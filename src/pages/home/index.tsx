@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, Home, Award } from 'lucide-react';
+import { ArrowRight, Home } from 'lucide-react';
 import FeaturesSection from '../../components/FeaturesSection';
 import EverythingElseSection from '../../components/EverythingElseSection';
 
