@@ -1,6 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import './animations.css';
 
 :root {
   --color-primary: #3D7475;
@@ -18,4 +17,3 @@
   body { font-family: var(--font-body, ui-sans-serif, system-ui); }
 }
 
-@import './animations.css';

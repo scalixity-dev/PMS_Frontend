@@ -32,7 +32,7 @@ export function useFetch<T>(url: string | null, options?: RequestInit): UseFetch
     return () => {
       active = false;
     };
-  }, [url, options]);
+  }, [url, JSON.stringify(options)]);
 
   return { data, loading, error };
 }

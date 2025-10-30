@@ -39,24 +39,24 @@ const Navbar: React.FC = () => {
           <NavLink to="/features" className={({ isActive }) => `${baseLink} ${isActive ? pillActive : mutedLink}`}>
             Features <ChevronDown />
           </NavLink>
-          <button className={`${baseLink} ${mutedLink}`}>
-            Use Cases <ChevronDown />
+          <button className={`${baseLink} ${mutedLink}`} disabled aria-disabled="true">
+            Use Cases
           </button>
-          <button className={`${baseLink} ${mutedLink}`}>
-            Resources <ChevronDown />
+          <button className={`${baseLink} ${mutedLink}`} disabled aria-disabled="true">
+            Resources
           </button>
-          <NavLink to="/pricing" className={({ isActive }) => `${baseLink} ${isActive ? pillActive : mutedLink}`}>
+          <button className={`${baseLink} ${mutedLink}`} disabled aria-disabled="true">
             Pricing
-          </NavLink>
+          </button>
         </div>
 
         <div className="flex items-center gap-4">
-          <Link to="/login" className="inline-flex items-center text-sm font-medium text-white">
+          <button className="inline-flex items-center text-sm font-medium text-white" disabled aria-disabled="true" type="button">
             <UserIcon /> Login
-          </Link>
-          <Link to="/signup" className="inline-flex items-center rounded-full border border-white/60 px-5 py-2 text-sm font-semibold text-white hover:bg-white/10">
+          </button>
+          <button className="inline-flex items-center rounded-full border border-white/60 px-5 py-2 text-sm font-semibold text-white" disabled aria-disabled="true" type="button">
             Sign up <ArrowNE />
-          </Link>
+          </button>
         </div>
       </nav>
     </header>
