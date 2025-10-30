@@ -1,11 +1,13 @@
 import React from 'react';
-import { ArrowRight, Home, TrendingUp, Shield, Award } from 'lucide-react';
+import { ArrowRight, Home, Award } from 'lucide-react';
+import FeaturesSection from '../../components/FeaturesSection';
+import EverythingElseSection from '../../components/EverythingElseSection';
 
 const HomePage: React.FC = () => {
   return (
     <div className="w-full">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-[var(--color-header-bg)] to-white py-20 px-6">
+      <section className="relative bg-gradient-to-br from-[var(--color-header-bg)] to-white py-20 px-6 rounded-xl">
         <div className="mx-auto max-w-7xl">
           <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-8">
             {/* Left Content */}
@@ -70,85 +72,10 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Features Section */}
-      <section className="bg-white py-20 px-6">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-12 text-center">
-            <h2 
-              className="mb-4 text-4xl font-bold"
-              style={{ 
-                fontFamily: 'var(--font-heading)', 
-                color: 'var(--color-heading)' 
-              }}
-            >
-              Why Choose Us
-            </h2>
-            <p 
-              className="mx-auto max-w-2xl text-lg"
-              style={{ color: 'var(--color-subheading)' }}
-            >
-              We provide comprehensive property management solutions tailored to your needs
-            </p>
-          </div>
+      <FeaturesSection />
 
-          {/* Feature Cards */}
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {/* Card 1 */}
-            <div className="group rounded-2xl bg-gradient-to-br from-[var(--color-card-1)] to-white p-8 shadow-lg transition-all hover:shadow-2xl hover:-translate-y-2">
-              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-md">
-                <Home className="text-[var(--color-primary)]" size={28} />
-              </div>
-              <h3 className="mb-3 text-xl font-semibold" style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-heading)' }}>
-                Wide Range of Properties
-              </h3>
-              <p style={{ color: 'var(--color-subheading)' }}>
-                From cozy apartments to luxury villas, we have the perfect property waiting for you.
-              </p>
-            </div>
-
-            {/* Card 2 */}
-            <div className="group rounded-2xl bg-gradient-to-br from-[var(--color-card-2)] to-white p-8 shadow-lg transition-all hover:shadow-2xl hover:-translate-y-2">
-              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-md">
-                <TrendingUp className="text-[var(--color-primary)]" size={28} />
-              </div>
-              <h3 className="mb-3 text-xl font-semibold" style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-heading)' }}>
-                Market Insights
-              </h3>
-              <p style={{ color: 'var(--color-subheading)' }}>
-                Get real-time market data and trends to make informed property decisions.
-              </p>
-            </div>
-
-            {/* Card 3 */}
-            <div className="group rounded-2xl bg-gradient-to-br from-[var(--color-card-3)] to-white p-8 shadow-lg transition-all hover:shadow-2xl hover:-translate-y-2">
-              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-md">
-                <Shield className="text-[var(--color-primary)]" size={28} />
-              </div>
-              <h3 className="mb-3 text-xl font-semibold" style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-heading)' }}>
-                Secure Transactions
-              </h3>
-              <p style={{ color: 'var(--color-subheading)' }}>
-                Your transactions are protected with industry-leading security measures.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] py-16 px-6 text-white">
-        <div className="mx-auto max-w-4xl text-center">
-          <Award size={48} className="mx-auto mb-6" />
-          <h2 className="mb-4 text-3xl font-bold md:text-4xl" style={{ fontFamily: 'var(--font-heading)' }}>
-            Ready to Find Your Perfect Property?
-          </h2>
-          <p className="mb-8 text-lg opacity-90">
-            Join thousands of satisfied customers who found their dream homes with us
-          </p>
-          <button className="rounded-full bg-white px-8 py-3 font-semibold text-[var(--color-primary)] shadow-lg transition-all hover:bg-gray-100 hover:shadow-xl">
-            Get Started Today
-          </button>
-        </div>
-      </section>
+      {/* Everything Else Section replaces the CTA */}
+      <EverythingElseSection />
     </div>
   );
 };

@@ -1,0 +1,84 @@
+import React from "react";
+import LearnMoreButton from "../common/buttons/LearnMoreButton";
+
+interface FeatureCardProps {
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+  description: string;
+  points: string[];
+  color: string;
+}
+
+const FeatureCard: React.FC<FeatureCardProps> = ({
+  icon,
+  title,
+  subtitle,
+  description,
+  points,
+  color,
+}) => {
+  // color prop expects a CSS variable name like '--color-card-1'
+  const bgVar = color;
+
+  // determine Tailwind background class for the button based on the card variable
+  // mapping:
+  // --color-card-1 (#9AD4AD) -> button bg class 'bg-[#3A4E33]'
+  // --color-card-2 (#6EB5AA) -> button bg class 'bg-[#005355]'
+  const buttonClass =
+    bgVar === "--color-card-1"
+      ? "bg-[#3A4E33]"
+      : bgVar === "--color-card-2"
+      ? "bg-[#005355]"
+      : "bg-[#3A4E33]";
+
+  return (
+    <div
+      className="rounded-3xl p-6 flex flex-col justify-between shadow-md"
+      style={{ backgroundColor: `var(${bgVar})` }}
+    >
+      <div>
+        <div className="flex items-center gap-4 mb-3">
+          <div
+            className="bg-white rounded-2xl p-3 border border-gray-200 flex items-center justify-center w-16 h-16"
+            style={{
+              // slightly reduced left-side shadow: milder opacity and blur for a softer look
+              boxShadow: '-8px 8px 0 rgba(0,0,0,0.16), -6px 14px 32px rgba(0,0,0,0.22)'
+            }}
+          >
+            {icon}
+          </div>
+          <h3 className="text-[var(--color-heading)] font-semibold text-lg">
+            {title}
+          </h3>
+        </div>
+
+        <h4 className="text-[var(--color-heading)] font-medium mb-2">
+          {subtitle}
+        </h4>
+        <p className="text-[var(--color-subheading)] text-sm mb-4">
+          {description}{" "}
+          <span className="text-[var(--color-primary)] font-medium cursor-pointer">
+            Read More
+          </span>
+        </p>
+
+        <ul className="space-y-2 mb-6">
+          {points.map((point, idx) => (
+            <li
+              key={idx}
+              className="flex items-center gap-2 border border-white rounded-full py-2 px-3 text-sm text-[var(--color-heading)]"
+            >
+              <span className="w-2 h-2 bg-white rounded-full"></span>
+              {point}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+  <LearnMoreButton bgClass={buttonClass} textClass="text-white" />
+    </div>
+  );
+};
+
+export default FeatureCard;
