@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #3D7475;
+  --color-secondary: #819A78;
+  --color-active: #20CC95;
+  --color-nonactive: #355C7D;
+  --color-heading: #1F2937;
+  --color-subheading: #4B5563;
+  --color-header-bg: #D8E0D5;
+  --color-navbar-bg: #273F3B;
+}
+
+@layer base {
+  html, body, #root { height: 100%; }
+  body { font-family: var(--font-body, ui-sans-serif, system-ui); }
+}
+
+@import './animations.css';
