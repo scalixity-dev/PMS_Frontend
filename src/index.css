@@ -117,6 +117,7 @@ body {
 }
 .btn-active:hover {
   background-color: #17a878;
+  opacity: 0.9;
 }
 
 /* Non Active Rounded Button */
