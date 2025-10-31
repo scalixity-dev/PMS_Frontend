@@ -4,7 +4,7 @@ const ExplorePropertiesBanner = () => {
       {/* Left abstract image - positioned at bottom, 70% of section height */}
       <div className="absolute left-0 bottom-0 w-1/3 h-[70%]">
         <img
-          src="/src/assets/images/abstractleft.png"
+          src="https://res.cloudinary.com/dxwspucxw/image/upload/v1761905090/abstractleft_yhtzva.png"
           alt="Abstract Left"
           className="h-full w-full object-cover filter brightness-90"
         />
@@ -14,7 +14,7 @@ const ExplorePropertiesBanner = () => {
       {/* Right abstract image - positioned at bottom, 70% of section height, mirrored */}
       <div className="absolute right-0 bottom-0 w-1/3 h-[70%]">
         <img
-          src="/src/assets/images/abstractleft.png"
+          src="https://res.cloudinary.com/dxwspucxw/image/upload/v1761905090/abstractright_qhdpgm.png"
           alt="Abstract Right"
           className="h-full w-full object-cover filter brightness-90"
           style={{ transform: 'scaleX(-1)' }}

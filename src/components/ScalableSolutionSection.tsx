@@ -15,17 +15,17 @@ export default function ScalableSolutionSection() {
   {/* Cards Grid */}
   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 px-4 w-full">
     <ScalableCard
-          image="src\assets\images\LandLords.png"
+          image="https://res.cloudinary.com/dxwspucxw/image/upload/v1761905088/LandLords_bucwby.png"
           title="Landlords"
           description="Protect your property and find Pms you trust."
         />
         <ScalableCard
-          image="src\assets\images\propertymanager.png"
+          image="https://res.cloudinary.com/dxwspucxw/image/upload/v1761905089/propertymanager_pqausl.png"
           title="Property Manager"
           description="Stay organized and connected with your team."
         />
         <ScalableCard
-          image="src\assets\images\servicepro.png"
+          image="https://res.cloudinary.com/dxwspucxw/image/upload/v1761905090/servicepro_y7ry43.png"
           title="Service Pros"
           description={<>
             <span>Enjoy your rental,</span>
@@ -34,7 +34,7 @@ export default function ScalableSolutionSection() {
           </>}
         />
         <ScalableCard
-          image="src\assets\images\owner.png    "
+          image="https://res.cloudinary.com/dxwspucxw/image/upload/v1761905089/owner_ipyjef.png"
           title="Owners"
           description="Protect your property and find Pms you trust."
         />
