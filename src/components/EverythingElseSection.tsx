@@ -20,7 +20,8 @@ export default function EverythingElseSection() {
               <ViewMoreButton />
             </div>
           </div>
-          <div />
+          </div>
+        </div>
         </div>
 
       {/* Right Side Cards */}
