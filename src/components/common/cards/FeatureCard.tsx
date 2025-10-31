@@ -1,5 +1,5 @@
 import React from "react";
-import LearnMoreButton from "../common/buttons/LearnMoreButton";
+import LearnMoreButton from "../buttons/LearnMoreButton";
 
 interface FeatureCardProps {
   icon: React.ReactNode;

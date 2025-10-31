@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import ChooseButton from "../common/buttons/ChooseButton";
+import ChooseButton from "../buttons/ChooseButton";
 
 interface ScalableCardProps {
   image: string;

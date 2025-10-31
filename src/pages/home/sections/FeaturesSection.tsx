@@ -1,5 +1,5 @@
 import React from "react";
-import FeatureCard from "../../../components/cards/FeatureCard";
+import FeatureCard from "../../../components/common/cards/FeatureCard";
 import PaginationButtons from "../../../components/common/buttons/PaginationButtons";
 import ViewAllButton from "../../../components/common/buttons/ViewAllButton";
 import { DollarSign, UserCheck, FileText } from "lucide-react";

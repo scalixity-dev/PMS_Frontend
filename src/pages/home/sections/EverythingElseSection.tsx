@@ -1,6 +1,6 @@
 // components/EverythingElseSection.tsx
 import { Smartphone, Briefcase, Home, Users } from "lucide-react";
-import EverythingElseCard from "../../../components/cards/EverythingElseCard";
+import EverythingElseCard from "../../../components/common/cards/EverythingElseCard";
 import ViewMoreButton from "../../../components/common/buttons/ViewMoreButton";
 
 export default function EverythingElseSection() {
