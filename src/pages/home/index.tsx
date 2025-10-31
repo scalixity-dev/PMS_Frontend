@@ -2,6 +2,8 @@ import React from 'react';
 import { ArrowRight, Home } from 'lucide-react';
 import FeaturesSection from '../../components/FeaturesSection';
 import EverythingElseSection from '../../components/EverythingElseSection';
+import ScalableSolutionSection from '../../components/ScalableSolutionSection';
+import ExplorePropertiesBanner from '../../components/ExplorePropertiesBanner';
 
 const HomePage: React.FC = () => {
   return (
@@ -74,8 +76,15 @@ const HomePage: React.FC = () => {
       {/* Features Section */}
       <FeaturesSection />
 
-      {/* Everything Else Section replaces the CTA */}
+      {/* Everything Else Section*/}
       <EverythingElseSection />
+
+      {/* ScalableSolution Section*/}
+      <ScalableSolutionSection />
+
+      <ExplorePropertiesBanner/>
+
+      
     </div>
   );
 };
