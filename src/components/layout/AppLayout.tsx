@@ -5,10 +5,13 @@ import Footer from './Footer';
 
 const AppLayout: React.FC = () => {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
       <main className="flex-1">
-        <Outlet />
+        {/* Page content (excluding header/footer) wrapped with uniform padding */}
+        <div className="p-10">
+          <Outlet />
+        </div>
       </main>
       <Footer />
     </div>
