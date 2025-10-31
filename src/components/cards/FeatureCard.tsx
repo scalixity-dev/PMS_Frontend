@@ -18,19 +18,14 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
   points,
   color,
 }) => {
-  // color prop expects a CSS variable name like '--color-card-1'
-  const bgVar = color;
-
-  // determine Tailwind background class for the button based on the card variable
-  // mapping:
-  // --color-card-1 (#9AD4AD) -> button bg class 'bg-[#3A4E33]'
-  // --color-card-2 (#6EB5AA) -> button bg class 'bg-[#005355]'
-  const buttonClass =
-    bgVar === "--color-card-1"
-      ? "bg-[#3A4E33]"
-      : bgVar === "--color-card-2"
-      ? "bg-[#005355]"
-      : "bg-[#3A4E33]";
+  // Map CSS variable names to button background classes
+  const colorToButtonClass: Record<string, string> = {
+    "--color-card-1": "bg-[#3A4E33]",
+    "--color-card-2": "bg-[#005355]",
+    "--color-card-3": "bg-[#3A4E33]", // Add mapping for card-3
+  };
+  
+  const buttonClass = colorToButtonClass[color] ?? "bg-[#3A4E33]";
 
   return (
     <div
