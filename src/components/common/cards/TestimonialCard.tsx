@@ -63,14 +63,14 @@ const TestimonialCard: React.FC<TestimonialCardProps> = ({
   const fullStars = Math.max(0, Math.min(5, Math.round(rating)));
 
   return (
-    <article className={`rounded-2xl border border-(--color-active) bg-white p-6 shadow-sm ${className ?? ''}`.trim()}>
+    <article className={`flex min-h-[370.57px] w-[396.09px] flex-col rounded-[12.85px] border-[1.07px] border-[#DDDDDD] bg-white p-6 shadow-sm ${className ?? ''}`.trim()}>
       <header className="mb-4 flex items-center justify-between">
         <BrandBadge brand={brand} />
-        <span className="text-3xl text-(--color-active)">”</span>
+      
       </header>
 
-      <h3 className="mb-3 text-[18px] font-semibold text-(--color-heading)">{title}</h3>
-      <p className="mb-4 text-[14px] leading-7 text-(--color-subheading)">{content}</p>
+      <h3 className="mb-3 font-body text-[18px] font-semibold whitespace-nowrap leading-[20.55px] text-(--color-heading)">{title}</h3>
+      <p className="mb-4 flex-1 font-body text-[14.99px] font-medium leading-[26px] text-(--color-subheading)">{content}</p>
 
       <div className="mb-4 flex items-center gap-1">
         {Array.from({ length: 5 }).map((_, i) => (
@@ -78,15 +78,15 @@ const TestimonialCard: React.FC<TestimonialCardProps> = ({
         ))}
       </div>
 
-      <footer className="mt-6 flex items-center gap-3">
+      <footer className="mt-auto flex items-center gap-3">
         {avatarUrl ? (
           <img src={avatarUrl} alt={authorName} className="h-12 w-12 rounded-full object-cover" />
         ) : (
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-(--color-header-bg) text-(--color-heading)">{authorName.charAt(0)}</div>
         )}
-        <div>
-          <p className="text-[15px] font-medium text-(--color-heading)">{authorName}</p>
-          <p className="text-[12px] text-(--color-subheading)">{authorRole}</p>
+        <div className="min-w-0">
+          <p className="truncate text-[15px] font-medium text-(--color-heading)">{authorName}</p>
+          <p className="truncate text-[12px] text-(--color-subheading)">{authorRole}</p>
         </div>
       </footer>
     </article>

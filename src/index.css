@@ -75,6 +75,15 @@ body {
   color: var(--color-heading);
 }
 
+/* 🎨 Scrollbar Hide */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* 🧭 Buttons */
 .btn {
   font-family: var(--font-body);
@@ -129,4 +138,13 @@ body {
 }
 .btn-nonactive:hover {
   opacity: 0.85;
+}
+
+/* 🖱️ Ensure hand cursor on interactive elements */
+a,
+button,
+input[type="button"],
+input[type="submit"],
+[role="button"] {
+  cursor: pointer;
 }

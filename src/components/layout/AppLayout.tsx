@@ -9,7 +9,7 @@ const AppLayout: React.FC = () => {
       <Navbar />
       <main className="flex-1">
         {/* Page content (excluding header/footer) wrapped with uniform padding */}
-        <div className="p-10">
+        <div className="p-4">
           <Outlet />
         </div>
       </main>
