@@ -62,9 +62,9 @@ const FAQSection: React.FC = () => {
             Frequently Asked Questions
           </h2>
           <p className="text-sm leading-6 text-(--color-subheading)">
-            If there are question you want to ask.
+            If there are questions you want to ask.
             <br />
-            We will answer all your question.
+            We will answer all your questions.
           </p>
         </div>
 

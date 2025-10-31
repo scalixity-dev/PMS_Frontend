@@ -1,9 +1,11 @@
 import React from 'react';
 
 const HeroSection: React.FC = () => {
+  const badgeClassName = "inline-flex items-center justify-center min-w-[122.972px] h-[41.615px] gap-[1.41px] rounded-[13.47px] px-[16.96px] py-[11.31px] border border-white bg-[#819A78] text-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] font-heading font-medium text-[12.72px] leading-[150%] tracking-normal";
+  const features = ["Free 14 day trial", "Credit card required", "Cancel anytime"] as const;
   return (
     <section className="w-full bg-white p-10 sm:p-14 lg:p-14">
-      <div className="mx-auto max-w-[1824px] rounded-[27.12px] bg-[var(--color-header-bg)] px-6 py-10 shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] sm:px-8 sm:py-14 lg:min-h-[785px] lg:px-20 lg:py-20 2xl:py-24 3xl:px-24 4xl:px-28 overflow-visible">
+      <div className="mx-auto max-w-[1824px] rounded-[27.12px] bg-(--color-header-bg) px-6 py-10 shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] sm:px-8 sm:py-14 lg:min-h-[785px] lg:px-20 lg:py-20 2xl:py-24 3xl:px-24 4xl:px-28 overflow-visible">
         <div className="relative grid items-center gap-8 lg:grid-cols-2 lg:gap-9 2xl:gap-8 3xl:gap-10 4xl:gap-12">
           {/* Left: Content */}
           <div>
@@ -22,7 +24,7 @@ const HeroSection: React.FC = () => {
 
             <div className="flex flex-wrap items-center gap-4">
               <button
-                className="inline-flex items-center justify-center w-[141.553px] h-[57.165px] gap-[6.93px] rounded-[14.61px] px-[20.78px] py-[15.58px] border-2 border-[#4B5563] bg-[transparent] hover:bg-[#1F2937] opacity-100 rotate-0 font-[Manrope] font-semibold text-[18.78px] leading-[1] whitespace-nowrap tracking-[0] text-black hover:text-white "
+                className="inline-flex items-center justify-center w-[141.553px] h-[57.165px] gap-[6.93px] rounded-[14.61px] px-[20.78px] py-[15.58px] border-2 border-[#4B5563] bg-transparent hover:bg-[#1F2937] opacity-100 rotate-0 font-[Manrope] font-semibold text-[18.78px] leading-none whitespace-nowrap tracking-[0] text-black hover:text-white "
               >
                 Learn More
               </button>
@@ -34,9 +36,9 @@ const HeroSection: React.FC = () => {
             </div>
 
             <div className="mt-8 flex flex-wrap whitespace-nowrap gap-3 text-sm">
-              <span className="inline-flex items-center justify-center min-w-[122.972px] h-[41.615px] gap-[1.41px] rounded-[13.47px] px-[16.96px] py-[11.31px] border border-white bg-[#819A78] text-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] font-heading font-medium text-[12.72px] leading-[150%] tracking-normal">Free 14 day trial</span>
-              <span className="inline-flex items-center justify-center min-w-[122.972px] h-[41.615px] gap-[1.41px] rounded-[13.47px] px-[16.96px] py-[11.31px] border border-white bg-[#819A78] text-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] font-heading font-medium text-[12.72px] leading-[150%] tracking-normal">Credit card required</span>
-              <span className="inline-flex items-center justify-center min-w-[122.972px] h-[41.615px] gap-[1.41px] rounded-[13.47px] px-[16.96px] py-[11.31px] border border-white bg-[#819A78] text-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] font-heading font-medium text-[12.72px] leading-[150%] tracking-normal">Cancel anytime</span>
+              {features.map((text) => (
+                <span key={text} className={badgeClassName}>{text}</span>
+              ))}
             </div>
           </div>
 

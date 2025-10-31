@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import logo from '../../assets/images/logo.png';
 
@@ -25,15 +25,18 @@ const ArrowNE: React.FC = () => (
 );
 
 const Navbar: React.FC = () => {
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+
   return (
-    <header className="bg-[var(--color-navbar-bg)] sticky top-0 z-50 text-white">
-      <nav className="mx-auto flex w-full max-w-[1920px] items-center justify-between px-[162px] py-[20px] h-[97px] opacity-100 relative">
+    <header className="bg-(--color-navbar-bg) sticky top-0 z-50 text-white">
+      <nav className="mx-auto flex w-full max-w-[1920px] items-center justify-between px-4 sm:px-6 md:px-10 lg:px-16 xl:px-[162px] py-[16px] md:py-[18px] lg:py-[20px] h-[72px] md:h-[88px] lg:h-[97px] opacity-100 relative">
         <Link to="/" className="flex items-center gap-2">
           <img src={logo} alt="PMS Logo" className="h-10 w-10 brightness-0 invert" />
-          <span className="font-body text-[24px] font-bold leading-[150%] tracking-normal">PMS</span>
+          <span className="font-body text-[20px] md:text-[24px] font-bold leading-[150%] tracking-normal">PMS</span>
         </Link>
 
-        <div className="flex items-center gap-4 absolute left-1/2 -translate-x-1/2">
+        {/* Center menu (desktop) */}
+        <div className="hidden lg:flex items-center gap-4 absolute left-1/2 -translate-x-1/2">
           <NavLink to="/" end className={({ isActive }) => `${baseLink} ${isActive ? pillActive : mutedLink}`}>
             Home
           </NavLink>
@@ -51,15 +54,74 @@ const Navbar: React.FC = () => {
           </button>
         </div>
 
-        <div className="flex items-center gap-6">
-          <button className="inline-flex items-center font-heading text-[16.95px] leading-[32.21px] font-semibold capitalize text-white" disabled aria-disabled="true" type="button">
+        {/* Right actions (desktop) */}
+        <div className="hidden sm:flex items-center gap-4 md:gap-6">
+          <button className="inline-flex items-center font-heading text-[15px] md:text-[16.95px] leading-[28px] md:leading-[32.21px] font-semibold capitalize text-white" disabled aria-disabled="true" type="button">
             <UserIcon /> Login
           </button>
-          <button className="inline-flex items-center justify-center w-[173px] h-[57px] rounded-[54.49px] border-[1.21px] border-[#E2E2E2] font-heading text-[16.95px] leading-[32.21px] font-semibold text-center align-middle text-white bg-(--color-primary)" disabled aria-disabled="true" type="button">
+          <button className="hidden md:inline-flex items-center justify-center w-[150px] md:w-[173px] h-[48px] md:h-[57px] rounded-[54.49px] border-[1.21px] border-[#E2E2E2] font-heading text-[15px] md:text-[16.95px] leading-[28px] md:leading-[32.21px] font-semibold text-center align-middle text-white bg-(--color-primary)" disabled aria-disabled="true" type="button">
             Sign up <ArrowNE />
           </button>
         </div>
+
+        {/* Mobile menu button */}
+        <div className="flex items-center lg:hidden">
+          <button
+            type="button"
+            aria-label={isMobileOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={isMobileOpen}
+            aria-controls="mobile-menu"
+            onClick={() => setIsMobileOpen((open) => !open)}
+            className="inline-flex items-center justify-center rounded-md p-2 text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-(--color-navbar-bg)"
+          >
+            {isMobileOpen ? (
+              // Close icon
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            ) : (
+              // Hamburger icon
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            )}
+          </button>
+        </div>
       </nav>
+
+      {/* Mobile menu panel */}
+      <div
+        id="mobile-menu"
+        className={`${isMobileOpen ? 'max-h-[480px] opacity-100' : 'max-h-0 opacity-0'} lg:hidden overflow-hidden transition-all duration-300 ease-out bg-(--color-navbar-bg)`}
+      >
+        <div className="px-4 sm:px-6 md:px-10 pb-4 pt-1">
+          <div className="flex flex-col gap-1">
+            <NavLink onClick={() => setIsMobileOpen(false)} to="/" end className={({ isActive }) => `${baseLink} ${isActive ? pillActive : mutedLink}`}>
+              Home
+            </NavLink>
+            <NavLink onClick={() => setIsMobileOpen(false)} to="/features" className={({ isActive }) => `${baseLink} ${isActive ? pillActive : mutedLink}`}>
+              Features <ChevronDown />
+            </NavLink>
+            <button className={`${baseLink} ${mutedLink}`} disabled>
+              Use Cases
+            </button>
+            <button className={`${baseLink} ${mutedLink}`} disabled>
+              Resources
+            </button>
+            <button className={`${baseLink} ${mutedLink}`} disabled>
+              Pricing
+            </button>
+          </div>
+          <div className="mt-3 flex flex-col gap-3">
+            <button className="inline-flex items-center font-heading text-[16px] leading-[28px] font-semibold capitalize text-white" disabled aria-disabled="true" type="button">
+              <UserIcon /> Login
+            </button>
+            <button className="inline-flex items-center justify-center w-full h-[52px] rounded-[54.49px] border-[1.21px] border-[#E2E2E2] font-heading text-[16px] leading-[28px] font-semibold text-center align-middle text-white bg-(--color-primary)" disabled aria-disabled="true" type="button">
+              Sign up <ArrowNE />
+            </button>
+          </div>
+        </div>
+      </div>
     </header>
   );
 };

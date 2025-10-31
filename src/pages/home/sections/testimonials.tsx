@@ -3,6 +3,7 @@ import TestimonialCard from '../../../components/common/TestimonialCard';
 
 const testimonials = [
   {
+    id: 'patrick-g-capterra',
     brand: 'capterra' as const,
     title: 'Manage Properties, Simplify Life',
     content:
@@ -13,6 +14,7 @@ const testimonials = [
     avatarUrl: undefined,
   },
   {
+    id: 'delores-generic',
     brand: 'generic' as const,
     title: 'Excellent Property Management',
     content:
@@ -22,6 +24,7 @@ const testimonials = [
     authorRole: 'owner',
   },
   {
+    id: 'marie-k-capterra',
     brand: 'capterra' as const,
     title: 'Long Time User',
     content:
@@ -31,6 +34,7 @@ const testimonials = [
     authorRole: 'broker',
   },
   {
+    id: 'philly-r-generic',
     brand: 'generic' as const,
     title: 'All in one',
     content:
@@ -55,8 +59,8 @@ const TestimonialsSection: React.FC = () => {
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 3xl:gap-8 4xl:gap-10">
-          {testimonials.map((t, idx) => (
-            <TestimonialCard key={idx} {...t} />
+          {testimonials.map((t) => (
+            <TestimonialCard key={t.id} {...t} />
           ))}
         </div>
 
