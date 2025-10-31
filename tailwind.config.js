@@ -5,6 +5,16 @@ export default {
     './src/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
+    screens: {
+      xs: '375px',
+      sm: '640px',
+      md: '768px',
+      lg: '1024px',
+      xl: '1280px',
+      '2xl': '1536px',
+      '3xl': '1600px',
+      '4xl': '1820px',
+    },
     extend: {
       colors: {
         primary: 'var(--color-primary)',
@@ -17,8 +27,8 @@ export default {
         navbar: 'var(--color-navbar-bg)',
       },
       fontFamily: {
-        heading: ['var(--font-heading)'],
-        body: ['var(--font-body)'],
+        heading: ['var(--font-heading)', 'Urbanist', 'sans-serif'],
+        body: ['var(--font-body)', 'Poppins', 'sans-serif'],
       },
       borderRadius: {
         lg: 'var(--radius-lg)',
