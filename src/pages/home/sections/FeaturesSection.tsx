@@ -1,7 +1,7 @@
 import React from "react";
-import FeatureCard from "./cards/FeatureCard";
-import PaginationButtons from "./common/buttons/PaginationButtons";
-import ViewAllButton from "./common/buttons/ViewAllButton";
+import FeatureCard from "../../../components/cards/FeatureCard";
+import PaginationButtons from "../../../components/common/buttons/PaginationButtons";
+import ViewAllButton from "../../../components/common/buttons/ViewAllButton";
 import { DollarSign, UserCheck, FileText } from "lucide-react";
 
 const FeaturesSection: React.FC = () => {
