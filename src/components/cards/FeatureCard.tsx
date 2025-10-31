@@ -30,7 +30,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
   return (
     <div
       className="rounded-3xl p-6 flex flex-col justify-between shadow-md"
-      style={{ backgroundColor: `var(${bgVar})` }}
+      style={{ backgroundColor: `var(${color})` }}
     >
       <div>
         <div className="flex items-center gap-4 mb-3">

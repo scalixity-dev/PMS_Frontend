@@ -1,8 +1,9 @@
 import React from 'react';
 import { Link, NavLink } from 'react-router-dom';
+import logo from '../../assets/images/logo.png';
 
-const baseLink = 'px-3 py-2 rounded-md text-sm font-medium text-white transition-colors';
-const pillActive = 'rounded-2xl bg-[var(--color-primary)]/45 text-white px-4 py-2';
+const baseLink = 'px-3 py-2 rounded-md font-heading text-[16px] font-light leading-[130%] tracking-normal text-white transition-colors active:bg-(--color-primary)';
+const pillActive = 'rounded-2xl  bg-[var(--color-primary)] text-white px-5 py-3';
 const mutedLink = 'text-white';
 
 const ChevronDown: React.FC = () => (
@@ -18,43 +19,43 @@ const UserIcon: React.FC = () => (
 );
 
 const ArrowNE: React.FC = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="ml-2">
+  <svg width="16.9516658782959" height="16.9516658782959" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="ml-2">
     <path d="M7 17L17 7M9 7h8v8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
 
 const Navbar: React.FC = () => {
   return (
-    <header className="bg-[var(--color-navbar-bg)] text-white">
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
+    <header className="bg-[var(--color-navbar-bg)] sticky top-0 z-50 text-white">
+      <nav className="mx-auto flex w-full max-w-[1920px] items-center justify-between px-[162px] py-[20px] h-[97px] opacity-100 relative">
         <Link to="/" className="flex items-center gap-2">
-          <img src="/vite.svg" alt="Logo" className="h-7 w-7" />
-          <span className="text-base font-semibold tracking-wide">PMS</span>
+          <img src={logo} alt="PMS Logo" className="h-10 w-10 brightness-0 invert" />
+          <span className="font-body text-[24px] font-bold leading-[150%] tracking-normal">PMS</span>
         </Link>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4 absolute left-1/2 -translate-x-1/2">
           <NavLink to="/" end className={({ isActive }) => `${baseLink} ${isActive ? pillActive : mutedLink}`}>
             Home
           </NavLink>
           <NavLink to="/features" className={({ isActive }) => `${baseLink} ${isActive ? pillActive : mutedLink}`}>
             Features <ChevronDown />
           </NavLink>
-          <button className={`${baseLink} ${mutedLink}`} disabled aria-disabled="true">
+          <button className={`${baseLink} ${mutedLink}`} disabled>
             Use Cases
           </button>
-          <button className={`${baseLink} ${mutedLink}`} disabled aria-disabled="true">
+          <button className={`${baseLink} ${mutedLink}`} disabled>
             Resources
           </button>
-          <button className={`${baseLink} ${mutedLink}`} disabled aria-disabled="true">
+          <button className={`${baseLink} ${mutedLink}`} disabled>
             Pricing
           </button>
         </div>
 
-        <div className="flex items-center gap-4">
-          <button className="inline-flex items-center text-sm font-medium text-white" disabled aria-disabled="true" type="button">
+        <div className="flex items-center gap-6">
+          <button className="inline-flex items-center font-heading text-[16.95px] leading-[32.21px] font-semibold capitalize text-white" disabled aria-disabled="true" type="button">
             <UserIcon /> Login
           </button>
-          <button className="inline-flex items-center rounded-full border border-white/60 px-5 py-2 text-sm font-semibold text-white" disabled aria-disabled="true" type="button">
+          <button className="inline-flex items-center justify-center w-[173px] h-[57px] rounded-[54.49px] border-[1.21px] border-[#E2E2E2] font-heading text-[16.95px] leading-[32.21px] font-semibold text-center align-middle text-white bg-(--color-primary)" disabled aria-disabled="true" type="button">
             Sign up <ArrowNE />
           </button>
         </div>
