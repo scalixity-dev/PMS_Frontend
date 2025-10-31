@@ -1,6 +1,6 @@
 // components/ScalableSolutionSection.tsx
-import ScalableCard from "./cards/ScalableCard";
-import PaginationButtons from "./common/buttons/PaginationButtons";
+import ScalableCard from "../../../components/common/cards/ScalableCard";
+import PaginationButtons from "../../../components/common/buttons/PaginationButtons";
 
 export default function ScalableSolutionSection() {
   return (

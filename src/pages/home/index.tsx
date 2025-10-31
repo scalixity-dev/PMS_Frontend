@@ -5,8 +5,8 @@ import EverythingElseSection from './sections/EverythingElseSection';
 import HeroSection from './sections/hero';
 import TestimonialsSection from './sections/testimonials';
 import FAQSection from './sections/faq';
-import ScalableSolutionSection from '../../components/ScalableSolutionSection';
-import ExplorePropertiesBanner from '../../components/ExplorePropertiesBanner';
+import ScalableSolutionSection from './sections/ScalableSolutionSection';
+import ExplorePropertiesBanner from './sections/ExplorePropertiesBanner';
 
 const HomePage: React.FC = () => {
   return (
