@@ -5,6 +5,8 @@ import EverythingElseSection from './sections/EverythingElseSection';
 import HeroSection from './sections/hero';
 import TestimonialsSection from './sections/testimonials';
 import FAQSection from './sections/faq';
+import ScalableSolutionSection from '../../components/ScalableSolutionSection';
+import ExplorePropertiesBanner from '../../components/ExplorePropertiesBanner';
 
 const HomePage: React.FC = () => {
   return (
@@ -15,7 +17,7 @@ const HomePage: React.FC = () => {
       {/* Features Section */}
       <FeaturesSection />
 
-      {/* Everything Else Section replaces the CTA */}
+      {/* Everything Else Section*/}
       <EverythingElseSection />
 
       {/* Testimonials Section */}
@@ -23,6 +25,13 @@ const HomePage: React.FC = () => {
 
       {/* FAQ Section */}
       <FAQSection />
+
+      {/* ScalableSolution Section*/}
+      <ScalableSolutionSection />
+
+      <ExplorePropertiesBanner/>
+
+      
     </div>
   );
 };
