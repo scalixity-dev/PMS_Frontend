@@ -1,5 +1,5 @@
 import React from 'react';
-import TestimonialCard from '../../../components/common/TestimonialCard';
+import TestimonialCard from '../../../components/common/cards/TestimonialCard';
 
 const testimonials = [
   {
@@ -48,20 +48,22 @@ const testimonials = [
 const TestimonialsSection: React.FC = () => {
   return (
     <section className="w-full bg-white px-6 py-14 sm:px-10 lg:px-20 lg:py-20">
-      <div className="mx-auto max-w-[1670px] 3xl:px-4 4xl:px-6">
+      <div className="mx-auto max-w-7xl px-4">
         <div className="mb-10">
-          <h2 className="mb-2 font-heading text-[28px] font-semibold leading-[120%] text-(--color-heading) sm:text-[34px] lg:text-[40px]">
+          <h2 className="mb-2 font-body text-[32px] font-semibold leading-[38.54px] text-(--color-heading)">
             Trusted by Property Professionals
           </h2>
-          <p className="text-sm text-(--color-subheading)">
+          <p className="font-body text-[14.99px] font-normal leading-[28.48px] text-(--color-subheading)">
             Empowering investors and companies to manage properties with confidence
           </p>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 3xl:gap-8 4xl:gap-10">
-          {testimonials.map((t) => (
-            <TestimonialCard key={t.id} {...t} />
-          ))}
+        <div className="overflow-x-auto scrollbar-hide pb-4">
+          <div className="flex gap-8">
+            {testimonials.map((t) => (
+              <TestimonialCard key={t.id} {...t} className="shrink-0" />
+            ))}
+          </div>
         </div>
 
         <div className="mt-8 flex items-center justify-center gap-2">

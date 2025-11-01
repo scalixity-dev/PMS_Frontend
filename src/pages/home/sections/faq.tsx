@@ -54,14 +54,14 @@ const FAQSection: React.FC = () => {
   };
 
   return (
-    <section className="w-full bg-white px-6 py-14 sm:px-10 lg:px-20 2xl:py-40 3xl:px-24 4xl:px-28">
-      <div className="mx-auto grid max-w-[1450px] gap-10 lg:grid-cols-2 lg:gap-16 3xl:gap-20 4xl:gap-24">
+    <section className="w-full bg-white px-6 py-14 sm:px-10 lg:px-20 2xl:py-24 3xl:px-24 4xl:px-28">
+      <div className="mx-auto grid max-w-7xl px-20 gap-10 lg:grid-cols-2 lg:gap-16 3xl:gap-20 4xl:gap-24">
         {/* Left: Heading */}
         <div>
-          <h2 className="mb-4 font-heading text-[28px] font-semibold leading-[120%] text-(--color-heading) sm:text-[34px] lg:text-[40px]">
+          <h2 className="mb-4 font-heading text-4xl font-semibold leading-tight tracking-[0] text-(--color-heading)">
             Frequently Asked Questions
           </h2>
-          <p className="text-sm leading-6 text-(--color-subheading)">
+          <p className="font-heading font-light text-lg leading-7 tracking-[0] text-[#61656E]">
             If there are questions you want to ask.
             <br />
             We will answer all your questions.
@@ -69,20 +69,20 @@ const FAQSection: React.FC = () => {
         </div>
 
         {/* Right: Accordion */}
-        <div className="flex flex-col">
+        <div className="flex flex-col w-full max-w-3xl">
           <div className="space-y-4">
             {items.map(item => {
               const expanded = openId === item.id;
               return (
-                <div key={item.id} className={`rounded-xl border border-(--color-active) bg-white transition-shadow ${expanded ? 'shadow-md' : 'shadow-sm'}`}>
+                <div key={item.id} className={`rounded-lg border border-[#E5E5E6] bg-white transition-shadow ${expanded ? 'shadow-md' : 'shadow-sm'}`}>
                   <button
                     type="button"
                     aria-expanded={expanded}
                     aria-controls={`faq-panel-${item.id}`}
                     onClick={() => toggle(item.id)}
-                    className="flex w-full items-center justify-between gap-6 px-6 py-5 text-left"
+                    className="flex w-full items-center justify-between gap-6 p-7 min-h-24 text-left"
                   >
-                    <span className="text-[17px] font-medium text-(--color-heading)">
+                    <span className="font-heading text-2xl font-medium leading-9 tracking-[0] text-(--color-heading)">
                       {item.question}
                     </span>
                     {expanded ? (
@@ -95,10 +95,10 @@ const FAQSection: React.FC = () => {
                   <div
                     id={`faq-panel-${item.id}`}
                     role="region"
-                    className={`grid overflow-hidden px-6 transition-[grid-template-rows] duration-300 ease-in-out ${expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
+                    className={`grid overflow-hidden px-7 transition-[grid-template-rows] duration-300 ease-in-out ${expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
                   >
                     <div className="min-h-0">
-                      <p className="pb-6 text-[14px] leading-7 text-(--color-subheading)">
+                      <p className="pb-7 font-heading font-normal text-lg leading-7 tracking-[0] text-(--color-subheading)">
                         {item.answer}
                       </p>
                     </div>

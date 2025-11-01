@@ -29,7 +29,7 @@ const Navbar: React.FC = () => {
 
   return (
     <header className="bg-(--color-navbar-bg) sticky top-0 z-50 text-white">
-      <nav className="mx-auto flex w-full max-w-[1920px] items-center justify-between px-4 sm:px-6 md:px-10 lg:px-16 xl:px-[162px] py-[16px] md:py-[18px] lg:py-[20px] h-[72px] md:h-[88px] lg:h-[97px] opacity-100 relative">
+      <nav className="mx-auto flex w-full max-w-[1920px] items-center justify-between px-4 sm:px-6 md:px-10 lg:px-16 xl:px-10 py-[16px] md:py-[18px] lg:py-[20px] h-[72px] md:h-[88px] lg:h-[97px] opacity-100 relative">
         <Link to="/" className="flex items-center gap-2">
           <img src={logo} alt="PMS Logo" className="h-10 w-10 brightness-0 invert" />
           <span className="font-body text-[20px] md:text-[24px] font-bold leading-[150%] tracking-normal">PMS</span>
@@ -113,10 +113,10 @@ const Navbar: React.FC = () => {
             </button>
           </div>
           <div className="mt-3 flex flex-col gap-3">
-            <button className="inline-flex items-center font-heading text-[16px] leading-[28px] font-semibold capitalize text-white" disabled aria-disabled="true" type="button">
+            <button className="inline-flex items-center font-heading text-[12px] leading-[28px] font-semibold capitalize text-white" disabled aria-disabled="true" type="button">
               <UserIcon /> Login
             </button>
-            <button className="inline-flex items-center justify-center w-full h-[52px] rounded-[54.49px] border-[1.21px] border-[#E2E2E2] font-heading text-[16px] leading-[28px] font-semibold text-center align-middle text-white bg-(--color-primary)" disabled aria-disabled="true" type="button">
+            <button className="inline-flex items-center justify-center w-full h-[52px] rounded-[54.49px] border-[1.21px] border-[#E2E2E2] font-heading text-[12px] leading-[28px] font-semibold text-center align-middle text-white bg-(--color-primary)" disabled aria-disabled="true" type="button">
               Sign up <ArrowNE />
             </button>
           </div>
