@@ -6,7 +6,7 @@ import ViewMoreButton from "../../../components/common/buttons/ViewMoreButton";
 export default function EverythingElseSection() {
   return (
     <section className="max-w-7xl mx-auto px-6 py-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-stretch">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-20 items-stretch">
         {/* Left Side Box */}
         <div
           className="flex flex-col rounded-lg p-10 w-full h-full space-y-6"

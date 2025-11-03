@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import logo from '../../assets/images/logo.png';
 
-const baseLink = 'px-3 py-2 rounded-md font-heading text-[16px] font-light leading-[130%] tracking-normal text-white transition-colors active:bg-(--color-primary)';
+const baseLink = 'px-3 py-2 rounded-md font-heading text-[14px] font-light leading-[130%] tracking-normal text-white transition-colors active:bg-(--color-primary)';
 const pillActive = 'rounded-2xl  bg-[var(--color-primary)] text-white px-5 py-3';
 const mutedLink = 'text-white';
 
@@ -29,14 +29,14 @@ const Navbar: React.FC = () => {
 
   return (
     <header className="bg-(--color-navbar-bg) sticky top-0 z-50 text-white">
-      <nav className="mx-auto flex w-full max-w-[1920px] items-center justify-between px-4 sm:px-6 md:px-10 lg:px-16 xl:px-10 py-[16px] md:py-[18px] lg:py-[20px] h-[72px] md:h-[88px] lg:h-[97px] opacity-100 relative">
+      <nav className="mx-auto flex w-full max-w-7xl items-center justify-between px-16 xl:px-0 py-[10px] md:py-[12px] lg:py-[14px] h-[60px] md:h-[72px] lg:h-[80px] opacity-100 relative">
         <Link to="/" className="flex items-center gap-2">
           <img src={logo} alt="PMS Logo" className="h-10 w-10 brightness-0 invert" />
-          <span className="font-body text-[20px] md:text-[24px] font-bold leading-[150%] tracking-normal">PMS</span>
+          <span className="font-body text-[20px] md:text-[20px] font-bold leading-[150%] tracking-normal">PMS</span>
         </Link>
 
         {/* Center menu (desktop) */}
-        <div className="hidden lg:flex items-center gap-4 absolute left-1/2 -translate-x-1/2">
+        <div className="hidden lg:flex items-center gap-2 xl:gap-4 absolute left-1/2 -translate-x-1/2">
           <NavLink to="/" end className={({ isActive }) => `${baseLink} ${isActive ? pillActive : mutedLink}`}>
             Home
           </NavLink>
@@ -55,11 +55,11 @@ const Navbar: React.FC = () => {
         </div>
 
         {/* Right actions (desktop) */}
-        <div className="hidden sm:flex items-center gap-4 md:gap-6">
-          <button className="inline-flex items-center font-heading text-[15px] md:text-[16.95px] leading-[28px] md:leading-[32.21px] font-semibold capitalize text-white" disabled aria-disabled="true" type="button">
+        <div className="hidden sm:flex items-center gap-2 md:gap-4 lg:gap-6">
+          <button className="inline-flex items-center font-heading text-[14px] md:text-[16px] leading-[28px] md:leading-[32.21px] font-semibold capitalize text-white" disabled aria-disabled="true" type="button">
             <UserIcon /> Login
           </button>
-          <button className="hidden md:inline-flex items-center justify-center w-[150px] md:w-[173px] h-[48px] md:h-[57px] rounded-[54.49px] border-[1.21px] border-[#E2E2E2] font-heading text-[15px] md:text-[16.95px] leading-[28px] md:leading-[32.21px] font-semibold text-center align-middle text-white bg-(--color-primary)" disabled aria-disabled="true" type="button">
+          <button className="hidden md:inline-flex items-center justify-center w-[100px] md:w-[120px] xl:w-[140px] h-[40px] md:h-[48px] rounded-[54.49px] border-[1.21px] border-[#E2E2E2] font-heading text-[12px] md:text-[14px] leading-[28px] md:leading-[32.21px] font-semibold text-center align-middle text-white bg-(--color-primary)" disabled aria-disabled="true" type="button">
             Sign up <ArrowNE />
           </button>
         </div>
@@ -116,7 +116,7 @@ const Navbar: React.FC = () => {
             <button className="inline-flex items-center font-heading text-[12px] leading-[28px] font-semibold capitalize text-white" disabled aria-disabled="true" type="button">
               <UserIcon /> Login
             </button>
-            <button className="inline-flex items-center justify-center w-full h-[52px] rounded-[54.49px] border-[1.21px] border-[#E2E2E2] font-heading text-[12px] leading-[28px] font-semibold text-center align-middle text-white bg-(--color-primary)" disabled aria-disabled="true" type="button">
+            <button className="inline-flex items-center justify-center w-full h-[44px] rounded-[54.49px] border-[1.21px] border-[#E2E2E2] font-heading text-[12px] leading-[28px] font-semibold text-center align-middle text-white bg-(--color-primary)" disabled aria-disabled="true" type="button">
               Sign up <ArrowNE />
             </button>
           </div>
