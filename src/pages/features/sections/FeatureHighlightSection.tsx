@@ -20,8 +20,8 @@ const FeatureHighlightSection: React.FC<FeatureHighlightSectionProps> = ({
         <section className="w-full flex flex-col items-center text-center py-12 md:py-20 bg-gradient-to-b from-[#DFF1E3] to-[#FFFFFF] rounded-3xl overflow-hidden">
       {/* Content Section */}
       <div className="max-w-3xl px-4 mb-8 md:mb-12">
-        <p className="text-sm text-green-700 font-medium mb-2">{subtitle}</p>
-        <h2 className="text-3xl md:text-4xl font-bold text-[#0D1B2A] mb-3">
+        <p className="text-lg text-[#175700] font-semibold mb-5">{subtitle}</p>
+        <h2 className="text-5xl md:text-5xl font-semibold text-[#0D1B2A] mb-5">
           {title}
         </h2>
         <p className="text-gray-600 text-sm md:text-base mb-6">{description}</p>

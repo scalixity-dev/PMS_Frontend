@@ -11,13 +11,13 @@ const FeaturesPage: React.FC = () => {
       <FeaturesHeroSection />
         
       <EveryFeatureSection />
-      <EveryFeatureCenteredSection />
       <FeatureHighlightSection
         subtitle="PMS Screening"
         title="Screen PMS and get them onboarded, in one place"
         description="Background Check, just verification, identity, education, employment history, and past evictions with 99.9% accuracy."
         imageSrc="https://res.cloudinary.com/dxwspucxw/image/upload/v1762162417/Property_Management_Dashboard_budkfv.png"
       />
+      <EveryFeatureCenteredSection />
       <FeatureHighlightSection
         subtitle=""
         title="Take control of the leasing process"
