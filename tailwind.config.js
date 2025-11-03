@@ -16,6 +16,10 @@ export default {
       '4xl': '1820px',
     },
     extend: {
+      maxWidth: {
+        '8xl': '90rem', // 1440px
+        '9xl': '96rem', // 1536px
+      },
       colors: {
         primary: 'var(--color-primary)',
         secondary: 'var(--color-secondary)',

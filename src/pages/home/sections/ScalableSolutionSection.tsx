@@ -4,7 +4,7 @@ import PaginationButtons from "../../../components/common/buttons/PaginationButt
 
 export default function ScalableSolutionSection() {
   return (
-    <section className="max-w-7xl mx-auto px-0 py-16 flex flex-col gap-8">
+    <section className="max-w-7xl mx-auto py-16 flex flex-col gap-8">
       <div className="px-6 flex justify-between items-center">
         <h2 className="text-2xl md:text-3xl font-semibold text-[var(--color-heading)] font-heading">
           A solution that scales with your needs

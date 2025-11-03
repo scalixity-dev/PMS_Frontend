@@ -3,10 +3,13 @@ import EveryFeatureSection from './sections/EveryFeatureSection';
 import EveryFeatureCenteredSection from './sections/EveryFeatureCenteredSection';
 import AIPoweredFeaturesSection from './sections/AIPoweredFeaturesSection';
 import FeatureHighlightSection from "./sections/FeatureHighlightSection";
+import FeaturesHeroSection from './sections/hero';
 
 const FeaturesPage: React.FC = () => {
   return (
     <section className="w-full">
+      <FeaturesHeroSection />
+        
       <EveryFeatureSection />
       <EveryFeatureCenteredSection />
       <FeatureHighlightSection

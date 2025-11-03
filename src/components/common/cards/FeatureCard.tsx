@@ -33,7 +33,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
       style={{ backgroundColor: `var(${color})` }}
     >
       <div>
-        <div className="flex items-center gap-4 mb-3">
+        <div className="flex items-center gap-4 mb-6">
           <div
             className="bg-white rounded-2xl p-3 border border-gray-200 flex items-center justify-center w-16 h-16"
             style={{
@@ -51,14 +51,14 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
         <h4 className="text-[var(--color-heading)] font-medium mb-2">
           {subtitle}
         </h4>
-        <p className="text-[var(--color-subheading)] text-sm mb-4">
+        <p className="text-[var(--color-heading)] font-normal text-sm mb-4">
           {description}{" "}
           <span className="text-[var(--color-primary)] font-medium cursor-pointer">
             Read More
           </span>
         </p>
 
-        <ul className="space-y-2 mb-6">
+        <ul className="space-y-5 mb-6">
           {points.map((point, idx) => (
             <li
               key={idx}
