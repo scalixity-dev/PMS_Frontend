@@ -36,7 +36,6 @@ const LearnMoreButton: React.FC<LearnMoreButtonProps> = ({
       onClick={onClick}
       // prefer Tailwind classes; fall back to bg-[#3A4E33] and text-white
       className={`w-full border-0 py-3 rounded-md  ${bgClass ?? 'bg-[#3A4E33]'} ${textClass ?? 'text-white'} ${className}`}
-      style={{ border: 'none' }}
       aria-label="Learn more"
     >
       {text}

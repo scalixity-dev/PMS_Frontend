@@ -41,7 +41,7 @@ const HeroCard: React.FC<HeroCardProps> = ({
   imageHeight,
   imageFullHeight = false,
   imageNoTranslate = false,
-  imageMaxHeight = 'max-h-90',
+  imageMaxHeight = 'max-h-[22.5rem]',
   titleMarginBottom = 'mb-6',
   descriptionMarginBottom = 'mb-14',
 }) => {

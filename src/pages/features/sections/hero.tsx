@@ -15,7 +15,7 @@ const FeaturesHeroSection: React.FC = () => {
       imageSrc="/hero2.png"
       showImageShadow={false}
       imageNoTranslate={true}
-      imageMaxHeight="max-h-108"
+      imageMaxHeight="max-h-[27rem]"
       titleMarginBottom="mb-4"
       descriptionMarginBottom="mb-6"
     />
