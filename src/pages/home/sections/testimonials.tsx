@@ -47,8 +47,8 @@ const testimonials = [
 
 const TestimonialsSection: React.FC = () => {
   return (
-    <section className="w-full bg-white px-6 py-14 sm:px-10 lg:px-20 lg:py-20">
-      <div className="mx-auto max-w-7xl px-4">
+    <section className="w-full bg-white  py-14 lg:py-20">
+      <div className="mx-auto max-w-7xl px-6 ">
         <div className="mb-10">
           <h2 className="mb-2 font-body text-[32px] font-semibold leading-[38.54px] text-(--color-heading)">
             Trusted by Property Professionals
@@ -59,7 +59,7 @@ const TestimonialsSection: React.FC = () => {
         </div>
 
         <div className="overflow-x-auto scrollbar-hide pb-4">
-          <div className="flex gap-8">
+          <div className="flex gap-8 lg:gap-6 xl:gap-8 2xl:gap-8">
             {testimonials.map((t) => (
               <TestimonialCard key={t.id} {...t} className="shrink-0" />
             ))}

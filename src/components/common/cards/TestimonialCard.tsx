@@ -63,14 +63,14 @@ const TestimonialCard: React.FC<TestimonialCardProps> = ({
   const fullStars = Math.max(0, Math.min(5, Math.round(rating)));
 
   return (
-    <article className={`flex min-h-[370.57px] w-[396.09px] flex-col rounded-[12.85px] border-[1.07px] border-[#DDDDDD] bg-white p-6 shadow-sm ${className ?? ''}`.trim()}>
+    <article className={`flex min-h-[370.57px] lg:min-h-[350px] xl:min-h-[375px] 2xl:min-h-[385px] w-[396.09px] lg:w-[300px] xl:w-[350px] 2xl:w-[360px] flex-col rounded-[12.85px] border-[1.07px] border-[#DDDDDD] bg-white p-6 lg:p-6 xl:p-7 2xl:p-8 shadow-sm ${className ?? ''}`.trim()}>
       <header className="mb-4 flex items-center justify-between">
         <BrandBadge brand={brand} />
       
       </header>
 
-      <h3 className="mb-3 font-body text-[18px] font-semibold whitespace-nowrap leading-[20.55px] text-(--color-heading)">{title}</h3>
-      <p className="mb-4 flex-1 font-body text-[14.99px] font-medium leading-[26px] text-(--color-subheading)">{content}</p>
+      <h3 className="mb-3 font-body text-[18px] lg:text-[17px] xl:text-[18px] 2xl:text-[19px] font-semibold truncate leading-[20.55px] lg:leading-[20px] xl:leading-[20.55px] 2xl:leading-[21px] text-(--color-heading)">{title}</h3>
+      <p className="mb-4 flex-1 font-body text-[14.99px] lg:text-[14px] xl:text-[14.99px] 2xl:text-[15.5px] font-medium leading-[26px] lg:leading-[25px] xl:leading-[26px] 2xl:leading-[27px] text-(--color-subheading)">{content}</p>
 
       <div className="mb-4 flex items-center gap-1">
         {Array.from({ length: 5 }).map((_, i) => (
@@ -80,13 +80,13 @@ const TestimonialCard: React.FC<TestimonialCardProps> = ({
 
       <footer className="mt-auto flex items-center gap-3">
         {avatarUrl ? (
-          <img src={avatarUrl} alt={authorName} className="h-12 w-12 rounded-full object-cover" />
+          <img src={avatarUrl} alt={authorName} className="h-12 w-12 lg:h-11 lg:w-11 xl:h-12 xl:w-12 2xl:h-[52px] 2xl:w-[52px] rounded-full object-cover" />
         ) : (
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-(--color-header-bg) text-(--color-heading)">{authorName.charAt(0)}</div>
+          <div className="flex h-12 w-12 lg:h-11 lg:w-11 xl:h-12 xl:w-12 2xl:h-[52px] 2xl:w-[52px] items-center justify-center rounded-full bg-(--color-header-bg) text-(--color-heading)">{authorName.charAt(0)}</div>
         )}
         <div className="min-w-0">
-          <p className="truncate text-[15px] font-medium text-(--color-heading)">{authorName}</p>
-          <p className="truncate text-[12px] text-(--color-subheading)">{authorRole}</p>
+          <p className="truncate text-[15px] lg:text-[14px] xl:text-[15px] 2xl:text-[16px] font-medium text-(--color-heading)">{authorName}</p>
+          <p className="truncate text-[12px] lg:text-[11.5px] xl:text-[12px] 2xl:text-[12.5px] text-(--color-subheading)">{authorRole}</p>
         </div>
       </footer>
     </article>

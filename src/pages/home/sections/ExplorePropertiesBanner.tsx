@@ -22,9 +22,9 @@ const ExplorePropertiesBanner = () => {
       </div>
 
       {/* Content Section */}
-      <div className="relative z-10 mx-auto max-w-7xl px-6 sm:px-10 lg:px-20">
+      <div className="relative z-10 mx-auto max-w-7xl px-6 ">
         {/* Use a responsive row: stacked on small screens, row on md+ with items centered and space between text and button */}
-        <div className="flex w-full flex-col gap-6 md:flex-row md:items-center md:justify-between">
+        <div className="flex w-full flex-col px-6 gap-6 md:flex-row md:items-center md:justify-between">
           <div className="md:max-w-3xl">
             <h2 className="text-2xl text-gray-900 font-medium leading-normal sm:text-3xl lg:text-4xl">
               List, manage, and maintain your <br />
