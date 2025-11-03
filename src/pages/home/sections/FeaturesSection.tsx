@@ -97,7 +97,7 @@ const FeaturesSection: React.FC = () => {
           className="overflow-x-auto pb-4 scrollbar-hide scroll-smooth"
           style={{ scrollBehavior: 'smooth' }}
         >
-          <div className="flex gap-8">
+          <div className="flex gap-8 pr-8">
             {duplicatedFeatures.map((feature, idx) => (
               <div key={idx} className="w-[389px] flex-shrink-0">
                 <FeatureCard {...feature} />

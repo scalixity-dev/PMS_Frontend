@@ -16,7 +16,11 @@ export default function ChooseButton({ text = "Choose", onClick, to, className =
 
   if (to) {
     return (
-      <Link to={to} className={classes} aria-label="Choose">
+      <Link
+        to={to}
+        className={classes}
+        onClick={onClick}
+      >
         {text}
         <span className={iconClasses}>
           <Send size={16} />
