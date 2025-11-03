@@ -1,5 +1,5 @@
 import React from "react";
-import GetStartedButton from '../../../components/common/buttons/GetStartedButton'
+import GetStartedButton from '../../../../components/common/buttons/GetStartedButton'
 
 interface FeatureHighlightSectionProps {
   title: string;

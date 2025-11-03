@@ -1,6 +1,6 @@
 // src/components/AIPoweredFeaturesSection.tsx
 import React from "react";
-import AIFeatureCard from "../../../components/common/cards/AIFeatureCard";
+import AIFeatureCard from "../../../../components/common/cards/AIFeatureCard";
 
 const AIPoweredFeaturesSection: React.FC = () => {
   const features = [

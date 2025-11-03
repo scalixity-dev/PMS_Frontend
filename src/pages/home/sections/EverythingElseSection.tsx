@@ -17,7 +17,7 @@ export default function EverythingElseSection() {
               Plus, everything else you’d expect on our highly rated platform
             </h2>
             <div className="mt-4">
-              <ViewMoreButton />
+              <ViewMoreButton to="/features" />
             </div>
           </div>
         </div>

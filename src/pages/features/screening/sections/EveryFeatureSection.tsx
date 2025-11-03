@@ -1,6 +1,6 @@
 // src/components/EveryFeatureSection.tsx
 import React from "react";
-import FeatureHighlightsGrid from "../../../components/common/FeatureHighlightsGrid";
+import FeatureHighlightsGrid from "../../../../components/common/FeatureHighlightsGrid";
 import { Search, TrendingUp, Wand, ClipboardCheck } from "lucide-react";
 
 const EveryFeatureSection: React.FC = () => {

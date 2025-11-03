@@ -1,6 +1,6 @@
 // src/components/EveryFeatureCenteredSection.tsx
 import React from "react";
-import FeatureHighlightsGrid from "../../../components/common/FeatureHighlightsGrid";
+import FeatureHighlightsGrid from "../../../../components/common/FeatureHighlightsGrid";
 import { RefreshCw, Search, Lock, Users } from "lucide-react";
 
 const EveryFeatureCenteredSection: React.FC = () => {

@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 
 export type GetStartedButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   /** Button label */
@@ -7,6 +8,8 @@ export type GetStartedButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement
   size?: 'sm' | 'md' | 'lg'
   /** override width class, defaults to w-40 */
   widthClass?: string
+  /** optional route path; when provided renders as Link */
+  to?: string
 }
 
 const sizeClasses: Record<NonNullable<GetStartedButtonProps['size']>, string> = {
@@ -16,10 +19,18 @@ const sizeClasses: Record<NonNullable<GetStartedButtonProps['size']>, string> = 
 }
 
 const GetStartedButton = React.forwardRef<HTMLButtonElement, GetStartedButtonProps>(
-  ({ text = 'Get Started', size = 'md', widthClass = 'w-40', className = '', ...rest }, ref) => {
+  ({ text = 'Get Started', size = 'md', widthClass = 'w-40', className = '', to, ...rest }, ref) => {
     const base = 'inline-flex items-center justify-center gap-2 rounded-lg border border-white bg-[#3D7475] opacity-100 rotate-0 font-heading font-light leading-none whitespace-nowrap tracking-[0] text-white shadow-md'
     const hover = rest.disabled ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'
     const classes = [base, sizeClasses[size], widthClass, hover, className].filter(Boolean).join(' ')
+
+    if (to) {
+      return (
+        <Link to={to} className={classes} aria-label={text}>
+          {text}
+        </Link>
+      )
+    }
 
     return (
       <button ref={ref} className={classes} aria-label={text} {...rest}>

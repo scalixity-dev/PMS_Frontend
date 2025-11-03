@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import TestimonialCard from '../../../components/common/cards/TestimonialCard';
+import PaginationButtons from '../../../components/common/buttons/PaginationButtons';
 
 const testimonials = [
   {
@@ -46,6 +47,16 @@ const testimonials = [
 ];
 
 const TestimonialsSection: React.FC = () => {
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+
+  const handlePrev = () => {
+    scrollerRef.current?.scrollBy({ left: -320, behavior: 'smooth' });
+  };
+
+  const handleNext = () => {
+    scrollerRef.current?.scrollBy({ left: 320, behavior: 'smooth' });
+  };
+
   return (
     <section className="w-full bg-white  py-14 lg:py-20">
       <div className="mx-auto max-w-7xl px-6 ">
@@ -53,12 +64,19 @@ const TestimonialsSection: React.FC = () => {
           <h2 className="mb-2 font-body text-[32px] font-semibold leading-[38.54px] text-(--color-heading)">
             Trusted by Property Professionals
           </h2>
-          <p className="font-body text-[14.99px] font-normal leading-[28.48px] text-(--color-subheading)">
-            Empowering investors and companies to manage properties with confidence
-          </p>
+          <div className="flex items-center justify-between gap-4">
+            <p className="font-body text-[14.99px] font-normal leading-[28.48px] text-(--color-subheading)">
+              Empowering investors and companies to manage properties with confidence
+            </p>
+            <PaginationButtons
+              onPrev={handlePrev}
+              onNext={handleNext}
+              containerClassName="flex items-center gap-2"
+            />
+          </div>
         </div>
 
-        <div className="overflow-x-auto scrollbar-hide pb-4">
+        <div ref={scrollerRef} className="overflow-x-auto scrollbar-hide pb-4">
           <div className="flex gap-8 lg:gap-6 xl:gap-8 2xl:gap-8">
             {testimonials.map((t) => (
               <TestimonialCard key={t.id} {...t} className="shrink-0" />
@@ -66,13 +84,7 @@ const TestimonialsSection: React.FC = () => {
           </div>
         </div>
 
-        <div className="mt-8 flex items-center justify-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-[rgba(2,7,62,0.8)]" />
-          <span className="h-2 w-2 rounded-full bg-[rgba(2,7,62,0.3)]" />
-          <span className="h-2 w-2 rounded-full bg-[rgba(2,7,62,0.3)]" />
-          <span className="h-2 w-2 rounded-full bg-[rgba(2,7,62,0.3)]" />
-          <span className="h-2 w-2 rounded-full bg-[rgba(2,7,62,0.3)]" />
-        </div>
+        
       </div>
     </section>
   );

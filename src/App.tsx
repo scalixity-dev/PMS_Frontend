@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import AppLayout from './components/layout/AppLayout';
 import HomePage from './pages/home';
-import FeaturesPage from './pages/features';
+import FeaturesPage from './pages/features/screening/index';
 
 const App: React.FC = () => {
   return (
