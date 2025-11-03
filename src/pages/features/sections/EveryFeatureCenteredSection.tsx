@@ -37,7 +37,9 @@ const EveryFeatureCenteredSection: React.FC = () => {
       </p>
 
       <div className="max-w-5xl mx-auto px-4">
-        <FeatureHighlightsGrid features={features} layout="vertical" />
+        <div className="border border-8 rounded-xl border-[var(--color-primary)]">
+          <FeatureHighlightsGrid features={features} layout="vertical" />
+        </div>
       </div>
     </section>
   );
