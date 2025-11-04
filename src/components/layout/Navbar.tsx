@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import logo from '../../assets/images/logo.png';
 
 const baseLink = 'px-3 py-2 rounded-md font-heading text-[14px] font-light leading-[130%] tracking-normal text-white transition-colors active:bg-(--color-primary)';
@@ -26,6 +26,30 @@ const ArrowNE: React.FC = () => (
 
 const Navbar: React.FC = () => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isFeaturesDropdownOpen, setIsFeaturesDropdownOpen] = useState(false);
+  const [isMobileFeaturesDropdownOpen, setIsMobileFeaturesDropdownOpen] = useState(false);
+  const featuresDropdownRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
+
+  // Check if we're on any features page
+  const isFeaturesActive = location.pathname.startsWith('/features');
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (featuresDropdownRef.current && !featuresDropdownRef.current.contains(event.target as Node)) {
+        setIsFeaturesDropdownOpen(false);
+      }
+    };
+
+    if (isFeaturesDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isFeaturesDropdownOpen]);
 
   return (
     <header className="bg-(--color-navbar-bg) sticky top-0 z-50 text-white">
@@ -40,9 +64,36 @@ const Navbar: React.FC = () => {
           <NavLink to="/" end className={({ isActive }) => `${baseLink} ${isActive ? pillActive : mutedLink}`}>
             Home
           </NavLink>
-          <NavLink to="/features" className={({ isActive }) => `${baseLink} ${isActive ? pillActive : mutedLink}`}>
-            Features <ChevronDown />
-          </NavLink>
+          
+          {/* Features Dropdown */}
+          <div className="relative" ref={featuresDropdownRef}>
+            <button 
+              onClick={() => setIsFeaturesDropdownOpen(!isFeaturesDropdownOpen)}
+              className={`${baseLink} ${isFeaturesActive ? pillActive : mutedLink}`}
+            >
+              Features <ChevronDown />
+            </button>
+            
+            {isFeaturesDropdownOpen && (
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 bg-white rounded-lg shadow-lg py-2">
+                <Link 
+                  to="/features/screening" 
+                  onClick={() => setIsFeaturesDropdownOpen(false)}
+                  className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors"
+                >
+                  Screening
+                </Link>
+                <Link 
+                  to="/features/lease" 
+                  onClick={() => setIsFeaturesDropdownOpen(false)}
+                  className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors"
+                >
+                  Lease
+                </Link>
+              </div>
+            )}
+          </div>
+
           <button className={`${baseLink} ${mutedLink}`} disabled>
             Use Cases
           </button>
@@ -99,9 +150,42 @@ const Navbar: React.FC = () => {
             <NavLink onClick={() => setIsMobileOpen(false)} to="/" end className={({ isActive }) => `${baseLink} ${isActive ? pillActive : mutedLink}`}>
               Home
             </NavLink>
-            <NavLink onClick={() => setIsMobileOpen(false)} to="/features" className={({ isActive }) => `${baseLink} ${isActive ? pillActive : mutedLink}`}>
-              Features <ChevronDown />
-            </NavLink>
+            
+            {/* Features Dropdown (Mobile) */}
+            <div>
+              <button 
+                onClick={() => setIsMobileFeaturesDropdownOpen(!isMobileFeaturesDropdownOpen)}
+                className={`${baseLink} ${isFeaturesActive ? pillActive : mutedLink} w-full flex items-center justify-between`}
+              >
+                Features <ChevronDown />
+              </button>
+              
+              {isMobileFeaturesDropdownOpen && (
+                <div className="ml-4 mt-1 flex flex-col gap-1">
+                  <Link 
+                    onClick={() => {
+                      setIsMobileOpen(false);
+                      setIsMobileFeaturesDropdownOpen(false);
+                    }}
+                    to="/features/screening" 
+                    className={`${baseLink} ${mutedLink}`}
+                  >
+                    Screening
+                  </Link>
+                  <Link 
+                    onClick={() => {
+                      setIsMobileOpen(false);
+                      setIsMobileFeaturesDropdownOpen(false);
+                    }}
+                    to="/features/lease" 
+                    className={`${baseLink} ${mutedLink}`}
+                  >
+                    Lease
+                  </Link>
+                </div>
+              )}
+            </div>
+
             <button className={`${baseLink} ${mutedLink}`} disabled>
               Use Cases
             </button>

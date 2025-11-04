@@ -1,6 +1,6 @@
 // components/ScalableSolutionSection.tsx
 import ScalableCard from "../../../components/common/cards/ScalableCard";
-import PaginationButtons from "../../../components/common/buttons/PaginationButtons";
+
 
 export default function ScalableSolutionSection() {
   return (
@@ -9,7 +9,7 @@ export default function ScalableSolutionSection() {
         <h2 className="text-2xl md:text-3xl font-semibold text-[var(--color-heading)] font-heading">
           A solution that scales with your needs
         </h2>
-        <PaginationButtons containerClassName="flex items-center gap-2" />
+       
       </div>
 
   {/* Cards Grid */}

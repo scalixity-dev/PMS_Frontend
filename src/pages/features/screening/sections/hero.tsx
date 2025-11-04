@@ -1,5 +1,5 @@
 import React from 'react';
-import HeroCard from '../../../components/common/cards/HeroCard';
+import HeroCard from '../../../../components/common/cards/HeroCard';
 
 const FeaturesHeroSection: React.FC = () => {
   const features = ["Free 14 day trial", "Credit card required", "Cancel anytime"] as const;
