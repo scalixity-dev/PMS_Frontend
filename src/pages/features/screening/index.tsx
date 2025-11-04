@@ -6,6 +6,7 @@ import RentalApplicationSection from './sections/Rentalapplication';
 import RentReportingSection from './sections/Rentreporting';
 import FeatureHighlightSection from './sections/FeatureHighlightSection';
 import AIPoweredFeaturesSection from './sections/AIPoweredFeaturesSection';
+import FeatureSectionFlat from './sections/FeatureSectionFlat';
 
 const FeaturesPage: React.FC = () => {
   return (
@@ -31,6 +32,7 @@ const FeaturesPage: React.FC = () => {
 
       <AIPoweredFeaturesSection />
       <RentReportingSection />
+      <FeatureSectionFlat/>
       <FeatureHighlightSection
         subtitle=""
         title="Faster payments, better future"
