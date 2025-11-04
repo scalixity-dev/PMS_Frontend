@@ -14,18 +14,9 @@ interface GreenFeaturesSliderProps {
 }
 
 const defaultData: FeatureItem[] = [
-  {
-    icon: <BarChart2 className="text-[#2A4C45]" size={26} />,
-    text: "Automatic monthly reporting—always included."
-  },
-  {
-    icon: <CreditCard className="text-[#2A4C45]" size={26} />,
-    text: "Report the last 24 months of payments, all at once"
-  },
-  {
-    icon: <FileCheck className="text-[#2A4C45]" size={26} />,
-    text: "Get real-time verification updates with automated tracking."
-  }
+  { icon: <BarChart2 />, text: "Automatic monthly reporting—always included." },
+  { icon: <CreditCard />, text: "Report the last 24 months of payments, all at once" },
+  { icon: <FileCheck />, text: "Get real-time verification updates with automated tracking." },
 ];
 
 const GreenFeaturesSliderSection: React.FC<GreenFeaturesSliderProps> = ({ data = defaultData }) => {
