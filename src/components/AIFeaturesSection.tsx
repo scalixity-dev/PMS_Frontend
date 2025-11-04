@@ -3,7 +3,7 @@ import React from "react";
 import AIFeatureCard from "./common/cards/AIFeatureCard";
 
 interface Feature {
-  image: string;
+  image?: string;
   title: string;
   description: string;
 }

@@ -21,13 +21,13 @@ const IconFeatureItem: React.FC<IconFeatureItemProps> = ({ icon, text }) => {
         <div className="absolute left-0 top-0 w-14 h-14 rounded-full bg-gray-300/90 transform translate-y-1" />
 
         {/* main icon circle (on top) */}
-        <div className="relative z-10 w-14 h-14 flex items-center justify-center rounded-full bg-[#D8F5C8]">
-          <span className="text-[var(--color-primary)] text-3xl">{processedIcon}</span>
+        <div className="relative z-10 w-14 h-14 flex items-center justify-center rounded-full bg-(#D8F5C8)">
+          <span className="text-(var(--color-primary)) text-3xl">{processedIcon}</span>
         </div>
       </div>
 
       {/* Text */}
-      <p className="text-[#195504] text-lg font-semibold leading-relaxed max-w-xs">
+      <p className="text-(#195504) text-lg font-semibold leading-relaxed max-w-xs">
         {text}
       </p>
     </div>

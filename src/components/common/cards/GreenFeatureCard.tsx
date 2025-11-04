@@ -1,6 +1,13 @@
 // src/components/GreenFeatureCard.tsx
 import React from "react";
 
+// Type for Lucide-react icon props (or similar SVG component props)
+type IconProps = {
+  className?: string;
+  size?: number;
+  strokeWidth?: number;
+};
+
 interface GreenFeatureCardProps {
   icon: React.ReactNode;
   text: string;
@@ -9,7 +16,10 @@ interface GreenFeatureCardProps {
 const GreenFeatureCard: React.FC<GreenFeatureCardProps> = ({ icon, text }) => {
   // Ensure icons always render with consistent color and size
   const processedIcon = React.isValidElement(icon)
-    ? React.cloneElement(icon as React.ReactElement<any>, ({ className: "text-[var(--color-primary)]", size: 26 } as any))
+    ? React.cloneElement(icon as React.ReactElement<IconProps>, {
+        className: "text-[var(--color-primary)]",
+        size: 26
+      })
     : icon;
 
   return (
