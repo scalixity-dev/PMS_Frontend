@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import logo from '../../assets/images/logo.png';
-import { ClipboardCheck, FileText } from 'lucide-react';
+import { ClipboardCheck, FileText, DollarSign } from 'lucide-react';
 
 const baseLink = 'px-3 py-2 rounded-md font-heading text-[14px] font-light leading-[130%] tracking-normal text-white transition-colors active:bg-(--color-primary)';
 const pillActive = 'rounded-2xl  bg-[var(--color-primary)] text-white px-5 py-3';
@@ -105,6 +105,17 @@ const Navbar: React.FC = () => {
                   </div>
                   <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
                 </Link>
+                <Link 
+                  to="/features/finance" 
+                  onClick={() => setIsFeaturesDropdownOpen(false)}
+                  className="group flex items-center justify-between px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors rounded-md mx-2"
+                >
+                  <div className="flex items-center gap-2">
+                    <DollarSign size={18} className="text-gray-700" />
+                    Finance
+                  </div>
+                  <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
+                </Link>
               </div>
             )}
           </div>
@@ -202,6 +213,20 @@ const Navbar: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <FileText size={18} />
                       Lease
+                    </div>
+                    <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
+                  </Link>
+                  <Link 
+                    onClick={() => {
+                      setIsMobileOpen(false);
+                      setIsMobileFeaturesDropdownOpen(false);
+                    }}
+                    to="/features/finance" 
+                    className={`${baseLink} ${mutedLink} group flex items-center justify-between`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <DollarSign size={18} />
+                      Finance
                     </div>
                     <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
                   </Link>
