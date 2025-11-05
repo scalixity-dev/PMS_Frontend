@@ -3,6 +3,7 @@ import AIFeaturesSection from '../../../components/AIFeaturesSection';
 import IconFeaturesRow from '../../../components/IconFeaturesRow';
 import GreenFeaturesSliderSection from '../../../components/GreenFeaturesSliderSection';
 import SplitHeroFeature from '../../../components/SplitHeroFeature';
+import SplitHeroFeatureReverse from '../../../components/SplitHeroFeatureReverse';
 import LeaseHeroSection from './sections/hero';
 import RentalLeaseSection from './sections/rentallease';
 import LeaseCardsSection from './sections/cards';
@@ -10,7 +11,7 @@ import ListingWebsiteSection from './sections/listingwebsite';
 import RentalPropertySection from './sections/rentalproperty';
 import MaintenanceSection from './sections/Maintenance';
 import InspectionsSection from './sections/inspections';
-import { Grid, Home, Users, Monitor, FileText, Repeat, FileCheck } from 'lucide-react';
+import { Grid, Home, Users, Monitor, FileText, Repeat, FileCheck, MessageSquare } from 'lucide-react';
 
 const LeasePage: React.FC = () => {
   const features = [
@@ -91,7 +92,7 @@ const LeasePage: React.FC = () => {
       <LeaseCardsSection />
       <ListingWebsiteSection />
       <RentalPropertySection />
-      <AIFeaturesSection features={features} />
+      <AIFeaturesSection features={features} color={"var(--color-card-1)"} />
       <MaintenanceSection />
       <SplitHeroFeature
         title="Coordinate Repairs from Anywhere"
@@ -105,7 +106,7 @@ const LeasePage: React.FC = () => {
       
      
 
-      <AIFeaturesSection features={maintenanceFeatures} />
+      <AIFeaturesSection features={maintenanceFeatures} color='#B3F5C9' />
       <InspectionsSection />
         
       {/* Move-In Move-Out Tool ensures you never miss a detail */}
@@ -119,6 +120,16 @@ const LeasePage: React.FC = () => {
         ]} 
       />
       
+
+      <SplitHeroFeatureReverse
+        title="Let inspections be the easy part"
+        description={
+          "A moving Pms has enough on their mind. With PMSCloud, you can document everything in minutes, store photos and notes, and keep things stress-free for everyone."
+        }
+        imageSrc={"https://res.cloudinary.com/dxwspucxw/image/upload/v1762321793/f394c061668ec3c89218b382b798b38545a06f7c_mix1wo.png"}
+        icon={<MessageSquare />}
+      />
+
       <AIFeaturesSection features={inspectionFeatures} />
       
 

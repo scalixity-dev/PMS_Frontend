@@ -6,11 +6,15 @@ interface AIFeatureCardProps {
   image?: string; // optional — some cards may not have an image
   title: string;
   description: string;
+  color?: string; // optional solid background color (CSS color string)
 }
 
-const AIFeatureCard: React.FC<AIFeatureCardProps> = ({ image, title, description }) => {
+const AIFeatureCard: React.FC<AIFeatureCardProps> = ({ image, title, description, color }) => {
+  const containerClass = `flex flex-col items-center rounded-3xl p-6 text-center hover:shadow-xl transition-shadow duration-300 min-h-[320px]`;
+  const gradientClasses = "bg-gradient-to-b from-[#ACE2BF] to-[#FFFFFF]";
+
   return (
-    <div className="flex flex-col items-center bg-gradient-to-b from-[#ACE2BF] to-[#FFFFFF] rounded-3xl p-6 text-center hover:shadow-xl transition-shadow duration-300 min-h-[320px]">
+    <div className={containerClass + (color ? "" : ` ${gradientClasses}`)} style={color ? { backgroundColor: color } : undefined}>
       {/* Image (optional) */}
       {image ? (
         <div className="w-full flex justify-center">

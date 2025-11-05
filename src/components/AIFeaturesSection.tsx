@@ -10,14 +10,15 @@ interface Feature {
 
 interface AIFeaturesSectionProps {
   features: Feature[];
+  color?: string; // optional section-level color to apply to all cards
 }
 
-const AIFeaturesSection: React.FC<AIFeaturesSectionProps> = ({ features }) => {
+const AIFeaturesSection: React.FC<AIFeaturesSectionProps> = ({ features, color }) => {
   return (
     <section className="w-full py-16">
       <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-16 px-6">
         {features.map((feature, index) => (
-          <AIFeatureCard key={index} {...feature} />
+          <AIFeatureCard key={index} {...feature} color={color} />
         ))}
       </div>
     </section>
