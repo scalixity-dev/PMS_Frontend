@@ -10,7 +10,7 @@ import FeatureSectionFlat from './sections/FeatureSectionFlat';
 
 const FeaturesPage: React.FC = () => {
   return (
-    <section className="w-full p-2">
+    <section className="w-full">
       <FeaturesHeroSection />
       <EveryFeatureSection />
 

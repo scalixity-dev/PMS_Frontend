@@ -10,7 +10,7 @@ import ExplorePropertiesBanner from './sections/ExplorePropertiesBanner';
 
 const HomePage: React.FC = () => {
   return (
-    <div className="w-full p-2">
+    <div className="w-full ">
       {/* Hero Section */}
       <HeroSection />
 
