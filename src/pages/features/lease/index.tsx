@@ -3,6 +3,13 @@ import AIFeaturesSection from '../../../components/AIFeaturesSection';
 import IconFeaturesRow from '../../../components/IconFeaturesRow';
 import GreenFeaturesSliderSection from '../../../components/GreenFeaturesSliderSection';
 import SplitHeroFeature from '../../../components/SplitHeroFeature';
+import LeaseHeroSection from './sections/hero';
+import RentalLeaseSection from './sections/rentallease';
+import LeaseCardsSection from './sections/cards';
+import ListingWebsiteSection from './sections/listingwebsite';
+import RentalPropertySection from './sections/rentalproperty';
+import MaintenanceSection from './sections/Maintenance';
+import InspectionsSection from './sections/inspections';
 import { Grid, Home, Users, Monitor, FileText, Repeat, FileCheck } from 'lucide-react';
 
 const LeasePage: React.FC = () => {
@@ -71,17 +78,21 @@ const LeasePage: React.FC = () => {
 
   return (
     <section className="w-full">
-      <div className="container mx-auto px-4 py-16">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Lease Management
-          </h1>
-          <p className="text-lg text-gray-600 mb-8">
-            Streamline your leasing process with our comprehensive lease management features.
-          </p>
-        </div>
-      </div>
+      <LeaseHeroSection />
       {/* Split hero feature from screenshot */}
+      <GreenFeaturesSliderSection
+        data={[
+          { icon: <FileText />, text: 'Build, send, and sign rental leases, all in one place' },
+          { icon: <Repeat />, text: 'Customize templates once, reuse forever' },
+          { icon: <FileCheck />, text: 'Access lawyer-approved state forms' },
+        ]}
+      />
+      <RentalLeaseSection />
+      <LeaseCardsSection />
+      <ListingWebsiteSection />
+      <RentalPropertySection />
+      <AIFeaturesSection features={features} />
+      <MaintenanceSection />
       <SplitHeroFeature
         title="Coordinate Repairs from Anywhere"
         description={
@@ -91,17 +102,12 @@ const LeasePage: React.FC = () => {
       />
 
       {/* Green features slider */}
-      <GreenFeaturesSliderSection
-        data={[
-          { icon: <FileText />, text: 'Build, send, and sign rental leases, all in one place' },
-          { icon: <Repeat />, text: 'Customize templates once, reuse forever' },
-          { icon: <FileCheck />, text: 'Access lawyer-approved state forms' },
-        ]}
-      />
-      <AIFeaturesSection features={features} />
+      
+     
 
       <AIFeaturesSection features={maintenanceFeatures} />
-      
+      <InspectionsSection />
+        
       {/* Move-In Move-Out Tool ensures you never miss a detail */}
       <IconFeaturesRow 
         title="Move-In Move-Out Tool ensures you never miss a detail" 
@@ -114,7 +120,7 @@ const LeasePage: React.FC = () => {
       />
       
       <AIFeaturesSection features={inspectionFeatures} />
-
+      
 
 
     </section>

@@ -7,6 +7,8 @@ interface HeroCardProps {
   title: string;
   description: string;
   features: readonly string[];
+  // Optional content to render between the title and description
+  betweenTitleAndDescription?: React.ReactNode;
   learnMoreLabel?: string;
   getStartedLabel?: string;
   learnMoreHandler?: () => void;
@@ -15,6 +17,7 @@ interface HeroCardProps {
   getStartedTo?: string;
   imageSrc?: string;
   imageAlt?: string;
+  backgroundImageSrc?: string;
   showStamp?: boolean;
   showImageShadow?: boolean;
   imageWidth?: number;
@@ -27,6 +30,7 @@ interface HeroCardProps {
   descriptionMarginBottom?: string;
   showBackgroundCard?: boolean;
   reverseLayout?: boolean;
+  imageContain?: boolean;
 }
 
 const HeroCard: React.FC<HeroCardProps> = ({
@@ -34,6 +38,7 @@ const HeroCard: React.FC<HeroCardProps> = ({
   title,
   description,
   features,
+  betweenTitleAndDescription,
   learnMoreLabel = 'Learn More',
   getStartedLabel = 'Get Started',
   learnMoreHandler,
@@ -42,6 +47,7 @@ const HeroCard: React.FC<HeroCardProps> = ({
   getStartedTo,
   imageSrc = '/hero.png',
   imageAlt = 'Hero image',
+  backgroundImageSrc,
   showStamp = true,
   showImageShadow = true,
   imageWidth,
@@ -54,6 +60,7 @@ const HeroCard: React.FC<HeroCardProps> = ({
   descriptionMarginBottom = 'mb-14',
   showBackgroundCard = true,
   reverseLayout = false,
+  imageContain = false,
 }) => {
   const badgeClassName = "inline-flex items-center justify-center min-w-32 h-10 gap-1 rounded-lg px-4 py-3 border border-white bg-[#819A78] text-white shadow-md font-heading font-medium text-sm leading-[150%] tracking-normal";
   const gridCols = reverseLayout 
@@ -69,6 +76,8 @@ const HeroCard: React.FC<HeroCardProps> = ({
       <h1 className={`${titleMarginBottom} font-heading lg:text-4xl xl:text-5xl font-medium leading-[120%] tracking-normal text-heading`}>
         {title}
       </h1>
+
+      {betweenTitleAndDescription}
 
       <p className={`${descriptionMarginBottom} font-heading font-light lg:text-sm xl:text-base leading-[150%] tracking-normal text-subheading`}>
         {description}
@@ -99,14 +108,28 @@ const HeroCard: React.FC<HeroCardProps> = ({
   );
 
   const imageDiv = (
-    <div className="flex h-full">
+    <div className={`flex h-full ${backgroundImageSrc ? 'relative' : ''}`}>
+      {backgroundImageSrc && (
+        <img
+          src={backgroundImageSrc}
+          alt="Background"
+          className={`absolute w-full max-w-2xl ${imageFullHeight ? '' : imageMaxHeight} rotate-0 rounded-2xl ${imageContain ? 'object-contain' : 'object-cover'}`}
+          style={{
+            ...(imageWidth && { width: `${imageWidth}px` }),
+            ...(imageHeight && { height: `${imageHeight}px` }),
+            zIndex: 1,
+            transform: 'translate(80px, 80px)',
+          }}
+        />
+      )}
       <img
         src={imageSrc}
         alt={imageAlt}
-        className={`w-full max-w-2xl ${imageFullHeight ? '' : imageMaxHeight} rotate-0 rounded-2xl object-cover ${showImageShadow ? 'shadow-lg' : ''} ${imageTranslate ? imageTranslate : imageNoTranslate ? '' : 'translate-y-4 sm:translate-y-6 lg:translate-y-10 xl:translate-y-20 2xl:translate-y-28'}`}
+        className={`w-full max-w-2xl ${imageFullHeight ? '' : imageMaxHeight} rotate-0 rounded-2xl ${imageContain ? 'object-contain' : 'object-cover'} ${showImageShadow ? 'shadow-lg' : ''} ${imageTranslate ? imageTranslate : imageNoTranslate ? '' : 'translate-y-4 sm:translate-y-6 lg:translate-y-10 xl:translate-y-20 2xl:translate-y-28'}`}
         style={{
           ...(imageWidth && { width: `${imageWidth}px` }),
           ...(imageHeight && { height: `${imageHeight}px` }),
+          ...(backgroundImageSrc && { position: 'relative', zIndex: 2 }),
         }}
       />
     </div>

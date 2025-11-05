@@ -71,7 +71,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
         </ul>
       </div>
 
-  <LearnMoreButton bgClass={buttonClass} textClass="text-white" to="/features" />
+  <LearnMoreButton bgClass={buttonClass} textClass="text-white" to="/features/screening" />
     </div>
   );
 };

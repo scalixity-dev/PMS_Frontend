@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import logo from '../../assets/images/logo.png';
+import { ClipboardCheck, FileText } from 'lucide-react';
 
 const baseLink = 'px-3 py-2 rounded-md font-heading text-[14px] font-light leading-[130%] tracking-normal text-white transition-colors active:bg-(--color-primary)';
 const pillActive = 'rounded-2xl  bg-[var(--color-primary)] text-white px-5 py-3';
@@ -9,6 +10,12 @@ const mutedLink = 'text-white';
 const ChevronDown: React.FC = () => (
   <svg width="12" height="12" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="ml-1 inline-block">
     <path d="M5 7l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+const ChevronRight: React.FC<{ className?: string }> = ({ className }) => (
+  <svg width="12" height="12" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className={`inline-block ${className || ''}`}>
+    <path d="M7 5l5 5-5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
 
@@ -75,20 +82,28 @@ const Navbar: React.FC = () => {
             </button>
             
             {isFeaturesDropdownOpen && (
-              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 bg-white rounded-lg shadow-lg py-2">
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 overflow-hidden">
                 <Link 
                   to="/features/screening" 
                   onClick={() => setIsFeaturesDropdownOpen(false)}
-                  className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors"
+                  className="group flex items-center justify-between px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors rounded-md mx-2"
                 >
-                  Screening
+                  <div className="flex items-center gap-2">
+                    <ClipboardCheck size={18} className="text-gray-700" />
+                    Screening
+                  </div>
+                  <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
                 </Link>
                 <Link 
                   to="/features/lease" 
                   onClick={() => setIsFeaturesDropdownOpen(false)}
-                  className="block px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors"
+                  className="group flex items-center justify-between px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors rounded-md mx-2"
                 >
-                  Lease
+                  <div className="flex items-center gap-2">
+                    <FileText size={18} className="text-gray-700" />
+                    Lease
+                  </div>
+                  <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
                 </Link>
               </div>
             )}
@@ -168,9 +183,13 @@ const Navbar: React.FC = () => {
                       setIsMobileFeaturesDropdownOpen(false);
                     }}
                     to="/features/screening" 
-                    className={`${baseLink} ${mutedLink}`}
+                    className={`${baseLink} ${mutedLink} group flex items-center justify-between`}
                   >
-                    Screening
+                    <div className="flex items-center gap-2">
+                      <ClipboardCheck size={18} />
+                      Screening
+                    </div>
+                    <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
                   </Link>
                   <Link 
                     onClick={() => {
@@ -178,9 +197,13 @@ const Navbar: React.FC = () => {
                       setIsMobileFeaturesDropdownOpen(false);
                     }}
                     to="/features/lease" 
-                    className={`${baseLink} ${mutedLink}`}
+                    className={`${baseLink} ${mutedLink} group flex items-center justify-between`}
                   >
-                    Lease
+                    <div className="flex items-center gap-2">
+                      <FileText size={18} />
+                      Lease
+                    </div>
+                    <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
                   </Link>
                 </div>
               )}

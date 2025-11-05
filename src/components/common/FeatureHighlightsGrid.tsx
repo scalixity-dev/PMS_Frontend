@@ -33,14 +33,14 @@ const FeatureHighlightsGrid: React.FC<FeatureHighlightsGridProps> = ({ features,
         {features.map((feature, index) => (
           <div
             key={index}
-            className={`flex flex-col p-8 space-y-4 ${
+            className={`flex flex-col p-8 space-y-4 relative ${
               layout === 'vertical' ? 'items-center text-center' : 'items-start'
             } ${
-              // Add right border for left column items (index 0, 2, 4...)
-              index % 2 === 0 ? 'md:border-r border-gray-300' : ''
+              // Add shorter right border for left column items (index 0, 2, 4...)
+              index % 2 === 0 ? 'md:after:content-[""] md:after:absolute md:after:right-0 md:after:top-1/2 md:after:-translate-y-1/2 md:after:w-px md:after:h-24 md:after:bg-gray-300' : ''
             } ${
-              // Add bottom border for top row items (index 0, 1)
-              index < 2 ? 'border-b border-gray-300' : ''
+              // Add horizontal line connecting top row items with spacing from container edges
+              index === 0 ? 'md:before:content-[""] md:before:absolute md:before:bottom-0 md:before:left-8 md:before:h-px md:before:bg-gray-300 md:before:w-[calc(200%-4rem)]' : ''
             }`}
           >
             {layout === 'vertical' ? (

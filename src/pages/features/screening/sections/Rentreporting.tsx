@@ -7,8 +7,8 @@ const RentReportingSection: React.FC = () => {
   return (
     <HeroCard
       badge="Rent Reporting"
-      title="Build credit with every rent payment"
-      description="Help your tenants build credit while ensuring timely payments. Rent reporting increases on-time payment rates by 23%."
+      title="Automated Rent Notifications"
+      description="Never miss a payment again. PMS sends smart reminders to tenants before due dates, making rent collection smoother and more reliable."
       features={features}
       showStamp={false}
       learnMoreLabel=""

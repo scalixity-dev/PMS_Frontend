@@ -24,7 +24,7 @@ export default function ScalableCard({ image, title, description }: ScalableCard
       </div>
       <h3 className="text-[var(--color-heading)] font-semibold mb-1 text-center font-heading">{title}</h3>
       <p className="text-[var(--color-subheading)] text-sm text-center mb-4 font-body">{description}</p>
-      <ChooseButton to="/features" />
+      <ChooseButton to="/features/screening" />
     </div>
   );
 }
