@@ -4,6 +4,7 @@ import AppLayout from './components/layout/AppLayout';
 import HomePage from './pages/home';
 import ScreeningPage from './pages/features/screening/index';
 import LeasePage from './pages/features/lease/index';
+import FinancePage from './pages/features/finance/index';
 
 const App: React.FC = () => {
   return (
@@ -13,6 +14,7 @@ const App: React.FC = () => {
           <Route path="/" element={<HomePage />} />
           <Route path="/features/screening" element={<ScreeningPage />} />
           <Route path="/features/lease" element={<LeasePage />} />
+          <Route path="/features/finance" element={<FinancePage />} />
           <Route path="*" element={<HomePage />} />
         </Route>
       </Routes>
