@@ -3,9 +3,10 @@ import React from "react";
 
 interface LearnMoreGradientProps {
   onClick?: () => void;
+  text?: string;
 }
 
-const LearnMoreGradient: React.FC<LearnMoreGradientProps> = ({ onClick }) => {
+const LearnMoreGradient: React.FC<LearnMoreGradientProps> = ({ onClick, text }) => {
   return (
     <button
       onClick={onClick}
@@ -13,7 +14,7 @@ const LearnMoreGradient: React.FC<LearnMoreGradientProps> = ({ onClick }) => {
                  bg-gradient-to-r from-[#3B5534] to-[#85AF77] 
                  hover:opacity-90 transition-opacity shadow-sm"
     >
-      Learn More
+      {text ?? 'Learn More'}
     </button>
   );
 };
