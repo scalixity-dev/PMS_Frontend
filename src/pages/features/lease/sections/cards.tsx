@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from 'react-router-dom';
 
 interface NumberCardProps {
   number: string;
@@ -38,12 +39,12 @@ const LeaseCard: React.FC<LeaseCardProps> = ({ title, description, learnMoreTo }
         <h3 className="text-white font-bold text-[22px] mb-4 leading-tight">{title}</h3>
         <p className="text-[#C0C0C0] text-[18px] mb-6 leading-relaxed">{description}</p>
         {learnMoreTo ? (
-          <a 
-            href={learnMoreTo}
+          <Link 
+            to={learnMoreTo}
             className="text-white text-base hover:opacity-80 transition-opacity"
           >
             Learn More
-          </a>
+          </Link>
         ) : (
           <span className="text-white underline text-base cursor-pointer hover:opacity-80 transition-opacity">
             Learn More
@@ -77,7 +78,7 @@ const LeaseCardsSection: React.FC = () => {
   ];
 
   return (
-    <section className="relative w-full bg-[#0F5132] py-20 px-6 overflow-hidden">
+    <section className="relative w-screen bg-[#0F5132] py-20 overflow-hidden left-1/2 -translate-x-1/2">
       <div className="max-w-8xl mx-auto px-12 relative z-10">
         {/* Cards Grid */}
         <div className="grid grid-cols-1 font-body md:grid-cols-3 gap-8 pb-12 items-start">
