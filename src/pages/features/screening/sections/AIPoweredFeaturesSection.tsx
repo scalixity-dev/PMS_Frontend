@@ -1,6 +1,6 @@
 // src/components/AIPoweredFeaturesSection.tsx
 import React from "react";
-import AIFeatureCard from "../../../../components/common/cards/AIFeatureCard";
+import AIFeaturesSection from "../../../../components/AIFeaturesSection";
 
 const AIPoweredFeaturesSection: React.FC = () => {
   const features = [
@@ -14,7 +14,7 @@ const AIPoweredFeaturesSection: React.FC = () => {
       image: "https://res.cloudinary.com/dxwspucxw/image/upload/v1762162431/one_wmo5aa.png",
       title: "Never miss a qualified lead",
       description:
-        "With our built-in Leads Tracking Tool, you can view everyone who’s contacted you, respond faster, and invite interested prospects to apply before they lose interest.",
+        "With our built-in Leads Tracking Tool, you can view everyone who's contacted you, respond faster, and invite interested prospects to apply before they lose interest.",
     },
     {
       image: "https://res.cloudinary.com/dxwspucxw/image/upload/v1762162431/one_wmo5aa.png",
@@ -24,15 +24,7 @@ const AIPoweredFeaturesSection: React.FC = () => {
     },
   ];
 
-  return (
-    <section className="w-full py-16">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-16 px-6">
-        {features.map((feature, index) => (
-          <AIFeatureCard key={index} {...feature} />
-        ))}
-      </div>
-    </section>
-  );
+  return <AIFeaturesSection features={features} />;
 };
 
 export default AIPoweredFeaturesSection;
