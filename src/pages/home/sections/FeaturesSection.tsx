@@ -84,7 +84,7 @@ const FeaturesSection: React.FC = () => {
               and manage your entire portfolio from one intuitive dashboard.
             </p>
             <div className="flex-shrink-0 md:ml-auto">
-              <ViewAllButton to="/features" />
+              <ViewAllButton to="/features/screening" />
             </div>
           </div>
         </div>

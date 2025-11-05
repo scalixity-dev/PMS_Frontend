@@ -8,7 +8,7 @@ const FeaturesHeroSection: React.FC = () => {
     <HeroCard
       badge="PMS Screening"
       title="PMS screening designed for landlords"
-      description="Quickly find trustworthy renters with PMS's 99.9% accurate background, credit, and identity verification checks."
+      description="Streamline your tenant selection with PMS’s intelligent screening system — automating identity verification and helping you discover trustworthy renters faster."
       features={features}
       showStamp={false}
       learnMoreLabel=""
@@ -16,6 +16,7 @@ const FeaturesHeroSection: React.FC = () => {
       showImageShadow={false}
       imageNoTranslate={true}
       imageMaxHeight="max-h-[27rem]"
+      imageContain={true}
       titleMarginBottom="mb-4"
       descriptionMarginBottom="mb-6"
     />
