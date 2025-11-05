@@ -92,7 +92,7 @@ const LeasePage: React.FC = () => {
       <LeaseCardsSection />
       <ListingWebsiteSection />
       <RentalPropertySection />
-      <AIFeaturesSection features={features} />
+      <AIFeaturesSection features={features} color={"var(--color-card-1)"} />
       <MaintenanceSection />
       <SplitHeroFeature
         title="Coordinate Repairs from Anywhere"
@@ -106,7 +106,7 @@ const LeasePage: React.FC = () => {
       
      
 
-      <AIFeaturesSection features={maintenanceFeatures} />
+      <AIFeaturesSection features={maintenanceFeatures} color='#B3F5C9' />
       <InspectionsSection />
         
       {/* Move-In Move-Out Tool ensures you never miss a detail */}
