@@ -4,7 +4,7 @@ import FeatureHighlightSection from "../../../components/FeatureHighlightSection
 import KeyPointsSection from "../../../components/KeyPointsSection";
 import SplitHeroFeature from "../../../components/SplitHeroFeature";
 import SplitHeroFeatureReverseInverse from "../../../components/SplitHeroFeatureReverseInverse";
-import GradientFeatureList from "./sections/GradientFeatureList"
+import GradientFeatureList from "./sections/GradientFeatureList";
 import { MailCheck } from "lucide-react";
 
 const featuresData = {

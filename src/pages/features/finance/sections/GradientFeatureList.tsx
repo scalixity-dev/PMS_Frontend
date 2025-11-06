@@ -1,26 +1,26 @@
 import React from "react";
 import { BarChart3, Clock, Landmark, Link } from "lucide-react";
 
-const GradientFeatureList: React.FC = () => {
-  const items = [
-    {
-      icon: <BarChart3 size={20} />,
-      text: "Get real-time visibility into your cash flow and expenses",
-    },
-    {
-      icon: <Clock size={20} />,
-      text: "Savings of $400-$1000 a year reported by our users",
-    },
-    {
-      icon: <Landmark size={20} />,
-      text: "Stay organized 24/7 with multiple bank accounts",
-    },
-    {
-      icon: <Link size={20} />,
-      text: "Integrate with QuickBooks Online in a few clicks",
-    },
-  ];
+const ITEMS = [
+  {
+    icon: <BarChart3 size={20} />,
+    text: "Get real-time visibility into your cash flow and expenses",
+  },
+  {
+    icon: <Clock size={20} />,
+    text: "Savings of $400-$1000 a year reported by our users",
+  },
+  {
+    icon: <Landmark size={20} />,
+    text: "Stay organized 24/7 with multiple bank accounts",
+  },
+  {
+    icon: <Link size={20} />,
+    text: "Integrate with QuickBooks Online in a few clicks",
+  },
+];
 
+const GradientFeatureList: React.FC = () => {
   return (
     <section className="max-w-5xl mx-auto my-25 bg-white rounded-md border border-gray-300 py-10 px-6 md:px-12 shadow-sm">
       {/* Title */}
@@ -30,7 +30,7 @@ const GradientFeatureList: React.FC = () => {
 
       {/* Gradient Rows */}
       <div className="flex flex-col gap-4">
-        {items.map((item, idx) => (
+        {ITEMS.map((item, idx) => (
           <div
             key={idx}
             className="relative flex items-center gap-3 text-white pr-6 pl-4 py-3
