@@ -2,6 +2,10 @@ import React from "react";
 import AIFeaturesSection from "../../../components/AIFeaturesSection";
 import FeatureHighlightSection from "../../../components/FeatureHighlightSection";
 import KeyPointsSection from "../../../components/KeyPointsSection";
+import SplitHeroFeature from "../../../components/SplitHeroFeature";
+import SplitHeroFeatureReverseInverse from "../../../components/SplitHeroFeatureReverseInverse";
+import GradientFeatureList from "./sections/GradientFeatureList"
+import { MailCheck } from "lucide-react";
 
 const featuresData = {
   core: [
@@ -82,6 +86,16 @@ const FinancePage: React.FC = () => {
       {/* Every Feature You'll Need */}
       <KeyPointsSection/>
 
+      {/* Fast Track your Money */}
+      <SplitHeroFeature
+        title="Fast-track your money"
+        description={
+          "Get quicker access to your funds with Faster Payments. Eligible PMSCloud users can enroll and receive ACH transactions in just 2-3 business days."
+        }
+        imageSrc={"https://res.cloudinary.com/dxwspucxw/image/upload/v1762414897/Screenshot_2025-11-06_131037_eadsof.png"}
+        icon={<MailCheck className="w-10 h-10 text-white" />}
+      />
+
       {/*AI features section (original) */}
       <AIFeaturesSection
         features={featuresData.core}
@@ -90,8 +104,25 @@ const FinancePage: React.FC = () => {
         buttonText="Set up online payments"
       />
 
+      {/* Hero Line */}
+      <div className="max-w-5xl mx-auto mt-20 text-center px-4 text-[var(--color-primary)] text-lg font-medium italic">
+        “ Being able to do all of my accounting in one place allowed me to go from chasing down expenses I didn’t know existed, to being fully in control of the money coming in and out of my rental business. “
+      </div>
+
+      <GradientFeatureList/>
+
       {/*AI features section (from screenshot) */}
       <AIFeaturesSection features={featuresData.screenshotSetA} />
+
+      <SplitHeroFeatureReverseInverse
+        title="All your rental reports, one easy dashboard"
+        description={
+          "The most comprehensive reporting tools for rental owners — track monthly stats, transactions, rent rolls, manage maintenance, and generate tax-ready reports in seconds."
+        }
+        imageSrc="https://res.cloudinary.com/dxwspucxw/image/upload/v1762414897/Screenshot_2025-11-06_131037_eadsof.png"
+        icon={<MailCheck className="w-10 h-10" />}
+        kicker="Reports"
+      />
 
       <FeatureHighlightSection
         subtitle=""
