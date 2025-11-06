@@ -1,4 +1,11 @@
 import React from "react";
+import FinanceHeroSection from "./sections/hero";
+import AccountingSection from "./sections/accounting";
+import InvoicesSection from "./sections/invoices";
+import EveryFeatureSection from "./sections/everyfeaturesection";
+import ReconciliationSection from "./sections/reconciliation";
+import EveryFeatureCenteredSection from "./sections/everyfeaturecentersection";
+import FAQSection from "../../../pages/home/sections/faq";
 import AIFeaturesSection from "../../../components/AIFeaturesSection";
 import FeatureHighlightSection from "../../../components/FeatureHighlightSection";
 import KeyPointsSection from "../../../components/KeyPointsSection";
@@ -82,7 +89,7 @@ const featuresData = {
 const FinancePage: React.FC = () => {
   return (
     <section className="w-full">
-
+      <FinanceHeroSection />
       {/* Every Feature You'll Need */}
       <KeyPointsSection/>
 
@@ -103,6 +110,7 @@ const FinancePage: React.FC = () => {
         textColor="white"
         buttonText="Set up online payments"
       />
+      <AccountingSection />
 
       {/* Hero Line */}
       <div className="max-w-5xl mx-auto mt-20 text-center px-4 text-[var(--color-primary)] text-lg font-medium italic">
@@ -110,6 +118,8 @@ const FinancePage: React.FC = () => {
       </div>
 
       <GradientFeatureList/>
+
+      <InvoicesSection />
 
       {/*AI features section (from screenshot) */}
       <AIFeaturesSection features={featuresData.screenshotSetA} />
@@ -124,6 +134,8 @@ const FinancePage: React.FC = () => {
         kicker="Reports"
       />
 
+      <EveryFeatureSection />
+
       <FeatureHighlightSection
         subtitle=""
         title="Access dozens of rental reports in seconds"
@@ -133,6 +145,9 @@ const FinancePage: React.FC = () => {
 
       {/*AI features section (screenshot set 3) */}
       <AIFeaturesSection features={featuresData.taxCards} />
+
+      <ReconciliationSection />
+      <EveryFeatureCenteredSection />
 
       {/* Connect any Account */}
       <FeatureHighlightSection
@@ -148,7 +163,7 @@ const FinancePage: React.FC = () => {
         color="#9AD4AD"
       />
 
-
+      <FAQSection />
 
     </section>
   );

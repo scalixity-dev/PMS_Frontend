@@ -1,7 +1,8 @@
 import React from 'react';
 import HeroCard from '../../../../components/common/cards/HeroCard';
+import { ClipboardCheck } from 'lucide-react';
 
-const MaintenanceSection: React.FC = () => {
+const ReconciliationSection: React.FC = () => {
   const features = [
     'Free 14 day trial',
     'Credit card required',
@@ -10,14 +11,15 @@ const MaintenanceSection: React.FC = () => {
 
   return (
     <HeroCard
-      badge="Maintenance"
-      title="AI handles maintenance requests instantly—from report to resolution."
-      description="Save hours every week with AI-powered maintenance automation—track issues, assign tasks, and ensure quick resolutions effortlessly."
+      badge="Reconciliation"
+      rightSideLogo={<ClipboardCheck className="w-4 h-4 stroke-current" />}
+      title="Make payments easier with bank reconciliation"
+      description="Organize every transaction, get more time back. Landlords report saving 10+ hours a month with Bank Reconciliation compared to manual methods."
       features={features}
       learnMoreLabel=""
       showStamp={false}
       showBackgroundCard={false}
-      imageSrc="/maintenance.png"
+      imageSrc="/reconciliation.png"
       showImageShadow={false}
       imageNoTranslate={true}
       imageContain={true}
@@ -29,6 +31,5 @@ const MaintenanceSection: React.FC = () => {
   );
 };
 
-export default MaintenanceSection;
-
+export default ReconciliationSection;
 

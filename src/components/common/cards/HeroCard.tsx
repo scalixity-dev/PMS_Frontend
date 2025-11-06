@@ -1,10 +1,12 @@
 import React from 'react';
-import GetStartedButton from '../buttons/GetStartedButton';
-import LearnMoreButton from '../buttons/LearnMoreButton';
+import HeroContent from './Herocard/HeroContent';
+import HeroRightImage from './Herocard/HeroRightImage';
+import HeroStamp from './Herocard/HeroStamp';
+import HeroSideImage from './Herocard/HeroSideImage';
 
 interface HeroCardProps {
-  badge: string;
-  title: string;
+  badge?: string;
+  title: string | React.ReactNode;
   description: string;
   features: readonly string[];
   // Optional content to render between the title and description
@@ -17,6 +19,11 @@ interface HeroCardProps {
   getStartedTo?: string;
   imageSrc?: string;
   imageAlt?: string;
+  // Optional: Show content in the center with two side images
+  leftImageSrc?: string;
+  leftImageAlt?: string;
+  rightImageSrc?: string;
+  rightImageAlt?: string;
   backgroundImageSrc?: string;
   showStamp?: boolean;
   showImageShadow?: boolean;
@@ -26,11 +33,22 @@ interface HeroCardProps {
   imageNoTranslate?: boolean;
   imageMaxHeight?: string;
   imageTranslate?: string;
+  leftImageTranslate?: string;
+  rightImageTranslate?: string;
   titleMarginBottom?: string;
   descriptionMarginBottom?: string;
   showBackgroundCard?: boolean;
   reverseLayout?: boolean;
   imageContain?: boolean;
+  sectionPaddingClassName?: string;
+  contentPaddingClassName?: string;
+  leftImageTopRightPattern?: boolean;
+  leftImageBottomLeftPattern?: boolean;
+  rightImageTopRightPattern?: boolean;
+  rightImageBottomLeftPattern?: boolean;
+  patternClassName?: string;
+  rightSideLogo?: React.ReactNode;
+  badgeCentered?: boolean;
 }
 
 const HeroCard: React.FC<HeroCardProps> = ({
@@ -47,6 +65,10 @@ const HeroCard: React.FC<HeroCardProps> = ({
   getStartedTo,
   imageSrc = '/hero.png',
   imageAlt = 'Hero image',
+  leftImageSrc,
+  leftImageAlt,
+  rightImageSrc,
+  rightImageAlt,
   backgroundImageSrc,
   showStamp = true,
   showImageShadow = true,
@@ -56,161 +78,148 @@ const HeroCard: React.FC<HeroCardProps> = ({
   imageNoTranslate = false,
   imageMaxHeight = 'max-h-[22.5rem]',
   imageTranslate,
+  leftImageTranslate,
+  rightImageTranslate,
   titleMarginBottom = 'mb-6',
   descriptionMarginBottom = 'mb-14',
   showBackgroundCard = true,
   reverseLayout = false,
   imageContain = false,
+  sectionPaddingClassName = 'p-4 sm:p-4 lg:p-2 xl:p-6',
+  contentPaddingClassName = 'px-6 py-10 sm:px-8 sm:py-14 lg:px-16 lg:py-14 2xl:py-20 3xl:px-20 4xl:px-2',
+  leftImageTopRightPattern = false,
+  leftImageBottomLeftPattern = false,
+  rightImageTopRightPattern = false,
+  rightImageBottomLeftPattern = false,
+  patternClassName,
+  rightSideLogo,
+  badgeCentered = false,
 }) => {
-  const badgeClassName = "inline-flex items-center justify-center min-w-32 h-10 gap-1 rounded-lg px-4 py-3 border border-white bg-[#819A78] text-white shadow-md font-heading font-medium text-sm leading-[150%] tracking-normal";
-  const gridCols = reverseLayout 
-    ? (showStamp ? "lg:grid-cols-[30%_15%_55%] 2xl:grid-cols-[40%_10%_50%]" : "lg:grid-cols-2") 
-    : (showStamp ? "lg:grid-cols-[55%_15%_30%] 2xl:grid-cols-[50%_10%_40%]" : "lg:grid-cols-2");
+  const hasSideImages = Boolean(leftImageSrc && rightImageSrc);
+  const gridCols = hasSideImages
+    ? "lg:grid-cols-[30%_40%_30%]"
+    : reverseLayout
+      ? (showStamp ? "lg:grid-cols-[30%_15%_55%] 2xl:grid-cols-[40%_10%_50%]" : "lg:grid-cols-2")
+      : (showStamp ? "lg:grid-cols-[55%_15%_30%] 2xl:grid-cols-[50%_10%_40%]" : "lg:grid-cols-2");
   
   const contentDiv = (
-    <div>
-      <p className="mb-6 font-heading text-2xl text-[#0B696B] font-medium leading-[150%] tracking-normal text-secondary">
-        {badge}
-      </p>
-
-      <h1 className={`${titleMarginBottom} font-heading lg:text-4xl xl:text-5xl font-medium leading-[120%] tracking-normal text-heading`}>
-        {title}
-      </h1>
-
-      {betweenTitleAndDescription}
-
-      <p className={`${descriptionMarginBottom} font-heading font-light lg:text-sm xl:text-base leading-[150%] tracking-normal text-subheading`}>
-        {description}
-      </p>
-
-      <div className="flex flex-wrap items-center gap-4">
-        {learnMoreLabel && (
-          <LearnMoreButton
-            text={learnMoreLabel}
-            onClick={learnMoreHandler}
-            variant="hero"
-            to={learnMoreTo}
-          />
-        )}
-        <GetStartedButton
-          text={getStartedLabel}
-          onClick={getStartedHandler}
-          to={getStartedTo}
-        />
-      </div>
-
-      <div className="mt-8 flex flex-wrap whitespace-nowrap gap-3 text-sm">
-        {features.map((text) => (
-          <span key={text} className={badgeClassName}>{text}</span>
-        ))}
-      </div>
-    </div>
+    <HeroContent
+      badge={badge}
+      badgeLogo={rightSideLogo}
+      badgeCentered={badgeCentered}
+      title={title}
+      description={description}
+      features={features}
+      betweenTitleAndDescription={betweenTitleAndDescription}
+      learnMoreLabel={learnMoreLabel}
+      getStartedLabel={getStartedLabel}
+      learnMoreHandler={learnMoreHandler}
+      getStartedHandler={getStartedHandler}
+      learnMoreTo={learnMoreTo}
+      getStartedTo={getStartedTo}
+      hasSideImages={hasSideImages}
+      titleMarginBottom={titleMarginBottom}
+      descriptionMarginBottom={descriptionMarginBottom}
+    />
   );
 
   const imageDiv = (
-    <div className={`flex h-full ${backgroundImageSrc ? 'relative' : ''}`}>
-      {backgroundImageSrc && (
-        <img
-          src={backgroundImageSrc}
-          alt="Background"
-          className={`absolute w-full max-w-2xl ${imageFullHeight ? '' : imageMaxHeight} rotate-0 rounded-2xl ${imageContain ? 'object-contain' : 'object-cover'}`}
-          style={{
-            ...(imageWidth && { width: `${imageWidth}px` }),
-            ...(imageHeight && { height: `${imageHeight}px` }),
-            zIndex: 1,
-            transform: 'translate(80px, 80px)',
-          }}
-        />
-      )}
-      <img
-        src={imageSrc}
-        alt={imageAlt}
-        className={`w-full max-w-2xl ${imageFullHeight ? '' : imageMaxHeight} rotate-0 rounded-2xl ${imageContain ? 'object-contain' : 'object-cover'} ${showImageShadow ? 'shadow-lg' : ''} ${imageTranslate ? imageTranslate : imageNoTranslate ? '' : 'translate-y-4 sm:translate-y-6 lg:translate-y-10 xl:translate-y-20 2xl:translate-y-28'}`}
-        style={{
-          ...(imageWidth && { width: `${imageWidth}px` }),
-          ...(imageHeight && { height: `${imageHeight}px` }),
-          ...(backgroundImageSrc && { position: 'relative', zIndex: 2 }),
-        }}
-      />
-    </div>
+    <HeroRightImage
+      imageSrc={imageSrc}
+      imageAlt={imageAlt}
+      backgroundImageSrc={backgroundImageSrc}
+      showImageShadow={showImageShadow}
+      imageWidth={imageWidth}
+      imageHeight={imageHeight}
+      imageFullHeight={imageFullHeight}
+      imageNoTranslate={imageNoTranslate}
+      imageMaxHeight={imageMaxHeight}
+      imageTranslate={imageTranslate}
+      imageContain={imageContain}
+    />
   );
 
-  const stampDiv = showStamp && (
-    <div className="flex items-end justify-end">
-      <div className="flex h-32 w-32 items-center justify-center rounded-full bg-black shadow-md border border-gray-700 p-3 -translate-y-28">
-        <svg
-          viewBox="0 0 132 132"
-          className="h-full w-full"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <defs>
-            <path
-              id="circlePath"
-              d="M66,66 m-51,0a51,51 0 1,1 102,0a51,51 0 1,1 -102,0"
-              fill="none"
-            />
-          </defs>
-
-          {/* Full circular text */}
-          <g transform="rotate(260,66,66)"> 
-            <text fill="white" fontSize="12" fontWeight="600" letterSpacing="3.5">
-              <textPath href="#circlePath" startOffset="0%">
-                ✨ Discover Your Dream Property 
-              </textPath>
-            </text>
-          </g>
-
-          {/* Inner circle */}
-          <circle cx="66" cy="66" r="30.1116" fill="#0f0f0f" stroke="#262626" strokeWidth="1.2" opacity="1" />
-
-          {/* Arrow */}
-          <path
-            d="M 57.9559 66 L 66 57.9559 L 74.0441 66 M 66 57.9559 L 66 80"
-            stroke="white"
-            strokeWidth="1.51"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            fill="none"
-            opacity="1"
-            transform="rotate(45,66,66)"
-          />
-        </svg>
-      </div>
-    </div>
-  );
+  const stampDiv = showStamp ? <HeroStamp /> : null;
   
   const content = (
     <div className={`relative grid items-center gap-4 ${gridCols}`}>
-      {reverseLayout ? (
+      {hasSideImages ? (
         <>
-          {/* Image on the left when reversed */}
-          {imageDiv}
-          {/* Middle: Stamp */}
-          {stampDiv}
-          {/* Content on the right when reversed */}
-          {contentDiv}
+          {/* Left: Image */}
+          <div className="flex h-full">
+            {leftImageSrc && (
+              <HeroSideImage
+                src={leftImageSrc}
+                alt={leftImageAlt || 'Left image'}
+                imageWidth={imageWidth}
+                imageHeight={imageHeight}
+                imageFullHeight={imageFullHeight}
+                imageMaxHeight={imageMaxHeight}
+                imageTranslate={imageTranslate}
+                imageNoTranslate={imageNoTranslate}
+                imageContain={imageContain}
+                showImageShadow={showImageShadow}
+                extraTranslateClassName={leftImageTranslate || ''}
+                showTopRightPattern={leftImageTopRightPattern}
+                showBottomLeftPattern={leftImageBottomLeftPattern}
+                patternClassName={patternClassName}
+              />
+            )}
+          </div>
+          {/* Middle: Content */}
+          <div className="mx-auto text-center">
+            {contentDiv}
+          </div>
+          {/* Right: Image */}
+          <div className="flex h-full justify-end flex-col items-end">
+            {rightImageSrc && (
+              <HeroSideImage
+                src={rightImageSrc}
+                alt={rightImageAlt || 'Right image'}
+                imageWidth={imageWidth}
+                imageHeight={imageHeight}
+                imageFullHeight={imageFullHeight}
+                imageMaxHeight={imageMaxHeight}
+                imageTranslate={imageTranslate}
+                imageNoTranslate={imageNoTranslate}
+                imageContain={imageContain}
+                showImageShadow={showImageShadow}
+                extraTranslateClassName={rightImageTranslate || ''}
+                showTopRightPattern={rightImageTopRightPattern}
+                showBottomLeftPattern={rightImageBottomLeftPattern}
+                patternClassName={patternClassName}
+              />
+            )}
+          </div>
         </>
       ) : (
         <>
-          {/* Left: Content */}
-          {contentDiv}
-          {/* Middle: Stamp */}
-          {stampDiv}
-          {/* Right: Image */}
-          {imageDiv}
+          {reverseLayout ? (
+            <>
+              {imageDiv}
+              {stampDiv}
+              {contentDiv}
+            </>
+          ) : (
+            <>
+              {contentDiv}
+              {stampDiv}
+              {imageDiv}
+            </>
+          )}
         </>
       )}
     </div>
   );
 
   return (
-    <section className="max-w-9xl mx-auto bg-white p-4 sm:p-4 lg:p-2 xl:p-6">
+    <section className={`max-w-9xl mx-auto bg-white ${sectionPaddingClassName}`}>
       {showBackgroundCard ? (
-        <div className="rounded-3xl bg-(--color-header-bg) px-6 py-10 shadow-md sm:px-8 sm:py-14 lg:min-h-40 3xl:min-h-[48.5rem] lg:px-16 lg:py-14 2xl:py-20 3xl:px-20 4xl:px-2 overflow-visible">
+        <div className={`rounded-3xl bg-(--color-header-bg) shadow-md lg:min-h-40 3xl:min-h-[48.5rem] overflow-visible ${contentPaddingClassName}`}>
           {content}
         </div>
       ) : (
-        <div className="px-6 py-10 sm:px-8 sm:py-14 lg:px-16 lg:py-14 2xl:py-20 3xl:px-20 4xl:px-2">
+        <div className={`${contentPaddingClassName}`}>
           {content}
         </div>
       )}

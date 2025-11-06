@@ -11,6 +11,9 @@ import ListingWebsiteSection from './sections/listingwebsite';
 import RentalPropertySection from './sections/rentalproperty';
 import MaintenanceSection from './sections/Maintenance';
 import InspectionsSection from './sections/inspections';
+import EveryFeatureSection from './sections/everyfeaturesection';
+import EveryFeatureCenteredSection from './sections/everyfeaturecenteredsection';
+
 import { Grid, Home, Users, Monitor, FileText, Repeat, FileCheck, MessageSquare } from 'lucide-react';
 
 const LeasePage: React.FC = () => {
@@ -91,9 +94,11 @@ const LeasePage: React.FC = () => {
       <RentalLeaseSection />
       <LeaseCardsSection />
       <ListingWebsiteSection />
+      <EveryFeatureSection />
       <RentalPropertySection />
       <AIFeaturesSection features={features} color={"var(--color-card-1)"} />
       <MaintenanceSection />
+      <EveryFeatureCenteredSection />
       <SplitHeroFeature
         title="Coordinate Repairs from Anywhere"
         description={

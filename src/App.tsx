@@ -5,6 +5,7 @@ import HomePage from './pages/home';
 import ScreeningPage from './pages/features/screening/index';
 import LeasePage from './pages/features/lease/index';
 import FinancePage from './pages/features/finance/index';
+import LeadsPage from './pages/features/leads/index';
 
 const App: React.FC = () => {
   return (
@@ -15,6 +16,7 @@ const App: React.FC = () => {
           <Route path="/features/screening" element={<ScreeningPage />} />
           <Route path="/features/lease" element={<LeasePage />} />
           <Route path="/features/finance" element={<FinancePage />} />
+          <Route path="/features/leads" element={<LeadsPage />} />
           <Route path="*" element={<HomePage />} />
         </Route>
       </Routes>
