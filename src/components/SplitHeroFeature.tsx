@@ -5,12 +5,14 @@ interface SplitHeroFeatureProps {
   title: string;
   description: string;
   imageSrc: string;
+  icon?: React.ReactNode;
 }
 
 const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
   title,
   description,
   imageSrc,
+  icon,
 }) => {
   return (
   <section className="relative w-screen left-1/2 -translate-x-1/2 py-40 px-6 md:px-32 bg-[#0CA474] overflow-hidden">
@@ -37,6 +39,9 @@ const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
         
         {/* Left Content */}
         <div className="text-white max-w-lg">
+          {/* Optional icon passed via prop (renders above the heading) */}
+          {icon && <div className="mb-4">{icon}</div>}
+
           <h2 className="text-3xl md:text-4xl font-semibold mb-4 leading-tight">
             {title}
           </h2>
