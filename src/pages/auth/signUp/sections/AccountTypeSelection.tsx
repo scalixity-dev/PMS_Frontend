@@ -1,4 +1,4 @@
-import { CheckCircleIcon, CheckedCircleIcon, HelpCircleIcon } from "../../../components/AuthIcons";
+import { CheckCircleIcon, CheckedCircleIcon, HelpCircleIcon } from "../../../../components/AuthIcons";
 
 interface FormData {
   accountType?: string;

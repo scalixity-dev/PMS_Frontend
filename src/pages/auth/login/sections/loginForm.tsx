@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import logo from '../../../assets/images/logo.png';
-import { AppleIcon, FacebookIcon, GoogleIcon } from '../../../components/AuthIcons';
+import logo from '../../../../assets/images/logo.png';
+import { AppleIcon, FacebookIcon, GoogleIcon } from '../../../../components/AuthIcons';
 
 const LoginForm: React.FC = () => {
     const [fullName, setFullName] = useState('');

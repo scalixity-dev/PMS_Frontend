@@ -42,6 +42,8 @@ const Navbar: React.FC = () => {
 
   // Check if we're on any features page
   const isFeaturesActive = pathname.startsWith('/features');
+  // Check if we're on any pricing page
+  const isPricingActive = pathname.startsWith('/pricing')
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -186,7 +188,10 @@ const Navbar: React.FC = () => {
           <button className={`${baseLink} ${mutedLink}`} disabled>
             Resources
           </button>
-          <button className={`${baseLink} ${mutedLink}`} disabled>
+          <button
+            onClick={() => navigate("pricing")}  
+            className={`${baseLink} ${isPricingActive ? pillActive : mutedLink}`}
+          >
             Pricing
           </button>
         </div>

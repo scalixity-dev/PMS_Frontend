@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { AccountTypeSelection } from './sections/1_AccountTypeSelection';
-import { EmailSignup } from './sections/2_EmailSignup';
-import { RegistrationForm } from './sections/3_RegistrationForm';
+import { AccountTypeSelection } from './sections/AccountTypeSelection';
+import { EmailSignup } from './sections/EmailSignup';
+import { RegistrationForm } from './sections/RegistrationForm';
 
 interface FormData {
   accountType?: string;

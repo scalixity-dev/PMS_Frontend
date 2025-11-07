@@ -1,5 +1,5 @@
 import React from 'react';
-import { GoogleIcon, AppleIcon, FacebookIcon } from '../../../components/AuthIcons'; 
+import { GoogleIcon, AppleIcon, FacebookIcon } from '../../../../components/AuthIcons'
 
 interface FormData {
   accountType?: string;
