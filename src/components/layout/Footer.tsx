@@ -1,8 +1,16 @@
 import React from "react";
 import { Mail, Send, Facebook, Linkedin, Twitter, Youtube } from "lucide-react";
 import logo from '../../assets/images/logo.png';
+import { useLocation } from "react-router-dom";
 
 const Footer: React.FC = () => {
+  const location = useLocation();
+  const pathname = location.pathname;
+  
+  // no footer for login or signup pages
+  if(pathname==='/login') return null;
+  if(pathname==='/signup') return null;
+
   return (
     <footer className="w-full  bg-white text-sm">
       {/* Top Section */}
