@@ -1,27 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Country, State } from 'country-state-city';
 import type { ICountry, IState } from 'country-state-city';
-
-interface FormData {
-  accountType?: string;
-  email?: string;
-  fullName?: string;
-  phone?: string;
-  phoneCountryCode?: string; // Added for the country code
-  country?: string; // This will store the country ISO code (e.g., "US")
-  state?: string; // This will store the state ISO code (e.g., "NY")
-  pincode?: string;
-  address?: string;
-  password?: string;
-  confirmPassword?: string;
-  agreedToTerms?: boolean;
-}
-
-interface RegistrationFormProps {
-  formData: FormData;
-  setFormData: (data: FormData) => void;
-  onSubmit: () => void;
-}
+import type { RegistrationFormProps } from './signUpProps';
 
 // Helper function to apply consistent styling to inputs/selects
 const inputClasses = (hasValue: boolean = true) =>
@@ -86,13 +66,12 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
                   value={formData.phoneCountryCode || ''}
                   onChange={(e) => {
                     const [countryIso] = e.target.value.split('|');
-                    // Automatically set country if phone code is selected
                     setFormData({ ...formData, phoneCountryCode: e.target.value, country: countryIso })
                   }}
                 >
                   <option value="" disabled>Code</option>
                   {phoneCountryCodes.map((code) => (
-                  <option className='bg-[#20CC95]/30' key={code.value} value={code.value}>{code.label}</option>
+                  <option className='bg-[#20CC95]/30 text-black' key={code.value} value={code.value}>{code.label}</option>
                   ))}
                 </select>
                 <input
@@ -126,7 +105,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
             >
               <option value="" disabled>Select Country</option>
               {countries.map((country) => (
-                <option className='bg-[#20CC95]/30' key={country.isoCode} value={country.isoCode}>
+                <option className='bg-[#20CC95]/30 text-black' key={country.isoCode} value={country.isoCode}>
                   {country.name}
                 </option>
               ))}
@@ -168,7 +147,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
               type="text"
               value={formData.address || ''}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              placeholder="Ex: 982 Building, 1890 W"
+              placeholder="Ex: ABC Building, 1890 NY"
               className={inputClasses()}
             />
           </div>
@@ -220,7 +199,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
               disabled={!formData.agreedToTerms}
               className="py-3 px-12 bg-teal-700 text-white rounded-md hover:bg-teal-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition font-medium"
             >
-              Start my free trail
+              Start my free trial
             </button>
           </div>
         </div>

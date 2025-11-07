@@ -329,15 +329,21 @@ const Navbar: React.FC = () => {
             <button className={`${baseLink} ${mutedLink}`} disabled>
               Resources
             </button>
-            <button className={`${baseLink} ${mutedLink}`} disabled>
+            <button className={`${baseLink} ${mutedLink}`} onClick={() => navigate("/pricing")}>
               Pricing
             </button>
           </div>
           <div className="mt-3 flex flex-col gap-3">
-            <button className="inline-flex items-center font-heading text-[12px] leading-7 font-semibold capitalize text-white" disabled aria-disabled="true" type="button">
+            <button
+              className="inline-flex items-center font-heading text-[12px] leading-7 font-semibold capitalize text-white"
+              onClick={() => navigate("/login")}
+              type="button">
               <UserIcon /> Login
             </button>
-            <button className="inline-flex items-center justify-center w-full h-11 rounded-[54.49px] border-[1.21px] border-[#E2E2E2] font-heading text-[12px] leading-7 font-semibold text-center align-middle text-white bg-(--color-primary)" disabled aria-disabled="true" type="button">
+            <button
+              className="inline-flex items-center justify-center w-full h-11 rounded-[54.49px] border-[1.21px] border-[#E2E2E2] font-heading text-[12px] leading-7 font-semibold text-center align-middle text-white bg-(--color-primary)"
+              onClick={() => navigate("/signup")}
+              type="button">
               Sign up <ArrowNE />
             </button>
           </div>
