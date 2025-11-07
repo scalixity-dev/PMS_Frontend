@@ -1,4 +1,10 @@
 import React from 'react';
+import KeepApplicationTrack from './sections/KeepApplicationTrack';
+import SplitHeroFeatureReverse from '../../../components/SplitHeroFeatureReverse';
+import LeadFeaturesGrid from './sections/LeadFeaturesGrid';
+import IconFeaturesRow from '../../../components/IconFeaturesRow';
+import ExplorePropertiesBanner from '../../../components/ExplorePropertiesBanner';
+import { MousePointerClick, Home, ShieldCheck, Star } from 'lucide-react';
 
 const LeadsPage: React.FC = () => {
   return (
@@ -9,6 +15,40 @@ const LeadsPage: React.FC = () => {
           Under Working...
         </p>
       </div>
+
+      <LeadFeaturesGrid/>
+      <KeepApplicationTrack />
+
+      <SplitHeroFeatureReverse
+        title="Get leads from your website"
+        description="A moving PMS  has enough on their mind. With PMSCloud, you can document everything in minutes, store photos and notes, and keep things stress-free for everyone."
+        imageSrc="https://res.cloudinary.com/dxwspucxw/image/upload/v1762494948/dee565d69987479109ffe7012bccf951b7f2a1d5_dtl9ch.png"
+      />
+
+      <IconFeaturesRow
+        title="Every feature you'll ever need, and more"
+        items={[
+          {
+            icon: <MousePointerClick size={24} />,
+            text: "List once, syndicate to multiple rental sites for free"
+          },
+          {
+            icon: <Home size={24} />,
+            text: "Advanced listings for even faster exposure"
+          },
+          {
+            icon: <ShieldCheck size={24} />,
+            text: "Receive rental applications right on PMSCloud"
+          },
+          {
+            icon: <Star size={24} />,
+            text: "Advertise on Rent.com, Redfin, Apartment Guide, and more"
+          }
+        ]}
+      />
+
+      <ExplorePropertiesBanner/>
+      
     </section>
   );
 };
