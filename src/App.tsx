@@ -6,6 +6,8 @@ import ScreeningPage from './pages/features/screening/index';
 import LeasePage from './pages/features/lease/index';
 import FinancePage from './pages/features/finance/index';
 import LeadsPage from './pages/features/leads/index';
+import LoginPage from './pages/login';
+import SignUpPage from './pages/signUp';
 
 const App: React.FC = () => {
   return (
@@ -13,6 +15,8 @@ const App: React.FC = () => {
       <Routes>
         <Route element={<AppLayout />}>
           <Route path="/" element={<HomePage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignUpPage />} />
           <Route path="/features/screening" element={<ScreeningPage />} />
           <Route path="/features/lease" element={<LeasePage />} />
           <Route path="/features/finance" element={<FinancePage />} />
