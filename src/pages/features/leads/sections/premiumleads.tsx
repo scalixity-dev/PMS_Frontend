@@ -8,7 +8,7 @@ const PremiumLeadsSection: React.FC = () => {
       title={
         <>
           <span className="mb-6 flex justify-center">
-            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#CFFBBF] text-(--color-primary) shadow-[0_4px_0_0_#00000040]">
+            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#CFFBBF] text-primary shadow-[0_4px_0_0_#00000040]">
               <Home className="h-6 w-6" aria-hidden="true" />
             </span>
           </span>

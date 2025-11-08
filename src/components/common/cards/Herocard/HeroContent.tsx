@@ -54,7 +54,7 @@ const HeroContent: React.FC<HeroContentProps> = ({
             {badge}
           </p>
           {badgeLogo && (
-            <div className="w-8 h-8 rounded-full bg-[#CFFBBF] flex items-center justify-center shrink-0 text-(--color-primary) shadow-[0_4px_0_0_#00000040]">
+            <div className="w-8 h-8 rounded-full bg-[#CFFBBF] flex items-center justify-center shrink-0 text-primary shadow-[0_4px_0_0_#00000040]">
               {badgeLogo}
             </div>
           )}

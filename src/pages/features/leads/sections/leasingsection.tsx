@@ -36,7 +36,7 @@ const LeasingSection: React.FC = () => {
       List properties, schedule showings, and turn leads into PMS faster than ever.
       </p>
       <div className="max-w-5xl mx-auto px-4">
-        <div className="border-8 rounded-xl border-(--color-primary)">
+        <div className="border-8 rounded-xl border-[color:var(--color-primary)]">
           <FeatureHighlightsGrid features={features} layout="vertical" descriptionClassName="text-[22px] text-[#195504]" />
         </div>
       </div>
