@@ -1,25 +1,6 @@
 import React from 'react';
 import { GoogleIcon, AppleIcon, FacebookIcon } from '../../../../components/AuthIcons'
-
-interface FormData {
-  accountType?: string;
-  email?: string;
-  fullName?: string;
-  phone?: string;
-  country?: string;
-  city?: string;
-  pincode?: string;
-  address?: string;
-  password?: string;
-  confirmPassword?: string;
-  agreedToTerms?: boolean;
-}
-
-interface EmailSignupProps {
-  onNext: () => void;
-  formData: FormData;
-  setFormData: (data: FormData) => void;
-}
+import type { EmailSignupProps } from './signUpProps';
 
 export const EmailSignup: React.FC<EmailSignupProps> = ({ onNext, formData, setFormData }) => {
   const handleSubmit = (e: React.FormEvent) => {

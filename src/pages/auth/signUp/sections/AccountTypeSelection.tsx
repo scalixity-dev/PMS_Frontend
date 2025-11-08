@@ -1,31 +1,5 @@
 import { CheckCircleIcon, CheckedCircleIcon, HelpCircleIcon } from "../../../../components/AuthIcons";
-
-interface FormData {
-  accountType?: string;
-  email?: string;
-  fullName?: string;
-  phone?: string;
-  country?: string;
-  city?: string;
-  pincode?: string;
-  address?: string;
-  password?: string;
-  confirmPassword?: string;
-  agreedToTerms?: boolean;
-}
-
-interface AccountType {
-  id: string;
-  title: string;
-  subtitle: string;
-  type: string;
-}
-
-interface AccountTypeSelectionProps {
-  onNext: () => void;
-  formData: FormData;
-  setFormData: (data: FormData) => void;
-}
+import type { AccountType, AccountTypeSelectionProps } from "./signUpProps";
 
 export const AccountTypeSelection: React.FC<AccountTypeSelectionProps> = ({ onNext, formData, setFormData }) => {
   const accountTypes: AccountType[] = [

@@ -10,7 +10,6 @@ const LoginForm: React.FC = () => {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        console.log('Login attempt:', { fullName, email, password });
         // Handle login logic here
     };
 
@@ -81,7 +80,7 @@ const LoginForm: React.FC = () => {
                 <div>
                 <button
                     type="submit"
-                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-(--color-primary) hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-(--color-primary)"
+                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-(--color-primary) hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-var[(--color-primary)]"
                 >
                     Continue
                 </button>
