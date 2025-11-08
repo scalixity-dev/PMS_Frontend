@@ -7,6 +7,8 @@ interface FeatureHighlightSectionProps {
   description: string;
   buttonText?: string;
   imageSrc: string;
+  bgClass?: string;
+  transparent?: boolean;
 }
 
 const FeatureHighlightSection: React.FC<FeatureHighlightSectionProps> = ({
@@ -14,10 +16,13 @@ const FeatureHighlightSection: React.FC<FeatureHighlightSectionProps> = ({
   subtitle,
   description,
   imageSrc,
+  bgClass,
+  transparent,
 }) => {
+  const backgroundClass = bgClass ?? (transparent ? 'bg-transparent' : 'bg-gradient-to-b from-[#DFF1E3] to-[#FFFFFF]');
   return (
     <div className="px-6">
-        <section className="w-full flex flex-col items-center text-center py-12 md:py-20 bg-gradient-to-b from-[#DFF1E3] to-[#FFFFFF] rounded-3xl overflow-hidden">
+        <section className={`w-full flex flex-col items-center text-center py-12 md:py-20 ${backgroundClass} rounded-3xl overflow-hidden`}>
       {/* Content Section */}
       <div className="max-w-3xl px-4 mb-8 md:mb-12">
         <p className="text-lg text-[#175700] font-semibold mb-5">{subtitle}</p>

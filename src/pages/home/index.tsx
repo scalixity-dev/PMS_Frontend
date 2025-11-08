@@ -6,7 +6,7 @@ import HeroSection from './sections/hero';
 import TestimonialsSection from './sections/testimonials';
 import FAQSection from './sections/faq';
 import ScalableSolutionSection from './sections/ScalableSolutionSection';
-import ExplorePropertiesBanner from './sections/ExplorePropertiesBanner';
+import ExplorePropertiesBanner from '../../components/ExplorePropertiesBanner';
 
 const HomePage: React.FC = () => {
   return (

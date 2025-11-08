@@ -4,6 +4,7 @@ import LearnMoreGradient from "../buttons/LearnMoreGradient";
 
 interface AIFeatureCardProps {
   image?: string; // optional — some cards may not have an image
+  icon?: React.ReactNode; // optional — render icon instead of image when provided
   title: string;
   description: string;
   color?: string; // optional solid background color (CSS color string)
@@ -11,15 +12,19 @@ interface AIFeatureCardProps {
   buttonText?: string; // optional override for the card button text
 }
 
-const AIFeatureCard: React.FC<AIFeatureCardProps> = ({ image, title, description, color, textColor, buttonText }) => {
+const AIFeatureCard: React.FC<AIFeatureCardProps> = ({ image, icon, title, description, color, textColor, buttonText }) => {
   const containerClass = `flex flex-col items-center rounded-3xl p-6 text-center hover:shadow-xl transition-shadow duration-300 min-h-[320px]`;
   const gradientClasses = "bg-gradient-to-b from-[#ACE2BF] to-[#FFFFFF]";
 
   return (
     <div className={containerClass + (color ? "" : ` ${gradientClasses}`)} style={color ? { backgroundColor: color } : undefined}>
       {/* Image (optional) */}
-      {image ? (
-        <div className="w-full flex justify-center">
+      {icon ? (
+        <div className="w-full flex justify-center mb-4">
+          <div className="flex items-center justify-center w-20 h-20 rounded-full bg-white/60">{icon}</div>
+        </div>
+      ) : image ? (
+        <div className="w-full flex justify-center mb-4">
           <img src={image} alt={title} className="rounded-lg max-w-full h-auto object-contain" />
         </div>
       ) : null}
