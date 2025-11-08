@@ -11,8 +11,8 @@ const HeroSection: React.FC = () => {
       description="PMS helps you simplify and grow your property management business. Find everything you need to list properties, collect rent, and screen pms — in one, easy place."
       features={features}
       imageSrc="/hero1.png"
-      learnMoreTo="/features/screening"
-      getStartedTo="/features/screening"
+      learnMoreTo="/login"
+      getStartedTo="/login"
     />
   );
 };

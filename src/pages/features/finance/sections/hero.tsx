@@ -26,7 +26,7 @@ const FinanceHeroSection: React.FC = () => {
       imageContain={true}
       imageMaxHeight="max-h-[20rem]"
       sectionPaddingClassName="p-0"
-      contentPaddingClassName="px-0 py-10 sm:px-0 sm:py-14 lg:px-0 lg:py-14 2xl:px-0 2xl:py-32 3xl:px-0 4xl:px-0"
+      contentPaddingClassName="px-0 py-10 sm:px-0 sm:py-14 lg:px-0 lg:py-32 2xl:px-0 2xl:py-32 3xl:px-0 4xl:px-0"
       titleMarginBottom="mb-4"
       descriptionMarginBottom="mb-6"
       leftImageSrc="/finance-hero1.png"

@@ -4,6 +4,7 @@ export interface HeroRightImageProps {
   imageSrc: string;
   imageAlt: string;
   backgroundImageSrc?: string;
+  backgroundImageTranslate?: string;
   showImageShadow?: boolean;
   imageWidth?: number;
   imageHeight?: number;
@@ -18,6 +19,7 @@ const HeroRightImage: React.FC<HeroRightImageProps> = ({
   imageSrc,
   imageAlt,
   backgroundImageSrc,
+  backgroundImageTranslate,
   showImageShadow = true,
   imageWidth,
   imageHeight,
@@ -38,7 +40,7 @@ const HeroRightImage: React.FC<HeroRightImageProps> = ({
             ...(imageWidth && { width: `${imageWidth}px` }),
             ...(imageHeight && { height: `${imageHeight}px` }),
             zIndex: 1,
-            transform: 'translate(80px, 80px)',
+          transform: backgroundImageTranslate || 'translate(80px, 80px)',
           }}
         />
       )}
