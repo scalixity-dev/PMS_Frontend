@@ -4,6 +4,7 @@ import AIFeatureCard from "./common/cards/AIFeatureCard";
 
 interface Feature {
   image?: string;
+  icon?: React.ReactNode;
   title: string;
   description: string;
 }

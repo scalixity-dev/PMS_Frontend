@@ -5,7 +5,7 @@ import { Heading, SubHeading, TableTitle } from './sections/Headings';
 import { allFeatureTables } from './sections/TableData';
 import RequestDemoCard from './sections/RequestDemo';
 import FAQSection from '../home/sections/faq';
-import ExplorePropertiesBanner from '../home/sections/ExplorePropertiesBanner';
+import ExplorePropertiesBanner from '../../components/ExplorePropertiesBanner';
 import { LeftCircle, LeftIcon, RightCircle } from './sections/pricingBackgroundIcons';
 
 const PricingPage: React.FC = () => {

@@ -16,7 +16,7 @@ const SplitHeroFeatureReverse: React.FC<Props> = ({
   icon,
 }) => {
   return (
-  <section className="relative w-full py-16 md:py-24 px-6 md:px-16">
+  <section className="relative max-w-7xl mx-auto py-16 md:py-24 px-6 md:px-16">
       <div className="max-w-7xl mx-auto relative bg-[#8CB89A] overflow-hidden px-6 md:px-12 md:pt-16 pb-45">
   {/* dotted pattern bg (left side - moved further left) */}
   <div className="absolute top-0 left-0 bottom-0 w-2/5 md:w-[38%] pointer-events-none -translate-x-6 md:-translate-x-12">
