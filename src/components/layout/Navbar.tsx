@@ -284,10 +284,10 @@ const Navbar: React.FC = () => {
             <button className={`${baseLink} ${mutedLink}`} disabled>
               Use Cases
             </button>
-            <button className={`${baseLink} ${mutedLink}`} onClick={() => navigate("/resources")}>
+            <button className={`${baseLink} ${isResourceActive ? pillActive : mutedLink}`} onClick={() => navigate("/resources")}>
               Resources
             </button>
-            <button className={`${baseLink} ${mutedLink}`} onClick={() => navigate("/pricing")}>
+            <button className={`${baseLink} ${isPricingActive ? pillActive : mutedLink}`} onClick={() => navigate("/pricing")}>
               Pricing
             </button>
           </div>

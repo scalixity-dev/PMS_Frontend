@@ -49,6 +49,11 @@ const ResourcePage: React.FC = () => {
 
         <ContactSection />
         <HelpAndSupportSection />
+        <img
+          src="/resourceMap.png"
+          alt="map"
+          className="w-full h-full" 
+        />
     </>
   );
 };

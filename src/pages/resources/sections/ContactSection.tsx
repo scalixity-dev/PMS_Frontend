@@ -38,7 +38,7 @@ const ContactSection: React.FC = () => {
             <ContactInfoItem
               icon={<Phone/>}
               title="Phone"
-              text="Mirpur,10 Road 1 House 12"
+              text="0123456789"
             />
             <ContactInfoItem
               icon={<Email />}
