@@ -2,6 +2,7 @@ import React from 'react';
 import AIFeaturesSection from "../../components/AIFeaturesSection";
 import ExplorePropertiesBanner from '../../components/ExplorePropertiesBanner';
 import ContentShowcaseSection from './sections/ContentShowcaseSection';
+import DualImageFeatureSection from './sections/DualImageFeatureSection';
 import { DollarSign, TrendingUp, Handshake, Award, ArrowLeft, CheckCircle2, Users, Edit, Monitor, Eye, AlignHorizontalJustifyCenter, SlidersHorizontal, FileCheck, FilePlus, FileText } from 'lucide-react';
 
 const usecaseFeatures = [
@@ -147,7 +148,8 @@ const UseCasesPage: React.FC = () => {
   ]}
 />
 
-
+  <DualImageFeatureSection
+  />
 
   <ExplorePropertiesBanner/>
     </section>
