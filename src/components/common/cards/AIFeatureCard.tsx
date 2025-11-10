@@ -10,11 +10,17 @@ interface AIFeatureCardProps {
   color?: string; // optional solid background color (CSS color string)
   textColor?: string; // optional text color for title & description (CSS color string)
   buttonText?: string; // optional override for the card button text
+  titleClassName?: string; // optional extra classes for the title element
 }
 
-const AIFeatureCard: React.FC<AIFeatureCardProps> = ({ image, icon, title, description, color, textColor, buttonText }) => {
+const AIFeatureCard: React.FC<AIFeatureCardProps> = ({ image, icon, title, description, color, textColor, buttonText, titleClassName }) => {
   const containerClass = `flex flex-col items-center rounded-3xl p-6 text-center hover:shadow-xl transition-shadow duration-300 min-h-[320px]`;
   const gradientClasses = "bg-gradient-to-b from-[#ACE2BF] to-[#FFFFFF]";
+  const titleClasses = ["font-bold", "text-2xl", "text-[#1F2A01]", "mb-4"];
+
+  if (titleClassName) {
+    titleClasses.push(titleClassName);
+  }
 
   return (
     <div className={containerClass + (color ? "" : ` ${gradientClasses}`)} style={color ? { backgroundColor: color } : undefined}>
@@ -30,7 +36,7 @@ const AIFeatureCard: React.FC<AIFeatureCardProps> = ({ image, icon, title, descr
       ) : null}
 
       {/* Title */}
-  <h3 className="font-bold text-2xl text-[#1F2A01] mb-4" style={textColor ? { color: textColor } : undefined}>{title}</h3>
+  <h3 className={titleClasses.join(" ")} style={textColor ? { color: textColor } : undefined}>{title}</h3>
 
       {/* Description */}
   <p className="text-gray-500 font-medium text-sm mb-8 max-w-xs" style={textColor ? { color: textColor } : undefined}>{description}</p>
