@@ -1,6 +1,7 @@
 import React from 'react';
 import { GoogleIcon, AppleIcon, FacebookIcon } from '../../../../components/AuthIcons'
 import type { EmailSignupProps } from './signUpProps';
+import { Link } from 'react-router-dom';
 
 export const EmailSignup: React.FC<EmailSignupProps> = ({ onNext, formData, setFormData }) => {
   const handleSubmit = (e: React.FormEvent) => {
@@ -70,6 +71,13 @@ export const EmailSignup: React.FC<EmailSignupProps> = ({ onNext, formData, setF
         </button>
       </div>
       
+      <div className=" text-center text-sm text-gray-600">
+          Already have an account?{' '}
+          <Link to="/login" className="font-medium text-(--color-primary) hover:text-green-600 hover:underline">
+            Sign In
+          </Link>
+      </div>
+
       <p className="mt-6 text-xs text-center text-gray-500">
         By creating an account you are agreeing to our  
         <a href="#" className="font-medium text-green-600 hover:text-green-500"> Terms and Conditions</a> & 

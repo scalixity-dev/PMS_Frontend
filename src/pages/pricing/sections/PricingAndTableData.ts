@@ -1,3 +1,44 @@
+export const pricingPlans = [
+  {
+    plan: "Starter",
+    description: "Designed for DIY landlords looking to automate tasks and simplify their portfolios.",
+    priceText: "$ 15.00 /m",
+    annualBillingText: "$198.00 if billed annually",
+    includesTitle: "Includes:",
+    features: ["Online Rent Payments", "Maintenance Management", "Listings and Applications"],
+    isPopular: false,
+  },
+  {
+    plan: "Growth",
+    description: "Designed for mid-to-large landlords looking for additional organization and tenant tools.",
+    priceText: "$ 32.00 /m",
+    annualBillingText: "$385.00 if billed annually",
+    includesTitle: "Everything in Starter, plus:",
+    features: ["Enhanced Reporting", "Move In/Out Inspections", "Property Message Board"],
+    isPopular: false,
+  },
+  {
+    plan: "Pro",
+    description: "Designed for mid-to-large landlords looking for premium features and efficiency",
+    priceText: "$ 55.00 /m",
+    annualBillingText: "$660.00 if billed annually",
+    includesTitle: "Everything in Growth, plus:",
+    features: ["Tax Reports", "Bank Reconciliation", "Separate Owner Portal"],
+    isPopular: true,
+    isPro: true,
+  },
+  {
+    plan: "Business",
+    description: "Designed for large companies looking for advanced features tailored to their needs.",
+    priceText: "Custom",
+    annualBillingText: "Starting at $100.00 / mo",
+    includesTitle: "Everything in Pro, plus:",
+    features: ["Team Management & Tools", "Task Management", "User-Interface Customization"],
+    isPopular: false,
+  },
+];
+
+
 export const allFeatureTables = [
   {
     title: "Property Management",

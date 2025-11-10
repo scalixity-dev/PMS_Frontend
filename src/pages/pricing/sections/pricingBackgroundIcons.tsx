@@ -1,6 +1,6 @@
 export const LeftIcon = () => {
     return(
-        <svg width="265" height="420" rotate={-52.52} viewBox="0 0 381 549" fill="none" xmlns="http://www.w3.org/2000/svg" className='absolute -left-10 -top-2'>
+        <svg width="265" height="420" viewBox="0 0 381 549" fill="none" xmlns="http://www.w3.org/2000/svg" className='absolute -left-10 -top-2'>
             <path d="M211.373 484.391C-135.944 706.734 -44.738 282.712 -92.1586 220.871C-139.579 159.029 -268.771 109.515 -163.629 28.891C-58.4871 -51.733 296.383 55.5469 343.804 117.388C445.025 249.391 316.515 403.767 211.373 484.391Z" fill="#20CC95" fill-opacity="0.25"/>
         </svg>
     )

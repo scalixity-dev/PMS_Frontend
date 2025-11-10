@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { CheckCircleIcon, CheckedCircleIcon, HelpCircleIcon } from "../../../../components/AuthIcons";
 import type { AccountType, AccountTypeSelectionProps } from "./signUpProps";
 
@@ -70,6 +71,7 @@ export const AccountTypeSelection: React.FC<AccountTypeSelectionProps> = ({ onNe
               I'm a <span className="text-teal-500 font-medium cursor-pointer">Property Owner</span>. My properties are managed by Property Managers.
             </p>
           </div>
+          
 
           <div className="flex justify-center">
             <button
@@ -79,6 +81,12 @@ export const AccountTypeSelection: React.FC<AccountTypeSelectionProps> = ({ onNe
             >
               Next
             </button>
+          </div>
+          <div className="mt-2 text-center text-sm text-gray-600">
+              Already have an account?{' '}
+              <Link to="/login" className="font-medium text-(--color-primary) hover:text-green-600 hover:underline">
+                Sign In
+              </Link>
           </div>
         </div>
       </div>

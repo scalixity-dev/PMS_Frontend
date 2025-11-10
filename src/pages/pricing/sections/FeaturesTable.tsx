@@ -18,7 +18,7 @@ const TrialButton = () => (
     <button
         className={`py-2 text-[9px] rounded-md font-semibold transition-colors duration-200 bg-[#20CC95] text-white hover:bg-[#20CC95]/80 border border-white flex items-center justify-center space-x-1 px-3`}
     >
-        <span>Start 14-days trail</span>
+        <span>Start 14-days trial</span>
         <svg
             xmlns="http://www.w3.org/2000/svg"
             className="h-3 w-3"

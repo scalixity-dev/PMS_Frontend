@@ -29,7 +29,7 @@ export const TableTitle = () => {
         </div>
 
         <button className="bg-[#3D7475] text-white font-semibold py-3 px-8 rounded-2xl hover:bg-teal-800 transition-colors shadow-lg border-2 border-white">
-            Compare all feature
+            Compare all features
         </button>
     </>)
 }
