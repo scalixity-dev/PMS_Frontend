@@ -2,9 +2,12 @@ import React from 'react';
 import IconFeaturesRow from '../../../components/IconFeaturesRow';
 import FeatureHighlightSection from '../../../components/FeatureHighlightSection';
 import AIFeaturesSection from '../../../components/AIFeaturesSection';
-import SplitHeroFeature from '../../../components/SplitHeroFeature';
+import SplitHeroFeaturefull from '../../../components/SplitHeroFeaturefull';
 import ExplorePropertiesBanner from '../../../components/ExplorePropertiesBanner';
 import { Users, ListChecks, ShieldCheck, Clock } from 'lucide-react';
+import TeamManagementSection from './sections/teammanagement';
+import KyeSection from './sections/kye';
+import Card from './sections/card';
 
 const TeamPage: React.FC = () => {
   const teamFeatures = [
@@ -29,13 +32,8 @@ const TeamPage: React.FC = () => {
   ];
   return (
     <section className="w-full">
-      <div className="max-w-7xl mx-auto px-6 md:px-8 lg:px-0 py-16 text-center">
-        <h1 className="text-3xl md:text-4xl font-heading font-bold text-gray-900 mb-4">Team</h1>
-        <p className="text-gray-700 max-w-3xl mx-auto">
-          Empower your team with seamless collaboration and role management.
-        </p>
-      </div>
       
+      <TeamManagementSection />
       <IconFeaturesRow
         title="Every feature you'll ever need, and more"
         items={[
@@ -71,7 +69,8 @@ const TeamPage: React.FC = () => {
         features={teamFeatures}
         color="#9AD4AD"
       />
-      
+
+      <KyeSection />
       <IconFeaturesRow
         title="Every feature you'll ever need, and more"
         items={[
@@ -93,15 +92,16 @@ const TeamPage: React.FC = () => {
           }
         ]}
       />
+
       
-      <SplitHeroFeature
+      <SplitHeroFeaturefull
         title="Make Property Descriptions Effortless"
         description={
           "Writing standout property descriptions is now easier than ever with  kye ai. Forget starting from scratch—just provide your listing details, and  kye ai will do the heavy lifting to create a unique description tailored to your property."
         }
         imageSrc={"https://res.cloudinary.com/dxwspucxw/image/upload/v1762263547/0fb6c58f-daa2-4303-80e3-58743edd561e.png"}
       />
-
+      <Card />
       <ExplorePropertiesBanner/>
       
     </section>

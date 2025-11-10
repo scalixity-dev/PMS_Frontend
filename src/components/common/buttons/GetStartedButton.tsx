@@ -19,21 +19,22 @@ const sizeClasses: Record<NonNullable<GetStartedButtonProps['size']>, string> = 
 }
 
 const GetStartedButton = React.forwardRef<HTMLButtonElement, GetStartedButtonProps>(
-  ({ text = 'Get Started', size = 'md', widthClass = 'w-40', className = '', to, ...rest }, ref) => {
+  ({ text = 'Get Started', size = 'md', widthClass = 'w-40', className = '', to, onClick, ...rest }, ref) => {
     const base = 'inline-flex items-center justify-center gap-2 rounded-lg border border-white bg-[#3D7475] opacity-100 rotate-0 font-heading font-light leading-none whitespace-nowrap tracking-[0] text-white shadow-[0px_4px_4px_0px_#00000040]'
     const hover = rest.disabled ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'
     const classes = [base, sizeClasses[size], widthClass, hover, className].filter(Boolean).join(' ')
+    const linkTo = to ?? (onClick ? undefined : '/login')
 
-    if (to) {
+    if (linkTo) {
       return (
-        <Link to={to} className={classes} aria-label={text}>
+        <Link to={linkTo} className={classes} aria-label={text}>
           {text}
         </Link>
       )
     }
 
     return (
-      <button ref={ref} className={classes} aria-label={text} {...rest}>
+      <button ref={ref} className={classes} aria-label={text} onClick={onClick} {...rest}>
         {text}
       </button>
     )

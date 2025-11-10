@@ -2,7 +2,7 @@ import React from 'react';
 import AIFeaturesSection from '../../../components/AIFeaturesSection';
 import IconFeaturesRow from '../../../components/IconFeaturesRow';
 import GreenFeaturesSliderSection from '../../../components/GreenFeaturesSliderSection';
-import SplitHeroFeature from '../../../components/SplitHeroFeature';
+import SplitHeroFeaturefull from '../../../components/SplitHeroFeaturefull';
 import SplitHeroFeatureReverse from '../../../components/SplitHeroFeatureReverse';
 import LeaseHeroSection from './sections/hero';
 import RentalLeaseSection from './sections/rentallease';
@@ -99,7 +99,7 @@ const LeasePage: React.FC = () => {
       <AIFeaturesSection features={features} color={"var(--color-card-1)"} />
       <MaintenanceSection />
       <EveryFeatureCenteredSection />
-      <SplitHeroFeature
+      <SplitHeroFeaturefull
         title="Coordinate Repairs from Anywhere"
         description={
           "Whether you're tackling the repair yourself or assigning it out, PmsCloud makes it easy. Communicate directly with vendors, landlords, and Pms, reducing response time (and stress)."

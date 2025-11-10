@@ -7,6 +7,7 @@ interface Feature {
   icon?: React.ReactNode;
   title: string;
   description: string;
+  titleClassName?: string;
 }
 
 interface AIFeaturesSectionProps {

@@ -6,8 +6,9 @@ import HeroSideImage from './Herocard/HeroSideImage';
 
 interface HeroCardProps {
   badge?: string;
+  badgeClassName?: string;
   title: string | React.ReactNode;
-  description: string;
+  description: string | React.ReactNode;
   features: readonly string[];
   // Optional content to render between the title and description
   betweenTitleAndDescription?: React.ReactNode;
@@ -25,6 +26,7 @@ interface HeroCardProps {
   rightImageSrc?: string;
   rightImageAlt?: string;
   backgroundImageSrc?: string;
+  backgroundImageTranslate?: string;
   showStamp?: boolean;
   showImageShadow?: boolean;
   imageWidth?: number;
@@ -42,6 +44,7 @@ interface HeroCardProps {
   imageContain?: boolean;
   sectionPaddingClassName?: string;
   contentPaddingClassName?: string;
+  contentClassName?: string;
   leftImageTopRightPattern?: boolean;
   leftImageBottomLeftPattern?: boolean;
   rightImageTopRightPattern?: boolean;
@@ -49,10 +52,15 @@ interface HeroCardProps {
   patternClassName?: string;
   rightSideLogo?: React.ReactNode;
   badgeCentered?: boolean;
+  hideImage?: boolean;
+  isCentered?: boolean;
+  backgroundCardClassName?: string;
+  maxWidthClassName?: string;
 }
 
 const HeroCard: React.FC<HeroCardProps> = ({
   badge,
+  badgeClassName,
   title,
   description,
   features,
@@ -70,6 +78,7 @@ const HeroCard: React.FC<HeroCardProps> = ({
   rightImageSrc,
   rightImageAlt,
   backgroundImageSrc,
+  backgroundImageTranslate,
   showStamp = true,
   showImageShadow = true,
   imageWidth,
@@ -87,6 +96,7 @@ const HeroCard: React.FC<HeroCardProps> = ({
   imageContain = false,
   sectionPaddingClassName = 'p-4 sm:p-4 lg:p-2 xl:p-6',
   contentPaddingClassName = 'px-6 py-10 sm:px-8 sm:py-14 lg:px-16 lg:py-14 2xl:py-20 3xl:px-20 4xl:px-2',
+  contentClassName = '',
   leftImageTopRightPattern = false,
   leftImageBottomLeftPattern = false,
   rightImageTopRightPattern = false,
@@ -94,6 +104,10 @@ const HeroCard: React.FC<HeroCardProps> = ({
   patternClassName,
   rightSideLogo,
   badgeCentered = false,
+  hideImage = false,
+  isCentered = false,
+  backgroundCardClassName = 'bg-(--color-header-bg)',
+  maxWidthClassName = 'max-w-9xl',
 }) => {
   const hasSideImages = Boolean(leftImageSrc && rightImageSrc);
   const gridCols = hasSideImages
@@ -105,6 +119,7 @@ const HeroCard: React.FC<HeroCardProps> = ({
   const contentDiv = (
     <HeroContent
       badge={badge}
+      badgeClassName={badgeClassName}
       badgeLogo={rightSideLogo}
       badgeCentered={badgeCentered}
       title={title}
@@ -120,6 +135,7 @@ const HeroCard: React.FC<HeroCardProps> = ({
       hasSideImages={hasSideImages}
       titleMarginBottom={titleMarginBottom}
       descriptionMarginBottom={descriptionMarginBottom}
+      isCentered={isCentered || hideImage}
     />
   );
 
@@ -128,6 +144,7 @@ const HeroCard: React.FC<HeroCardProps> = ({
       imageSrc={imageSrc}
       imageAlt={imageAlt}
       backgroundImageSrc={backgroundImageSrc}
+      backgroundImageTranslate={backgroundImageTranslate}
       showImageShadow={showImageShadow}
       imageWidth={imageWidth}
       imageHeight={imageHeight}
@@ -141,8 +158,14 @@ const HeroCard: React.FC<HeroCardProps> = ({
 
   const stampDiv = showStamp ? <HeroStamp /> : null;
   
-  const content = (
-    <div className={`relative grid items-center gap-4 ${gridCols}`}>
+  const content = hideImage ? (
+    <div className="relative flex justify-center">
+      <div className="w-full max-w-4xl">
+        {contentDiv}
+      </div>
+    </div>
+  ) : (
+    <div className={`relative grid items-center gap-4 ${contentClassName} ${gridCols}`}>
       {hasSideImages ? (
         <>
           {/* Left: Image */}
@@ -213,9 +236,9 @@ const HeroCard: React.FC<HeroCardProps> = ({
   );
 
   return (
-    <section className={`max-w-9xl mx-auto bg-white ${sectionPaddingClassName}`}>
+    <section className={`${maxWidthClassName} mx-auto bg-white ${sectionPaddingClassName}`}>
       {showBackgroundCard ? (
-        <div className={`rounded-3xl bg-(--color-header-bg) shadow-md lg:min-h-40 3xl:min-h-[48.5rem] overflow-visible ${contentPaddingClassName}`}>
+        <div className={`rounded-3xl ${backgroundCardClassName} shadow-md lg:min-h-40 3xl:min-h-[48.5rem] overflow-visible ${contentPaddingClassName}`}>
           {content}
         </div>
       ) : (
