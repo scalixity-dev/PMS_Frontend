@@ -6,7 +6,7 @@ interface FeatureHighlightSectionProps {
   subtitle: string;
   description: string;
   buttonText?: string;
-  imageSrc: string;
+  imageSrc?: string;
   bgClass?: string;
   transparent?: boolean;
 }
@@ -33,15 +33,17 @@ const FeatureHighlightSection: React.FC<FeatureHighlightSectionProps> = ({
         <GetStartedButton size="sm" widthClass="w-32"/>
       </div>
 
-      {/* Image Section - now in document flow */}
-      <div className="w-full max-w-5xl px-4 md:px-8">
-        <img
-          src={imageSrc}
-          alt="feature preview"
-          loading="lazy"
-          className="w-full h-auto object-contain rounded-lg"
-        />
-      </div>
+      {/* Image Section - now in document flow (render only if imageSrc provided) */}
+      {imageSrc && (
+        <div className="w-full max-w-5xl px-4 md:px-8">
+          <img
+            src={imageSrc}
+            alt="feature preview"
+            loading="lazy"
+            className="w-full h-auto object-contain rounded-lg"
+          />
+        </div>
+      )}
     </section>
     </div>
   );
