@@ -5,21 +5,36 @@ interface SplitHeroFeatureProps {
   title: string;
   description: string;
   imageSrc: string;
+  secondaryImageSrc?: string;
+  secondaryImageAlt?: string;
   icon?: React.ReactNode;
   badgeText?: string;
+  backgroundClassName?: string;
+  secondaryImageBackgroundClassName?: string;
 }
 
 const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
   title,
   description,
   imageSrc,
+  secondaryImageSrc,
+  secondaryImageAlt,
   icon,
   badgeText,
+  backgroundClassName,
+  secondaryImageBackgroundClassName,
 }) => {
+  const appliedBackgroundClass =
+    backgroundClassName ?? "bg-[#0CA474]";
+  const secondaryBackgroundClass =
+    secondaryImageBackgroundClassName ?? appliedBackgroundClass;
+
   return (
-    <section className="relative w-screen left-1/2 -translate-x-1/2 pt-40 py-20 px-6 md:px-20">
-      <div className="relative mx-auto max-w-5xl">
-        <div className="relative overflow-hidden  bg-[#0CA474] py-28 px-6 md:px-16 lg:px-24">
+    <section className="relative w-screen left-1/2 -translate-x-1/2 pt-20 py-20 px-6 md:px-20">
+      <div className="relative mx-auto max-w-6xl">
+        <div
+          className={`relative overflow-hidden py-28 px-6 md:px-16 lg:px-24 ${appliedBackgroundClass}`}
+        >
           {/* Curved white wave at the top */}
           <div className="pointer-events-none absolute -top-px left-0 w-full h-32 z-20">
             <svg
@@ -80,11 +95,20 @@ const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
 
             {/* Right Image */}
             <div className="flex justify-center md:justify-end">
-              <img
-                src={imageSrc}
-                alt="feature preview"
-                className="shadow-xl w-full max-w-[760px] md:max-w-[720px] lg:max-w-[860px] object-contain border border-white/30"
-              />
+              <div className={secondaryImageSrc ? "relative" : undefined}>
+                <img
+                  src={imageSrc}
+                  alt="feature preview"
+                  className=" w-full max-w-[760px] md:max-w-[720px] lg:max-w-[860px] object-contain  "
+                />
+                {secondaryImageSrc && (
+                  <img
+                    src={secondaryImageSrc}
+                    alt={secondaryImageAlt ?? "additional feature preview"}
+                    className={`shadow-xl w-40 md:w-48 lg:w-56 object-contain border border-white/30 rounded-3xl absolute -bottom-10 -left-10 md:-left-16 ${secondaryBackgroundClass}`}
+                  />
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -98,7 +122,7 @@ const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
             xmlns="http://www.w3.org/2000/svg"
           >
             <path
-              d="M0,90 Q720,0 1440,120 L1440,120 L0,120 Z"
+              d="M0,90 Q720,0 1440,90 L1440,120 L0,120 Z"
               fill="white"
             />
           </svg>

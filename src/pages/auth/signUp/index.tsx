@@ -20,8 +20,10 @@ const SignUpPage: React.FC = () => {
 
   return (
     <>
-      <LeftIcon />
-      <RightCircle />
+      <div>
+        <LeftIcon />
+        <RightCircle />
+      </div>
 
       {currentStep === 1 && (
         <AccountTypeSelection

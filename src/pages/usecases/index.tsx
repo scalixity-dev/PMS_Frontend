@@ -3,6 +3,11 @@ import AIFeaturesSection from "../../components/AIFeaturesSection";
 import ExplorePropertiesBanner from '../../components/ExplorePropertiesBanner';
 import ContentShowcaseSection from './sections/ContentShowcaseSection';
 import DualImageFeatureSection from './sections/DualImageFeatureSection';
+import HeroSection from './sections/hero';
+import SplitHeroFeature from '../../components/SplitHeroFeature';
+import KeepPropertySection from './sections/keepproperty';
+import ManageFeeSection from './sections/managefee';
+import AllInOneUseCaseSection from './sections/allinone';
 import { DollarSign, TrendingUp, Handshake, Award, ArrowLeft, CheckCircle2, Users, Edit, Monitor, Eye, AlignHorizontalJustifyCenter, SlidersHorizontal, FileCheck, FilePlus, FileText } from 'lucide-react';
 
 const usecaseFeatures = [

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Country, State } from 'country-state-city';
 import type { ICountry, IState } from 'country-state-city';
 import type { RegistrationFormProps } from './signUpProps';
+import { Link } from 'react-router-dom';
 
 // Helper function to apply consistent styling to inputs/selects
 const inputClasses = (hasValue: boolean = true) =>
@@ -201,6 +202,12 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
             >
               Start my free trial
             </button>
+          </div>
+          <div className="mb-8 text-center text-sm text-gray-600">
+              Already have an account?{' '}
+              <Link to="/login" className="font-medium text-(--color-primary) hover:text-green-600 hover:underline">
+                Sign In
+              </Link>
           </div>
         </div>
       </div>

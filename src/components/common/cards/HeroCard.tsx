@@ -45,17 +45,22 @@ interface HeroCardProps {
   sectionPaddingClassName?: string;
   contentPaddingClassName?: string;
   contentClassName?: string;
+  sectionClassName?: string;
+  sideContentLeft?: React.ReactNode;
+  sideContentRight?: React.ReactNode;
   leftImageTopRightPattern?: boolean;
   leftImageBottomLeftPattern?: boolean;
   rightImageTopRightPattern?: boolean;
   rightImageBottomLeftPattern?: boolean;
   patternClassName?: string;
   rightSideLogo?: React.ReactNode;
+  badgeLogoPosition?: 'left' | 'right';
   badgeCentered?: boolean;
   hideImage?: boolean;
   isCentered?: boolean;
   backgroundCardClassName?: string;
   maxWidthClassName?: string;
+  embeddedContent?: React.ReactNode;
 }
 
 const HeroCard: React.FC<HeroCardProps> = ({
@@ -97,17 +102,22 @@ const HeroCard: React.FC<HeroCardProps> = ({
   sectionPaddingClassName = 'p-4 sm:p-4 lg:p-2 xl:p-6',
   contentPaddingClassName = 'px-6 py-10 sm:px-8 sm:py-14 lg:px-16 lg:py-14 2xl:py-20 3xl:px-20 4xl:px-2',
   contentClassName = '',
+  sectionClassName = 'bg-white',
+  sideContentLeft,
+  sideContentRight,
   leftImageTopRightPattern = false,
   leftImageBottomLeftPattern = false,
   rightImageTopRightPattern = false,
   rightImageBottomLeftPattern = false,
   patternClassName,
   rightSideLogo,
+  badgeLogoPosition = 'right',
   badgeCentered = false,
   hideImage = false,
   isCentered = false,
   backgroundCardClassName = 'bg-(--color-header-bg)',
   maxWidthClassName = 'max-w-9xl',
+  embeddedContent,
 }) => {
   const hasSideImages = Boolean(leftImageSrc && rightImageSrc);
   const gridCols = hasSideImages
@@ -121,6 +131,7 @@ const HeroCard: React.FC<HeroCardProps> = ({
       badge={badge}
       badgeClassName={badgeClassName}
       badgeLogo={rightSideLogo}
+      badgeLogoPosition={badgeLogoPosition}
       badgeCentered={badgeCentered}
       title={title}
       description={description}
@@ -136,6 +147,9 @@ const HeroCard: React.FC<HeroCardProps> = ({
       titleMarginBottom={titleMarginBottom}
       descriptionMarginBottom={descriptionMarginBottom}
       isCentered={isCentered || hideImage}
+      sideContentLeft={sideContentLeft}
+      sideContentRight={sideContentRight}
+      embeddedContent={embeddedContent}
     />
   );
 
@@ -236,7 +250,7 @@ const HeroCard: React.FC<HeroCardProps> = ({
   );
 
   return (
-    <section className={`${maxWidthClassName} mx-auto bg-white ${sectionPaddingClassName}`}>
+    <section className={`${maxWidthClassName} mx-auto ${sectionClassName} ${sectionPaddingClassName}`}>
       {showBackgroundCard ? (
         <div className={`rounded-3xl ${backgroundCardClassName} shadow-md lg:min-h-40 3xl:min-h-[48.5rem] overflow-visible ${contentPaddingClassName}`}>
           {content}

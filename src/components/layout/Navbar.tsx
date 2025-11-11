@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import logo from '../../assets/images/logo.png';
-import { ClipboardCheck, FileText, DollarSign, Users } from 'lucide-react';
+import { ClipboardCheck, FileText, DollarSign, Users, UserCog } from 'lucide-react';
 
 const baseLink = 'px-3 py-2 rounded-md font-heading text-[14px] font-light leading-[130%] tracking-normal text-white transition-colors active:bg-(--color-primary)';
 const pillActive = 'rounded-2xl  bg-[var(--color-primary)] text-white px-5 py-3';
@@ -44,6 +44,8 @@ const Navbar: React.FC = () => {
   const isFeaturesActive = pathname.startsWith('/features');
   // Check if we're on any pricing page
   const isPricingActive = pathname.startsWith('/pricing')
+  // Check if we're on any resource page
+  const isResourceActive = pathname.startsWith('/resources')
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -61,53 +63,6 @@ const Navbar: React.FC = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isFeaturesDropdownOpen]);
-
-  // Navbar for Login Page
-  if (pathname === '/login') {
-    return (
-      <header className="bg-(--color-navbar-bg) sticky top-0 z-50 text-white">
-        <nav className="mx-auto flex w-full max-w-7xl items-center justify-between px-16 xl:px-0 py-2.5 md:py-3 lg:py-3.5 h-[60px] md:h-[72px] lg:h-20 opacity-100 relative">
-          <Link to="/" className="flex items-center gap-2">
-            <img src={logo} alt="PMS Logo" className="h-10 w-10 brightness-0 invert" />
-            <span className="font-body text-[20px] md:text-[20px] font-bold leading-[150%] tracking-normal">PMS</span>
-          </Link>
-          
-          <div className="flex items-center hover:bg-transparent">
-            <Link 
-              to="/signup"
-              className="inline-flex items-center justify-center w-[100px] md:w-[120px] xl:w-[140px] h-10 md:h-12 rounded-[54.49px] border-[1.21px] border-transparent font-heading text-[12px] md:text-[14px] leading-7 md:leading-[32.21px] font-semibold text-center align-middle text-white bg-(--color-primary) hover:border-white transition-colors duration-200"
-            >
-              Sign up <ArrowNE />
-            </Link>
-          </div>
-        </nav>
-      </header>
-    );
-  }
-
-  // Navbar for Signup Page
-  if (pathname === '/signup') {
-    return (
-      <header className="bg-(--color-navbar-bg) sticky top-0 z-50 text-white">
-        <nav className="mx-auto flex w-full max-w-7xl items-center justify-between px-16 xl:px-0 py-2.5 md:py-3 lg:py-3.5 h-[60px] md:h-[72px] lg:h-20 opacity-100 relative">
-          <Link to="/" className="flex items-center gap-2">
-            <img src={logo} alt="PMS Logo" className="h-10 w-10 brightness-0 invert" />
-            <span className="font-body text-[20px] md:text-[20px] font-bold leading-[150%] tracking-normal">PMS</span>
-          </Link>
-          
-          <div className="flex items-center gap-2 md:gap-4 lg:gap-6">
-            <span className="font-heading text-[14px] font-light hidden sm:inline">Already have an account?</span>
-            <Link 
-              to="/login"
-              className="inline-flex items-center justify-center w-[100px] md:w-[120px] xl:w-[140px] h-10 md:h-12 rounded-[54.49px] border-[1.21px] border-transparent font-heading text-[12px] md:text-[14px] leading-7 md:leading-[32.21px] font-semibold text-center align-middle text-white bg-(--color-primary) hover:border-white transition-colors duration-200"
-            >
-              Sign In <ArrowNE />
-            </Link>
-          </div>
-        </nav>
-      </header>
-    );
-  }
 
   return (
     <header className="bg-(--color-navbar-bg) sticky top-0 z-50 text-white">
@@ -178,6 +133,17 @@ const Navbar: React.FC = () => {
                   </div>
                   <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
                 </Link>
+                <Link 
+                  to="/features/team" 
+                  onClick={() => setIsFeaturesDropdownOpen(false)}
+                  className="group flex items-center justify-between px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors rounded-md mx-2"
+                >
+                  <div className="flex items-center gap-2">
+                    <UserCog size={18} className="text-gray-700" />
+                    Team
+                  </div>
+                  <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
+                </Link>
               </div>
             )}
           </div>
@@ -185,7 +151,10 @@ const Navbar: React.FC = () => {
           <button className={`${baseLink} ${mutedLink}`} disabled>
             Use Cases
           </button>
-          <button className={`${baseLink} ${mutedLink}`} disabled>
+          <button
+            className={`${baseLink} ${isResourceActive ? pillActive : mutedLink}`}
+            onClick={() => navigate("/resources")}
+          >
             Resources
           </button>
           <button
@@ -198,22 +167,22 @@ const Navbar: React.FC = () => {
 
         {/* Right actions (desktop) */}
         <div className="hidden sm:flex items-center gap-2 md:gap-4 lg:gap-6">
-          <button
+          {!(pathname === '/login') && <button
             className="inline-flex items-center font-heading text-[14px] md:text-[16px] leading-7 md:leading-[32.21px] font-semibold capitalize text-white"
             aria-disabled="true"
             type="button"
             onClick={() => navigate("/login")}
           >
             <UserIcon /> Login
-          </button>
-          <button
+          </button>}
+          {!(pathname === '/signup') && <button
             className="hidden md:inline-flex items-center justify-center w-[100px] md:w-[120px] xl:w-[140px] h-10 md:h-12 rounded-[54.49px] border-[1.21px] border-[#E2E2E2] font-heading text-[12px] md:text-[14px] leading-7 md:leading-[32.21px] font-semibold text-center align-middle text-white bg-(--color-primary)"
             aria-disabled="true"
             type="button"
             onClick={() => navigate("/signup")}
           >
             Sign up <ArrowNE />
-          </button>
+          </button>}
         </div>
 
         {/* Mobile menu button */}
@@ -319,6 +288,20 @@ const Navbar: React.FC = () => {
                     </div>
                     <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
                   </Link>
+                  <Link 
+                    onClick={() => {
+                      setIsMobileOpen(false);
+                      setIsMobileFeaturesDropdownOpen(false);
+                    }}
+                    to="/features/team" 
+                    className={`${baseLink} ${mutedLink} group flex items-center justify-between`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <UserCog size={18} />
+                      Team
+                    </div>
+                    <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
+                  </Link>
                 </div>
               )}
             </div>
@@ -326,26 +309,30 @@ const Navbar: React.FC = () => {
             <button className={`${baseLink} ${mutedLink}`} disabled>
               Use Cases
             </button>
-            <button className={`${baseLink} ${mutedLink}`} disabled>
+            <button className={`${baseLink} ${isResourceActive ? pillActive : mutedLink}`} onClick={() => navigate("/resources")}>
               Resources
             </button>
-            <button className={`${baseLink} ${mutedLink}`} onClick={() => navigate("/pricing")}>
+            <button className={`${baseLink} ${isPricingActive ? pillActive : mutedLink}`} onClick={() => navigate("/pricing")}>
               Pricing
             </button>
           </div>
           <div className="mt-3 flex flex-col gap-3">
-            <button
-              className="inline-flex items-center font-heading text-[12px] leading-7 font-semibold capitalize text-white"
-              onClick={() => navigate("/login")}
-              type="button">
-              <UserIcon /> Login
-            </button>
-            <button
-              className="inline-flex items-center justify-center w-full h-11 rounded-[54.49px] border-[1.21px] border-[#E2E2E2] font-heading text-[12px] leading-7 font-semibold text-center align-middle text-white bg-(--color-primary)"
-              onClick={() => navigate("/signup")}
-              type="button">
-              Sign up <ArrowNE />
-            </button>
+            {!(pathname === '/login') && <button
+            className="inline-flex items-center font-heading text-[14px] md:text-[16px] leading-7 md:leading-[32.21px] font-semibold capitalize text-white"
+            aria-disabled="true"
+            type="button"
+            onClick={() => navigate("/login")}
+          >
+            <UserIcon /> Login
+          </button>}
+          {!(pathname === '/signup') && <button
+            className="hidden md:inline-flex items-center justify-center w-[100px] md:w-[120px] xl:w-[140px] h-10 md:h-12 rounded-[54.49px] border-[1.21px] border-[#E2E2E2] font-heading text-[12px] md:text-[14px] leading-7 md:leading-[32.21px] font-semibold text-center align-middle text-white bg-(--color-primary)"
+            aria-disabled="true"
+            type="button"
+            onClick={() => navigate("/signup")}
+          >
+            Sign up <ArrowNE />
+          </button>}
           </div>
         </div>
       </div>
