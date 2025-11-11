@@ -34,6 +34,20 @@ const usecaseFeatures = [
 const UseCasesPage: React.FC = () => {
   return (
     <section className="w-full">
+      <HeroSection />
+
+      <SplitHeroFeature
+        title="Find the right PMS, faster"
+        description="Save up to 20 hours a week with online applications, background checks, and credit reports, helping you choose pms  with confidence."
+        imageSrc="/lease-invoice.png"
+        backgroundClassName="bg-[#88AF95]"
+        secondaryImageBackgroundClassName="bg-[#88AF95]"
+      />
+      <AllInOneUseCaseSection />
+      <KeepPropertySection />
+      <ManageFeeSection />
+     
+
       <AIFeaturesSection
         features={usecaseFeatures}
         color="#B3F5C9"
