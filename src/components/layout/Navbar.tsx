@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import logo from '../../assets/images/logo.png';
-import { ClipboardCheck, FileText, DollarSign, Users } from 'lucide-react';
+import { ClipboardCheck, FileText, DollarSign, Users, UserCog } from 'lucide-react';
 
 const baseLink = 'px-3 py-2 rounded-md font-heading text-[14px] font-light leading-[130%] tracking-normal text-white transition-colors active:bg-(--color-primary)';
 const pillActive = 'rounded-2xl  bg-[var(--color-primary)] text-white px-5 py-3';
@@ -130,6 +130,17 @@ const Navbar: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <Users size={18} className="text-gray-700" />
                     Leads
+                  </div>
+                  <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
+                </Link>
+                <Link 
+                  to="/features/team" 
+                  onClick={() => setIsFeaturesDropdownOpen(false)}
+                  className="group flex items-center justify-between px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors rounded-md mx-2"
+                >
+                  <div className="flex items-center gap-2">
+                    <UserCog size={18} className="text-gray-700" />
+                    Team
                   </div>
                   <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
                 </Link>
@@ -274,6 +285,20 @@ const Navbar: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <Users size={18} />
                       Leads
+                    </div>
+                    <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
+                  </Link>
+                  <Link 
+                    onClick={() => {
+                      setIsMobileOpen(false);
+                      setIsMobileFeaturesDropdownOpen(false);
+                    }}
+                    to="/features/team" 
+                    className={`${baseLink} ${mutedLink} group flex items-center justify-between`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <UserCog size={18} />
+                      Team
                     </div>
                     <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
                   </Link>
