@@ -1,5 +1,10 @@
 import React from 'react';
 import AIFeaturesSection from "../../components/AIFeaturesSection";
+import HeroSection from './sections/hero';
+import SplitHeroFeature from '../../components/SplitHeroFeature';
+import KeepPropertySection from './sections/keepproperty';
+import ManageFeeSection from './sections/managefee';
+import AllInOneUseCaseSection from './sections/allinone';
 import { DollarSign, TrendingUp, Handshake } from 'lucide-react';
 
 const usecaseFeatures = [
@@ -26,14 +31,24 @@ const usecaseFeatures = [
 const UseCasesPage: React.FC = () => {
   return (
     <section className="w-full">
-      <div className="max-w-7xl mx-auto px-6 md:px-8 lg:px-0 py-16 text-center">
-        <h1 className="text-3xl md:text-4xl font-heading font-bold text-gray-900 mb-4">Use Cases</h1>
-        <p className="text-gray-700 max-w-3xl mx-auto">
-          Under Working...
-        </p>
-      </div>
-
-  <AIFeaturesSection features={usecaseFeatures} color="#B3F5C9" textColor="#07351E" buttonText='Read More' />
+      <HeroSection />
+      <AIFeaturesSection
+        features={usecaseFeatures}
+        color="#B3F5C9"
+        textColor="#07351E"
+        buttonText="Read More"
+      />
+      <SplitHeroFeature
+        title="Find the right PMS, faster"
+        description="Save up to 20 hours a week with online applications, background checks, and credit reports, helping you choose pms  with confidence."
+        imageSrc="/lease-invoice.png"
+        backgroundClassName="bg-[#88AF95]"
+        secondaryImageBackgroundClassName="bg-[#88AF95]"
+      />
+      <AllInOneUseCaseSection />
+      <KeepPropertySection />
+      <ManageFeeSection />
+     
     </section>
   );
 };
