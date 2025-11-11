@@ -80,7 +80,7 @@ export const PricingCard: React.FC<PricingCardProps> = ({
         <button
           className={`w-[80%] py-3 rounded-md font-semibold transition-colors duration-200 ${buttonClasses} flex items-center justify-center space-x-2`}
         >
-          <span>Start 14-days trail</span>
+          <span>Start 14-days trial</span>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             className="h-5 w-5"

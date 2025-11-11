@@ -11,6 +11,7 @@ import LoginPage from './pages/auth/login';
 import SignUpPage from './pages/auth/signUp';
 import TeamPage from './pages/features/team/index';
 import UseCasesPage from './pages/usecases';
+import ResourcePage from './pages/resources';
 
 const App: React.FC = () => {
   return (
@@ -26,6 +27,7 @@ const App: React.FC = () => {
           <Route path="/features/finance" element={<FinancePage />} />
           <Route path="/features/leads" element={<LeadsPage />} />
           <Route path="/features/team" element={<TeamPage />} />
+          <Route path="/resources" element={<ResourcePage />} />
           <Route path="/pricing" element={<PricingPage />} />
           <Route path="*" element={<HomePage />} />
         </Route>

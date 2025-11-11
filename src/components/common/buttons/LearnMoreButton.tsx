@@ -21,7 +21,7 @@ const LearnMoreButton: React.FC<LearnMoreButtonProps> = ({
   className = ''
 }) => {
   const baseClassName = variant === 'hero'
-    ? `inline-flex items-center justify-center w-36 h-14 gap-2 rounded-lg px-5 py-4 border-2 border-[#4B5563] bg-transparent opacity-100 rotate-0 font-heading font-medium text-lg leading-none whitespace-nowrap tracking-[0] text-black transition-colors duration-200 hover:bg-[#1F2937] hover:text-white focus:outline-none focus:ring-2 focus:ring-[#1F2937]/40 ${className}`
+    ? `inline-flex items-center justify-center w-36 h-14 gap-2 rounded-lg px-5 py-4 border-2 border-[#4B5563] bg-transparent opacity-100 font-heading font-medium text-lg leading-none whitespace-nowrap tracking-[0] text-black transition-colors duration-200 hover:bg-[#1F2937] hover:text-white focus:outline-none focus:ring-2 focus:ring-[#1F2937]/40 ${className}`
     : `inline-flex items-center justify-center w-full border-0 py-3 rounded-md ${bgClass ?? 'bg-[#3A4E33]'} ${textClass ?? 'text-white'} transition-colors transition-transform transition-shadow duration-200 hover:brightness-90 hover:-translate-y-px hover:shadow-md focus:outline-none focus:ring-2 focus:ring-black/10 ${className}`;
 
   // If 'to' prop is provided, render as Link, otherwise as button
