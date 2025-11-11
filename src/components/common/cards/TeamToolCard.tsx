@@ -33,10 +33,10 @@ const TeamToolCard: React.FC<TeamToolCardProps> = ({
 
       {/* Card Content */}
       <div className="mt-12">
-        <h3 className="text-lg font-semibold text-[#0D1B2A] mb-3">
+        <h3 className="text-lg font-medium text-[#0D1B2A] mb-3">
           {title}
         </h3>
-        <p className="text-sm text-[#4B5563] leading-relaxed mb-6">
+        <p className="text-xs text-[#4B5563] leading-relaxed mb-10">
           {description}
         </p>
 
