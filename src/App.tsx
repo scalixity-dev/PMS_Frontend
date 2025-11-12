@@ -11,6 +11,7 @@ import LoginPage from './pages/auth/login';
 import SignUpPage from './pages/auth/signUp';
 import TeamPage from './pages/features/team/index';
 import UseCasesPage from './pages/usecases';
+import PmsPage from './pages/pms';
 import ResourcePage from './pages/resources';
 
 const App: React.FC = () => {
@@ -22,6 +23,7 @@ const App: React.FC = () => {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignUpPage />} />
           <Route path="/usecases" element={<UseCasesPage />} />
+          <Route path="/pms" element={<PmsPage />} />
           <Route path="/features/screening" element={<ScreeningPage />} />
           <Route path="/features/lease" element={<LeasePage />} />
           <Route path="/features/finance" element={<FinancePage />} />
