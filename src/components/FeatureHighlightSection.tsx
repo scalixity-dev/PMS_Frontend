@@ -2,6 +2,10 @@ import React from "react";
 import GetStartedButton from './common/buttons/GetStartedButton'
 
 interface FeatureHighlightSectionProps {
+  badge?: string;
+  badgeClassName?: string;
+  badgeLogo?: React.ReactNode;
+  badgeLogoPosition?: 'left' | 'right';
   title: string;
   subtitle: string;
   description: string;
@@ -12,6 +16,10 @@ interface FeatureHighlightSectionProps {
 }
 
 const FeatureHighlightSection: React.FC<FeatureHighlightSectionProps> = ({
+  badge,
+  badgeClassName,
+  badgeLogo,
+  badgeLogoPosition = 'right',
   title,
   subtitle,
   description,
@@ -25,6 +33,17 @@ const FeatureHighlightSection: React.FC<FeatureHighlightSectionProps> = ({
         <section className={`w-full flex flex-col items-center text-center py-12 md:py-20 ${backgroundClass} rounded-3xl overflow-hidden`}>
       {/* Content Section */}
       <div className="max-w-3xl px-4 mb-8 md:mb-12">
+        {badge && (
+          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium mb-4 ${badgeClassName || 'bg-green-100 text-green-700'}`}>
+            {badgeLogo && badgeLogoPosition === 'left' && (
+              <span className="flex-shrink-0">{badgeLogo}</span>
+            )}
+            <span>{badge}</span>
+            {badgeLogo && badgeLogoPosition === 'right' && (
+              <span className="flex-shrink-0">{badgeLogo}</span>
+            )}
+          </div>
+        )}
         <p className="text-lg text-[#175700] font-semibold mb-5">{subtitle}</p>
         <h2 className="text-5xl md:text-5xl font-semibold text-[#0D1B2A] mb-5">
           {title}
