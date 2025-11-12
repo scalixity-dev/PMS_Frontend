@@ -16,12 +16,14 @@ const ListingWebsiteSection: React.FC = () => {
       learnMoreLabel=""
       showStamp={false}
       showBackgroundCard={false}
-      imageSrc="/listing.png"
+      imageSrc="/Employe.png"
       imageWidth={420}
-      imageTranslate="ml-auto"
+      imageTranslate=" -translate-x-6 sm:translate-x-28 translate-y-6 sm:translate-y-2"
       showImageShadow={false}
       imageNoTranslate={true}
-      imageMaxHeight="max-h-[27rem]"
+      imageMaxHeight="max-h-[40rem]"
+      backgroundImageSrc="/vector3.png"
+      backgroundImageTranslate="translate(100px, 40px) scale(1.3)"
       titleMarginBottom="mb-4"
       descriptionMarginBottom="mb-6"
     />

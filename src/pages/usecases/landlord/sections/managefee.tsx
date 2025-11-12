@@ -1,7 +1,7 @@
 import React from 'react';
 import { Receipt, Wallet2, PieChart } from 'lucide-react';
-import HeroCard from '../../../components/common/cards/HeroCard';
-import UsecaseCard from '../../../components/common/cards/usecasecard';
+import HeroCard from '../../../../components/common/cards/HeroCard';
+import UsecaseCard from '../../../../components/common/cards/usecasecard';
 
 const ManageFeeSection: React.FC = () => {
   const usecaseFeatures = [

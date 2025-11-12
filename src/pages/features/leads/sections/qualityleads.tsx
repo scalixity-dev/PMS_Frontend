@@ -17,12 +17,14 @@ const QualityLeadsSection: React.FC = () => {
       showStamp={false}
       showBackgroundCard={false}
       showImageShadow={false}
-      imageSrc="/quality-leads.png"
+      imageSrc="/Group.png"
       imageAlt="Dashboard showing qualified leads"
       imageContain
-      imageMaxHeight="max-h-[40rem]"
+      imageMaxHeight="max-h-[30rem]"
       imageNoTranslate
-      imageTranslate="translate-x-6 sm:translate-x-10 lg:translate-x-32"
+      imageTranslate="-translate-x-6 sm:-translate-x-2 translate-y-6 sm:translate-y-2"
+      backgroundImageSrc="/vector5.png"
+      backgroundImageTranslate="translate(400px, 60px) scale(1.7)"
       sectionPaddingClassName="py-12 px-0"
       contentPaddingClassName="py-10"
       maxWidthClassName="max-w-7xl"

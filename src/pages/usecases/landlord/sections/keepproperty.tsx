@@ -1,7 +1,7 @@
 import React from 'react';
 import { ClipboardList, BarChart3, Send } from 'lucide-react';
-import HeroCard from '../../../components/common/cards/HeroCard';
-import UsecaseCard from '../../../components/common/cards/usecasecard';
+import HeroCard from '../../../../components/common/cards/HeroCard';
+import UsecaseCard from '../../../../components/common/cards/usecasecard';
 
 const KeepPropertySection: React.FC = () => {
   const usecaseFeatures = [
@@ -41,7 +41,7 @@ const KeepPropertySection: React.FC = () => {
       titleMarginBottom="mb-4"
       descriptionMarginBottom="mb-6"
       sectionClassName="bg-transparent"
-      sectionPaddingClassName="px-6 sm:px-10 lg:px-0 "
+      sectionPaddingClassName="px-6 sm:px-10 lg:px-0 py-20 "
       contentPaddingClassName="px-0"
       maxWidthClassName="max-w-7xl"
       embeddedContent={

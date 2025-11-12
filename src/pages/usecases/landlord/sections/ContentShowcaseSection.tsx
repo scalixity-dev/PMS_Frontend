@@ -1,6 +1,6 @@
 import React from "react";
 import { ArrowRight } from "lucide-react";
-import GetStartedButton from "../../../components/common/buttons/GetStartedButton";
+import GetStartedButton from "../../../../components/common/buttons/GetStartedButton";
 
 interface Feature {
   icon: React.ReactNode;

@@ -14,10 +14,13 @@ const RentalPropertySection: React.FC = () => {
       showStamp={false}
       showBackgroundCard={false}
       reverseLayout={true}
-      imageSrc="/rental-property.png"
+      imageSrc="/Group.png"
       showImageShadow={false}
       imageNoTranslate={true}
-      imageMaxHeight="max-h-[27rem]"
+      imageMaxHeight="max-h-[30rem]"
+      backgroundImageSrc="/vector4.png"
+      backgroundImageTranslate="translate(-60px, -60px) scale(1.1)"
+      imageTranslate="-translate-x-6 sm:-translate-x-2 translate-y-6 sm:translate-y-2"
       titleMarginBottom="mb-4"
       descriptionMarginBottom="mb-6"
     />
