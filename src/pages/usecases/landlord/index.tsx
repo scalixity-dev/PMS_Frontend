@@ -110,6 +110,20 @@ const UseCasesPage: React.FC = () => {
         imageSrc="/lease-invoice.png"
         backgroundClassName="bg-[#88AF95]"
         secondaryImageBackgroundClassName="bg-[#88AF95]"
+        features={[
+          {
+            icon: <Users size={28} />,
+            title: "Improve Occupancy",
+            description:
+              "Fill vacancies up to 15% sooner with custom applications, allowing you to pre-screen and find applicants faster.",
+          },
+          {
+            icon: <CheckCircle2 size={28} />,
+            title: "Assign Fees",
+            description:
+              "Set up application fees automatically so the screening costs are always covered, no sweat. ",
+          },
+        ]}
       />
       <ContentShowcaseSection
         reverse={false}

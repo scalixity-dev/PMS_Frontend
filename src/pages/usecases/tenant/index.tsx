@@ -1,6 +1,8 @@
 import React from "react";
 import FeatureHighlightSection from "../../../components/FeatureHighlightSection";
 import RentalFeaturesSection from "./sections/RentalFeaturesSection";
+import TakeCarePmsSection from "./sections/takecarepms";
+import HandleMaintenanceSection from "./sections/handlemaintenance";
 import { Users } from 'lucide-react';
 
 const TenantPage: React.FC = () => {
@@ -19,6 +21,8 @@ const TenantPage: React.FC = () => {
         </div>
 
         <RentalFeaturesSection />
+        <TakeCarePmsSection />
+        <HandleMaintenanceSection />
     </section>
   );
 };

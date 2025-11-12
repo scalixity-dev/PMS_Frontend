@@ -35,13 +35,17 @@ const Navbar: React.FC = () => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isFeaturesDropdownOpen, setIsFeaturesDropdownOpen] = useState(false);
   const [isMobileFeaturesDropdownOpen, setIsMobileFeaturesDropdownOpen] = useState(false);
+  const [isUseCasesDropdownOpen, setIsUseCasesDropdownOpen] = useState(false);
+  const [isMobileUseCasesDropdownOpen, setIsMobileUseCasesDropdownOpen] = useState(false);
   const featuresDropdownRef = useRef<HTMLDivElement>(null);
+  const useCasesDropdownRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const pathname = location.pathname;
   const navigate = useNavigate();
 
   // Check if we're on any features page
   const isFeaturesActive = pathname.startsWith('/features');
+  const isUseCasesActive = pathname.startsWith('/usecases');
   // Check if we're on any pricing page
   const isPricingActive = pathname.startsWith('/pricing')
   // Check if we're on any resource page
@@ -53,16 +57,21 @@ const Navbar: React.FC = () => {
       if (featuresDropdownRef.current && !featuresDropdownRef.current.contains(event.target as Node)) {
         setIsFeaturesDropdownOpen(false);
       }
+      if (useCasesDropdownRef.current && !useCasesDropdownRef.current.contains(event.target as Node)) {
+        setIsUseCasesDropdownOpen(false);
+      }
     };
 
-    if (isFeaturesDropdownOpen) {
+    const shouldListen = isFeaturesDropdownOpen || isUseCasesDropdownOpen;
+
+    if (shouldListen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isFeaturesDropdownOpen]);
+  }, [isFeaturesDropdownOpen, isUseCasesDropdownOpen]);
 
   return (
     <header className="bg-(--color-navbar-bg) sticky top-0 z-50 text-white">
@@ -81,7 +90,10 @@ const Navbar: React.FC = () => {
           {/* Features Dropdown */}
           <div className="relative" ref={featuresDropdownRef}>
             <button 
-              onClick={() => setIsFeaturesDropdownOpen(!isFeaturesDropdownOpen)}
+              onClick={() => {
+                setIsFeaturesDropdownOpen((prev) => !prev);
+                setIsUseCasesDropdownOpen(false);
+              }}
               className={`${baseLink} ${isFeaturesActive ? pillActive : mutedLink}`}
             >
               Features <ChevronDown />
@@ -148,9 +160,35 @@ const Navbar: React.FC = () => {
             )}
           </div>
 
-          <button className={`${baseLink} ${mutedLink}`} disabled>
-            Use Cases
-          </button>
+          <div className="relative" ref={useCasesDropdownRef}>
+            <button
+              onClick={() => {
+                setIsUseCasesDropdownOpen((prev) => !prev);
+                setIsFeaturesDropdownOpen(false);
+              }}
+              className={`${baseLink} ${isUseCasesActive ? pillActive : mutedLink}`}
+            >
+              Use Cases <ChevronDown />
+            </button>
+
+            {isUseCasesDropdownOpen && (
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 overflow-hidden">
+                <Link
+                  to="/usecases/landlord"
+                  onClick={() => setIsUseCasesDropdownOpen(false)}
+                  className="group flex items-center justify-between px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors rounded-md mx-2"
+                >
+                  <div className="flex items-center gap-2">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M3 9l9-6 9 6v11a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    Landlord
+                  </div>
+                  <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
+                </Link>
+              </div>
+            )}
+          </div>
           <button
             className={`${baseLink} ${isResourceActive ? pillActive : mutedLink}`}
             onClick={() => navigate("/resources")}
@@ -224,7 +262,10 @@ const Navbar: React.FC = () => {
             {/* Features Dropdown (Mobile) */}
             <div>
               <button 
-                onClick={() => setIsMobileFeaturesDropdownOpen(!isMobileFeaturesDropdownOpen)}
+                onClick={() => {
+                  setIsMobileFeaturesDropdownOpen((prev) => !prev);
+                  setIsMobileUseCasesDropdownOpen(false);
+                }}
                 className={`${baseLink} ${isFeaturesActive ? pillActive : mutedLink} w-full flex items-center justify-between`}
               >
                 Features <ChevronDown />
@@ -306,9 +347,38 @@ const Navbar: React.FC = () => {
               )}
             </div>
 
-            <button className={`${baseLink} ${mutedLink}`} disabled>
-              Use Cases
-            </button>
+            <div>
+              <button
+                onClick={() => {
+                  setIsMobileUseCasesDropdownOpen((prev) => !prev);
+                  setIsMobileFeaturesDropdownOpen(false);
+                }}
+                className={`${baseLink} ${isUseCasesActive ? pillActive : mutedLink} w-full flex items-center justify-between`}
+              >
+                Use Cases <ChevronDown />
+              </button>
+
+              {isMobileUseCasesDropdownOpen && (
+                <div className="ml-4 mt-1 flex flex-col gap-1">
+                  <Link
+                    onClick={() => {
+                      setIsMobileOpen(false);
+                      setIsMobileUseCasesDropdownOpen(false);
+                    }}
+                    to="/usecases/landlord"
+                    className={`${baseLink} ${mutedLink} group flex items-center justify-between`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 9l9-6 9 6v11a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      Landlord
+                    </div>
+                    <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
+                  </Link>
+                </div>
+              )}
+            </div>
             <button className={`${baseLink} ${isResourceActive ? pillActive : mutedLink}`} onClick={() => navigate("/resources")}>
               Resources
             </button>
