@@ -1,5 +1,5 @@
 import React from "react";
-import RentalFeatureCard from "../../../components/common/cards/RentalFeatureCard";
+import RentalFeatureCard from "../../../../components/common/cards/RentalFeatureCard";
 import { CreditCard, Monitor, RotateCcw } from "lucide-react";
 
 const RentalFeaturesSection: React.FC = () => {
