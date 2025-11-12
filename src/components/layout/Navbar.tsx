@@ -74,7 +74,8 @@ const Navbar: React.FC = () => {
   }, [isFeaturesDropdownOpen, isUseCasesDropdownOpen]);
 
   return (
-    <header className="bg-(--color-navbar-bg) sticky top-0 z-50 text-white">
+    <>
+    <header className="bg-(--color-navbar-bg) fixed top-0 left-0 right-0 z-50 text-white w-full">
       <nav className="mx-auto flex w-full max-w-7xl items-center justify-between px-16 xl:px-0 py-2.5 md:py-3 lg:py-3.5 h-[60px] md:h-[72px] lg:h-20 opacity-100 relative">
         <Link to="/" className="flex items-center gap-2">
           <img src={logo} alt="PMS Logo" className="h-10 w-10 brightness-0 invert" />
@@ -407,6 +408,8 @@ const Navbar: React.FC = () => {
         </div>
       </div>
     </header>
+    <div className="h-[60px] md:h-[72px] lg:h-20" />
+    </>
   );
 };
 
