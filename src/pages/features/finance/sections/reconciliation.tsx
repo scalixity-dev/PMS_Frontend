@@ -26,7 +26,7 @@ const ReconciliationSection: React.FC = () => {
       imageMaxHeight="max-h-[30rem]"
       imageHeight={460}
       backgroundImageSrc="/vector3.png"
-      backgroundImageTranslate="translate(40px, 40px) "
+      backgroundImageTranslate="translate(40px, 40px)"
       imageTranslate="-translate-x-6 sm:translate-x-8 translate-y-6 sm:translate-y-14"
       titleMarginBottom="mb-4"
       descriptionMarginBottom="mb-6"
