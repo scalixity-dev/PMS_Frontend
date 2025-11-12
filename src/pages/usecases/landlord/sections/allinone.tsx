@@ -2,7 +2,7 @@ import React from "react";
 
 const AllInOneUseCaseSection: React.FC = () => {
   return (
-    <section className="relative overflow-hidden bg-white px-6 py-24 sm:px-10">
+    <section className="relative overflow-hidden bg-white px-6 py-20 sm:px-10">
       <div className="mx-auto max-w-7xl flex w-full  flex-col items-center gap-14 lg:flex-row lg:items-start lg:gap-20">
         <div className="max-w-xl text-center lg:text-left">
           <span className="inline-flex items-center rounded-sm border border-[#0CA474]/30 bg-[#E5F8EE] px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] text-[#0CA474] shadow-sm">

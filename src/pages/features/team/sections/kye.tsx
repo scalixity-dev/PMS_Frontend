@@ -19,11 +19,14 @@ const KyeSection: React.FC = () => {
       showStamp={false}
       showBackgroundCard={false}
       reverseLayout
-      imageSrc="/maintenance.png"
+      imageSrc="/Group.png"
       imageAlt="AI drafted property description preview"
       imageContain
       imageMaxHeight="max-h-[35rem]"
       imageNoTranslate
+      backgroundImageSrc="/vector1.png"
+      backgroundImageTranslate="translate(0px, -40px)"
+      imageTranslate="-translate-x-6 sm:-translate-x-20 translate-y-6 sm:translate-y-10"
       showImageShadow={false}
       titleMarginBottom="mb-4"
       descriptionMarginBottom="mb-6"

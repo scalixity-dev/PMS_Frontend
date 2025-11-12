@@ -24,11 +24,13 @@ const LeaseHeroSection: React.FC = () => {
       showStamp={false}
       learnMoreLabel=""
       showBackgroundCard={false}
-      imageSrc="/lease_hero.png"
+      imageSrc="/lease-hero2.png"
       showImageShadow={false}
       imageNoTranslate={true}
-      
-      imageMaxHeight="max-h-[27rem]"
+      imageMaxHeight="max-h-[30rem]"
+      backgroundImageSrc="/vector6.png"
+      backgroundImageTranslate="translate(50px, 0px) "
+      imageTranslate="-translate-x-6 sm:-translate-x-2 translate-y-6 sm:translate-y-2"
       imageContain={true}
       titleMarginBottom="mb-4"
       descriptionMarginBottom="mb-6"

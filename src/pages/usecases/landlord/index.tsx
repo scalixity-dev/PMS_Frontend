@@ -1,11 +1,11 @@
 import React from 'react';
-import AIFeaturesSection from "../../components/AIFeaturesSection";
-import ExplorePropertiesBanner from '../../components/ExplorePropertiesBanner';
+import AIFeaturesSection from "../../../components/AIFeaturesSection";
+import ExplorePropertiesBanner from '../../../components/ExplorePropertiesBanner';
 import TeamToolsSection from './sections/TeamToolsSection'; 
 import ContentShowcaseSection from './sections/ContentShowcaseSection';
 import DualImageFeatureSection from './sections/DualImageFeatureSection';
-import HeroSection from './sections/hero';
-import SplitHeroFeature from '../../components/SplitHeroFeature';
+import HeroSection from './sections/landlordhero';
+import SplitHeroFeature from '../../../components/SplitHeroFeature';
 import KeepPropertySection from './sections/keepproperty';
 import ManageFeeSection from './sections/managefee';
 import AllInOneUseCaseSection from './sections/allinone';
@@ -172,9 +172,9 @@ const UseCasesPage: React.FC = () => {
       <DualImageFeatureSection />
       
       <AllInOneUseCaseSection />
-      
-      <KeepPropertySection />
       <TeamToolsSection/>
+      <KeepPropertySection />
+      
       <ManageFeeSection />
       <ExplorePropertiesBanner />
     </section>

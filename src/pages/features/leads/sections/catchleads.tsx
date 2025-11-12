@@ -17,11 +17,12 @@ const CatchLeadsSection: React.FC = () => {
       showBackgroundCard={false}
       showStamp={false}
       showImageShadow={false}
-      imageSrc="/reconciliation.png"
+      imageSrc="/Employe.png"
       imageAlt="Reconciliation"
       imageWidth={400}
-      imageTranslate="translate-x-4 sm:translate-x-6 lg:translate-x-56"
-
+      imageTranslate="-translate-x-6 sm:translate-x-28 translate-y-6 sm:translate-y-0"
+      backgroundImageSrc="/vector3.png"
+      backgroundImageTranslate="translate(120px, 20px) scale(1.2)"
       titleMarginBottom="mb-4"
       descriptionMarginBottom="mb-6"
       maxWidthClassName="max-w-7xl"
