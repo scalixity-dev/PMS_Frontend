@@ -12,11 +12,14 @@ const ListYourRentalSection: React.FC = () => {
       showStamp={false}
       showBackgroundCard={false}
       showImageShadow={false}
-      imageSrc="/list-rental.png"
+      imageSrc="/Group.png"
       imageAlt="Advertise your rental property"
       imageContain
       imageMaxHeight="max-h-[40rem]"
       imageNoTranslate
+      backgroundImageSrc="/vector2.png"
+      backgroundImageTranslate="translate(-40px, -100px) scale(1.2)"
+      imageTranslate="-translate-x-6 sm:translate-x-10 translate-y-6 sm:translate-y-10"
       sectionPaddingClassName="py-12 px-0"
       contentPaddingClassName="py-10"
       maxWidthClassName="max-w-7xl"

@@ -19,12 +19,15 @@ const ReconciliationSection: React.FC = () => {
       learnMoreLabel=""
       showStamp={false}
       showBackgroundCard={false}
-      imageSrc="/reconciliation.png"
+      imageSrc="/Employe.png"
       showImageShadow={false}
       imageNoTranslate={true}
       imageContain={true}
-      imageMaxHeight="max-h-[40rem]"
+      imageMaxHeight="max-h-[30rem]"
       imageHeight={460}
+      backgroundImageSrc="/vector3.png"
+      backgroundImageTranslate="translate(40px, 40px)"
+      imageTranslate="-translate-x-6 sm:translate-x-8 translate-y-6 sm:translate-y-14"
       titleMarginBottom="mb-4"
       descriptionMarginBottom="mb-6"
     />

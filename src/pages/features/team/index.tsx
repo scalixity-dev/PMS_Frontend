@@ -5,7 +5,7 @@ import AIFeaturesSection from '../../../components/AIFeaturesSection';
 import SplitHeroFeaturefull from '../../../components/SplitHeroFeaturefull';
 import ExplorePropertiesBanner from '../../../components/ExplorePropertiesBanner';
 import { Users, ListChecks, ShieldCheck, Clock } from 'lucide-react';
-import TeamManagementSection from './sections/teammanagement';
+import TeamManagementSection from './sections/teamhero';
 import KyeSection from './sections/kye';
 import Card from './sections/card';
 

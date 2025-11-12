@@ -1,5 +1,5 @@
 import React from "react";
-import TeamToolCard from "../../../components/common/cards/TeamToolCard";
+import TeamToolCard from "../../../../components/common/cards/TeamToolCard";
 
 const TeamToolsSection: React.FC = () => {
   const tools = [

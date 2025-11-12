@@ -1,5 +1,5 @@
 import React from 'react';
-import HeroCard from '../../../components/common/cards/HeroCard';
+import HeroCard from '../../../../components/common/cards/HeroCard';
 import { Users } from 'lucide-react';
 
 const UseCasesHeroSection: React.FC = () => {

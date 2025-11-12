@@ -5,7 +5,7 @@ import LeadFeaturesGrid from './sections/LeadFeaturesGrid';
 import IconFeaturesRow from '../../../components/IconFeaturesRow';
 import ExplorePropertiesBanner from '../../../components/ExplorePropertiesBanner';
 import { MousePointerClick, Home, ShieldCheck, Star, MailCheck } from 'lucide-react';
-import LeadsHeroSection from './sections/hero';
+import LeadsHeroSection from './sections/leadshero';
 import CatchLeadsSection from './sections/catchleads';
 import PremiumLeadsSection from './sections/premiumleads';
 import ConvertLeadsSection from './sections/convertleads';

@@ -13,11 +13,14 @@ const InspectionsSection: React.FC = () => {
       showStamp={false}
       showBackgroundCard={false}
       reverseLayout={true}
-      imageSrc="/inspections.png"
+      imageSrc="/Group.png"
       showImageShadow={false}
       imageNoTranslate={true}
       imageMaxHeight="max-h-[35rem]"
       imageHeight={460}
+      backgroundImageSrc="/vector2.png"
+      backgroundImageTranslate="translate(-80px, -20px) scale(1.2)"
+      imageTranslate="-translate-x-6 sm:-translate-x-20 translate-y-6 sm:translate-y-10"
       titleMarginBottom="mb-4"
       descriptionMarginBottom="mb-6"
     />

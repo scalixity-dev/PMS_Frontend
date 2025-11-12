@@ -17,9 +17,12 @@ const MaintenanceSection: React.FC = () => {
       learnMoreLabel=""
       showStamp={false}
       showBackgroundCard={false}
-      imageSrc="/maintenance.png"
+      imageSrc="/Group.png"
+      backgroundImageSrc="/vector1.png"
+      backgroundImageTranslate="translate(-40px, 0px)"
       showImageShadow={false}
       imageNoTranslate={true}
+      imageTranslate="translate-y-6 sm:translate-y-10"
       imageContain={true}
       imageMaxHeight="max-h-[40rem]"
       imageHeight={460}

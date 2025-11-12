@@ -4,15 +4,15 @@ import IconFeaturesRow from '../../../components/IconFeaturesRow';
 import GreenFeaturesSliderSection from '../../../components/GreenFeaturesSliderSection';
 import SplitHeroFeaturefull from '../../../components/SplitHeroFeaturefull';
 import SplitHeroFeatureReverse from '../../../components/SplitHeroFeatureReverse';
-import LeaseHeroSection from './sections/hero';
+import LeaseHeroSection from './sections/leasehero';
 import RentalLeaseSection from './sections/rentallease';
 import LeaseCardsSection from './sections/cards';
 import ListingWebsiteSection from './sections/listingwebsite';
 import RentalPropertySection from './sections/rentalproperty';
 import MaintenanceSection from './sections/Maintenance';
 import InspectionsSection from './sections/inspections';
-import EveryFeatureSection from './sections/everyfeaturesection';
-import EveryFeatureCenteredSection from './sections/everyfeaturecenteredsection';
+import EveryFeatureSection from './sections/leasefeaturesection';
+import EveryFeatureCenteredSection from './sections/leasefeaturecenteredsection';
 
 import { Grid, Home, Users, Monitor, FileText, Repeat, FileCheck, MessageSquare } from 'lucide-react';
 
