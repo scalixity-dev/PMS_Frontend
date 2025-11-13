@@ -33,14 +33,18 @@ const ManageFeeSection: React.FC = () => {
         getStartedLabel=""
         showStamp={false}
         showBackgroundCard={false}
-        imageSrc="/managefee.png"
+        imageSrc="/orderlist.png"
         showImageShadow={false}
         imageNoTranslate
-        imageMaxHeight="max-h-[27rem]"
+        imageWidth={600}
+        imageHeight={350}
+        imageMaxHeight="max-h-[35rem]"
+        backgroundImageSrc="/vector7.png"
+        backgroundImageTranslate="translate(-10px, 60px) scale(1.2)"
+        imageTranslate="-translate-x-6 sm:-translate-x-20 translate-y-6 sm:translate-y-20"
         titleMarginBottom="mb-4"
         descriptionMarginBottom="mb-6"
         sectionClassName="bg-transparent"
-        imageTranslate=" translate-y-6  lg:translate-y-20"
         sectionPaddingClassName="px-6 sm:px-10 lg:px-0 py-20 "
         contentPaddingClassName="px-0"
         maxWidthClassName="max-w-full"

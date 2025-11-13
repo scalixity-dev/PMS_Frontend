@@ -16,7 +16,8 @@ const UseCasesHeroSection: React.FC = () => {
         badgeClassName="inline-flex items-center gap-3 px-4 py-2 rounded-xl font-heading text-2xl text-[#0B696B] font-medium leading-[150%] tracking-normal bg-white [border-width:1.65px] border-[#0B696B]"
         badgeCentered
         badgeLogoPosition="left"
-        rightSideLogo={<Users className="h-5 w-5 text-[#0B696B]" strokeWidth={2.2} />}
+        badgeLogoWrapperClassName="inline-flex items-center justify-center w-10 h-10 rounded-full shrink-0 text-primary "
+        rightSideLogo={<Users className="h-6 w-6 text-[#0B696B]" strokeWidth={2.2} />}
         title="The all-in-one platform that helps you manage your portfolio with ease"
         description="Handle your rentals without the stress. PMSCloud brings listings, leases, payments, and maintenance in one place—saving you up to 20 hours a week."
         features={features}

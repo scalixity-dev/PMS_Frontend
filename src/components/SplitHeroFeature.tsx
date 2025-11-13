@@ -1,6 +1,12 @@
 import React from "react";
 import GetStartedButton from "./common/buttons/GetStartedButton";
 
+interface FeatureItem {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}
+
 interface SplitHeroFeatureProps {
   title: string;
   description: string;
@@ -11,6 +17,7 @@ interface SplitHeroFeatureProps {
   badgeText?: string;
   backgroundClassName?: string;
   secondaryImageBackgroundClassName?: string;
+  features?: FeatureItem[];
 }
 
 const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
@@ -23,6 +30,7 @@ const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
   badgeText,
   backgroundClassName,
   secondaryImageBackgroundClassName,
+  features,
 }) => {
   const appliedBackgroundClass =
     backgroundClassName ?? "bg-[#0CA474]";
@@ -30,10 +38,10 @@ const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
     secondaryImageBackgroundClassName ?? appliedBackgroundClass;
 
   return (
-    <section className="relative w-screen left-1/2 -translate-x-1/2 pt-20 py-20 px-6 md:px-20">
-      <div className="relative mx-auto max-w-6xl">
+    <section className="relative w-screen left-1/2 -translate-x-1/2 pt-20 py-20 px-6 md:px-0">
+      <div className="relative mx-auto max-w-7xl">
         <div
-          className={`relative overflow-hidden py-28 px-6 md:px-16 lg:px-24 ${appliedBackgroundClass}`}
+          className={`relative overflow-hidden py-28 px-6 md:px-16 lg:px-16 ${appliedBackgroundClass}`}
         >
           {/* Curved white wave at the top */}
           <div className="pointer-events-none absolute -top-px left-0 w-full h-32 z-20">
@@ -65,7 +73,7 @@ const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
           </div>
 
           {/* Content Wrapper */}
-          <div className="relative z-10 grid md:grid-cols-2 gap-10 items-center">
+          <div className="relative z-10 grid md:grid-cols-2 gap-10 items-start">
             {/* Left Content */}
             <div className="text-white max-w-lg">
               {(badgeText || icon) && (
@@ -86,9 +94,32 @@ const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
                 {title}
               </h2>
 
-              <p className="text-white/90 text-sm md:text-lg font-normal mb-16 leading-relaxed">
+              <p className="text-white/90 text-sm md:text-lg font-normal mb-10 leading-relaxed">
                 {description}
               </p>
+
+              {features && features.length > 0 && (
+                <div className="mb-16 grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {features.map((feature, index) => (
+                    <div
+                      key={`${feature.title}-${index}`}
+                      className="flex items-start gap-4"
+                    >
+                      <div className="bg-[#CDEBC3] rounded-2xl p-4 w-16 h-16 flex items-center justify-center shadow-sm shrink-0">
+                        <div className="text-[#081029]">{feature.icon}</div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-[#1F2937] leading-snug">
+                          {feature.title}
+                        </h3>
+                        <p className="mt-2 text-sm text-[#FFFFFF]/71 leading-relaxed">
+                          {feature.description}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <GetStartedButton size="sm" widthClass="w-32" />
             </div>

@@ -6,6 +6,7 @@ export interface HeroContentProps {
   badge?: string;
   badgeLogo?: React.ReactNode;
   badgeCentered?: boolean;
+  badgeLogoWrapperClassName?: string;
   badgeClassName?: string;
   badgeLogoPosition?: 'left' | 'right';
   title: string | React.ReactNode;
@@ -30,6 +31,7 @@ export interface HeroContentProps {
 const HeroContent: React.FC<HeroContentProps> = ({
   badge,
   badgeLogo,
+  badgeLogoWrapperClassName,
   badgeCentered = false,
   title,
   description,
@@ -68,13 +70,13 @@ const HeroContent: React.FC<HeroContentProps> = ({
           <p className={badgeClassName ? badgeClassName : "font-heading text-2xl text-[#0B696B] font-medium leading-[150%] tracking-normal text-secondary"}>
             <span className="inline-flex items-center gap-3">
               {badgeLogo && badgeLogoPosition === 'left' && (
-                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#CFFBBF] shrink-0 text-primary shadow-[0_4px_0_0_#00000040]">
+                <span className={badgeLogoWrapperClassName ?? "inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#CFFBBF] shrink-0 text-primary shadow-[0_4px_0_0_#00000040]"}>
                   {badgeLogo}
                 </span>
               )}
               <span>{badge}</span>
               {badgeLogo && badgeLogoPosition === 'right' && (
-                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#CFFBBF] shrink-0 text-primary shadow-[0_4px_0_0_#00000040]">
+                <span className={badgeLogoWrapperClassName ?? "inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#CFFBBF] shrink-0 text-primary shadow-[0_4px_0_0_#00000040]"}>
                   {badgeLogo}
                 </span>
               )}
