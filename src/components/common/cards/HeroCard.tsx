@@ -54,6 +54,7 @@ interface HeroCardProps {
   rightImageBottomLeftPattern?: boolean;
   patternClassName?: string;
   rightSideLogo?: React.ReactNode;
+  badgeLogoWrapperClassName?: string;
   badgeLogoPosition?: 'left' | 'right';
   badgeCentered?: boolean;
   hideImage?: boolean;
@@ -112,6 +113,7 @@ const HeroCard: React.FC<HeroCardProps> = ({
   patternClassName,
   rightSideLogo,
   badgeLogoPosition = 'right',
+  badgeLogoWrapperClassName,
   badgeCentered = false,
   hideImage = false,
   isCentered = false,
@@ -131,6 +133,7 @@ const HeroCard: React.FC<HeroCardProps> = ({
       badge={badge}
       badgeClassName={badgeClassName}
       badgeLogo={rightSideLogo}
+      badgeLogoWrapperClassName={badgeLogoWrapperClassName}
       badgeLogoPosition={badgeLogoPosition}
       badgeCentered={badgeCentered}
       title={title}
