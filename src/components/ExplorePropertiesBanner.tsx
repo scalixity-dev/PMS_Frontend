@@ -43,7 +43,7 @@ const ExplorePropertiesBanner = () => {
 
           {/* Button container - keeps button on the right and vertically centered on md+ */}
           <div className="mt-2 sm:mt-3 flex-shrink-0 md:mt-0">
-            <Link to="/features/screening" className="inline-block rounded-md bg-[var(--color-primary)] px-4 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-normal text-gray-50 transition-all duration-200 hover:opacity-90" aria-label="Explore properties">
+            <Link to="/signup" className="inline-block rounded-md bg-[var(--color-primary)] px-4 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-normal text-gray-50 transition-all duration-200 hover:opacity-90" aria-label="Explore properties">
               Explore Properties
             </Link>
           </div>

@@ -158,10 +158,10 @@ const FinancePage: React.FC = () => {
       />
 
       {/*AI features section (repeat from screenshot, styled) */}
-      <AIFeaturesSection
+      {/* <AIFeaturesSection
         features={featuresData.taxCards}
         color="#9AD4AD"
-      />
+      /> */}
 
       <FAQSection />
 

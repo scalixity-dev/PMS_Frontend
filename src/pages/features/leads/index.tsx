@@ -7,7 +7,7 @@ import ExplorePropertiesBanner from '../../../components/ExplorePropertiesBanner
 import { MousePointerClick, Home, ShieldCheck, Star, MailCheck } from 'lucide-react';
 import LeadsHeroSection from './sections/leadshero';
 import CatchLeadsSection from './sections/catchleads';
-import PremiumLeadsSection from './sections/premiumleads';
+// import PremiumLeadsSection from './sections/premiumleads';
 import ConvertLeadsSection from './sections/convertleads';
 import GoogleCalendarSection from './sections/googlecalendar';
 import SplitHeroFeature from '../../../components/SplitHeroFeature';
@@ -28,7 +28,7 @@ const LeadsPage: React.FC = () => {
         description="A moving PMS  has enough on their mind. With PMSCloud, you can document everything in minutes, store photos and notes, and keep things stress-free for everyone."
         imageSrc="https://res.cloudinary.com/dxwspucxw/image/upload/v1762494948/dee565d69987479109ffe7012bccf951b7f2a1d5_dtl9ch.png"
       />
-      <PremiumLeadsSection />
+      {/* <PremiumLeadsSection /> */}
       <ConvertLeadsSection />
       <GoogleCalendarSection />
       <SplitHeroFeature
