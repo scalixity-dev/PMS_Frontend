@@ -5,25 +5,25 @@ import ViewMoreButton from "../../../components/common/buttons/ViewMoreButton";
 
 export default function EverythingElseSection() {
   return (
-    <section className="max-w-7xl mx-auto px-6 py-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-20 items-stretch">
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 lg:py-10">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-20 items-stretch">
         {/* Left Side Box */}
         <div
-          className="flex flex-col rounded-lg p-10 w-full h-full space-y-6"
+          className="flex flex-col rounded-lg p-6 sm:p-8 lg:p-10 w-full h-full space-y-4 sm:space-y-6"
           style={{ backgroundColor: "var(--color-card-1)" }}
         >
           <div>
-            <h2 className="text-white text-3xl md:text-4xl font-semibold font-[var(--font-heading)] mb-4 leading-snug">
-              Plus, everything else you’d expect on our highly rated platform
+            <h2 className="text-white text-2xl sm:text-3xl lg:text-4xl font-semibold font-[var(--font-heading)] mb-3 sm:mb-4 leading-snug">
+              Plus, everything else you'd expect on our highly rated platform
             </h2>
-            <div className="mt-4">
+            <div className="mt-3 sm:mt-4">
               <ViewMoreButton to="/features/screening" />
             </div>
           </div>
         </div>
 
         {/* Right Side Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full justify-items-center h-full">
+        <div className="grid grid-cols-2 sm:grid-cols-2 gap-3 sm:gap-6 w-full justify-items-center h-full">
           <EverythingElseCard
             number="01"
             title="Tenant Mobile App"
