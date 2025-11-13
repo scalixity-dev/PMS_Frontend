@@ -1,5 +1,5 @@
 import KeyPointCard from "./common/cards/KeyPointCard";
-import PaginationButtons from "./common/buttons/PaginationButtons";
+// import PaginationButtons from "./common/buttons/PaginationButtons";
 import { Wallet, Landmark, FileCheck } from "lucide-react";
 
 const KeyPointsSection = () => {
@@ -28,7 +28,7 @@ const KeyPointsSection = () => {
         </h2>
 
         {/* Pagination Controls */}
-        <PaginationButtons containerClassName="flex gap-2" />
+        {/* <PaginationButtons containerClassName="flex gap-2" /> */}
       </div>
 
       {/* Cards */}

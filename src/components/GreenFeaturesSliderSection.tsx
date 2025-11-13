@@ -28,7 +28,7 @@ const GreenFeaturesSliderSection: React.FC<GreenFeaturesSliderProps> = ({ data =
           Every feature you’ll ever need, and more
         </h2>
 
-        <PaginationButtons containerClassName="flex gap-2" />
+        {/* <PaginationButtons containerClassName="flex gap-2" /> */}
       </div>
 
       {/* Cards */}

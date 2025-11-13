@@ -11,15 +11,15 @@ const TeamToolsSection: React.FC = () => {
     },
     {
       icon: "https://res.cloudinary.com/dxwspucxw/image/upload/v1762862465/037-writing_hisdhh.png",
-      title: "Built-in workflow tracking",
+      title: "Documentation and reporting",
       description:
-        "Assign specific tasks to team members, create custom permissions, and track every actionable item, in real-time.",
+        "Generate comprehensive reports, maintain detailed property records, and create professional documentation for all your rental operations.",
     },
     {
       icon: "https://res.cloudinary.com/dxwspucxw/image/upload/v1762862468/018-seo_zpycpk.png",
-      title: "Built-in workflow tracking",
+      title: "Marketing and visibility",
       description:
-        "Assign specific tasks to team members, create custom permissions, and track every actionable item, in real-time.",
+        "Boost your property listings with SEO optimization, reach more tenants through multiple channels, and maximize your rental property exposure.",
     },
   ];
 

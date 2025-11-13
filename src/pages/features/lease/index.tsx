@@ -7,7 +7,7 @@ import SplitHeroFeatureReverse from '../../../components/SplitHeroFeatureReverse
 import LeaseHeroSection from './sections/leasehero';
 import RentalLeaseSection from './sections/rentallease';
 import LeaseCardsSection from './sections/cards';
-import ListingWebsiteSection from './sections/listingwebsite';
+// import ListingWebsiteSection from './sections/listingwebsite';
 import RentalPropertySection from './sections/rentalproperty';
 import MaintenanceSection from './sections/Maintenance';
 import InspectionsSection from './sections/inspections';
@@ -93,7 +93,7 @@ const LeasePage: React.FC = () => {
       />
       <RentalLeaseSection />
       <LeaseCardsSection />
-      <ListingWebsiteSection />
+      {/* <ListingWebsiteSection /> */}
       <EveryFeatureSection />
       <RentalPropertySection />
       <AIFeaturesSection features={features} color={"var(--color-card-1)"} />
