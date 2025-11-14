@@ -14,7 +14,7 @@ const SupportSection: React.FC = () => {
           title="Technical Support"
           description="Already using our product and experiencing technical issues?"
           ctaText="Raise A Ticket"
-          ctaHref="#"
+          ctaHref="#contact-section"
         />
 
         {/* Card 2: Request a call */}
@@ -23,7 +23,7 @@ const SupportSection: React.FC = () => {
           title="Request a call"
           description="Contact Sales to get pricing information & product recommendation."
           ctaText="Schedule Call"
-          ctaHref="#"
+          ctaHref="#contact-section"
         />
 
         {/* Card 3: General Inquiries */}

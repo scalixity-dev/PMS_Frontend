@@ -53,25 +53,47 @@ interface Category {
 
 interface AppfolioPricingTableProps {
   categories: Category[];
+  isOpen?: boolean;
+  onToggle?: () => void;
 }
 
 // --- New Component Logic ---
 
-export const AppfolioPricingTable: React.FC<AppfolioPricingTableProps> = ({ categories }) => {
+export const AppfolioPricingTable: React.FC<AppfolioPricingTableProps> = ({ categories, isOpen = false, onToggle }) => {
   // State for mobile tab selection
   const [selectedPlan, setSelectedPlan] = useState<Plan>('growth');
 
   return (
-    <div className="w-full max-w-7xl mx-auto mt-6 mb-16">
-      
-      {/* =====================================================
-        DESKTOP VIEW (lg:block)
-        - One single table for all categories.
-        - Plan names are in the main header.
-        - Category titles are full-width rows in the body.
-        =====================================================
-      */}
-      <div className="hidden lg:block border-r border-b border-gray-200 overflow-hidden">
+    <div id="features-table" className="w-full max-w-7xl mx-auto mt-6 mb-16">
+      {/* Toggle Button */}
+      <div className="flex justify-center mb-6">
+        <button
+          onClick={onToggle}
+          className="flex items-center justify-center gap-2 px-6 py-3 bg-[#20CC95] text-white font-semibold rounded-lg hover:bg-[#17a673] transition-colors duration-200 shadow-md"
+        >
+          <span>{isOpen ? 'Hide' : 'View'} Feature Comparison</span>
+          <svg
+            className={`w-5 h-5 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Table Content - Conditionally Rendered */}
+      {isOpen && (
+        <>
+          {/* =====================================================
+            DESKTOP VIEW (lg:block)
+            - One single table for all categories.
+            - Plan names are in the main header.
+            - Category titles are full-width rows in the body.
+            =====================================================
+          */}
+          <div className="hidden lg:block border-r border-b border-gray-200 overflow-hidden">
         <table className="w-full table-fixed">
           {/* Plan Headers */}
           <thead className="text-white">
@@ -184,6 +206,8 @@ export const AppfolioPricingTable: React.FC<AppfolioPricingTableProps> = ({ cate
           ))}
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 };

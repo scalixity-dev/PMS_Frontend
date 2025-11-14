@@ -2,7 +2,11 @@ import { useState } from "react";
 import { Heading, SubHeading } from "./Headings"
 import PricingCardSection from "./PricingCardSection";
 
-export const PricingHeroSection = () => {
+interface PricingHeroSectionProps {
+  onLearnMoreClick?: () => void;
+}
+
+export const PricingHeroSection = ({ onLearnMoreClick }: PricingHeroSectionProps) => {
     const [isYearly, setIsYearly] = useState(false);
     return (
         <div className="relative z-10 mb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -33,7 +37,7 @@ export const PricingHeroSection = () => {
                 </div>
             </div>
 
-            <PricingCardSection />
+            <PricingCardSection isYearly={isYearly} onLearnMoreClick={onLearnMoreClick} />
       </div>
     )
 }

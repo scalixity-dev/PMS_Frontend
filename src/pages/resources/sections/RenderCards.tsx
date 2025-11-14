@@ -5,9 +5,10 @@ type FilterType = "Landlord" | "Tenant" | "Service Pro" | "Property Manager";
 
 interface ResourceCardsProps {
   filter: FilterType;
+  searchQuery?: string;
 }
 
-export const ResourceCards = ({ filter }: ResourceCardsProps) => {
+export const ResourceCards = ({ filter, searchQuery = "" }: ResourceCardsProps) => {
   const cardData = {
     Landlord: [
       {
@@ -285,21 +286,38 @@ export const ResourceCards = ({ filter }: ResourceCardsProps) => {
     ],
   };
 
-  const cards = cardData[filter] || cardData.Landlord;
+  const allCards = cardData[filter] || cardData.Landlord;
+
+  // Filter cards based on search query
+  const filteredCards = searchQuery.trim()
+    ? allCards.filter((card) => {
+        const query = searchQuery.toLowerCase();
+        const titleMatch = card.title.toLowerCase().includes(query);
+        const subtitleMatch = card.subtitle.toLowerCase().includes(query);
+        return titleMatch || subtitleMatch;
+      })
+    : allCards;
 
   return (
     <div className="flex flex-wrap justify-center gap-y-8 gap-x-5">
-      {cards.map((card, index) => (
+      {filteredCards.length > 0 ? (
+        filteredCards.map((card, index) => (
           <InfoCard
-          key={`${filter}-${index}`}
-          title={card.title}
-          subtitle={card.subtitle}
-          icon={card.icon}
-          iconColorClass={card.iconColorClass}
-          variant={card.variant}
-        />
-      ))}
+            key={`${filter}-${index}`}
+            title={card.title}
+            subtitle={card.subtitle}
+            icon={card.icon}
+            iconColorClass={card.iconColorClass}
+            variant={card.variant}
+          />
+        ))
+      ) : (
+        <div className="w-full text-center py-12">
+          <p className="text-lg text-slate-600">No results found for "{searchQuery}"</p>
+          <p className="text-sm text-slate-500 mt-2">Try searching with different keywords</p>
         </div>
+      )}
+    </div>
   );
 };
 

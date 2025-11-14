@@ -9,6 +9,8 @@ interface PricingCardProps {
   features: string[];
   isPopular?: boolean;
   isPro?: boolean;
+  isYearly?: boolean;
+  onLearnMoreClick?: () => void;
 }
 
 interface FeatureItemProps {
@@ -36,6 +38,8 @@ export const PricingCard: React.FC<PricingCardProps> = ({
   features,
   isPopular = false,
   isPro = false,
+  isYearly = false,
+  onLearnMoreClick,
 }) => {
   const navigate = useNavigate();
   const isDark = isPro;
@@ -50,6 +54,43 @@ export const PricingCard: React.FC<PricingCardProps> = ({
     : "bg-[#20CC95] text-white hover:bg-[#20CC95]/80 border-2 border-white";
   const includesColorClass = isDark ? "text-white" : "text-gray-900";
   const learnMoreColorClass = isDark ? "text-white" : "text-[#20CC95]";
+
+  // Helper function to extract price from annualBillingText
+  const extractAnnualPrice = (text: string): string => {
+    // Extract price like "$198.00" or "$100.00 / mo" from text
+    const match = text.match(/\$[\d,]+\.?\d*/);
+    if (match) {
+      return match[0];
+    }
+    return text;
+  };
+
+  // Calculate monthly equivalent from annual price
+  const getMonthlyEquivalent = (annualText: string): string => {
+    const match = annualText.match(/\$[\d,]+\.?\d*/);
+    if (match) {
+      const annualPrice = parseFloat(match[0].replace('$', '').replace(',', ''));
+      const monthlyPrice = (annualPrice / 12).toFixed(2);
+      return `$${monthlyPrice} /m`;
+    }
+    return priceText; // Fallback to original monthly price
+  };
+
+  // Handle "Custom" pricing case
+  const isCustomPricing = priceText.toLowerCase() === "custom";
+
+  // Determine what to display based on isYearly
+  const displayPrice = isYearly 
+    ? (isCustomPricing 
+        ? annualBillingText.replace(" / mo", " /year") 
+        : extractAnnualPrice(annualBillingText) + " /year")
+    : priceText;
+  
+  const displaySubPrice = isYearly
+    ? (isCustomPricing 
+        ? "Contact us for annual pricing" 
+        : getMonthlyEquivalent(annualBillingText) + " billed monthly")
+    : annualBillingText;
  
   return (
     <div
@@ -72,10 +113,10 @@ export const PricingCard: React.FC<PricingCardProps> = ({
 
       <div className="min-h-20 mb-4">
         <p className={`text-3xl md:text-4xl font-bold ${priceColorClass} mb-1`}>
-          {priceText}
+          {displayPrice}
         </p>
         <p className={`text-xs ${subPriceColorClass}`}>
-          {annualBillingText}
+          {displaySubPrice}
         </p>
       </div>
 
@@ -110,9 +151,17 @@ export const PricingCard: React.FC<PricingCardProps> = ({
         ))}
       </div>
 
-      <a href="#" className={`mt-auto pt-4 text-md font-semibold ${learnMoreColorClass} hover:underline`}>
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          if (onLearnMoreClick) {
+            onLearnMoreClick();
+          }
+        }}
+        className={`mt-auto pt-4 text-md font-semibold ${learnMoreColorClass} hover:underline text-left`}
+      >
         Learn More
-      </a>
+      </button>
     </div>
   );
 };

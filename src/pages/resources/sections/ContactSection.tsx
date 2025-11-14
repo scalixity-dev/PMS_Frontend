@@ -22,7 +22,7 @@ const ContactInfoItem: React.FC<{
 // Main Contact Section Component
 const ContactSection: React.FC = () => {
   return (
-    <section className="py-16 lg:py-24 bg-white">
+    <section id="contact-section" className="py-16 lg:py-24 bg-white">
       <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
         
         <div className="lg:mt-12">

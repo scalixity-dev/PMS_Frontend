@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { AppfolioPricingTable } from './sections/FeaturesTable';
 import { allFeatureTables } from './sections/PricingAndTableData';
 import RequestDemoCard from './sections/RequestDemo';
@@ -7,6 +8,19 @@ import { LeftCircle, LeftIcon, RightCircle } from './sections/pricingBackgroundI
 import { PricingHeroSection } from './sections/PricingHeroSection';
 
 const PricingPage: React.FC = () => {
+  const [isTableOpen, setIsTableOpen] = useState(false);
+
+  const openTable = () => {
+    setIsTableOpen(true);
+    // Scroll to table after opening
+    setTimeout(() => {
+      const tableElement = document.getElementById('features-table');
+      if (tableElement) {
+        tableElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
+  };
+
   return (
     <div className="relative min-h-screen bg-white text-gray-900 overflow-hidden py-12 sm:py-16 px-4 sm:px-6 lg:px-8">
       {/* background icons */}
@@ -14,7 +28,7 @@ const PricingPage: React.FC = () => {
       <LeftCircle />
       <RightCircle />
 
-      <PricingHeroSection />
+      <PricingHeroSection onLearnMoreClick={openTable} />
 
       {/* for tables */}
       {/* <div className="min-h-screen bg-white py-10 sm:py-12 px-0">
@@ -31,7 +45,11 @@ const PricingPage: React.FC = () => {
           </div>
         </div>
       </div> */}
-      <AppfolioPricingTable categories={allFeatureTables} />
+      <AppfolioPricingTable 
+        categories={allFeatureTables} 
+        isOpen={isTableOpen}
+        onToggle={() => setIsTableOpen(!isTableOpen)}
+      />
 
       <RequestDemoCard />
       <FAQSection />

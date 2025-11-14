@@ -72,9 +72,11 @@ const useWindowSize = (): [number, number] => {
 // --- Pricing Slider Component ---
 interface PricingSliderProps {
   plans: PricingPlanProps[];
+  isYearly: boolean;
+  onLearnMoreClick?: () => void;
 }
 
-const PricingSlider = ({ plans }: PricingSliderProps): React.ReactElement => {
+const PricingSlider = ({ plans, isYearly, onLearnMoreClick }: PricingSliderProps): React.ReactElement => {
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [touchEndX, setTouchEndX] = useState<number | null>(null);
@@ -125,7 +127,7 @@ const PricingSlider = ({ plans }: PricingSliderProps): React.ReactElement => {
           style={{ transform: `translateX(-${currentIndex * 100}%)` }}
         >
           {plans.map((plan, index) => (
-            <div key={index} className="w-full flex-shrink-0 p-2">
+            <div key={index} className="w-full shrink-0 p-2">
               <PricingCard
                 plan={plan.plan}
                 description={plan.description}
@@ -135,6 +137,8 @@ const PricingSlider = ({ plans }: PricingSliderProps): React.ReactElement => {
                 features={plan.features}
                 isPopular={plan.isPopular}
                 isPro={plan.isPro}
+                isYearly={isYearly}
+                onLearnMoreClick={onLearnMoreClick}
               />
             </div>
           ))}
@@ -177,7 +181,12 @@ const PricingSlider = ({ plans }: PricingSliderProps): React.ReactElement => {
 };
 
 // --- Main App Component ---
-export default function PricingCardSection(): React.ReactElement | null {
+interface PricingCardSectionProps {
+  isYearly: boolean;
+  onLearnMoreClick?: () => void;
+}
+
+export default function PricingCardSection({ isYearly, onLearnMoreClick }: PricingCardSectionProps): React.ReactElement | null {
   const [width] = useWindowSize();
   const [isClient, setIsClient] = useState<boolean>(false);
 
@@ -207,11 +216,13 @@ export default function PricingCardSection(): React.ReactElement | null {
                 features={plan.features}
                 isPopular={plan.isPopular}
                 isPro={plan.isPro}
+                isYearly={isYearly}
+                onLearnMoreClick={onLearnMoreClick}
               />
             ))}
           </div>
         ) : (
-          <PricingSlider plans={pricingPlans} />
+          <PricingSlider plans={pricingPlans} isYearly={isYearly} onLearnMoreClick={onLearnMoreClick} />
         )}
       </div>
     </div>

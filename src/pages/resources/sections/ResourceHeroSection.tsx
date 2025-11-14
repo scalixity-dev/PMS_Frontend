@@ -28,6 +28,7 @@ const FilterButton = ({
 
 export default function App() {
   const [activeFilter, setActiveFilter] = useState<FilterType>("Landlord");
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   const filters: FilterType[] = ["Landlord", "Tenant", "Service Pro", "Property Manager"];
 
@@ -51,6 +52,8 @@ export default function App() {
             <input
               type="text"
               placeholder="Search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full h-14 pl-5 pr-12 py-3 rounded-lg shadow-md border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-400 text-md"
             />
             <button className="absolute right-2 rounded-full" aria-label="Search resources">
@@ -73,7 +76,7 @@ export default function App() {
           </div>
         </div>
 
-        <ResourceCards filter={activeFilter} />
+        <ResourceCards filter={activeFilter} searchQuery={searchQuery} />
       </div>
     </div>
   );
