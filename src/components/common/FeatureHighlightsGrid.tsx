@@ -45,8 +45,11 @@ const FeatureHighlightsGrid: React.FC<FeatureHighlightsGridProps> = ({ features,
               // Add shorter right border for left column items (index 0, 2, 4...)
               index % 2 === 0 ? 'md:after:content-[""] md:after:absolute md:after:right-0 md:after:top-1/2 md:after:-translate-y-1/2 md:after:w-px md:after:h-24 md:after:bg-gray-300' : ''
             } ${
-              // Add horizontal line connecting top row items with spacing from container edges
-              index === 0 ? 'md:before:content-[""] md:before:absolute md:before:bottom-0 md:before:left-8 md:before:h-px md:before:bg-gray-300 md:before:w-[calc(200%-4rem)]' : ''
+              // Add horizontal line connecting top row items with spacing from container edges (desktop only)
+              index === 0 ? 'before:content-[""] before:absolute before:bottom-0 md:before:left-8 md:before:bg-gray-300 md:before:w-[calc(200%-4rem)] before:left-8 before:right-8 before:h-px before:bg-gray-300 md:before:right-auto' : ''
+            } ${
+              // Mobile: Add bottom border with padding offset for all items except the last one (excluding index 0 which uses before)
+              index < features.length - 1 && index !== 0 ? 'before:content-[""] before:absolute before:bottom-0 before:left-8 before:right-8 before:h-px before:bg-gray-300 md:before:hidden' : ''
             }`}
           >
             {layout === 'vertical' ? (

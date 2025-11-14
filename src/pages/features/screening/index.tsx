@@ -4,7 +4,7 @@ import EveryFeatureCenteredSection from './sections/ScreeningFeatureCenteredSect
 import FeaturesHeroSection from './sections/screeninghero';
 import RentalApplicationSection from './sections/Rentalapplication';
 import RentReportingSection from './sections/Rentreporting';
-import FeatureHighlightSection from './sections/FeatureHighlightSection';
+import FeatureHighlightSection from '../../../components/FeatureHighlightSection';
 import AIPoweredFeaturesSection from './sections/AIPoweredFeaturesSection';
 import FeatureSectionFlat from './sections/FeatureSectionFlat';
 

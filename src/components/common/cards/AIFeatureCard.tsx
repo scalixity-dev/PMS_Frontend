@@ -14,9 +14,9 @@ interface AIFeatureCardProps {
 }
 
 const AIFeatureCard: React.FC<AIFeatureCardProps> = ({ image, icon, title, description, color, textColor, buttonText, titleClassName }) => {
-  const containerClass = `flex flex-col items-center rounded-3xl p-6 text-center hover:shadow-xl transition-shadow duration-300 min-h-[320px]`;
+  const containerClass = `flex flex-col items-center rounded-2xl sm:rounded-3xl p-4 sm:p-6 text-center hover:shadow-xl transition-shadow duration-300 min-h-[280px] sm:min-h-[320px]`;
   const gradientClasses = "bg-gradient-to-b from-[#ACE2BF] to-[#FFFFFF]";
-  const titleClasses = ["font-bold", "text-2xl", "text-[#1F2A01]", "mb-4"];
+  const titleClasses = ["font-bold", "text-xl", "sm:text-2xl", "text-[#1F2A01]", "mb-3", "sm:mb-4"];
 
   if (titleClassName) {
     titleClasses.push(titleClassName);
@@ -26,11 +26,11 @@ const AIFeatureCard: React.FC<AIFeatureCardProps> = ({ image, icon, title, descr
     <div className={containerClass + (color ? "" : ` ${gradientClasses}`)} style={color ? { backgroundColor: color } : undefined}>
       {/* Image (optional) */}
       {icon ? (
-        <div className="w-full flex justify-center mb-4">
-          <div className="flex items-center justify-center w-20 h-20 rounded-full bg-white/60">{icon}</div>
+        <div className="w-full flex justify-center mb-3 sm:mb-4">
+          <div className="flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/60">{icon}</div>
         </div>
       ) : image ? (
-        <div className="w-full flex justify-center mb-4">
+        <div className="w-full flex justify-center mb-3 sm:mb-4">
           <img src={image} alt={title} className="rounded-lg max-w-full h-auto object-contain" />
         </div>
       ) : null}
@@ -39,10 +39,10 @@ const AIFeatureCard: React.FC<AIFeatureCardProps> = ({ image, icon, title, descr
   <h3 className={titleClasses.join(" ")} style={textColor ? { color: textColor } : undefined}>{title}</h3>
 
       {/* Description */}
-  <p className="text-gray-500 font-medium text-sm mb-8 max-w-xs" style={textColor ? { color: textColor } : undefined}>{description}</p>
+  <p className="text-gray-500 font-medium text-xs sm:text-sm mb-6 sm:mb-8 max-w-xs" style={textColor ? { color: textColor } : undefined}>{description}</p>
 
       {/* Button */}
-      <div className="mt-auto w-full">
+      <div className="mt-auto w-full flex justify-center">
         <LearnMoreGradient text={buttonText} />
       </div>
     </div>
