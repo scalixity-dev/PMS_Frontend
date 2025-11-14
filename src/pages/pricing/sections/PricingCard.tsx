@@ -1,3 +1,5 @@
+import { useNavigate } from "react-router-dom";
+
 interface PricingCardProps {
   plan: string;
   description: string;
@@ -35,6 +37,7 @@ export const PricingCard: React.FC<PricingCardProps> = ({
   isPopular = false,
   isPro = false,
 }) => {
+  const navigate = useNavigate();
   const isDark = isPro;
   
   const cardBgClass = isDark ? "bg-[#20CC95] text-white border-3 border-white shadow-md shadow-[#20CC95] hover:bg-[#006B49]" : "bg-[#D7FFF2] hover:shadow-md hover:shadow-[#20CC95]";
@@ -78,7 +81,8 @@ export const PricingCard: React.FC<PricingCardProps> = ({
 
       <div className="mb-6">
         <button
-          className={`w-[80%] py-3 rounded-md font-semibold transition-colors duration-200 ${buttonClasses} flex items-center justify-center space-x-2`}
+          className={`w-full md:w-[80%] max-w-xs px-1 py-3 rounded-md font-semibold transition-colors duration-200 ${buttonClasses} flex items-center justify-center space-x-2 mx-auto md:mx-0`}
+          onClick={() => navigate("/signup")}
         >
           <span>Start 14-days trial</span>
           <svg

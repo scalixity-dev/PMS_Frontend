@@ -2,9 +2,9 @@ import React from 'react';
 
 const RequestDemoCard: React.FC = () => {
   return (
-    <div className="max-w-7xl mb-30 mx-auto px-14 bg-[#819A78]/20 rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between">
+  <div className="max-w-7xl mb-8 mx-auto px-4 sm:px-6 bg-[#819A78]/20 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between">
       
-      <div className="flex-1 pl-6 text-center md:text-left md:pr-8 mb-8 md:mb-0">
+      <div className="flex-1 text-center md:text-left md:pr-8 mb-8 md:mb-0">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">
           Request a demo
         </h2>
@@ -31,11 +31,11 @@ const RequestDemoCard: React.FC = () => {
         </button>
       </div>
 
-      <div className="flex-none">
+      <div className="flex-none w-full md:w-auto">
         <img
           src="/requestDemo.jpg"
           alt="Modern House"
-          className="rounded-xl shadow-lg w-full md:w-[400px] h-auto object-cover"
+          className="rounded-lg lg:rounded-xl md:rounded-xl shadow-lg w-full max-w-[420px] h-auto object-cover mx-auto md:mx-0"
         />
       </div>
     </div>

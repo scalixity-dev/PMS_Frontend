@@ -44,7 +44,7 @@ export const InfoCard = ({
   iconColorClass = 'text-current',
 }: InfoCardProps) => {
 
-  const cardBaseClasses = 'p-9 rounded-2xl shadow-md flex flex-col h-[254.29388427734375px] w-[319.759765625px]';
+  const cardBaseClasses = 'p-6 sm:p-9 rounded-2xl shadow-md w-[45%] flex flex-col md:w-[320px] min-h-[220px]';
 
 
   const cardVariantClasses = {
@@ -69,19 +69,19 @@ export const InfoCard = ({
   return (
     <div className={`${cardBaseClasses} ${cardVariantClasses[variant]}`}>
       
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center gap-2 md:gap-0 space-x-4 flex-col md:flex-row">
         <div
-          className={`flex h-12 w-12 items-center justify-center rounded-xl`}
+          className={`flex h-12 w-12 items-center rounded-xl`}
         >
           {icon && <div className={`${iconColorClass}`}>{icon}</div>}
         </div>
-        <h3 className={`text-lg font-semibold ${titleVariantClasses[variant]}`}>
+        <h3 className={`text-md md:text-lg font-semibold ${titleVariantClasses[variant]}`}>
           {title}
         </h3>
       </div>
 
       <div>
-        <p className={`text-md mt-6 ${subtitleVariantClasses[variant]}`}>
+        <p className={`text-sm md:text-md mt-6 ${subtitleVariantClasses[variant]}`}>
           {subtitle}
         </p>
       </div>
@@ -99,7 +99,7 @@ export const LearnMoreCard: React.FC<LearnMoreCardProps> = ({
   href = '#',
 }) => {
   return (
-    <div className="flex flex-col h-full ">
+    <div className="flex flex-col h-full max-w-md">
       
       {/* Image Container */}
       <div className={`rounded-2xl p-6 md:p-8 ${backgroundColorClass} mb-6`}>
@@ -205,7 +205,7 @@ export const SimpleIconCard: React.FC<SimpleIconCardProps> = (props) => {
       </div>
 
       {/* Title */}
-      <h3 className="text-xl font-bold text-slate-900">
+      <h3 className="text-md md:text-lg font-bold text-slate-900">
         {title}
       </h3>
 

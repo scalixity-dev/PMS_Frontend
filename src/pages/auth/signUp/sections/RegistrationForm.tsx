@@ -6,33 +6,29 @@ import { Link } from 'react-router-dom';
 
 // Helper function to apply consistent styling to inputs/selects
 const inputClasses = (hasValue: boolean = true) =>
-  `w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#20CC95] text-sm ${
+  `w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm transition-all ${
     hasValue ? 'text-gray-900' : 'text-gray-400'
   } placeholder-gray-400 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed`;
 
-const labelClasses = "block text-xs font-medium text-gray-500 mb-1";
+const labelClasses = "block text-xs font-medium text-gray-700 mb-1";
 
 export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, setFormData, onSubmit }) => {
   const [countries, setCountries] = useState<ICountry[]>([]);
   const [states, setStates] = useState<IState[]>([]);
 
   useEffect(() => {
-    // Load all countries on component mount
     setCountries(Country.getAllCountries());
   }, []);
 
   useEffect(() => {
-    // When formData.country changes, update the states list
     if (formData.country) {
       setStates(State.getStatesOfCountry(formData.country));
     } else {
-      setStates([]); // Clear states if no country is selected
+      setStates([]);
     }
-    // Clear state and pincode selection when country changes
     setFormData({ ...formData, state: '', pincode: '' });
   }, [formData.country]);
 
-  // Memoize phone codes to avoid recalculating on every render
   const phoneCountryCodes = useMemo(() => {
     return Country.getAllCountries().map(country => ({
       label: `${country.flag} ${country.phonecode.startsWith('+') ? '' : '+'}${country.phonecode}`,
@@ -41,12 +37,14 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
   }, []);
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-4">
-      <div className="w-full max-w-xl">
-        <h1 className="text-3xl font-bold text-center mb-2">Start your free 14-day trial</h1>
-        <p className="text-center text-gray-600 mb-8">Enter your details to continue.</p>
+    <div className="min-h-screen bg-white flex items-center justify-center p-4 sm:p-6 md:p-8">
+      <div className="w-full max-w-xl p-6 sm:p-8 md:p-10 bg-white rounded-xl sm:rounded-2xl border border-gray-100 shadow-xl">
+        <div className="space-y-2 sm:space-y-3 mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Start your free 14-day trial</h1>
+          <p className="text-sm sm:text-base text-gray-600">Enter your details to continue.</p>
+        </div>
 
-        <div className="space-y-6">
+        <div className="space-y-5 sm:space-y-6">
           <div>
             <label className={labelClasses}>Full Name</label>
             <input
@@ -61,9 +59,9 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className={labelClasses}>Phone Number</label>
-              <div className="flex border border-gray-300 rounded-md focus:outline-none">
+              <div className="flex border border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-teal-500 focus-within:border-teal-500 transition-all">
                 <select 
-                  className="pl-2 border-r w-20 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#20CC95] text-sm bg-white"
+                  className="pl-2 border-r w-20 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm bg-white transition-all"
                   value={formData.phoneCountryCode || ''}
                   onChange={(e) => {
                     const [countryIso] = e.target.value.split('|');
@@ -72,7 +70,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
                 >
                   <option value="" disabled>Code</option>
                   {phoneCountryCodes.map((code) => (
-                  <option className='bg-[#20CC95]/30 text-black' key={code.value} value={code.value}>{code.label}</option>
+                  <option className='bg-teal-50 text-black' key={code.value} value={code.value}>{code.label}</option>
                   ))}
                 </select>
                 <input
@@ -80,7 +78,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
                   value={formData.phone || ''}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   placeholder="Type your phone"
-                  className="flex-1 px-4 py-3 rounded-md focus:outline-none focus:ring-2 focus:ring-[#20CC95] text-sm placeholder-gray-400"
+                  className="flex-1 px-4 py-3 rounded-md focus:outline-none text-sm placeholder-gray-400 border-0"
                 />
               </div>
             </div>
@@ -106,7 +104,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
             >
               <option value="" disabled>Select Country</option>
               {countries.map((country) => (
-                <option className='bg-[#20CC95]/30 text-black' key={country.isoCode} value={country.isoCode}>
+                <option className='bg-teal-50 text-black' key={country.isoCode} value={country.isoCode}>
                   {country.name}
                 </option>
               ))}
@@ -124,7 +122,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
               >
                 <option value="" disabled>Select State</option>
                 {states.map((state) => (
-                  <option className='bg-[#20CC95]/30 text-black' key={state.isoCode} value={state.isoCode}>
+                  <option className='bg-teal-50 text-black' key={state.isoCode} value={state.isoCode}>
                     {state.name}
                   </option>
                 ))}
@@ -137,7 +135,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
                 value={formData.pincode || ''}
                 onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
                 className={inputClasses(!!formData.pincode)}
-                disabled={!formData.state} // Logically, pincode depends on state/city
+                disabled={!formData.state}
               />
             </div>
           </div>
@@ -187,7 +185,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
               id="terms"
               checked={formData.agreedToTerms || false}
               onChange={(e) => setFormData({ ...formData, agreedToTerms: e.target.checked })}
-              className="mt-1 w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-[#20CC95]"
+              className="mt-1 w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500 transition-all"
             />
             <label htmlFor="terms" className="ml-2 text-sm text-gray-600 cursor-pointer">
               I agree to the terms and conditions
@@ -198,14 +196,14 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
             <button
               onClick={onSubmit}
               disabled={!formData.agreedToTerms}
-              className="py-3 px-12 bg-teal-700 text-white rounded-md hover:bg-teal-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition font-medium"
+              className="py-3 px-12 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all font-semibold transform hover:scale-[1.02] active:scale-[0.98]"
             >
               Start my free trial
             </button>
           </div>
-          <div className="mb-8 text-center text-sm text-gray-600">
+          <div className="mb-8 text-center text-sm sm:text-base text-gray-600 pt-2">
               Already have an account?{' '}
-              <Link to="/login" className="font-medium text-(--color-primary) hover:text-green-600 hover:underline">
+              <Link to="/login" className="font-semibold text-teal-600 hover:text-teal-700 hover:underline transition-colors">
                 Sign In
               </Link>
           </div>

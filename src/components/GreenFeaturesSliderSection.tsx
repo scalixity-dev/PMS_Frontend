@@ -1,7 +1,6 @@
 // src/components/GreenFeaturesSliderSection.tsx
 import React from "react";
 import GreenFeatureCard from "./common/cards/GreenFeatureCard";
-import PaginationButtons from "./common/buttons/PaginationButtons";
 import { BarChart2, CreditCard, FileCheck } from "lucide-react";
 
 type FeatureItem = {
