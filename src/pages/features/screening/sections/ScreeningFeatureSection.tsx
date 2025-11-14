@@ -30,14 +30,14 @@ const EveryFeatureSection: React.FC = () => {
   ];
 
   return (
-    <section className="max-w-8xl mx-auto px-4 sm:px-20 py-8 flex flex-col lg:flex-row items-center justify-between gap-10">
-  <div className="lg:w-2/5 space-y-6 px-2 sm:px-4">
+    <section className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-20 py-6 sm:py-8 flex flex-col lg:flex-row items-center justify-between gap-6 sm:gap-8 lg:gap-10">
+      <div className="lg:w-2/5 space-y-4 sm:space-y-6 px-0 sm:px-2 lg:px-4">
         <div className="flex items-center space-x-2">
-          <h2 className="text-3xl sm:text-4xl font-bold text-[var(--color-primary)] leading-snug">
-            Every feature you’ll ever need, and more
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[var(--color-primary)] leading-snug">
+            Every feature you'll ever need, and more
           </h2>
         </div>
-        <p className="text-gray-600 leading-relaxed">
+        <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
           From listing and leasing to rent collection and maintenance — everything is built right in. Manage Pms, track finances, and automate daily tasks effortlessly.
         </p>
       </div>

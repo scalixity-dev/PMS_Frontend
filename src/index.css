@@ -157,3 +157,29 @@ input[type="submit"],
 .max-w-9xl {
   max-width: 96rem; /* 1536px */
 }
+
+/* -------------------------- */
+/* Lease card smooth hover glow */
+/* -------------------------- */
+.lease-card {
+  position: relative;
+  overflow: hidden;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  will-change: box-shadow, background-color, opacity;
+}
+.lease-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  /* soft radial glow from top-center */
+  background: radial-gradient(600px 240px at 50% 6%, rgba(32,204,149,0.14), rgba(32,204,149,0.07) 20%, transparent 45%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 260ms cubic-bezier(.2,.9,.2,1);
+}
+.lease-card:hover::before,
+.lease-card:focus-within::before {
+  opacity: 1;
+}
