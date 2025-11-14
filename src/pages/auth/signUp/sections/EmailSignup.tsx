@@ -3,6 +3,7 @@ import { GoogleIcon, AppleIcon, FacebookIcon } from '../../../../components/Auth
 import type { EmailSignupProps } from './signUpProps';
 import { Link } from 'react-router-dom';
 
+
 export const EmailSignup: React.FC<EmailSignupProps> = ({ onNext, formData, setFormData }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -11,11 +12,27 @@ export const EmailSignup: React.FC<EmailSignupProps> = ({ onNext, formData, setF
     }
   };
 
+  // Get account type specific heading
+  const getHeading = () => {
+    switch (formData.accountType) {
+      case 'manage':
+        return 'Start your free 14-day trial';
+      case 'renting':
+      case 'fix':
+      default:
+        return null; // No heading for renting and fix account types
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 md:p-8">
       <div className="w-full max-w-md p-6 sm:p-8 md:p-10 space-y-5 sm:space-y-6 md:space-y-7 bg-white rounded-xl sm:rounded-2xl border border-gray-100 text-gray-900">
         <div className="text-center space-y-2 sm:space-y-3">
-          <h2 className="text-2xl sm:text-3xl md:text-3xl font-bold font-heading text-gray-900">Start your free 14-day trial</h2>
+          {getHeading() && (
+            <h2 className="text-2xl sm:text-3xl md:text-3xl font-bold font-heading text-gray-900">
+              {getHeading()}
+            </h2>
+          )}
           <p className="text-sm sm:text-base text-gray-600">Continue with email or another provider.</p>
         </div>
       
