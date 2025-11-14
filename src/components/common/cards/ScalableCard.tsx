@@ -10,10 +10,10 @@ interface ScalableCardProps {
 export default function ScalableCard({ image, title, description }: ScalableCardProps) {
   return (
     <div
-      className="flex flex-col items-center bg-white rounded-2xl overflow-hidden transition-shadow duration-200 w-full p-4 border border-[#E5E5E5]"
+      className="flex flex-col items-center bg-white rounded-2xl overflow-hidden transition-shadow duration-200 w-full p-2 sm:p-4 border border-[#E5E5E5]"
       style={{ boxShadow: "1px 4px 8px 0px #00000040" }}
     >
-      <div className="w-full h-52 overflow-hidden rounded-md mb-4">
+      <div className="w-full h-32 sm:h-52 overflow-hidden rounded-md mb-2 sm:mb-4">
         <img
           src={image}
           alt={title}
@@ -22,8 +22,8 @@ export default function ScalableCard({ image, title, description }: ScalableCard
           className="w-full h-full object-cover"
         />
       </div>
-      <h3 className="text-[var(--color-heading)] font-semibold mb-1 text-center font-heading">{title}</h3>
-      <p className="text-[var(--color-subheading)] text-sm text-center mb-4 font-body">{description}</p>
+      <h3 className="text-[var(--color-heading)] font-semibold mb-1 text-center font-heading text-xs sm:text-base">{title}</h3>
+      <p className="text-[var(--color-subheading)] text-xs sm:text-sm text-center mb-2 sm:mb-4 font-body">{description}</p>
       <ChooseButton to="/features/screening" />
     </div>
   );
