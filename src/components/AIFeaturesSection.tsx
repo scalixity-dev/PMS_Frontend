@@ -19,10 +19,12 @@ interface AIFeaturesSectionProps {
 
 const AIFeaturesSection: React.FC<AIFeaturesSectionProps> = ({ features, color, textColor, buttonText }) => {
   return (
-    <section className="w-full py-8 sm:py-12 lg:py-16">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-10 lg:gap-16 px-4 sm:px-6">
+    <section className="w-full py-6 sm:py-8 md:py-10 lg:py-16">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 md:gap-10 lg:gap-16 px-4 sm:px-6">
         {features.map((feature, index) => (
-          <AIFeatureCard key={index} {...feature} color={color} textColor={textColor} buttonText={buttonText} />
+          <div key={index} className="w-full">
+            <AIFeatureCard {...feature} color={color} textColor={textColor} buttonText={buttonText} />
+          </div>
         ))}
       </div>
     </section>
