@@ -18,12 +18,15 @@ const WhyPmsCloud: React.FC = () => {
         learnMoreLabel=""
         showStamp={false}
         showBackgroundCard={false}
-        imageSrc="/WhyPmsCloud.png"
+        imageSrc="/whyPmsCloudDashboard.png"
+        imageWidth = {450}
+        imageHeight = {500}
+        backgroundImageSrc="/bg_vector.png"
+        backgroundImageTranslate="translate(100px, 0px)"
         showImageShadow={false}
         imageNoTranslate={true}
         imageContain={true}
         imageMaxHeight="max-h-[40rem]"
-        imageHeight={460}
         titleMarginBottom="mb-4"
         descriptionMarginBottom="mb-6"
       />

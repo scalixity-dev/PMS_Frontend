@@ -12,21 +12,22 @@ export const EmailSignup: React.FC<EmailSignupProps> = ({ onNext, formData, setF
   };
 
   return (
-    <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg text-gray-900 m-auto">
-      <div className="text-center">
-        <h2 className="text-2xl font-semibold font-heading">Start your free 14-day trial</h2>
-        <p className="mt-2 text-sm text-gray-600">Continue with email or another provider.</p>
-      </div>
+    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 md:p-8">
+      <div className="w-full max-w-md p-6 sm:p-8 md:p-10 space-y-5 sm:space-y-6 md:space-y-7 bg-white rounded-xl sm:rounded-2xl border border-gray-100 text-gray-900">
+        <div className="text-center space-y-2 sm:space-y-3">
+          <h2 className="text-2xl sm:text-3xl md:text-3xl font-bold font-heading text-gray-900">Start your free 14-day trial</h2>
+          <p className="text-sm sm:text-base text-gray-600">Continue with email or another provider.</p>
+        </div>
       
       <form
-        className="space-y-4"
+        className="space-y-4 sm:space-y-5"
         onSubmit={handleSubmit}
       >
         <div>
-          <label htmlFor="email-address" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="email-address" className="block text-sm sm:text-base font-semibold text-gray-700 mb-2">
             Email address
           </label>
-          <div className="mt-1">
+          <div>
             <input
               id="email-address"
               name="email"
@@ -36,7 +37,7 @@ export const EmailSignup: React.FC<EmailSignupProps> = ({ onNext, formData, setF
               value={formData.email || ''}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               placeholder="Enter your email"
-              className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="appearance-none block w-full px-4 py-3 sm:py-3.5 border-2 border-gray-200 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm sm:text-base transition-all"
             />
           </div>
         </div>
@@ -44,45 +45,49 @@ export const EmailSignup: React.FC<EmailSignupProps> = ({ onNext, formData, setF
         <button
           type="submit"
           disabled={!formData.email}
-          className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-(--color-primary) hover:bg-opacity-90 disabled:bg-gray-400 disabled:cursor-not-allowed"
+          className="w-full flex justify-center py-3 sm:py-3.5 px-4 border border-transparent rounded-lg text-base font-semibold text-white bg-teal-600 hover:bg-teal-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02] active:scale-[0.98]"
         >
           Continue
         </button>
       </form>
 
-      <div className="relative my-6">
+      <div className="relative my-5 sm:my-6 md:my-7">
         <div className="absolute inset-0 flex items-center" aria-hidden="true">
-          <div className="w-full border-t border-gray-300" />
+          <div className="w-full border-t border-gray-200" />
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-white text-gray-500">OR</span>
+          <span className="px-3 bg-white text-gray-500 font-medium">OR</span>
         </div>
       </div>
 
-      <div className="space-y-3">
-        <button type="button" className="w-full inline-flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
-          <GoogleIcon /> Create with Google
+      <div className="space-y-3 sm:space-y-3.5">
+        <button type="button" className="w-full inline-flex justify-center items-center py-3 sm:py-3.5 px-4 border-2 border-gray-200 rounded-lg bg-white text-sm sm:text-base font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 gap-3 transition-all transform hover:scale-[1.02] active:scale-[0.98]">
+          <GoogleIcon />
+          Create with Google
         </button>
-        <button type="button" className="w-full inline-flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
-          <AppleIcon /> Create with Apple
+        <button type="button" className="w-full inline-flex justify-center items-center py-3 sm:py-3.5 px-4 border-2 border-gray-200 rounded-lg bg-white text-sm sm:text-base font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 gap-3 transition-all transform hover:scale-[1.02] active:scale-[0.98]">
+          <AppleIcon />
+          Create with Apple
         </button>
-        <button type="button" className="w-full inline-flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
-          <FacebookIcon /> Create with Facebook
+        <button type="button" className="w-full inline-flex justify-center items-center py-3 sm:py-3.5 px-4 border-2 border-gray-200 rounded-lg bg-white text-sm sm:text-base font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 gap-3 transition-all transform hover:scale-[1.02] active:scale-[0.98]">
+          <FacebookIcon />
+          Create with Facebook
         </button>
       </div>
       
-      <div className=" text-center text-sm text-gray-600">
+      <div className="text-center text-sm sm:text-base text-gray-600 pt-2">
           Already have an account?{' '}
-          <Link to="/login" className="font-medium text-(--color-primary) hover:text-green-600 hover:underline">
+          <Link to="/login" className="font-semibold text-teal-600 hover:text-teal-700 hover:underline transition-colors">
             Sign In
           </Link>
       </div>
 
-      <p className="mt-6 text-xs text-center text-gray-500">
+      <p className="mt-5 sm:mt-6 md:mt-7 text-xs sm:text-sm text-center text-gray-500 leading-relaxed">
         By creating an account you are agreeing to our  
-        <a href="#" className="font-medium text-green-600 hover:text-green-500"> Terms and Conditions</a> & 
-        <a href="#" className="font-medium text-green-600 hover:text-green-500"> Privacy Policy</a>.
+        <a href="#" className="font-semibold text-teal-600 hover:text-teal-700 transition-colors"> Terms and Conditions</a> & 
+        <a href="#" className="font-semibold text-teal-600 hover:text-teal-700 transition-colors"> Privacy Policy</a>.
       </p>
+      </div>
     </div>
   );
 };

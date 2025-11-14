@@ -1,13 +1,13 @@
 export const LeftIcon = () => {
     return(
-        <svg width="265" height="420" viewBox="0 0 381 549" fill="none" xmlns="http://www.w3.org/2000/svg" className='absolute -left-10 -top-2'>
+        <svg width="265" height="420" viewBox="0 0 381 549" fill="none" xmlns="http://www.w3.org/2000/svg" className='hidden lg:block absolute -left-15 -top-12'>
             <path d="M211.373 484.391C-135.944 706.734 -44.738 282.712 -92.1586 220.871C-139.579 159.029 -268.771 109.515 -163.629 28.891C-58.4871 -51.733 296.383 55.5469 343.804 117.388C445.025 249.391 316.515 403.767 211.373 484.391Z" fill="#20CC95" fill-opacity="0.25"/>
         </svg>
     )
 }
 export const LeftCircle = () => {
     return(
-        <svg width="112" height="121" viewBox="0 0 132 141" fill="none" xmlns="http://www.w3.org/2000/svg" className='absolute right-75 top-10'>
+        <svg width="112" height="121" viewBox="0 0 132 141" fill="none" xmlns="http://www.w3.org/2000/svg" className='hidden lg:block absolute right-60 top-10'>
             <g filter="url(#filter0_dddddd_1022_21750)">
                 <path d="M49.0907 4.99219C59.4068 -0.963783 72.1167 -0.963782 82.4327 4.99219C92.7487 10.9482 99.1037 21.9552 99.1037 33.8672C99.1037 45.7791 92.7487 56.7862 82.4327 62.7422C72.1167 68.6982 59.4068 68.6982 49.0907 62.7422C38.7747 56.7862 32.4197 45.7791 32.4197 33.8672C32.4197 21.9552 38.7747 10.9482 49.0907 4.99219Z" fill="#20CC95" fill-opacity="0.5"/>
             </g>
@@ -52,7 +52,7 @@ export const LeftCircle = () => {
 }
 export const RightCircle = () => {
     return(
-        <svg width="285" height="286" viewBox="0 0 325 346" fill="none" xmlns="http://www.w3.org/2000/svg" className='absolute right-15 top-20'>
+        <svg width="285" height="286" viewBox="0 0 325 346" fill="none" xmlns="http://www.w3.org/2000/svg" className='hidden lg:block absolute right-5 top-20'>
             <g filter="url(#filter0_dddddd_1022_21749)">
                 <path d="M121.137 12.3184C146.592 -2.37819 177.954 -2.37819 203.41 12.3184C228.865 27.0149 244.546 54.1753 244.546 83.5684C244.546 112.961 228.865 140.122 203.41 154.818C177.954 169.515 146.592 169.515 121.137 154.818C95.6821 140.122 80.001 112.961 80.001 83.5684C80.001 54.1753 95.6821 27.0149 121.137 12.3184Z" fill="#3D7475" fill-opacity="0.7"/>
             </g>

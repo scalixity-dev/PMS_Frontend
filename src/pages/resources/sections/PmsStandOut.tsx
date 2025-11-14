@@ -12,7 +12,7 @@ export const PMSStandOut: React.FC = () => {
         </h2>
 
         {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12 place-items-center">
           
           {/* Card 1: Rent Collection */}
           <LearnMoreCard
