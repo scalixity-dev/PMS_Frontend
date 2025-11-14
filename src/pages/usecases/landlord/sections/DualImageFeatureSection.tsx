@@ -45,7 +45,7 @@ export default function DualImageFeatureSection() {
         </div>
 
         {/* Feature Cards */}
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 mt-8 bg-white py-12">
+        <div className="max-w-6xl mx-auto px-5 grid grid-cols-1 md:grid-cols-3 gap-8 mt-8 bg-white py-12">
           {/* Messenger & Property Board */}
           <div className="flex gap-4">
             <div className="flex-shrink-0 w-16 h-16 bg-green-200 rounded-lg flex items-center justify-center">

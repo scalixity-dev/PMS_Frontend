@@ -1,5 +1,4 @@
 import React from 'react';
-import AIFeaturesSection from "../../../components/AIFeaturesSection";
 import ExplorePropertiesBanner from '../../../components/ExplorePropertiesBanner';
 import TeamToolsSection from './sections/TeamToolsSection'; 
 import ContentShowcaseSection from './sections/ContentShowcaseSection';
@@ -9,7 +8,8 @@ import SplitHeroFeature from '../../../components/SplitHeroFeature';
 import KeepPropertySection from './sections/keepproperty';
 import ManageFeeSection from './sections/managefee';
 import AllInOneUseCaseSection from './sections/allinone';
-import { DollarSign, TrendingUp, Handshake, Award, ArrowLeft, CheckCircle2, Users, Edit, Monitor, Eye, AlignHorizontalJustifyCenter, SlidersHorizontal, FileCheck, FilePlus, FileText } from 'lucide-react';
+import { DollarSign, TrendingUp, Handshake, CheckCircle2, Users, Edit, Monitor, Eye, AlignHorizontalJustifyCenter, SlidersHorizontal, FileCheck, FilePlus, FileText } from 'lucide-react';
+import AIFeaturesSection from '../../../components/AIFeaturesSection';
 
 const usecaseFeatures = [
   {
@@ -37,44 +37,15 @@ const UseCasesPage: React.FC = () => {
     <section className="w-full">
       <HeroSection />
 
-      <h2 className='max-w-4xl mx-auto text-4xl font-medium text-[#1F2937]'>Every feature your rental business needs, and more.</h2>
+      <div className='w-full flex justify-center items-center'>
+        <h2 className='max-w-4xl text-2xl md:text-3xl lg:text-4xl font-medium text-[#1F2937]'>Every feature your rental business needs, and more.</h2>
+      </div>
       <AIFeaturesSection
         features={usecaseFeatures}
         color="#B3F5C9"
         textColor="#07351E"
         buttonText="Read More"
       />
-        <ContentShowcaseSection
-          reverse={false}
-          tag="Get paid easily and effortlessly"
-          heading="Secure instant payments"
-          description="Make rent collection an easy job with automatic billing, online pay, and instant invoices. Set up is easy—according to 84% of our users—and only takes a few minutes."
-          buttonText="Get Started"
-          buttonLink="#"
-          imageSrc="https://res.cloudinary.com/dxwspucxw/image/upload/v1762587822/9a212322aec3cb78c17930176bcb8e7673408294_dhlqwr.png"
-          pillButtons={[{ label: "Auto Pay" }, { label: "Rent Collection" }]}
-          features={[
-            {
-              icon: <Award size={32} />,
-              title: "Online Rent Collection",
-              description:
-                "Receive debit, credit, and ACH payments directly to your bank account, safely and securely.",
-            },
-            {
-              icon: <ArrowLeft size={32} />,
-              title: "Auto Pay",
-              description:
-                "Reduce late payments by 90% with auto pay, ensuring every rent payment is made right on time.",
-            },
-            {
-              icon: <CheckCircle2 size={32} />,
-              title: "Customizable Reports",
-              description:
-                "Build financial and rental reports in seconds and track your portfolio growth over time.",
-            },
-          ]}
-        />
-
         <ContentShowcaseSection
         reverse={true}
         tag="Find the right PMS, faster"
