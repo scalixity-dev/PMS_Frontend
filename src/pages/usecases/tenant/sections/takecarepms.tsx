@@ -35,7 +35,7 @@ const TakeCarePmsSection: React.FC = () => {
       showBackgroundCard={false}
       reverseLayout
       imageSrc="/Group.png"
-      showImageShadow={false}
+      showImageShadow={true}
       imageNoTranslate
       imageMaxHeight="max-h-[30rem]"
       backgroundImageSrc="/vector4.png"
@@ -51,7 +51,7 @@ const TakeCarePmsSection: React.FC = () => {
               key={card.title}
               className="flex flex-col gap-2 border-l-4 border-[#034243] bg-gradient-to-r from-[#0E7A67] to-[#B8C6C4] p-4 text-white shadow-lg sm:flex-row sm:items-center sm:gap-4"
             >
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#034243]/40">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full ">
                 {card.icon}
               </span>
               <p className="text-sm leading-[150%] text-white/90 sm:text-base">

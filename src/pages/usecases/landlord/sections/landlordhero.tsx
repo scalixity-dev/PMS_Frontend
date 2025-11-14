@@ -2,6 +2,7 @@ import React from 'react';
 import HeroCard from '../../../../components/common/cards/HeroCard';
 import { Users } from 'lucide-react';
 
+
 const UseCasesHeroSection: React.FC = () => {
   const features = [
     'Free 14 day trial',
@@ -10,7 +11,21 @@ const UseCasesHeroSection: React.FC = () => {
   ] as const;
 
   return (
-    <div className="w-full">
+    <div className="w-full relative">
+      {/* background circles */}
+      
+      
+      {/* small decorative circles */}
+      <div 
+        className="hidden lg:block absolute rounded-full w-[34px] h-[34px] top-[55px] right-[34%] xl:right-[30%] 2xl:right-[20%] bg-[#4ADDAE] border-2 border-[#FFFEFE] shadow-[0px_3.09px_3.09px_0px_rgba(0,0,0,0.25)]"
+      />
+      <div 
+        className="hidden lg:block absolute rounded-full w-[20px] h-[20px] top-[127px] right-[13%] xl:right-[10%] 2xl:right-[8%] bg-[#FFE232] border-2 border-[#FFFEFE] shadow-[0px_3.09px_3.09px_0px_rgba(0,0,0,0.25)]"
+      />
+      <div 
+        className="hidden lg:block absolute rounded-full w-[34px] h-[34px] top-[275px] left-[103px] lg:left-[80px] xl:left-[103px] bg-[#819A78] border-2 border-[#FFFEFE] shadow-[0px_3.09px_3.09px_0px_rgba(0,0,0,0.25)]"
+      />
+      
       <HeroCard
         badge="Landlord"
         badgeClassName="inline-flex items-center gap-3 px-4 py-2 rounded-xl font-heading text-2xl text-[#0B696B] font-medium leading-[150%] tracking-normal bg-white [border-width:1.65px] border-[#0B696B]"

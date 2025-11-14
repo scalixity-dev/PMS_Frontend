@@ -15,10 +15,22 @@ interface SplitHeroFeatureProps {
   secondaryImageAlt?: string;
   icon?: React.ReactNode;
   badgeText?: string;
+  badgeVariant?: "default" | "elevated";
   backgroundClassName?: string;
   secondaryImageBackgroundClassName?: string;
+  innerSpacingClassName?: string;
+  imageWrapperClassName?: string;
+  allowContentOverflow?: boolean;
+  imageBackgroundSrc?: string;
+  imageBackgroundClassName?: string;
+  outerMaxWidthClassName?: string;
   features?: FeatureItem[];
 }
+
+type IconElementProps = {
+  className?: string;
+  strokeWidth?: number;
+};
 
 const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
   title,
@@ -28,20 +40,51 @@ const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
   secondaryImageAlt,
   icon,
   badgeText,
+  badgeVariant = "default",
   backgroundClassName,
   secondaryImageBackgroundClassName,
+  innerSpacingClassName,
+  imageWrapperClassName,
+  allowContentOverflow,
+  imageBackgroundSrc,
+  imageBackgroundClassName,
+  outerMaxWidthClassName,
   features,
 }) => {
   const appliedBackgroundClass =
     backgroundClassName ?? "bg-[#0CA474]";
   const secondaryBackgroundClass =
     secondaryImageBackgroundClassName ?? appliedBackgroundClass;
+  const innerSpacingClass =
+    innerSpacingClassName ?? "py-28 px-6 md:px-16 lg:px-16";
+  const outerMaxWidthClass =
+    outerMaxWidthClassName ?? "max-w-7xl";
+
+  const renderIcon = () => {
+    if (!icon) {
+      return null;
+    }
+
+    if (React.isValidElement(icon)) {
+      const iconElement = icon as React.ReactElement<IconElementProps>;
+      const existingClassName = iconElement.props.className ?? "";
+
+      return React.cloneElement(iconElement, {
+        className: `w-8 h-8 ${existingClassName}`.trim(),
+        strokeWidth: iconElement.props.strokeWidth ?? 1.8,
+      });
+    }
+
+    return icon;
+  };
 
   return (
-    <section className="relative w-screen left-1/2 -translate-x-1/2 pt-20 py-20 px-6 md:px-0">
-      <div className="relative mx-auto max-w-7xl">
+    <section className="relative w-screen left-1/2 -translate-x-1/2  py-16 px-6 md:px-0">
+      <div className={`relative mx-auto ${outerMaxWidthClass}`}>
         <div
-          className={`relative overflow-hidden py-28 px-6 md:px-16 lg:px-16 ${appliedBackgroundClass}`}
+          className={`relative ${
+            allowContentOverflow ? "overflow-visible" : "overflow-hidden"
+          } ${innerSpacingClass} ${appliedBackgroundClass}`}
         >
           {/* Curved white wave at the top */}
           <div className="pointer-events-none absolute -top-px left-0 w-full h-32 z-20">
@@ -76,14 +119,29 @@ const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
           <div className="relative z-10 grid md:grid-cols-2 gap-10 items-start">
             {/* Left Content */}
             <div className="text-white max-w-lg">
-              {(badgeText || icon) && (
-                <div className="flex items-center gap-3 mb-4">
+              {(badgeText || (badgeVariant === "elevated" && icon)) && (
+                <div
+                  className={`flex items-center ${
+                    badgeVariant === "elevated" ? "gap-4 mb-6" : "gap-3 mb-4"
+                  }`}
+                >
+                  {badgeVariant === "elevated" && icon && (
+                    <div className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-white border border-white/60 text-[#0C6A58] shadow-lg shadow-black/10">
+                      {renderIcon()}
+                    </div>
+                  )}
                   {badgeText && (
-                    <span
-                      className="inline-flex items-center rounded-full bg-[#B9E4C8]/50 border border-white/30 px-4 py-1 text-[22px] font-medium leading-[150%] tracking-normal text-white -ml-2"
-                    >
-                      {badgeText}
-                    </span>
+                    <>
+                      {badgeVariant === "elevated" ? (
+                        <span className="inline-flex items-center rounded-sm bg-white/95 border border-white/60 px-5 py-2 text-sm md:text-base font-semibold tracking-wide text-[#0C6A58] shadow-lg shadow-black/10">
+                          {badgeText}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center rounded-sm bg-[#B9E4C8]/50 border border-white/30 px-4 py-1 text-base md:text-lg font-medium leading-[150%] tracking-normal text-white -ml-2">
+                          {badgeText}
+                        </span>
+                      )}
+                    </>
                   )}
 
                   
@@ -126,7 +184,24 @@ const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
 
             {/* Right Image */}
             <div className="flex justify-center md:justify-end">
-              <div className={secondaryImageSrc ? "relative" : undefined}>
+              <div
+                className={
+                  [
+                    secondaryImageSrc || imageBackgroundSrc ? "relative" : undefined,
+                    imageWrapperClassName,
+                  ]
+                    .filter((value): value is string => Boolean(value))
+                    .join(" ") || undefined
+                }
+              >
+                {imageBackgroundSrc && (
+                  <img
+                    src={imageBackgroundSrc}
+                    alt=""
+                    aria-hidden="true"
+                    className={`absolute ${imageBackgroundClassName ?? ""}`.trim()}
+                  />
+                )}
                 <img
                   src={imageSrc}
                   alt="feature preview"

@@ -44,16 +44,47 @@ const HeroRightImage: React.FC<HeroRightImageProps> = ({
           }}
         />
       )}
-      <img
-        src={imageSrc}
-        alt={imageAlt}
-        className={`w-full max-w-2xl ${imageFullHeight ? '' : imageMaxHeight} rotate-0 rounded-2xl ${imageContain ? 'object-contain' : 'object-cover'} ${showImageShadow ? 'shadow-lg' : ''} ${imageTranslate ? imageTranslate : imageNoTranslate ? '' : 'translate-y-4 sm:translate-y-6 lg:translate-y-10 xl:translate-y-20 2xl:translate-y-28'}`}
-        style={{
-          ...(imageWidth && { width: `${imageWidth}px` }),
-          ...(imageHeight && { height: `${imageHeight}px` }),
-          ...(backgroundImageSrc && { position: 'relative', zIndex: 2 }),
-        }}
-      />
+      {showImageShadow ? (
+        <div className="relative">
+          {/* Gradient shadow layer */}
+          <div 
+            className={`absolute inset-0 w-full max-w-2xl ${imageFullHeight ? '' : imageMaxHeight} rounded-2xl`}
+            style={{
+              background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.08) 40%, transparent 70%)',
+              filter: 'blur(20px)',
+              transform: imageTranslate 
+                ? `${imageTranslate} translate(0, 8px)` 
+                : imageNoTranslate 
+                  ? 'translate(0, 8px)' 
+                  : 'translate(0, 8px) translate-y-4 sm:translate-y-6 lg:translate-y-10 xl:translate-y-20 2xl:translate-y-28',
+              zIndex: backgroundImageSrc ? 1 : 0,
+              ...(imageWidth && { width: `${imageWidth}px` }),
+              ...(imageHeight && { height: `${imageHeight}px` }),
+            }}
+          />
+          <img
+            src={imageSrc}
+            alt={imageAlt}
+            className={`relative w-full max-w-2xl ${imageFullHeight ? '' : imageMaxHeight} rotate-0 rounded-2xl ${imageContain ? 'object-contain' : 'object-cover'} ${imageTranslate ? imageTranslate : imageNoTranslate ? '' : 'translate-y-4 sm:translate-y-6 lg:translate-y-10 xl:translate-y-20 2xl:translate-y-28'}`}
+            style={{
+              ...(imageWidth && { width: `${imageWidth}px` }),
+              ...(imageHeight && { height: `${imageHeight}px` }),
+              ...(backgroundImageSrc && { position: 'relative', zIndex: 2 }),
+            }}
+          />
+        </div>
+      ) : (
+        <img
+          src={imageSrc}
+          alt={imageAlt}
+          className={`w-full max-w-2xl ${imageFullHeight ? '' : imageMaxHeight} rotate-0 rounded-2xl ${imageContain ? 'object-contain' : 'object-cover'} ${imageTranslate ? imageTranslate : imageNoTranslate ? '' : 'translate-y-4 sm:translate-y-6 lg:translate-y-10 xl:translate-y-20 2xl:translate-y-28'}`}
+          style={{
+            ...(imageWidth && { width: `${imageWidth}px` }),
+            ...(imageHeight && { height: `${imageHeight}px` }),
+            ...(backgroundImageSrc && { position: 'relative', zIndex: 2 }),
+          }}
+        />
+      )}
     </div>
   );
 };
