@@ -52,11 +52,7 @@ const HeroRightImage: React.FC<HeroRightImageProps> = ({
             style={{
               background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.08) 40%, transparent 70%)',
               filter: 'blur(20px)',
-              transform: imageTranslate 
-                ? `${imageTranslate} translate(0, 8px)` 
-                : imageNoTranslate 
-                  ? 'translate(0, 8px)' 
-                  : 'translate(0, 8px) translate-y-4 sm:translate-y-6 lg:translate-y-10 xl:translate-y-20 2xl:translate-y-28',
+              transform: 'translateY(8px)',
               zIndex: backgroundImageSrc ? 1 : 0,
               ...(imageWidth && { width: `${imageWidth}px` }),
               ...(imageHeight && { height: `${imageHeight}px` }),

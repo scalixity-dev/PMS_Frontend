@@ -31,12 +31,10 @@ const AIFeatureCard: React.FC<AIFeatureCardProps> = ({ image, icon, title, descr
           <div className="flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/60">{icon}</div>
         </div>
       ) : image ? (
-        <div className="w-full flex justify-center mb-3 sm:mb-4 shrink-0 h-24 sm:h-28">
-          <img src={image} alt={title} className="rounded-lg w-full h-full object-contain" />
+        <div className="w-full flex justify-center mb-3 sm:mb-4 shrink-0">
+          <img src={image} alt={title} className="rounded-lg max-w-full h-auto object-contain" />
         </div>
-      ) : (
-        <div className="w-full flex justify-center mb-3 sm:mb-4 shrink-0 h-24 sm:h-28"></div>
-      )}
+      ) : null}
 
       {/* Title */}
       <h3 className={titleClasses.join(" ") + " shrink-0"} style={textColor ? { color: textColor } : undefined}>{title}</h3>
