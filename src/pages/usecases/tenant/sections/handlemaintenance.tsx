@@ -7,26 +7,26 @@ const HandleMaintenanceSection: React.FC = () => {
   const usecaseFeatures = [
     {
       icon: <ClipboardList size={24} />,
-      title: "Report Issues Fast",
-      description: "Log maintenance requests in seconds so nothing slips through the cracks.",
+      title: "Photo and Video Requests",
+      description: " Easily describe the issue and attach photos or videos so nothing gets lost in translation.",
     },
     {
       icon: <MessageSquare size={24} />,
-      title: "Stay in the Loop",
-      description: "Chat with your landlord about updates and approvals without leaving the app.",
+      title: "Scheduling",
+      description: "Approve entry times and coordinate details right inside the app, no more back and forth or missed appointments.",
     },
     {
       icon: <CheckCircle2 size={24} />,
-      title: "Track Progress",
-      description: "See the status of every request, from scheduling to completion, all in one timeline.",
+      title: "Local Service Pros",
+      description: "Your landlord can quickly connect with trusted local pros to handle repairs, so you can get back to living comfortably.",
     },
   ];
 
   return (
     <HeroCard
       badge=""
-      title="Handle maintenance without the hassle"
-      description="Submit issues, follow updates, and keep your space comfortable. PMS makes maintenance simple for every tenant."
+      title="Handle maintenance requests, hassle-free"
+      description="Submit maintenance requests in seconds, track progress in real time, and get things fixed without the hassle."
       features={[]}
       learnMoreLabel=""
       showStamp={false}
@@ -34,7 +34,7 @@ const HandleMaintenanceSection: React.FC = () => {
       imageSrc="/Group.png"
       backgroundImageSrc="/rental-lease.png"
       backgroundImageTranslate="translate(180px, 120px)"
-      showImageShadow={false}
+      showImageShadow={true}
       imageNoTranslate
       imageTranslate="translate-x-4 translate-y-6 lg:translate-x-10 lg:translate-y-12"
       imageMaxHeight="max-h-[35rem]"

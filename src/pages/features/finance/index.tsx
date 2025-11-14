@@ -109,6 +109,7 @@ const FinancePage: React.FC = () => {
         color="#20CC95"
         textColor="white"
         buttonText="Set up online payments"
+        buttonTo="/pricing"
       />
       <AccountingSection />
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import logo from '../../assets/images/logo.png';
-import { ClipboardCheck, FileText, DollarSign, Users, UserCog } from 'lucide-react';
+import { ClipboardCheck, FileText, DollarSign, Users, UserCog, User, Wrench } from 'lucide-react';
 
 const baseLink = 'px-3 py-2 rounded-md font-heading text-[14px] font-light leading-[130%] tracking-normal text-white transition-colors active:bg-(--color-primary)';
 const pillActive = 'rounded-2xl  bg-[var(--color-primary)] text-white px-5 py-3';
@@ -184,6 +184,28 @@ const Navbar: React.FC = () => {
                       <path d="M3 9l9-6 9 6v11a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                     Landlord
+                  </div>
+                  <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
+                </Link>
+                <Link
+                  to="/usecases/tenant"
+                  onClick={() => setIsUseCasesDropdownOpen(false)}
+                  className="group flex items-center justify-between px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors rounded-md mx-2"
+                >
+                  <div className="flex items-center gap-2">
+                    <User size={18} className="text-gray-700" />
+                    Tenant
+                  </div>
+                  <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
+                </Link>
+                <Link
+                  to="/usecases/servicepros"
+                  onClick={() => setIsUseCasesDropdownOpen(false)}
+                  className="group flex items-center justify-between px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors rounded-md mx-2"
+                >
+                  <div className="flex items-center gap-2">
+                    <Wrench size={18} className="text-gray-700" />
+                    Service Pros
                   </div>
                   <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
                 </Link>
@@ -374,6 +396,34 @@ const Navbar: React.FC = () => {
                         <path d="M3 9l9-6 9 6v11a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                       Landlord
+                    </div>
+                    <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
+                  </Link>
+                  <Link
+                    onClick={() => {
+                      setIsMobileOpen(false);
+                      setIsMobileUseCasesDropdownOpen(false);
+                    }}
+                    to="/usecases/tenant"
+                    className={`${baseLink} ${mutedLink} group flex items-center justify-between`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <User size={18} />
+                      Tenant
+                    </div>
+                    <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
+                  </Link>
+                  <Link
+                    onClick={() => {
+                      setIsMobileOpen(false);
+                      setIsMobileUseCasesDropdownOpen(false);
+                    }}
+                    to="/usecases/servicepros"
+                    className={`${baseLink} ${mutedLink} group flex items-center justify-between`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Wrench size={18} />
+                      Service Pros
                     </div>
                     <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
                   </Link>

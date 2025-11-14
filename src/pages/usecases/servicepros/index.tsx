@@ -1,7 +1,8 @@
 import React from "react";
 import FeatureShowcaseWithCards from "./sections/FeatureShowcaseWithCards";
 import SkillFeaturesSection from "./sections/SkillFeaturesSection";
-import ExplorePropertiesBanner from "../../../components/ExplorePropertiesBanner";
+import ServiceProsHero from "./sections/serviceproshero";
+  import ExplorePropertiesBanner from "../../../components/ExplorePropertiesBanner";
 import { 
   Briefcase, 
   Award, 
@@ -17,6 +18,7 @@ import {
 const ServiceProsPage: React.FC = () => {
   return (
     <div className="w-full">
+      <ServiceProsHero />
       <SkillFeaturesSection />
     
       {/* Section 1: Create a business profile in minutes */}
@@ -104,7 +106,7 @@ const ServiceProsPage: React.FC = () => {
         ]}
         backgroundColor="#ffffff"
       />
-        <ExplorePropertiesBanner />
+      <ExplorePropertiesBanner />
     </div>
   );
 };
