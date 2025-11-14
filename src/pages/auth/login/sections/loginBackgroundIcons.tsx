@@ -1,20 +1,13 @@
 export const LeftIcon = () => {
     return(
         <>
-            <style>{`
-                @media (max-width: 1425px) {
-                    .left-icon-position {
-                        top: -13rem !important;
-                    }
-                }
-            `}</style>
             <svg
                 width="273"
                 height="556"
                 viewBox="0 0 273 556"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
-                className="left-icon-position hidden -left-15 lg:block absolute lg:top-20"
+                className="hidden -left-15 lg:block absolute -top-52 lg:top-20"
             >
                 <path
                     d="M140.029 508.602C-161.679 692.872 -120.397 282.181 -171.16 215.982C-221.922 149.783 -347.871 87.3117 -257.918 18.3348C-167.965 -50.6421 175.016 92.4905 225.778 158.69C334.132 299.994 229.982 439.626 140.029 508.602Z"

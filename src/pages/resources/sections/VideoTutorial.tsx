@@ -23,7 +23,7 @@ const VideoTutorialsCard: React.FC = () => {
       <div className="flex-none w-full md:w-auto">
         <img
           src="/videoTutorial.jpg"
-          alt="Modern House Patio"
+          alt="Video tutorials preview"
           className="rounded-lg lg:rounded-xl md:rounded-xl shadow-lg w-full max-w-[350px] h-auto object-cover mx-auto"
          />
       </div>

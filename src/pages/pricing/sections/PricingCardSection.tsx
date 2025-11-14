@@ -185,7 +185,7 @@ export default function PricingCardSection(): React.ReactElement | null {
     setIsClient(true); // Set client-side flag after mount
   }, []);
 
-  const isDesktop = width >= 1285;
+  const isDesktop = width >= 1280;
 
   if (!isClient) {
     return null;

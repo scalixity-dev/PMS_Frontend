@@ -33,23 +33,7 @@ export const PricingHeroSection = () => {
                 </div>
             </div>
 
-        {/* for pament cards */}
-        {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-            {pricingPlans.map((plan, index) => (
-            <PricingCard
-                key={index}
-                plan={plan.plan}
-                description={plan.description}
-                priceText={plan.priceText}
-                annualBillingText={plan.annualBillingText}
-                includesTitle={plan.includesTitle}
-                features={plan.features}
-                isPopular={plan.isPopular}
-                isPro={plan.isPro}
-            />
-            ))}
-        </div> */}
-        <PricingCardSection />
+            <PricingCardSection />
       </div>
     )
 }
