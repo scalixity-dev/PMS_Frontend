@@ -19,12 +19,23 @@ const defaultProps: Required<CtaSectionProps> = {
 const CtaSection: React.FC<CtaSectionProps> = (props) => {
   const { title, description, buttonText, buttonHref, titleSize } = { ...defaultProps, ...props };
 
+  // map titleSize prop to safe Tailwind classes (avoid dynamic class names)
+  const titleClassMap: Record<string, string> = {
+    '5xl': 'text-5xl md:text-5xl',
+    '4xl': 'text-4xl md:text-4xl',
+    '3xl': 'text-3xl md:text-4xl',
+    'lg': 'text-lg md:text-2xl',
+    'xl': 'text-xl md:text-3xl',
+  };
+
+  const titleClass = titleClassMap[titleSize as string] || 'text-3xl md:text-4xl';
+
   return (
     <section className="bg-white pt-10 pb-8 md:pt-15 md:pb-10">
       <div className="max-w-3xl mx-auto text-center px-4">
 
         {/* Title */}
-        <h2 className={`text-${titleSize} font-bold text-slate-900 mb-6`}>
+        <h2 className={`${titleClass} font-bold text-slate-900 mb-6`}>
           {title}
         </h2>
 

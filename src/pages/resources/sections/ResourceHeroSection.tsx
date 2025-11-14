@@ -60,8 +60,8 @@ export default function App() {
         </div>
 
         {/* Filter Buttons */}
-        <div className="flex justify-center mb-6">
-          <div className="flex items-center gap-3 justify-evenly w-full max-w-3xl h-18 rounded-full bg-[#F4FFFC] p-2 shadow-inner border border-[#DADADA]">
+        <div className="flex justify-center mb-16 px-4">
+          <div className="flex flex-wrap items-center justify-center gap-3 rounded-xl bg-[#F4FFFC] p-2 shadow-inner border border-[#DADADA] w-full max-w-xl">
             {filters.map((filter) => (
               <FilterButton 
                 key={filter}

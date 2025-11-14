@@ -1,7 +1,7 @@
 // background icons
 export const LeftIcon = () => {
     return(
-        <svg width="309" height="409" viewBox="0 0 419 549" fill="none" xmlns="http://www.w3.org/2000/svg" className="absolute top-30 -left-1">
+        <svg width="309" height="409" viewBox="0 0 419 549" fill="none" xmlns="http://www.w3.org/2000/svg" className="hidden lg:block absolute top-30 -left-1">
             <path d="M249.373 484.391C-97.9442 706.734 -6.73801 282.712 -54.1586 220.871C-101.579 159.029 -230.771 109.515 -125.629 28.891C-20.4871 -51.733 334.383 55.5469 381.804 117.388C483.025 249.391 354.515 403.767 249.373 484.391Z" fill="#20CC95" fill-opacity="0.25"/>
         </svg>
     )
@@ -12,7 +12,7 @@ export const RightIcon = () => {
           src="/resourceCard.png"
           alt="Background"
           width={262} height={190}
-          className="absolute right-10 top-30"
+          className="hidden lg:block absolute right-10 top-30"
         />
     )
 }
@@ -81,7 +81,7 @@ export const Dashboard = () => {
 }
 export const Settings = () => {
     return(
-        <svg width="50" height="50" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg width="58" height="58" viewBox="0 0 58 58" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect width="49.7209" height="49.7209" rx="8.28682" fill="white"/>
         <g clip-path="url(#clip0_884_74536)">
         <path fill-rule="evenodd" clip-rule="evenodd" d="M12.8931 14.859C13.2748 14.7364 13.6838 14.9466 13.8063 15.3284C13.9289 15.7102 13.7187 16.1191 13.3369 16.2416L9.76661 17.3896C9.38482 17.5121 8.97586 17.302 8.85335 16.9202C8.84578 16.8965 8.83944 16.8727 8.83434 16.8489L8.83347 16.8491L8.04242 13.1831C7.95918 12.7903 8.21009 12.4043 8.60288 12.321C8.99567 12.2378 9.38169 12.4887 9.46493 12.8815L9.88591 14.8325C11.3991 12.7264 13.3575 10.9622 15.6232 9.67819C18.2302 8.20083 21.2405 7.35742 24.4444 7.35742C29.3919 7.35742 33.8713 9.36289 37.1136 12.6052C40.3559 15.8476 42.3614 20.3269 42.3614 25.2744C42.3614 30.222 40.3559 34.7013 37.1136 37.9437C33.8712 41.186 29.3919 43.1915 24.4444 43.1915C19.4872 43.1915 15.0156 41.1842 11.7794 37.948C8.53092 34.6994 6.52734 30.2124 6.52734 25.2744C6.52734 24.8722 6.85342 24.5461 7.25568 24.5461C7.65794 24.5461 7.98401 24.8722 7.98401 25.2744C7.98401 29.811 9.8248 33.9334 12.8094 36.918C15.7822 39.8908 19.8902 41.7348 24.4444 41.7348C28.9898 41.7348 33.1049 39.8924 36.0837 36.9137C39.0623 33.935 40.9047 29.8199 40.9047 25.2744C40.9047 20.729 39.0623 16.6138 36.0837 13.6352C33.105 10.6565 28.9898 8.81409 24.4444 8.81409C21.4951 8.81409 18.7299 9.58722 16.3403 10.9414C14.3669 12.0598 12.6475 13.5734 11.2898 15.3744L12.8931 14.859Z" fill="#515151"/>
@@ -331,7 +331,7 @@ export const ChatIcon = () => {
 //pms stand out
 export const Diamond = () => {
     return(
-        <svg width="267" height="364" viewBox="0 0 267 364" fill="none" xmlns="http://www.w3.org/2000/svg" className="absolute right-0 w-[220px] h-[220px]">
+        <svg width="267" height="364" viewBox="0 0 267 364" fill="none" xmlns="http://www.w3.org/2000/svg" className="hidden lg:block absolute right-0 w-[220px] h-[220px]">
         <g filter="url(#filter0_dddddd_884_74807)">
         <path d="M149.773 4.64656C157.508 0.180746 167.038 0.180746 174.773 4.64657L232.046 37.7128C239.781 42.1786 244.546 50.4318 244.546 59.3634V125.496C244.546 134.428 239.781 142.681 232.046 147.147L174.773 180.213C167.038 184.679 157.508 184.679 149.773 180.213L92.501 147.147C84.766 142.681 80.001 134.428 80.001 125.496V59.3634C80.001 50.4318 84.766 42.1786 92.501 37.7128L149.773 4.64656Z" fill="#82FAD4"/>
         </g>
@@ -378,7 +378,7 @@ export const Diamond = () => {
 //landlord forms
 export const MidCircle = () => {
     return(
-        <svg width="163" height="266" viewBox="0 0 203 346" fill="none" xmlns="http://www.w3.org/2000/svg" className="absolute left-0">
+        <svg width="163" height="266" viewBox="0 0 203 346" fill="none" xmlns="http://www.w3.org/2000/svg" className="hidden lg:block absolute left-0">
         <g filter="url(#filter0_dddddd_884_74808)">
         <path d="M-1.13621 12.3184C24.319 -2.37819 55.681 -2.37819 81.1362 12.3184C106.591 27.0149 122.272 54.1753 122.272 83.5684C122.272 112.961 106.591 140.122 81.1362 154.818C55.681 169.515 24.319 169.515 -1.13621 154.818C-26.5914 140.122 -42.2724 112.961 -42.2724 83.5684C-42.2724 54.1753 -26.5914 27.0149 -1.13621 12.3184Z" fill="#3D7475" fill-opacity="0.7"/>
         </g>

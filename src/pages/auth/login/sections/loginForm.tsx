@@ -14,7 +14,7 @@ const LoginForm: React.FC = () => {
     };
 
     return (
-        <div className="w-full lg:w-1/2 p-6 sm:p-10 lg:p-6 flex flex-col justify-center">
+        <div className="w-full lg:w-1/2 p-2 sm:p-10 lg:p-6 flex flex-col justify-center">
             <div className="text-center lg:text-left mb-8">
                 <img src={logo} alt="PMS Logo" className="h-8 w-8 mx-auto lg:mx-0 mb-2 brightness-0" />
                 <h1 className="text-md font-body text-gray-800 font-bold mb-2">PMS</h1>
@@ -33,7 +33,7 @@ const LoginForm: React.FC = () => {
                     name="full-name"
                     type="text"
                     required
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 sm:text-sm transition-all"
                     placeholder="Enter your name"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
@@ -51,7 +51,7 @@ const LoginForm: React.FC = () => {
                     name="email"
                     type="email"
                     required
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 sm:text-sm transition-all"
                     placeholder="Enter your email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -69,7 +69,7 @@ const LoginForm: React.FC = () => {
                     name="password"
                     type="password"
                     required
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 sm:text-sm transition-all"
                     placeholder="********"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -80,7 +80,7 @@ const LoginForm: React.FC = () => {
                 <div>
                 <button
                     type="submit"
-                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-(--color-primary) hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-var[(--color-primary)]"
+                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md text-sm font-medium text-white bg-(--color-primary) hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
                 >
                     Continue
                 </button>
@@ -102,19 +102,19 @@ const LoginForm: React.FC = () => {
                 <div className="mt-6 space-y-3">
                 <button
                     type="button"
-                    className="w-full inline-flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    className="w-full inline-flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
                 >
                     <GoogleIcon /> Create with Google
                 </button>
                 <button
                     type="button"
-                    className="w-full inline-flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    className="w-full inline-flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
                 >
                     <AppleIcon /> Create with Apple
                 </button>
                 <button
                     type="button"
-                    className="w-full inline-flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    className="w-full inline-flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
                 >
                     <FacebookIcon /> Create with Facebook
                 </button>
@@ -123,7 +123,7 @@ const LoginForm: React.FC = () => {
 
             <div className="mt-8 text-center text-sm text-gray-600">
                 Don't have an account?{' '}
-                <Link to="/signup" className="font-medium text-(--color-primary) hover:text-green-600 hover:underline">
+                <Link to="/signup" className="font-medium text-(--color-primary) hover:text-green-600 hover:underline transition-colors">
                 Sign up
                 </Link>
             </div>

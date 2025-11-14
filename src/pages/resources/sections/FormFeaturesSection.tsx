@@ -5,7 +5,7 @@ import { Check, Clock, Contact, Scan } from './resourceIcons';
 const FormFeaturesSection: React.FC = () => {
   return (
     <section className="py-16 px-4 bg-white">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div className="max-w-7xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-6">
         
         {/* Card 1: Legally Compliant Forms */}
         <SimpleIconCard

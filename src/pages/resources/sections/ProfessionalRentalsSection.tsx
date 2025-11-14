@@ -8,17 +8,19 @@ export const ProfessionalRentalsSection = () => {
             description="Free with your PmsCloud Pro/Business plans or available for purchase on Starter/Growth plans."
             features={[]}
             learnMoreLabel=""
-            getStartedLabel=""
             showStamp={false}
             showBackgroundCard={false}
+            imageSrc="/professional_dashboard.png"
+            imageWidth = {450}
+            imageHeight = {300}
+            backgroundImageSrc="/bg_vector2.png"
             reverseLayout={true}
-            imageSrc="/professionalRental.png"
             showImageShadow={false}
             imageNoTranslate={true}
-            imageMaxHeight="max-h-[35rem]"
-            imageHeight={460}
-            titleMarginBottom="mb-6"
-            descriptionMarginBottom="mt-6"
+            imageContain={true}
+            imageMaxHeight="max-h-[40rem]"
+            titleMarginBottom="mb-4"
+            descriptionMarginBottom="mb-6"
         />
     )
 }
