@@ -1,5 +1,21 @@
 import React from "react";
-import GetStartedButton from "./common/buttons/GetStartedButton";
+// import GetStartedButton from "./common/buttons/GetStartedButton"; // Mocked
+const GetStartedButton: React.FC<{
+  size?: string;
+  widthClass?: string;
+  to?: string;
+  className?: string;
+  text?: string;
+}> = ({ text = "Get Started", className, widthClass, to }) => (
+  <a
+    href={to || "#"}
+    className={`inline-block px-5 py-2.5 font-semibold text-white bg-[#3D7475] rounded-lg border border-white shadow-md hover:bg-[#2c5858] transition-colors ${
+      widthClass || ""
+    } ${className || ""}`}
+  >
+    {text}
+  </a>
+);
 
 interface FeatureItem {
   icon: React.ReactNode;
@@ -15,15 +31,15 @@ interface SplitHeroFeatureProps {
   secondaryImageAlt?: string;
   icon?: React.ReactNode;
   badgeText?: string;
-  badgeVariant?: "default" | "elevated";
+  badgeVariant?: "default" | "elevated"; // Kept from V1
   backgroundClassName?: string;
   secondaryImageBackgroundClassName?: string;
-  innerSpacingClassName?: string;
-  imageWrapperClassName?: string;
-  allowContentOverflow?: boolean;
-  imageBackgroundSrc?: string;
-  imageBackgroundClassName?: string;
-  outerMaxWidthClassName?: string;
+  innerSpacingClassName?: string; // Kept from V1
+  imageWrapperClassName?: string; // Kept from V1
+  allowContentOverflow?: boolean; // Kept from V1
+  imageBackgroundSrc?: string; // Kept from V1
+  imageBackgroundClassName?: string; // Kept from V1
+  outerMaxWidthClassName?: string; // Kept from V1
   features?: FeatureItem[];
 }
 
@@ -40,26 +56,26 @@ const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
   secondaryImageAlt,
   icon,
   badgeText,
-  badgeVariant = "default",
+  badgeVariant = "default", // Kept from V1
   backgroundClassName,
   secondaryImageBackgroundClassName,
-  innerSpacingClassName,
-  imageWrapperClassName,
-  allowContentOverflow,
-  imageBackgroundSrc,
-  imageBackgroundClassName,
-  outerMaxWidthClassName,
+  innerSpacingClassName, // Kept from V1
+  imageWrapperClassName, // Kept from V1
+  allowContentOverflow, // Kept from V1
+  imageBackgroundSrc, // Kept from V1
+  imageBackgroundClassName, // Kept from V1
+  outerMaxWidthClassName, // Kept from V1
   features,
 }) => {
-  const appliedBackgroundClass =
-    backgroundClassName ?? "bg-[#0CA474]";
+  const appliedBackgroundClass = backgroundClassName ?? "bg-[#0CA474]";
   const secondaryBackgroundClass =
     secondaryImageBackgroundClassName ?? appliedBackgroundClass;
+  // Kept V1 logic
   const innerSpacingClass =
     innerSpacingClassName ?? "py-28 px-6 md:px-16 lg:px-16";
-  const outerMaxWidthClass =
-    outerMaxWidthClassName ?? "max-w-7xl";
+  const outerMaxWidthClass = outerMaxWidthClassName ?? "max-w-7xl";
 
+  // Kept from V1
   const renderIcon = () => {
     if (!icon) {
       return null;
@@ -79,7 +95,9 @@ const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
   };
 
   return (
-    <section className="relative w-screen left-1/2 -translate-x-1/2  py-16 px-6 md:px-0">
+    // Updated CSS from V2
+    <section className="relative w-screen left-1/2 -translate-x-1/2 pt-20 py-20 px-6 lg:px-0">
+      {/* Kept V1 logic */}
       <div className={`relative mx-auto ${outerMaxWidthClass}`}>
         <div
           className={`relative ${
@@ -116,15 +134,18 @@ const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
           </div>
 
           {/* Content Wrapper */}
-          <div className="relative z-10 grid md:grid-cols-2 gap-10 items-start">
+          {/* Updated CSS from V2 (lg:grid-cols-2) */}
+          <div className="relative z-10 grid lg:grid-cols-2 gap-10 items-start">
             {/* Left Content */}
             <div className="text-white max-w-lg">
+              {/* Kept V1 logic */}
               {(badgeText || (badgeVariant === "elevated" && icon)) && (
                 <div
                   className={`flex items-center ${
                     badgeVariant === "elevated" ? "gap-4 mb-6" : "gap-3 mb-4"
                   }`}
                 >
+                  {/* Kept V1 logic */}
                   {badgeVariant === "elevated" && icon && (
                     <div className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-white border border-white/60 text-[#0C6A58] shadow-lg shadow-black/10">
                       {renderIcon()}
@@ -132,32 +153,35 @@ const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
                   )}
                   {badgeText && (
                     <>
+                      {/* Kept V1 logic */}
                       {badgeVariant === "elevated" ? (
                         <span className="inline-flex items-center rounded-sm bg-white/95 border border-white/60 px-5 py-2 text-sm md:text-base font-semibold tracking-wide text-[#0C6A58] shadow-lg shadow-black/10">
                           {badgeText}
                         </span>
                       ) : (
-                        <span className="inline-flex items-center rounded-sm bg-[#B9E4C8]/50 border border-white/30 px-4 py-1 text-base md:text-lg font-medium leading-[150%] tracking-normal text-white -ml-2">
+                        // Updated CSS from V2 (rounded-full, text-[22px])
+                        <span className="inline-flex items-center rounded-full bg-[#B9E4C8]/50 border border-white/30 px-4 py-1 text-[22px] font-medium leading-[150%] tracking-normal text-white -ml-2">
                           {badgeText}
                         </span>
                       )}
                     </>
                   )}
-
-                  
                 </div>
               )}
 
-              <h2 className="text-3xl md:text-4xl font-semibold mb-4 leading-tight">
+              {/* Updated CSS from V2 (lg:text-4xl) */}
+              <h2 className="text-3xl lg:text-4xl font-semibold mb-4 leading-tight">
                 {title}
               </h2>
 
-              <p className="text-white/90 text-sm md:text-lg font-normal mb-10 leading-relaxed">
+              {/* Updated CSS from V2 (lg:text-lg) */}
+              <p className="text-white/90 text-sm lg:text-lg font-normal mb-10 leading-relaxed">
                 {description}
               </p>
 
               {features && features.length > 0 && (
-                <div className="mb-16 grid grid-cols-1 md:grid-cols-2 gap-6">
+                // Updated CSS from V2 (sm:grid-cols-2)
+                <div className="mb-16 grid grid-cols-1 sm:grid-cols-2 gap-6">
                   {features.map((feature, index) => (
                     <div
                       key={`${feature.title}-${index}`}
@@ -167,7 +191,8 @@ const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
                         <div className="text-[#081029]">{feature.icon}</div>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-[#1F2937] leading-snug">
+                        {/* Updated CSS from V2 (text-white) */}
+                        <h3 className="font-semibold text-white leading-snug">
                           {feature.title}
                         </h3>
                         <p className="mt-2 text-sm text-[#FFFFFF]/71 leading-relaxed">
@@ -179,21 +204,23 @@ const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
                 </div>
               )}
 
+              {/* Kept V1 component call */}
               <GetStartedButton size="sm" widthClass="w-32" />
             </div>
 
             {/* Right Image */}
-            <div className="flex justify-center md:justify-end">
+            {/* Updated CSS from V2 (lg:justify-end) */}
+            <div className="flex justify-center lg:justify-end">
               <div
-                className={
-                  [
-                    secondaryImageSrc || imageBackgroundSrc ? "relative" : undefined,
-                    imageWrapperClassName,
-                  ]
-                    .filter((value): value is string => Boolean(value))
-                    .join(" ") || undefined
-                }
+                // Kept V1 logic
+                className={[
+                  secondaryImageSrc || imageBackgroundSrc ? "relative" : "",
+                  imageWrapperClassName ?? "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
               >
+                {/* Kept V1 logic */}
                 {imageBackgroundSrc && (
                   <img
                     src={imageBackgroundSrc}
@@ -205,13 +232,26 @@ const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
                 <img
                   src={imageSrc}
                   alt="feature preview"
-                  className=" w-full max-w-[760px] md:max-w-[720px] lg:max-w-[860px] object-contain  "
+                  // Updated CSS from V2 (removed md:max-w-[720px])
+                  className="w-full max-w-[760px] lg:max-w-[860px] object-contain"
+                  // Added from V2
+                  onError={(e) =>
+                    (e.currentTarget.src =
+                      "https://placehold.co/860x600/88AF95/FFFFFF?text=Feature+Preview")
+                  }
                 />
+                {/* Kept V1 logic */}
                 {secondaryImageSrc && (
                   <img
                     src={secondaryImageSrc}
                     alt={secondaryImageAlt ?? "additional feature preview"}
-                    className={`shadow-xl w-40 md:w-48 lg:w-56 object-contain border border-white/30 rounded-3xl absolute -bottom-10 -left-10 md:-left-16 ${secondaryBackgroundClass}`}
+                    // Updated CSS from V2 (sm:w-48, lg:-left-16)
+                    className={`shadow-xl w-40 sm:w-48 lg:w-56 object-contain border border-white/30 rounded-3xl absolute -bottom-10 -left-10 lg:-left-16 ${secondaryBackgroundClass}`}
+                    // Added from V2
+                    onError={(e) =>
+                      (e.currentTarget.src =
+                        "https://placehold.co/224x150/88AF95/FFFFFF?text=Details")
+                    }
                   />
                 )}
               </div>

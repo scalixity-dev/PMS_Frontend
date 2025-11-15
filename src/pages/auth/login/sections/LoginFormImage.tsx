@@ -1,6 +1,6 @@
 const LoginFormImage: React.FC = () => {
   return (
-    <div className="hidden lg:block lg:w-1/2 items-center justify-center relative pt-6 ml-10">
+    <div className="hidden lg:flex lg:w-1/2 items-center justify-center relative pt-6 ml-10">
         <svg width="495" height="654" viewBox="0 0 495 654" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect width="494.024" height="654" fill="#C9FFEE"/>
         <g filter="url(#filter0_dd_770_14193)">
