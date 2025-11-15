@@ -3,8 +3,8 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import logo from '../../assets/images/logo.png';
 import { ClipboardCheck, FileText, DollarSign, Users, UserCog, User, Wrench } from 'lucide-react';
 
-const baseLink = 'px-3 py-2 rounded-md font-heading text-[14px] font-light leading-[130%] tracking-normal text-white transition-colors active:bg-(--color-primary)';
-const pillActive = 'rounded-2xl  bg-[var(--color-primary)] text-white px-5 py-3';
+const baseLink = 'px-3 py-2 rounded-md font-heading text-[14px] font-light leading-[130%] tracking-normal text-white transition-colors active:bg-[var(--color-primary)]';
+const pillActive = 'rounded-2xl bg-[var(--color-primary)] text-white px-5 py-3';
 const mutedLink = 'text-white';
 
 const ChevronDown: React.FC = () => (
@@ -73,13 +73,33 @@ const Navbar: React.FC = () => {
     };
   }, [isFeaturesDropdownOpen, isUseCasesDropdownOpen]);
 
+  // Close mobile menu on route change
+  useEffect(() => {
+    if (isMobileOpen) {
+      setIsMobileOpen(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobileOpen]);
+
   return (
     <>
-    <header className="bg-(--color-navbar-bg) fixed top-0 left-0 right-0 z-50 text-white w-full">
-      <nav className="mx-auto flex w-full max-w-7xl items-center justify-between px-16 xl:px-0 py-2.5 md:py-3 lg:py-3.5 h-[60px] md:h-[72px] lg:h-20 opacity-100 relative">
+    <header className="bg-[var(--color-navbar-bg)] fixed top-0 left-0 right-0 z-50 text-white w-full">
+      <nav className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 sm:px-6 md:px-16 xl:px-0 py-2.5 md:py-3 lg:py-3.5 h-[60px] md:h-[72px] lg:h-20 opacity-100 relative">
         <Link to="/" className="flex items-center gap-2">
-          <img src={logo} alt="PMS Logo" className="h-10 w-10 brightness-0 invert" />
-          <span className="font-body text-[20px] md:text-[20px] font-bold leading-[150%] tracking-normal">PMS</span>
+          <img src={logo} alt="PMS Logo" className="h-6 w-6 md:h-8 md:w-8 lg:h-10 lg:w-10 brightness-0 invert" />
+          <span className="font-body text-md md:text-lg lg:text-xl font-bold leading-[150%] tracking-normal">PMS</span>
         </Link>
 
         {/* Center menu (desktop) */}
@@ -227,7 +247,7 @@ const Navbar: React.FC = () => {
         </div>
 
         {/* Right actions (desktop) */}
-        <div className="hidden sm:flex items-center gap-2 md:gap-4 lg:gap-6">
+        <div className="hidden lg:flex items-center gap-2 lg:gap-6">
           {!(pathname === '/login') && <button
             className="inline-flex items-center font-heading text-[14px] md:text-[16px] leading-7 md:leading-[32.21px] font-semibold capitalize text-white"
             aria-disabled="true"
@@ -237,7 +257,7 @@ const Navbar: React.FC = () => {
             <UserIcon /> Login
           </button>}
           {!(pathname === '/signup') && <button
-            className="hidden md:inline-flex items-center justify-center w-[100px] md:w-[120px] xl:w-[140px] h-10 md:h-12 rounded-[54.49px] border-[1.21px] border-[#E2E2E2] font-heading text-[12px] md:text-[14px] leading-7 md:leading-[32.21px] font-semibold text-center align-middle text-white bg-(--color-primary)"
+            className="hidden md:inline-flex items-center justify-center w-[100px] md:w-[120px] xl:w-[140px] h-10 md:h-12 rounded-[54.49px] border-[1.21px] border-[#E2E2E2] font-heading text-[12px] md:text-[14px] leading-7 md:leading-[32.21px] font-semibold text-center align-middle text-white bg-[var(--color-primary)]"
             aria-disabled="true"
             type="button"
             onClick={() => navigate("/signup")}
@@ -254,7 +274,7 @@ const Navbar: React.FC = () => {
             aria-expanded={isMobileOpen}
             aria-controls="mobile-menu"
             onClick={() => setIsMobileOpen((open) => !open)}
-            className="inline-flex items-center justify-center rounded-md p-2 text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-(--color-navbar-bg)"
+            className="inline-flex items-center justify-center rounded-md p-2 text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[var(--color-navbar-bg)]"
           >
             {isMobileOpen ? (
               // Close icon
@@ -271,14 +291,23 @@ const Navbar: React.FC = () => {
         </div>
       </nav>
 
-      {/* Mobile menu panel */}
+      {/* Mobile menu panel (Slides from right) */}
       <div
         id="mobile-menu"
-        className={`${isMobileOpen ? 'max-h-[480px] opacity-100' : 'max-h-0 opacity-0'} lg:hidden overflow-hidden transition-all duration-300 ease-out bg-(--color-navbar-bg)`}
+        className={`
+          lg:hidden 
+          absolute top-full right-0 
+          h-[calc(100svh-60px)] md:h-[calc(100svh-72px)] 
+          w-80 md:w-96 
+          bg-[var(--color-navbar-bg)] 
+          overflow-y-auto 
+          transition-all duration-300 ease-in-out
+          ${isMobileOpen ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}
+        `}
       >
         <div className="px-4 sm:px-6 md:px-10 pb-4 pt-1">
           <div className="flex flex-col gap-1">
-            <NavLink onClick={() => setIsMobileOpen(false)} to="/" end className={({ isActive }) => `${baseLink} ${isActive ? pillActive : mutedLink}`}>
+            <NavLink onClick={() => setIsMobileOpen(false)} to="/" end className={({ isActive }) => `${baseLink} ${isActive ? pillActive : mutedLink} flex`}>
               Home
             </NavLink>
             
@@ -294,13 +323,10 @@ const Navbar: React.FC = () => {
                 Features <ChevronDown />
               </button>
               
-              {isMobileFeaturesDropdownOpen && (
+              <div className={`${isMobileFeaturesDropdownOpen ? 'max-h-96' : 'max-h-0'} overflow-hidden transition-all duration-300 ease-in-out`}>
                 <div className="ml-4 mt-1 flex flex-col gap-1">
                   <Link 
-                    onClick={() => {
-                      setIsMobileOpen(false);
-                      setIsMobileFeaturesDropdownOpen(false);
-                    }}
+                    onClick={() => setIsMobileOpen(false)}
                     to="/features/screening" 
                     className={`${baseLink} ${mutedLink} group flex items-center justify-between`}
                   >
@@ -311,10 +337,7 @@ const Navbar: React.FC = () => {
                     <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
                   </Link>
                   <Link 
-                    onClick={() => {
-                      setIsMobileOpen(false);
-                      setIsMobileFeaturesDropdownOpen(false);
-                    }}
+                    onClick={() => setIsMobileOpen(false)}
                     to="/features/lease" 
                     className={`${baseLink} ${mutedLink} group flex items-center justify-between`}
                   >
@@ -325,10 +348,7 @@ const Navbar: React.FC = () => {
                     <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
                   </Link>
                   <Link 
-                    onClick={() => {
-                      setIsMobileOpen(false);
-                      setIsMobileFeaturesDropdownOpen(false);
-                    }}
+                    onClick={() => setIsMobileOpen(false)}
                     to="/features/finance" 
                     className={`${baseLink} ${mutedLink} group flex items-center justify-between`}
                   >
@@ -339,10 +359,7 @@ const Navbar: React.FC = () => {
                     <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
                   </Link>
                   <Link 
-                    onClick={() => {
-                      setIsMobileOpen(false);
-                      setIsMobileFeaturesDropdownOpen(false);
-                    }}
+                    onClick={() => setIsMobileOpen(false)}
                     to="/features/leads" 
                     className={`${baseLink} ${mutedLink} group flex items-center justify-between`}
                   >
@@ -353,10 +370,7 @@ const Navbar: React.FC = () => {
                     <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
                   </Link>
                   <Link 
-                    onClick={() => {
-                      setIsMobileOpen(false);
-                      setIsMobileFeaturesDropdownOpen(false);
-                    }}
+                    onClick={() => setIsMobileOpen(false)}
                     to="/features/team" 
                     className={`${baseLink} ${mutedLink} group flex items-center justify-between`}
                   >
@@ -367,9 +381,10 @@ const Navbar: React.FC = () => {
                     <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
                   </Link>
                 </div>
-              )}
+              </div>
             </div>
 
+            {/* Use Cases Dropdown (Mobile) */}
             <div>
               <button
                 onClick={() => {
@@ -381,13 +396,10 @@ const Navbar: React.FC = () => {
                 Use Cases <ChevronDown />
               </button>
 
-              {isMobileUseCasesDropdownOpen && (
+              <div className={`${isMobileUseCasesDropdownOpen ? 'max-h-96' : 'max-h-0'} overflow-hidden transition-all duration-300 ease-in-out`}>
                 <div className="ml-4 mt-1 flex flex-col gap-1">
                   <Link
-                    onClick={() => {
-                      setIsMobileOpen(false);
-                      setIsMobileUseCasesDropdownOpen(false);
-                    }}
+                    onClick={() => setIsMobileOpen(false)}
                     to="/usecases/landlord"
                     className={`${baseLink} ${mutedLink} group flex items-center justify-between`}
                   >
@@ -400,10 +412,7 @@ const Navbar: React.FC = () => {
                     <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
                   </Link>
                   <Link
-                    onClick={() => {
-                      setIsMobileOpen(false);
-                      setIsMobileUseCasesDropdownOpen(false);
-                    }}
+                    onClick={() => setIsMobileOpen(false)}
                     to="/usecases/tenant"
                     className={`${baseLink} ${mutedLink} group flex items-center justify-between`}
                   >
@@ -414,10 +423,7 @@ const Navbar: React.FC = () => {
                     <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
                   </Link>
                   <Link
-                    onClick={() => {
-                      setIsMobileOpen(false);
-                      setIsMobileUseCasesDropdownOpen(false);
-                    }}
+                    onClick={() => setIsMobileOpen(false)}
                     to="/usecases/servicepros"
                     className={`${baseLink} ${mutedLink} group flex items-center justify-between`}
                   >
@@ -428,37 +434,51 @@ const Navbar: React.FC = () => {
                     <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
                   </Link>
                 </div>
-              )}
+              </div>
             </div>
-            <button className={`${baseLink} ${isResourceActive ? pillActive : mutedLink}`} onClick={() => navigate("/resources")}>
+            <button className={`${baseLink} ${isResourceActive ? pillActive : mutedLink} flex`} onClick={() => navigate("/resources")}>
               Resources
             </button>
-            <button className={`${baseLink} ${isPricingActive ? pillActive : mutedLink}`} onClick={() => navigate("/pricing")}>
+            <button className={`${baseLink} ${isPricingActive ? pillActive : mutedLink} flex`} onClick={() => navigate("/pricing")}>
               Pricing
             </button>
           </div>
-          <div className="mt-3 flex flex-col gap-3">
+
+          {/* Mobile Auth Buttons */}
+          <div className="mt-4 flex flex-col gap-3 pt-3 border-t border-gray-700">
             {!(pathname === '/login') && <button
-            className="inline-flex items-center font-heading text-[14px] md:text-[16px] leading-7 md:leading-[32.21px] font-semibold capitalize text-white"
-            aria-disabled="true"
-            type="button"
-            onClick={() => navigate("/login")}
-          >
-            <UserIcon /> Login
-          </button>}
-          {!(pathname === '/signup') && <button
-            className="hidden md:inline-flex items-center justify-center w-[100px] md:w-[120px] xl:w-[140px] h-10 md:h-12 rounded-[54.49px] border-[1.21px] border-[#E2E2E2] font-heading text-[12px] md:text-[14px] leading-7 md:leading-[32.21px] font-semibold text-center align-middle text-white bg-(--color-primary)"
-            aria-disabled="true"
-            type="button"
-            onClick={() => navigate("/signup")}
-          >
-            Sign up <ArrowNE />
-          </button>}
+              className="inline-flex items-center justify-center font-heading text-md leading-7 font-semibold capitalize text-white"
+              type="button"
+              onClick={() => navigate("/login")}
+            >
+              <UserIcon /> Login
+            </button>}
+            {!(pathname === '/signup') && <button
+              className="inline-flex items-center justify-center w-full h-12 rounded-full border border-[#E2E2E2] font-heading text-md leading-7 font-semibold text-center align-middle text-white bg-[var(--color-primary)]"
+              type="button"
+              onClick={() => navigate("/signup")}
+            >
+              Sign up <ArrowNE />
+            </button>}
           </div>
         </div>
       </div>
     </header>
-    <div className="h-[60px] md:h-[72px] lg:h-20" />
+
+    {/* Backdrop for mobile menu */}
+    <div
+      onClick={() => setIsMobileOpen(false)}
+      className={`
+        lg:hidden
+        fixed inset-0 top-[60px] md:top-[72px] 
+        bg-black/50 
+        transition-opacity duration-300 ease-in-out
+        ${isMobileOpen ? 'opacity-100 visible z-40' : 'opacity-0 invisible z-[-1]'}
+      `}
+      aria-hidden="true"
+    />
+
+    <div className="h-[60px] md:h-[72px] lg:h-20" /> {/* Spacer div */}
     </>
   );
 };
