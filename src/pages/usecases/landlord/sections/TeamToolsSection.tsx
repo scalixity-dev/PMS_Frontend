@@ -24,7 +24,7 @@ const TeamToolsSection: React.FC = () => {
   ];
 
   return (
-    <section className="max-w-4xl mx-auto py-16 flex flex-col items-center text-center bg-white">
+    <section className="max-w-4xl px-2 mx-auto py-16 flex flex-col items-center text-center bg-white">
       {/* Heading */}
       <h2 className="text-3xl md:text-4xl font-semibold text-[#0D1B2A] mb-20">
         Rental management tools for the whole team
