@@ -447,16 +447,14 @@ const Navbar: React.FC = () => {
           {/* Mobile Auth Buttons */}
           <div className="mt-4 flex flex-col gap-3 pt-3 border-t border-gray-700">
             {!(pathname === '/login') && <button
-              className="inline-flex items-center justify-center font-heading text-[14px] leading-7 font-semibold capitalize text-white"
-              aria-disabled="true"
+              className="inline-flex items-center justify-center font-heading text-md leading-7 font-semibold capitalize text-white"
               type="button"
               onClick={() => navigate("/login")}
             >
               <UserIcon /> Login
             </button>}
             {!(pathname === '/signup') && <button
-              className="inline-flex items-center justify-center w-full h-12 rounded-[54.49px] border-[1.21px] border-[#E2E2E2] font-heading text-[14px] leading-7 font-semibold text-center align-middle text-white bg-[var(--color-primary)]"
-              aria-disabled="true"
+              className="inline-flex items-center justify-center w-full h-12 rounded-full border border-[#E2E2E2] font-heading text-md leading-7 font-semibold text-center align-middle text-white bg-[var(--color-primary)]"
               type="button"
               onClick={() => navigate("/signup")}
             >
