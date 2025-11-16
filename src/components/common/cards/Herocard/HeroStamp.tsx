@@ -2,8 +2,8 @@ import React from 'react';
 
 const HeroStamp: React.FC = () => {
   return (
-    <div className="flex items-end justify-end">
-      <div className="flex h-32 w-32 items-center justify-center rounded-full bg-black shadow-md border border-gray-700 p-3 -translate-y-28">
+    <div className="hidden lg:flex items-end justify-end">
+      <div className="flex h-24 w-24 md:h-28 md:w-28 lg:h-32 lg:w-32 items-center justify-center rounded-full bg-black shadow-md border border-gray-700 p-2 md:p-2.5 lg:p-3 -translate-y-16 md:-translate-y-20 lg:-translate-y-28">
         <svg
           viewBox="0 0 132 132"
           className="h-full w-full"

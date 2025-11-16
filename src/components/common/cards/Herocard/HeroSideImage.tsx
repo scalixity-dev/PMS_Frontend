@@ -33,7 +33,7 @@ const HeroSideImage: React.FC<HeroSideImageProps> = ({
   showBottomLeftPattern = false,
   patternClassName = '',
 }) => {
-  const baseClassName = `w-full max-w-2xl ${imageFullHeight ? '' : imageMaxHeight} rotate-0 rounded-2xl ${imageContain ? 'object-contain' : 'object-cover'} ${showImageShadow ? 'shadow-lg' : ''} ${imageTranslate ? imageTranslate : imageNoTranslate ? '' : 'translate-y-4 sm:translate-y-6 lg:translate-y-10 xl:translate-y-20 2xl:translate-y-28'}`;
+  const baseClassName = `w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl ${imageFullHeight ? '' : imageMaxHeight} rotate-0 rounded-2xl ${imageContain ? 'object-contain' : 'object-cover'} ${showImageShadow ? 'shadow-lg' : ''} ${imageTranslate ? imageTranslate : imageNoTranslate ? '' : 'translate-y-2 sm:translate-y-4 md:translate-y-6 lg:translate-y-10 xl:translate-y-20 2xl:translate-y-28'}`;
 
   return (
     <div className="relative w-full">

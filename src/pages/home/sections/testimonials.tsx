@@ -50,34 +50,54 @@ const TestimonialsSection: React.FC = () => {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
 
   const handlePrev = () => {
-    scrollerRef.current?.scrollBy({ left: -320, behavior: 'smooth' });
+    if (window.innerWidth < 640) {
+      // Mobile: scroll by card width + gap (396px + 16px = ~412px)
+      scrollerRef.current?.scrollBy({ left: -412, behavior: 'smooth' });
+    } else if (window.innerWidth < 1024) {
+      // Tablet: scroll by smaller amount
+      scrollerRef.current?.scrollBy({ left: -320, behavior: 'smooth' });
+    } else {
+      // Desktop: scroll by card width + gap
+      scrollerRef.current?.scrollBy({ left: -320, behavior: 'smooth' });
+    }
   };
 
   const handleNext = () => {
-    scrollerRef.current?.scrollBy({ left: 320, behavior: 'smooth' });
+    if (window.innerWidth < 640) {
+      // Mobile: scroll by card width + gap (396px + 16px = ~412px)
+      scrollerRef.current?.scrollBy({ left: 412, behavior: 'smooth' });
+    } else if (window.innerWidth < 1024) {
+      // Tablet: scroll by smaller amount
+      scrollerRef.current?.scrollBy({ left: 320, behavior: 'smooth' });
+    } else {
+      // Desktop: scroll by card width + gap
+      scrollerRef.current?.scrollBy({ left: 320, behavior: 'smooth' });
+    }
   };
 
   return (
-    <section className="w-full bg-white  py-14 lg:py-20">
-      <div className="mx-auto max-w-7xl px-6 ">
-        <div className="mb-10">
-          <h2 className="mb-2 font-body text-[32px] font-semibold leading-[38.54px] text-(--color-heading)">
+    <section className="w-full bg-white py-8 sm:py-10 md:py-12 lg:py-16 xl:py-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-6 lg:px-6">
+        <div className="mb-6 sm:mb-8 md:mb-10">
+          <h2 className="mb-2 sm:mb-3 font-body text-2xl sm:text-[28px] md:text-[30px] lg:text-[32px] font-semibold leading-tight sm:leading-[34px] md:leading-[36px] lg:leading-[38.54px] text-(--color-heading)">
             Trusted by Property Professionals
           </h2>
-          <div className="flex items-center justify-between gap-4">
-            <p className="font-body text-[14.99px] font-normal leading-[28.48px] text-(--color-subheading)">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            <p className="font-body text-xs sm:text-sm md:text-[14.99px] font-normal leading-6 sm:leading-7 md:leading-[28.48px] text-(--color-subheading)">
               Empowering investors and companies to manage properties with confidence
             </p>
-            <PaginationButtons
-              onPrev={handlePrev}
-              onNext={handleNext}
-              containerClassName="flex items-center gap-2"
-            />
+            <div className="flex shrink-0 self-end sm:self-auto">
+              <PaginationButtons
+                onPrev={handlePrev}
+                onNext={handleNext}
+                containerClassName="flex items-center gap-2"
+              />
+            </div>
           </div>
         </div>
 
-        <div ref={scrollerRef} className="overflow-x-auto scrollbar-hide pb-4">
-          <div className="flex gap-8 lg:gap-6 xl:gap-8 2xl:gap-8">
+        <div ref={scrollerRef} className="overflow-x-auto scrollbar-hide pb-4 -mx-4 sm:-mx-6 md:mx-0 px-4 sm:px-6 md:px-0">
+          <div className="flex gap-4 sm:gap-6 md:gap-8 lg:gap-6 xl:gap-8 2xl:gap-8">
             {testimonials.map((t) => (
               <TestimonialCard key={t.id} {...t} className="shrink-0" />
             ))}

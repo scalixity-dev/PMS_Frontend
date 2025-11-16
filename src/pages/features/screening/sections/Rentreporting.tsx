@@ -13,15 +13,15 @@ const RentReportingSection: React.FC = () => {
       showStamp={false}
       learnMoreLabel=""
       showBackgroundCard={false}
-      reverseLayout={true}
+      reverseLayout={false}
+      reverseLayoutDesktop={true}
       imageSrc="/Group.png"
       showImageShadow={false}
-      imageNoTranslate={true}
-      imageTranslate="translate-y-22"
-      imageMaxHeight="max-h-[35rem]"
-      imageHeight={460}
+      imageNoTranslate={false}
+      imageTranslate="translate-y-2 sm:translate-y-4 md:translate-y-8 lg:translate-y-16 xl:translate-y-22"
+      imageMaxHeight="max-h-[18rem] sm:max-h-[22rem] md:max-h-[26rem] lg:max-h-[30rem] xl:max-h-[35rem]"
       titleMarginBottom="mb-4"
-      descriptionMarginBottom="mb-6"
+      descriptionMarginBottom="mb-6 sm:mb-8 md:mb-10"
     />
   );
 };
