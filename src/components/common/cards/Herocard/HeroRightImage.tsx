@@ -30,12 +30,12 @@ const HeroRightImage: React.FC<HeroRightImageProps> = ({
   imageContain = false,
 }) => {
   return (
-    <div className={`flex h-full ${backgroundImageSrc ? 'relative' : ''}`}>
+    <div className={`flex h-full justify-center items-center ${backgroundImageSrc ? 'relative' : ''}`}>
       {backgroundImageSrc && (
         <img
           src={backgroundImageSrc}
           alt="Background"
-          className={`absolute w-full max-w-2xl ${imageFullHeight ? '' : imageMaxHeight} rotate-0 rounded-2xl ${imageContain ? 'object-contain' : 'object-cover'}`}
+          className={`absolute w-full max-w-full sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl ${imageFullHeight ? '' : imageMaxHeight} rotate-0 rounded-2xl ${imageContain ? 'object-contain' : 'object-cover'}`}
           style={{
             ...(imageWidth && { width: `${imageWidth}px` }),
             ...(imageHeight && { height: `${imageHeight}px` }),
@@ -48,7 +48,7 @@ const HeroRightImage: React.FC<HeroRightImageProps> = ({
         <div className="relative">
           {/* Gradient shadow layer */}
           <div 
-            className={`absolute inset-0 w-full max-w-2xl ${imageFullHeight ? '' : imageMaxHeight} rounded-2xl`}
+            className={`absolute inset-0 w-full max-w-full sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl ${imageFullHeight ? '' : imageMaxHeight} rounded-2xl`}
             style={{
               background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.08) 40%, transparent 70%)',
               filter: 'blur(20px)',
@@ -61,7 +61,7 @@ const HeroRightImage: React.FC<HeroRightImageProps> = ({
           <img
             src={imageSrc}
             alt={imageAlt}
-            className={`relative w-full max-w-2xl ${imageFullHeight ? '' : imageMaxHeight} rotate-0 rounded-2xl ${imageContain ? 'object-contain' : 'object-cover'} ${imageTranslate ? imageTranslate : imageNoTranslate ? '' : 'translate-y-4 sm:translate-y-6 lg:translate-y-10 xl:translate-y-20 2xl:translate-y-28'}`}
+            className={`relative w-full max-w-full sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl ${imageFullHeight ? '' : imageMaxHeight} rotate-0 rounded-2xl ${imageContain ? 'object-contain' : 'object-cover'} ${imageTranslate ? imageTranslate : imageNoTranslate ? '' : 'translate-y-0 sm:translate-y-0 md:translate-y-0 lg:translate-y-10 xl:translate-y-20 2xl:translate-y-20'}`}
             style={{
               ...(imageWidth && { width: `${imageWidth}px` }),
               ...(imageHeight && { height: `${imageHeight}px` }),
@@ -73,7 +73,7 @@ const HeroRightImage: React.FC<HeroRightImageProps> = ({
         <img
           src={imageSrc}
           alt={imageAlt}
-          className={`w-full max-w-2xl ${imageFullHeight ? '' : imageMaxHeight} rotate-0 rounded-2xl ${imageContain ? 'object-contain' : 'object-cover'} ${imageTranslate ? imageTranslate : imageNoTranslate ? '' : 'translate-y-4 sm:translate-y-6 lg:translate-y-10 xl:translate-y-20 2xl:translate-y-28'}`}
+          className={`w-full max-w-full sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl ${imageFullHeight ? '' : imageMaxHeight} rotate-0 rounded-2xl ${imageContain ? 'object-contain' : 'object-cover'} ${imageTranslate ? imageTranslate : imageNoTranslate ? '' : 'translate-y-0 sm:translate-y-0 md:translate-y-0 lg:translate-y-10 xl:translate-y-20 2xl:translate-y-20'}`}
           style={{
             ...(imageWidth && { width: `${imageWidth}px` }),
             ...(imageHeight && { height: `${imageHeight}px` }),
