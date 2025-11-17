@@ -72,7 +72,8 @@ const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
     secondaryImageBackgroundClassName ?? appliedBackgroundClass;
   // Kept V1 logic
   const innerSpacingClass =
-    innerSpacingClassName ?? "py-28 px-6 md:px-16 lg:px-16";
+    innerSpacingClassName ??
+    "pt-12 pb-40 sm:pt-20 sm:pb-48 md:pt-28 md:pb-56 px-4 sm:px-6 md:px-12 lg:px-16";
   const outerMaxWidthClass = outerMaxWidthClassName ?? "max-w-7xl";
 
   // Kept from V1
@@ -96,7 +97,7 @@ const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
 
   return (
     // Updated CSS from V2
-    <section className="relative w-screen left-1/2 -translate-x-1/2 pt-20 py-20 px-6 lg:px-0">
+    <section className="relative w-full py-8 sm:py-12 lg:py-20 px-4 sm:px-6">
       {/* Kept V1 logic */}
       <div className={`relative mx-auto ${outerMaxWidthClass}`}>
         <div
@@ -115,8 +116,8 @@ const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
               <path d="M0,0 Q720,30 1440,0 L1440,0 L0,0 Z" fill="white" />
             </svg>
           </div>
-          {/* Dotted Background */}
-          <div className="absolute inset-0 pointer-events-none">
+          {/* Dotted Background (hidden on small screens) */}
+          <div className="hidden md:block absolute inset-0 pointer-events-none">
             <svg width="100%" height="100%">
               <pattern
                 id="dots"
@@ -134,8 +135,8 @@ const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
           </div>
 
           {/* Content Wrapper */}
-          {/* Updated CSS from V2 (lg:grid-cols-2) */}
-          <div className="relative z-10 grid lg:grid-cols-2 gap-10 items-start">
+          {/* Mobile-first: stack, become two-column at md */}
+          <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10 lg:gap-12 items-start">
             {/* Left Content */}
             <div className="text-white max-w-lg">
               {/* Kept V1 logic */}
@@ -209,8 +210,8 @@ const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
             </div>
 
             {/* Right Image */}
-            {/* Updated CSS from V2 (lg:justify-end) */}
-            <div className="flex justify-center lg:justify-end">
+            {/* Updated CSS from V2 (md:justify-end) */}
+            <div className="flex justify-center md:justify-end">
               <div
                 // Kept V1 logic
                 className={[
@@ -232,9 +233,7 @@ const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
                 <img
                   src={imageSrc}
                   alt="feature preview"
-                  // Updated CSS from V2 (removed md:max-w-[720px])
-                  className="w-full max-w-[760px] lg:max-w-[860px] object-contain"
-                  // Added from V2
+                  className="w-full max-w-full sm:max-w-[520px] md:max-w-[720px] lg:max-w-[860px] object-contain"
                   onError={(e) =>
                     (e.currentTarget.src =
                       "https://placehold.co/860x600/88AF95/FFFFFF?text=Feature+Preview")
@@ -245,9 +244,7 @@ const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
                   <img
                     src={secondaryImageSrc}
                     alt={secondaryImageAlt ?? "additional feature preview"}
-                    // Updated CSS from V2 (sm:w-48, lg:-left-16)
-                    className={`shadow-xl w-40 sm:w-48 lg:w-56 object-contain border border-white/30 rounded-3xl absolute -bottom-10 -left-10 lg:-left-16 ${secondaryBackgroundClass}`}
-                    // Added from V2
+                    className={`hidden sm:block shadow-xl w-40 sm:w-48 lg:w-56 object-contain border border-white/30 rounded-3xl absolute -bottom-10 -left-10 lg:-left-16 ${secondaryBackgroundClass}`}
                     onError={(e) =>
                       (e.currentTarget.src =
                         "https://placehold.co/224x150/88AF95/FFFFFF?text=Details")
