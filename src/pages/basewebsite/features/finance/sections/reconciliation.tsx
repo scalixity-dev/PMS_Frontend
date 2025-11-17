@@ -23,11 +23,12 @@ const ReconciliationSection: React.FC = () => {
       showImageShadow={false}
       imageNoTranslate={true}
       imageContain={true}
-      imageMaxHeight="max-h-[30rem]"
-      imageHeight={460}
+      imageMaxHeight="max-h-[35rem]"
+      imageHeightMobile={220}
+      imageHeightDesktop={460}
       backgroundImageSrc="/vector3.png"
-      backgroundImageTranslate="translate(40px, 40px)"
-      imageTranslate="-translate-x-6 sm:translate-x-8 translate-y-6 sm:translate-y-14"
+      backgroundImageTranslate="translate(20px, 20px) sm:translate(40px, 40px)"
+      imageTranslate="-translate-x-0 sm:translate-x-0 lg:translate-x-0 translate-y-2 sm:translate-y-6 lg:translate-y-6"
       titleMarginBottom="mb-4"
       descriptionMarginBottom="mb-6"
     />
