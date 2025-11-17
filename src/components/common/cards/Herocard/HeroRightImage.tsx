@@ -6,8 +6,11 @@ export interface HeroRightImageProps {
   backgroundImageSrc?: string;
   backgroundImageTranslate?: string;
   showImageShadow?: boolean;
+  hideBackgroundOnMobile?: boolean;
   imageWidth?: number;
   imageHeight?: number;
+  imageHeightMobile?: number;
+  imageHeightDesktop?: number;
   imageFullHeight?: boolean;
   imageNoTranslate?: boolean;
   imageMaxHeight?: string;
@@ -21,24 +24,65 @@ const HeroRightImage: React.FC<HeroRightImageProps> = ({
   backgroundImageSrc,
   backgroundImageTranslate,
   showImageShadow = true,
+  hideBackgroundOnMobile = false,
   imageWidth,
   imageHeight,
+  imageHeightMobile,
+  imageHeightDesktop,
   imageFullHeight = false,
   imageNoTranslate = false,
   imageMaxHeight = 'max-h-[22.5rem]',
   imageTranslate,
   imageContain = false,
 }) => {
+  // Generate unique ID for this component instance
+  const uniqueId = React.useMemo(() => `hero-image-${Math.random().toString(36).substring(2, 11)}`, []);
+  
+  // Build responsive height styles
+  const getHeightStyle = () => {
+    if (imageHeightMobile !== undefined || imageHeightDesktop !== undefined) {
+      return {
+        '--image-height-mobile': imageHeightMobile !== undefined ? `${imageHeightMobile}px` : 'auto',
+        '--image-height-desktop': imageHeightDesktop !== undefined ? `${imageHeightDesktop}px` : 'auto',
+      } as React.CSSProperties;
+    }
+    return imageHeight ? { height: `${imageHeight}px` } : {};
+  };
+
+  const heightStyle = getHeightStyle();
+  const hasResponsiveHeight = imageHeightMobile !== undefined || imageHeightDesktop !== undefined;
+
   return (
-    <div className={`flex h-full justify-center items-center ${backgroundImageSrc ? 'relative' : ''}`}>
+    <>
+      {hasResponsiveHeight && (
+        <style>{`
+          #${uniqueId} > img,
+          #${uniqueId} .relative > img {
+            height: var(--image-height-mobile, auto) !important;
+          }
+          @media (min-width: 1024px) {
+            #${uniqueId} > img,
+            #${uniqueId} .relative > img {
+              height: var(--image-height-desktop, auto) !important;
+            }
+          }
+        `}</style>
+      )}
+      <div 
+        id={uniqueId}
+        className={`flex h-full justify-center items-center ${backgroundImageSrc ? 'relative' : ''}`}
+        style={hasResponsiveHeight ? heightStyle : {}}
+      >
       {backgroundImageSrc && (
         <img
           src={backgroundImageSrc}
           alt="Background"
-          className={`absolute w-full max-w-full sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl ${imageFullHeight ? '' : imageMaxHeight} rotate-0 rounded-2xl ${imageContain ? 'object-contain' : 'object-cover'}`}
+          className={`absolute w-full max-w-full sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl ${imageFullHeight ? '' : imageMaxHeight} rotate-0 rounded-2xl ${imageContain ? 'object-contain' : 'object-cover'} ${
+            hideBackgroundOnMobile ? 'hidden sm:block' : ''
+          }`}
           style={{
             ...(imageWidth && { width: `${imageWidth}px` }),
-            ...(imageHeight && { height: `${imageHeight}px` }),
+            ...(hasResponsiveHeight ? {} : (imageHeight ? { height: `${imageHeight}px` } : {})),
             zIndex: 1,
           transform: backgroundImageTranslate || 'translate(80px, 80px)',
           }}
@@ -55,7 +99,7 @@ const HeroRightImage: React.FC<HeroRightImageProps> = ({
               transform: 'translateY(8px)',
               zIndex: backgroundImageSrc ? 1 : 0,
               ...(imageWidth && { width: `${imageWidth}px` }),
-              ...(imageHeight && { height: `${imageHeight}px` }),
+              ...(hasResponsiveHeight ? {} : (imageHeight ? { height: `${imageHeight}px` } : {})),
             }}
           />
           <img
@@ -64,7 +108,7 @@ const HeroRightImage: React.FC<HeroRightImageProps> = ({
             className={`relative w-full max-w-full sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl ${imageFullHeight ? '' : imageMaxHeight} rotate-0 rounded-2xl ${imageContain ? 'object-contain' : 'object-cover'} ${imageTranslate ? imageTranslate : imageNoTranslate ? '' : 'translate-y-0 sm:translate-y-0 md:translate-y-0 lg:translate-y-10 xl:translate-y-20 2xl:translate-y-20'}`}
             style={{
               ...(imageWidth && { width: `${imageWidth}px` }),
-              ...(imageHeight && { height: `${imageHeight}px` }),
+              ...(hasResponsiveHeight ? {} : (imageHeight ? { height: `${imageHeight}px` } : {})),
               ...(backgroundImageSrc && { position: 'relative', zIndex: 2 }),
             }}
           />
@@ -76,12 +120,13 @@ const HeroRightImage: React.FC<HeroRightImageProps> = ({
           className={`w-full max-w-full sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl ${imageFullHeight ? '' : imageMaxHeight} rotate-0 rounded-2xl ${imageContain ? 'object-contain' : 'object-cover'} ${imageTranslate ? imageTranslate : imageNoTranslate ? '' : 'translate-y-0 sm:translate-y-0 md:translate-y-0 lg:translate-y-10 xl:translate-y-20 2xl:translate-y-20'}`}
           style={{
             ...(imageWidth && { width: `${imageWidth}px` }),
-            ...(imageHeight && { height: `${imageHeight}px` }),
+            ...(hasResponsiveHeight ? {} : (imageHeight ? { height: `${imageHeight}px` } : {})),
             ...(backgroundImageSrc && { position: 'relative', zIndex: 2 }),
           }}
         />
       )}
     </div>
+    </>
   );
 };
 
