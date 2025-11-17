@@ -29,8 +29,11 @@ interface HeroCardProps {
   backgroundImageTranslate?: string;
   showStamp?: boolean;
   showImageShadow?: boolean;
+  hideBackgroundOnMobile?: boolean;
   imageWidth?: number;
   imageHeight?: number;
+  imageHeightMobile?: number;
+  imageHeightDesktop?: number;
   imageFullHeight?: boolean;
   imageNoTranslate?: boolean;
   imageMaxHeight?: string;
@@ -88,8 +91,11 @@ const HeroCard: React.FC<HeroCardProps> = ({
   backgroundImageTranslate,
   showStamp = true,
   showImageShadow = true,
+  hideBackgroundOnMobile = false,
   imageWidth,
   imageHeight,
+  imageHeightMobile,
+  imageHeightDesktop,
   imageFullHeight = false,
   imageNoTranslate = false,
   imageMaxHeight = 'max-h-[22.5rem]',
@@ -102,8 +108,8 @@ const HeroCard: React.FC<HeroCardProps> = ({
   reverseLayout = false,
   reverseLayoutDesktop,
   imageContain = false,
-  sectionPaddingClassName = 'p-4 sm:p-4 md:p-6 lg:p-2 xl:p-6',
-  contentPaddingClassName = 'px-4 py-8 sm:px-6 sm:py-10 md:px-8 md:py-12 lg:px-16 lg:py-14 2xl:py-20 3xl:px-20 4xl:px-2',
+  sectionPaddingClassName = 'p-2 sm:p-4 md:p-6 lg:p-2 xl:p-6',
+  contentPaddingClassName = 'px-6 py-8 sm:px-6 sm:py-10 md:px-8 md:py-12 lg:px-16 lg:py-14 2xl:py-20 3xl:px-20 4xl:px-2',
   contentClassName = '',
   sectionClassName = 'bg-white',
   sideContentLeft,
@@ -166,8 +172,11 @@ const HeroCard: React.FC<HeroCardProps> = ({
       backgroundImageSrc={backgroundImageSrc}
       backgroundImageTranslate={backgroundImageTranslate}
       showImageShadow={showImageShadow}
+      hideBackgroundOnMobile={hideBackgroundOnMobile}
       imageWidth={imageWidth}
       imageHeight={imageHeight}
+      imageHeightMobile={imageHeightMobile}
+      imageHeightDesktop={imageHeightDesktop}
       imageFullHeight={imageFullHeight}
       imageNoTranslate={imageNoTranslate}
       imageMaxHeight={imageMaxHeight}

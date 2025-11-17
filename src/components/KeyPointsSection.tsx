@@ -11,7 +11,6 @@ const KeyPointsSection = () => {
     {
       icon: <Landmark size={40} />,
       text: "Multiple bank accounts for easy accounting",
-      active: true,
     },
     {
       icon: <FileCheck size={40} />,
@@ -34,12 +33,7 @@ const KeyPointsSection = () => {
       {/* Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
         {items.map((item, idx) => (
-          <KeyPointCard 
-            key={idx} 
-            icon={item.icon} 
-            text={item.text} 
-            active={item.active}
-          />
+          <KeyPointCard key={idx} icon={item.icon} text={item.text} />
         ))}
       </div>
     </section>

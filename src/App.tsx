@@ -1,19 +1,19 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, } from 'react-router-dom';
 import AppLayout from './components/layout/AppLayout';
-import HomePage from './pages/home';
-import ScreeningPage from './pages/features/screening/index';
-import LeasePage from './pages/features/lease/index';
-import FinancePage from './pages/features/finance/index';
-import LeadsPage from './pages/features/leads/index';
-import PricingPage from './pages/pricing';
-import LoginPage from './pages/auth/login';
-import SignUpPage from './pages/auth/signUp';
-import TeamPage from './pages/features/team/index';
-import LandlordUseCasesPage from './pages/usecases/landlord';
-import ResourcePage from './pages/resources';
-import TenantPage from './pages/usecases/tenant';
-import ServiceProsPage from './pages/usecases/servicepros';
+import HomePage from './pages/basewebsite/home';
+import ScreeningPage from './pages/basewebsite/features/screening/index';
+import LeasePage from './pages/basewebsite/features/lease/index';
+import FinancePage from './pages/basewebsite/features/finance/index';
+import LeadsPage from './pages/basewebsite/features/leads/index';
+import PricingPage from './pages/basewebsite/pricing';
+import LoginPage from './pages/basewebsite/auth/login';
+import SignUpPage from './pages/basewebsite/auth/signUp';
+import TeamPage from './pages/basewebsite/features/team/index';
+import LandlordUseCasesPage from './pages/basewebsite/usecases/landlord';
+import ResourcePage from './pages/basewebsite/resources';
+import TenantPage from './pages/basewebsite/usecases/tenant';
+import ServiceProsPage from './pages/basewebsite/usecases/servicepros';
 
 const App: React.FC = () => {
   return (
