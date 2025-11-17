@@ -21,20 +21,22 @@ const FinanceHeroSection: React.FC = () => {
       showBackgroundCard={false}
       showImageShadow={false}
       imageNoTranslate={true}
-      leftImageTranslate="-translate-y-8 -translate-x-4 sm:-translate-y-10 sm:-translate-x-6 lg:-translate-y-6 lg:-translate-x-10"
+      leftImageTranslate="translate-y-0 -translate-x-6 sm:translate-y-0 sm:-translate-x-7 lg:-translate-y-6 lg:-translate-x-10"
        rightImageTranslate="translate-y-6 sm:translate-y-10 lg:translate-y-32"
       imageContain={true}
-      imageMaxHeight="max-h-[20rem]"
-      sectionPaddingClassName="p-0"
-      contentPaddingClassName="px-0 py-10 sm:px-0 sm:py-14 lg:px-0 lg:py-32 2xl:px-0 2xl:py-32 3xl:px-0 4xl:px-0"
+      imageMaxHeight="max-h-[18rem] sm:max-h-[22rem] lg:max-h-[24rem]"
+      sectionPaddingClassName="px-4 sm:px-6 lg:px-8"
+      contentPaddingClassName="px-4 py-12 sm:px-6 sm:py-16 lg:px-12 lg:py-28 2xl:px-16 2xl:py-32"
       titleMarginBottom="mb-4"
       descriptionMarginBottom="mb-6"
       leftImageSrc="/finance-hero1.png"
       leftImageAlt="Finance left preview"
       rightImageSrc="/finance-hero2.png"
       rightImageAlt="Finance right preview"
-      leftImageBottomLeftPattern={true}
-      rightImageTopRightPattern={true}
+      hideRightImageOnMobile
+      mobileImageBetweenContent
+      leftImageBottomLeftPattern={false}
+      rightImageTopRightPattern={false}
       rightSideLogo={<DollarSign className="w-4 h-4 stroke-current" />}
     />
   );

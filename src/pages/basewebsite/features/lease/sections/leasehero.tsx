@@ -29,7 +29,7 @@ const LeaseHeroSection: React.FC = () => {
       imageNoTranslate={true}
       imageMaxHeight="max-h-[30rem]"
       backgroundImageSrc="/vector6.png"
-      backgroundImageTranslate=" translate(50px, 0px) "
+      backgroundImageTranslate=" translate(-20px, 0px) sm:translate(50px, 0px) "
       imageTranslate="-translate-x-6 sm:-translate-x-2 translate-y-6 sm:translate-y-2"
       imageContain={true}
       titleMarginBottom="mb-4"

@@ -38,82 +38,85 @@ const FeatureShowcaseWithCards: React.FC<FeatureShowcaseWithCardsProps> = ({
   imageMaxWidth = "650px",
   pushImageOuter = false,
 }) => {
-  // map some common image width values to Tailwind classes so we avoid inline styles
   const imageMaxClass = imageMaxWidth === "650px" ? "max-w-[650px]" : imageMaxWidth === "500px" ? "max-w-[500px]" : "";
   return (
     <section
-      className={`w-full py-16 px-6 md:px-20 relative ${
-        backgroundVectorSrc ? (reverse ? '-ml-2 overflow-visible' : '-mr-2 overflow-visible') : 'overflow-hidden'
-      } ${className}`}
+      className={`w-full py-16 sm:py-20 px-6 sm:px-10 md:px-16 lg:px-20 relative overflow-hidden ${className}`}
       style={backgroundColor ? { backgroundColor } : undefined}
     >
-      {/* Background Vector - Positioned relative to viewport edge */}
       {backgroundVectorSrc && (
         <div
-          className={`absolute top-1/2 -translate-y-1/2 z-0 ${reverse ? 'left-[-0.5rem] bg-left' : 'right-[-0.5rem] bg-right'} bg-contain bg-no-repeat bg-center w-[50vw] h-[80%] min-h-[450px]`}
+          className={`hidden lg:block absolute top-1/2 -translate-y-1/2 z-0 ${
+            reverse ? 'left-[-0.5rem] bg-left' : 'right-[-0.5rem] bg-right'
+          } bg-contain bg-no-repeat bg-center w-1/2 h-4/5 min-h-[28.125rem]`}
           style={{ backgroundImage: `url(${backgroundVectorSrc})` }}
         />
       )}
 
       <div
         className={`max-w-7xl mx-auto flex flex-col ${
-          reverse ? "md:flex-row-reverse" : "md:flex-row"
-        } items-start justify-between gap-8 md:gap-12 relative z-10`}
+          reverse ? 'lg:flex-row-reverse' : 'lg:flex-row'
+        } items-start justify-between gap-12 lg:gap-20 relative z-10`}
       >
-        {/* Content Section - Left Side */}
-        <div className="w-full md:w-[45%] flex flex-col z-10">
+        <div className="w-full lg:w-[45%] flex flex-col z-10">
           {eyebrow && (
             <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-[#E8F5E9] text-[#1F2937] mb-4 self-start">
               {eyebrow}
             </span>
           )}
 
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-[#1F2937] leading-tight mb-4">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-[#1F2937] leading-tight mb-5">
             {heading}
           </h2>
 
-          <p className="text-[#4B5563] text-base md:text-lg leading-relaxed mb-8">
+          <p className="text-[#4B5563] text-base md:text-lg leading-relaxed mb-8 lg:mb-10">
             {description}
           </p>
 
-          {/* Feature Cards - 2x2 Grid with Button */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
             {features.map((feature, idx) => (
               <div key={idx} className="flex flex-col items-start gap-3">
-                <div className="bg-[#CDEBC3] rounded-2xl p-4 w-12 h-12 flex items-center justify-center shadow-sm flex-shrink-0">
+                <div className="bg-[#CDEBC3] rounded-xl p-3 w-12 h-12 flex items-center justify-center shadow-sm flex-shrink-0">
                   <div className="text-[#081029]">
                     {feature.icon}
                   </div>
                 </div>
-                <div className="flex flex-col gap-1 max-w-[12rem]">
+                <div className="flex flex-col gap-1">
                   <h3 className="font-semibold text-[#1F2937] text-lg">
                     {feature.title}
                   </h3>
-                  <p className="text-xs text-[#4B5563] leading-relaxed">
+                  <p className="text-sm text-[#4B5563] leading-relaxed">
                     {feature.description}
                   </p>
                 </div>
               </div>
             ))}
             
-            {/* CTA Button in 2nd row, 2nd column */}
-            <div className="flex items-center justify-start">
-              <GetStartedButton
-                text={buttonText}
-                size="sm"
-                to={buttonLink !== "#" ? buttonLink : undefined}
-              />
-            </div>
+            {/* CTA Button - Aligns with the grid - REMOVED FROM HERE */}
+          </div>
+
+          {/* CTA Button - Moved out of grid to be after all text content */}
+          <div className="flex items-center justify-start mt-8 md:mt-10">
+            <GetStartedButton
+              text={buttonText}
+              size="sm"
+              to={buttonLink !== '#' ? buttonLink : undefined}
+            />
           </div>
         </div>
-
-        {/* Image Section - Right Side */}
-        <div className="relative w-full md:w-[55%] flex items-center justify-center md:justify-end min-h-[500px]">
+        <div className="relative w-full lg:w-3/5 flex items-center justify-center lg:justify-end min-h-[18.75rem] sm:min-h-[25rem] md:min-h-[31.25rem] lg:min-h-[31.25rem]">
           {/* Main Content Image */}
           <div
-            className={`relative z-10 w-full ${imageMaxClass} ${pushImageOuter ? (reverse ? 'mr-auto' : 'ml-auto') : 'ml-auto'}`}
+            className={`relative z-10 w-full ${imageMaxClass} ${
+              pushImageOuter ? (reverse ? 'lg:mr-auto' : 'lg:ml-auto') : 'lg:ml-auto'
+            }`}
           >
-            <img src={imageSrc} alt={heading} className="w-full rounded-2xl shadow-md object-cover" />
+            <img 
+              src={imageSrc} 
+              alt={heading} 
+              className="w-full rounded-2xl shadow-lg object-cover" 
+              onError={(e) => (e.currentTarget.src = 'https://placehold.co/600x500/cccccc/333333?text=Image+Error')}
+            />
           </div>
         </div>
       </div>
