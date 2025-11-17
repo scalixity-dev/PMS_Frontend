@@ -53,7 +53,7 @@ const HeroContent: React.FC<HeroContentProps> = ({
   badgeLogoPosition = 'right',
   embeddedContent,
 }) => {
-  const featurePillClassName = "inline-flex items-center justify-center min-w-24 sm:min-w-28 md:min-w-32 h-8 sm:h-9 md:h-10 gap-1 rounded-lg px-3 sm:px-3.5 md:px-4 py-2 sm:py-2.5 md:py-3 border border-white bg-[#819A78] text-white shadow-[0px_4px_4px_0px_#00000040] font-heading font-medium text-xs sm:text-xs md:text-sm leading-[150%] tracking-normal";
+  const featurePillClassName = "inline-flex items-center justify-center min-w-[6rem] sm:min-w-[7rem] md:min-w-[8rem] h-8 sm:h-9 md:h-10 gap-1 rounded-lg px-3 sm:px-3.5 md:px-4 py-2 sm:py-2.5 md:py-3 border border-white bg-[#819A78] text-white shadow-[0px_4px_4px_0px_#00000040] font-heading font-medium text-xs sm:text-xs md:text-sm leading-[150%] tracking-normal";
   const shouldCenter = isCentered || hasSideImages;
   const hasSideContent = Boolean(sideContentLeft || sideContentRight);
   const featuresContainerClass = [
