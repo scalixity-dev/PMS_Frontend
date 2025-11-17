@@ -19,7 +19,7 @@ const MaintenanceSection: React.FC = () => {
       showBackgroundCard={false}
       imageSrc="/Group.png"
       backgroundImageSrc="/vector1.png"
-      backgroundImageTranslate="translate(-40px, 0px)"
+      backgroundImageTranslate=" translate(-20px, 0px) sm:translate(-40px, 0px)"
       showImageShadow={false}
       imageNoTranslate={true}
       imageTranslate="translate-y-6 sm:translate-y-10"

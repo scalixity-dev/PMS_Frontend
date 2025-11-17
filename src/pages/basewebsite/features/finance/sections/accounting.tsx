@@ -19,10 +19,14 @@ const AccountingSection: React.FC = () => {
       learnMoreLabel=""
       showBackgroundCard={false}
       showStamp={false}
+      sectionPaddingClassName="px-4 sm:px-6 lg:px-8"
+      contentPaddingClassName="px-4 py-12 sm:px-6 sm:py-16 lg:px-12 lg:py-20 2xl:px-16 2xl:py-24"
       imageSrc="/accounting.png"
       showImageShadow={false}
-      imageTranslate="translate-y-8"
-      imageMaxHeight="max-h-[20rem]"
+      imageHeightMobile={260}
+      imageHeightDesktop={460}
+      imageTranslate="translate-y-2 sm:translate-y-6 md:translate-y-8 lg:translate-y-12"
+      imageMaxHeight="max-h-[30rem]"
       imageContain={true}
       titleMarginBottom="mb-4"
       descriptionMarginBottom="mb-6"

@@ -17,7 +17,7 @@ const InspectionsSection: React.FC = () => {
       showImageShadow={false}
       imageNoTranslate={true}
       imageMaxHeight="max-h-[35rem]"
-      imageHeightMobile={260}
+      imageHeightMobile={200}
       imageHeightDesktop={460}
       backgroundImageSrc="/vector2.png"
       backgroundImageTranslate="translate(-100px, 100px) lg:translate(-80px, -20px) scale(1.2)"
