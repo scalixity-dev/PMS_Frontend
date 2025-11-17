@@ -6,6 +6,8 @@ import { ClipboardCheck, FileText, DollarSign, Users, UserCog, User, Wrench } fr
 const baseLink = 'px-3 py-2 rounded-md font-heading text-[14px] font-light leading-[130%] tracking-normal text-white transition-colors active:bg-[var(--color-primary)]';
 const pillActive = 'rounded-2xl bg-[var(--color-primary)] text-white px-5 py-3';
 const mutedLink = 'text-white';
+const subPillActive = 'rounded-2xl bg-[var(--color-primary)] text-white px-4 py-2';
+const subMutedLink = 'text-gray-800 hover:bg-gray-100';
 
 const ChevronDown: React.FC = () => (
   <svg width="12" height="12" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="ml-1 inline-block">
@@ -45,7 +47,16 @@ const Navbar: React.FC = () => {
 
   // Check if we're on any features page
   const isFeaturesActive = pathname.startsWith('/features');
+  const isFeaturesScreeningActive = pathname.startsWith('/features/screening');
+  const isFeaturesLeaseActive = pathname.startsWith('/features/lease');
+  const isFeaturesFinanceActive = pathname.startsWith('/features/finance');
+  const isFeaturesLeadsActive = pathname.startsWith('/features/leads');
+  const isFeaturesTeamActive = pathname.startsWith('/features/team');
+  // Check if we're on any use cases page
   const isUseCasesActive = pathname.startsWith('/usecases');
+  const isUseCasesLandlordActive = pathname.startsWith('/usecases/landlord');
+  const isUseCasesTenantActive = pathname.startsWith('/usecases/tenant');
+  const isUseCasesServiceProsActive = pathname.startsWith('/usecases/servicepros');
   // Check if we're on any pricing page
   const isPricingActive = pathname.startsWith('/pricing')
   // Check if we're on any resource page
@@ -95,7 +106,7 @@ const Navbar: React.FC = () => {
 
   return (
     <>
-    <header className="bg-[var(--color-navbar-bg)] fixed top-0 left-0 right-0 z-50 text-white w-full">
+    <header className="bg-(--color-navbar-bg) fixed top-0 left-0 right-0 z-50 text-white w-full">
       <nav className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 sm:px-6 md:px-16 xl:px-0 py-2.5 md:py-3 lg:py-3.5 h-[60px] md:h-[72px] lg:h-20 opacity-100 relative">
         <Link to="/" className="flex items-center gap-2">
           <img src={logo} alt="PMS Logo" className="h-6 w-6 md:h-8 md:w-8 lg:h-10 lg:w-10 brightness-0 invert" />
@@ -125,10 +136,10 @@ const Navbar: React.FC = () => {
                 <Link 
                   to="/features/screening" 
                   onClick={() => setIsFeaturesDropdownOpen(false)}
-                  className="group flex items-center justify-between px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors rounded-md mx-2"
+                  className={`group flex items-center justify-between px-4 py-2 text-gray-800 transition-colors rounded-md mx-2 ${isFeaturesScreeningActive ? subPillActive : subMutedLink}`}
                 >
                   <div className="flex items-center gap-2">
-                    <ClipboardCheck size={18} className="text-gray-700" />
+                    <ClipboardCheck size={18} />
                     Screening
                   </div>
                   <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
@@ -136,10 +147,10 @@ const Navbar: React.FC = () => {
                 <Link 
                   to="/features/lease" 
                   onClick={() => setIsFeaturesDropdownOpen(false)}
-                  className="group flex items-center justify-between px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors rounded-md mx-2"
+                  className={`group flex items-center justify-between px-4 py-2 text-gray-800  transition-colors rounded-md mx-2 ${isFeaturesLeaseActive ? subPillActive : subMutedLink}`}
                 >
                   <div className="flex items-center gap-2">
-                    <FileText size={18} className="text-gray-700" />
+                    <FileText size={18} />
                     Lease
                   </div>
                   <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
@@ -147,10 +158,10 @@ const Navbar: React.FC = () => {
                 <Link 
                   to="/features/finance" 
                   onClick={() => setIsFeaturesDropdownOpen(false)}
-                  className="group flex items-center justify-between px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors rounded-md mx-2"
+                  className={`group flex items-center justify-between px-4 py-2 text-gray-800  transition-colors rounded-md mx-2 ${isFeaturesFinanceActive ? subPillActive : subMutedLink}`}
                 >
                   <div className="flex items-center gap-2">
-                    <DollarSign size={18} className="text-gray-700" />
+                    <DollarSign size={18} />
                     Finance
                   </div>
                   <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
@@ -158,10 +169,10 @@ const Navbar: React.FC = () => {
                 <Link 
                   to="/features/leads" 
                   onClick={() => setIsFeaturesDropdownOpen(false)}
-                  className="group flex items-center justify-between px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors rounded-md mx-2"
+                  className={`group flex items-center justify-between px-4 py-2 text-gray-800  transition-colors rounded-md mx-2 ${isFeaturesLeadsActive ? subPillActive : subMutedLink}`}
                 >
                   <div className="flex items-center gap-2">
-                    <Users size={18} className="text-gray-700" />
+                    <Users size={18} />
                     Leads
                   </div>
                   <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
@@ -169,10 +180,10 @@ const Navbar: React.FC = () => {
                 <Link 
                   to="/features/team" 
                   onClick={() => setIsFeaturesDropdownOpen(false)}
-                  className="group flex items-center justify-between px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors rounded-md mx-2"
+                  className={`group flex items-center justify-between px-4 py-2 text-gray-800  transition-colors rounded-md mx-2 ${isFeaturesTeamActive ? subPillActive : subMutedLink}`}
                 >
                   <div className="flex items-center gap-2">
-                    <UserCog size={18} className="text-gray-700" />
+                    <UserCog size={18} />
                     Team
                   </div>
                   <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
@@ -197,7 +208,7 @@ const Navbar: React.FC = () => {
                 <Link
                   to="/usecases/landlord"
                   onClick={() => setIsUseCasesDropdownOpen(false)}
-                  className="group flex items-center justify-between px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors rounded-md mx-2"
+                  className={`group flex items-center justify-between px-4 py-2 text-gray-800  transition-colors rounded-md mx-2 ${isUseCasesLandlordActive ? subPillActive : subMutedLink}`}
                 >
                   <div className="flex items-center gap-2">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -210,10 +221,10 @@ const Navbar: React.FC = () => {
                 <Link
                   to="/usecases/tenant"
                   onClick={() => setIsUseCasesDropdownOpen(false)}
-                  className="group flex items-center justify-between px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors rounded-md mx-2"
+                  className={`group flex items-center justify-between px-4 py-2 text-gray-800  transition-colors rounded-md mx-2 ${isUseCasesTenantActive ? subPillActive : subMutedLink}`}
                 >
                   <div className="flex items-center gap-2">
-                    <User size={18} className="text-gray-700" />
+                    <User size={18} />
                     Tenant
                   </div>
                   <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
@@ -221,10 +232,10 @@ const Navbar: React.FC = () => {
                 <Link
                   to="/usecases/servicepros"
                   onClick={() => setIsUseCasesDropdownOpen(false)}
-                  className="group flex items-center justify-between px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors rounded-md mx-2"
+                  className={`group flex items-center justify-between px-4 py-2 text-gray-800  transition-colors rounded-md mx-2 ${isUseCasesServiceProsActive ? subPillActive : subMutedLink}`}
                 >
                   <div className="flex items-center gap-2">
-                    <Wrench size={18} className="text-gray-700" />
+                    <Wrench size={18} />
                     Service Pros
                   </div>
                   <ChevronRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-in-out" />
@@ -257,7 +268,7 @@ const Navbar: React.FC = () => {
             <UserIcon /> Login
           </button>}
           {!(pathname === '/signup') && <button
-            className="hidden md:inline-flex items-center justify-center w-[100px] md:w-[120px] xl:w-[140px] h-10 md:h-12 rounded-[54.49px] border-[1.21px] border-[#E2E2E2] font-heading text-[12px] md:text-[14px] leading-7 md:leading-[32.21px] font-semibold text-center align-middle text-white bg-[var(--color-primary)]"
+            className="hidden md:inline-flex items-center justify-center w-[100px] md:w-[120px] xl:w-[140px] h-10 md:h-12 rounded-[54.49px] border-[1.21px] border-[#E2E2E2] font-heading text-[12px] md:text-[14px] leading-7 md:leading-[32.21px] font-semibold text-center align-middle text-white bg-(--color-primary)"
             aria-disabled="true"
             type="button"
             onClick={() => navigate("/signup")}
@@ -274,7 +285,7 @@ const Navbar: React.FC = () => {
             aria-expanded={isMobileOpen}
             aria-controls="mobile-menu"
             onClick={() => setIsMobileOpen((open) => !open)}
-            className="inline-flex items-center justify-center rounded-md p-2 text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[var(--color-navbar-bg)]"
+            className="inline-flex items-center justify-center rounded-md p-2 text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-(--color-navbar-bg)"
           >
             {isMobileOpen ? (
               // Close icon
@@ -299,7 +310,7 @@ const Navbar: React.FC = () => {
           absolute top-full right-0 
           h-[calc(100svh-60px)] md:h-[calc(100svh-72px)] 
           w-80 md:w-96 
-          bg-[var(--color-navbar-bg)] 
+          bg-(--color-navbar-bg)
           overflow-y-auto 
           transition-all duration-300 ease-in-out
           ${isMobileOpen ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}
@@ -328,7 +339,7 @@ const Navbar: React.FC = () => {
                   <Link 
                     onClick={() => setIsMobileOpen(false)}
                     to="/features/screening" 
-                    className={`${baseLink} ${mutedLink} group flex items-center justify-between`}
+                    className={`${baseLink} ${isFeaturesScreeningActive ? subPillActive : mutedLink} group flex items-center justify-between`}
                   >
                     <div className="flex items-center gap-2">
                       <ClipboardCheck size={18} />
@@ -339,7 +350,7 @@ const Navbar: React.FC = () => {
                   <Link 
                     onClick={() => setIsMobileOpen(false)}
                     to="/features/lease" 
-                    className={`${baseLink} ${mutedLink} group flex items-center justify-between`}
+                    className={`${baseLink} ${isFeaturesLeaseActive ? subPillActive : mutedLink} group flex items-center justify-between`}
                   >
                     <div className="flex items-center gap-2">
                       <FileText size={18} />
@@ -350,7 +361,7 @@ const Navbar: React.FC = () => {
                   <Link 
                     onClick={() => setIsMobileOpen(false)}
                     to="/features/finance" 
-                    className={`${baseLink} ${mutedLink} group flex items-center justify-between`}
+                    className={`${baseLink} ${isFeaturesFinanceActive ? subPillActive : mutedLink} group flex items-center justify-between`}
                   >
                     <div className="flex items-center gap-2">
                       <DollarSign size={18} />
@@ -361,7 +372,7 @@ const Navbar: React.FC = () => {
                   <Link 
                     onClick={() => setIsMobileOpen(false)}
                     to="/features/leads" 
-                    className={`${baseLink} ${mutedLink} group flex items-center justify-between`}
+                    className={`${baseLink} ${isFeaturesLeadsActive ? subPillActive : mutedLink} group flex items-center justify-between`}
                   >
                     <div className="flex items-center gap-2">
                       <Users size={18} />
@@ -372,7 +383,7 @@ const Navbar: React.FC = () => {
                   <Link 
                     onClick={() => setIsMobileOpen(false)}
                     to="/features/team" 
-                    className={`${baseLink} ${mutedLink} group flex items-center justify-between`}
+                    className={`${baseLink} ${isFeaturesTeamActive ? subPillActive : mutedLink} group flex items-center justify-between`}
                   >
                     <div className="flex items-center gap-2">
                       <UserCog size={18} />
@@ -401,7 +412,7 @@ const Navbar: React.FC = () => {
                   <Link
                     onClick={() => setIsMobileOpen(false)}
                     to="/usecases/landlord"
-                    className={`${baseLink} ${mutedLink} group flex items-center justify-between`}
+                    className={`${baseLink} ${isUseCasesLandlordActive ? subPillActive : mutedLink} group flex items-center justify-between`}
                   >
                     <div className="flex items-center gap-2">
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -414,7 +425,7 @@ const Navbar: React.FC = () => {
                   <Link
                     onClick={() => setIsMobileOpen(false)}
                     to="/usecases/tenant"
-                    className={`${baseLink} ${mutedLink} group flex items-center justify-between`}
+                    className={`${baseLink} ${isUseCasesTenantActive ? subPillActive : mutedLink} group flex items-center justify-between`}
                   >
                     <div className="flex items-center gap-2">
                       <User size={18} />
@@ -425,7 +436,7 @@ const Navbar: React.FC = () => {
                   <Link
                     onClick={() => setIsMobileOpen(false)}
                     to="/usecases/servicepros"
-                    className={`${baseLink} ${mutedLink} group flex items-center justify-between`}
+                    className={`${baseLink} ${isUseCasesServiceProsActive ? subPillActive : mutedLink} group flex items-center justify-between`}
                   >
                     <div className="flex items-center gap-2">
                       <Wrench size={18} />
@@ -454,7 +465,7 @@ const Navbar: React.FC = () => {
               <UserIcon /> Login
             </button>}
             {!(pathname === '/signup') && <button
-              className="inline-flex items-center justify-center w-full h-12 rounded-full border border-[#E2E2E2] font-heading text-md leading-7 font-semibold text-center align-middle text-white bg-[var(--color-primary)]"
+              className="inline-flex items-center justify-center w-full h-12 rounded-full border border-[#E2E2E2] font-heading text-md leading-7 font-semibold text-center align-middle text-white bg-(--color-primary)"
               type="button"
               onClick={() => navigate("/signup")}
             >
