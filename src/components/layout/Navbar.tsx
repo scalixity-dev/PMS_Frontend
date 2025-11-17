@@ -106,7 +106,7 @@ const Navbar: React.FC = () => {
 
   return (
     <>
-    <header className="bg-(--color-navbar-bg) fixed top-0 left-0 right-0 z-50 text-white w-full">
+    <header className="bg-[var(--color-navbar-bg)] fixed top-0 left-0 right-0 z-50 text-white w-full">
       <nav className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 sm:px-6 md:px-16 xl:px-0 py-2.5 md:py-3 lg:py-3.5 h-[60px] md:h-[72px] lg:h-20 opacity-100 relative">
         <Link to="/" className="flex items-center gap-2">
           <img src={logo} alt="PMS Logo" className="h-6 w-6 md:h-8 md:w-8 lg:h-10 lg:w-10 brightness-0 invert" />
@@ -268,7 +268,7 @@ const Navbar: React.FC = () => {
             <UserIcon /> Login
           </button>}
           {!(pathname === '/signup') && <button
-            className="hidden md:inline-flex items-center justify-center w-[100px] md:w-[120px] xl:w-[140px] h-10 md:h-12 rounded-[54.49px] border-[1.21px] border-[#E2E2E2] font-heading text-[12px] md:text-[14px] leading-7 md:leading-[32.21px] font-semibold text-center align-middle text-white bg-(--color-primary)"
+            className="hidden md:inline-flex items-center justify-center w-[100px] md:w-[120px] xl:w-[140px] h-10 md:h-12 rounded-[54.49px] border-[1.21px] border-[#E2E2E2] font-heading text-[12px] md:text-[14px] leading-7 md:leading-[32.21px] font-semibold text-center align-middle text-white bg-[var(--color-primary)]"
             aria-disabled="true"
             type="button"
             onClick={() => navigate("/signup")}
@@ -285,7 +285,7 @@ const Navbar: React.FC = () => {
             aria-expanded={isMobileOpen}
             aria-controls="mobile-menu"
             onClick={() => setIsMobileOpen((open) => !open)}
-            className="inline-flex items-center justify-center rounded-md p-2 text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-(--color-navbar-bg)"
+            className="inline-flex items-center justify-center rounded-md p-2 text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[var(--color-navbar-bg)]"
           >
             {isMobileOpen ? (
               // Close icon
@@ -310,7 +310,7 @@ const Navbar: React.FC = () => {
           absolute top-full right-0 
           h-[calc(100svh-60px)] md:h-[calc(100svh-72px)] 
           w-80 md:w-96 
-          bg-(--color-navbar-bg)
+          bg-[var(--color-navbar-bg)]
           overflow-y-auto 
           transition-all duration-300 ease-in-out
           ${isMobileOpen ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}
@@ -465,7 +465,7 @@ const Navbar: React.FC = () => {
               <UserIcon /> Login
             </button>}
             {!(pathname === '/signup') && <button
-              className="inline-flex items-center justify-center w-full h-12 rounded-full border border-[#E2E2E2] font-heading text-md leading-7 font-semibold text-center align-middle text-white bg-(--color-primary)"
+              className="inline-flex items-center justify-center w-full h-12 rounded-full border border-[#E2E2E2] font-heading text-md leading-7 font-semibold text-center align-middle text-white bg-[var(--color-primary)]"
               type="button"
               onClick={() => navigate("/signup")}
             >
