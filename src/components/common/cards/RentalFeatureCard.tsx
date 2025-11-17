@@ -12,17 +12,16 @@ const RentalFeatureCard: React.FC<RentalFeatureCardProps> = ({
   description,
 }) => {
   return (
-    <div className="flex flex-col justify-between border border-[#20CC95] rounded-2xl p-8 text-left bg-white shadow-sm hover:shadow-md transition">
+    <div className="flex flex-col justify-between border border-[#20CC95] rounded-2xl bg-white shadow-sm hover:shadow-md transition p-5 sm:p-6 md:p-8 text-left">
       <div>
-        <h3 className="text-2xl font-semibold text-[#0D1B2A] mb-5">
+        <h3 className="text-xl sm:text-2xl font-semibold text-[#0D1B2A] mb-4 sm:mb-5">
           {title}
         </h3>
         <p className="text-sm text-[#4B5563] leading-relaxed">
           {description}
         </p>
       </div>
-
-      <div className="mt-8 text-[#486E55] flex justify-start">
+      <div className="mt-6 sm:mt-8 text-[#486E55] flex justify-start">
         {icon}
       </div>
     </div>

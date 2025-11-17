@@ -96,7 +96,7 @@ const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
 
   return (
     // Updated CSS from V2
-    <section className="relative w-screen left-1/2 -translate-x-1/2 pt-20 py-20 px-6 lg:px-0">
+    <section className="relative w-screen left-1/2 -translate-x-1/2 pt-20 pb-20 px-6 lg:px-0">
       {/* Kept V1 logic */}
       <div className={`relative mx-auto ${outerMaxWidthClass}`}>
         <div
