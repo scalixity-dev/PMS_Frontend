@@ -57,7 +57,7 @@ const ContentShowcaseSection: React.FC<ContentShowcaseSectionProps> = ({
   featuresInSingleRow = false,
 }) => {
   return (
-    <section className="w-full mt-10 py-16 px-6 md:px-20 overflow-visible">
+    <section className="w-full mt-10 pt-8 pb-8 px-6 md:px-20 overflow-visible">
       <div
         className={`max-w-6xl mx-auto flex flex-col lg:flex-row items-stretch justify-center gap-6 lg:gap-28 ${
           reverse ? "lg:flex-row-reverse" : ""

@@ -2,7 +2,7 @@ import { MessageSquare, Smartphone, Monitor } from 'lucide-react';
 
 export default function DualImageFeatureSection() {
   return (
-    <div className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
+    <div className="w-screen relative mt-5 left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
       {/* Teal background - only half height */}
   <div className="absolute inset-0 h-1/2 bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary)] overflow-hidden">
         {/* Decorative pattern in background - left 40% */}
@@ -87,7 +87,7 @@ export default function DualImageFeatureSection() {
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 Utility Set Up
               </h3>
-              <p className="text-sm text-gray-600 mb-2">
+              <p className="text-sm text-gray-600">
                 Find service professionals in your area and assign it to them through our platform.{' '}
                 <a href="#" className="text-[var(--color-primary)] underline">Learn more</a>
               </p>

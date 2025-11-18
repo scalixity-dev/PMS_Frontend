@@ -96,9 +96,7 @@ const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
   };
 
   return (
-    // Updated CSS from V2
     <section className="relative w-full py-8 sm:py-12 lg:py-20 px-4 sm:px-6">
-      {/* Kept V1 logic */}
       <div className={`relative mx-auto ${outerMaxWidthClass}`}>
         <div
           className={`relative ${
@@ -160,7 +158,6 @@ const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
                           {badgeText}
                         </span>
                       ) : (
-                        // Updated CSS from V2 (rounded-full, text-[22px])
                         <span className="inline-flex items-center rounded-full bg-[#B9E4C8]/50 border border-white/30 px-4 py-1 text-[22px] font-medium leading-[150%] tracking-normal text-white -ml-2">
                           {badgeText}
                         </span>
@@ -170,18 +167,15 @@ const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
                 </div>
               )}
 
-              {/* Updated CSS from V2 (lg:text-4xl) */}
               <h2 className="text-3xl lg:text-4xl font-semibold mb-4 leading-tight">
                 {title}
               </h2>
 
-              {/* Updated CSS from V2 (lg:text-lg) */}
               <p className="text-white/90 text-sm lg:text-lg font-normal mb-10 leading-relaxed">
                 {description}
               </p>
 
               {features && features.length > 0 && (
-                // Updated CSS from V2 (sm:grid-cols-2)
                 <div className="mb-16 grid grid-cols-1 sm:grid-cols-2 gap-6">
                   {features.map((feature, index) => (
                     <div
@@ -192,7 +186,6 @@ const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
                         <div className="text-[#081029]">{feature.icon}</div>
                       </div>
                       <div className="flex-1 min-w-0">
-                        {/* Updated CSS from V2 (text-white) */}
                         <h3 className="font-semibold text-white leading-snug">
                           {feature.title}
                         </h3>
@@ -210,7 +203,6 @@ const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
             </div>
 
             {/* Right Image */}
-            {/* Updated CSS from V2 (md:justify-end) */}
             <div className="flex justify-center md:justify-end">
               <div
                 // Kept V1 logic
@@ -257,7 +249,7 @@ const SplitHeroFeature: React.FC<SplitHeroFeatureProps> = ({
         </div>
 
         {/* Curved white wave at the bottom */}
-        <div className="pointer-events-none absolute -bottom-px left-0 w-full h-32 z-20">
+        <div className="pointer-events-none absolute -bottom-px left-0 w-full h-15 md:h-20 lg:h-32 z-20">
           <svg
             viewBox="0 0 1440 120"
             preserveAspectRatio="none"

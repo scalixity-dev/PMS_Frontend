@@ -33,7 +33,7 @@ const Card: React.FC<CardProps> = ({
 
   return (
     <section
-      className={`relative w-screen bg-[#CDFFEF] my-24 py-16 overflow-hidden left-1/2 -translate-x-1/2 ${
+      className={`relative w-screen bg-[#CDFFEF] my-20 py-16 overflow-hidden left-1/2 -translate-x-1/2 ${
         className ?? ""
       }`}
     >
@@ -47,7 +47,7 @@ const Card: React.FC<CardProps> = ({
         />
       </div>
 
-      <div className="absolute bottom-0 left-0 w-full h-32 overflow-hidden pointer-events-none">
+      <div className="absolute bottom-0 left-0 w-full h-15 md:h-20 lg:h-32 overflow-hidden pointer-events-none">
         <svg
           viewBox="0 0 1440 120"
           preserveAspectRatio="none"
