@@ -5,7 +5,7 @@ const ListYourRentalSection: React.FC = () => {
   return (
     <HeroCard
       title="List your rental on top partner sites—free"
-      description="With PMSCloud, you can market your property in minutes. Just fill out your listing details, upload your best photos, and highlight your amenities. Once you’re ready, you can publish and syndicate your listing to top rental sites at no extra cost."
+      description="With PMSCloud, you can market your property in minutes. Just fill out your listing details, upload your best photos, and highlight your amenities. Once you're ready, you can publish and syndicate your listing to top rental sites at no extra cost."
       features={[]}
       learnMoreLabel=""
       
@@ -15,17 +15,18 @@ const ListYourRentalSection: React.FC = () => {
       imageSrc="/Group.png"
       imageAlt="Advertise your rental property"
       imageContain
-      imageMaxHeight="max-h-[40rem]"
+      imageMaxHeight="max-h-[26rem] sm:max-h-[30rem] md:max-h-[34rem]"
       imageNoTranslate
+      hideBackgroundOnMobile
       backgroundImageSrc="/vector2.png"
-      backgroundImageTranslate="translate(-40px, -100px) scale(1.2)"
-      imageTranslate="-translate-x-6 sm:translate-x-10 translate-y-6 sm:translate-y-10"
+      backgroundImageTranslate="translate(10px, -10px) lg:translate(10px, -10px) scale(1.2)"
+      imageTranslate="-translate-x-2 sm:-translate-x-6 translate-y-4 sm:translate-y-8 lg:translate-y-12"
       sectionPaddingClassName="py-12 px-0"
-      contentPaddingClassName="py-10"
+      
       maxWidthClassName="max-w-7xl"
-      contentClassName="gap-10 xl:gap-16"
-      titleMarginBottom="mb-6"
-      descriptionMarginBottom="mb-10"
+      contentClassName="gap-0 xl:gap-16"
+      titleMarginBottom="mb-4"
+      descriptionMarginBottom="mb-6"
     />
   );
 };

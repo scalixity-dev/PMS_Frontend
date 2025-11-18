@@ -141,31 +141,35 @@ const HeroCard: React.FC<HeroCardProps> = ({
       ? (showStamp ? "grid-cols-1 lg:grid-cols-[30%_15%_55%] 2xl:grid-cols-[40%_10%_50%]" : "grid-cols-1 lg:grid-cols-2")
       : (showStamp ? "grid-cols-1 lg:grid-cols-[55%_15%_30%] 2xl:grid-cols-[50%_10%_40%]" : "grid-cols-1 lg:grid-cols-2");
   
+  const heroContentProps: React.ComponentProps<typeof HeroContent> = {
+    badge,
+    badgeClassName,
+    badgeLogo: rightSideLogo,
+    badgeLogoWrapperClassName,
+    badgeLogoPosition,
+    badgeCentered,
+    title,
+    description,
+    features,
+    betweenTitleAndDescription,
+    learnMoreLabel,
+    getStartedLabel,
+    learnMoreHandler,
+    getStartedHandler,
+    learnMoreTo,
+    getStartedTo,
+    hasSideImages,
+    titleMarginBottom,
+    descriptionMarginBottom,
+    isCentered: isCentered || hideImage,
+    sideContentLeft,
+    sideContentRight,
+    embeddedContent,
+  };
+
   const contentDiv = (
     <HeroContent
-      badge={badge}
-      badgeClassName={badgeClassName}
-      badgeLogo={rightSideLogo}
-      badgeLogoWrapperClassName={badgeLogoWrapperClassName}
-      badgeLogoPosition={badgeLogoPosition}
-      badgeCentered={badgeCentered}
-      title={title}
-      description={description}
-      features={features}
-      betweenTitleAndDescription={betweenTitleAndDescription}
-      learnMoreLabel={learnMoreLabel}
-      getStartedLabel={getStartedLabel}
-      learnMoreHandler={learnMoreHandler}
-      getStartedHandler={getStartedHandler}
-      learnMoreTo={learnMoreTo}
-      getStartedTo={getStartedTo}
-      hasSideImages={hasSideImages}
-      titleMarginBottom={titleMarginBottom}
-      descriptionMarginBottom={descriptionMarginBottom}
-      isCentered={isCentered || hideImage}
-      sideContentLeft={sideContentLeft}
-      sideContentRight={sideContentRight}
-      embeddedContent={embeddedContent}
+      {...heroContentProps}
     />
   );
 
@@ -190,6 +194,51 @@ const HeroCard: React.FC<HeroCardProps> = ({
   );
 
   const stampDiv = showStamp ? <HeroStamp /> : null;
+
+  const renderSideImages = () => (
+    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mt-6 sm:mt-8">
+      {leftImageSrc && (
+        <div className="flex justify-center">
+          <HeroSideImage
+            src={leftImageSrc}
+            alt={leftImageAlt || 'Left image'}
+            imageWidth={imageWidth}
+            imageHeight={imageHeight}
+            imageFullHeight={imageFullHeight}
+            imageMaxHeight={imageMaxHeight}
+            imageTranslate={imageTranslate}
+            imageNoTranslate={imageNoTranslate}
+            imageContain={imageContain}
+            showImageShadow={showImageShadow}
+            extraTranslateClassName={leftImageTranslate || ''}
+            showTopRightPattern={leftImageTopRightPattern}
+            showBottomLeftPattern={leftImageBottomLeftPattern}
+            patternClassName={patternClassName}
+          />
+        </div>
+      )}
+      {rightImageSrc && !hideRightImageOnMobile && (
+        <div className="flex justify-center">
+          <HeroSideImage
+            src={rightImageSrc}
+            alt={rightImageAlt || 'Right image'}
+            imageWidth={imageWidth}
+            imageHeight={imageHeight}
+            imageFullHeight={imageFullHeight}
+            imageMaxHeight={imageMaxHeight}
+            imageTranslate={imageTranslate}
+            imageNoTranslate={imageNoTranslate}
+            imageContain={imageContain}
+            showImageShadow={showImageShadow}
+            extraTranslateClassName={rightImageTranslate || ''}
+            showTopRightPattern={rightImageTopRightPattern}
+            showBottomLeftPattern={rightImageBottomLeftPattern}
+            patternClassName={patternClassName}
+          />
+        </div>
+      )}
+    </div>
+  );
   
   const content = hideImage ? (
     <div className="relative flex justify-center">
@@ -203,148 +252,20 @@ const HeroCard: React.FC<HeroCardProps> = ({
       <div className={`lg:hidden flex flex-col ${contentClassName}`}>
         {hasSideImages ? (
           mobileImageBetweenContent ? (
-            <>
-              <div className="mx-auto text-center w-full">
-                <HeroContent
-                  badge={badge}
-                  badgeClassName={badgeClassName}
-                  badgeLogo={rightSideLogo}
-                  badgeLogoWrapperClassName={badgeLogoWrapperClassName}
-                  badgeLogoPosition={badgeLogoPosition}
-                  badgeCentered={badgeCentered}
-                  title={title}
-                  description={description}
-                  features={[]}
-                  betweenTitleAndDescription={betweenTitleAndDescription}
-                  learnMoreLabel=""
-                  getStartedLabel=""
-                  hasSideImages={hasSideImages}
-                  titleMarginBottom={titleMarginBottom}
-                  descriptionMarginBottom=""
-                  isCentered={isCentered || hideImage}
-                  sideContentLeft={sideContentLeft}
-                  sideContentRight={sideContentRight}
-                  embeddedContent={embeddedContent}
-                />
-              </div>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mt-6 sm:mt-8">
-                {leftImageSrc && (
-                  <div className="flex justify-center">
-                    <HeroSideImage
-                      src={leftImageSrc}
-                      alt={leftImageAlt || 'Left image'}
-                      imageWidth={imageWidth}
-                      imageHeight={imageHeight}
-                      imageFullHeight={imageFullHeight}
-                      imageMaxHeight={imageMaxHeight}
-                      imageTranslate={imageTranslate}
-                      imageNoTranslate={imageNoTranslate}
-                      imageContain={imageContain}
-                      showImageShadow={showImageShadow}
-                      extraTranslateClassName={leftImageTranslate || ''}
-                      showTopRightPattern={leftImageTopRightPattern}
-                      showBottomLeftPattern={leftImageBottomLeftPattern}
-                      patternClassName={patternClassName}
-                    />
-                  </div>
-                )}
-                {rightImageSrc && !hideRightImageOnMobile && (
-                  <div className="flex justify-center">
-                    <HeroSideImage
-                      src={rightImageSrc}
-                      alt={rightImageAlt || 'Right image'}
-                      imageWidth={imageWidth}
-                      imageHeight={imageHeight}
-                      imageFullHeight={imageFullHeight}
-                      imageMaxHeight={imageMaxHeight}
-                      imageTranslate={imageTranslate}
-                      imageNoTranslate={imageNoTranslate}
-                      imageContain={imageContain}
-                      showImageShadow={showImageShadow}
-                      extraTranslateClassName={rightImageTranslate || ''}
-                      showTopRightPattern={rightImageTopRightPattern}
-                      showBottomLeftPattern={rightImageBottomLeftPattern}
-                      patternClassName={patternClassName}
-                    />
-                  </div>
-                )}
-              </div>
-              <div className="mx-auto text-center w-full mt-6 sm:mt-8">
-                <HeroContent
-                  badge=""
-                  badgeClassName={badgeClassName}
-                  badgeLogo={rightSideLogo}
-                  badgeLogoWrapperClassName={badgeLogoWrapperClassName}
-                  badgeLogoPosition={badgeLogoPosition}
-                  badgeCentered={badgeCentered}
-                  title=""
-                  description=""
-                  features={features}
-                  betweenTitleAndDescription={undefined}
-                  learnMoreLabel={learnMoreLabel}
-                  getStartedLabel={getStartedLabel}
-                  learnMoreHandler={learnMoreHandler}
-                  getStartedHandler={getStartedHandler}
-                  learnMoreTo={learnMoreTo}
-                  getStartedTo={getStartedTo}
-                  hasSideImages={hasSideImages}
-                  titleMarginBottom=""
-                  descriptionMarginBottom=""
-                  isCentered={isCentered || hideImage}
-                  sideContentLeft={sideContentLeft}
-                  sideContentRight={sideContentRight}
-                  embeddedContent={undefined}
-                />
-              </div>
-            </>
+            <div className="mx-auto text-center w-full">
+              <HeroContent
+                {...heroContentProps}
+                descriptionMarginBottom=""
+                betweenDescriptionAndActions={renderSideImages()}
+              />
+            </div>
           ) : (
             <>
               {/* Mobile: Content first, then images */}
               <div className="mx-auto text-center w-full">
                 {contentDiv}
               </div>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mt-6 sm:mt-8">
-                {leftImageSrc && (
-                  <div className="flex justify-center">
-                    <HeroSideImage
-                      src={leftImageSrc}
-                      alt={leftImageAlt || 'Left image'}
-                      imageWidth={imageWidth}
-                      imageHeight={imageHeight}
-                      imageFullHeight={imageFullHeight}
-                      imageMaxHeight={imageMaxHeight}
-                      imageTranslate={imageTranslate}
-                      imageNoTranslate={imageNoTranslate}
-                      imageContain={imageContain}
-                      showImageShadow={showImageShadow}
-                      extraTranslateClassName={leftImageTranslate || ''}
-                      showTopRightPattern={leftImageTopRightPattern}
-                      showBottomLeftPattern={leftImageBottomLeftPattern}
-                      patternClassName={patternClassName}
-                    />
-                  </div>
-                )}
-                {rightImageSrc && !hideRightImageOnMobile && (
-                  <div className="flex justify-center">
-                    <HeroSideImage
-                      src={rightImageSrc}
-                      alt={rightImageAlt || 'Right image'}
-                      imageWidth={imageWidth}
-                      imageHeight={imageHeight}
-                      imageFullHeight={imageFullHeight}
-                      imageMaxHeight={imageMaxHeight}
-                      imageTranslate={imageTranslate}
-                      imageNoTranslate={imageNoTranslate}
-                      imageContain={imageContain}
-                      showImageShadow={showImageShadow}
-                      extraTranslateClassName={rightImageTranslate || ''}
-                      showTopRightPattern={rightImageTopRightPattern}
-                      showBottomLeftPattern={rightImageBottomLeftPattern}
-                      patternClassName={patternClassName}
-                    />
-                  </div>
-                )}
-              </div>
+              {renderSideImages()}
             </>
           )
         ) : (
