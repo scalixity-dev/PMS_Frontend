@@ -1,12 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import {
+  Link,
+  NavLink,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom';
 import logo from '../../assets/images/logo.png';
 import { ClipboardCheck, FileText, DollarSign, Users, UserCog, User, Wrench } from 'lucide-react';
 
 const baseLink = 'px-3 py-2 rounded-md font-heading text-[14px] font-light leading-[130%] tracking-normal text-white transition-colors active:bg-[var(--color-primary)]';
-const pillActive = 'rounded-2xl bg-[var(--color-primary)] text-white px-5 py-3';
+const pillActive = 'rounded-2xl bg-[var(--color-primary)] text-white py-3';
 const mutedLink = 'text-white';
-const subPillActive = 'rounded-2xl bg-[var(--color-primary)] text-white px-4 py-2';
+const subPillActive = 'rounded-2xl bg-[var(--color-primary)] text-white py-2';
 const subMutedLink = 'text-gray-800 hover:bg-gray-100';
 
 const ChevronDown: React.FC = () => (
@@ -106,10 +111,16 @@ const Navbar: React.FC = () => {
 
   return (
     <>
+    {/* Removed the bg-gray-900 fallback */}
     <header className="bg-[var(--color-navbar-bg)] fixed top-0 left-0 right-0 z-50 text-white w-full">
       <nav className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 sm:px-6 md:px-16 xl:px-0 py-2.5 md:py-3 lg:py-3.5 h-[60px] md:h-[72px] lg:h-20 opacity-100 relative">
         <Link to="/" className="flex items-center gap-2">
-          <img src={logo} alt="PMS Logo" className="h-6 w-6 md:h-8 md:w-8 lg:h-10 lg:w-10 brightness-0 invert" />
+          {/* Replaced imported logo with a placeholder */}
+          <img 
+            src={logo}
+            alt="PMS Logo" 
+            className="h-6 w-6 md:h-8 md:w-8 lg:h-10 lg:w-10 brightness-0 invert" 
+          />
           <span className="font-body text-md md:text-lg lg:text-xl font-bold leading-[150%] tracking-normal">PMS</span>
         </Link>
 
@@ -309,7 +320,7 @@ const Navbar: React.FC = () => {
           lg:hidden 
           absolute top-full right-0 
           h-[calc(100svh-60px)] md:h-[calc(100svh-72px)] 
-          w-80 md:w-96 
+          w-65 md:w-96 
           bg-[var(--color-navbar-bg)]
           overflow-y-auto 
           transition-all duration-300 ease-in-out
@@ -494,4 +505,5 @@ const Navbar: React.FC = () => {
   );
 };
 
+// Removed the NavbarWrapper and exported the Navbar directly
 export default Navbar;
