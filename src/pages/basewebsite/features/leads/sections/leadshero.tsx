@@ -3,7 +3,7 @@ import HeroCard from '../../../../../components/common/cards/HeroCard';
 
 const LeadsHeroSection: React.FC = () => {
   return (
-    <div className="relative px-0 sm:px-6 md:px-8 lg:px-10 py-8 sm:py-10 md:py-12 lg:py-12">
+    <div className="relative px-0 sm:px-6 md:px-8 lg:px-10 py-2 lg:py-12">
       {/* Bottom-left polygon - hidden on mobile/tablet, visible on desktop */}
       <div
         aria-hidden="true"
