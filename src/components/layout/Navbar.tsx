@@ -115,7 +115,6 @@ const Navbar: React.FC = () => {
     <header className="bg-[var(--color-navbar-bg)] fixed top-0 left-0 right-0 z-50 text-white w-full">
       <nav className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 sm:px-6 md:px-16 xl:px-0 py-2.5 md:py-3 lg:py-3.5 h-[60px] md:h-[72px] lg:h-20 opacity-100 relative">
         <Link to="/" className="flex items-center gap-2">
-          {/* Replaced imported logo with a placeholder */}
           <img 
             src={logo}
             alt="PMS Logo" 
