@@ -1,6 +1,6 @@
 // src/components/dashboard/DashboardNavbar.tsx
 import { useState, useRef, useEffect } from "react";
-import { Menu, Search, Bell, MessageSquare, Info, User, LogOut, UserCog } from "lucide-react";
+import { Search, Bell, MessageSquare, Info, User, LogOut, UserCog } from "lucide-react";
 import logo from "../../assets/images/logo.png";
 
 interface NavbarProps {
