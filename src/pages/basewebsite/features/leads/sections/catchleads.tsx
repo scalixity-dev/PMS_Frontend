@@ -19,15 +19,18 @@ const CatchLeadsSection: React.FC = () => {
       showImageShadow={false}
       imageSrc="/Employe.png"
       imageAlt="Reconciliation"
-      imageWidth={400}
-      imageTranslate="-translate-x-6 sm:translate-x-28 translate-y-6 sm:translate-y-0"
+      imageNoTranslate={true}
+      imageContain={true}
+      imageMaxHeight="max-h-[35rem]"
+      imageHeightMobile={220}
+      imageHeightDesktop={460}
+      imageTranslate="-translate-x-0 sm:translate-x-0 lg:translate-x-0 translate-y-2 sm:translate-y-6 lg:translate-y-6"
       backgroundImageSrc="/vector3.png"
-      backgroundImageTranslate="translate(120px, 20px) scale(1.2)"
+      backgroundImageTranslate="translate(20px, 20px) sm:translate(40px, 40px)"
       titleMarginBottom="mb-4"
       descriptionMarginBottom="mb-6"
       maxWidthClassName="max-w-7xl"
-      sectionPaddingClassName="py-12 px-0"
-      contentPaddingClassName="py-10"
+      sectionPaddingClassName=" px-0 sm:px-6 lg:px-0"
     />
   );
 };

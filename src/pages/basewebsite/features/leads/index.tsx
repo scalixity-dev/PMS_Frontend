@@ -18,7 +18,7 @@ import QualityLeadsSection from './sections/qualityleads';
 
 const LeadsPage: React.FC = () => {
   return (
-    <section className="w-full px-10">
+    <section className="w-full ">
       <LeadsHeroSection />
       <LeadFeaturesGrid/>
       <CatchLeadsSection />

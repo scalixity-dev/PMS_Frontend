@@ -25,7 +25,7 @@ const SkillFeaturesSection: React.FC = () => {
 
   return (
     <section className="w-full max-w-8xl mx-auto pb-10 flex flex-col items-center text-center bg-white px-6 md:px-12">
-      <h2 className="text-3xl md:text-5xl font-semibold text-[#0D1B2A] mb-14">
+      <h2 className="text-3xl md:text-5xl font-semibold text-[#0D1B2A] mb-10">
         Turn your skills into steady work with PMS
       </h2>
 

@@ -13,6 +13,7 @@ export interface HeroContentProps {
   description: string | React.ReactNode;
   features: readonly string[];
   betweenTitleAndDescription?: React.ReactNode;
+  betweenDescriptionAndActions?: React.ReactNode;
   learnMoreLabel?: string;
   getStartedLabel?: string;
   learnMoreHandler?: () => void;
@@ -37,6 +38,7 @@ const HeroContent: React.FC<HeroContentProps> = ({
   description,
   features,
   betweenTitleAndDescription,
+  betweenDescriptionAndActions,
   learnMoreLabel = 'Learn More',
   getStartedLabel = 'Get Started',
   learnMoreHandler,
@@ -106,6 +108,8 @@ const HeroContent: React.FC<HeroContentProps> = ({
           </div>
         </div>
       ) : null}
+
+      {betweenDescriptionAndActions}
 
       {sideContentLeft || sideContentRight ? (
         <div className="mt-6 sm:mt-7 md:mt-8 flex w-full flex-col items-center gap-4 sm:gap-5 md:gap-6 lg:flex-row lg:justify-center">
