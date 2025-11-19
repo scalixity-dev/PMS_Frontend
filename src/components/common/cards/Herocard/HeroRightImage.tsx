@@ -51,6 +51,7 @@ const HeroRightImage: React.FC<HeroRightImageProps> = ({
 
   const heightStyle = getHeightStyle();
   const hasResponsiveHeight = imageHeightMobile !== undefined || imageHeightDesktop !== undefined;
+  const isDesktop = typeof window !== 'undefined' ? window.innerWidth >= 1024 : false;
 
   return (
     <>
@@ -73,7 +74,7 @@ const HeroRightImage: React.FC<HeroRightImageProps> = ({
         className={`flex h-full justify-center items-center ${backgroundImageSrc ? 'relative' : ''}`}
         style={hasResponsiveHeight ? heightStyle : {}}
       >
-      {backgroundImageSrc && (
+      {backgroundImageSrc && isDesktop && (
         <img
           src={backgroundImageSrc}
           alt="Background"
@@ -105,7 +106,7 @@ const HeroRightImage: React.FC<HeroRightImageProps> = ({
           <img
             src={imageSrc}
             alt={imageAlt}
-            className={`relative w-full max-w-full sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl ${imageFullHeight ? '' : imageMaxHeight} rotate-0 rounded-2xl ${imageContain ? 'object-contain' : 'object-cover'} ${imageTranslate ? imageTranslate : imageNoTranslate ? '' : 'translate-y-0 sm:translate-y-0 md:translate-y-0 lg:translate-y-10 xl:translate-y-20 2xl:translate-y-20'}`}
+            className={`relative w-full max-w-full sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl ${imageFullHeight ? '' : imageMaxHeight} rotate-0 rounded-2xl ${imageContain ? 'object-contain' : 'object-cover'} ${(imageTranslate && isDesktop) ? imageTranslate : imageNoTranslate ? '' : 'translate-y-0 sm:translate-y-0 md:translate-y-0 lg:translate-y-10 xl:translate-y-20 2xl:translate-y-20'}`}
             style={{
               ...(imageWidth && { width: `${imageWidth}px` }),
               ...(hasResponsiveHeight ? {} : (imageHeight ? { height: `${imageHeight}px` } : {})),
@@ -117,7 +118,7 @@ const HeroRightImage: React.FC<HeroRightImageProps> = ({
         <img
           src={imageSrc}
           alt={imageAlt}
-          className={`w-full max-w-full sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl ${imageFullHeight ? '' : imageMaxHeight} rotate-0 rounded-2xl ${imageContain ? 'object-contain' : 'object-cover'} ${imageTranslate ? imageTranslate : imageNoTranslate ? '' : 'translate-y-0 sm:translate-y-0 md:translate-y-0 lg:translate-y-10 xl:translate-y-20 2xl:translate-y-20'}`}
+          className={`w-full max-w-full sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl ${imageFullHeight ? '' : imageMaxHeight} rotate-0 rounded-2xl ${imageContain ? 'object-contain' : 'object-cover'} ${(imageTranslate && isDesktop) ? imageTranslate : imageNoTranslate ? '' : 'translate-y-0 sm:translate-y-0 md:translate-y-0 lg:translate-y-10 xl:translate-y-20 2xl:translate-y-20'}`}
           style={{
             ...(imageWidth && { width: `${imageWidth}px` }),
             ...(hasResponsiveHeight ? {} : (imageHeight ? { height: `${imageHeight}px` } : {})),
