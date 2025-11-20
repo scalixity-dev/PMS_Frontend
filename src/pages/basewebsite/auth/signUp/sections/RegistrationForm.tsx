@@ -1,8 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Country, State } from 'country-state-city';
 import type { ICountry, IState } from 'country-state-city';
 import type { RegistrationFormProps } from './signUpProps';
 import { Link, useNavigate } from 'react-router-dom';
+import { Eye, EyeOff, Search, ChevronDown } from 'lucide-react';
 import { authService } from '../../../../../services/auth.service';
 
 // Helper function to apply consistent styling to inputs/selects
@@ -16,8 +17,17 @@ const labelClasses = "block text-xs font-medium text-gray-700 mb-1";
 export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, setFormData }) => {
   const [countries, setCountries] = useState<ICountry[]>([]);
   const [states, setStates] = useState<IState[]>([]);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordErrors, setPasswordErrors] = useState<{
+    strength?: string;
+    match?: string;
+  }>({});
+  const [isPhoneCodeOpen, setIsPhoneCodeOpen] = useState(false);
+  const [phoneCodeSearch, setPhoneCodeSearch] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const phoneCodeRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -36,10 +46,126 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
   const phoneCountryCodes = useMemo(() => {
     return Country.getAllCountries().map(country => ({
       label: `${country.flag} ${country.phonecode.startsWith('+') ? '' : '+'}${country.phonecode}`,
-      value: `${country.isoCode}|${country.phonecode}`
-    })).sort((a, b) => a.label.localeCompare(b.label)); // Sort them alphabetically
+      value: `${country.isoCode}|${country.phonecode}`,
+      name: country.name,
+      phonecode: country.phonecode.startsWith('+') ? country.phonecode : `+${country.phonecode}`,
+      flag: country.flag,
+      isoCode: country.isoCode,
+    })).sort((a, b) => a.name.localeCompare(b.name)); // Sort by country name
   }, []);
 
+  // Filter phone codes based on search
+  const filteredPhoneCodes = useMemo(() => {
+    if (!phoneCodeSearch) return phoneCountryCodes;
+    const searchLower = phoneCodeSearch.toLowerCase();
+    return phoneCountryCodes.filter(code => 
+      code.name.toLowerCase().includes(searchLower) ||
+      code.phonecode.includes(searchLower) ||
+      code.isoCode.toLowerCase().includes(searchLower)
+    );
+  }, [phoneCodeSearch, phoneCountryCodes]);
+
+  // Get selected phone code display
+  const selectedPhoneCode = useMemo(() => {
+    if (!formData.phoneCountryCode) return null;
+    return phoneCountryCodes.find(code => code.value === formData.phoneCountryCode);
+  }, [formData.phoneCountryCode, phoneCountryCodes]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (phoneCodeRef.current && !phoneCodeRef.current.contains(event.target as Node)) {
+        setIsPhoneCodeOpen(false);
+        setPhoneCodeSearch('');
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // Validate password strength
+  const validatePasswordStrength = (password: string): string | undefined => {
+    if (!password) return undefined;
+    
+    if (password.length < 8) {
+      return 'Password must be at least 8 characters long';
+    }
+    
+    if (!/[a-z]/.test(password)) {
+      return 'Password must contain at least one lowercase letter';
+    }
+    
+    if (!/[A-Z]/.test(password)) {
+      return 'Password must contain at least one uppercase letter';
+    }
+    
+    if (!/\d/.test(password)) {
+      return 'Password must contain at least one number';
+    }
+    
+    return undefined;
+  };
+
+  // Validate password match
+  const validatePasswordMatch = (password: string, confirmPassword: string): string | undefined => {
+    if (!confirmPassword) return undefined;
+    
+    if (password !== confirmPassword) {
+      return 'Passwords do not match';
+    }
+    
+    return undefined;
+  };
+
+  // Handle password change
+  const handlePasswordChange = (value: string) => {
+    setFormData({ ...formData, password: value });
+    const strengthError = validatePasswordStrength(value);
+    const matchError = formData.confirmPassword 
+      ? validatePasswordMatch(value, formData.confirmPassword)
+      : undefined;
+    
+    setPasswordErrors({
+      strength: strengthError,
+      match: matchError,
+    });
+  };
+
+  // Handle confirm password change
+  const handleConfirmPasswordChange = (value: string) => {
+    setFormData({ ...formData, confirmPassword: value });
+    const matchError = validatePasswordMatch(formData.password || '', value);
+    
+    setPasswordErrors(prev => ({
+      ...prev,
+      match: matchError,
+    }));
+  };
+
+  // Check if form is valid
+  const isFormValid = useMemo(() => {
+    const hasPasswordStrengthError = passwordErrors.strength !== undefined;
+    const hasPasswordMatchError = passwordErrors.match !== undefined;
+    const passwordsMatch = formData.password === formData.confirmPassword;
+    const passwordIsStrong = !validatePasswordStrength(formData.password || '');
+    
+    return (
+      formData.agreedToTerms &&
+      !hasPasswordStrengthError &&
+      !hasPasswordMatchError &&
+      passwordsMatch &&
+      passwordIsStrong &&
+      !!formData.password &&
+      !!formData.confirmPassword &&
+      !!formData.email &&
+      !!formData.fullName
+    );
+  }, [formData, passwordErrors]);
+
+  // Handle registration
   const handleRegistration = async () => {
     // Validate required fields
     if (!formData.email || !formData.password || !formData.fullName) {
@@ -81,9 +207,8 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
         address: formData.address,
       });
 
-      // Registration successful - redirect to email verification or success page
-      // The JWT token is set as HTTP-only cookie by the backend
-      navigate(`/auth/verify-email?userId=${response.id}&email=${encodeURIComponent(response.email)}`);
+      // Registration successful - redirect to pricing page to select plan
+      navigate(`/pricing?userId=${response.id}&newAccount=true`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
     } finally {
@@ -120,25 +245,83 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
             <div>
               <label className={labelClasses}>Phone Number</label>
               <div className="flex border border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-teal-500 focus-within:border-teal-500 transition-all">
-                <select 
-                  className="pl-2 border-r w-20 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm bg-white transition-all"
-                  value={formData.phoneCountryCode || ''}
-                  onChange={(e) => {
-                    const [countryIso] = e.target.value.split('|');
-                    setFormData({ ...formData, phoneCountryCode: e.target.value, country: countryIso })
-                  }}
-                >
-                  <option value="" disabled>Code</option>
-                  {phoneCountryCodes.map((code) => (
-                  <option className='bg-teal-50 text-black' key={code.value} value={code.value}>{code.label}</option>
-                  ))}
-                </select>
+                {/* Phone Code Selector */}
+                <div className="relative" ref={phoneCodeRef}>
+                  <button
+                    type="button"
+                    onClick={() => setIsPhoneCodeOpen(!isPhoneCodeOpen)}
+                    className="flex items-center gap-1 px-3 py-3 border-r border-gray-300 bg-white rounded-l-md focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm min-w-[100px] hover:bg-gray-50 transition-colors"
+                  >
+                    <span className="text-sm font-medium">
+                      {selectedPhoneCode ? (
+                        <span className="flex items-center gap-1">
+                          <span>{selectedPhoneCode.flag}</span>
+                          <span className="hidden sm:inline">{selectedPhoneCode.phonecode}</span>
+                        </span>
+                      ) : (
+                        <span className="text-gray-500">Code</span>
+                      )}
+                    </span>
+                    <ChevronDown size={16} className={`text-gray-500 transition-transform ${isPhoneCodeOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {/* Dropdown */}
+                  {isPhoneCodeOpen && (
+                    <div className="absolute left-0 top-full mt-1 w-80 bg-white border border-gray-300 rounded-md shadow-lg z-50 max-h-80 overflow-hidden flex flex-col">
+                      {/* Search Input */}
+                      <div className="p-2 border-b border-gray-200">
+                        <div className="relative">
+                          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                          <input
+                            type="text"
+                            placeholder="Search country or code..."
+                            value={phoneCodeSearch}
+                            onChange={(e) => setPhoneCodeSearch(e.target.value)}
+                            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                            autoFocus
+                          />
+                        </div>
+                      </div>
+
+                      {/* Options List */}
+                      <div className="overflow-y-auto max-h-64">
+                        {filteredPhoneCodes.length > 0 ? (
+                          filteredPhoneCodes.map((code) => (
+                            <button
+                              key={code.value}
+                              type="button"
+                              onClick={() => {
+                                const [countryIso] = code.value.split('|');
+                                setFormData({ ...formData, phoneCountryCode: code.value, country: countryIso });
+                                setIsPhoneCodeOpen(false);
+                                setPhoneCodeSearch('');
+                              }}
+                              className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-teal-50 transition-colors text-left ${
+                                formData.phoneCountryCode === code.value ? 'bg-teal-50' : ''
+                              }`}
+                            >
+                              <span className="text-xl">{code.flag}</span>
+                              <span className="flex-1 text-sm font-medium text-gray-900">{code.name}</span>
+                              <span className="text-sm text-gray-600">{code.phonecode}</span>
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-4 py-8 text-center text-sm text-gray-500">
+                            No countries found
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Phone Number Input */}
                 <input
                   type="tel"
                   value={formData.phone || ''}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   placeholder="Type your phone"
-                  className="flex-1 px-4 py-3 rounded-md focus:outline-none text-sm placeholder-gray-400 border-0"
+                  className="flex-1 px-4 py-3 rounded-r-md focus:outline-none text-sm placeholder-gray-400 border-0"
                 />
               </div>
             </div>
@@ -214,24 +397,50 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className={labelClasses}>Create Password</label>
-              <input
-                type="password"
-                value={formData.password || ''}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder="Enter your password"
-                className={inputClasses()}
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={formData.password || ''}
+                  onChange={(e) => handlePasswordChange(e.target.value)}
+                  placeholder="Enter your password"
+                  className={`${inputClasses()} ${passwordErrors.strength ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''} pr-10`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              {passwordErrors.strength && (
+                <p className="text-xs text-red-600 mt-1">{passwordErrors.strength}</p>
+              )}
             </div>
 
             <div>
               <label className={labelClasses}>Confirm Password</label>
-              <input
-                type="password"
-                value={formData.confirmPassword || ''}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                placeholder="Confirm Password"
-                className={inputClasses()}
-              />
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={formData.confirmPassword || ''}
+                  onChange={(e) => handleConfirmPasswordChange(e.target.value)}
+                  placeholder="Confirm Password"
+                  className={`${inputClasses()} ${passwordErrors.match ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''} pr-10`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              {passwordErrors.match && (
+                <p className="text-xs text-red-600 mt-1">{passwordErrors.match}</p>
+              )}
             </div>
           </div>
 

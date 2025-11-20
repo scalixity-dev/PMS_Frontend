@@ -29,6 +29,25 @@ export interface ApiError {
   error?: string;
 }
 
+export interface ActivateAccountRequest {
+  planId: string;
+  isYearly?: boolean;
+}
+
+export interface ActivateAccountResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface CurrentUser {
+  userId: string;
+  email: string;
+  role: string;
+  fullName: string;
+  isEmailVerified: boolean;
+  isActive: boolean;
+}
+
 class AuthService {
   /**
    * Register a new user
@@ -145,6 +164,65 @@ class AuthService {
     }
 
     return response.json();
+  }
+
+  /**
+   * Activate account with selected plan
+   */
+  async activateAccount(userId: string, data: ActivateAccountRequest): Promise<ActivateAccountResponse> {
+    const response = await fetch(API_ENDPOINTS.AUTH.ACTIVATE_ACCOUNT(userId), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({
+        message: 'Account activation failed',
+        statusCode: response.status,
+      }));
+      console.error('API Error:', errorData);
+      let errorMessage = 'Failed to activate account. Please try again.';
+      if (errorData.message) {
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join(', ');
+        } else {
+          errorMessage = errorData.message;
+        }
+      }
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get current authenticated user
+   */
+  async getCurrentUser(): Promise<CurrentUser> {
+    const response = await fetch(API_ENDPOINTS.AUTH.GET_CURRENT_USER, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Unauthorized. Please log in.');
+      }
+      const errorData = await response.json().catch(() => ({
+        message: 'Failed to get user information',
+      }));
+      throw new Error(errorData.message || 'Failed to get user information');
+    }
+
+    const data = await response.json();
+    return data.user || data;
   }
 
   /**

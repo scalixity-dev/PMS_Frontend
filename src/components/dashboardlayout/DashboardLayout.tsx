@@ -1,14 +1,10 @@
 // src/components/dashboard/DashboardLayout.tsx
-import type { ReactNode } from "react";
 import { useState } from "react";
+import { Outlet } from "react-router-dom";
 import DashboardNavbar from "./DashboardNavbar";
 import DashboardSidebar from "./DashboardSidebar";
 
-interface DashboardLayoutProps {
-  children: ReactNode;
-}
-
-export default function DashboardLayout({ children }: DashboardLayoutProps) {
+export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
 
   return (

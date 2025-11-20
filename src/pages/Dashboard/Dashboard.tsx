@@ -1,5 +1,4 @@
 import React from 'react';
-import DashboardLayout from "../../components/dashboardlayout/DashboardLayout";
 import profilePic from "../../assets/images/profilepic.png";
 import propertyPic from "../../assets/images/propertypic.png";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -635,6 +634,5 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
   );
 }

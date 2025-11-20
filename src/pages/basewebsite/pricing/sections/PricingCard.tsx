@@ -1,4 +1,6 @@
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { authService } from "../../../../services/auth.service";
 
 interface PricingCardProps {
   plan: string;
@@ -42,6 +44,10 @@ export const PricingCard: React.FC<PricingCardProps> = ({
   onLearnMoreClick,
 }) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [isActivating, setIsActivating] = useState(false);
+  const userId = searchParams.get('userId');
+  const isNewAccount = searchParams.get('newAccount') === 'true';
   const isDark = isPro;
   
   const cardBgClass = isDark ? "bg-[#20CC95] text-white border-3 border-white shadow-md shadow-[#20CC95] hover:bg-[#006B49]" : "bg-[#D7FFF2] hover:shadow-md hover:shadow-[#20CC95]";
@@ -122,20 +128,44 @@ export const PricingCard: React.FC<PricingCardProps> = ({
 
       <div className="mb-6">
         <button
-          className={`w-full md:w-[80%] max-w-xs px-1 py-3 rounded-md font-semibold transition-colors duration-200 ${buttonClasses} flex items-center justify-center space-x-2 mx-auto md:mx-0`}
-          onClick={() => navigate("/signup")}
+          className={`w-full md:w-[80%] max-w-xs px-1 py-3 rounded-md font-semibold transition-colors duration-200 ${buttonClasses} flex items-center justify-center space-x-2 mx-auto md:mx-0 disabled:opacity-50 disabled:cursor-not-allowed`}
+          onClick={async () => {
+            if (isNewAccount && userId) {
+              // Activate account with selected plan
+              setIsActivating(true);
+              try {
+                const planId = plan.toLowerCase(); // e.g., "starter", "growth", "pro", "business"
+                await authService.activateAccount(userId, {
+                  planId,
+                  isYearly,
+                });
+                // Redirect to dashboard after successful activation
+                navigate('/dashboard');
+              } catch (error) {
+                console.error('Failed to activate account:', error);
+                alert(error instanceof Error ? error.message : 'Failed to activate account. Please try again.');
+                setIsActivating(false);
+              }
+            } else {
+              // Regular flow - go to signup
+              navigate("/signup");
+            }
+          }}
+          disabled={isActivating}
         >
-          <span>Start 14-days trial</span>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-          </svg>
+          <span>{isActivating ? 'Activating...' : 'Start 14-days trial'}</span>
+          {!isActivating && (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            </svg>
+          )}
         </button>
       </div>
 
