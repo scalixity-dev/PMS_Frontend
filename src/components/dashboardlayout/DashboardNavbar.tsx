@@ -1,6 +1,6 @@
 // src/components/dashboard/DashboardNavbar.tsx
 import { useState, useRef, useEffect } from "react";
-import { Search, Bell, MessageSquare, Info, User, LogOut, UserCog } from "lucide-react";
+import { Search, Bell, MessageSquare, Info, User, LogOut, UserCog, FileText, Download } from "lucide-react";
 import logo from "../../assets/images/logo.png";
 
 interface NavbarProps {
@@ -115,13 +115,23 @@ export default function DashboardNavbar({ sidebarOpen, setSidebarOpen }: NavbarP
         {/* Right side icons */}
         <div className="flex items-center gap-2 md:gap-3 ml-auto">
 
+          {/* File Icon */}
+          <button aria-label="Files" className="hidden md:flex w-8 h-8 md:w-10 md:h-10 rounded-full bg-white items-center justify-center hover:bg-gray-100 shadow-[0_4px_0_rgba(93,111,108)]">
+            <FileText size={18} className="text-gray-800 md:w-[22px] md:h-[22px]" />
+          </button>
+
+          {/* Download Icon */}
+          <button aria-label="Downloads" className="hidden md:flex w-8 h-8 md:w-10 md:h-10 mr-8 rounded-full bg-white items-center justify-center hover:bg-gray-100 shadow-[0_4px_0_rgba(93,111,108)]">
+            <Download size={18} className="text-gray-800 md:w-[22px] md:h-[22px]" />
+          </button>
+
           {/* Messages Icon */}
           <button aria-label="Messages" className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white flex items-center justify-center hover:bg-gray-100 shadow-[0_4px_0_rgba(93,111,108)]">
             <MessageSquare size={18} className="text-gray-800 md:w-[22px] md:h-[22px]" />
           </button>
 
-          {/* Info Icon - Hidden on mobile to save space if needed, or keep small */}
-          <button aria-label="Info" className="hidden xs:flex w-8 h-8 md:w-10 md:h-10 rounded-full bg-white items-center justify-center hover:bg-gray-100 shadow-[0_4px_0_rgba(93,111,108)]">
+          {/* Info Icon */}
+          <button aria-label="Info" className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white flex items-center justify-center hover:bg-gray-100 shadow-[0_4px_0_rgba(93,111,108)]">
             <Info size={18} className="text-gray-800 md:w-[22px] md:h-[22px]" />
           </button>
 
@@ -133,7 +143,7 @@ export default function DashboardNavbar({ sidebarOpen, setSidebarOpen }: NavbarP
           {/* User Profile */}
           <div className="relative" ref={dropdownRef}>
             <div 
-              className="flex items-center gap-2 bg-white rounded-full pl-1 pr-1 py-1 md:pl-4 md:pr-2 md:py-2 hover:bg-gray-100 cursor-pointer shadow-[0_4px_0_rgba(93,111,108)]"
+              className="flex items-center gap-2 bg-white rounded-full pl-1 pr-1 py-1 mr-6 md:pl-4 md:pr-2 md:py-2 hover:bg-gray-100 cursor-pointer shadow-[0_4px_0_rgba(93,111,108)]"
               onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
             >
               <span className="font-medium text-gray-800 text-base hidden lg:block">Shawn James</span>

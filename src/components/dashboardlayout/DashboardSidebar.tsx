@@ -53,7 +53,7 @@ export default function DashboardSidebar({ open, setOpen }: SidebarProps) {
 
         {/* Navigation */}
         <nav className="px-1 py-2 space-y-1">
-          <SidebarLink label="Dashboard" to="/" icon={<PiChartLineUpFill size={24} />} />
+          <SidebarLink label="Dashboard" to="/dashboard" icon={<PiChartLineUpFill size={24} />} />
           <SidebarLink label="Portfolio" to="/portfolio" icon={<PiChartPieSliceFill size={24} />} />
           <SidebarLink label="Leasing" to="/leasing" icon={<PiBuildingsFill size={24} />} />
           <SidebarLink label="Contacts" to="/contacts" icon={<PiUsersFill size={24} />} />

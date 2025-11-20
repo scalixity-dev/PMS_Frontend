@@ -38,6 +38,14 @@ const App: React.FC = () => {
           <Route path="*" element={<HomePage />} />
         </Route>
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/portfolio" element={<Dashboard />} />
+        <Route path="/leasing" element={<Dashboard />} />
+        <Route path="/contacts" element={<Dashboard />} />
+        <Route path="/accounting" element={<Dashboard />} />
+        <Route path="/maintenance" element={<Dashboard />} />
+        <Route path="/documents" element={<Dashboard />} />
+        <Route path="/reports" element={<Dashboard />} />
+        <Route path="/downloads" element={<Dashboard />} />
       </Routes>
     </BrowserRouter>
   );
