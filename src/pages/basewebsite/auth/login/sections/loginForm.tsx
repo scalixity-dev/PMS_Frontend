@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import logo from '../../../../../assets/images/logo.png';
 import { AppleIcon, FacebookIcon, GoogleIcon } from '../../../../../components/AuthIcons';
 import { authService } from '../../../../../services/auth.service';
 
 const LoginForm: React.FC = () => {
+    const location = useLocation();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -14,6 +15,13 @@ const LoginForm: React.FC = () => {
     const [emailError, setEmailError] = useState<string>('');
     const [passwordError, setPasswordError] = useState<string>('');
     const navigate = useNavigate();
+
+    // Pre-fill email if redirected from signup
+    useEffect(() => {
+        if (location.state && typeof location.state === 'object' && 'email' in location.state) {
+            setEmail(location.state.email as string);
+        }
+    }, [location.state]);
 
     const validateEmail = (email: string): boolean => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -57,10 +65,16 @@ const LoginForm: React.FC = () => {
         setIsLoading(true);
 
         try {
-            await authService.login(email, password);
+            const response = await authService.login(email, password);
             
-            // Login successful - redirect to dashboard
-            navigate('/dashboard', { replace: true });
+            // Check if device verification is required
+            if (response.requiresDeviceVerification) {
+                // Redirect to OTP page for device verification
+                navigate(`/otp?userId=${response.user.id}&email=${response.user.email}&type=device`, { replace: true });
+            } else {
+               
+                navigate('/dashboard', { replace: true });
+            }
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Login failed. Please try again.';
             setError(errorMessage);

@@ -131,16 +131,17 @@ export const PricingCard: React.FC<PricingCardProps> = ({
           className={`w-full md:w-[80%] max-w-xs px-1 py-3 rounded-md font-semibold transition-colors duration-200 ${buttonClasses} flex items-center justify-center space-x-2 mx-auto md:mx-0 disabled:opacity-50 disabled:cursor-not-allowed`}
           onClick={async () => {
             if (isNewAccount && userId) {
-              // Activate account with selected plan
+              // Activate account with selected plan first
               setIsActivating(true);
               try {
                 const planId = plan.toLowerCase(); // e.g., "starter", "growth", "pro", "business"
-                await authService.activateAccount(userId, {
+                const response = await authService.activateAccount(userId, {
                   planId,
                   isYearly,
                 });
-                // Redirect to dashboard after successful activation
-                navigate('/dashboard');
+                // After activation, redirect to OTP page for email verification
+                const userEmail = searchParams.get('email') || '';
+                navigate(`/otp?userId=${userId}&email=${encodeURIComponent(userEmail)}&activated=true`);
               } catch (error) {
                 console.error('Failed to activate account:', error);
                 alert(error instanceof Error ? error.message : 'Failed to activate account. Please try again.');

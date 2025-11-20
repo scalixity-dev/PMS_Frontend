@@ -208,7 +208,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
       });
 
       // Registration successful - redirect to pricing page to select plan
-      navigate(`/pricing?userId=${response.id}&newAccount=true`);
+      navigate(`/pricing?userId=${response.id}&email=${encodeURIComponent(formData.email!)}&newAccount=true`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
     } finally {

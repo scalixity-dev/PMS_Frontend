@@ -4,15 +4,20 @@ interface OtpFormProps {
     email?: string;
     onSubmit?: (otp: string) => void | Promise<void>;
     onResend?: () => void | Promise<void>;
+    otpType?: 'email' | 'device';
 }
 
 const OtpForm: React.FC<OtpFormProps> = ({ 
     email = 'nickjames@gmail.com', 
     onSubmit, 
-    onResend 
+    onResend,
+    otpType = 'email'
 }) => {
     const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState<string>('');
+    const [isResending, setIsResending] = useState(false);
+    const [resendSuccess, setResendSuccess] = useState(false);
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
     const handleChange = (index: number, value: string) => {
@@ -64,13 +69,21 @@ const OtpForm: React.FC<OtpFormProps> = ({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const otpCode = otp.join('');
+        const otpCode = otp.join('').trim();
         
         if (otpCode.length !== 6) {
+            setError('Please enter the complete 6-digit code');
             return; // Don't submit if OTP is incomplete
         }
 
+        // Validate that all characters are digits
+        if (!/^\d{6}$/.test(otpCode)) {
+            setError('OTP code must contain only numbers');
+            return;
+        }
+
         setIsSubmitting(true);
+        setError('');
         try {
             if (onSubmit) {
                 await onSubmit(otpCode);
@@ -79,16 +92,26 @@ const OtpForm: React.FC<OtpFormProps> = ({
                 // Default behavior: Handle OTP verification logic here
             }
         } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'OTP verification failed. Please try again.';
+            setError(errorMessage);
             console.error('OTP submission error:', error);
+            // Clear OTP on error
+            setOtp(['', '', '', '', '', '']);
+            inputRefs.current[0]?.focus();
         } finally {
             setIsSubmitting(false);
         }
     };
 
     const handleResend = async () => {
+        setIsResending(true);
+        setResendSuccess(false);
         try {
             if (onResend) {
                 await onResend();
+                setResendSuccess(true);
+                // Clear success message after 3 seconds
+                setTimeout(() => setResendSuccess(false), 3000);
             } else {
                 console.log('Resending OTP...');
                 // Default behavior: Handle resend logic here
@@ -96,22 +119,48 @@ const OtpForm: React.FC<OtpFormProps> = ({
             setOtp(['', '', '', '', '', '']);
             inputRefs.current[0]?.focus();
         } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Failed to resend OTP. Please try again.';
+            setError(errorMessage);
             console.error('OTP resend error:', error);
+        } finally {
+            setIsResending(false);
         }
     };
 
     return (
         <div className="w-full p-2 sm:p-10 lg:p-6 flex flex-col justify-center">
             <div className="text-left mb-8">
-                <h2 className="text-xl font-heading font-semibold text-gray-900 mb-2">Enter your code</h2>
+                <h2 className="text-xl font-heading font-semibold text-gray-900 mb-2">
+                    {otpType === 'device' ? 'Verify New Device' : 'Enter your code'}
+                </h2>
                 <p className="text-gray-600 text-sm">
-                    An email has been sent to<br />
-                    <span className="font-medium">{email}</span> with a<br />
-                    confirmation code. The code is valid for 5 minutes.
+                    {otpType === 'device' ? (
+                        <>
+                            We detected a login from a new device.<br />
+                            An email has been sent to <span className="font-medium">{email}</span><br />
+                            with a verification code. The code is valid for 10 minutes.
+                        </>
+                    ) : (
+                        <>
+                            An email has been sent to<br />
+                            <span className="font-medium">{email}</span> with a<br />
+                            confirmation code. The code is valid for 10 minutes.
+                        </>
+                    )}
                 </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
+                {error && (
+                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+                        {error}
+                    </div>
+                )}
+                {resendSuccess && (
+                    <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md text-sm">
+                        OTP has been resent to your email. Please check your inbox.
+                    </div>
+                )}
                 <div className="flex justify-center gap-3">
                     {otp.map((digit, index) => (
                         <input
@@ -134,14 +183,25 @@ const OtpForm: React.FC<OtpFormProps> = ({
                     ))}
                 </div>
 
-                <div className="text-right">
+                <div className="flex flex-col gap-4">
                     <button
-                        type="button"
-                        onClick={handleResend}
-                        className="text-sm font-medium text-teal-500 hover:text-teal-600 hover:underline transition-colors"
+                        type="submit"
+                        disabled={isSubmitting || otp.join('').length !== 6}
+                        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                     >
-                        Resend Code
+                        {isSubmitting ? 'Verifying...' : 'Verify Code'}
                     </button>
+                    
+                    <div className="text-center">
+                        <button
+                            type="button"
+                            onClick={handleResend}
+                            disabled={isResending}
+                            className="text-sm font-medium text-teal-500 hover:text-teal-600 hover:underline transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {isResending ? 'Sending...' : 'Resend Code'}
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
