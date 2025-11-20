@@ -142,9 +142,10 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="space-y-6">
+    <DashboardLayout>
+      <div className="space-y-5">
         {/* Top Row - Overview, Tasks, Applications */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Overview Section */}
           <div className="bg-white rounded-lg p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
@@ -246,7 +247,7 @@ export default function Dashboard() {
         </div>
 
         {/* Second Row - Accounting and Lease Funnel */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Accounting Chart */}
           <div className="bg-white rounded-lg p-6 shadow-sm">
             <div className="flex items-center justify-between mb-6">
@@ -339,7 +340,7 @@ export default function Dashboard() {
         </div>
 
         {/* Third Row - Maintenance and Recently Viewed */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
           {/* Maintenance */}
           <div className="bg-white rounded-lg p-6 shadow-sm lg:col-span-3">
             <div className="flex items-center justify-between mb-6">
@@ -440,7 +441,7 @@ export default function Dashboard() {
         </div>
 
         {/* Fourth Row - Properties/Financial/Deposits and Expiring Leases/Overdue Invoices */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Properties & Units Chart */}
           <div className="bg-white rounded-2xl p-6 shadow-sm">
             <div className="flex items-center justify-between mb-6">
@@ -470,7 +471,7 @@ export default function Dashboard() {
                 </PieChart>
               </ResponsiveContainer>
             </div>
-            <div className="mt-6 flex items-center justify-center gap-6">
+            <div className="mt-6 flex items-center justify-center gap-4">
               {propertiesUnitsData.map((item) => (
                 <div key={item.name} className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
