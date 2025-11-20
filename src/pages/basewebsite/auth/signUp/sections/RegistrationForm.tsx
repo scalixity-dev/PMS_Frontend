@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { Country, State } from 'country-state-city';
 import type { ICountry, IState } from 'country-state-city';
 import type { RegistrationFormProps } from './signUpProps';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { authService } from '../../../../../services/auth.service';
 
 // Helper function to apply consistent styling to inputs/selects
 const inputClasses = (hasValue: boolean = true) =>
@@ -12,9 +13,12 @@ const inputClasses = (hasValue: boolean = true) =>
 
 const labelClasses = "block text-xs font-medium text-gray-700 mb-1";
 
-export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, setFormData, onSubmit }) => {
+export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, setFormData }) => {
   const [countries, setCountries] = useState<ICountry[]>([]);
   const [states, setStates] = useState<IState[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     setCountries(Country.getAllCountries());
@@ -36,6 +40,57 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
     })).sort((a, b) => a.label.localeCompare(b.label)); // Sort them alphabetically
   }, []);
 
+  const handleRegistration = async () => {
+    // Validate required fields
+    if (!formData.email || !formData.password || !formData.fullName) {
+      setError('Please fill in all required fields');
+      return;
+    }
+
+    // Validate password match
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    // Validate password strength
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
+    if (formData.password.length < 8 || !passwordRegex.test(formData.password)) {
+      setError('Password must be at least 8 characters and contain uppercase, lowercase, and a number');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Extract phone country code and number
+      const [phoneCountryCode, phoneNumber] = formData.phoneCountryCode 
+        ? formData.phoneCountryCode.split('|')
+        : [undefined, formData.phone];
+
+      const response = await authService.register({
+        email: formData.email!,
+        password: formData.password!,
+        fullName: formData.fullName!,
+        phoneCountryCode: phoneCountryCode,
+        phoneNumber: phoneNumber,
+        country: formData.country,
+        state: formData.state,
+        pincode: formData.pincode,
+        address: formData.address,
+      });
+
+      // Registration successful - redirect to email verification or success page
+      // The JWT token is set as HTTP-only cookie by the backend
+      navigate(`/auth/verify-email?userId=${response.id}&email=${encodeURIComponent(response.email)}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4 sm:p-6 md:p-8">
       <div className="w-full max-w-xl p-6 sm:p-8 md:p-10 bg-white rounded-xl sm:rounded-2xl border border-gray-100 shadow-xl">
@@ -45,6 +100,11 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
         </div>
 
         <div className="space-y-5 sm:space-y-6">
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
           <div>
             <label className={labelClasses}>Full Name</label>
             <input
@@ -194,11 +254,11 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
 
           <div className="flex justify-center pt-2">
             <button
-              onClick={onSubmit}
-              disabled={!formData.agreedToTerms}
+              onClick={handleRegistration}
+              disabled={!formData.agreedToTerms || isLoading}
               className="py-3 px-12 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all font-semibold transform hover:scale-[1.02] active:scale-[0.98]"
             >
-              Start my free trial
+              {isLoading ? 'Creating account...' : 'Start my free trial'}
             </button>
           </div>
           <div className="mb-8 text-center text-sm sm:text-base text-gray-600 pt-2">
