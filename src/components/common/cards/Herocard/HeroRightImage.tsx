@@ -51,7 +51,14 @@ const HeroRightImage: React.FC<HeroRightImageProps> = ({
 
   const heightStyle = getHeightStyle();
   const hasResponsiveHeight = imageHeightMobile !== undefined || imageHeightDesktop !== undefined;
-  const isDesktop = typeof window !== 'undefined' ? window.innerWidth >= 1024 : false;
+  const [isDesktop, setIsDesktop] = React.useState(false);
+
+  React.useEffect(() => {
+    const update = () => setIsDesktop(window.innerWidth >= 1024);
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
 
   return (
     <>
