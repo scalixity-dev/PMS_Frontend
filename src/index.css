@@ -1,68 +1,185 @@
+@import "tailwindcss";
+
+/* ⚙️ PMS Design System */
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  /* 🌈 Core Colors */
+  --color-primary: #3D7475;
+  --color-secondary: #819A78;
+  --color-active: #20CC95;
+  --color-nonactive: #355C7D;
+  --color-heading: #1F2937;
+  --color-subheading: #4B5563;
+  --color-header-bg: #D8E0D5;
+  --color-navbar-bg: #273F3B;
+  --color-card-1: #9AD4AD;
+  --color-card-2: #6EB5AA;
+  --color-card-3: #9AD4AD;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  /* 🧭 Gradients */
+  --linear-card-1: linear-gradient(180deg, #9AD4AD 0%, #FFFFFF 100%);
+  --linear-card-2: linear-gradient(180deg, #6EB5AA 0%, #FFFFFF 100%);
+  --linear-card-3: linear-gradient(180deg, #9AD4AD 0%, #FFFFFF 100%);
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  /* ✍️ Typography */
+  --font-heading: 'Urbanist', sans-serif;
+  --font-body: 'Urbanist', sans-serif;
+
+  /* 📏 Spacing */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+
+  /* 🧱 Border Radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 1rem;
+  --radius-xl: 2rem;
+
+  /* 🌤️ Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.15);
+
+  /* 🧩 Button Variables */
+  --btn-primary-bg: #3D7475;
+  --btn-primary-border: 9.76px solid #FFFFFF;
+
+  --btn-secondary-bg: #819A78;
+  --btn-secondary-border: 14.09px solid #FFFFFF;
+
+  --btn-active-bg: #20CC95;
+  --btn-active-border: 7.41px solid #E3E3E3;
+
+  --btn-nonactive-bg: #355C7D;
+  --btn-nonactive-border: 4.89px solid #E3E3E3;
+
+  --btn-text-color: #FFFFFF;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+/* 🌙 Optional Dark Theme */
+[data-theme='dark'] {
+  --color-heading: #E5E7EB;
+  --color-subheading: #9CA3AF;
+  --color-header-bg: #1E293B;
+  --color-navbar-bg: #111827;
+  --color-primary: #20CC95;
+  --color-secondary: #355C7D;
 }
 
+/* 🧠 Typography Defaults */
 body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+  font-family: var(--font-body);
+  background-color: var(--color-header-bg);
+  color: var(--color-heading);
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+/* 🎨 Scrollbar Hide */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
+/* 🧭 Buttons */
+.btn {
+  font-family: var(--font-body);
   font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
+  /* Reduce default button roundness to a medium radius */
+  border-radius: var(--radius-md);
+  padding: 0.5rem 1.25rem;
   cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  transition: all 0.25s ease;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+/* Primary Button */
+.btn-primary {
+  background-color: var(--btn-primary-bg);
+  border: var(--btn-primary-border);
+  color: var(--btn-text-color);
+}
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+/* Secondary Button */
+.btn-secondary {
+  background-color: var(--btn-secondary-bg);
+  border: var(--btn-secondary-border);
+  color: var(--btn-text-color);
+}
+.btn-secondary:hover {
+  opacity: 0.9;
+}
+
+/* Active Rounded Button */
+.btn-active {
+  background-color: var(--btn-active-bg);
+  border: var(--btn-active-border);
+  color: #000;
+  border-radius: 9999px;
+  font-weight: 600;
+}
+.btn-active:hover {
+  background-color: #17a878;
+  opacity: 0.9;
+}
+
+/* Non Active Rounded Button */
+.btn-nonactive {
+  background-color: var(--btn-nonactive-bg);
+  border: var(--btn-nonactive-border);
+  color: #E3E3E3;
+  border-radius: 9999px;
+  font-weight: 500;
+}
+.btn-nonactive:hover {
+  opacity: 0.85;
+}
+
+/* 🖱️ Ensure hand cursor on interactive elements */
+a,
+button,
+input[type="button"],
+input[type="submit"],
+[role="button"] {
+  cursor: pointer;
+}
+
+/* 📐 Max Width Utilities */
+.max-w-8xl {
+  max-width: 90rem; /* 1440px */
+}
+
+.max-w-9xl {
+  max-width: 96rem; /* 1536px */
+}
+
+/* -------------------------- */
+/* Lease card smooth hover glow */
+/* -------------------------- */
+.lease-card {
+  position: relative;
+  overflow: hidden;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  will-change: box-shadow, background-color, opacity;
+}
+.lease-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  /* soft radial glow from top-center */
+  background: radial-gradient(600px 240px at 50% 6%, rgba(32,204,149,0.14), rgba(32,204,149,0.07) 20%, transparent 45%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 260ms cubic-bezier(.2,.9,.2,1);
+}
+.lease-card:hover::before,
+.lease-card:focus-within::before {
+  opacity: 1;
 }
