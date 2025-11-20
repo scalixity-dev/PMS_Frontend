@@ -39,6 +39,23 @@ export interface ActivateAccountResponse {
   message: string;
 }
 
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  user: {
+    id: string;
+    email: string;
+    fullName: string;
+    role: string;
+    isEmailVerified: boolean;
+    isActive: boolean;
+  };
+  message: string;
+}
+
 export interface CurrentUser {
   userId: string;
   email: string;
@@ -186,6 +203,39 @@ class AuthService {
       }));
       console.error('API Error:', errorData);
       let errorMessage = 'Failed to activate account. Please try again.';
+      if (errorData.message) {
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join(', ');
+        } else {
+          errorMessage = errorData.message;
+        }
+      }
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Login with email and password
+   */
+  async login(email: string, password: string): Promise<LoginResponse> {
+    const response = await fetch(API_ENDPOINTS.AUTH.LOGIN, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({
+        message: 'Login failed',
+        statusCode: response.status,
+      }));
+      console.error('API Error:', errorData);
+      let errorMessage = 'Login failed. Please check your credentials.';
       if (errorData.message) {
         if (Array.isArray(errorData.message)) {
           errorMessage = errorData.message.join(', ');
