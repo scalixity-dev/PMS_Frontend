@@ -207,9 +207,8 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
         address: formData.address,
       });
 
-      // Registration successful - redirect to email verification or success page
-      // The JWT token is set as HTTP-only cookie by the backend
-      navigate(`/auth/verify-email?userId=${response.id}&email=${encodeURIComponent(response.email)}`);
+      // Registration successful - redirect to pricing page to select plan
+      navigate(`/pricing?userId=${response.id}&newAccount=true`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
     } finally {

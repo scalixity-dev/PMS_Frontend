@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, } from 'react-router-dom';
 import AppLayout from './components/layout/AppLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import DashboardLayout from './components/dashboardlayout/DashboardLayout';
 import HomePage from './pages/basewebsite/home';
 import ScreeningPage from './pages/basewebsite/features/screening/index';
 import LeasePage from './pages/basewebsite/features/lease/index';
@@ -17,7 +18,7 @@ import ResourcePage from './pages/basewebsite/resources';
 import TenantPage from './pages/basewebsite/usecases/tenant';
 import ServiceProsPage from './pages/basewebsite/usecases/servicepros';
 import Dashboard from './pages/Dashboard/Dashboard';
-import ListUnit from './pages/Dashboard/features/ListUnit/ListUnit';
+// import ListUnit from './pages/Dashboard/features/ListUnit/ListUnit';
 
 const App: React.FC = () => {
   return (
@@ -48,7 +49,7 @@ const App: React.FC = () => {
           <ProtectedRoute>
             <Dashboard />
           </ProtectedRoute>
-          <Route path="/dashboard/list-unit" element={<ListUnit />} />
+          // <Route path="/dashboard/list-unit" element={<ListUnit />} />
           }
       />
       <Route

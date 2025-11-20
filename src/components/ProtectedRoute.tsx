@@ -14,8 +14,15 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     const checkAuth = async () => {
       try {
         const user = await authService.getCurrentUser();
-        // Verify user is property manager and account is active
-        if (user.role === 'PROPERTY_MANAGER' && user.isActive) {
+        // Verify user is property manager (or has property manager role) and account is active
+        // Role might be 'PROPERTY_MANAGER', 'property_manager', or similar variations
+        const isPropertyManager = user.role && (
+          user.role.toUpperCase() === 'PROPERTY_MANAGER' ||
+          user.role.toLowerCase() === 'property_manager' ||
+          user.role === 'property_manager'
+        );
+        
+        if (isPropertyManager && user.isActive) {
           setIsAuthenticated(true);
         } else {
           setIsAuthenticated(false);
