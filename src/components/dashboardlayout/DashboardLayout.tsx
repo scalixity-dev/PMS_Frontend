@@ -18,11 +18,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       </div>
 
       <div className="flex flex-1 pt-20">
-        <div className="fixed left-0 top-20 bottom-0 z-40 h-[calc(100vh-5rem)]">
+        <div className="fixed left-0 top-16 bottom-0 z-40 h-[calc(100vh-32px)]">
           <DashboardSidebar open={sidebarOpen} setOpen={setSidebarOpen} />
         </div>
 
-        <main className="p-4 md:p-6 flex-1 ml-0 lg:ml-64 overflow-y-auto">{children}</main>
+        <main className="p-4 md:p-6 flex-1 ml-0 lg:ml-55 overflow-y-auto">{children}</main>
       </div>
     </div>
   );
