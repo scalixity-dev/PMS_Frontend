@@ -10,12 +10,14 @@ import LeadsPage from './pages/basewebsite/features/leads/index';
 import PricingPage from './pages/basewebsite/pricing';
 import LoginPage from './pages/basewebsite/auth/login';
 import SignUpPage from './pages/basewebsite/auth/signUp';
+import OtpPage from './pages/basewebsite/auth/otp';
 import TeamPage from './pages/basewebsite/features/team/index';
 import LandlordUseCasesPage from './pages/basewebsite/usecases/landlord';
 import ResourcePage from './pages/basewebsite/resources';
 import TenantPage from './pages/basewebsite/usecases/tenant';
 import ServiceProsPage from './pages/basewebsite/usecases/servicepros';
 import Dashboard from './pages/Dashboard/Dashboard';
+import ListUnit from './pages/Dashboard/features/ListUnit/ListUnit';
 
 const App: React.FC = () => {
   return (
@@ -25,6 +27,7 @@ const App: React.FC = () => {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignUpPage />} />
+          <Route path="/otp" element={<OtpPage />} />
          
           <Route path="/usecases/landlord" element={<LandlordUseCasesPage />} />
           <Route path="/usecases/tenant" element={<TenantPage />} />
@@ -38,13 +41,15 @@ const App: React.FC = () => {
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="*" element={<HomePage />} />
       </Route>
-      <Route
+        <Route element={<DashboardLayout />}>
+        <Route
         path="/dashboard"
         element={
           <ProtectedRoute>
             <Dashboard />
           </ProtectedRoute>
-        }
+          <Route path="/dashboard/list-unit" element={<ListUnit />} />
+          }
       />
       <Route
         path="/portfolio"
@@ -52,7 +57,7 @@ const App: React.FC = () => {
           <ProtectedRoute>
             <Dashboard />
           </ProtectedRoute>
-        }
+          }
       />
       <Route
         path="/leasing"
@@ -60,7 +65,7 @@ const App: React.FC = () => {
           <ProtectedRoute>
             <Dashboard />
           </ProtectedRoute>
-        }
+          }
       />
       <Route
         path="/contacts"
@@ -68,7 +73,7 @@ const App: React.FC = () => {
           <ProtectedRoute>
             <Dashboard />
           </ProtectedRoute>
-        }
+          }
       />
       <Route
         path="/accounting"
@@ -76,7 +81,7 @@ const App: React.FC = () => {
           <ProtectedRoute>
             <Dashboard />
           </ProtectedRoute>
-        }
+          }
       />
       <Route
         path="/maintenance"
@@ -84,7 +89,7 @@ const App: React.FC = () => {
           <ProtectedRoute>
             <Dashboard />
           </ProtectedRoute>
-        }
+          }
       />
       <Route
         path="/documents"
@@ -92,7 +97,7 @@ const App: React.FC = () => {
           <ProtectedRoute>
             <Dashboard />
           </ProtectedRoute>
-        }
+          }
       />
       <Route
         path="/reports"
@@ -100,7 +105,7 @@ const App: React.FC = () => {
           <ProtectedRoute>
             <Dashboard />
           </ProtectedRoute>
-        }
+          }
       />
       <Route
         path="/downloads"
@@ -110,6 +115,7 @@ const App: React.FC = () => {
           </ProtectedRoute>
         }
       />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

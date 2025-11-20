@@ -59,14 +59,14 @@ const HeroContent: React.FC<HeroContentProps> = ({
   const shouldCenter = isCentered || hasSideImages;
   const hasSideContent = Boolean(sideContentLeft || sideContentRight);
   const featuresContainerClass = [
-    'flex whitespace-nowrap gap-3 text-sm',
+    'flex whitespace-nowrap gap-3 text-sm flex-wrap md:flex-nowrap',
     shouldCenter ? 'justify-center' : '',
     hasSideContent ? 'flex-nowrap overflow-x-auto lg:overflow-visible' : 'flex-wrap',
   ].join(' ').trim();
   const ctaTopMarginClass = embeddedContent ? 'mt-6 sm:mt-8 md:mt-10' : '';
 
   return (
-    <div className={shouldCenter ? 'text-center flex flex-col items-center' : ''}>
+    <div className={shouldCenter ? 'text-center flex flex-col items-center' : 'px-1'}>
       {badge && (
         <div className={`mb-4 sm:mb-5 md:mb-6 lg:mb-6 flex items-center gap-2 sm:gap-3 md:gap-4 ${badgeCentered || shouldCenter ? 'justify-center' : ''}`}>
           <p className={badgeClassName ? badgeClassName : "font-heading text-base sm:text-lg md:text-xl lg:text-2xl text-[#0B696B] font-medium leading-[150%] tracking-normal text-secondary"}>

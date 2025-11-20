@@ -23,40 +23,10 @@ export interface RegisterResponse {
   message: string;
 }
 
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-export interface LoginResponse {
-  user: {
-    id: string;
-    email: string;
-    fullName: string;
-    role: string;
-    isEmailVerified: boolean;
-    isActive: boolean;
-  };
+export interface ApiError {
   message: string;
-}
-
-export interface ActivateAccountRequest {
-  planId: string;
-  isYearly?: boolean;
-}
-
-export interface ActivateAccountResponse {
-  success: boolean;
-  message: string;
-}
-
-export interface CurrentUser {
-  userId: string;
-  email: string;
-  role: string;
-  fullName: string;
-  isEmailVerified: boolean;
-  isActive: boolean;
+  statusCode?: number;
+  error?: string;
 }
 
 class AuthService {
@@ -69,24 +39,41 @@ class AuthService {
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include',
+      credentials: 'include', // Include cookies for JWT
       body: JSON.stringify(data),
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({
-        message: 'Registration failed',
-        statusCode: response.status,
-      }));
-      console.error('API Error:', errorData);
-      let errorMessage = 'Registration failed. Please try again.';
-      if (errorData.message) {
+      let errorMessage = 'Registration failed';
+      
+      try {
+        const errorData = await response.json();
+        
+        // Handle NestJS validation errors (array format)
         if (Array.isArray(errorData.message)) {
-          errorMessage = errorData.message.join(', ');
-        } else {
+          errorMessage = errorData.message.join('. ');
+        } 
+        // Handle single error message
+        else if (errorData.message) {
           errorMessage = errorData.message;
         }
+        // Handle error field
+        else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+        
+        // Log error for debugging
+        console.error('Registration error:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+        });
+      } catch (parseError) {
+        // If JSON parsing fails, use status text
+        errorMessage = `Registration failed: ${response.statusText}`;
+        console.error('Failed to parse error response:', parseError);
       }
+      
       throw new Error(errorMessage);
     }
 
@@ -94,110 +81,67 @@ class AuthService {
   }
 
   /**
-   * Login with email and password
+   * Verify email OTP
    */
-  async login(email: string, password: string): Promise<LoginResponse> {
-    const response = await fetch(API_ENDPOINTS.AUTH.LOGIN, {
+  async verifyEmail(userId: string, code: string): Promise<void> {
+    const response = await fetch(API_ENDPOINTS.AUTH.VERIFY_EMAIL(userId), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       credentials: 'include',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ code }),
     });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({
-        message: 'Login failed',
+        message: 'Email verification failed',
         statusCode: response.status,
       }));
-      console.error('API Error:', errorData);
-      let errorMessage = 'Login failed. Please check your credentials.';
-      if (errorData.message) {
-        if (Array.isArray(errorData.message)) {
-          errorMessage = errorData.message.join(', ');
-        } else {
-          errorMessage = errorData.message;
-        }
-      }
-      throw new Error(errorMessage);
-    }
-
-    return response.json();
-  }
-
-  /**
-   * Logout user
-   */
-  async logout(): Promise<void> {
-    try {
-      await fetch(API_ENDPOINTS.AUTH.LOGOUT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      });
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Continue with logout even if API call fails
+      throw new Error(errorData.message || `Email verification failed: ${response.statusText}`);
     }
   }
 
   /**
-   * Get current authenticated user
+   * Verify device OTP
    */
-  async getCurrentUser(): Promise<CurrentUser> {
-    const response = await fetch(API_ENDPOINTS.AUTH.GET_CURRENT_USER, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error('Unauthorized. Please log in.');
-      }
-      const errorData = await response.json().catch(() => ({
-        message: 'Failed to get user information',
-      }));
-      throw new Error(errorData.message || 'Failed to get user information');
-    }
-
-    const data = await response.json();
-    return data.user;
-  }
-
-  /**
-   * Activate account with selected plan
-   */
-  async activateAccount(userId: string, data: ActivateAccountRequest): Promise<ActivateAccountResponse> {
-    const response = await fetch(API_ENDPOINTS.AUTH.ACTIVATE_ACCOUNT(userId), {
+  async verifyDevice(userId: string, code: string): Promise<void> {
+    const response = await fetch(API_ENDPOINTS.AUTH.VERIFY_DEVICE(userId), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       credentials: 'include',
-      body: JSON.stringify(data),
+      body: JSON.stringify({ code }),
     });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({
-        message: 'Account activation failed',
+        message: 'Device verification failed',
         statusCode: response.status,
       }));
-      console.error('API Error:', errorData);
-      let errorMessage = 'Failed to activate account. Please try again.';
-      if (errorData.message) {
-        if (Array.isArray(errorData.message)) {
-          errorMessage = errorData.message.join(', ');
-        } else {
-          errorMessage = errorData.message;
-        }
-      }
-      throw new Error(errorMessage);
+      throw new Error(errorData.message || `Device verification failed: ${response.statusText}`);
+    }
+  }
+
+  /**
+   * Check device and send OTP if needed
+   */
+  async checkDevice(userId: string): Promise<{ requiresVerification: boolean; message: string }> {
+    const response = await fetch(API_ENDPOINTS.AUTH.CHECK_DEVICE(userId), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({
+        message: 'Device check failed',
+        statusCode: response.status,
+      }));
+      throw new Error(errorData.message || `Device check failed: ${response.statusText}`);
     }
 
     return response.json();

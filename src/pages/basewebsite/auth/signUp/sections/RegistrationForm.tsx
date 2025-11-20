@@ -180,9 +180,9 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
     }
 
     // Validate password strength
-    const strengthError = validatePasswordStrength(formData.password);
-    if (strengthError) {
-      setError(strengthError);
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
+    if (formData.password.length < 8 || !passwordRegex.test(formData.password)) {
+      setError('Password must be at least 8 characters and contain uppercase, lowercase, and a number');
       return;
     }
 
@@ -207,8 +207,9 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
         address: formData.address,
       });
 
-      // Registration successful - redirect to pricing page to select plan
-      navigate(`/pricing?userId=${response.id}&newAccount=true`);
+      // Registration successful - redirect to email verification or success page
+      // The JWT token is set as HTTP-only cookie by the backend
+      navigate(`/auth/verify-email?userId=${response.id}&email=${encodeURIComponent(response.email)}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
     } finally {
@@ -464,7 +465,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
           <div className="flex justify-center pt-2">
             <button
               onClick={handleRegistration}
-              disabled={!isFormValid || isLoading}
+              disabled={!formData.agreedToTerms || isLoading}
               className="py-3 px-12 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all font-semibold transform hover:scale-[1.02] active:scale-[0.98]"
             >
               {isLoading ? 'Creating account...' : 'Start my free trial'}
