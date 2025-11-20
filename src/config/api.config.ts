@@ -9,6 +9,7 @@ export const API_ENDPOINTS = {
     CHECK_DEVICE: (userId: string) => `${API_BASE_URL}/auth/check-device/${userId}`,
     ACTIVATE_ACCOUNT: (userId: string) => `${API_BASE_URL}/auth/activate-account/${userId}`,
     GET_CURRENT_USER: `${API_BASE_URL}/auth/me`,
+    LOGOUT: `${API_BASE_URL}/auth/logout`,
     GOOGLE: `${API_BASE_URL}/auth/google`,
     FACEBOOK: `${API_BASE_URL}/auth/facebook`,
     APPLE: `${API_BASE_URL}/auth/apple`,

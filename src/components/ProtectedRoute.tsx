@@ -22,7 +22,13 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
           user.role === 'property_manager'
         );
         
-        if (isPropertyManager && user.isActive) {
+        // User must be:
+        // 1. Property manager
+        // 2. Account must be active (isActive = true)
+        // 3. Email must be verified (isEmailVerified = true)
+        // Note: Backend JwtAuthGuard already checks for active subscription,
+        // so if getCurrentUser succeeds, user has an active subscription
+        if (isPropertyManager && user.isActive && user.isEmailVerified) {
           setIsAuthenticated(true);
         } else {
           setIsAuthenticated(false);

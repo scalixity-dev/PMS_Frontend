@@ -226,6 +226,24 @@ class AuthService {
   }
 
   /**
+   * Logout user
+   */
+  async logout(): Promise<void> {
+    try {
+      await fetch(API_ENDPOINTS.AUTH.LOGOUT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Continue with logout even if API call fails
+    }
+  }
+
+  /**
    * Initiate OAuth flow
    */
   initiateOAuth(provider: 'google' | 'facebook' | 'apple'): void {

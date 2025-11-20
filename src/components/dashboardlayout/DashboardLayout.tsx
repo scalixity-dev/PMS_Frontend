@@ -18,7 +18,9 @@ export default function DashboardLayout() {
           <DashboardSidebar open={sidebarOpen} setOpen={setSidebarOpen} />
         </div>
 
-        <main className="p-4 md:p-6 flex-1 ml-0 lg:ml-55 overflow-y-auto">{children}</main>
+        <main className="p-4 md:p-6 flex-1 ml-0 lg:ml-64 overflow-y-auto">
+          <Outlet />
+        </main>
       </div>
     </div>
   );

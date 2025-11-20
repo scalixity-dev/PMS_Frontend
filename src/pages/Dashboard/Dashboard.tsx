@@ -142,8 +142,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <DashboardLayout>
-      <div className="space-y-5">
+    <div className="space-y-6">
         {/* Top Row - Overview, Tasks, Applications */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Overview Section */}

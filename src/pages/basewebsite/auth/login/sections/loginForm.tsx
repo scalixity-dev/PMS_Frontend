@@ -23,23 +23,7 @@ const LoginForm: React.FC = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                <label htmlFor="full-name" className="block text-xs font-medium text-gray-700">
-                    Full name
-                </label>
-                <div className="mt-1">
-                    <input
-                    id="full-name"
-                    name="full-name"
-                    type="text"
-                    required
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 sm:text-sm transition-all"
-                    placeholder="Enter your name"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    />
-                </div>
-                </div>
+                
 
                 <div>
                 <label htmlFor="email-address" className="block text-xs font-medium text-gray-700">
