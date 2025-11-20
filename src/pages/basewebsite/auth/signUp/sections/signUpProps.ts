@@ -30,7 +30,7 @@ export interface RegisterFormData {
 export interface RegistrationFormProps {
   formData: RegisterFormData;
   setFormData: (data: RegisterFormData) => void;
-  onSubmit: () => void;
+  onSubmit?: () => void; // Optional since component handles submission internally
 }
 
 export interface AccountType {
