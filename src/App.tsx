@@ -14,6 +14,7 @@ import LandlordUseCasesPage from './pages/basewebsite/usecases/landlord';
 import ResourcePage from './pages/basewebsite/resources';
 import TenantPage from './pages/basewebsite/usecases/tenant';
 import ServiceProsPage from './pages/basewebsite/usecases/servicepros';
+import Dashboard from './pages/Dashboard/Dashboard';
 
 const App: React.FC = () => {
   return (
@@ -36,6 +37,15 @@ const App: React.FC = () => {
           <Route path="/pricing" element={<PricingPage />} />
           <Route path="*" element={<HomePage />} />
         </Route>
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/portfolio" element={<Dashboard />} />
+        <Route path="/leasing" element={<Dashboard />} />
+        <Route path="/contacts" element={<Dashboard />} />
+        <Route path="/accounting" element={<Dashboard />} />
+        <Route path="/maintenance" element={<Dashboard />} />
+        <Route path="/documents" element={<Dashboard />} />
+        <Route path="/reports" element={<Dashboard />} />
+        <Route path="/downloads" element={<Dashboard />} />
       </Routes>
     </BrowserRouter>
   );
