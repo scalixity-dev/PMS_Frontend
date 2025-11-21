@@ -14,6 +14,7 @@ interface CustomDropdownProps {
   placeholder?: string;
   required?: boolean;
   disabled?: boolean;
+  textClassName?: string;
   buttonClassName?: string;
 }
 
@@ -25,7 +26,8 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
   placeholder = 'Select an option',
   required = false,
   disabled = false,
-  buttonClassName = ''
+  buttonClassName = '',
+  textClassName = ''
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -57,22 +59,21 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
           {label}{required && '*'}
         </label>
       )}
-      
+
       {/* Dropdown Trigger */}
       <button
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full flex items-center justify-between px-4 py-2.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all ${
-          disabled ? 'opacity-50 cursor-not-allowed' : 'hover:border-[var(--color-primary)] cursor-pointer'
-        } ${buttonClassName}`}
+        className={`w-full flex items-center justify-between px-4 py-2.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:border-[var(--color-primary)] cursor-pointer'
+          } ${buttonClassName}`}
       >
-        <span className={selectedOption ? 'text-gray-900' : 'text-gray-400'}>
+        <span className={`${selectedOption ? 'text-gray-900' : 'text-gray-400'} ${textClassName}`}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
-        <ChevronDown 
-          size={20} 
-          className={`text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} 
+        <ChevronDown
+          size={20}
+          className={`text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
 
