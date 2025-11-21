@@ -65,6 +65,21 @@ export interface CurrentUser {
   fullName: string;
   isEmailVerified: boolean;
   isActive: boolean;
+  country?: string;
+  address?: string;
+  phoneNumber?: string;
+  phoneCountryCode?: string;
+  state?: string;
+  pincode?: string;
+}
+
+export interface UpdateProfileRequest {
+  phoneCountryCode?: string;
+  phoneNumber?: string;
+  country?: string;
+  state?: string;
+  pincode?: string;
+  address?: string;
 }
 
 class AuthService {
@@ -424,6 +439,40 @@ class AuthService {
     };
     const endpoint = API_ENDPOINTS.AUTH[providerMap[provider]];
     window.location.href = endpoint;
+  }
+
+  /**
+   * Update user profile (for OAuth users completing registration)
+   */
+  async updateProfile(data: UpdateProfileRequest): Promise<void> {
+    const response = await fetch(API_ENDPOINTS.AUTH.UPDATE_PROFILE, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Profile update failed';
+      
+      try {
+        const errorData = await response.json();
+        
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join('. ');
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+      } catch (parseError) {
+        errorMessage = `Profile update failed: ${response.statusText}`;
+      }
+      
+      throw new Error(errorMessage);
+    }
   }
 }
 

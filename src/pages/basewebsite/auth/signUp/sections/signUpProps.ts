@@ -31,6 +31,8 @@ export interface RegistrationFormProps {
   formData: RegisterFormData;
   setFormData: (data: RegisterFormData) => void;
   onSubmit?: () => void; // Optional since component handles submission internally
+  isOAuthSignup?: boolean; // Flag to indicate OAuth signup (hide email, password fields)
+  userId?: string; // User ID for OAuth signups (to pass to pricing page)
 }
 
 export interface AccountType {

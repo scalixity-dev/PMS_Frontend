@@ -190,21 +190,24 @@ const LoginForm: React.FC = () => {
                 <div className="mt-6 space-y-3">
                 <button
                     type="button"
-                    className="w-full inline-flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+                    onClick={() => authService.initiateOAuth('google')}
+                    className="w-full inline-flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all transform hover:scale-[1.02] active:scale-[0.98] gap-3"
                 >
-                    <GoogleIcon /> Create with Google
+                    <GoogleIcon /> Sign in with Google
                 </button>
                 <button
                     type="button"
-                    className="w-full inline-flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+                    onClick={() => authService.initiateOAuth('apple')}
+                    className="w-full inline-flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all transform hover:scale-[1.02] active:scale-[0.98] gap-3"
                 >
-                    <AppleIcon /> Create with Apple
+                    <AppleIcon /> Sign in with Apple
                 </button>
                 <button
                     type="button"
-                    className="w-full inline-flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+                    onClick={() => authService.initiateOAuth('facebook')}
+                    className="w-full inline-flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all transform hover:scale-[1.02] active:scale-[0.98] gap-3"
                 >
-                    <FacebookIcon /> Create with Facebook
+                    <FacebookIcon /> Sign in with Facebook
                 </button>
                 </div>
             </div>
