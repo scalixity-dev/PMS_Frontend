@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Plus, Building } from 'lucide-react';
 import PropertyCard from '../components/PropertyCard';
-import property from '../../../../../assets/images/property.jpg';
 
 interface Property {
   id: string;

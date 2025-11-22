@@ -145,7 +145,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
     }));
   };
 
-  // Check if form is valid
+  // Check if form is valid (used to enable/disable submit)
   const isFormValid = useMemo(() => {
     const hasPasswordStrengthError = passwordErrors.strength !== undefined;
     const hasPasswordMatchError = passwordErrors.match !== undefined;
@@ -464,7 +464,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
           <div className="flex justify-center pt-2">
             <button
               onClick={handleRegistration}
-              disabled={!formData.agreedToTerms || isLoading}
+              disabled={!isFormValid || isLoading}
               className="py-3 px-12 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all font-semibold transform hover:scale-[1.02] active:scale-[0.98]"
             >
               {isLoading ? 'Creating account...' : 'Start my free trial'}

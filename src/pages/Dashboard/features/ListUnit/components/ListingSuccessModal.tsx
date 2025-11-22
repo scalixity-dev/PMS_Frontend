@@ -1,4 +1,5 @@
-import React, { Fragment } from 'react';
+import React, { Fragment, useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Dialog, Transition } from '@headlessui/react';
 import { X } from 'lucide-react';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
@@ -19,6 +20,25 @@ const ListingSuccessModal: React.FC<ListingSuccessModalProps> = ({
     onListAnother,
     propertyDetails,
 }) => {
+    const navigate = useNavigate();
+    const [isClosing, setIsClosing] = useState(false);
+    const timeoutRef = useRef<number | null>(null);
+
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+    }, []);
+
+    const animateAndThen = (cb: () => void) => {
+        setIsClosing(true);
+        // match modal leave duration (200ms)
+        timeoutRef.current = window.setTimeout(() => {
+            cb();
+        }, 200);
+    };
     return (
         <Transition appear show={isOpen} as={Fragment}>
             <Dialog as="div" className="relative z-50" onClose={onClose}>
@@ -31,7 +51,9 @@ const ListingSuccessModal: React.FC<ListingSuccessModalProps> = ({
                     leaveFrom="opacity-100"
                     leaveTo="opacity-0"
                 >
-                    <div className="fixed inset-0 bg-black/25" />
+                    <div
+                        className={`fixed inset-0 bg-white/30 ${isClosing ? 'backdrop-blur-0' : 'backdrop-blur-lg'} transition-all duration-200`}
+                    />
                 </Transition.Child>
 
                 <div className="fixed inset-0 overflow-y-auto">
@@ -49,7 +71,12 @@ const ListingSuccessModal: React.FC<ListingSuccessModalProps> = ({
                                 {/* Header */}
                                 <div className="bg-[#3D7475] p-4 flex justify-end">
                                     <button
-                                        onClick={onClose}
+                                        onClick={() =>
+                                            animateAndThen(() => {
+                                                onClose();
+                                                navigate('/dashboard');
+                                            })
+                                        }
                                         className="text-white hover:text-gray-200 transition-colors focus:outline-none"
                                     >
                                         <X size={24} />
@@ -91,14 +118,14 @@ const ListingSuccessModal: React.FC<ListingSuccessModalProps> = ({
                                             <button
                                                 type="button"
                                                 className="inline-flex justify-center rounded-lg border border-transparent bg-[#4A5568] px-6 py-3 text-sm font-medium text-white hover:bg-[#2D3748] focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2 min-w-[140px]"
-                                                onClick={onBackToList}
+                                                onClick={() => animateAndThen(onBackToList)}
                                             >
                                                 Back to list
                                             </button>
                                             <button
                                                 type="button"
                                                 className="inline-flex justify-center rounded-lg border border-transparent bg-[#3D7475] px-6 py-3 text-sm font-medium text-white hover:bg-[#2c5556] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3D7475] focus-visible:ring-offset-2 min-w-[160px]"
-                                                onClick={onListAnother}
+                                                onClick={() => animateAndThen(onListAnother)}
                                             >
                                                 List Another Property
                                             </button>
