@@ -5,16 +5,24 @@ import Stepper from './components/Stepper';
 import PropertySelection from './steps/PropertySelection';
 import LeasingDetails from './steps/LeasingDetails';
 import ApplicationSettings from './steps/ApplicationSettings';
+import ApplicationFee from './steps/ApplicationFee';
+import ApplicationFeeDetails from './steps/ApplicationFeeDetails';
+import ListingContact from './steps/ListingContact';
 import CreatePropertyForm from './steps/CreatePropertyForm';
+import ListingSuccessModal from './components/ListingSuccessModal';
 import NextStepButton from './components/NextStepButton';
 import PetPolicy from './steps/PetPolicy';
 import PetDetails from './steps/PetDetails';
+
+import propertyImage from '../../../../assets/images/property.jpg';
 
 const ListUnit: React.FC = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [leasingStep, setLeasingStep] = useState(1); // 1: Details, 2: Pets Policy, 3: Pet Details
+  const [applicationStep, setApplicationStep] = useState(1); // 1: Online Apps, 2: Application Fee, 3: Fee Details, 4: Listing Contact
   const [showCreateProperty, setShowCreateProperty] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [formData, setFormData] = useState({
     // Step 1
     property: '',
@@ -43,8 +51,54 @@ const ListUnit: React.FC = () => {
     // Basic Amenities
     parking: '',
     laundry: '',
-    ac: ''
+    ac: '',
+    // Application Settings
+    receiveApplicationsOnline: null as boolean | null,
+    applicationFee: null as boolean | null,
+    applicationFeeAmount: '',
+    // Listing Contact
+    contactName: '',
+    countryCode: '+91',
+    phoneNumber: '',
+    email: '',
+    displayPhonePublicly: false,
   });
+
+  const properties = [
+    {
+      id: '1',
+      name: 'Grove Street',
+      unit: 'House',
+      address: '11 Grove Street, Boston, MA 12114, US',
+      price: 8210,
+      bedrooms: 3,
+      bathrooms: 2,
+      image: propertyImage
+    },
+    {
+      id: '2',
+      name: '721 Meadowview Lane',
+      unit: 'House',
+      address: '721 Meadowview Lane, Springfield, IL 62701, US',
+      price: 6500,
+      bedrooms: 4,
+      bathrooms: 2,
+      image: propertyImage
+    },
+    {
+      id: '3',
+      name: 'America Apartment',
+      unit: 'Penthouse',
+      address: '456 Park Avenue, New York, NY 10022, US',
+      price: 12000,
+      bedrooms: 2,
+      bathrooms: 2,
+      image: propertyImage
+    },
+  ];
+
+  const selectedProperty = properties.find(p => p.id === formData.property);
+  const propertyDisplay = selectedProperty ? selectedProperty.address : (formData.property || "New Property");
 
   const updateFormData = (key: string, value: any) => {
     setFormData(prev => ({ ...prev, [key]: value }));
@@ -66,6 +120,25 @@ const ListUnit: React.FC = () => {
       } else {
         setCurrentStep(1);
       }
+    } else if (currentStep === 3) {
+      if (applicationStep === 4) {
+        if (formData.applicationFee) {
+          setApplicationStep(3);
+        } else {
+          setApplicationStep(2);
+        }
+      } else if (applicationStep === 3) {
+        setApplicationStep(2);
+      } else if (applicationStep === 2) {
+        setApplicationStep(1);
+      } else {
+        setCurrentStep(2);
+        if (formData.petsAllowed) {
+          setLeasingStep(3);
+        } else {
+          setLeasingStep(2);
+        }
+      }
     } else {
       setCurrentStep(prev => prev - 1);
     }
@@ -83,17 +156,76 @@ const ListUnit: React.FC = () => {
           setLeasingStep(3);
         } else {
           setCurrentStep(3);
+          setApplicationStep(1);
         }
       } else {
         setCurrentStep(3);
+        setApplicationStep(1);
       }
-    } else if (currentStep < 3) {
-      setCurrentStep(prev => prev + 1);
-    } else {
-      // Handle submission
-      console.log('Form Submitted:', formData);
-      navigate('/dashboard');
+    } else if (currentStep === 3) {
+      if (applicationStep === 1) {
+        setApplicationStep(2);
+      } else if (applicationStep === 2) {
+        if (formData.applicationFee) {
+          setApplicationStep(3);
+        } else {
+          setApplicationStep(4);
+        }
+      } else if (applicationStep === 3) {
+        setApplicationStep(4);
+      } else {
+        // Handle submission from step 4
+        console.log('Form Submitted:', formData);
+        setShowSuccessModal(true);
+      }
     }
+  };
+
+  const handleBackToList = () => {
+    setShowSuccessModal(false);
+    navigate('/dashboard');
+  };
+
+  const handleListAnother = () => {
+    setShowSuccessModal(false);
+    // Reset form and go to step 1
+    setCurrentStep(1);
+    setLeasingStep(1);
+    setApplicationStep(1);
+    setFormData({
+      property: '',
+      unit: '',
+      bedrooms: '',
+      bathrooms: '',
+      size: '',
+      rent: '',
+      deposit: '',
+      refundable: '',
+      leaseDuration: '',
+      minLeaseDuration: '',
+      maxLeaseDuration: '',
+      availableDate: '',
+      monthToMonth: false,
+      petsAllowed: null,
+      pets: [],
+      petDeposit: '',
+      petRent: '',
+      petDescription: '',
+      description: '',
+      amenities: [],
+      publish: false,
+      parking: '',
+      laundry: '',
+      ac: '',
+      receiveApplicationsOnline: null,
+      applicationFee: null,
+      applicationFeeAmount: '',
+      contactName: '',
+      countryCode: '+91',
+      phoneNumber: '',
+      email: '',
+      displayPhonePublicly: false,
+    });
   };
 
   const handleCreateProperty = () => {
@@ -145,6 +277,7 @@ const ListUnit: React.FC = () => {
                       data={formData}
                       updateData={updateFormData}
                       onCreateProperty={handleCreateProperty}
+                      properties={properties}
                     />
                     {formData.property && (
                       <div className="w-full max-w-md mt-6 flex justify-center">
@@ -187,14 +320,30 @@ const ListUnit: React.FC = () => {
 
                 {currentStep === 3 && (
                   <div className="w-full flex flex-col items-center">
-                    <div className="text-center mb-8">
-                      <h2 className="text-xl font-bold mb-2 text-[var(--color-heading)]">Application settings</h2>
-                      <p className="text-[var(--color-subheading)]">Customize your listing and application preferences.</p>
-                    </div>
-                    <ApplicationSettings data={formData} updateData={updateFormData} />
-                    <div className="w-full max-w-md mt-8 flex justify-center">
-                      <NextStepButton onClick={handleNext}>Publish Listing</NextStepButton>
-                    </div>
+                    {applicationStep === 1 ? (
+                      <>
+                        <ApplicationSettings data={formData} updateData={updateFormData} />
+                        <div className="w-full max-w-md mt-8 flex justify-center">
+                          <NextStepButton onClick={handleNext} />
+                        </div>
+                      </>
+                    ) : applicationStep === 2 ? (
+                      <>
+                        <ApplicationFee data={formData} updateData={updateFormData} />
+                        <div className="w-full max-w-md mt-8 flex justify-center">
+                          <NextStepButton onClick={handleNext}>{formData.applicationFee ? 'Next' : 'Next'}</NextStepButton>
+                        </div>
+                      </>
+                    ) : applicationStep === 3 ? (
+                      <>
+                        <ApplicationFeeDetails data={formData} updateData={updateFormData} />
+                        <div className="w-full max-w-md mt-8 flex justify-center">
+                          <NextStepButton onClick={handleNext}>Next</NextStepButton>
+                        </div>
+                      </>
+                    ) : (
+                      <ListingContact data={formData} updateData={updateFormData} onSubmit={handleNext} />
+                    )}
                   </div>
                 )}
               </>
@@ -202,6 +351,13 @@ const ListUnit: React.FC = () => {
           </div>
         </div>
       </div>
+      <ListingSuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        onBackToList={handleBackToList}
+        onListAnother={handleListAnother}
+        propertyDetails={propertyDisplay}
+      />
     </div>
   );
 };

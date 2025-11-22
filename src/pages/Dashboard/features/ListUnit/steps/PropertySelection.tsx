@@ -3,48 +3,27 @@ import { ChevronDown, Plus, Building } from 'lucide-react';
 import PropertyCard from '../components/PropertyCard';
 import property from '../../../../../assets/images/property.jpg';
 
+interface Property {
+  id: string;
+  name: string;
+  unit: string;
+  address: string;
+  price: number;
+  bedrooms: number;
+  bathrooms: number;
+  image: string;
+}
+
 interface PropertySelectionProps {
   data: any;
   updateData: (key: string, value: any) => void;
   onCreateProperty: () => void;
+  properties: Property[];
 }
 
-const PropertySelection: React.FC<PropertySelectionProps> = ({ data, updateData, onCreateProperty }) => {
+const PropertySelection: React.FC<PropertySelectionProps> = ({ data, updateData, onCreateProperty, properties }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const properties = [
-    { 
-      id: '1', 
-      name: 'Grove Street', 
-      unit: 'House',
-      address: '11 Grove Street, Boston, MA 12114, US',
-      price: 8210,
-      bedrooms: 3,
-      bathrooms: 2,
-      image: property
-    },
-    { 
-      id: '2', 
-      name: '721 Meadowview Lane', 
-      unit: 'House',
-      address: '721 Meadowview Lane, Springfield, IL 62701, US',
-      price: 6500,
-      bedrooms: 4,
-      bathrooms: 2,
-      image: property
-    },
-    { 
-      id: '3', 
-      name: 'America Apartment', 
-      unit: 'Penthouse',
-      address: '456 Park Avenue, New York, NY 10022, US',
-      price: 12000,
-      bedrooms: 2,
-      bathrooms: 2,
-      image: property   
-    },
-  ];
 
   const selectedProperty = properties.find(p => p.id === data.property);
 
@@ -88,7 +67,7 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ data, updateData,
         // Show Dropdown when no selection
         <div className="w-full max-w-md relative" ref={dropdownRef}>
           <label className="block text-sm font-medium text-gray-700 mb-2">Property</label>
-          
+
           {/* Dropdown Trigger */}
           <button
             onClick={() => setIsOpen(!isOpen)}
@@ -125,7 +104,7 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ data, updateData,
                   </button>
                 ))}
               </div>
-              
+
               {/* Create Property Option */}
               <button
                 onClick={handleCreateProperty}
