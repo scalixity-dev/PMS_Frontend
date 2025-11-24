@@ -20,6 +20,7 @@ import ResourcePage from './pages/basewebsite/resources';
 import TenantPage from './pages/basewebsite/usecases/tenant';
 import ServiceProsPage from './pages/basewebsite/usecases/servicepros';
 import Dashboard from './pages/Dashboard/Dashboard';
+import ListUnit from './pages/Dashboard/features/ListUnit';
 // import ListUnit from './pages/Dashboard/features/ListUnit/ListUnit';
 
 const App: React.FC = () => {
@@ -34,6 +35,7 @@ const App: React.FC = () => {
           <Route path="/otp" element={<OtpPage />} />
           <Route path="/auth/callback" element={<OAuthCallbackPage />} />
          
+
           <Route path="/usecases/landlord" element={<LandlordUseCasesPage />} />
           <Route path="/usecases/tenant" element={<TenantPage />} />
           <Route path="/usecases/servicepros" element={<ServiceProsPage />} />
@@ -43,83 +45,83 @@ const App: React.FC = () => {
           <Route path="/features/leads" element={<LeadsPage />} />
           <Route path="/features/team" element={<TeamPage />} />
           <Route path="/resources" element={<ResourcePage />} />
-        <Route path="/pricing" element={<PricingPage />} />
-        <Route path="*" element={<HomePage />} />
-      </Route>
+          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="*" element={<HomePage />} />
+        </Route>
         <Route element={<DashboardLayout />}>
-        <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-          // <Route path="/dashboard/list-unit" element={<ListUnit />} />
-          }
-      />
-      <Route
-        path="/portfolio"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-          }
-      />
-      <Route
-        path="/leasing"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-          }
-      />
-      <Route
-        path="/contacts"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-          }
-      />
-      <Route
-        path="/accounting"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-          }
-      />
-      <Route
-        path="/maintenance"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-          }
-      />
-      <Route
-        path="/documents"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-          }
-      />
-      <Route
-        path="/reports"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-          }
-      />
-      <Route
-        path="/downloads"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        }
-      />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/dashboard/list-unit" element={<ListUnit />} />
+          <Route
+            path="/portfolio"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/leasing"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/contacts"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/accounting"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/maintenance"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/documents"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/downloads"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
         </Route>
       </Routes>
     </BrowserRouter>

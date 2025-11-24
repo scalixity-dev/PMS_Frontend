@@ -1,10 +1,14 @@
 // src/components/dashboard/DashboardLayout.tsx
-import { useState } from "react";
 import { Outlet } from "react-router-dom";
+import { useState, type ReactNode } from "react";
 import DashboardNavbar from "./DashboardNavbar";
 import DashboardSidebar from "./DashboardSidebar";
 
-export default function DashboardLayout() {
+interface DashboardLayoutProps {
+  children?: ReactNode;
+}
+
+export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
 
   return (
@@ -18,9 +22,7 @@ export default function DashboardLayout() {
           <DashboardSidebar open={sidebarOpen} setOpen={setSidebarOpen} />
         </div>
 
-        <main className="p-4 md:p-6 flex-1 ml-0 lg:ml-64 overflow-y-auto">
-          <Outlet />
-        </main>
+        <main className="p-4 md:p-6 flex-1 ml-0 lg:ml-55 overflow-y-auto">{children || <Outlet />}</main>
       </div>
     </div>
   );
