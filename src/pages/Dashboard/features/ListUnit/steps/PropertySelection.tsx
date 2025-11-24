@@ -1,0 +1,125 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { ChevronDown, Plus, Building } from 'lucide-react';
+import PropertyCard from '../components/PropertyCard';
+
+interface Property {
+  id: string;
+  name: string;
+  unit: string;
+  address: string;
+  price: number;
+  bedrooms: number;
+  bathrooms: number;
+  image: string;
+}
+
+interface PropertySelectionProps {
+  data: any;
+  updateData: (key: string, value: any) => void;
+  onCreateProperty: () => void;
+  properties: Property[];
+}
+
+const PropertySelection: React.FC<PropertySelectionProps> = ({ data, updateData, onCreateProperty, properties }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const selectedProperty = properties.find(p => p.id === data.property);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleSelect = (propertyId: string) => {
+    updateData('property', propertyId);
+    setIsOpen(false);
+  };
+
+  const handleCreateProperty = () => {
+    setIsOpen(false);
+    onCreateProperty();
+  };
+
+  const handleDelete = () => {
+    updateData('property', '');
+  };
+
+  return (
+    <div className="bg-transparent p-8 rounded-lg w-full flex flex-col items-center">
+      {selectedProperty ? (
+        // Show Property Card when selected
+        <PropertyCard
+          property={selectedProperty}
+          onDelete={handleDelete}
+          onBack={handleDelete} // Reusing handleDelete as it clears selection, which is the desired "Back" behavior for now
+        />
+      ) : (
+        // Show Dropdown when no selection
+        <div className="w-full max-w-md relative" ref={dropdownRef}>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Property</label>
+
+          {/* Dropdown Trigger */}
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="w-full flex items-center justify-between p-3 border border-gray-300 rounded-lg bg-white hover:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
+                <Building size={16} />
+              </div>
+              <span className="text-gray-500">Select a property</span>
+            </div>
+            <ChevronDown size={20} className={`text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          </button>
+
+          {/* Dropdown Menu */}
+          {isOpen && (
+            <div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+              <div className="max-h-60 overflow-y-auto">
+                {properties.map((property) => (
+                  <button
+                    key={property.id}
+                    onClick={() => handleSelect(property.id)}
+                    className="w-full flex items-center justify-between p-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                        <Building size={16} />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-sm font-medium text-gray-900">{property.name}</p>
+                        <p className="text-xs text-gray-500">{property.unit}</p>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {/* Create Property Option */}
+              <button
+                onClick={handleCreateProperty}
+                className="w-full flex items-center gap-3 p-3 bg-gray-50 hover:bg-gray-100 text-[var(--color-primary)] font-medium border-t border-gray-200 transition-colors"
+              >
+                <div className="w-8 h-8 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center">
+                  <Plus size={16} />
+                </div>
+                Create New Property
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default PropertySelection;

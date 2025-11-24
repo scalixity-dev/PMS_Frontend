@@ -1,4 +1,5 @@
 import React from 'react';
+
 import profilePic from "../../assets/images/profilepic.png";
 import propertyPic from "../../assets/images/propertypic.png";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -142,8 +143,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <DashboardLayout>
-      <div className="space-y-5">
+    <div className="space-y-5">
         {/* Top Row - Overview, Tasks, Applications */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Overview Section */}
@@ -633,6 +633,6 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-      </div>
+    </div>
   );
 }
