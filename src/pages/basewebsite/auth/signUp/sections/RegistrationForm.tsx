@@ -149,6 +149,24 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
   // For OAuth signup, only terms agreement is required
   // For regular signup, all fields including password are validated in handleRegistration
 
+  // Compute form validity based on OAuth vs regular signup
+  const isFormValid = useMemo(() => {
+    if (isOAuthSignup) {
+      // OAuth signup: only terms agreement is required
+      return formData.agreedToTerms || false;
+    } else {
+      // Regular signup: validate all required fields
+      return !!(
+        formData.email &&
+        formData.password &&
+        formData.fullName &&
+        formData.agreedToTerms &&
+        formData.password === formData.confirmPassword &&
+        !passwordErrors.strength
+      );
+    }
+  }, [isOAuthSignup, formData.email, formData.password, formData.fullName, formData.agreedToTerms, formData.confirmPassword, passwordErrors.strength]);
+
   // Handle registration
   const handleRegistration = async () => {
     if (isOAuthSignup) {

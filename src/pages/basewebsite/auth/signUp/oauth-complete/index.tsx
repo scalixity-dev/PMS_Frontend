@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { RegistrationForm } from '../sections/RegistrationForm';
 import type { RegisterFormData } from '../sections/signUpProps';
+import { Navigate } from 'react-router-dom';
 
 const OAuthCompletePage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -23,7 +24,7 @@ const OAuthCompletePage: React.FC = () => {
   if (!userId) {
     // Redirect if no userId
     navigate('/signup', { replace: true });
-    return null;
+    return <Navigate to="/signup" replace />;
   }
 
   return (

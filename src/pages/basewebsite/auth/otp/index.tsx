@@ -8,7 +8,9 @@ const OtpPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const userId = searchParams.get('userId');
-  const email = searchParams.get('email') || '';
+  // Decode email from URL to handle URL-encoded characters
+  const rawEmail = searchParams.get('email') || '';
+  const email = rawEmail ? decodeURIComponent(rawEmail) : '';
   const otpType = (searchParams.get('type') || 'email') as 'email' | 'device'; // 'email' or 'device'
 
   useEffect(() => {
@@ -16,35 +18,62 @@ const OtpPage: React.FC = () => {
   }, []);
 
   const handleOtpSubmit = async (otpCode: string) => {
+    // Check for missing userId and handle gracefully
     if (!userId) {
-      throw new Error('User ID is missing. Please try again.');
+      alert('User ID is missing. Please try logging in again.');
+      navigate('/login', { replace: true });
+      return;
     }
 
-    if (otpType === 'device') {
-      // Verify device OTP
-      await authService.verifyDevice(userId, otpCode);
-      // After successful device verification, redirect to dashboard
-      navigate('/dashboard', { replace: true });
-    } else {
-      // Verify email OTP
-      await authService.verifyEmail(userId, otpCode);
-      // After successful email verification, redirect to dashboard
-      navigate('/dashboard', { replace: true });
+    try {
+      if (otpType === 'device') {
+        // Verify device OTP
+        await authService.verifyDevice(userId, otpCode);
+        // After successful device verification, redirect to dashboard
+        navigate('/dashboard', { replace: true });
+      } else {
+        // Verify email OTP
+        await authService.verifyEmail(userId, otpCode);
+        // After successful email verification, redirect to dashboard
+        navigate('/dashboard', { replace: true });
+      }
+    } catch (error) {
+      console.error('OTP verification error:', error);
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'OTP verification failed. Please try again.';
+      alert(errorMessage);
+      // Re-throw to let OtpForm handle UI state (clearing OTP, etc.)
+      throw error;
     }
   };
 
   const handleResendOtp = async () => {
+    // Check for missing userId and handle gracefully
     if (!userId) {
-      throw new Error('User ID is missing. Please try again.');
+      alert('User ID is missing. Please try logging in again.');
+      navigate('/login', { replace: true });
+      return;
     }
 
-    if (otpType === 'device') {
-      // For device verification, we need to trigger login again to resend OTP
-      // This is a limitation - we'd need a separate endpoint for resending device OTP
-      throw new Error('Please try logging in again to receive a new device verification code.');
-    } else {
-      // Resend email OTP
-      await authService.resendEmailOtp(userId);
+    try {
+      if (otpType === 'device') {
+        // For device verification, we need to trigger login again to resend OTP
+        // This is a limitation - we'd need a separate endpoint for resending device OTP
+        alert('Please try logging in again to receive a new device verification code.');
+        navigate('/login', { replace: true });
+      } else {
+        // Resend email OTP
+        await authService.resendEmailOtp(userId);
+      }
+    } catch (error) {
+      console.error('OTP resend error:', error);
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'Failed to resend OTP. Please try again.';
+      alert(errorMessage);
+      // Re-throw to let OtpForm handle UI state
+      throw error;
     }
   };
 
