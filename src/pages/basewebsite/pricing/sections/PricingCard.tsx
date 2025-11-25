@@ -48,6 +48,7 @@ export const PricingCard: React.FC<PricingCardProps> = ({
   const [isActivating, setIsActivating] = useState(false);
   const userId = searchParams.get('userId');
   const isNewAccount = searchParams.get('newAccount') === 'true';
+  const isOAuth = searchParams.get('oauth') === 'true';
   const isDark = isPro;
   
   const cardBgClass = isDark ? "bg-[#20CC95] text-white border-3 border-white shadow-md shadow-[#20CC95] hover:bg-[#006B49]" : "bg-[#D7FFF2] hover:shadow-md hover:shadow-[#20CC95]";
@@ -130,17 +131,25 @@ export const PricingCard: React.FC<PricingCardProps> = ({
         <button
           className={`w-full md:w-[80%] max-w-xs px-1 py-3 rounded-md font-semibold transition-colors duration-200 ${buttonClasses} flex items-center justify-center space-x-2 mx-auto md:mx-0 disabled:opacity-50 disabled:cursor-not-allowed`}
           onClick={async () => {
-            if (isNewAccount && userId) {
+            // Handle both regular signup and OAuth signup flows
+            if ((isNewAccount || isOAuth) && userId) {
               // Activate account with selected plan
               setIsActivating(true);
               try {
                 const planId = plan.toLowerCase(); // e.g., "starter", "growth", "pro", "business"
-                await authService.activateAccount(userId, {
+                const response = await authService.activateAccount(userId, {
                   planId,
                   isYearly,
                 });
-                // Redirect to dashboard after successful activation
-                navigate('/dashboard');
+                // After activation, redirect based on flow
+                const userEmail = searchParams.get('email') || '';
+                if (isOAuth) {
+                  // OAuth users are already email verified, go directly to dashboard
+                  navigate('/dashboard', { replace: true });
+                } else {
+                  // Regular signup - redirect to OTP page for email verification
+                  navigate(`/otp?userId=${userId}&email=${encodeURIComponent(userEmail)}&activated=true`);
+                }
               } catch (error) {
                 console.error('Failed to activate account:', error);
                 alert(error instanceof Error ? error.message : 'Failed to activate account. Please try again.');

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { GoogleIcon, AppleIcon, FacebookIcon } from '../../../../../components/AuthIcons'
 import type { EmailSignupProps } from './signUpProps';
 import { Link } from 'react-router-dom';
@@ -6,10 +7,49 @@ import { authService } from '../../../../../services/auth.service';
 
 
 export const EmailSignup: React.FC<EmailSignupProps> = ({ onNext, formData, setFormData }) => {
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string>('');
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.email) {
+    setError('');
+
+    if (!formData.email) {
+      setError('Please enter your email address');
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Check if email already exists
+      const emailExists = await authService.checkEmailExists(formData.email);
+      
+      if (emailExists) {
+        // Email exists - redirect to login page
+        navigate('/login', { 
+          state: { email: formData.email },
+          replace: true 
+        });
+      } else {
+        // Email doesn't exist - proceed to registration form
+        onNext();
+      }
+    } catch (err) {
+      console.error('Error checking email:', err);
+      // On error, proceed to registration (fail open)
+      // The registration endpoint will catch duplicate emails
       onNext();
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -41,6 +81,12 @@ export const EmailSignup: React.FC<EmailSignupProps> = ({ onNext, formData, setF
         className="space-y-4 sm:space-y-5"
         onSubmit={handleSubmit}
       >
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            {error}
+          </div>
+        )}
+        
         <div>
           <label htmlFor="email-address" className="block text-sm sm:text-base font-semibold text-gray-700 mb-2">
             Email address
@@ -53,19 +99,25 @@ export const EmailSignup: React.FC<EmailSignupProps> = ({ onNext, formData, setF
               autoComplete="email"
               required
               value={formData.email || ''}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, email: e.target.value });
+                setError(''); // Clear error when user types
+              }}
               placeholder="Enter your email"
-              className="appearance-none block w-full px-4 py-3 sm:py-3.5 border-2 border-gray-200 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm sm:text-base transition-all"
+              className={`appearance-none block w-full px-4 py-3 sm:py-3.5 border-2 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm sm:text-base transition-all ${
+                error ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-200'
+              }`}
+              disabled={isLoading}
             />
           </div>
         </div>
         
         <button
           type="submit"
-          disabled={!formData.email}
-          className="w-full flex justify-center py-3 sm:py-3.5 px-4 border border-transparent rounded-lg text-base font-semibold text-white bg-teal-600 hover:bg-teal-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+          disabled={!formData.email || isLoading}
+          className="w-full flex justify-center py-3 sm:py-3.5 px-4 border border-transparent rounded-lg text-base font-semibold text-white bg-teal-600 hover:bg-teal-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:transform-none"
         >
-          Continue
+          {isLoading ? 'Checking...' : 'Continue'}
         </button>
       </form>
 

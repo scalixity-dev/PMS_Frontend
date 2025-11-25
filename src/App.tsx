@@ -12,6 +12,8 @@ import PricingPage from './pages/basewebsite/pricing';
 import LoginPage from './pages/basewebsite/auth/login';
 import SignUpPage from './pages/basewebsite/auth/signUp';
 import OtpPage from './pages/basewebsite/auth/otp';
+import OAuthCallbackPage from './pages/basewebsite/auth/oauth-callback';
+import OAuthCompletePage from './pages/basewebsite/auth/signUp/oauth-complete';
 import TeamPage from './pages/basewebsite/features/team/index';
 import LandlordUseCasesPage from './pages/basewebsite/usecases/landlord';
 import ResourcePage from './pages/basewebsite/resources';
@@ -32,7 +34,10 @@ const App: React.FC = () => {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignUpPage />} />
+          <Route path="/signup/oauth-complete" element={<OAuthCompletePage />} />
           <Route path="/otp" element={<OtpPage />} />
+          <Route path="/auth/callback" element={<OAuthCallbackPage />} />
+         
 
           <Route path="/usecases/landlord" element={<LandlordUseCasesPage />} />
           <Route path="/usecases/tenant" element={<TenantPage />} />
