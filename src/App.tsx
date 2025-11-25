@@ -19,6 +19,9 @@ import TenantPage from './pages/basewebsite/usecases/tenant';
 import ServiceProsPage from './pages/basewebsite/usecases/servicepros';
 import Dashboard from './pages/Dashboard/Dashboard';
 import ListUnit from './pages/Dashboard/features/ListUnit';
+import AddProperty from './pages/Dashboard/features/Property/AddProperty';
+import AddIncomeInvoice from './pages/Dashboard/features/Transactions/AddIncomeInvoice';
+import AddExpenseInvoice from './pages/Dashboard/features/Transactions/AddExpenseInvoice';
 // import ListUnit from './pages/Dashboard/features/ListUnit/ListUnit';
 
 const App: React.FC = () => {
@@ -47,12 +50,15 @@ const App: React.FC = () => {
           <Route
             path="/dashboard"
             element={
-              <ProtectedRoute>
+              // <ProtectedRoute>
                 <Dashboard />
-              </ProtectedRoute>
+              // </ProtectedRoute>
             }
           />
           <Route path="/dashboard/list-unit" element={<ListUnit />} />
+          <Route path="/dashboard/property/add" element={<AddProperty />} />
+          <Route path="/dashboard/accounting/transactions/income/add" element={<AddIncomeInvoice />} />
+          <Route path="/dashboard/accounting/transactions/expense/add" element={<AddExpenseInvoice />} />
           <Route
             path="/portfolio"
             element={
