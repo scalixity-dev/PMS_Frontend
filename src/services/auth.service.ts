@@ -39,6 +39,25 @@ export interface ActivateAccountResponse {
   message: string;
 }
 
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  user: {
+    id: string;
+    email: string;
+    fullName: string;
+    role: string;
+    isEmailVerified: boolean;
+    isActive: boolean;
+  };
+  message?: string;
+  requiresDeviceVerification?: boolean;
+  token?: string;
+}
+
 export interface CurrentUser {
   userId: string;
   email: string;
@@ -46,6 +65,21 @@ export interface CurrentUser {
   fullName: string;
   isEmailVerified: boolean;
   isActive: boolean;
+  country?: string;
+  address?: string;
+  phoneNumber?: string;
+  phoneCountryCode?: string;
+  state?: string;
+  pincode?: string;
+}
+
+export interface UpdateProfileRequest {
+  phoneCountryCode?: string;
+  phoneNumber?: string;
+  country?: string;
+  state?: string;
+  pincode?: string;
+  address?: string;
 }
 
 class AuthService {
@@ -100,24 +134,66 @@ class AuthService {
   }
 
   /**
+   * Resend email verification OTP
+   */
+  async resendEmailOtp(userId: string): Promise<void> {
+    const response = await fetch(API_ENDPOINTS.AUTH.RESEND_EMAIL_OTP(userId), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({
+        message: 'Failed to resend OTP',
+        statusCode: response.status,
+      }));
+      throw new Error(errorData.message || `Failed to resend OTP: ${response.statusText}`);
+    }
+  }
+
+  /**
    * Verify email OTP
    */
   async verifyEmail(userId: string, code: string): Promise<void> {
+    // Ensure code is a string and exactly 6 digits
+    const otpCode = String(code).trim();
+    
+    if (!/^\d{6}$/.test(otpCode)) {
+      throw new Error('OTP code must be exactly 6 digits');
+    }
+
     const response = await fetch(API_ENDPOINTS.AUTH.VERIFY_EMAIL(userId), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       credentials: 'include',
-      body: JSON.stringify({ code }),
+      body: JSON.stringify({ code: otpCode }),
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({
-        message: 'Email verification failed',
-        statusCode: response.status,
-      }));
-      throw new Error(errorData.message || `Email verification failed: ${response.statusText}`);
+      let errorMessage = 'Email verification failed';
+      
+      try {
+        const errorData = await response.json();
+        
+        // Handle validation errors (array format from NestJS)
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join('. ');
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+      } catch (parseError) {
+        // If JSON parsing fails, use status text
+        errorMessage = `Email verification failed: ${response.statusText}`;
+      }
+      
+      throw new Error(errorMessage);
     }
   }
 
@@ -125,21 +201,43 @@ class AuthService {
    * Verify device OTP
    */
   async verifyDevice(userId: string, code: string): Promise<void> {
+    const deviceFingerprint = this.generateDeviceFingerprint();
+    const otpCode = String(code).trim();
+    
+    if (!/^\d{6}$/.test(otpCode)) {
+      throw new Error('OTP code must be exactly 6 digits');
+    }
+
     const response = await fetch(API_ENDPOINTS.AUTH.VERIFY_DEVICE(userId), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-device-fingerprint': deviceFingerprint,
       },
       credentials: 'include',
-      body: JSON.stringify({ code }),
+      body: JSON.stringify({ code: otpCode }),
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({
-        message: 'Device verification failed',
-        statusCode: response.status,
-      }));
-      throw new Error(errorData.message || `Device verification failed: ${response.statusText}`);
+      let errorMessage = 'Device verification failed';
+      
+      try {
+        const errorData = await response.json();
+        
+        // Handle validation errors (array format from NestJS)
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join('. ');
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+      } catch (parseError) {
+        // If JSON parsing fails, use status text
+        errorMessage = `Device verification failed: ${response.statusText}`;
+      }
+      
+      throw new Error(errorMessage);
     }
   }
 
@@ -200,6 +298,93 @@ class AuthService {
   }
 
   /**
+   * Generate a simple device fingerprint
+   */
+  private generateDeviceFingerprint(): string {
+    // Create a simple fingerprint from available browser info
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    ctx?.fillText('Device fingerprint', 2, 2);
+    const canvasFingerprint = canvas.toDataURL();
+    
+    const fingerprint = [
+      navigator.userAgent,
+      navigator.language,
+      screen.width + 'x' + screen.height,
+      new Date().getTimezoneOffset(),
+      canvasFingerprint.slice(-20), // Last 20 chars of canvas fingerprint
+    ].join('|');
+    
+    // Simple hash function
+    let hash = 0;
+    for (let i = 0; i < fingerprint.length; i++) {
+      const char = fingerprint.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    
+    return Math.abs(hash).toString(36);
+  }
+
+  /**
+   * Login with email and password
+   */
+  async login(email: string, password: string): Promise<LoginResponse> {
+    const deviceFingerprint = this.generateDeviceFingerprint();
+    
+    const response = await fetch(API_ENDPOINTS.AUTH.LOGIN, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-device-fingerprint': deviceFingerprint,
+      },
+      credentials: 'include',
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({
+        message: 'Login failed',
+        statusCode: response.status,
+      }));
+      console.error('API Error:', errorData);
+      let errorMessage = 'Login failed. Please check your credentials.';
+      if (errorData.message) {
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join(', ');
+        } else {
+          errorMessage = errorData.message;
+        }
+      }
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Check if email already exists
+   */
+  async checkEmailExists(email: string): Promise<boolean> {
+    const response = await fetch(API_ENDPOINTS.AUTH.CHECK_EMAIL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ email }),
+    });
+
+    if (!response.ok) {
+      // If there's an error, assume email doesn't exist to allow registration
+      return false;
+    }
+
+    const data = await response.json();
+    return data.exists === true;
+  }
+
+  /**
    * Get current authenticated user
    */
   async getCurrentUser(): Promise<CurrentUser> {
@@ -226,6 +411,24 @@ class AuthService {
   }
 
   /**
+   * Logout user
+   */
+  async logout(): Promise<void> {
+    try {
+      await fetch(API_ENDPOINTS.AUTH.LOGOUT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Continue with logout even if API call fails
+    }
+  }
+
+  /**
    * Initiate OAuth flow
    */
   initiateOAuth(provider: 'google' | 'facebook' | 'apple'): void {
@@ -236,6 +439,40 @@ class AuthService {
     };
     const endpoint = API_ENDPOINTS.AUTH[providerMap[provider]];
     window.location.href = endpoint;
+  }
+
+  /**
+   * Update user profile (for OAuth users completing registration)
+   */
+  async updateProfile(data: UpdateProfileRequest): Promise<void> {
+    const response = await fetch(API_ENDPOINTS.AUTH.UPDATE_PROFILE, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Profile update failed';
+      
+      try {
+        const errorData = await response.json();
+        
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join('. ');
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+      } catch (parseError) {
+        errorMessage = `Profile update failed: ${response.statusText}`;
+      }
+      
+      throw new Error(errorMessage);
+    }
   }
 }
 

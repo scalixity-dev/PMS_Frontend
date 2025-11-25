@@ -1,42 +1,74 @@
 // src/components/dashboard/DashboardNavbar.tsx
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Search, Bell, MessageSquare, Info, User, LogOut, UserCog, FileText, Download } from "lucide-react";
 import logo from "../../assets/images/logo.png";
+import { authService } from "../../services/auth.service";
 
 interface NavbarProps {
-  sidebarOpen: boolean;
-  setSidebarOpen: (open: boolean) => void;
+  sidebarOpen: boolean;
+  setSidebarOpen: (open: boolean) => void;
 }
 
 export default function DashboardNavbar({ sidebarOpen, setSidebarOpen }: NavbarProps) {
-  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [userName, setUserName] = useState<string>("User");
+  const [isLoading, setIsLoading] = useState(true);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsProfileDropdownOpen(false);
-      }
-    };
+  // Fetch current user data
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const user = await authService.getCurrentUser();
+        setUserName(user.fullName || "User");
+      } catch (error) {
+        console.error("Failed to fetch user:", error);
+        setUserName("User");
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+    fetchUser();
+  }, []);
 
-  const handleLogout = () => {
-    // Add logout logic here
-    console.log("Logging out...");
-    setIsProfileDropdownOpen(false);
-  };
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsProfileDropdownOpen(false);
+      }
+    };
 
-  const handleManageProfile = () => {
-    // Add manage profile logic here
-    console.log("Managing profile...");
-    setIsProfileDropdownOpen(false);
-  };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+      // Redirect to login page
+      navigate("/login", { replace: true });
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Still redirect even if logout API call fails
+      navigate("/login", { replace: true });
+    } finally {
+      setIsProfileDropdownOpen(false);
+    }
+  };
+
+  const handleManageProfile = () => {
+    // Navigate to profile management page (you can create this route later)
+    // For now, just close the dropdown
+    setIsProfileDropdownOpen(false);
+    // TODO: Navigate to profile page when created
+    // navigate("/dashboard/profile");
+  };
 
   return (
     <header className="relative h-16 bg-[var(--color-navbar-bg)] flex items-center px-4 lg:px-0 gap-4">
@@ -145,7 +177,9 @@ export default function DashboardNavbar({ sidebarOpen, setSidebarOpen }: NavbarP
               className="flex items-center gap-1 bg-white rounded-full pl-2 pr-1 py-1 mr-4 md:pl-3 md:pr-1 md:py-1 hover:bg-gray-100 cursor-pointer shadow-[0_3px_0_rgba(93,111,108)]"
               onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
             >
-              <span className="font-medium text-gray-800 text-sm hidden lg:block">Shawn James</span>
+              <span className="font-medium text-gray-800 text-sm hidden lg:block">
+                {isLoading ? "Loading..." : userName}
+              </span>
               <div className="w-6 h-6 rounded-full bg-gray-800 flex items-center justify-center overflow-hidden">
                 <User size={16} className="text-white" />
               </div>
