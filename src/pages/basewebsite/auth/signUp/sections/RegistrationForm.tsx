@@ -153,6 +153,12 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
   const handleRegistration = async () => {
     if (isOAuthSignup) {
       // OAuth signup - update profile only
+      // Validate terms agreement
+      if (!formData.agreedToTerms) {
+        setError('Please agree to the terms and conditions');
+        return;
+      }
+
       setIsLoading(true);
       setError(null);
 
