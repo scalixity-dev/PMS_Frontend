@@ -18,5 +18,12 @@ export const API_ENDPOINTS = {
     FACEBOOK: `${API_BASE_URL}/auth/facebook`,
     APPLE: `${API_BASE_URL}/auth/apple`,
   },
+  PROPERTY: {
+    GET_ALL: `${API_BASE_URL}/property`,
+    GET_ONE: (id: string) => `${API_BASE_URL}/property/${id}`,
+    CREATE: `${API_BASE_URL}/property`,
+    UPDATE: (id: string) => `${API_BASE_URL}/property/${id}`,
+    DELETE: (id: string) => `${API_BASE_URL}/property/${id}`,
+  },
 };
 

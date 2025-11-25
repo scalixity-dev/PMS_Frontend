@@ -1,28 +1,43 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Plus, Building } from 'lucide-react';
+import { ChevronDown, Plus, Building, Loader2 } from 'lucide-react';
 import PropertyCard from '../components/PropertyCard';
-
-interface Property {
-  id: string;
-  name: string;
-  unit: string;
-  address: string;
-  price: number;
-  bedrooms: number;
-  bathrooms: number;
-  image: string;
-}
+import { propertyService } from '../../../../../services/property.service';
+import type { Property } from '../../../../../services/property.service';
 
 interface PropertySelectionProps {
   data: any;
   updateData: (key: string, value: any) => void;
   onCreateProperty: () => void;
-  properties: Property[];
 }
 
-const PropertySelection: React.FC<PropertySelectionProps> = ({ data, updateData, onCreateProperty, properties }) => {
+const PropertySelection: React.FC<PropertySelectionProps> = ({ data, updateData, onCreateProperty }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const fetchProperties = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const fetchedProperties = await propertyService.getAllTransformed();
+        // Only set properties if we get a valid array from the API
+        // No mock data or fallback - use exactly what the API returns
+        setProperties(Array.isArray(fetchedProperties) ? fetchedProperties : []);
+      } catch (err) {
+        console.error('Error fetching properties:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load properties');
+        // On error, ensure properties array is empty (no mock data)
+        setProperties([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProperties();
+  }, []);
 
   const selectedProperty = properties.find(p => p.id === data.property);
 
@@ -52,6 +67,31 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ data, updateData,
   const handleDelete = () => {
     updateData('property', '');
   };
+
+  if (loading) {
+    return (
+      <div className="bg-transparent p-8 rounded-lg w-full flex flex-col items-center justify-center min-h-[200px]">
+        <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)]" />
+        <p className="mt-4 text-gray-600">Loading properties...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-transparent p-8 rounded-lg w-full flex flex-col items-center">
+        <div className="w-full max-w-md bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-800 text-sm">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-transparent p-8 rounded-lg w-full flex flex-col items-center">
@@ -85,23 +125,29 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ data, updateData,
           {isOpen && (
             <div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden animate-in fade-in zoom-in-95 duration-100">
               <div className="max-h-60 overflow-y-auto">
-                {properties.map((property) => (
-                  <button
-                    key={property.id}
-                    onClick={() => handleSelect(property.id)}
-                    className="w-full flex items-center justify-between p-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
-                        <Building size={16} />
+                {properties.length === 0 ? (
+                  <div className="p-4 text-center text-gray-500 text-sm">
+                    No properties found in database. Create your first property!
+                  </div>
+                ) : (
+                  properties.map((property) => (
+                    <button
+                      key={property.id}
+                      onClick={() => handleSelect(property.id)}
+                      className="w-full flex items-center justify-between p-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                          <Building size={16} />
+                        </div>
+                        <div className="text-left">
+                          <p className="text-sm font-medium text-gray-900">{property.name}</p>
+                          <p className="text-xs text-gray-500">{property.unit}</p>
+                        </div>
                       </div>
-                      <div className="text-left">
-                        <p className="text-sm font-medium text-gray-900">{property.name}</p>
-                        <p className="text-xs text-gray-500">{property.unit}</p>
-                      </div>
-                    </div>
-                  </button>
-                ))}
+                    </button>
+                  ))
+                )}
               </div>
 
               {/* Create Property Option */}
