@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import TransactionTypeToggle from './components/TransactionTypeToggle';
 import DatePicker from '../../../../components/ui/DatePicker';
 import CustomDropdown from '../../components/CustomDropdown';
+import PayerPayeeDropdown from './components/PayerPayeeDropdown';
+import AddTenantModal from './components/AddTenantModal';
 
 const AddExpenseInvoice: React.FC = () => {
     const navigate = useNavigate();
@@ -11,6 +13,8 @@ const AddExpenseInvoice: React.FC = () => {
     const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
     const [currency, setCurrency] = useState<string>('');
     const [isPaid, setIsPaid] = useState<boolean>(false);
+    const [payerPayee, setPayerPayee] = useState<string>('');
+    const [isAddTenantModalOpen, setIsAddTenantModalOpen] = useState(false);
 
     return (
         <div className="p-6 max-w-6xl mx-auto font-['Urbanist']">
@@ -37,7 +41,7 @@ const AddExpenseInvoice: React.FC = () => {
                     />
                 </div>
 
-                
+
 
                 {/* Form Fields */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8 ">
@@ -77,16 +81,22 @@ const AddExpenseInvoice: React.FC = () => {
                     <div className="col-span-1 md:col-span-2">
                         <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Payer /Payee *</label>
                         <div className="relative">
-                            <select className="w-full rounded-md bg-white px-4 py-3 text-sm text-gray-700 outline-none appearance-none shadow-sm focus:ring-2 focus:ring-[#84CC16]/20 cursor-pointer">
-                                <option value="" disabled selected>Payee</option>
-                                <option value="payer1">Payer 1</option>
-                                <option value="payer2">Payer 2</option>
-                            </select>
-                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
-                                <ChevronDown className="w-4 h-4" />
-                            </div>
+                            <PayerPayeeDropdown
+                                value={payerPayee}
+                                onChange={setPayerPayee}
+                                options={[
+                                    { id: '2', label: 'Ojshav Saxena', type: 'tenant' },
+                                ]}
+                                onAddTenant={() => setIsAddTenantModalOpen(true)}
+                            />
                         </div>
                     </div>
+
+                    <AddTenantModal
+                        isOpen={isAddTenantModalOpen}
+                        onClose={() => setIsAddTenantModalOpen(false)}
+                        onSave={(data) => console.log('New Tenant Data:', data)}
+                    />
                     {/* Currency (Only for General Expense) or Spacer */}
                     {expenseType === 'general' ? (
                         <div className="col-span-1 md:col-span-1">
