@@ -34,7 +34,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
         { id: 1, name: 'Atul', status: 'Pending', share: true },
         { id: 2, name: 'Ajay', status: 'Pending', share: true },
     ]);
-    
+
     // Create Equipment Form State
     const [newEquipment, setNewEquipment] = useState({
         category: '',
@@ -79,7 +79,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
     };
 
     const handleDateChange = (id: string, date: Date | undefined) => {
-        setDateOptions(dateOptions.map(opt => 
+        setDateOptions(dateOptions.map(opt =>
             opt.id === id ? { ...opt, date } : opt
         ));
     };
@@ -90,7 +90,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                 const hasSlot = opt.timeSlots.includes(slot);
                 return {
                     ...opt,
-                    timeSlots: hasSlot 
+                    timeSlots: hasSlot
                         ? opt.timeSlots.filter(s => s !== slot)
                         : [...opt.timeSlots, slot]
                 };
@@ -169,38 +169,46 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                             className="cursor-pointer"
                         >
                             <label className="block text-sm font-bold text-gray-700 mb-2">Equipment *</label>
-                            <div className="w-full bg-white border border-gray-300 rounded-md px-4 py-3 flex items-center justify-between hover:border-gray-400 transition-colors">
-                                <span className="text-gray-400">Select an equipment</span>
-                                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </div>
+                            {selectedEquipment ? (
+                                <div className="w-full bg-[#7BD747] text-white font-bold rounded-full px-4 py-3 flex items-center justify-between">
+                                    <span>{availableEquipment.find(e => e.id === selectedEquipment)?.name}</span>
+                                </div>
+                            ) : (
+                                <div className="w-full bg-white border border-gray-300 rounded-md px-4 py-3 flex items-center justify-between hover:border-gray-400 transition-colors">
+                                    <span className="text-gray-400">Select an equipment</span>
+                                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
+                            )}
                         </div>
 
                         {/* Dropdown Menu */}
                         {showEquipmentDropdown && (
                             <div className="absolute z-50 mt-2 w-full bg-white rounded-lg shadow-lg border border-gray-200 max-h-96 overflow-hidden">
                                 {/* Create Equipment Button */}
-                                <button
-                                    onClick={() => {
-                                        setShowCreateEquipmentModal(true);
-                                        setShowEquipmentDropdown(false);
-                                    }}
-                                    className="w-full px-4 py-3 text-[#2E6819] font-bold text-left hover:bg-gray-50 border-b border-gray-200"
-                                >
-                                    Create equipment
-                                </button>
+                                <div className="px-3 py-6 bg-[var(--color-primary)] border-b border-gray-200">
+                                    <button
+                                        onClick={() => {
+                                            setShowCreateEquipmentModal(true);
+                                            setShowEquipmentDropdown(false);
+                                        }}
+                                        className="w-auto flex items-center justify-between px-4 py-3 bg-[#7BD747] text-white font-bold rounded-full hover:opacity-90 transition-opacity"
+                                    >
+                                        <span>Create equipment</span>
+                                        <Plus className="w-5 h-5 bg-white ml-2 text-[#7BD747] rounded-full p-0.5" />
+                                    </button>
+                                </div>
 
                                 {/* Search Bar */}
-                                <div className="p-3 border-b border-gray-200">
+                                <div className="p-3">
                                     <div className="relative">
-                                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                                         <input
                                             type="text"
                                             placeholder="Search"
                                             value={equipmentSearchQuery}
                                             onChange={(e) => setEquipmentSearchQuery(e.target.value)}
-                                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3D7475]/20 focus:border-[#3D7475]"
+                                            className="w-full pl-4 pr-4 py-3 bg-[#C4C4C4] text-gray-700 placeholder-gray-500 rounded-full focus:outline-none"
                                         />
                                     </div>
                                 </div>
@@ -288,7 +296,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                                     <Trash2 size={16} />
                                 </button>
                             </div>
-                            
+
                             {/* Date Input */}
                             <div className="mb-3 w-56">
                                 <label className="block text-xs text-gray-600 mb-1">Date *</label>
@@ -336,7 +344,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                     ))}
                 </div>
 
-                <button 
+                <button
                     onClick={handleAddDate}
                     className="flex items-center gap-2 px-6 py-2 rounded-full border-2 border-[#7BD747] text-black font-bold bg-white hover:bg-gray-50 transition-colors"
                 >
