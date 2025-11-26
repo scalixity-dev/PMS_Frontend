@@ -17,9 +17,10 @@ interface PropertySelectionProps {
     onSelect: (propertyId: string) => void;
     properties: Property[];
     onNext: () => void;
+    onCreateProperty: () => void;
 }
 
-const PropertySelection: React.FC<PropertySelectionProps> = ({ selectedProperty, onSelect, properties, onNext }) => {
+const PropertySelection: React.FC<PropertySelectionProps> = ({ selectedProperty, onSelect, properties, onNext, onCreateProperty }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -101,6 +102,7 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ selectedProperty,
 
                             {/* Create Property Option */}
                             <button
+                                onClick={onCreateProperty}
                                 className="w-full flex items-center gap-3 p-3 bg-gray-50 hover:bg-gray-100 text-[#3D7475] font-medium border-t border-gray-200 transition-colors"
                             >
                                 <div className="w-8 h-8 rounded-full bg-[#3D7475]/10 flex items-center justify-center">

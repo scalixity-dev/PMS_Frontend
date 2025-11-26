@@ -10,6 +10,8 @@ import FinalDetails from './steps/FinalDetails';
 import MediaUpload from './steps/MediaUpload';
 import IssueDescription from './steps/IssueDescription';
 import PropertySelection from './steps/PropertySelection';
+import CreatePropertyForm from './components/CreatePropertyForm';
+import PrioritySelection from './steps/PrioritySelection';
 import propertyImage from '../../../../assets/images/property.jpg';
 
 interface RequestTypeCardProps {
@@ -80,8 +82,10 @@ const AddMaintenanceRequest: React.FC = () => {
     const [issueTitle, setIssueTitle] = useState('');
     const [issueDescription, setIssueDescription] = useState('');
     const [selectedProperty, setSelectedProperty] = useState<string | null>(null);
+    const [isCreatingProperty, setIsCreatingProperty] = useState(false);
+    const [selectedPriority, setSelectedPriority] = useState<string | null>(null);
 
-    const properties = [
+    const [propertiesList, setPropertiesList] = useState([
         {
             id: '1',
             name: 'Grove Street',
@@ -112,7 +116,40 @@ const AddMaintenanceRequest: React.FC = () => {
             bathrooms: 2,
             image: propertyImage
         },
-    ];
+    ]);
+
+    const handleCreateProperty = (propertyData: any) => {
+        const newProperty = {
+            id: (propertiesList.length + 1).toString(),
+            name: propertyData.address || 'New Property',
+            unit: propertyData.unitType || 'Unit',
+            address: propertyData.address || '',
+            price: parseFloat(propertyData.marketRent) || 0,
+            bedrooms: 0,
+            bathrooms: 0,
+            image: propertyImage
+        };
+        setPropertiesList([...propertiesList, newProperty]);
+        setSelectedProperty(newProperty.id);
+        setIsCreatingProperty(false);
+    };
+
+    const handleSubmitRequest = () => {
+        console.log('Submitting Request:', {
+            type: selectedType,
+            category: selectedCategory,
+            subCategory: selectedSubCategory,
+            issue: selectedIssue,
+            finalDetail: selectedFinalDetail,
+            media: mediaFiles,
+            title: issueTitle,
+            description: issueDescription,
+            property: selectedProperty,
+            priority: selectedPriority
+        });
+        // Navigate to success or dashboard
+        navigate('/dashboard');
+    };
 
     const handleNext = () => {
         if (mainStep === 0 && selectedType) {
@@ -380,11 +417,28 @@ const AddMaintenanceRequest: React.FC = () => {
 
                     {/* Step 2: Property Selection */}
                     {mainStep === 2 && (
-                        <PropertySelection
-                            selectedProperty={selectedProperty}
-                            onSelect={setSelectedProperty}
-                            properties={properties}
-                            onNext={handleNext}
+                        isCreatingProperty ? (
+                            <CreatePropertyForm
+                                onCancel={() => setIsCreatingProperty(false)}
+                                onCreate={handleCreateProperty}
+                            />
+                        ) : (
+                            <PropertySelection
+                                selectedProperty={selectedProperty}
+                                onSelect={setSelectedProperty}
+                                properties={propertiesList}
+                                onNext={handleNext}
+                                onCreateProperty={() => setIsCreatingProperty(true)}
+                            />
+                        )
+                    )}
+
+                    {/* Step 3: Priority Selection */}
+                    {mainStep === 3 && (
+                        <PrioritySelection
+                            selectedPriority={selectedPriority}
+                            onSelect={setSelectedPriority}
+                            onSubmit={handleSubmitRequest}
                         />
                     )}
 
