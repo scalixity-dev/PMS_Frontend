@@ -14,6 +14,8 @@ import CreatePropertyForm from './components/CreatePropertyForm';
 import PrioritySelection from './steps/PrioritySelection';
 import MaintenanceSuccessModal from './components/MaintenanceSuccessModal';
 import AdvancedRequestForm from './components/AdvancedRequestForm';
+import PropertyTenantsStep from './components/PropertyTenantsStep';
+import DueDateMaterialsStep from './components/DueDateMaterialsStep';
 import propertyImage from '../../../../assets/images/property.jpg';
 
 interface RequestTypeCardProps {
@@ -191,7 +193,7 @@ const AddMaintenanceRequest: React.FC = () => {
                 }
             }
         } else if (mainStep === 2) {
-            if (selectedProperty) {
+            if (selectedType === 'advanced' || selectedProperty) {
                 setMainStep(3);
             }
         }
@@ -451,29 +453,48 @@ const AddMaintenanceRequest: React.FC = () => {
 
                     {/* Step 2: Property Selection */}
                     {mainStep === 2 && (
-                        isCreatingProperty ? (
-                            <CreatePropertyForm
-                                onCancel={() => setIsCreatingProperty(false)}
-                                onCreate={handleCreateProperty}
+                        selectedType === 'advanced' ? (
+                            <PropertyTenantsStep
+                                onNext={handleNext}
+                                onBack={handleBack}
+                                properties={propertiesList}
                             />
                         ) : (
-                            <PropertySelection
-                                selectedProperty={selectedProperty}
-                                onSelect={setSelectedProperty}
-                                properties={propertiesList}
-                                onNext={handleNext}
-                                onCreateProperty={() => setIsCreatingProperty(true)}
-                            />
+                            isCreatingProperty ? (
+                                <CreatePropertyForm
+                                    onCancel={() => setIsCreatingProperty(false)}
+                                    onCreate={handleCreateProperty}
+                                />
+                            ) : (
+                                <PropertySelection
+                                    selectedProperty={selectedProperty}
+                                    onSelect={setSelectedProperty}
+                                    properties={propertiesList}
+                                    onNext={handleNext}
+                                    onCreateProperty={() => setIsCreatingProperty(true)}
+                                />
+                            )
                         )
                     )}
 
-                    {/* Step 3: Priority Selection */}
+                    {/* Step 3: Due Date & Materials (Advanced) OR Priority (Basic) */}
                     {mainStep === 3 && (
-                        <PrioritySelection
-                            selectedPriority={selectedPriority}
-                            onSelect={setSelectedPriority}
-                            onSubmit={handleSubmitRequest}
-                        />
+                        selectedType === 'advanced' ? (
+                            <DueDateMaterialsStep
+                                onNext={(data) => {
+                                    console.log('Due Date Data:', data);
+                                    // Set data to state if needed
+                                    handleSubmitRequest();
+                                }}
+                                onBack={handleBack}
+                            />
+                        ) : (
+                            <PrioritySelection
+                                selectedPriority={selectedPriority}
+                                onSelect={setSelectedPriority}
+                                onSubmit={handleSubmitRequest}
+                            />
+                        )
                     )}
 
                     <MaintenanceSuccessModal
