@@ -49,7 +49,7 @@ const PrioritySelection: React.FC<PrioritySelectionProps> = ({ selectedPriority,
                 onClick={onSubmit}
                 disabled={!selectedPriority}
                 className={`
-                    bg-[#3D7475] text-white px-12 py-3.5 rounded-xl font-bold text-lg transition-all shadow-lg
+                    bg-[#3D7475] text-white px-12 py-3.5 rounded-lg font-bold text-lg transition-all shadow-lg
                     ${!selectedPriority ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'}
                 `}
             >

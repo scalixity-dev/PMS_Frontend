@@ -12,6 +12,7 @@ import IssueDescription from './steps/IssueDescription';
 import PropertySelection from './steps/PropertySelection';
 import CreatePropertyForm from './components/CreatePropertyForm';
 import PrioritySelection from './steps/PrioritySelection';
+import MaintenanceSuccessModal from './components/MaintenanceSuccessModal';
 import propertyImage from '../../../../assets/images/property.jpg';
 
 interface RequestTypeCardProps {
@@ -84,6 +85,8 @@ const AddMaintenanceRequest: React.FC = () => {
     const [selectedProperty, setSelectedProperty] = useState<string | null>(null);
     const [isCreatingProperty, setIsCreatingProperty] = useState(false);
     const [selectedPriority, setSelectedPriority] = useState<string | null>(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [createdRequestId, setCreatedRequestId] = useState<string>('');
 
     const [propertiesList, setPropertiesList] = useState([
         {
@@ -135,7 +138,11 @@ const AddMaintenanceRequest: React.FC = () => {
     };
 
     const handleSubmitRequest = () => {
+        const newRequestId = Math.floor(100000 + Math.random() * 900000).toString();
+        setCreatedRequestId(newRequestId);
+
         console.log('Submitting Request:', {
+            id: newRequestId,
             type: selectedType,
             category: selectedCategory,
             subCategory: selectedSubCategory,
@@ -147,8 +154,8 @@ const AddMaintenanceRequest: React.FC = () => {
             property: selectedProperty,
             priority: selectedPriority
         });
-        // Navigate to success or dashboard
-        navigate('/dashboard');
+
+        setShowSuccessModal(true);
     };
 
     const handleNext = () => {
@@ -441,6 +448,18 @@ const AddMaintenanceRequest: React.FC = () => {
                             onSubmit={handleSubmitRequest}
                         />
                     )}
+
+                    <MaintenanceSuccessModal
+                        isOpen={showSuccessModal}
+                        onClose={() => setShowSuccessModal(false)}
+                        onBackToList={() => navigate('/dashboard')}
+                        onAssignPro={() => {
+                            console.log('Assign Service Pro clicked');
+                            navigate('/dashboard'); // Or navigate to assign pro page
+                        }}
+                        requestId={createdRequestId}
+                        propertyName={propertiesList.find(p => p.id === selectedProperty)?.name || 'Property'}
+                    />
 
                 </div>
             </div>
