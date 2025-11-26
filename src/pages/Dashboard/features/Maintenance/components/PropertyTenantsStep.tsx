@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import CustomDropdown from '../../../components/CustomDropdown';
 import DatePicker from '../../../../../components/ui/DatePicker';
-import { Plus, Trash2, X, Search } from 'lucide-react';
+import { Plus, Trash2, X, AlertTriangle } from 'lucide-react';
 
 interface DateOption {
     id: string;
@@ -28,6 +28,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
     const [showEquipmentDropdown, setShowEquipmentDropdown] = useState(false);
     const [equipmentSearchQuery, setEquipmentSearchQuery] = useState('');
     const [showCreateEquipmentModal, setShowCreateEquipmentModal] = useState(false);
+    const [showExitConfirmation, setShowExitConfirmation] = useState(false);
     const [tenantAuthorization, setTenantAuthorization] = useState(false);
     const [dateOptions, setDateOptions] = useState<DateOption[]>([]);
     const [pmsList, setPmsList] = useState([
@@ -385,11 +386,13 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4">
                         {/* Modal Header */}
-                        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                            <h3 className="text-xl font-bold text-gray-800">Create equipment</h3>
+                        <div className="flex items-center justify-between p-6 bg-[#3D7475] rounded-t-lg">
+                            <div className="bg-[#7BD747] px-6 py-2 rounded-full">
+                                <h3 className="text-lg font-bold text-white">Create equipment</h3>
+                            </div>
                             <button
-                                onClick={() => setShowCreateEquipmentModal(false)}
-                                className="text-gray-400 hover:text-gray-600 transition-colors"
+                                onClick={() => setShowExitConfirmation(true)}
+                                className="text-white hover:text-gray-200 transition-colors"
                             >
                                 <X size={24} />
                             </button>
@@ -410,7 +413,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                                 ]}
                                 placeholder="Select main category"
                                 required
-                                buttonClassName="!bg-white !border !border-gray-300 !rounded-md !py-3"
+                                buttonClassName="!bg-[#7BD747] !border-none !rounded-full !py-3 !text-white !px-6"
                                 labelClassName="font-bold text-gray-700"
                             />
 
@@ -422,7 +425,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                                     placeholder="Type in a brand name"
                                     value={newEquipment.brand}
                                     onChange={(e) => setNewEquipment({ ...newEquipment, brand: e.target.value })}
-                                    className="w-full rounded-md border border-gray-300 px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#3D7475]/20 focus:border-[#3D7475]"
+                                    className="w-full rounded-full border-none px-6 py-3 text-sm bg-[#7BD747] text-white placeholder-white/80 focus:outline-none focus:ring-2 focus:ring-[#3D7475]"
                                 />
                             </div>
 
@@ -435,7 +438,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                                         placeholder="Type in a number"
                                         value={newEquipment.model}
                                         onChange={(e) => setNewEquipment({ ...newEquipment, model: e.target.value })}
-                                        className="w-full rounded-md border border-gray-300 px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#3D7475]/20 focus:border-[#3D7475]"
+                                        className="w-full rounded-full border-none px-6 py-3 text-sm bg-[#7BD747] text-white placeholder-white/80 focus:outline-none focus:ring-2 focus:ring-[#3D7475]"
                                     />
                                 </div>
                                 <div>
@@ -445,28 +448,75 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                                         placeholder="Type in a number"
                                         value={newEquipment.serial}
                                         onChange={(e) => setNewEquipment({ ...newEquipment, serial: e.target.value })}
-                                        className="w-full rounded-md border border-gray-300 px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#3D7475]/20 focus:border-[#3D7475]"
+                                        className="w-full rounded-full border-none px-6 py-3 text-sm bg-[#7BD747] text-white placeholder-white/80 focus:outline-none focus:ring-2 focus:ring-[#3D7475]"
                                     />
                                 </div>
                             </div>
                         </div>
 
                         {/* Modal Footer */}
-                        <div className="flex gap-3 p-6 border-t border-gray-200 justify-end">
+                        <div className="flex gap-3 p-6 justify-center">
                             <button
-                                onClick={() => setShowCreateEquipmentModal(false)}
-                                className="px-8 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-bold hover:bg-gray-50 transition-colors"
+                                onClick={() => setShowExitConfirmation(true)}
+                                className="w-40 py-3 rounded-lg bg-[#556370] text-white font-bold hover:opacity-90 transition-opacity"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleCreateEquipment}
-                                className="px-8 py-2.5 rounded-lg bg-[#7BD747] text-white font-bold hover:opacity-90 transition-opacity"
+                                className="w-40 py-3 rounded-lg bg-[#3D7475] text-white font-bold hover:opacity-90 transition-opacity"
                             >
                                 Create
                             </button>
                         </div>
                     </div>
+
+                    {/* Exit Confirmation Dialog */}
+                    {showExitConfirmation && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]">
+                            <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden">
+                                {/* Header */}
+                                <div className="bg-[#3D7475] px-6 py-4 flex items-center justify-between">
+                                    <div className="flex items-center gap-3 text-white">
+                                        <AlertTriangle size={24} />
+                                        <h3 className="text-lg font-bold">You're about to leave</h3>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowExitConfirmation(false)}
+                                        className="text-white hover:text-gray-200 transition-colors"
+                                    >
+                                        <X size={24} />
+                                    </button>
+                                </div>
+
+                                {/* Body */}
+                                <div className="p-8 text-center">
+                                    <p className="text-gray-700 text-lg">
+                                        Are you sure you want to leave without saving ? You will lose any changes made.
+                                    </p>
+                                </div>
+
+                                {/* Footer */}
+                                <div className="flex gap-4 p-6 justify-center pb-8">
+                                    <button
+                                        onClick={() => setShowExitConfirmation(false)}
+                                        className="w-32 py-2.5 rounded-lg bg-[#556370] text-white font-bold hover:opacity-90 transition-opacity"
+                                    >
+                                        No
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setShowExitConfirmation(false);
+                                            setShowCreateEquipmentModal(false);
+                                        }}
+                                        className="w-32 py-2.5 rounded-lg bg-[#3D7475] text-white font-bold hover:opacity-90 transition-opacity"
+                                    >
+                                        Yes I'm Sure
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
         </div>
