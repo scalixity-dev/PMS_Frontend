@@ -2,20 +2,62 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Plus, Building, Loader2 } from 'lucide-react';
 import PropertyCard from '../components/PropertyCard';
 import { propertyService } from '../../../../../services/property.service';
-import type { Property } from '../../../../../services/property.service';
+import type { Property, BackendProperty } from '../../../../../services/property.service';
 
 interface PropertySelectionProps {
   data: any;
   updateData: (key: string, value: any) => void;
   onCreateProperty: () => void;
   onEditProperty?: (propertyId: string) => void;
+  onNext?: (propertyId: string) => void;
 }
 
-const PropertySelection: React.FC<PropertySelectionProps> = ({ data, updateData, onCreateProperty, onEditProperty }) => {
+// Utility function to determine the next incomplete property creation step
+const getNextIncompleteStep = (property: BackendProperty): number | null => {
+  // Step 1: GeneralInfo - needs propertyName and address
+  if (!property.propertyName || !property.address) {
+    return 1;
+  }
+
+  // Step 3: BasicAmenities - needs amenities with parking, laundry, airConditioning
+  if (!property.amenities || 
+      !property.amenities.parking || 
+      !property.amenities.laundry || 
+      !property.amenities.airConditioning) {
+    return 3;
+  }
+
+  // Step 4: PropertyFeatures - needs propertyFeatures array (can be empty but should exist)
+  if (!property.amenities.propertyFeatures) {
+    return 4;
+  }
+
+  // Step 5: PropertyPhotos - needs coverPhotoUrl and at least one gallery photo (non-primary)
+  if (!property.coverPhotoUrl) {
+    return 5;
+  }
+  // Check for gallery photos (non-primary photos)
+  const galleryPhotos = property.photos?.filter(p => !p.isPrimary) || [];
+  if (galleryPhotos.length === 0) {
+    return 5;
+  }
+
+  // Step 6: MarketingDescription - needs description
+  if (!property.description) {
+    return 6;
+  }
+
+  // All steps complete
+  return null;
+};
+
+const PropertySelection: React.FC<PropertySelectionProps> = ({ data, updateData, onCreateProperty, onEditProperty, onNext }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [fullPropertyData, setFullPropertyData] = useState<BackendProperty | null>(null);
+  const [loadingPropertyData, setLoadingPropertyData] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -42,6 +84,29 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ data, updateData,
 
   const selectedProperty = properties.find(p => p.id === data.property);
 
+  // Fetch full property data when a property is selected
+  useEffect(() => {
+    const fetchFullPropertyData = async () => {
+      if (!data.property) {
+        setFullPropertyData(null);
+        return;
+      }
+
+      try {
+        setLoadingPropertyData(true);
+        const fullProperty = await propertyService.getOne(data.property);
+        setFullPropertyData(fullProperty);
+      } catch (err) {
+        console.error('Error fetching full property data:', err);
+        setFullPropertyData(null);
+      } finally {
+        setLoadingPropertyData(false);
+      }
+    };
+
+    fetchFullPropertyData();
+  }, [data.property]);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -54,6 +119,22 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ data, updateData,
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  const handleNext = () => {
+    if (!fullPropertyData || !onNext) return;
+
+    const nextStep = getNextIncompleteStep(fullPropertyData);
+    
+    if (nextStep !== null) {
+      // Property has incomplete steps, open edit mode
+      if (onEditProperty) {
+        onEditProperty(fullPropertyData.id);
+      }
+    } else {
+      // All property steps complete, proceed to lease
+      onNext(fullPropertyData.id);
+    }
+  };
 
   const handleSelect = (propertyId: string) => {
     updateData('property', propertyId);
@@ -103,6 +184,7 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ data, updateData,
           onDelete={handleDelete}
           onBack={handleDelete} // Reusing handleDelete as it clears selection, which is the desired "Back" behavior for now
           onEdit={onEditProperty ? () => onEditProperty(selectedProperty.id) : undefined}
+          onNext={onNext ? handleNext : undefined}
         />
       ) : (
         // Show Dropdown when no selection

@@ -25,5 +25,9 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `${API_BASE_URL}/property/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/property/${id}`,
   },
+  UPLOAD: {
+    FILE: `${API_BASE_URL}/upload/file`,
+    IMAGE: `${API_BASE_URL}/upload/image`,
+  },
 };
 

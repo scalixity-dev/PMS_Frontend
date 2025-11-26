@@ -201,6 +201,13 @@ const ListUnit: React.FC = () => {
     setShowCreateProperty(true);
   };
 
+  const handlePropertyNext = (propertyId: string) => {
+    // All property steps are complete, proceed to lease (step 2)
+    updateFormData('property', propertyId);
+    setCurrentStep(2);
+    setLeasingStep(1);
+  };
+
   const handlePropertyCreated = (propertyData: any) => {
     console.log('Property Created/Updated:', propertyData);
     const propertyId = propertyData.id || formData.property;
@@ -251,6 +258,7 @@ const ListUnit: React.FC = () => {
                       updateData={updateFormData}
                       onCreateProperty={handleCreateProperty}
                       onEditProperty={handleEditProperty}
+                      onNext={handlePropertyNext}
                     />
                     {formData.property && (
                       <div className="w-full max-w-md mt-6 flex justify-center">

@@ -9,6 +9,8 @@ export interface BackendProperty {
   sizeSqft?: string | number | null;
   yearBuilt?: number | null;
   description?: string | null;
+  coverPhotoUrl?: string | null;
+  youtubeUrl?: string | null;
   address?: {
     streetAddress: string;
     city: string;
@@ -306,6 +308,8 @@ class PropertyService {
       country: string;
     };
     description?: string;
+    coverPhotoUrl?: string;
+    youtubeUrl?: string;
     singleUnitDetails?: {
       beds: number;
       baths?: number;

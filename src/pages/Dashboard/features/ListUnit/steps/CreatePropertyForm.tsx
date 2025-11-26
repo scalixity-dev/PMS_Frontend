@@ -358,6 +358,115 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
       return;
     }
 
+    // Save photos when on step 5 (PropertyPhotos)
+    if (currentStep === 5) {
+      // Validate cover photo (required)
+      if (!formData.coverPhoto) {
+        setError('Cover photo is required. Please upload a cover photo.');
+        return;
+      }
+
+      // Validate gallery photos (required - at least one)
+      if (!formData.galleryPhotos || formData.galleryPhotos.length === 0) {
+        setError('At least one gallery photo is required. Please add gallery photos.');
+        return;
+      }
+
+      // Validate YouTube URL format if provided (optional)
+      if (formData.youtubeUrl && formData.youtubeUrl.trim()) {
+        const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/;
+        if (!youtubeRegex.test(formData.youtubeUrl.trim())) {
+          setError('Please enter a valid YouTube URL.');
+          return;
+        }
+      }
+
+      if (!managerId || !propertyId) {
+        setError('Property information not available. Please start from step 1.');
+        return;
+      }
+
+      setIsSubmitting(true);
+      setError(null);
+
+      try {
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+        
+        // Upload cover photo using /upload/image endpoint (creates PropertyPhoto automatically)
+        const coverPhoto = formData.coverPhoto as { file: File; previewUrl: string } | null;
+        const coverPhotoFile = coverPhoto?.file;
+        if (!coverPhotoFile) {
+          throw new Error('Cover photo file is missing');
+        }
+
+        const coverPhotoFormData = new FormData();
+        coverPhotoFormData.append('file', coverPhotoFile);
+        coverPhotoFormData.append('propertyId', propertyId);
+
+        const coverPhotoResponse = await fetch(`${API_BASE_URL}/upload/image`, {
+          method: 'POST',
+          credentials: 'include',
+          body: coverPhotoFormData,
+        });
+
+        if (!coverPhotoResponse.ok) {
+          const errorData = await coverPhotoResponse.json().catch(() => ({}));
+          throw new Error(errorData.message || 'Failed to upload cover photo');
+        }
+
+        const coverPhotoData = await coverPhotoResponse.json();
+        const coverPhotoUrl = coverPhotoData.url;
+
+        // Upload gallery photos using /upload/image endpoint
+        const galleryPhotoUrls: string[] = [];
+        const galleryPhotos = (formData.galleryPhotos || []) as Array<{ file: File; previewUrl: string }>;
+        for (const galleryPhoto of galleryPhotos) {
+          if (galleryPhoto?.file) {
+            const galleryFormData = new FormData();
+            galleryFormData.append('file', galleryPhoto.file);
+            galleryFormData.append('propertyId', propertyId);
+
+            const galleryResponse = await fetch(`${API_BASE_URL}/upload/image`, {
+              method: 'POST',
+              credentials: 'include',
+              body: galleryFormData,
+            });
+
+            if (galleryResponse.ok) {
+              const galleryData = await galleryResponse.json();
+              galleryPhotoUrls.push(galleryData.url);
+            } else {
+              console.warn('Failed to upload gallery photo:', galleryPhoto);
+            }
+          }
+        }
+
+        // Prepare photos array for PropertyPhoto table
+        // The /upload/image endpoint already creates PropertyPhoto records,
+        // but we need to ensure the cover photo is marked as primary
+        const photos = [
+          { photoUrl: coverPhotoUrl, isPrimary: true },
+          ...galleryPhotoUrls.map(url => ({ photoUrl: url, isPrimary: false })),
+        ];
+
+        // Update property with coverPhotoUrl, photos (to set isPrimary correctly), and youtubeUrl
+        const updateData: any = {
+          coverPhotoUrl: coverPhotoUrl,
+          youtubeUrl: formData.youtubeUrl || null,
+          photos: photos,
+        };
+
+        await propertyService.update(propertyId, updateData);
+        setCurrentStep(prev => prev + 1);
+      } catch (err) {
+        console.error('Error uploading photos:', err);
+        setError(err instanceof Error ? err.message : 'Failed to upload photos. Please try again.');
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
     if (currentStep < 7) {
       setCurrentStep(prev => prev + 1);
     } else {
