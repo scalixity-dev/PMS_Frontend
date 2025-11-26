@@ -2,15 +2,16 @@ import React from 'react';
 
 interface MaintenanceStepperProps {
     currentStep: number;
+    steps?: { id: number; label: string }[];
 }
 
-const steps = [
+const defaultSteps = [
     { id: 1, label: 'General Details' },
     { id: 2, label: 'Property' },
     { id: 3, label: 'Priority' },
 ];
 
-const MaintenanceStepper: React.FC<MaintenanceStepperProps> = ({ currentStep }) => {
+const MaintenanceStepper: React.FC<MaintenanceStepperProps> = ({ currentStep, steps = defaultSteps }) => {
     return (
         <div className="w-full max-w-3xl mx-auto mb-12 px-20">
             <div className="flex items-center justify-between relative">

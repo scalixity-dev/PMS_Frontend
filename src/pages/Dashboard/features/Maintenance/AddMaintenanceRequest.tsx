@@ -13,6 +13,7 @@ import PropertySelection from './steps/PropertySelection';
 import CreatePropertyForm from './components/CreatePropertyForm';
 import PrioritySelection from './steps/PrioritySelection';
 import MaintenanceSuccessModal from './components/MaintenanceSuccessModal';
+import AdvancedRequestForm from './components/AdvancedRequestForm';
 import propertyImage from '../../../../assets/images/property.jpg';
 
 interface RequestTypeCardProps {
@@ -121,6 +122,12 @@ const AddMaintenanceRequest: React.FC = () => {
         },
     ]);
 
+    const advancedSteps = [
+        { id: 1, label: 'General Details' },
+        { id: 2, label: 'Property & Tenants' },
+        { id: 3, label: 'Due date & Materials' },
+    ];
+
     const handleCreateProperty = (propertyData: any) => {
         const newProperty = {
             id: (propertiesList.length + 1).toString(),
@@ -163,19 +170,25 @@ const AddMaintenanceRequest: React.FC = () => {
             setMainStep(1);
             setGeneralSubStep(1);
         } else if (mainStep === 1) {
-            if (generalSubStep === 1 && selectedCategory) {
-                setGeneralSubStep(2);
-            } else if (generalSubStep === 2) {
-                setGeneralSubStep(3);
-            } else if (generalSubStep === 3) {
-                setGeneralSubStep(4);
-            } else if (generalSubStep === 4) {
-                setGeneralSubStep(5);
-            } else if (generalSubStep === 5) {
-                setGeneralSubStep(6);
-            } else if (generalSubStep === 6) {
-                // Proceed to Property Step
+            if (selectedType === 'advanced') {
+                // For advanced flow, step 1 is a single form, so go to step 2
                 setMainStep(2);
+            } else {
+                // Basic flow logic
+                if (generalSubStep === 1 && selectedCategory) {
+                    setGeneralSubStep(2);
+                } else if (generalSubStep === 2) {
+                    setGeneralSubStep(3);
+                } else if (generalSubStep === 3) {
+                    setGeneralSubStep(4);
+                } else if (generalSubStep === 4) {
+                    setGeneralSubStep(5);
+                } else if (generalSubStep === 5) {
+                    setGeneralSubStep(6);
+                } else if (generalSubStep === 6) {
+                    // Proceed to Property Step
+                    setMainStep(2);
+                }
             }
         } else if (mainStep === 2) {
             if (selectedProperty) {
@@ -240,7 +253,7 @@ const AddMaintenanceRequest: React.FC = () => {
     return (
         <div className="flex flex-col h-full w-full bg-[var(--color-background)] px-6 overflow-y-auto">
             <div className="flex-1 flex items-start justify-center pt-8">
-                <div className="bg-[#DFE5E3] rounded-[2rem] p-12 flex flex-col items-center max-w-3xl w-full shadow-sm min-h-[80vh] relative">
+                <div className={`bg-[#DFE5E3] rounded-[2rem] p-12 flex flex-col items-center w-full shadow-sm min-h-[80vh] relative ${selectedType === 'advanced' && mainStep >= 1 ? 'max-w-6xl' : 'max-w-3xl'}`}>
 
                     {/* Back Button */}
                     <div className="absolute top-8 left-8">
@@ -256,7 +269,10 @@ const AddMaintenanceRequest: React.FC = () => {
                     {/* Stepper (Only show for Main Step 1+) */}
                     {mainStep >= 1 && (
                         <div className="w-full mt-8 mb-6">
-                            <MaintenanceStepper currentStep={getStepperStep()} />
+                            <MaintenanceStepper
+                                currentStep={getStepperStep()}
+                                steps={selectedType === 'advanced' ? advancedSteps : undefined}
+                            />
                         </div>
                     )}
 
@@ -293,133 +309,144 @@ const AddMaintenanceRequest: React.FC = () => {
 
                     {/* Step 1: General Details */}
                     {mainStep === 1 && (
-                        <div className="flex flex-col items-center w-full">
-                            {generalSubStep === 1 && (
-                                <>
-                                    <CategorySelection
-                                        selectedCategory={selectedCategory}
-                                        onSelect={setSelectedCategory}
-                                    />
-                                    <div className="mt-12">
-                                        <button
-                                            onClick={handleNext}
-                                            disabled={!selectedCategory}
-                                            className={`
-                                                bg-[#3D7475] text-white px-16 py-3 rounded-lg font-medium transition-all
-                                                ${!selectedCategory ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'}
-                                            `}
-                                        >
-                                            Next
-                                        </button>
-                                    </div>
-                                </>
-                            )}
+                        selectedType === 'advanced' ? (
+                            <AdvancedRequestForm
+                                onNext={(data) => {
+                                    console.log('Advanced Data:', data);
+                                    // Set data to state if needed
+                                    handleNext();
+                                }}
+                                onDiscard={() => navigate('/dashboard')}
+                            />
+                        ) : (
+                            <div className="flex flex-col items-center w-full">
+                                {generalSubStep === 1 && (
+                                    <>
+                                        <CategorySelection
+                                            selectedCategory={selectedCategory}
+                                            onSelect={setSelectedCategory}
+                                        />
+                                        <div className="mt-12">
+                                            <button
+                                                onClick={handleNext}
+                                                disabled={!selectedCategory}
+                                                className={`
+                                                    bg-[#3D7475] text-white px-16 py-3 rounded-lg font-medium transition-all
+                                                    ${!selectedCategory ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'}
+                                                `}
+                                            >
+                                                Next
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
 
-                            {generalSubStep === 2 && (
-                                <>
-                                    <SubCategorySelection
-                                        selectedSubCategory={selectedSubCategory}
-                                        onSelect={setSelectedSubCategory}
-                                        category={selectedCategory || 'appliances'}
-                                    />
-                                    <div className="mt-12 flex items-center gap-4">
-                                        <button
-                                            onClick={handleSkip}
-                                            className="bg-[#5C6B7F] text-white px-16 py-3 rounded-lg font-medium hover:opacity-90 transition-all"
-                                        >
-                                            Skip
-                                        </button>
-                                        <button
-                                            onClick={handleNext}
-                                            className="bg-[#3D7475] text-white px-16 py-3 rounded-lg font-medium hover:opacity-90 transition-all"
-                                        >
-                                            Next
-                                        </button>
-                                    </div>
-                                </>
-                            )}
+                                {generalSubStep === 2 && (
+                                    <>
+                                        <SubCategorySelection
+                                            selectedSubCategory={selectedSubCategory}
+                                            onSelect={setSelectedSubCategory}
+                                            category={selectedCategory || 'appliances'}
+                                        />
+                                        <div className="mt-12 flex items-center gap-4">
+                                            <button
+                                                onClick={handleSkip}
+                                                className="bg-[#5C6B7F] text-white px-16 py-3 rounded-lg font-medium hover:opacity-90 transition-all"
+                                            >
+                                                Skip
+                                            </button>
+                                            <button
+                                                onClick={handleNext}
+                                                className="bg-[#3D7475] text-white px-16 py-3 rounded-lg font-medium hover:opacity-90 transition-all"
+                                            >
+                                                Next
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
 
-                            {generalSubStep === 3 && (
-                                <>
-                                    <IssueDefinition
-                                        selectedIssue={selectedIssue}
-                                        onSelect={setSelectedIssue}
-                                        subCategory={selectedSubCategory || 'refrigerator'}
-                                    />
-                                    <div className="mt-12 flex items-center gap-4">
-                                        <button
-                                            onClick={handleSkip}
-                                            className="bg-[#5C6B7F] text-white px-16 py-3 rounded-lg font-medium hover:opacity-90 transition-all"
-                                        >
-                                            Skip
-                                        </button>
-                                        <button
-                                            onClick={handleNext}
-                                            className="bg-[#3D7475] text-white px-16 py-3 rounded-lg font-medium hover:opacity-90 transition-all"
-                                        >
-                                            Next
-                                        </button>
-                                    </div>
-                                </>
-                            )}
+                                {generalSubStep === 3 && (
+                                    <>
+                                        <IssueDefinition
+                                            selectedIssue={selectedIssue}
+                                            onSelect={setSelectedIssue}
+                                            subCategory={selectedSubCategory || 'refrigerator'}
+                                        />
+                                        <div className="mt-12 flex items-center gap-4">
+                                            <button
+                                                onClick={handleSkip}
+                                                className="bg-[#5C6B7F] text-white px-16 py-3 rounded-lg font-medium hover:opacity-90 transition-all"
+                                            >
+                                                Skip
+                                            </button>
+                                            <button
+                                                onClick={handleNext}
+                                                className="bg-[#3D7475] text-white px-16 py-3 rounded-lg font-medium hover:opacity-90 transition-all"
+                                            >
+                                                Next
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
 
-                            {generalSubStep === 4 && (
-                                <>
-                                    <FinalDetails
-                                        selectedDetail={selectedFinalDetail}
-                                        onSelect={setSelectedFinalDetail}
-                                        issue={selectedIssue || 'temperature'}
-                                    />
-                                    <div className="mt-12 flex items-center gap-4">
-                                        <button
-                                            onClick={handleSkip}
-                                            className="bg-[#5C6B7F] text-white px-16 py-3 rounded-lg font-medium hover:opacity-90 transition-all"
-                                        >
-                                            Skip
-                                        </button>
-                                        <button
-                                            onClick={handleNext}
-                                            className="bg-[#3D7475] text-white px-16 py-3 rounded-lg font-medium hover:opacity-90 transition-all"
-                                        >
-                                            Next
-                                        </button>
-                                    </div>
-                                </>
-                            )}
+                                {generalSubStep === 4 && (
+                                    <>
+                                        <FinalDetails
+                                            selectedDetail={selectedFinalDetail}
+                                            onSelect={setSelectedFinalDetail}
+                                            issue={selectedIssue || 'temperature'}
+                                        />
+                                        <div className="mt-12 flex items-center gap-4">
+                                            <button
+                                                onClick={handleSkip}
+                                                className="bg-[#5C6B7F] text-white px-16 py-3 rounded-lg font-medium hover:opacity-90 transition-all"
+                                            >
+                                                Skip
+                                            </button>
+                                            <button
+                                                onClick={handleNext}
+                                                className="bg-[#3D7475] text-white px-16 py-3 rounded-lg font-medium hover:opacity-90 transition-all"
+                                            >
+                                                Next
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
 
-                            {generalSubStep === 5 && (
-                                <>
-                                    <MediaUpload
-                                        onFileSelect={(file) => setMediaFiles([...mediaFiles, file])}
-                                    />
-                                    <div className="mt-12 flex items-center gap-4">
-                                        <button
-                                            onClick={handleSkip}
-                                            className="bg-[#5C6B7F] text-white px-16 py-3 rounded-lg font-medium hover:opacity-90 transition-all"
-                                        >
-                                            Skip
-                                        </button>
-                                        <button
-                                            onClick={handleNext}
-                                            className="bg-[#3D7475] text-white px-16 py-3 rounded-lg font-medium hover:opacity-90 transition-all"
-                                        >
-                                            Next
-                                        </button>
-                                    </div>
-                                </>
-                            )}
+                                {generalSubStep === 5 && (
+                                    <>
+                                        <MediaUpload
+                                            onFileSelect={(file) => setMediaFiles([...mediaFiles, file])}
+                                        />
+                                        <div className="mt-12 flex items-center gap-4">
+                                            <button
+                                                onClick={handleSkip}
+                                                className="bg-[#5C6B7F] text-white px-16 py-3 rounded-lg font-medium hover:opacity-90 transition-all"
+                                            >
+                                                Skip
+                                            </button>
+                                            <button
+                                                onClick={handleNext}
+                                                className="bg-[#3D7475] text-white px-16 py-3 rounded-lg font-medium hover:opacity-90 transition-all"
+                                            >
+                                                Next
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
 
-                            {generalSubStep === 6 && (
-                                <IssueDescription
-                                    defaultTitle={`${selectedCategory || 'Category'} / ${selectedSubCategory || 'Sub-Category'} / ${selectedIssue || 'Issue'} / ${selectedFinalDetail || 'Detail'}`}
-                                    onContinue={(title, description) => {
-                                        setIssueTitle(title);
-                                        setIssueDescription(description);
-                                        setMainStep(2);
-                                    }}
-                                />
-                            )}
-                        </div>
+                                {generalSubStep === 6 && (
+                                    <IssueDescription
+                                        defaultTitle={`${selectedCategory || 'Category'} / ${selectedSubCategory || 'Sub-Category'} / ${selectedIssue || 'Issue'} / ${selectedFinalDetail || 'Detail'}`}
+                                        onContinue={(title, description) => {
+                                            setIssueTitle(title);
+                                            setIssueDescription(description);
+                                            handleNext();
+                                        }}
+                                    />
+                                )}
+                            </div>
+                        )
                     )}
 
                     {/* Step 2: Property Selection */}
@@ -460,7 +487,6 @@ const AddMaintenanceRequest: React.FC = () => {
                         requestId={createdRequestId}
                         propertyName={propertiesList.find(p => p.id === selectedProperty)?.name || 'Property'}
                     />
-
                 </div>
             </div>
         </div>
