@@ -8,9 +8,10 @@ interface PropertySelectionProps {
   data: any;
   updateData: (key: string, value: any) => void;
   onCreateProperty: () => void;
+  onEditProperty?: (propertyId: string) => void;
 }
 
-const PropertySelection: React.FC<PropertySelectionProps> = ({ data, updateData, onCreateProperty }) => {
+const PropertySelection: React.FC<PropertySelectionProps> = ({ data, updateData, onCreateProperty, onEditProperty }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
@@ -101,6 +102,7 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ data, updateData,
           property={selectedProperty}
           onDelete={handleDelete}
           onBack={handleDelete} // Reusing handleDelete as it clears selection, which is the desired "Back" behavior for now
+          onEdit={onEditProperty ? () => onEditProperty(selectedProperty.id) : undefined}
         />
       ) : (
         // Show Dropdown when no selection

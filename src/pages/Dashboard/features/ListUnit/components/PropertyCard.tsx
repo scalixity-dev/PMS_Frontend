@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trash2, BedDouble, Bath } from 'lucide-react';
+import { Trash2, BedDouble, Bath, Edit } from 'lucide-react';
 
 interface PropertyCardProps {
   property: {
@@ -13,9 +13,10 @@ interface PropertyCardProps {
   };
   onDelete: () => void;
   onBack: () => void;
+  onEdit?: () => void;
 }
 
-const PropertyCard: React.FC<PropertyCardProps> = ({ property, onDelete, onBack }) => {
+const PropertyCard: React.FC<PropertyCardProps> = ({ property, onDelete, onBack, onEdit }) => {
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden w-full max-w-md mx-auto">
       {/* Property Image */}
@@ -81,6 +82,15 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onDelete, onBack 
           >
             Back
           </button>
+          {onEdit && (
+            <button
+              onClick={onEdit}
+              className="flex-1 px-4 py-2.5 bg-[var(--color-primary)] text-white rounded-lg font-medium hover:opacity-90 transition-colors flex items-center justify-center gap-2"
+            >
+              <Edit size={18} />
+              Edit
+            </button>
+          )}
           <button
             onClick={onDelete}
             className="flex-1 px-4 py-2.5 bg-gray-700 text-white rounded-lg font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"

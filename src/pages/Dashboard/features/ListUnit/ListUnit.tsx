@@ -196,9 +196,15 @@ const ListUnit: React.FC = () => {
     setShowCreateProperty(true);
   };
 
+  const handleEditProperty = (propertyId: string) => {
+    updateFormData('property', propertyId);
+    setShowCreateProperty(true);
+  };
+
   const handlePropertyCreated = (propertyData: any) => {
-    console.log('New Property Created:', propertyData);
-    updateFormData('property', 'new-property-id');
+    console.log('Property Created/Updated:', propertyData);
+    const propertyId = propertyData.id || formData.property;
+    updateFormData('property', propertyId);
     setShowCreateProperty(false);
     setCurrentStep(2);
   };
@@ -227,7 +233,10 @@ const ListUnit: React.FC = () => {
           <div className="flex flex-col items-center justify-start w-full">
             {showCreateProperty ? (
               <div className="w-full flex flex-col items-center">
-                <CreatePropertyForm onSubmit={handlePropertyCreated} />
+                <CreatePropertyForm 
+                  onSubmit={handlePropertyCreated}
+                  propertyId={formData.property || undefined}
+                />
               </div>
             ) : (
               <>
@@ -241,6 +250,7 @@ const ListUnit: React.FC = () => {
                       data={formData}
                       updateData={updateFormData}
                       onCreateProperty={handleCreateProperty}
+                      onEditProperty={handleEditProperty}
                     />
                     {formData.property && (
                       <div className="w-full max-w-md mt-6 flex justify-center">

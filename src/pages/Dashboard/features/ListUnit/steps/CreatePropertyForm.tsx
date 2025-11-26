@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ArrowLeft } from 'lucide-react';
 import GeneralInfo from './create-property/GeneralInfo';
 import PropertySummaryMap from './create-property/PropertySummaryMap';
 import BasicAmenities from './BasicAmenities';
@@ -12,14 +13,16 @@ import { authService } from '../../../../../services/auth.service';
 
 interface CreatePropertyFormProps {
   onSubmit: (propertyData: any) => void;
+  propertyId?: string; // If provided, load existing property and resume from appropriate step
 }
 
-const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit }) => {
+const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, propertyId: initialPropertyId }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [managerId, setManagerId] = useState<string | null>(null);
-  const [propertyId, setPropertyId] = useState<string | null>(null);
+  const [propertyId, setPropertyId] = useState<string | null>(initialPropertyId || null);
+  const [isLoadingProperty, setIsLoadingProperty] = useState(false);
   const [formData, setFormData] = useState({
     // General Info
     propertyName: '',
@@ -67,9 +70,147 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit }) => 
     fetchUser();
   }, []);
 
+  // Load existing property data if propertyId is provided
+  useEffect(() => {
+    const loadPropertyData = async () => {
+      if (!initialPropertyId) return;
+
+      setIsLoadingProperty(true);
+      setError(null);
+
+      try {
+        const property = await propertyService.getOne(initialPropertyId);
+        setPropertyId(property.id);
+
+        // Map backend property to form data
+        const mappedData: any = {
+          propertyName: property.propertyName || '',
+          propertyType: property.propertyType?.toLowerCase() || '',
+          marketRent: property.marketRent?.toString() || '',
+          address: property.address?.streetAddress || '',
+          city: property.address?.city || '',
+          stateRegion: property.address?.stateRegion || '',
+          country: property.address?.country || '',
+          zip: property.address?.zipCode || '',
+          beds: property.singleUnitDetails?.beds?.toString() || '',
+          bathrooms: property.singleUnitDetails?.baths?.toString() || '',
+          sizeSquareFt: property.sizeSqft?.toString() || '',
+          yearBuilt: property.yearBuilt?.toString() || '',
+          parking: property.amenities?.parking?.toLowerCase() || '',
+          laundry: property.amenities?.laundry?.toLowerCase() || '',
+          ac: property.amenities?.airConditioning?.toLowerCase() || '',
+          features: property.amenities?.propertyFeatures || [],
+          marketingDescription: property.description || '',
+          coverPhoto: property.photos?.find(p => p.isPrimary)?.photoUrl || null,
+          galleryPhotos: property.photos?.filter(p => !p.isPrimary).map(p => p.photoUrl) || [],
+        };
+
+        setFormData(prev => ({ ...prev, ...mappedData }));
+
+        // Determine starting step based on what's completed
+        // Step 1: GeneralInfo (propertyName, address, beds, bathrooms, etc.)
+        // Step 2: PropertySummaryMap (always show after step 1)
+        // Step 3: BasicAmenities (parking, laundry, ac)
+        // Step 4: PropertyFeatures (features array) - User wants to start here after GeneralInfo
+        // Step 5: PropertyPhotos (photos)
+        // Step 6: MarketingDescription (description)
+        // Step 7: AddRibbon (optional)
+
+        let startingStep = 1;
+        // If GeneralInfo is completed (has propertyName and address), start from PropertyFeatures (step 4)
+        if (property.propertyName && property.address) {
+          startingStep = 4; // Start from PropertyFeatures after GeneralInfo
+          // If PropertyFeatures is also completed, continue to next steps
+          if (property.amenities?.propertyFeatures && property.amenities.propertyFeatures.length > 0) {
+            if (property.photos && property.photos.length > 0) {
+              startingStep = 5; // PropertyPhotos completed
+              if (property.description) {
+                startingStep = 6; // MarketingDescription completed
+                // Step 7 (AddRibbon) is optional, so we'll start from step 6 if description exists
+              }
+            }
+          }
+        }
+
+        setCurrentStep(startingStep);
+      } catch (err) {
+        console.error('Error loading property:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load property data. Please try again.');
+      } finally {
+        setIsLoadingProperty(false);
+      }
+    };
+
+    loadPropertyData();
+  }, [initialPropertyId]);
+
   const updateFormData = (key: string, value: any) => {
     setFormData(prev => ({ ...prev, [key]: value }));
   };
+
+  // Map frontend amenity values to backend enum values
+  // Since BasicAmenities now uses enum values directly, we just validate and pass through
+  const mapParkingType = (value: string): 'NONE' | 'STREET' | 'GARAGE' | 'DRIVEWAY' | 'DEDICATED_SPOT' | 'PRIVATE_LOT' | 'ASSIGNED' => {
+      const validValues: Array<'NONE' | 'STREET' | 'GARAGE' | 'DRIVEWAY' | 'DEDICATED_SPOT' | 'PRIVATE_LOT' | 'ASSIGNED'> = [
+        'NONE', 'STREET', 'GARAGE', 'DRIVEWAY', 'DEDICATED_SPOT', 'PRIVATE_LOT', 'ASSIGNED'
+      ];
+      // Support both enum values and legacy lowercase values for backward compatibility
+      const mapping: Record<string, 'NONE' | 'STREET' | 'GARAGE' | 'DRIVEWAY' | 'DEDICATED_SPOT' | 'PRIVATE_LOT' | 'ASSIGNED'> = {
+        'none': 'NONE',
+        'street': 'STREET',
+        'garage': 'GARAGE',
+        'driveway': 'DRIVEWAY',
+        'dedicated_spot': 'DEDICATED_SPOT',
+        'dedicated spot': 'DEDICATED_SPOT',
+        'private_lot': 'PRIVATE_LOT',
+        'private lot': 'PRIVATE_LOT',
+        'assigned': 'ASSIGNED',
+      };
+      const upperValue = value.toUpperCase();
+      if (validValues.includes(upperValue as any)) {
+        return upperValue as any;
+      }
+      return mapping[value.toLowerCase()] || 'NONE';
+    };
+
+    const mapLaundryType = (value: string): 'NONE' | 'IN_UNIT' | 'ON_SITE' | 'HOOKUPS' => {
+      const validValues: Array<'NONE' | 'IN_UNIT' | 'ON_SITE' | 'HOOKUPS'> = [
+        'NONE', 'IN_UNIT', 'ON_SITE', 'HOOKUPS'
+      ];
+      // Support both enum values and legacy lowercase values for backward compatibility
+      const mapping: Record<string, 'NONE' | 'IN_UNIT' | 'ON_SITE' | 'HOOKUPS'> = {
+        'none': 'NONE',
+        'in_unit': 'IN_UNIT',
+        'in unit': 'IN_UNIT',
+        'on_site': 'ON_SITE',
+        'on site': 'ON_SITE',
+        'hookups': 'HOOKUPS',
+      };
+      const upperValue = value.toUpperCase();
+      if (validValues.includes(upperValue as any)) {
+        return upperValue as any;
+      }
+      return mapping[value.toLowerCase()] || 'NONE';
+    };
+
+    const mapACType = (value: string): 'NONE' | 'CENTRAL' | 'WINDOW' | 'PORTABLE' | 'COOLER' => {
+      const validValues: Array<'NONE' | 'CENTRAL' | 'WINDOW' | 'PORTABLE' | 'COOLER'> = [
+        'NONE', 'CENTRAL', 'WINDOW', 'PORTABLE', 'COOLER'
+      ];
+      // Support both enum values and legacy lowercase values for backward compatibility
+      const mapping: Record<string, 'NONE' | 'CENTRAL' | 'WINDOW' | 'PORTABLE' | 'COOLER'> = {
+        'none': 'NONE',
+        'central': 'CENTRAL',
+        'window': 'WINDOW',
+        'portable': 'PORTABLE',
+        'cooler': 'COOLER',
+      };
+      const upperValue = value.toUpperCase();
+      if (validValues.includes(upperValue as any)) {
+        return upperValue as any;
+      }
+      return mapping[value.toLowerCase()] || 'NONE';
+    };
 
   // Map form data to backend DTO format
   const mapFormDataToBackend = () => {
@@ -97,39 +238,8 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit }) => 
         }
       : undefined;
 
-    // Map frontend amenity values to backend enum values
-    const mapParkingType = (value: string): 'NONE' | 'STREET' | 'GARAGE' | 'DRIVEWAY' | 'ASSIGNED' => {
-      const mapping: Record<string, 'NONE' | 'STREET' | 'GARAGE' | 'DRIVEWAY' | 'ASSIGNED'> = {
-        'none': 'NONE',
-        'street': 'STREET',
-        'garage': 'GARAGE',
-        'private_lot': 'ASSIGNED',
-      };
-      return mapping[value.toLowerCase()] || 'NONE';
-    };
-
-    const mapLaundryType = (value: string): 'NONE' | 'IN_UNIT' | 'ON_SITE' | 'HOOKUPS' => {
-      const mapping: Record<string, 'NONE' | 'IN_UNIT' | 'ON_SITE' | 'HOOKUPS'> = {
-        'none': 'NONE',
-        'in_unit': 'IN_UNIT',
-        'on_site': 'ON_SITE',
-        'hookups': 'HOOKUPS',
-      };
-      return mapping[value.toLowerCase()] || 'NONE';
-    };
-
-    const mapACType = (value: string): 'NONE' | 'CENTRAL' | 'WINDOW' | 'PORTABLE' => {
-      const mapping: Record<string, 'NONE' | 'CENTRAL' | 'WINDOW' | 'PORTABLE'> = {
-        'none': 'NONE',
-        'central': 'CENTRAL',
-        'window': 'WINDOW',
-        'portable': 'PORTABLE',
-      };
-      return mapping[value.toLowerCase()] || 'NONE';
-    };
-
     // Prepare amenities
-    const amenities = formData.parking || formData.laundry || formData.ac
+    const amenities = formData.parking || formData.laundry || formData.ac || (Array.isArray(formData.features) && formData.features.length > 0)
       ? {
           parking: mapParkingType(formData.parking || 'none'),
           laundry: mapLaundryType(formData.laundry || 'none'),
@@ -176,6 +286,78 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit }) => 
   };
 
   const handleNext = async () => {
+    // Save basic amenities (parking, laundry, AC) when on step 3 (BasicAmenities)
+    if (currentStep === 3) {
+      if (!managerId || !propertyId) {
+        setError('Property information not available. Please start from step 1.');
+        return;
+      }
+
+      setIsSubmitting(true);
+      setError(null);
+
+      try {
+        // Prepare amenities with parking, laundry, and AC
+        // Always provide all three fields (required by DTO), using selected values or 'NONE' as default
+        const amenities = {
+          parking: mapParkingType(formData.parking || 'NONE'),
+          laundry: mapLaundryType(formData.laundry || 'NONE'),
+          airConditioning: mapACType(formData.ac || 'NONE'),
+          // Preserve existing features if any
+          propertyFeatures: Array.isArray(formData.features) ? formData.features : [],
+        };
+
+        const updateData: any = {
+          amenities: amenities,
+        };
+
+        await propertyService.update(propertyId, updateData);
+        setCurrentStep(prev => prev + 1);
+      } catch (err) {
+        console.error('Error updating basic amenities:', err);
+        setError(err instanceof Error ? err.message : 'Failed to save amenities. Please try again.');
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
+    // Save features when on step 4 (PropertyFeatures)
+    if (currentStep === 4) {
+      if (!managerId || !propertyId) {
+        setError('Property information not available. Please start from step 1.');
+        return;
+      }
+
+      setIsSubmitting(true);
+      setError(null);
+
+      try {
+        // Prepare amenities with features for update
+        // Include parking, laundry, AC from previous step and add features
+        // Always provide all three fields (required by DTO), using selected values or 'NONE' as default
+        const amenities = {
+          parking: mapParkingType(formData.parking || 'NONE'),
+          laundry: mapLaundryType(formData.laundry || 'NONE'),
+          airConditioning: mapACType(formData.ac || 'NONE'),
+          propertyFeatures: Array.isArray(formData.features) ? formData.features : [],
+        };
+
+        const updateData: any = {
+          amenities: amenities,
+        };
+
+        await propertyService.update(propertyId, updateData);
+        setCurrentStep(prev => prev + 1);
+      } catch (err) {
+        console.error('Error updating property features:', err);
+        setError(err instanceof Error ? err.message : 'Failed to save features. Please try again.');
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
     if (currentStep < 7) {
       setCurrentStep(prev => prev + 1);
     } else {
@@ -236,6 +418,17 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit }) => 
     }
   };
 
+  if (isLoadingProperty) {
+    return (
+      <div className="w-full flex flex-col items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-primary)] mb-4"></div>
+          <p className="text-gray-600">Loading property data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full flex flex-col items-center">
       {/* Step Content */}
@@ -253,6 +446,16 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit }) => 
       {/* Navigation Buttons - Only show for steps 2-7 (step 1 has its own save button) */}
       {currentStep > 1 && (
         <div className="flex gap-4 pt-4 w-full max-w-md justify-center">
+          {/* Back Button */}
+          <button
+            onClick={handleBack}
+            disabled={isSubmitting || currentStep === 1}
+            className="flex items-center gap-2 px-6 py-3 border border-gray-300 text-gray-700 bg-white rounded-lg font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ArrowLeft size={18} />
+            Back
+          </button>
+          {/* Next Button */}
           <NextStepButton onClick={handleNext} disabled={isSubmitting || !managerId || !propertyId}>
             {isSubmitting ? 'Updating...' : currentStep === 7 ? 'Complete Property' : 'Next'}
           </NextStepButton>

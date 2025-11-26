@@ -7,25 +7,32 @@ interface BasicAmenitiesProps {
 }
 
 const BasicAmenities: React.FC<BasicAmenitiesProps> = ({ data, updateData }) => {
+  // Parking options matching Prisma enum ParkingType
   const parkingOptions = [
-    { value: 'garage', label: 'Garage' },
-    { value: 'street', label: 'Street Parking' },
-    { value: 'private_lot', label: 'Private Lot' },
-    { value: 'none', label: 'None' },
+    { value: 'NONE', label: 'None' },
+    { value: 'STREET', label: 'Street Parking' },
+    { value: 'GARAGE', label: 'Garage' },
+    { value: 'DRIVEWAY', label: 'Driveway' },
+    { value: 'DEDICATED_SPOT', label: 'Dedicated Spot' },
+    { value: 'PRIVATE_LOT', label: 'Private Lot' },
+    { value: 'ASSIGNED', label: 'Assigned' },
   ];
 
+  // Laundry options matching Prisma enum LaundryType
   const laundryOptions = [
-    { value: 'in_unit', label: 'In Unit' },
-    { value: 'on_site', label: 'On Site' },
-    { value: 'hookups', label: 'Hookups Only' },
-    { value: 'none', label: 'None' },
+    { value: 'NONE', label: 'None' },
+    { value: 'IN_UNIT', label: 'In Unit' },
+    { value: 'ON_SITE', label: 'On Site' },
+    { value: 'HOOKUPS', label: 'Hookups Only' },
   ];
 
+  // Air Conditioning options matching Prisma enum AirConditioningType
   const acOptions = [
-    { value: 'central', label: 'Central Air' },
-    { value: 'window', label: 'Window Unit' },
-    { value: 'portable', label: 'Portable' },
-    { value: 'none', label: 'None' },
+    { value: 'NONE', label: 'None' },
+    { value: 'CENTRAL', label: 'Central Air' },
+    { value: 'WINDOW', label: 'Window Unit' },
+    { value: 'PORTABLE', label: 'Portable' },
+    { value: 'COOLER', label: 'Cooler' },
   ];
 
   return (
@@ -43,8 +50,9 @@ const BasicAmenities: React.FC<BasicAmenitiesProps> = ({ data, updateData }) => 
               value={data.parking || ''}
               onChange={(value) => updateData('parking', value)}
               options={parkingOptions}
-              placeholder="Select parking Type"
+              placeholder="Select parking type"
               buttonClassName="bg-[#76C043] text-white border border-gray-300 placeholder-white"
+              required
             />
           </div>
           
@@ -54,8 +62,9 @@ const BasicAmenities: React.FC<BasicAmenitiesProps> = ({ data, updateData }) => 
               value={data.laundry || ''}
               onChange={(value) => updateData('laundry', value)}
               options={laundryOptions}
-              placeholder="Select Laundry Type"
+              placeholder="Select laundry type"
               buttonClassName="bg-[#76C043] text-white border border-gray-300"
+              required
             />
           </div>
 
@@ -67,6 +76,7 @@ const BasicAmenities: React.FC<BasicAmenitiesProps> = ({ data, updateData }) => 
               options={acOptions}
               placeholder="Select AC type"
               buttonClassName="bg-[#76C043] text-white border border-gray-300"
+              required
             />
           </div>
         </div>

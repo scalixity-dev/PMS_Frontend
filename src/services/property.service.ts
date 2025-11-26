@@ -6,6 +6,9 @@ export interface BackendProperty {
   propertyName: string;
   propertyType: 'SINGLE' | 'MULTI';
   marketRent?: string | number | null;
+  sizeSqft?: string | number | null;
+  yearBuilt?: number | null;
+  description?: string | null;
   address?: {
     streetAddress: string;
     city: string;
@@ -26,6 +29,13 @@ export interface BackendProperty {
     photoUrl: string;
     isPrimary: boolean;
   }>;
+  amenities?: {
+    parking: 'NONE' | 'STREET' | 'GARAGE' | 'DRIVEWAY' | 'DEDICATED_SPOT' | 'PRIVATE_LOT' | 'ASSIGNED';
+    laundry: 'NONE' | 'IN_UNIT' | 'ON_SITE' | 'HOOKUPS';
+    airConditioning: 'NONE' | 'CENTRAL' | 'WINDOW' | 'PORTABLE' | 'COOLER';
+    propertyFeatures?: string[];
+    propertyAmenities?: string[];
+  } | null;
 }
 
 // Frontend Property Interface
@@ -87,17 +97,21 @@ class PropertyService {
    * Transform backend property to frontend property format
    */
   transformProperty(backendProperty: BackendProperty): Property {
-    // Format address
-    const addressParts = backendProperty.address
-      ? [
-          backendProperty.address.streetAddress,
-          backendProperty.address.city,
-          backendProperty.address.stateRegion,
-          backendProperty.address.zipCode,
-          backendProperty.address.country,
-        ].filter(Boolean)
-      : [];
-    const address = addressParts.length > 0 ? addressParts.join(', ') : 'Address not available';
+    // Format address - handle null, undefined, or empty address object
+    let address = 'Address not available';
+    if (backendProperty.address) {
+      const addressParts = [
+        backendProperty.address.streetAddress,
+        backendProperty.address.city,
+        backendProperty.address.stateRegion,
+        backendProperty.address.zipCode,
+        backendProperty.address.country,
+      ].filter(part => part && part.trim() !== '');
+      
+      if (addressParts.length > 0) {
+        address = addressParts.join(', ');
+      }
+    }
 
     // Get price from marketRent
     const price = backendProperty.marketRent
@@ -140,6 +154,56 @@ class PropertyService {
   }
 
   /**
+   * Get a single property by ID
+   */
+  async getOne(propertyId: string): Promise<BackendProperty> {
+    const response = await fetch(API_ENDPOINTS.PROPERTY.GET_ONE(propertyId), {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include', // Include cookies for JWT
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to fetch property';
+      
+      try {
+        const errorData = await response.json();
+        
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join('. ');
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+        
+        console.error('Property fetch error:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+        });
+      } catch (parseError) {
+        errorMessage = `Failed to fetch property: ${response.statusText}`;
+        console.error('Failed to parse error response:', parseError);
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get a single property and transform it
+   */
+  async getOneTransformed(propertyId: string): Promise<Property> {
+    const backendProperty = await this.getOne(propertyId);
+    return this.transformProperty(backendProperty);
+  }
+
+  /**
    * Get all properties and transform them
    */
   async getAllTransformed(): Promise<Property[]> {
@@ -173,9 +237,9 @@ class PropertyService {
       deposit?: number;
     };
     amenities?: {
-      parking: 'NONE' | 'STREET' | 'GARAGE' | 'DRIVEWAY' | 'ASSIGNED';
+      parking: 'NONE' | 'STREET' | 'GARAGE' | 'DRIVEWAY' | 'DEDICATED_SPOT' | 'PRIVATE_LOT' | 'ASSIGNED';
       laundry: 'NONE' | 'IN_UNIT' | 'ON_SITE' | 'HOOKUPS';
-      airConditioning: 'NONE' | 'CENTRAL' | 'WINDOW' | 'PORTABLE';
+      airConditioning: 'NONE' | 'CENTRAL' | 'WINDOW' | 'PORTABLE' | 'COOLER';
       propertyFeatures?: string[];
       propertyAmenities?: string[];
     };
@@ -249,9 +313,9 @@ class PropertyService {
       deposit?: number;
     };
     amenities?: {
-      parking: 'NONE' | 'STREET' | 'GARAGE' | 'DRIVEWAY' | 'ASSIGNED';
+      parking: 'NONE' | 'STREET' | 'GARAGE' | 'DRIVEWAY' | 'DEDICATED_SPOT' | 'PRIVATE_LOT' | 'ASSIGNED';
       laundry: 'NONE' | 'IN_UNIT' | 'ON_SITE' | 'HOOKUPS';
-      airConditioning: 'NONE' | 'CENTRAL' | 'WINDOW' | 'PORTABLE';
+      airConditioning: 'NONE' | 'CENTRAL' | 'WINDOW' | 'PORTABLE' | 'COOLER';
       propertyFeatures?: string[];
       propertyAmenities?: string[];
     };
