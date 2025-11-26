@@ -12,26 +12,18 @@ const steps = [
 
 const MaintenanceStepper: React.FC<MaintenanceStepperProps> = ({ currentStep }) => {
     return (
-        <div className="w-full max-w-3xl mx-auto mb-12">
-            <div className="relative">
-                {/* Connecting Line */}
-                <div className="absolute top-4 left-12 right-12 h-[3px] bg-gray-200 -translate-y-1/2 z-0">
-                    <div
-                        className="h-full bg-[#10B981] transition-all duration-300 ease-in-out"
-                        style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
-                    />
-                </div>
+        <div className="w-full max-w-3xl mx-auto mb-12 px-20">
+            <div className="flex items-center justify-between relative">
+                {steps.map((step, index) => {
+                    const isActive = step.id === currentStep;
+                    const isCompleted = step.id < currentStep;
 
-                {/* Steps */}
-                <div className="flex justify-between relative z-10">
-                    {steps.map((step) => {
-                        const isActive = step.id === currentStep;
-                        const isCompleted = step.id < currentStep;
-
-                        return (
-                            <div key={step.id} className="flex flex-col items-center gap-3">
+                    return (
+                        <React.Fragment key={step.id}>
+                            {/* Step Circle and Label */}
+                            <div className="flex flex-col items-center relative z-10">
                                 <div
-                                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors duration-300 ${isActive || isCompleted
+                                    className={`w-8 h-6 rounded-full flex items-center justify-center text-sm font-bold transition-colors duration-300 ${isActive || isCompleted
                                         ? 'bg-[#10B981] text-white' // Emerald green for active/completed
                                         : 'bg-[#6B7280] text-white' // Gray for inactive
                                         }`}
@@ -39,15 +31,27 @@ const MaintenanceStepper: React.FC<MaintenanceStepperProps> = ({ currentStep }) 
                                     {step.id}
                                 </div>
                                 <span
-                                    className={`text-sm font-medium ${isActive ? 'text-gray-900' : 'text-gray-500'
+                                    className={`absolute top-10 w-32 text-center text-sm font-medium ${isActive ? 'text-gray-900' : 'text-gray-500'
                                         }`}
                                 >
                                     {step.label}
                                 </span>
                             </div>
-                        );
-                    })}
-                </div>
+
+                            {/* Connector Line */}
+                            {index < steps.length - 1 && (
+                                <div className="flex-1 h-[3px] bg-gray-200 mx-2 relative">
+                                    <div
+                                        className="h-full bg-[#10B981] transition-all duration-300 ease-in-out"
+                                        style={{
+                                            width: isCompleted ? '100%' : '0%'
+                                        }}
+                                    />
+                                </div>
+                            )}
+                        </React.Fragment>
+                    );
+                })}
             </div>
         </div>
     );

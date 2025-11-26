@@ -8,6 +8,9 @@ import SubCategorySelection from './steps/SubCategorySelection';
 import IssueDefinition from './steps/IssueDefinition';
 import FinalDetails from './steps/FinalDetails';
 import MediaUpload from './steps/MediaUpload';
+import IssueDescription from './steps/IssueDescription';
+import PropertySelection from './steps/PropertySelection';
+import propertyImage from '../../../../assets/images/property.jpg';
 
 interface RequestTypeCardProps {
     type: 'basic' | 'advanced';
@@ -65,7 +68,7 @@ const AddMaintenanceRequest: React.FC = () => {
     // 3: Priority (Stepper Step 3)
 
     const [mainStep, setMainStep] = useState(0);
-    const [generalSubStep, setGeneralSubStep] = useState(1); // 1: Category, 2: Sub-category, 3: Issue Definition, 4: Final Details, 5: Media Upload
+    const [generalSubStep, setGeneralSubStep] = useState(1); // 1: Category, 2: Sub-category, 3: Issue Definition, 4: Final Details, 5: Media Upload, 6: Issue Description
 
     // Data State
     const [selectedType, setSelectedType] = useState<'basic' | 'advanced' | null>(null);
@@ -74,6 +77,42 @@ const AddMaintenanceRequest: React.FC = () => {
     const [selectedIssue, setSelectedIssue] = useState<string | null>(null);
     const [selectedFinalDetail, setSelectedFinalDetail] = useState<string | null>(null);
     const [mediaFiles, setMediaFiles] = useState<File[]>([]);
+    const [issueTitle, setIssueTitle] = useState('');
+    const [issueDescription, setIssueDescription] = useState('');
+    const [selectedProperty, setSelectedProperty] = useState<string | null>(null);
+
+    const properties = [
+        {
+            id: '1',
+            name: 'Grove Street',
+            unit: 'House',
+            address: '11 Grove Street, Boston, MA 12114, US',
+            price: 8210,
+            bedrooms: 3,
+            bathrooms: 2,
+            image: propertyImage
+        },
+        {
+            id: '2',
+            name: '721 Meadowview Lane',
+            unit: 'House',
+            address: '721 Meadowview Lane, Springfield, IL 62701, US',
+            price: 6500,
+            bedrooms: 4,
+            bathrooms: 2,
+            image: propertyImage
+        },
+        {
+            id: '3',
+            name: 'America Apartment',
+            unit: 'Penthouse',
+            address: '456 Park Avenue, New York, NY 10022, US',
+            price: 12000,
+            bedrooms: 2,
+            bathrooms: 2,
+            image: propertyImage
+        },
+    ];
 
     const handleNext = () => {
         if (mainStep === 0 && selectedType) {
@@ -89,8 +128,14 @@ const AddMaintenanceRequest: React.FC = () => {
             } else if (generalSubStep === 4) {
                 setGeneralSubStep(5);
             } else if (generalSubStep === 5) {
+                setGeneralSubStep(6);
+            } else if (generalSubStep === 6) {
                 // Proceed to Property Step
                 setMainStep(2);
+            }
+        } else if (mainStep === 2) {
+            if (selectedProperty) {
+                setMainStep(3);
             }
         }
     };
@@ -110,9 +155,9 @@ const AddMaintenanceRequest: React.FC = () => {
                 setSelectedFinalDetail(null);
                 setGeneralSubStep(5);
             } else if (generalSubStep === 5) {
-                // Skip media upload and proceed to Property Step
+                // Skip media upload and go to Issue Description
                 setMediaFiles([]);
-                setMainStep(2);
+                setGeneralSubStep(6);
             }
         }
     };
@@ -131,10 +176,12 @@ const AddMaintenanceRequest: React.FC = () => {
                 setGeneralSubStep(3);
             } else if (generalSubStep === 5) {
                 setGeneralSubStep(4);
+            } else if (generalSubStep === 6) {
+                setGeneralSubStep(5);
             }
         } else if (mainStep === 2) {
             setMainStep(1);
-            setGeneralSubStep(5); // Go back to media upload
+            setGeneralSubStep(6); // Go back to issue description
         } else {
             setMainStep(prev => prev - 1);
         }
@@ -149,7 +196,7 @@ const AddMaintenanceRequest: React.FC = () => {
     return (
         <div className="flex flex-col h-full w-full bg-[var(--color-background)] px-6 overflow-y-auto">
             <div className="flex-1 flex items-start justify-center pt-8">
-                <div className="bg-[#DFE5E3] rounded-[2rem] p-12 flex flex-col items-center max-w-6xl w-full shadow-sm min-h-[80vh] relative">
+                <div className="bg-[#DFE5E3] rounded-[2rem] p-12 flex flex-col items-center max-w-3xl w-full shadow-sm min-h-[80vh] relative">
 
                     {/* Back Button */}
                     <div className="absolute top-8 left-8">
@@ -164,7 +211,7 @@ const AddMaintenanceRequest: React.FC = () => {
 
                     {/* Stepper (Only show for Main Step 1+) */}
                     {mainStep >= 1 && (
-                        <div className="w-full mb-8">
+                        <div className="w-full mt-8 mb-6">
                             <MaintenanceStepper currentStep={getStepperStep()} />
                         </div>
                     )}
@@ -317,7 +364,28 @@ const AddMaintenanceRequest: React.FC = () => {
                                     </div>
                                 </>
                             )}
+
+                            {generalSubStep === 6 && (
+                                <IssueDescription
+                                    defaultTitle={`${selectedCategory || 'Category'} / ${selectedSubCategory || 'Sub-Category'} / ${selectedIssue || 'Issue'} / ${selectedFinalDetail || 'Detail'}`}
+                                    onContinue={(title, description) => {
+                                        setIssueTitle(title);
+                                        setIssueDescription(description);
+                                        setMainStep(2);
+                                    }}
+                                />
+                            )}
                         </div>
+                    )}
+
+                    {/* Step 2: Property Selection */}
+                    {mainStep === 2 && (
+                        <PropertySelection
+                            selectedProperty={selectedProperty}
+                            onSelect={setSelectedProperty}
+                            properties={properties}
+                            onNext={handleNext}
+                        />
                     )}
 
                 </div>
