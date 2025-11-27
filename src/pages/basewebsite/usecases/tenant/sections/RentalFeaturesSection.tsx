@@ -1,6 +1,6 @@
 import React from "react";
 import RentalFeatureCard from "../../../../../components/common/cards/RentalFeatureCard";
-import { CreditCard, Monitor, RotateCcw } from "lucide-react";
+import { CreditCard, Monitor, Undo2 } from "lucide-react";
 
 const RentalFeaturesSection: React.FC = () => {
   const features = [
@@ -17,7 +17,7 @@ const RentalFeaturesSection: React.FC = () => {
         "Purchase renters insurance directly from your PmsCloud account—fast, simple, and the easiest way to protect your belongings and peace of mind.",
     },
     {
-      icon: <RotateCcw size={40} />,
+      icon: <Undo2 size={40} />,
       title: "Support at Your Fingertips",
       description:
         "PMS support is here to help whenever you need it. From account setup to troubleshooting, our team makes sure you get answers quickly so you can keep managing your rental with ease.",

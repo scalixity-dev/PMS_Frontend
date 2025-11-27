@@ -16,6 +16,7 @@ interface CustomDropdownProps {
   disabled?: boolean;
   textClassName?: string;
   buttonClassName?: string;
+  labelClassName?: string;
 }
 
 const CustomDropdown: React.FC<CustomDropdownProps> = ({
@@ -27,7 +28,8 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
   required = false,
   disabled = false,
   buttonClassName = '',
-  textClassName = ''
+  textClassName = '',
+  labelClassName = ''
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -55,7 +57,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
   return (
     <div className="w-full relative" ref={dropdownRef}>
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className={`block text-sm font-medium text-gray-700 mb-2 ${labelClassName}`}>
           {label}{required && '*'}
         </label>
       )}
