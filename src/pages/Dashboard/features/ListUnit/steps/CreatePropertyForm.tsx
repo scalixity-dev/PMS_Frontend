@@ -3,6 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 import GeneralInfo from './create-property/GeneralInfo';
 import PropertySummaryMap from './create-property/PropertySummaryMap';
 import BasicAmenities from './BasicAmenities';
+import BasicAmenitiesExtended from './BasicAmenitiesExtended';
 import PropertyFeatures from './create-property/PropertyFeatures';
 import PropertyPhotos from './create-property/PropertyPhotos';
 import MarketingDescription from './create-property/MarketingDescription';
@@ -42,6 +43,8 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
     parking: '',
     laundry: '',
     ac: '',
+    // Extended Amenities
+    extendedAmenities: [] as string[],
     // Features
     features: [],
     // Photos
@@ -99,6 +102,7 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
           parking: property.amenities?.parking?.toLowerCase() || '',
           laundry: property.amenities?.laundry?.toLowerCase() || '',
           ac: property.amenities?.airConditioning?.toLowerCase() || '',
+          extendedAmenities: property.amenities?.propertyAmenities || [],
           features: property.amenities?.propertyFeatures || [],
           marketingDescription: property.description || '',
           coverPhoto: property.coverPhotoUrl || property.photos?.find(p => p.isPrimary)?.photoUrl || null,
@@ -114,22 +118,25 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
         // Step 1: GeneralInfo (propertyName, address, beds, bathrooms, etc.)
         // Step 2: PropertySummaryMap (always show after step 1)
         // Step 3: BasicAmenities (parking, laundry, ac)
-        // Step 4: PropertyFeatures (features array) - User wants to start here after GeneralInfo
-        // Step 5: PropertyPhotos (photos)
-        // Step 6: MarketingDescription (description)
-        // Step 7: AddRibbon (optional)
+        // Step 4: BasicAmenitiesExtended (extended amenities)
+        // Step 5: PropertyFeatures (features array)
+        // Step 6: PropertyPhotos (photos)
+        // Step 7: MarketingDescription (description)
+        // Step 8: AddRibbon (optional)
 
         let startingStep = 1;
-        // If GeneralInfo is completed (has propertyName and address), start from PropertyFeatures (step 4)
+        // If GeneralInfo is completed (has propertyName and address), start from BasicAmenitiesExtended (step 4)
         if (property.propertyName && property.address) {
-          startingStep = 4; // Start from PropertyFeatures after GeneralInfo
-          // If PropertyFeatures is also completed, continue to next steps
-          if (property.amenities?.propertyFeatures && property.amenities.propertyFeatures.length > 0) {
-            if (property.photos && property.photos.length > 0) {
-              startingStep = 5; // PropertyPhotos completed
-              if (property.description) {
-                startingStep = 6; // MarketingDescription completed
-                // Step 7 (AddRibbon) is optional, so we'll start from step 6 if description exists
+          startingStep = 4; // Start from BasicAmenitiesExtended after BasicAmenities
+          // If BasicAmenitiesExtended is also completed, continue to next steps
+          if (property.amenities?.propertyAmenities && property.amenities.propertyAmenities.length > 0) {
+            if (property.amenities?.propertyFeatures && property.amenities.propertyFeatures.length > 0) {
+              if (property.photos && property.photos.length > 0) {
+                startingStep = 6; // PropertyPhotos completed
+                if (property.description) {
+                  startingStep = 7; // MarketingDescription completed
+                  // Step 8 (AddRibbon) is optional, so we'll start from step 7 if description exists
+                }
               }
             }
           }
@@ -256,11 +263,12 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
       : undefined;
 
     // Prepare amenities
-    const amenities = formData.parking || formData.laundry || formData.ac || (Array.isArray(formData.features) && formData.features.length > 0)
+    const amenities = formData.parking || formData.laundry || formData.ac || (Array.isArray(formData.extendedAmenities) && formData.extendedAmenities.length > 0) || (Array.isArray(formData.features) && formData.features.length > 0)
       ? {
           parking: mapParkingType(formData.parking || 'none'),
           laundry: mapLaundryType(formData.laundry || 'none'),
           airConditioning: mapACType(formData.ac || 'none'),
+          propertyAmenities: Array.isArray(formData.extendedAmenities) ? formData.extendedAmenities : [],
           propertyFeatures: Array.isArray(formData.features) ? formData.features : [],
         }
       : undefined;
@@ -322,7 +330,8 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
           parking: mapParkingType(formData.parking || 'NONE'),
           laundry: mapLaundryType(formData.laundry || 'NONE'),
           airConditioning: mapACType(formData.ac || 'NONE'),
-          // Preserve existing features if any
+          // Preserve existing extended amenities and features if any
+          propertyAmenities: Array.isArray(formData.extendedAmenities) ? formData.extendedAmenities : [],
           propertyFeatures: Array.isArray(formData.features) ? formData.features : [],
         };
 
@@ -341,7 +350,7 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
       return;
     }
 
-    // Save features when on step 4 (PropertyFeatures)
+    // Save extended amenities when on step 4 (BasicAmenitiesExtended)
     if (currentStep === 4) {
       if (!managerId || !propertyId) {
         setError('Property information not available. Please start from step 1.');
@@ -352,13 +361,51 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
       setError(null);
 
       try {
+        // Prepare amenities with extended amenities for update
+        // Include parking, laundry, AC from previous step and add extended amenities
+        const amenities = {
+          parking: mapParkingType(formData.parking || 'NONE'),
+          laundry: mapLaundryType(formData.laundry || 'NONE'),
+          airConditioning: mapACType(formData.ac || 'NONE'),
+          propertyAmenities: Array.isArray(formData.extendedAmenities) ? formData.extendedAmenities : [],
+          // Preserve existing features if any
+          propertyFeatures: Array.isArray(formData.features) ? formData.features : [],
+        };
+
+        const updateData: any = {
+          amenities: amenities,
+        };
+
+        await propertyService.update(propertyId, updateData);
+        setCurrentStep(prev => prev + 1);
+      } catch (err) {
+        console.error('Error updating extended amenities:', err);
+        setError(err instanceof Error ? err.message : 'Failed to save extended amenities. Please try again.');
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
+    // Save features when on step 5 (PropertyFeatures)
+    if (currentStep === 5) {
+      if (!managerId || !propertyId) {
+        setError('Property information not available. Please start from step 1.');
+        return;
+      }
+
+      setIsSubmitting(true);
+      setError(null);
+
+      try {
         // Prepare amenities with features for update
-        // Include parking, laundry, AC from previous step and add features
+        // Include parking, laundry, AC, extended amenities from previous steps and add features
         // Always provide all three fields (required by DTO), using selected values or 'NONE' as default
         const amenities = {
           parking: mapParkingType(formData.parking || 'NONE'),
           laundry: mapLaundryType(formData.laundry || 'NONE'),
           airConditioning: mapACType(formData.ac || 'NONE'),
+          propertyAmenities: Array.isArray(formData.extendedAmenities) ? formData.extendedAmenities : [],
           propertyFeatures: Array.isArray(formData.features) ? formData.features : [],
         };
 
@@ -377,8 +424,8 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
       return;
     }
 
-    // Save photos when on step 5 (PropertyPhotos)
-    if (currentStep === 5) {
+    // Save photos when on step 6 (PropertyPhotos)
+    if (currentStep === 6) {
       // Validate cover photo (required)
       if (!formData.coverPhoto) {
         setError('Cover photo is required. Please upload a cover photo.');
@@ -503,8 +550,8 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
       return;
     }
 
-    // Save marketing description when on step 6 (MarketingDescription)
-    if (currentStep === 6) {
+    // Save marketing description when on step 7 (MarketingDescription)
+    if (currentStep === 7) {
       if (!managerId || !propertyId) {
         setError('Property information not available. Please start from step 1.');
         return;
@@ -530,8 +577,8 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
       return;
     }
 
-    // Save ribbon data when on step 7 (AddRibbon)
-    if (currentStep === 7) {
+    // Save ribbon data when on step 8 (AddRibbon)
+    if (currentStep === 8) {
       if (!managerId || !propertyId) {
         setError('Property information not available. Please start from step 1.');
         return;
@@ -568,7 +615,7 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
       return;
     }
 
-    if (currentStep < 7) {
+    if (currentStep < 8) {
       setCurrentStep(prev => prev + 1);
     } else {
       // Update existing property with remaining data
@@ -616,12 +663,14 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
       case 3:
         return <BasicAmenities data={formData} updateData={updateFormData} />;
       case 4:
-        return <PropertyFeatures data={formData} updateData={updateFormData} />;
+        return <BasicAmenitiesExtended data={formData} updateData={updateFormData} />;
       case 5:
-        return <PropertyPhotos data={formData} updateData={updateFormData} />;
+        return <PropertyFeatures data={formData} updateData={updateFormData} />;
       case 6:
-        return <MarketingDescription data={formData} updateData={updateFormData} />;
+        return <PropertyPhotos data={formData} updateData={updateFormData} />;
       case 7:
+        return <MarketingDescription data={formData} updateData={updateFormData} />;
+      case 8:
         return <AddRibbon data={formData} updateData={updateFormData} />;
       default:
         return null;
@@ -667,7 +716,7 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
           </button>
           {/* Next Button */}
           <NextStepButton onClick={handleNext} disabled={isSubmitting || !managerId || !propertyId}>
-            {isSubmitting ? 'Updating...' : currentStep === 7 ? 'Complete Property' : 'Next'}
+            {isSubmitting ? 'Updating...' : currentStep === 8 ? 'Complete Property' : 'Next'}
           </NextStepButton>
         </div>
       )}

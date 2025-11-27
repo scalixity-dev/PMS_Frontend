@@ -7,9 +7,10 @@ interface PropertyData {
     city?: string;
     stateRegion?: string;
     zip?: string;
-    marketRent?: number;
-    bathrooms?: number;
-    beds?: number;
+    marketRent?: number | string;
+    bathrooms?: number | string;
+    beds?: number | string;
+    coverPhotoUrl?: string;
 }
 
 interface PropertySummaryMapProps {
