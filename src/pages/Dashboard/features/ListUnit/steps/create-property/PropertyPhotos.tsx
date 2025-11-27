@@ -15,17 +15,54 @@ const PropertyPhotos: React.FC<PropertyPhotosProps> = ({ data, updateData }) => 
         youtubeUrl?: string;
     }>({});
 
+    // Helper function to check if cover photo exists (either URL string or file object)
+    const hasCoverPhoto = () => {
+        if (!data.coverPhoto) return false;
+        // If it's a string (URL), it exists
+        if (typeof data.coverPhoto === 'string') return true;
+        // If it's an object with file or previewUrl, it exists
+        if (typeof data.coverPhoto === 'object' && (data.coverPhoto.file || data.coverPhoto.previewUrl)) return true;
+        return false;
+    };
+
+    // Helper function to get cover photo URL (either from string or previewUrl)
+    const getCoverPhotoUrl = () => {
+        if (!data.coverPhoto) return null;
+        if (typeof data.coverPhoto === 'string') return data.coverPhoto;
+        if (typeof data.coverPhoto === 'object' && data.coverPhoto.previewUrl) return data.coverPhoto.previewUrl;
+        return null;
+    };
+
+    // Helper function to check if gallery photos exist
+    const hasGalleryPhotos = () => {
+        if (!data.galleryPhotos || data.galleryPhotos.length === 0) return false;
+        return data.galleryPhotos.some((photo: any) => {
+            // If it's a string (URL), it exists
+            if (typeof photo === 'string') return true;
+            // If it's an object with file or previewUrl, it exists
+            if (typeof photo === 'object' && (photo.file || photo.previewUrl)) return true;
+            return false;
+        });
+    };
+
+    // Helper function to get gallery photo URL
+    const getGalleryPhotoUrl = (photo: any) => {
+        if (typeof photo === 'string') return photo;
+        if (typeof photo === 'object' && photo.previewUrl) return photo.previewUrl;
+        return null;
+    };
+
     // Validate form whenever data changes
     useEffect(() => {
         const newErrors: typeof errors = {};
         
         // Validate cover photo (required)
-        if (!data.coverPhoto) {
+        if (!hasCoverPhoto()) {
             newErrors.coverPhoto = 'Cover photo is required';
         }
         
         // Validate gallery photos (required - at least one)
-        if (!data.galleryPhotos || data.galleryPhotos.length === 0) {
+        if (!hasGalleryPhotos()) {
             newErrors.galleryPhotos = 'At least one gallery photo is required';
         }
         
@@ -135,6 +172,10 @@ const PropertyPhotos: React.FC<PropertyPhotosProps> = ({ data, updateData }) => 
     const removeCoverPhoto = (e: React.MouseEvent) => {
         e.stopPropagation();
         updateData('coverPhoto', null);
+        // Reset input
+        if (coverInputRef.current) {
+            coverInputRef.current.value = '';
+        }
     };
 
     const removeGalleryPhoto = (index: number) => {
@@ -173,26 +214,35 @@ const PropertyPhotos: React.FC<PropertyPhotosProps> = ({ data, updateData }) => 
                     <div
                         onClick={handleCoverClick}
                         className={`w-full h-64 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all relative overflow-hidden ${
-                            data.coverPhoto
+                            hasCoverPhoto()
                                 ? 'border-transparent'
                                 : errors.coverPhoto
                                 ? 'bg-red-50 border-red-300 hover:bg-red-100'
                                 : 'bg-[#F3F4F6] border-gray-300 hover:bg-gray-100'
                         }`}
                     >
-                        {data.coverPhoto ? (
+                        {hasCoverPhoto() ? (
                             <>
                                 <img
-                                    src={data.coverPhoto.previewUrl}
+                                    src={getCoverPhotoUrl() || ''}
                                     alt="Cover"
                                     className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                        // Fallback if image fails to load
+                                        const target = e.target as HTMLImageElement;
+                                        target.style.display = 'none';
+                                    }}
                                 />
                                 <button
                                     onClick={removeCoverPhoto}
-                                    className="absolute top-4 right-4 p-2 bg-white/80 rounded-full hover:bg-white transition-colors"
+                                    className="absolute top-4 right-4 p-2 bg-white/80 rounded-full hover:bg-white transition-colors z-10"
                                 >
                                     <X size={20} className="text-gray-600" />
                                 </button>
+                                {/* Overlay text for replacing photo */}
+                                <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
+                                    <span className="text-white font-medium">Click to replace photo</span>
+                                </div>
                             </>
                         ) : (
                             <>
@@ -214,22 +264,32 @@ const PropertyPhotos: React.FC<PropertyPhotosProps> = ({ data, updateData }) => 
                 {/* Gallery Photos */}
                 <div className="w-full">
                     <div className="flex flex-wrap items-center gap-4">
-                        {/* Uploaded Images */}
-                        {data.galleryPhotos?.map((photo: any, index: number) => (
-                            <div key={index} className="relative w-32 h-32 rounded-2xl overflow-hidden border border-gray-200 group">
-                                <img
-                                    src={photo.previewUrl}
-                                    alt={`Gallery ${index + 1}`}
-                                    className="w-full h-full object-cover"
-                                />
-                                <button
-                                    onClick={() => removeGalleryPhoto(index)}
-                                    className="absolute top-2 right-2 p-1 bg-white/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
-                                >
-                                    <X size={16} className="text-gray-600" />
-                                </button>
-                            </div>
-                        ))}
+                        {/* Uploaded Images - Show both existing (URLs) and new uploads */}
+                        {data.galleryPhotos?.map((photo: any, index: number) => {
+                            const photoUrl = getGalleryPhotoUrl(photo);
+                            if (!photoUrl) return null;
+                            
+                            return (
+                                <div key={index} className="relative w-32 h-32 rounded-2xl overflow-hidden border border-gray-200 group">
+                                    <img
+                                        src={photoUrl}
+                                        alt={`Gallery ${index + 1}`}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            // Fallback if image fails to load
+                                            const target = e.target as HTMLImageElement;
+                                            target.style.display = 'none';
+                                        }}
+                                    />
+                                    <button
+                                        onClick={() => removeGalleryPhoto(index)}
+                                        className="absolute top-2 right-2 p-1 bg-white/80 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white z-10"
+                                    >
+                                        <X size={16} className="text-gray-600" />
+                                    </button>
+                                </div>
+                            );
+                        })}
 
                         {/* Add Gallery Button */}
                         <button

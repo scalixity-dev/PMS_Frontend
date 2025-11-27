@@ -15,12 +15,22 @@ const PropertySummaryMap: FC<PropertySummaryMapProps> = ({ data, onBack }) => {
             </div>
 
             <div className="bg-white rounded-xl shadow-md overflow-hidden w-full max-w-md mx-auto">
-                {/* Map Placeholder */}
-                <div className="relative h-48 bg-gray-200 flex items-center justify-center">
-                    <div className="text-center">
-                        <span className="text-4xl mb-2 block">🗺️</span>
-                        <span className="text-gray-500 font-medium">Map View</span>
-                    </div>
+                {/* Property Cover Photo or Map Placeholder */}
+                <div className="relative h-48 bg-gray-200">
+                    {data.coverPhotoUrl ? (
+                        <img 
+                            src={data.coverPhotoUrl} 
+                            alt={data.propertyName || 'Property'}
+                            className="w-full h-full object-cover"
+                        />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                            <div className="text-center">
+                                <span className="text-4xl mb-2 block">🗺️</span>
+                                <span className="text-gray-500 font-medium">Map View</span>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Property Details */}

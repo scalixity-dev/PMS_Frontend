@@ -11,6 +11,8 @@ export interface BackendProperty {
   description?: string | null;
   coverPhotoUrl?: string | null;
   youtubeUrl?: string | null;
+  ribbonType?: 'NONE' | 'CHAT' | 'CUSTOM' | null;
+  ribbonTitle?: string | null;
   address?: {
     streetAddress: string;
     city: string;
@@ -130,10 +132,11 @@ class PropertyService {
         : Number(backendProperty.singleUnitDetails.baths) || 0
       : 0;
 
-    // Get primary photo or first photo
-    const primaryPhoto = backendProperty.photos?.find((p) => p.isPrimary);
-    const firstPhoto = backendProperty.photos?.[0];
-    const image = primaryPhoto?.photoUrl || firstPhoto?.photoUrl || '';
+    // Prioritize coverPhotoUrl, then primary photo, then first photo
+    const image = backendProperty.coverPhotoUrl 
+      || backendProperty.photos?.find((p) => p.isPrimary)?.photoUrl 
+      || backendProperty.photos?.[0]?.photoUrl 
+      || '';
 
     // Determine unit name
     const unit =
