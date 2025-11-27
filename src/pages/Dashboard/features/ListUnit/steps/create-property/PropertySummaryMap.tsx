@@ -1,12 +1,23 @@
-import React from 'react';
+import type { FC } from 'react';
 import { BedDouble, Bath } from 'lucide-react';
 
+interface PropertyData {
+    propertyName?: string;
+    address?: string;
+    city?: string;
+    stateRegion?: string;
+    zip?: string;
+    marketRent?: number;
+    bathrooms?: number;
+    beds?: number;
+}
+
 interface PropertySummaryMapProps {
-    data: any;
+    data: PropertyData;
     onBack: () => void;
 }
 
-const PropertySummaryMap: React.FC<PropertySummaryMapProps> = ({ data, onBack }) => {
+const PropertySummaryMap: FC<PropertySummaryMapProps> = ({ data, onBack }) => {
     return (
         <div className="w-full flex flex-col items-center">
             <div className="text-center mb-8">

@@ -14,8 +14,6 @@ import NextStepButton from './components/NextStepButton';
 import PetPolicy from './steps/PetPolicy';
 import PetDetails from './steps/PetDetails';
 
-import propertyImage from '../../../../assets/images/property.jpg';
-
 const ListUnit: React.FC = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
@@ -64,41 +62,7 @@ const ListUnit: React.FC = () => {
     displayPhonePublicly: false,
   });
 
-  const properties = [
-    {
-      id: '1',
-      name: 'Grove Street',
-      unit: 'House',
-      address: '11 Grove Street, Boston, MA 12114, US',
-      price: 8210,
-      bedrooms: 3,
-      bathrooms: 2,
-      image: propertyImage
-    },
-    {
-      id: '2',
-      name: '721 Meadowview Lane',
-      unit: 'House',
-      address: '721 Meadowview Lane, Springfield, IL 62701, US',
-      price: 6500,
-      bedrooms: 4,
-      bathrooms: 2,
-      image: propertyImage
-    },
-    {
-      id: '3',
-      name: 'America Apartment',
-      unit: 'Penthouse',
-      address: '456 Park Avenue, New York, NY 10022, US',
-      price: 12000,
-      bedrooms: 2,
-      bathrooms: 2,
-      image: propertyImage
-    },
-  ];
-
-  const selectedProperty = properties.find(p => p.id === formData.property);
-  const propertyDisplay = selectedProperty ? selectedProperty.address : (formData.property || "New Property");
+  const propertyDisplay = formData.property || "New Property";
 
   const updateFormData = (key: string, value: any) => {
     setFormData(prev => ({ ...prev, [key]: value }));
@@ -232,9 +196,22 @@ const ListUnit: React.FC = () => {
     setShowCreateProperty(true);
   };
 
+  const handleEditProperty = (propertyId: string) => {
+    updateFormData('property', propertyId);
+    setShowCreateProperty(true);
+  };
+
+  const handlePropertyNext = (propertyId: string) => {
+    // All property steps are complete, proceed to lease (step 2)
+    updateFormData('property', propertyId);
+    setCurrentStep(2);
+    setLeasingStep(1);
+  };
+
   const handlePropertyCreated = (propertyData: any) => {
-    console.log('New Property Created:', propertyData);
-    updateFormData('property', 'new-property-id');
+    console.log('Property Created/Updated:', propertyData);
+    const propertyId = propertyData.id || formData.property;
+    updateFormData('property', propertyId);
     setShowCreateProperty(false);
     setCurrentStep(2);
   };
@@ -263,7 +240,10 @@ const ListUnit: React.FC = () => {
           <div className="flex flex-col items-center justify-start w-full">
             {showCreateProperty ? (
               <div className="w-full flex flex-col items-center">
-                <CreatePropertyForm onSubmit={handlePropertyCreated} />
+                <CreatePropertyForm 
+                  onSubmit={handlePropertyCreated}
+                  propertyId={formData.property || undefined}
+                />
               </div>
             ) : (
               <>
@@ -277,7 +257,8 @@ const ListUnit: React.FC = () => {
                       data={formData}
                       updateData={updateFormData}
                       onCreateProperty={handleCreateProperty}
-                      properties={properties}
+                      onEditProperty={handleEditProperty}
+                      onNext={handlePropertyNext}
                     />
                     {formData.property && (
                       <div className="w-full max-w-md mt-6 flex justify-center">

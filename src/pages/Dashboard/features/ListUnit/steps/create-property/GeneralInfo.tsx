@@ -1,12 +1,99 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Country, State, City } from 'country-state-city';
+import type { ICountry, IState, ICity } from 'country-state-city';
 import CustomDropdown from '../../../../components/CustomDropdown';
+import { propertyService } from '../../../../../../services/property.service';
+import { authService } from '../../../../../../services/auth.service';
+import NextStepButton from '../../components/NextStepButton';
 
 interface GeneralInfoProps {
     data: any;
     updateData: (key: string, value: any) => void;
+    onPropertyCreated?: (propertyId: string) => void;
+    propertyId?: string; // If property already exists, use this to update instead of create
 }
 
-const GeneralInfo: React.FC<GeneralInfoProps> = ({ data, updateData }) => {
+const GeneralInfo: React.FC<GeneralInfoProps> = ({ data, updateData, onPropertyCreated, propertyId }) => {
+    const [countries, setCountries] = useState<ICountry[]>([]);
+    const [states, setStates] = useState<IState[]>([]);
+    const [cities, setCities] = useState<ICity[]>([]);
+    const [isSaving, setIsSaving] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
+    const [managerId, setManagerId] = useState<string | null>(null);
+
+    // Load all countries on mount
+    useEffect(() => {
+        setCountries(Country.getAllCountries());
+    }, []);
+
+    // Get current user ID on mount
+    useEffect(() => {
+        const fetchUser = async () => {
+            try {
+                const user = await authService.getCurrentUser();
+                setManagerId(user.userId);
+            } catch (error) {
+                console.error('Failed to fetch user:', error);
+            }
+        };
+        fetchUser();
+    }, []);
+
+    // Load states when country changes
+    useEffect(() => {
+        if (data.country) {
+            const countryStates = State.getStatesOfCountry(data.country);
+            setStates(countryStates);
+            // Reset state and city when country changes
+            if (data.stateRegion) {
+                updateData('stateRegion', '');
+            }
+            if (data.city) {
+                updateData('city', '');
+            }
+        } else {
+            setStates([]);
+        }
+    }, [data.country]);
+
+    // Load cities when state changes
+    useEffect(() => {
+        if (data.country && data.stateRegion) {
+            const stateCities = City.getCitiesOfState(data.country, data.stateRegion);
+            setCities(stateCities);
+            // Reset city when state changes
+            if (data.city) {
+                updateData('city', '');
+            }
+        } else {
+            setCities([]);
+        }
+    }, [data.country, data.stateRegion]);
+
+    // Convert countries to dropdown options
+    const countryOptions = useMemo(() => {
+        return countries.map(country => ({
+            value: country.isoCode,
+            label: country.name
+        })).sort((a, b) => a.label.localeCompare(b.label));
+    }, [countries]);
+
+    // Convert states to dropdown options
+    const stateOptions = useMemo(() => {
+        return states.map(state => ({
+            value: state.isoCode,
+            label: state.name
+        })).sort((a, b) => a.label.localeCompare(b.label));
+    }, [states]);
+
+    // Convert cities to dropdown options
+    const cityOptions = useMemo(() => {
+        return cities.map(city => ({
+            value: city.name,
+            label: city.name
+        })).sort((a, b) => a.label.localeCompare(b.label));
+    }, [cities]);
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         updateData(name, value);
@@ -14,6 +101,181 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ data, updateData }) => {
 
     const handleRadioChange = (value: string) => {
         updateData('isManufactured', value);
+    };
+
+    const handleCountryChange = (value: string) => {
+        updateData('country', value);
+    };
+
+    const handleStateChange = (value: string) => {
+        updateData('stateRegion', value);
+    };
+
+    const handleCityChange = (value: string) => {
+        updateData('city', value);
+    };
+
+    // Get currency symbol based on country code
+    const getCurrencySymbol = (countryCode?: string): string => {
+        if (!countryCode) return '$'; // Default to USD
+        
+        const currencyMap: Record<string, string> = {
+            // Major currencies
+            'US': '$',      // United States - USD
+            'CA': 'C$',     // Canada - CAD
+            'GB': '£',      // United Kingdom - GBP
+            'AU': 'A$',     // Australia - AUD
+            'NZ': 'NZ$',    // New Zealand - NZD
+            'IN': '₹',      // India - INR
+            'JP': '¥',      // Japan - JPY
+            'CN': '¥',      // China - CNY
+            'KR': '₩',      // South Korea - KRW
+            'SG': 'S$',     // Singapore - SGD
+            'HK': 'HK$',    // Hong Kong - HKD
+            'MY': 'RM',     // Malaysia - MYR
+            'TH': '฿',      // Thailand - THB
+            'ID': 'Rp',     // Indonesia - IDR
+            'PH': '₱',      // Philippines - PHP
+            'VN': '₫',      // Vietnam - VND
+            'BD': '৳',      // Bangladesh - BDT
+            'PK': '₨',      // Pakistan - PKR
+            'LK': 'Rs',     // Sri Lanka - LKR
+            'AE': 'د.إ',    // UAE - AED
+            'SA': '﷼',      // Saudi Arabia - SAR
+            'EG': 'E£',     // Egypt - EGP
+            'ZA': 'R',      // South Africa - ZAR
+            'NG': '₦',      // Nigeria - NGN
+            'KE': 'KSh',    // Kenya - KES
+            'BR': 'R$',     // Brazil - BRL
+            'MX': '$',      // Mexico - MXN
+            'AR': '$',      // Argentina - ARS
+            'CL': '$',      // Chile - CLP
+            'CO': '$',      // Colombia - COP
+            'PE': 'S/',     // Peru - PEN
+            'EU': '€',      // Eurozone - EUR
+            'DE': '€',      // Germany - EUR
+            'FR': '€',      // France - EUR
+            'IT': '€',      // Italy - EUR
+            'ES': '€',      // Spain - EUR
+            'NL': '€',      // Netherlands - EUR
+            'BE': '€',      // Belgium - EUR
+            'AT': '€',      // Austria - EUR
+            'PT': '€',      // Portugal - EUR
+            'IE': '€',      // Ireland - EUR
+            'FI': '€',      // Finland - EUR
+            'GR': '€',      // Greece - EUR
+            'PL': 'zł',     // Poland - PLN
+            'CZ': 'Kč',     // Czech Republic - CZK
+            'HU': 'Ft',     // Hungary - HUF
+            'RO': 'lei',    // Romania - RON
+            'SE': 'kr',     // Sweden - SEK
+            'NO': 'kr',     // Norway - NOK
+            'DK': 'kr',     // Denmark - DKK
+            'CH': 'CHF',    // Switzerland - CHF
+            'RU': '₽',      // Russia - RUB
+            'TR': '₺',      // Turkey - TRY
+            'IL': '₪',      // Israel - ILS
+        };
+        
+        return currencyMap[countryCode] || '$'; // Default to USD if country not found
+    };
+
+    // Get current currency symbol based on selected country
+    const currencySymbol = useMemo(() => {
+        return getCurrencySymbol(data.country);
+    }, [data.country]);
+
+    // Validate required fields for GeneralInfo
+    const isFormValid = () => {
+        return !!(
+            data.propertyName &&
+            data.propertyType &&
+            data.isManufactured &&
+            data.marketRent &&
+            data.beds &&
+            data.bathrooms &&
+            data.sizeSquareFt &&
+            data.yearBuilt &&
+            data.address &&
+            data.city &&
+            data.stateRegion &&
+            data.country &&
+            data.zip &&
+            managerId
+        );
+    };
+
+    // Map GeneralInfo data to backend format
+    const mapGeneralInfoToBackend = () => {
+        const propertyType: 'SINGLE' | 'MULTI' = 'SINGLE'; // Default to SINGLE for GeneralInfo
+
+        const address = data.address && data.city && data.stateRegion && data.zip && data.country
+            ? {
+                streetAddress: data.address,
+                city: data.city,
+                stateRegion: data.stateRegion,
+                zipCode: data.zip,
+                country: data.country,
+            }
+            : undefined;
+
+        const singleUnitDetails = data.beds
+            ? {
+                beds: parseInt(data.beds) || 0,
+                baths: data.bathrooms ? parseFloat(data.bathrooms) : undefined,
+                marketRent: data.marketRent ? parseFloat(data.marketRent) : undefined,
+            }
+            : undefined;
+
+        return {
+            managerId: managerId!,
+            propertyName: data.propertyName,
+            propertyType,
+            yearBuilt: data.yearBuilt ? parseInt(data.yearBuilt) : undefined,
+            sizeSqft: data.sizeSquareFt ? parseFloat(data.sizeSquareFt) : undefined,
+            marketRent: data.marketRent ? parseFloat(data.marketRent) : undefined,
+            address,
+            singleUnitDetails,
+        };
+    };
+
+    // Handle save/create property
+    const handleSaveAndContinue = async () => {
+        if (!isFormValid()) {
+            setSaveError('Please fill in all required fields');
+            return;
+        }
+
+        if (!managerId) {
+            setSaveError('User information not loaded. Please refresh the page.');
+            return;
+        }
+
+        setIsSaving(true);
+        setSaveError(null);
+
+        try {
+            if (propertyId) {
+                // Update existing property
+                const updateData = mapGeneralInfoToBackend();
+                await propertyService.update(propertyId, updateData);
+                if (onPropertyCreated) {
+                    onPropertyCreated(propertyId);
+                }
+            } else {
+                // Create new property
+                const createData = mapGeneralInfoToBackend();
+                const createdProperty = await propertyService.create(createData);
+                if (onPropertyCreated && createdProperty.id) {
+                    onPropertyCreated(createdProperty.id);
+                }
+            }
+        } catch (err) {
+            console.error('Error saving property:', err);
+            setSaveError(err instanceof Error ? err.message : 'Failed to save property. Please try again.');
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -93,17 +355,20 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ data, updateData }) => {
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Market Rent*
+                            Market Rent* {data.country && <span className="text-xs text-gray-500 font-normal">({currencySymbol})</span>}
                         </label>
-                        <input
-                            type="number"
-                            name="marketRent"
-                            value={data.marketRent}
-                            onChange={handleChange}
-                            placeholder="0.00"
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] bg-white text-gray-900 placeholder-gray-400"
-                            required
-                        />
+                        <div className="relative">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 font-medium">{currencySymbol}</span>
+                            <input
+                                type="number"
+                                name="marketRent"
+                                value={data.marketRent}
+                                onChange={handleChange}
+                                placeholder="0.00"
+                                className="w-full pl-8 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] bg-white text-gray-900 placeholder-gray-400"
+                                required
+                            />
+                        </div>
                     </div>
                     <CustomDropdown
                         label="Beds"
@@ -180,62 +445,49 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ data, updateData }) => {
                     <input
                         type="text"
                         name="address"
-                        value={data.address}
+                        value={data.address || ''}
                         onChange={handleChange}
-                        placeholder="Address"
+                        placeholder="Enter street address"
                         className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] bg-white text-gray-900 placeholder-gray-400"
                         required
                     />
                 </div>
 
-                {/* City & State/Region */}
+                {/* Country & State/Region */}
                 <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            City*
-                        </label>
-                        <input
-                            type="text"
-                            name="city"
-                            value={data.city}
-                            onChange={handleChange}
-                            placeholder="City"
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] bg-white text-gray-900 placeholder-gray-400"
-                            required
-                        />
-                    </div>
                     <CustomDropdown
-                        label="State / Region"
-                        value={data.stateRegion}
-                        onChange={(value) => updateData('stateRegion', value)}
-                        options={[
-                            { value: 'AL', label: 'Alabama' },
-                            { value: 'AK', label: 'Alaska' },
-                            { value: 'AZ', label: 'Arizona' },
-                            { value: 'CA', label: 'California' },
-                            { value: 'FL', label: 'Florida' },
-                            { value: 'NY', label: 'New York' },
-                            { value: 'TX', label: 'Texas' }
-                        ]}
-                        placeholder="Select state"
+                        label="Country*"
+                        value={data.country}
+                        onChange={handleCountryChange}
+                        options={countryOptions}
+                        placeholder="Select country"
                         required
+                        disabled={countryOptions.length === 0}
+                        searchable={true}
+                    />
+                    <CustomDropdown
+                        label="State / Region*"
+                        value={data.stateRegion}
+                        onChange={handleStateChange}
+                        options={stateOptions}
+                        placeholder={data.country ? "Select state" : "Select country first"}
+                        required
+                        disabled={!data.country || stateOptions.length === 0}
+                        searchable={true}
                     />
                 </div>
 
-                {/* Country & Zip */}
+                {/* City & Zip */}
                 <div className="grid grid-cols-2 gap-4">
                     <CustomDropdown
-                        label="Country"
-                        value={data.country}
-                        onChange={(value) => updateData('country', value)}
-                        options={[
-                            { value: 'US', label: 'United States' },
-                            { value: 'CA', label: 'Canada' },
-                            { value: 'UK', label: 'United Kingdom' },
-                            { value: 'IN', label: 'India' }
-                        ]}
-                        placeholder="Select country"
+                        label="City*"
+                        value={data.city}
+                        onChange={handleCityChange}
+                        options={cityOptions}
+                        placeholder={data.stateRegion ? "Select city" : data.country ? "Select state first" : "Select country first"}
                         required
+                        disabled={!data.stateRegion || cityOptions.length === 0}
+                        searchable={true}
                     />
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -251,6 +503,23 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ data, updateData }) => {
                             required
                         />
                     </div>
+                </div>
+
+                {/* Error Message */}
+                {saveError && (
+                    <div className="w-full max-w-md bg-red-50 border border-red-200 rounded-lg p-4">
+                        <p className="text-red-800 text-sm">{saveError}</p>
+                    </div>
+                )}
+
+                {/* Save Button */}
+                <div className="flex justify-center pt-6">
+                    <NextStepButton 
+                        onClick={handleSaveAndContinue} 
+                        disabled={isSaving || !managerId || !isFormValid()}
+                    >
+                        {isSaving ? 'Saving...' : propertyId ? 'Update & Continue' : 'Save & Continue'}
+                    </NextStepButton>
                 </div>
             </div>
         </div>
