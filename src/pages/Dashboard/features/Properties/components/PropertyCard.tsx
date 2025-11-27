@@ -1,7 +1,8 @@
-import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DollarSign, Wrench, User } from 'lucide-react';
 
 interface PropertyCardProps {
+    id: number;
     image: string;
     name: string;
     address: string;
@@ -10,12 +11,15 @@ interface PropertyCardProps {
 }
 
 const PropertyCard: React.FC<PropertyCardProps> = ({
+    id,
     image,
     name,
     address,
     balance,
     type = 'Single Family'
 }) => {
+    const navigate = useNavigate();
+
     return (
         <div className="bg-[#F6F6F8] rounded-[2rem] p-4 shadow-sm relative">
             <div className="flex gap-4">
@@ -44,7 +48,10 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
                         {address}
                     </p>
 
-                    <button className="bg-[#82D64D] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#72c042] transition-colors">
+                    <button
+                        onClick={() => navigate(`/dashboard/properties/${id}`)}
+                        className="bg-[#82D64D] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#72c042] transition-colors"
+                    >
                         View Property
                     </button>
                 </div>

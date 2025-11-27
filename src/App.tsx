@@ -27,6 +27,7 @@ import AddExpenseInvoice from './pages/Dashboard/features/Transactions/AddExpens
 import AddMaintenanceRequest from './pages/Dashboard/features/Maintenance/AddMaintenanceRequest';
 import Properties from './pages/Dashboard/features/Properties/Properties';
 import Equipments from './pages/Dashboard/features/Equipments/Equipments';
+import PropertyDetail from './pages/Dashboard/features/Properties/PropertyDetail';
 // import ListUnit from './pages/Dashboard/features/ListUnit/ListUnit';
 
 const App: React.FC = () => {
@@ -65,6 +66,7 @@ const App: React.FC = () => {
           />
           <Route path="/dashboard/list-unit" element={<ListUnit />} />
           <Route path="/dashboard/properties" element={<Properties />} />
+          <Route path="/dashboard/properties/:id" element={<PropertyDetail />} />
           <Route path="/dashboard/equipments" element={<Equipments />} />
           <Route path="/dashboard/property/add" element={<AddProperty />} />
           <Route path="/dashboard/accounting/transactions/income/add" element={<AddIncomeInvoice />} />
