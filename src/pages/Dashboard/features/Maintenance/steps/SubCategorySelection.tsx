@@ -8,8 +8,6 @@ interface SubCategorySelectionProps {
 }
 
 // Mock data mapping categories to sub-categories
-// For now, we'll just implement the ones from the screenshot (Appliances)
-// In a real app, this would likely be more extensive
 const subCategoriesMap: Record<string, Array<{ id: string; label: string }>> = {
     appliances: [
         { id: 'refrigerator', label: 'Refrigerator' },
@@ -19,6 +17,42 @@ const subCategoriesMap: Record<string, Array<{ id: string; label: string }>> = {
         { id: 'water_heater', label: 'Water Heater' },
         { id: 'cooling', label: 'Cooling' },
     ],
+    electrical: [
+        { id: 'outlet', label: 'Outlet' },
+        { id: 'lighting', label: 'Lighting' },
+        { id: 'circuit_breaker', label: 'Circuit Breaker' },
+        { id: 'wiring', label: 'Wiring' },
+        { id: 'switches', label: 'Switches' },
+    ],
+    exterior: [
+        { id: 'roof', label: 'Roof' },
+        { id: 'doors', label: 'Doors' },
+        { id: 'windows', label: 'Windows' },
+        { id: 'siding', label: 'Siding' },
+        { id: 'gutters', label: 'Gutters' },
+    ],
+    household: [
+        { id: 'doors_interior', label: 'Doors' },
+        { id: 'windows_interior', label: 'Windows' },
+        { id: 'closets', label: 'Closets' },
+        { id: 'flooring', label: 'Flooring' },
+        { id: 'pest_control', label: 'Pest Control' },
+    ],
+    outdoors: [
+        { id: 'landscaping', label: 'Landscaping' },
+        { id: 'fencing', label: 'Fencing' },
+        { id: 'pool', label: 'Pool' },
+        { id: 'porch', label: 'Porch' },
+        { id: 'parking', label: 'Parking' },
+    ],
+    plumbing: [
+        { id: 'sink', label: 'Sink' },
+        { id: 'toilet', label: 'Toilet' },
+        { id: 'shower', label: 'Shower / Bath' },
+        { id: 'pipes', label: 'Pipes' },
+        { id: 'faucets', label: 'Faucets' },
+        { id: 'drains', label: 'Drains' },
+    ],
     // Fallback for other categories if selected
     default: [
         { id: 'other', label: 'Other' },
@@ -26,7 +60,7 @@ const subCategoriesMap: Record<string, Array<{ id: string; label: string }>> = {
 };
 
 const SubCategorySelection: React.FC<SubCategorySelectionProps> = ({ selectedSubCategory, onSelect, category }) => {
-    const items = subCategoriesMap[category] || subCategoriesMap['appliances']; // Default to appliances for demo/screenshot match if category not found
+    const items = subCategoriesMap[category] || subCategoriesMap['default'];
 
     return (
         <div className="w-full max-w-4xl mx-auto">

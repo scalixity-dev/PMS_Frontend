@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import CustomDropdown from '../../../components/CustomDropdown';
 import DatePicker from '../../../../../components/ui/DatePicker';
+import Toggle from '../../../../../components/Toggle';
 import { Plus, Trash2, X, AlertTriangle } from 'lucide-react';
 
 interface DateOption {
@@ -147,19 +148,17 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                     You can link property/unit equipment to this maintenance request and keep track of its maintenance history. You can add/select up to 5 equipment. (This information is visible to you only and not shared to Pms or assigned Service Pros).
                 </p>
 
-                <div className="flex items-center gap-3 mb-4">
-                    <button
-                        onClick={() => {
-                            setLinkEquipment(!linkEquipment);
-                            if (!linkEquipment) {
+                <div className="mb-4">
+                    <Toggle
+                        checked={linkEquipment}
+                        onChange={(checked) => {
+                            setLinkEquipment(checked);
+                            if (!checked) {
                                 setShowEquipmentDropdown(false);
                             }
                         }}
-                        className={`w-14 h-8 rounded-full transition-colors relative ${linkEquipment ? 'bg-[#7BD747]' : 'bg-gray-300'}`}
-                    >
-                        <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-transform ${linkEquipment ? 'left-7' : 'left-1'}`} />
-                    </button>
-                    <span className="font-medium text-gray-700">Link equipment</span>
+                        label="Link equipment"
+                    />
                 </div>
 
                 {/* Equipment Dropdown */}
@@ -264,12 +263,11 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                                 </div>
                                 <div className="text-[#2E6819] font-bold">{pms.status}</div>
                                 <div>
-                                    <button
-                                        onClick={() => togglePmsShare(pms.id)}
-                                        className={`w-12 h-7 rounded-full transition-colors relative ${pms.share ? 'bg-[#7BD747]' : 'bg-gray-300'}`}
-                                    >
-                                        <div className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-transform ${pms.share ? 'left-6' : 'left-1'}`} />
-                                    </button>
+                                    <Toggle
+                                        checked={pms.share}
+                                        onChange={() => togglePmsShare(pms.id)}
+                                        size="small"
+                                    />
                                 </div>
                             </div>
                         ))}
@@ -355,14 +353,12 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
             </div>
 
             {/* Tenant Authorization Toggle */}
-            <div className="flex items-center gap-3 mb-8">
-                <button
-                    onClick={() => setTenantAuthorization(!tenantAuthorization)}
-                    className={`w-14 h-8 rounded-full transition-colors relative ${tenantAuthorization ? 'bg-[#7BD747]' : 'bg-gray-300'}`}
-                >
-                    <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-transform ${tenantAuthorization ? 'left-7' : 'left-1'}`} />
-                </button>
-                <span className="font-medium text-gray-700">Authorization to enter in tenant's absence</span>
+            <div className="mb-8">
+                <Toggle
+                    checked={tenantAuthorization}
+                    onChange={setTenantAuthorization}
+                    label="Authorization to enter in tenant's absence"
+                />
             </div>
 
             {/* Footer Buttons */}
