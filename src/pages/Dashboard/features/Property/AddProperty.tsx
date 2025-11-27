@@ -531,7 +531,7 @@ const AddProperty: React.FC = () => {
                       value={formData.parking}
                       onChange={(e) => updateFormData('parking', e.target.value)}
                     >
-                      <option value="">Gourmet</option>
+                      <option value="">Search</option>
                       {parkingOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                     </select>
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">

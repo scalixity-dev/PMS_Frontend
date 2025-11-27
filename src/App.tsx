@@ -21,6 +21,10 @@ import TenantPage from './pages/basewebsite/usecases/tenant';
 import ServiceProsPage from './pages/basewebsite/usecases/servicepros';
 import Dashboard from './pages/Dashboard/Dashboard';
 import ListUnit from './pages/Dashboard/features/ListUnit';
+import AddProperty from './pages/Dashboard/features/Property/AddProperty';
+import AddIncomeInvoice from './pages/Dashboard/features/Transactions/AddIncomeInvoice';
+import AddExpenseInvoice from './pages/Dashboard/features/Transactions/AddExpenseInvoice';
+import AddMaintenanceRequest from './pages/Dashboard/features/Maintenance/AddMaintenanceRequest';
 // import ListUnit from './pages/Dashboard/features/ListUnit/ListUnit';
 
 const App: React.FC = () => {
@@ -34,7 +38,7 @@ const App: React.FC = () => {
           <Route path="/signup/oauth-complete" element={<OAuthCompletePage />} />
           <Route path="/otp" element={<OtpPage />} />
           <Route path="/auth/callback" element={<OAuthCallbackPage />} />
-         
+
 
           <Route path="/usecases/landlord" element={<LandlordUseCasesPage />} />
           <Route path="/usecases/tenant" element={<TenantPage />} />
@@ -52,12 +56,16 @@ const App: React.FC = () => {
           <Route
             path="/dashboard"
             element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
+              // <ProtectedRoute>
+              <Dashboard />
+              // </ProtectedRoute>
             }
           />
           <Route path="/dashboard/list-unit" element={<ListUnit />} />
+          <Route path="/dashboard/property/add" element={<AddProperty />} />
+          <Route path="/dashboard/accounting/transactions/income/add" element={<AddIncomeInvoice />} />
+          <Route path="/dashboard/accounting/transactions/expense/add" element={<AddExpenseInvoice />} />
+          <Route path="/dashboard/maintenance/request" element={<AddMaintenanceRequest />} />
           <Route
             path="/portfolio"
             element={
