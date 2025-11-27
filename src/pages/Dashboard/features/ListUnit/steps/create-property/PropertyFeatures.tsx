@@ -1,5 +1,5 @@
-import React from 'react';
-import { Plus } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, X } from 'lucide-react';
 
 interface PropertyFeaturesProps {
     data: any;
@@ -7,7 +7,10 @@ interface PropertyFeaturesProps {
 }
 
 const PropertyFeatures: React.FC<PropertyFeaturesProps> = ({ data, updateData }) => {
-    const features = [
+    const [customFeatureInput, setCustomFeatureInput] = useState('');
+    const [showCustomInput, setShowCustomInput] = useState(false);
+
+    const defaultFeatures = [
         'Furnished',
         'Hardwood Floor',
         'Renovated',
@@ -18,6 +21,9 @@ const PropertyFeatures: React.FC<PropertyFeaturesProps> = ({ data, updateData })
     ];
 
     const selectedFeatures = data.features || [];
+    // Combine default features with custom features (those not in default list)
+    const customFeatures = selectedFeatures.filter((f: string) => !defaultFeatures.includes(f));
+    const allFeatures = [...defaultFeatures, ...customFeatures];
 
     const toggleFeature = (feature: string) => {
         if (selectedFeatures.includes(feature)) {
@@ -25,6 +31,19 @@ const PropertyFeatures: React.FC<PropertyFeaturesProps> = ({ data, updateData })
         } else {
             updateData('features', [...selectedFeatures, feature]);
         }
+    };
+
+    const handleAddCustomFeature = () => {
+        const trimmedFeature = customFeatureInput.trim();
+        if (trimmedFeature && !selectedFeatures.includes(trimmedFeature)) {
+            updateData('features', [...selectedFeatures, trimmedFeature]);
+            setCustomFeatureInput('');
+            setShowCustomInput(false);
+        }
+    };
+
+    const handleRemoveCustomFeature = (feature: string) => {
+        updateData('features', selectedFeatures.filter((f: string) => f !== feature));
     };
 
     return (
@@ -36,37 +55,83 @@ const PropertyFeatures: React.FC<PropertyFeaturesProps> = ({ data, updateData })
 
             <div className="w-full max-w-3xl bg-[#F3F4F6] p-8 rounded-3xl min-h-[300px]">
                 <div className="flex flex-wrap gap-4">
-                    {features.map((feature) => {
+                    {allFeatures.map((feature) => {
                         const isSelected = selectedFeatures.includes(feature);
+                        const isCustom = customFeatures.includes(feature);
                         return (
-                            <button
-                                key={feature}
-                                onClick={() => toggleFeature(feature)}
-                                className={`
-                  flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all
-                  ${isSelected
-                                        ? 'bg-[#86D24A] text-white shadow-sm'
-                                        : 'bg-white text-gray-700 border border-gray-200 hover:border-[#86D24A] hover:text-[#86D24A]'
-                                    }
-                `}
-                            >
-                                {feature}
-                                {isSelected ? (
-                                    // No icon needed for selected state based on design, but keeping structure if needed
-                                    // Or maybe a checkmark? Design shows just color change.
-                                    // Actually design shows a Plus icon for unselected and nothing for selected?
-                                    // Let's look at the screenshot again.
-                                    // Screenshot shows:
-                                    // Selected (Green): "Furnished", "Hardwood Floor", "Internet", "Carpet", "Storage" - No icon
-                                    // Unselected (White): "Renovated (+)", "Fire place (+)"
-                                    // So unselected has (+), selected has no icon.
-                                    null
-                                ) : (
-                                    <Plus size={18} className="text-gray-400" />
+                            <div key={feature} className="relative group">
+                                <button
+                                    onClick={() => toggleFeature(feature)}
+                                    className={`
+                                        flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all
+                                        ${isSelected
+                                            ? 'bg-[#86D24A] text-white shadow-sm'
+                                            : 'bg-white text-gray-700 border border-gray-200 hover:border-[#86D24A] hover:text-[#86D24A]'
+                                        }
+                                    `}
+                                >
+                                    {feature}
+                                    {isSelected ? null : (
+                                        <Plus size={18} className="text-gray-400" />
+                                    )}
+                                </button>
+                                {isCustom && isSelected && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleRemoveCustomFeature(feature);
+                                        }}
+                                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                                        title="Remove custom feature"
+                                    >
+                                        <X size={12} />
+                                    </button>
                                 )}
-                            </button>
+                            </div>
                         );
                     })}
+                    
+                    {/* Custom Feature Input */}
+                    {showCustomInput ? (
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="text"
+                                value={customFeatureInput}
+                                onChange={(e) => setCustomFeatureInput(e.target.value)}
+                                onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                        handleAddCustomFeature();
+                                    }
+                                }}
+                                placeholder="Enter feature name"
+                                className="px-4 py-3 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#86D24A] focus:border-[#86D24A]"
+                                autoFocus
+                            />
+                            <button
+                                onClick={handleAddCustomFeature}
+                                className="px-4 py-3 bg-[#86D24A] text-white rounded-full font-medium hover:bg-[#76C043] transition-colors"
+                            >
+                                Add
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setShowCustomInput(false);
+                                    setCustomFeatureInput('');
+                                }}
+                                className="px-4 py-3 bg-gray-300 text-gray-700 rounded-full font-medium hover:bg-gray-400 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={() => setShowCustomInput(true)}
+                            className="flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all bg-white text-gray-700 border-2 border-dashed border-gray-300 hover:border-[#86D24A] hover:text-[#86D24A]"
+                        >
+                            <Plus size={18} />
+                            Add Custom Feature
+                        </button>
+                    )}
                 </div>
             </div>
         </div>
