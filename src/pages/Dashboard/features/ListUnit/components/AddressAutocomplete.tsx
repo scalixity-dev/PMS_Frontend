@@ -62,7 +62,11 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Geoapify API key - can be moved to env variable
-  const API_KEY = import.meta.env.VITE_GEOAPIFY_API_KEY || '251dd4f512374fa3b7bf47f5c7ab0a20';
+  const API_KEY = import.meta.env.VITE_GEOAPIFY_API_KEY;
+
+  if (!API_KEY) {
+    console.error('VITE_GEOAPIFY_API_KEY is not configured');
+  }
 
   // Fetch autocomplete suggestions from Geoapify
   const fetchSuggestions = useCallback(async (text: string) => {
