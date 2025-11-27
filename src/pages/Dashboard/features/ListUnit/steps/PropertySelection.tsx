@@ -175,12 +175,22 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ data, updateData,
     );
   }
 
+  // Get cover photo URL from full property data if available, otherwise use transformed property image
+  const propertyImage = fullPropertyData?.coverPhotoUrl 
+    || fullPropertyData?.photos?.find((p) => p.isPrimary)?.photoUrl 
+    || fullPropertyData?.photos?.[0]?.photoUrl 
+    || selectedProperty?.image 
+    || '';
+
   return (
     <div className="bg-transparent p-8 rounded-lg w-full flex flex-col items-center">
       {selectedProperty ? (
         // Show Property Card when selected
         <PropertyCard
-          property={selectedProperty}
+          property={{
+            ...selectedProperty,
+            image: propertyImage,
+          }}
           onDelete={handleDelete}
           onBack={handleDelete} // Reusing handleDelete as it clears selection, which is the desired "Back" behavior for now
           onEdit={onEditProperty ? () => onEditProperty(selectedProperty.id) : undefined}

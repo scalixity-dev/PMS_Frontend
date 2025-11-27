@@ -101,8 +101,11 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
           ac: property.amenities?.airConditioning?.toLowerCase() || '',
           features: property.amenities?.propertyFeatures || [],
           marketingDescription: property.description || '',
-          coverPhoto: property.photos?.find(p => p.isPrimary)?.photoUrl || null,
+          coverPhoto: property.coverPhotoUrl || property.photos?.find(p => p.isPrimary)?.photoUrl || null,
           galleryPhotos: property.photos?.filter(p => !p.isPrimary).map(p => p.photoUrl) || [],
+          youtubeUrl: property.youtubeUrl || '',
+          ribbonType: property.ribbonType?.toLowerCase() || 'none',
+          ribbonTitle: property.ribbonTitle || '',
         };
 
         setFormData(prev => ({ ...prev, ...mappedData }));
@@ -212,6 +215,20 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
       return mapping[value.toLowerCase()] || 'NONE';
     };
 
+  // Map ribbon type from frontend format to backend enum
+  const mapRibbonType = (value: string): 'NONE' | 'CHAT' | 'CUSTOM' => {
+    const mapping: Record<string, 'NONE' | 'CHAT' | 'CUSTOM'> = {
+      'none': 'NONE',
+      'chat': 'CHAT',
+      'custom': 'CUSTOM',
+    };
+    const upperValue = value.toUpperCase();
+    if (upperValue === 'NONE' || upperValue === 'CHAT' || upperValue === 'CUSTOM') {
+      return upperValue as 'NONE' | 'CHAT' | 'CUSTOM';
+    }
+    return mapping[value.toLowerCase()] || 'NONE';
+  };
+
   // Map form data to backend DTO format
   const mapFormDataToBackend = () => {
     // Map property type - for now, assume all are SINGLE properties
@@ -270,6 +287,8 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
       marketRent: formData.marketRent ? parseFloat(formData.marketRent) : undefined,
       address,
       description: formData.marketingDescription || undefined,
+      ribbonType: mapRibbonType(formData.ribbonType || 'none'),
+      ribbonTitle: formData.ribbonTitle && formData.ribbonType !== 'none' ? formData.ribbonTitle : undefined,
       singleUnitDetails,
       amenities,
       photos: photos.length > 0 ? photos : undefined,
@@ -392,51 +411,68 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
       try {
         const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
         
-        // Upload cover photo using /upload/image endpoint (creates PropertyPhoto automatically)
-        const coverPhoto = formData.coverPhoto as { file: File; previewUrl: string } | null;
-        const coverPhotoFile = coverPhoto?.file;
-        if (!coverPhotoFile) {
-          throw new Error('Cover photo file is missing');
+        // Handle cover photo - can be a string URL (existing) or object with file (new upload)
+        let coverPhotoUrl: string;
+        
+        if (typeof formData.coverPhoto === 'string') {
+          // Existing cover photo URL - use it directly
+          coverPhotoUrl = formData.coverPhoto;
+        } else if (formData.coverPhoto && typeof formData.coverPhoto === 'object' && 'file' in formData.coverPhoto) {
+          // New cover photo upload
+          const coverPhotoFile = (formData.coverPhoto as { file: File; previewUrl: string }).file;
+          if (!coverPhotoFile) {
+            throw new Error('Cover photo file is missing');
+          }
+
+          const coverPhotoFormData = new FormData();
+          coverPhotoFormData.append('file', coverPhotoFile);
+          coverPhotoFormData.append('propertyId', propertyId);
+
+          const coverPhotoResponse = await fetch(`${API_BASE_URL}/upload/image`, {
+            method: 'POST',
+            credentials: 'include',
+            body: coverPhotoFormData,
+          });
+
+          if (!coverPhotoResponse.ok) {
+            const errorData = await coverPhotoResponse.json().catch(() => ({}));
+            throw new Error(errorData.message || 'Failed to upload cover photo');
+          }
+
+          const coverPhotoData = await coverPhotoResponse.json();
+          coverPhotoUrl = coverPhotoData.url;
+        } else {
+          throw new Error('Cover photo is invalid');
         }
 
-        const coverPhotoFormData = new FormData();
-        coverPhotoFormData.append('file', coverPhotoFile);
-        coverPhotoFormData.append('propertyId', propertyId);
-
-        const coverPhotoResponse = await fetch(`${API_BASE_URL}/upload/image`, {
-          method: 'POST',
-          credentials: 'include',
-          body: coverPhotoFormData,
-        });
-
-        if (!coverPhotoResponse.ok) {
-          const errorData = await coverPhotoResponse.json().catch(() => ({}));
-          throw new Error(errorData.message || 'Failed to upload cover photo');
-        }
-
-        const coverPhotoData = await coverPhotoResponse.json();
-        const coverPhotoUrl = coverPhotoData.url;
-
-        // Upload gallery photos using /upload/image endpoint
+        // Handle gallery photos - can be strings (existing URLs) or objects with files (new uploads)
         const galleryPhotoUrls: string[] = [];
-        const galleryPhotos = (formData.galleryPhotos || []) as Array<{ file: File; previewUrl: string }>;
+        const galleryPhotos = formData.galleryPhotos || [];
+        
         for (const galleryPhoto of galleryPhotos) {
-          if (galleryPhoto?.file) {
-            const galleryFormData = new FormData();
-            galleryFormData.append('file', galleryPhoto.file);
-            galleryFormData.append('propertyId', propertyId);
+          if (typeof galleryPhoto === 'string') {
+            // Existing gallery photo URL - use it directly
+            galleryPhotoUrls.push(galleryPhoto);
+          } else if (galleryPhoto && typeof galleryPhoto === 'object' && 'file' in galleryPhoto) {
+            // New gallery photo upload
+            const galleryPhotoFile = (galleryPhoto as { file: File; previewUrl: string }).file;
+            if (galleryPhotoFile) {
+              const galleryFormData = new FormData();
+              galleryFormData.append('file', galleryPhotoFile);
+              galleryFormData.append('propertyId', propertyId);
 
-            const galleryResponse = await fetch(`${API_BASE_URL}/upload/image`, {
-              method: 'POST',
-              credentials: 'include',
-              body: galleryFormData,
-            });
+              const galleryResponse = await fetch(`${API_BASE_URL}/upload/image`, {
+                method: 'POST',
+                credentials: 'include',
+                body: galleryFormData,
+              });
 
-            if (galleryResponse.ok) {
-              const galleryData = await galleryResponse.json();
-              galleryPhotoUrls.push(galleryData.url);
-            } else {
-              console.warn('Failed to upload gallery photo:', galleryPhoto);
+              if (galleryResponse.ok) {
+                const galleryData = await galleryResponse.json();
+                galleryPhotoUrls.push(galleryData.url);
+              } else {
+                console.warn('Failed to upload gallery photo:', galleryPhoto);
+              }
             }
           }
         }
@@ -462,6 +498,71 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
         console.error('Error uploading photos:', err);
         setError(err instanceof Error ? err.message : 'Failed to upload photos. Please try again.');
       } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
+    // Save marketing description when on step 6 (MarketingDescription)
+    if (currentStep === 6) {
+      if (!managerId || !propertyId) {
+        setError('Property information not available. Please start from step 1.');
+        return;
+      }
+
+      setIsSubmitting(true);
+      setError(null);
+
+      try {
+        // Update property with marketing description
+        const updateData: any = {
+          description: formData.marketingDescription || null,
+        };
+
+        await propertyService.update(propertyId, updateData);
+        setCurrentStep(prev => prev + 1);
+      } catch (err) {
+        console.error('Error updating marketing description:', err);
+        setError(err instanceof Error ? err.message : 'Failed to save description. Please try again.');
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
+    // Save ribbon data when on step 7 (AddRibbon)
+    if (currentStep === 7) {
+      if (!managerId || !propertyId) {
+        setError('Property information not available. Please start from step 1.');
+        return;
+      }
+
+      setIsSubmitting(true);
+      setError(null);
+
+      try {
+        // Map ribbon type to backend format
+        const ribbonType = mapRibbonType(formData.ribbonType || 'none');
+        
+        // Update property with ribbon data
+        const updateData: any = {
+          ribbonType: ribbonType,
+          ribbonTitle: formData.ribbonTitle && formData.ribbonType !== 'none' ? formData.ribbonTitle : null,
+        };
+
+        await propertyService.update(propertyId, updateData);
+        
+        // After saving ribbon, complete the property creation
+        const backendData = mapFormDataToBackend();
+        // Remove managerId and propertyName from update (they shouldn't change)
+        const { managerId: _, propertyName: __, ...finalUpdateData } = backendData;
+        const updatedProperty = await propertyService.update(propertyId, finalUpdateData);
+        
+        // Call the onSubmit callback with the updated property
+        onSubmit(updatedProperty);
+      } catch (err) {
+        console.error('Error updating ribbon:', err);
+        setError(err instanceof Error ? err.message : 'Failed to save ribbon. Please try again.');
         setIsSubmitting(false);
       }
       return;
