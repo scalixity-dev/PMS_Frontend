@@ -4,9 +4,10 @@ import YesNoToggle from '../../../../../components/common/YesNoToggle';
 interface ApplicationFeeProps {
     data: any;
     updateData: (key: string, value: any) => void;
+    propertyId?: string;
 }
 
-const ApplicationFee: React.FC<ApplicationFeeProps> = ({ data, updateData }) => {
+const ApplicationFee: React.FC<ApplicationFeeProps> = ({ data, updateData, propertyId }) => {
     return (
         <div className="w-full flex flex-col items-center">
             <div className="text-center mb-8">

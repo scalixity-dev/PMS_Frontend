@@ -29,5 +29,13 @@ export const API_ENDPOINTS = {
     FILE: `${API_BASE_URL}/upload/file`,
     IMAGE: `${API_BASE_URL}/upload/image`,
   },
+  LEASING: {
+    GET_ALL: `${API_BASE_URL}/leasing`,
+    GET_ONE: (id: string) => `${API_BASE_URL}/leasing/${id}`,
+    GET_BY_PROPERTY: (propertyId: string) => `${API_BASE_URL}/leasing/property/${propertyId}`,
+    CREATE: `${API_BASE_URL}/leasing`,
+    UPDATE: (id: string) => `${API_BASE_URL}/leasing/${id}`,
+    DELETE: (id: string) => `${API_BASE_URL}/leasing/${id}`,
+  },
 };
 

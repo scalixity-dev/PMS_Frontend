@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Stepper from './components/Stepper';
@@ -13,6 +13,9 @@ import ListingSuccessModal from './components/ListingSuccessModal';
 import NextStepButton from './components/NextStepButton';
 import PetPolicy from './steps/PetPolicy';
 import PetDetails from './steps/PetDetails';
+import { leasingService } from '../../../../services/leasing.service';
+import { propertyService } from '../../../../services/property.service';
+import type { LeaseDuration } from '../../../../services/leasing.service';
 
 const ListUnit: React.FC = () => {
   const navigate = useNavigate();
@@ -21,6 +24,9 @@ const ListUnit: React.FC = () => {
   const [applicationStep, setApplicationStep] = useState(1); // 1: Online Apps, 2: Application Fee, 3: Fee Details, 4: Listing Contact
   const [showCreateProperty, setShowCreateProperty] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [leasingId, setLeasingId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     // Step 1
     property: '',
@@ -68,6 +74,370 @@ const ListUnit: React.FC = () => {
     setFormData(prev => ({ ...prev, [key]: value }));
   };
 
+  // Map numeric lease duration to backend enum
+  const mapLeaseDuration = (months: string): LeaseDuration => {
+    const mapping: Record<string, LeaseDuration> = {
+      '1': 'ONE_MONTH',
+      '2': 'TWO_MONTHS',
+      '3': 'THREE_MONTHS',
+      '4': 'FOUR_MONTHS',
+      '5': 'FIVE_MONTHS',
+      '6': 'SIX_MONTHS',
+      '7': 'SEVEN_MONTHS',
+      '8': 'EIGHT_MONTHS',
+      '9': 'NINE_MONTHS',
+      '10': 'TEN_MONTHS',
+      '11': 'ELEVEN_MONTHS',
+      '12': 'TWELVE_MONTHS',
+      '13': 'THIRTEEN_MONTHS',
+      '14': 'FOURTEEN_MONTHS',
+      '15': 'FIFTEEN_MONTHS',
+      '16': 'SIXTEEN_MONTHS',
+      '17': 'SEVENTEEN_MONTHS',
+      '18': 'EIGHTEEN_MONTHS',
+      '19': 'NINETEEN_MONTHS',
+      '20': 'TWENTY_MONTHS',
+      '21': 'TWENTY_ONE_MONTHS',
+      '22': 'TWENTY_TWO_MONTHS',
+      '23': 'TWENTY_THREE_MONTHS',
+      '24': 'TWENTY_FOUR_MONTHS',
+      '36': 'THIRTY_SIX_PLUS_MONTHS',
+    };
+    return mapping[months] || 'TWELVE_MONTHS';
+  };
+
+  // Check if leasing exists for property when property is selected
+  useEffect(() => {
+    const checkExistingLeasing = async () => {
+      if (!formData.property) {
+        setLeasingId(null);
+        return;
+      }
+
+      try {
+        const leasing = await leasingService.getByPropertyId(formData.property);
+        setLeasingId(leasing.id);
+        // Load existing leasing data into form
+        updateFormData('rent', leasing.monthlyRent?.toString() || '');
+        updateFormData('deposit', leasing.securityDeposit?.toString() || '');
+        updateFormData('refundable', leasing.amountRefundable?.toString() || '');
+        updateFormData('availableDate', leasing.dateAvailable ? new Date(leasing.dateAvailable).toISOString().split('T')[0] : '');
+        // Map backend enum to numeric string for frontend
+        const reverseMapping: Record<string, string> = {
+          'ONE_MONTH': '1',
+          'TWO_MONTHS': '2',
+          'THREE_MONTHS': '3',
+          'FOUR_MONTHS': '4',
+          'FIVE_MONTHS': '5',
+          'SIX_MONTHS': '6',
+          'SEVEN_MONTHS': '7',
+          'EIGHT_MONTHS': '8',
+          'NINE_MONTHS': '9',
+          'TEN_MONTHS': '10',
+          'ELEVEN_MONTHS': '11',
+          'TWELVE_MONTHS': '12',
+          'THIRTEEN_MONTHS': '13',
+          'FOURTEEN_MONTHS': '14',
+          'FIFTEEN_MONTHS': '15',
+          'SIXTEEN_MONTHS': '16',
+          'SEVENTEEN_MONTHS': '17',
+          'EIGHTEEN_MONTHS': '18',
+          'NINETEEN_MONTHS': '19',
+          'TWENTY_MONTHS': '20',
+          'TWENTY_ONE_MONTHS': '21',
+          'TWENTY_TWO_MONTHS': '22',
+          'TWENTY_THREE_MONTHS': '23',
+          'TWENTY_FOUR_MONTHS': '24',
+          'THIRTY_SIX_PLUS_MONTHS': '36',
+        };
+        updateFormData('minLeaseDuration', reverseMapping[leasing.minLeaseDuration] || '');
+        updateFormData('maxLeaseDuration', reverseMapping[leasing.maxLeaseDuration] || '');
+        updateFormData('description', leasing.description || '');
+        updateFormData('petsAllowed', leasing.petsAllowed ?? null);
+        updateFormData('pets', leasing.petCategory || []);
+        updateFormData('petDeposit', leasing.petDeposit?.toString() || '');
+        updateFormData('petRent', leasing.petFee?.toString() || '');
+        updateFormData('petDescription', leasing.petDescription || '');
+        updateFormData('receiveApplicationsOnline', leasing.onlineRentalApplication ?? null);
+        updateFormData('applicationFee', leasing.requireApplicationFee ?? null);
+        updateFormData('applicationFeeAmount', leasing.applicationFee?.toString() || '');
+      } catch (err) {
+        // Leasing doesn't exist yet, that's okay
+        setLeasingId(null);
+      }
+
+      // Also load property data for listing contact information
+      try {
+        const property = await propertyService.getOne(formData.property);
+        updateFormData('contactName', property.listingContactName || '');
+        updateFormData('countryCode', property.listingPhoneCountryCode || '+91');
+        updateFormData('phoneNumber', property.listingPhoneNumber || '');
+        updateFormData('email', property.listingEmail || '');
+        updateFormData('displayPhonePublicly', property.displayPhonePublicly ?? false);
+      } catch (err) {
+        // Property might not have contact info yet, that's okay
+        console.error('Error loading property contact info:', err);
+      }
+    };
+
+    checkExistingLeasing();
+  }, [formData.property]);
+
+  // Save pet policy when moving from leasingStep 2
+  const handleSavePetPolicy = async () => {
+    if (!formData.property || !leasingId) {
+      setError('Property and leasing information not available. Please start from step 1.');
+      return;
+    }
+
+    if (formData.petsAllowed === null || formData.petsAllowed === undefined) {
+      setError('Please select whether pets are allowed.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const updateData: any = {
+        petsAllowed: formData.petsAllowed,
+      };
+
+      await leasingService.update(leasingId, updateData);
+
+      // Move to next step based on petsAllowed
+      if (formData.petsAllowed) {
+        setLeasingStep(3);
+      } else {
+        setCurrentStep(3);
+        setApplicationStep(1);
+      }
+    } catch (err) {
+      console.error('Error saving pet policy:', err);
+      setError(err instanceof Error ? err.message : 'Failed to save pet policy. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Save application settings when moving from applicationStep 1 to 2
+  const handleSaveApplicationSettings = async () => {
+    if (!formData.property || !leasingId) {
+      setError('Property and leasing information not available. Please start from step 1.');
+      return;
+    }
+
+    if (formData.receiveApplicationsOnline === null || formData.receiveApplicationsOnline === undefined) {
+      setError('Please select whether to receive rental applications online.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const updateData: any = {
+        onlineRentalApplication: formData.receiveApplicationsOnline,
+      };
+
+      await leasingService.update(leasingId, updateData);
+
+      // Move to next step
+      setApplicationStep(2);
+    } catch (err) {
+      console.error('Error saving application settings:', err);
+      setError(err instanceof Error ? err.message : 'Failed to save application settings. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Save application fee preference when moving from applicationStep 2
+  const handleSaveApplicationFee = async () => {
+    if (!formData.property || !leasingId) {
+      setError('Property and leasing information not available. Please start from step 1.');
+      return;
+    }
+
+    if (formData.applicationFee === null || formData.applicationFee === undefined) {
+      setError('Please select whether to require application fee.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const updateData: any = {
+        requireApplicationFee: formData.applicationFee,
+        // If application fee is not required, set fee to null
+        applicationFee: formData.applicationFee ? (formData.applicationFeeAmount ? parseFloat(formData.applicationFeeAmount) : null) : null,
+      };
+
+      await leasingService.update(leasingId, updateData);
+
+      // Move to next step based on applicationFee
+      if (formData.applicationFee) {
+        setApplicationStep(3);
+      } else {
+        setApplicationStep(4);
+      }
+    } catch (err) {
+      console.error('Error saving application fee preference:', err);
+      setError(err instanceof Error ? err.message : 'Failed to save application fee preference. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Save listing contact when submitting final step
+  const handleSaveListingContact = async () => {
+    if (!formData.property) {
+      setError('Property is required. Please select a property first.');
+      return;
+    }
+
+    // Validate required fields
+    if (!formData.contactName || !formData.phoneNumber || !formData.email) {
+      setError('Please fill in all required fields (contact name, phone number, and email).');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const updateData: any = {
+        listingContactName: formData.contactName,
+        listingPhoneCountryCode: formData.countryCode || '+91',
+        listingPhoneNumber: formData.phoneNumber,
+        listingEmail: formData.email,
+        displayPhonePublicly: formData.displayPhonePublicly || false,
+      };
+
+      await propertyService.update(formData.property, updateData);
+
+      // Show success modal
+      setShowSuccessModal(true);
+    } catch (err) {
+      console.error('Error saving listing contact:', err);
+      setError(err instanceof Error ? err.message : 'Failed to save listing contact. Please try again.');
+      setIsSubmitting(false);
+    }
+  };
+
+  // Save application fee details when moving from applicationStep 3 to 4
+  const handleSaveApplicationFeeDetails = async () => {
+    if (!formData.property || !leasingId) {
+      setError('Property and leasing information not available. Please start from step 1.');
+      return;
+    }
+
+    if (!formData.applicationFeeAmount || parseFloat(formData.applicationFeeAmount) <= 0) {
+      setError('Please enter a valid application fee amount.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const updateData: any = {
+        applicationFee: parseFloat(formData.applicationFeeAmount),
+      };
+
+      await leasingService.update(leasingId, updateData);
+
+      // Move to next step
+      setApplicationStep(4);
+    } catch (err) {
+      console.error('Error saving application fee details:', err);
+      setError(err instanceof Error ? err.message : 'Failed to save application fee details. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Save pet details when moving from leasingStep 3
+  const handleSavePetDetails = async () => {
+    if (!formData.property || !leasingId) {
+      setError('Property and leasing information not available. Please start from step 1.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const updateData: any = {
+        petCategory: Array.isArray(formData.pets) ? formData.pets : [],
+        petDeposit: formData.petDeposit ? parseFloat(formData.petDeposit) : null,
+        petFee: formData.petRent ? parseFloat(formData.petRent) : null,
+        petDescription: formData.petDescription || null,
+      };
+
+      await leasingService.update(leasingId, updateData);
+
+      // Move to next step
+      setCurrentStep(3);
+      setApplicationStep(1);
+    } catch (err) {
+      console.error('Error saving pet details:', err);
+      setError(err instanceof Error ? err.message : 'Failed to save pet details. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Save leasing details when moving from leasingStep 1 to 2
+  const handleSaveLeasingDetails = async () => {
+    if (!formData.property) {
+      setError('Property is required. Please select a property first.');
+      return;
+    }
+
+    // Validate required fields
+    if (!formData.rent || !formData.deposit || !formData.refundable || !formData.availableDate || !formData.minLeaseDuration || !formData.maxLeaseDuration) {
+      setError('Please fill in all required fields (rent, deposit, refundable, date available, and lease durations).');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const leasingData = {
+        propertyId: formData.property,
+        monthlyRent: parseFloat(formData.rent),
+        securityDeposit: parseFloat(formData.deposit),
+        amountRefundable: parseFloat(formData.refundable),
+        dateAvailable: new Date(formData.availableDate).toISOString(),
+        minLeaseDuration: mapLeaseDuration(formData.minLeaseDuration),
+        maxLeaseDuration: mapLeaseDuration(formData.maxLeaseDuration),
+        description: formData.description || undefined,
+        petsAllowed: formData.petsAllowed ?? false,
+        onlineRentalApplication: formData.receiveApplicationsOnline ?? false,
+      };
+
+      if (leasingId) {
+        // Update existing leasing
+        await leasingService.update(leasingId, leasingData);
+      } else {
+        // Create new leasing
+        const createdLeasing = await leasingService.create(leasingData);
+        setLeasingId(createdLeasing.id);
+      }
+
+      // Move to next step
+      setLeasingStep(2);
+    } catch (err) {
+      console.error('Error saving leasing details:', err);
+      setError(err instanceof Error ? err.message : 'Failed to save leasing details. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleBack = () => {
     if (showCreateProperty) {
       setShowCreateProperty(false);
@@ -108,39 +478,41 @@ const ListUnit: React.FC = () => {
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep === 1) {
       setCurrentStep(2);
       setLeasingStep(1);
     } else if (currentStep === 2) {
       if (leasingStep === 1) {
-        setLeasingStep(2);
+        // Save leasing details before moving to next step
+        await handleSaveLeasingDetails();
+        // handleSaveLeasingDetails will move to next step on success
       } else if (leasingStep === 2) {
-        if (formData.petsAllowed) {
-          setLeasingStep(3);
-        } else {
-          setCurrentStep(3);
-          setApplicationStep(1);
-        }
-      } else {
-        setCurrentStep(3);
-        setApplicationStep(1);
+        // Save pet policy before moving to next step
+        await handleSavePetPolicy();
+        // handleSavePetPolicy will move to next step on success
+      } else if (leasingStep === 3) {
+        // Save pet details before moving to next step
+        await handleSavePetDetails();
+        // handleSavePetDetails will move to next step on success
       }
     } else if (currentStep === 3) {
       if (applicationStep === 1) {
-        setApplicationStep(2);
+        // Save application settings before moving to next step
+        await handleSaveApplicationSettings();
+        // handleSaveApplicationSettings will move to next step on success
       } else if (applicationStep === 2) {
-        if (formData.applicationFee) {
-          setApplicationStep(3);
-        } else {
-          setApplicationStep(4);
-        }
+        // Save application fee preference before moving to next step
+        await handleSaveApplicationFee();
+        // handleSaveApplicationFee will move to next step on success
       } else if (applicationStep === 3) {
-        setApplicationStep(4);
+        // Save application fee details before moving to next step
+        await handleSaveApplicationFeeDetails();
+        // handleSaveApplicationFeeDetails will move to next step on success
       } else {
-        // Handle submission from step 4
-        console.log('Form Submitted:', formData);
-        setShowSuccessModal(true);
+        // Handle submission from step 4 - save listing contact
+        await handleSaveListingContact();
+        // handleSaveListingContact will show success modal on success
       }
     }
   };
@@ -276,23 +648,48 @@ const ListUnit: React.FC = () => {
                           <h2 className="text-xl font-bold mb-2 text-[var(--color-heading)]">Lease details</h2>
                           <p className="text-[var(--color-subheading)]">Add main lease terms and other leasing details if necessary.</p>
                         </div>
-                        <LeasingDetails data={formData} updateData={updateFormData} />
+                        <LeasingDetails 
+                          data={formData} 
+                          updateData={updateFormData}
+                          propertyId={formData.property}
+                        />
+                        {error && (
+                          <div className="w-full max-w-md mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
+                            <p className="text-red-800 text-sm">{error}</p>
+                          </div>
+                        )}
                         <div className="w-full max-w-md mt-8 flex justify-center">
-                          <NextStepButton onClick={handleNext} />
+                          <NextStepButton onClick={handleNext} disabled={isSubmitting}>
+                            {isSubmitting ? 'Saving...' : 'Next'}
+                          </NextStepButton>
                         </div>
                       </>
                     ) : leasingStep === 2 ? (
                       <>
-                        <PetPolicy data={formData} updateData={updateFormData} />
+                        <PetPolicy data={formData} updateData={updateFormData} propertyId={formData.property} />
+                        {error && (
+                          <div className="w-full max-w-md mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
+                            <p className="text-red-800 text-sm">{error}</p>
+                          </div>
+                        )}
                         <div className="w-full max-w-md mt-8 flex justify-center">
-                          <NextStepButton onClick={handleNext} />
+                          <NextStepButton onClick={handleNext} disabled={isSubmitting}>
+                            {isSubmitting ? 'Saving...' : 'Next'}
+                          </NextStepButton>
                         </div>
                       </>
                     ) : (
                       <>
-                        <PetDetails data={formData} updateData={updateFormData} />
+                        <PetDetails data={formData} updateData={updateFormData} propertyId={formData.property} />
+                        {error && (
+                          <div className="w-full max-w-md mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
+                            <p className="text-red-800 text-sm">{error}</p>
+                          </div>
+                        )}
                         <div className="w-full max-w-md mt-8 flex justify-center">
-                          <NextStepButton onClick={handleNext} />
+                          <NextStepButton onClick={handleNext} disabled={isSubmitting}>
+                            {isSubmitting ? 'Saving...' : 'Next'}
+                          </NextStepButton>
                         </div>
                       </>
                     )}
@@ -303,27 +700,55 @@ const ListUnit: React.FC = () => {
                   <div className="w-full flex flex-col items-center">
                     {applicationStep === 1 ? (
                       <>
-                        <ApplicationSettings data={formData} updateData={updateFormData} />
+                        <ApplicationSettings data={formData} updateData={updateFormData} propertyId={formData.property} />
+                        {error && (
+                          <div className="w-full max-w-md mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
+                            <p className="text-red-800 text-sm">{error}</p>
+                          </div>
+                        )}
                         <div className="w-full max-w-md mt-8 flex justify-center">
-                          <NextStepButton onClick={handleNext} />
+                          <NextStepButton onClick={handleNext} disabled={isSubmitting}>
+                            {isSubmitting ? 'Saving...' : 'Next'}
+                          </NextStepButton>
                         </div>
                       </>
                     ) : applicationStep === 2 ? (
                       <>
-                        <ApplicationFee data={formData} updateData={updateFormData} />
+                        <ApplicationFee data={formData} updateData={updateFormData} propertyId={formData.property} />
+                        {error && (
+                          <div className="w-full max-w-md mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
+                            <p className="text-red-800 text-sm">{error}</p>
+                          </div>
+                        )}
                         <div className="w-full max-w-md mt-8 flex justify-center">
-                          <NextStepButton onClick={handleNext}>{formData.applicationFee ? 'Next' : 'Next'}</NextStepButton>
+                          <NextStepButton onClick={handleNext} disabled={isSubmitting}>
+                            {isSubmitting ? 'Saving...' : 'Next'}
+                          </NextStepButton>
                         </div>
                       </>
                     ) : applicationStep === 3 ? (
                       <>
-                        <ApplicationFeeDetails data={formData} updateData={updateFormData} />
+                        <ApplicationFeeDetails data={formData} updateData={updateFormData} propertyId={formData.property} />
+                        {error && (
+                          <div className="w-full max-w-md mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
+                            <p className="text-red-800 text-sm">{error}</p>
+                          </div>
+                        )}
                         <div className="w-full max-w-md mt-8 flex justify-center">
-                          <NextStepButton onClick={handleNext}>Next</NextStepButton>
+                          <NextStepButton onClick={handleNext} disabled={isSubmitting}>
+                            {isSubmitting ? 'Saving...' : 'Next'}
+                          </NextStepButton>
                         </div>
                       </>
                     ) : (
-                      <ListingContact data={formData} updateData={updateFormData} onSubmit={handleNext} />
+                      <>
+                        <ListingContact data={formData} updateData={updateFormData} onSubmit={handleNext} propertyId={formData.property} />
+                        {error && (
+                          <div className="w-full max-w-md mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
+                            <p className="text-red-800 text-sm">{error}</p>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 )}

@@ -13,6 +13,11 @@ export interface BackendProperty {
   youtubeUrl?: string | null;
   ribbonType?: 'NONE' | 'CHAT' | 'CUSTOM' | null;
   ribbonTitle?: string | null;
+  listingContactName?: string | null;
+  listingPhoneCountryCode?: string | null;
+  listingPhoneNumber?: string | null;
+  listingEmail?: string | null;
+  displayPhonePublicly?: boolean | null;
   address?: {
     streetAddress: string;
     city: string;
