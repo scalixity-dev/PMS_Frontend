@@ -258,7 +258,7 @@ export default function DashboardSidebar({ open, setOpen }: SidebarProps) {
                 activeDropdown={activeDropdown}
                 setActiveDropdown={setActiveDropdown}
               >
-                <SidebarSubLink label="Overview" to="/dashboard/" isCurrentPath={isCurrentPath} />
+                <SidebarSubLink label="Overview" to="/dashboard" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Calendar" to="/dashboard/calendar" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Tasks" to="/dashboard/tasks" isCurrentPath={isCurrentPath} />
               </SidebarDropdownLink>
