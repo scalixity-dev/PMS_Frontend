@@ -1,16 +1,43 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Undo2 } from 'lucide-react';
 import CustomDropdown from '../../../components/CustomDropdown';
 import Toggle from '../../../../../components/Toggle';
+import { propertyService } from '../../../../../services/property.service';
+import { getCurrencySymbol } from '../../../../../utils/currency.utils';
 
 interface LeasingDetailsProps {
   data: any;
   updateData: (key: string, value: any) => void;
+  propertyId?: string;
 }
 
-const LeasingDetails: React.FC<LeasingDetailsProps> = ({ data, updateData }) => {
+const LeasingDetails: React.FC<LeasingDetailsProps> = ({ data, updateData, propertyId }) => {
+  const [property, setProperty] = useState<any>(null);
+  
   const inputClass = "w-full p-3 bg-[#84CC16] text-white placeholder-white/70 border-none rounded-lg focus:ring-2 focus:ring-white/50 outline-none text-center font-medium";
   const labelClass = "block text-xs font-medium text-gray-700 mb-1 ml-1";
+
+  // Fetch property data to get country for currency
+  useEffect(() => {
+    const fetchProperty = async () => {
+      if (!propertyId) return;
+      
+      try {
+        const propertyData = await propertyService.getOne(propertyId);
+        setProperty(propertyData);
+      } catch (err) {
+        console.error('Error fetching property:', err);
+      }
+    };
+
+    fetchProperty();
+  }, [propertyId]);
+
+  // Get currency symbol based on property's country
+  const currencySymbol = useMemo(() => {
+    const countryCode = property?.address?.country;
+    return getCurrencySymbol(countryCode);
+  }, [property?.address?.country]);
 
   return (
     <div className="w-full flex flex-col gap-6">
@@ -19,38 +46,59 @@ const LeasingDetails: React.FC<LeasingDetailsProps> = ({ data, updateData }) => 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           {/* Monthly Rent */}
           <div>
-            <label className={labelClass}>Monthly rent*</label>
-            <input
-              type="number"
-              className={inputClass}
-              value={data.rent || ''}
-              onChange={(e) => updateData('rent', e.target.value)}
-              placeholder="₹ 50,000"
-            />
+            <label className={labelClass}>
+              Monthly rent* {currencySymbol && <span className="text-xs text-gray-500 font-normal">({currencySymbol})</span>}
+            </label>
+            <div className="relative">
+              {currencySymbol && (
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white font-medium">{currencySymbol}</span>
+              )}
+              <input
+                type="number"
+                className={`${inputClass} ${currencySymbol ? 'pl-8' : ''}`}
+                value={data.rent || ''}
+                onChange={(e) => updateData('rent', e.target.value)}
+                placeholder={`${currencySymbol || '₹'} 50,000`}
+              />
+            </div>
           </div>
 
           {/* Security Deposit */}
           <div>
-            <label className={labelClass}>Security deposit*</label>
-            <input
-              type="number"
-              className={inputClass}
-              value={data.deposit || ''}
-              onChange={(e) => updateData('deposit', e.target.value)}
-              placeholder="000.00"
-            />
+            <label className={labelClass}>
+              Security deposit* {currencySymbol && <span className="text-xs text-gray-500 font-normal">({currencySymbol})</span>}
+            </label>
+            <div className="relative">
+              {currencySymbol && (
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white font-medium">{currencySymbol}</span>
+              )}
+              <input
+                type="number"
+                className={`${inputClass} ${currencySymbol ? 'pl-8' : ''}`}
+                value={data.deposit || ''}
+                onChange={(e) => updateData('deposit', e.target.value)}
+                placeholder={`${currencySymbol || '₹'} 0.00`}
+              />
+            </div>
           </div>
 
           {/* Amount Refundable */}
           <div>
-            <label className={labelClass}>Amount refundable*</label>
-            <input
-              type="number"
-              className={inputClass}
-              value={data.refundable || ''}
-              onChange={(e) => updateData('refundable', e.target.value)}
-              placeholder="000.00"
-            />
+            <label className={labelClass}>
+              Amount refundable* {currencySymbol && <span className="text-xs text-gray-500 font-normal">({currencySymbol})</span>}
+            </label>
+            <div className="relative">
+              {currencySymbol && (
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white font-medium">{currencySymbol}</span>
+              )}
+              <input
+                type="number"
+                className={`${inputClass} ${currencySymbol ? 'pl-8' : ''}`}
+                value={data.refundable || ''}
+                onChange={(e) => updateData('refundable', e.target.value)}
+                placeholder={`${currencySymbol || '₹'} 0.00`}
+              />
+            </div>
           </div>
 
           {/* Date Available */}

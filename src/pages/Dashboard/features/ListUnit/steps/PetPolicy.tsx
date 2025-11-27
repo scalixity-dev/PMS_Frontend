@@ -4,9 +4,10 @@ import YesNoToggle from '../../../../../components/common/YesNoToggle';
 interface PetPolicyProps {
     data: any;
     updateData: (key: string, value: any) => void;
+    propertyId?: string;
 }
 
-const PetPolicy: React.FC<PetPolicyProps> = ({ data, updateData }) => {
+const PetPolicy: React.FC<PetPolicyProps> = ({ data, updateData, propertyId }) => {
     return (
         <div className="w-full flex flex-col items-center">
             <div className="text-center mb-8">

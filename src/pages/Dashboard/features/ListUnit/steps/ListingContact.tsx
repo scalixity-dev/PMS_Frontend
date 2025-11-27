@@ -7,9 +7,10 @@ interface ListingContactProps {
     data: any;
     updateData: (key: string, value: any) => void;
     onSubmit: () => void;
+    propertyId?: string;
 }
 
-const ListingContact: React.FC<ListingContactProps> = ({ data, updateData, onSubmit }) => {
+const ListingContact: React.FC<ListingContactProps> = ({ data, updateData, onSubmit, propertyId }) => {
     return (
         <div className="w-full flex flex-col items-center">
             <div className="text-center mb-8">

@@ -1,14 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Undo2, Check } from 'lucide-react';
 import MultiSelectDropdown from '../../../../../../src/components/MultiSelectDropdown';
+import { propertyService } from '../../../../../services/property.service';
+import { getCurrencySymbol } from '../../../../../utils/currency.utils';
 
 interface PetDetailsProps {
     data: any;
     updateData: (key: string, value: any) => void;
+    propertyId?: string;
 }
 
-const PetDetails: React.FC<PetDetailsProps> = ({ data, updateData }) => {
+const PetDetails: React.FC<PetDetailsProps> = ({ data, updateData, propertyId }) => {
+    const [property, setProperty] = useState<any>(null);
     const [showOtherDropdown, setShowOtherDropdown] = useState(false);
+
+    // Fetch property data to get country for currency
+    useEffect(() => {
+        const fetchProperty = async () => {
+            if (!propertyId) return;
+            
+            try {
+                const propertyData = await propertyService.getOne(propertyId);
+                setProperty(propertyData);
+            } catch (err) {
+                console.error('Error fetching property:', err);
+            }
+        };
+
+        fetchProperty();
+    }, [propertyId]);
+
+    // Get currency symbol based on property's country
+    const currencySymbol = useMemo(() => {
+        const countryCode = property?.address?.country;
+        return getCurrencySymbol(countryCode);
+    }, [property?.address?.country]);
 
     const togglePet = (pet: string) => {
         const currentPets = data.pets || [];
@@ -20,13 +46,7 @@ const PetDetails: React.FC<PetDetailsProps> = ({ data, updateData }) => {
     };
 
     const handleOtherChange = (selectedOthers: string[]) => {
-        // Filter out existing "other" pets and add the new ones
-        // This logic assumes "other" pets are distinct from the main 4.
-        // For simplicity, let's just store them in the same 'pets' array.
-        // But we need to know which ones are "other" to manage the dropdown state if we wanted to sync perfectly.
-        // A simpler approach: Just merge them.
-        // However, to keep the dropdown in sync, we might need a separate state or filter.
-        // Let's assume 'pets' contains ALL selected pets.
+
 
         const mainPets = ['Cat', 'Dog', 'Horse', 'Rabbit'];
         const currentMainPets = (data.pets || []).filter((p: string) => mainPets.includes(p));
@@ -109,24 +129,38 @@ const PetDetails: React.FC<PetDetailsProps> = ({ data, updateData }) => {
             {/* Deposits Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label className={labelClass}>Pets Deposits</label>
-                    <input
-                        type="number"
-                        className={inputClass}
-                        value={data.petDeposit || ''}
-                        onChange={(e) => updateData('petDeposit', e.target.value)}
-                        placeholder="₹ 00"
-                    />
+                    <label className={labelClass}>
+                        Pet Deposit {currencySymbol && <span className="text-xs text-gray-500 font-normal">({currencySymbol})</span>}
+                    </label>
+                    <div className="relative">
+                        {currencySymbol && (
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white font-medium">{currencySymbol}</span>
+                        )}
+                        <input
+                            type="number"
+                            className={`${inputClass} ${currencySymbol ? 'pl-8' : ''}`}
+                            value={data.petDeposit || ''}
+                            onChange={(e) => updateData('petDeposit', e.target.value)}
+                            placeholder={`${currencySymbol || '₹'} 0.00`}
+                        />
+                    </div>
                 </div>
                 <div>
-                    <label className={labelClass}>Pets Deposits</label> {/* Keeping label as per screenshot, but mapping to rent/fee */}
-                    <input
-                        type="number"
-                        className={inputClass}
-                        value={data.petRent || ''}
-                        onChange={(e) => updateData('petRent', e.target.value)}
-                        placeholder="₹ 00"
-                    />
+                    <label className={labelClass}>
+                        Pet Fee {currencySymbol && <span className="text-xs text-gray-500 font-normal">({currencySymbol})</span>}
+                    </label>
+                    <div className="relative">
+                        {currencySymbol && (
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white font-medium">{currencySymbol}</span>
+                        )}
+                        <input
+                            type="number"
+                            className={`${inputClass} ${currencySymbol ? 'pl-8' : ''}`}
+                            value={data.petRent || ''}
+                            onChange={(e) => updateData('petRent', e.target.value)}
+                            placeholder={`${currencySymbol || '₹'} 0.00`}
+                        />
+                    </div>
                 </div>
             </div>
 
