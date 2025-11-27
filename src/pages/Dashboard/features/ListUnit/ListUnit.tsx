@@ -322,6 +322,7 @@ const ListUnit: React.FC = () => {
     } catch (err) {
       console.error('Error saving listing contact:', err);
       setError(err instanceof Error ? err.message : 'Failed to save listing contact. Please try again.');
+    } finally {
       setIsSubmitting(false);
     }
   };
