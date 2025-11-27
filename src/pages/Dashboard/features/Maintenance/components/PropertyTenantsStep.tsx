@@ -118,7 +118,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
     };
 
     return (
-        <div className="w-full max-w-5xl mx-auto pb-12">`
+        <div className="w-full max-w-5xl mx-auto pb-12">
             <div className="mb-8">
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">Property</h2>
                 <p className="text-gray-500 text-sm">
