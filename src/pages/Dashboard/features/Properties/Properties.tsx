@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import PropertiesHeader from './components/PropertiesHeader';
-import PropertiesFilter from './components/PropertiesFilter';
+import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
+import Pagination from '../../components/Pagination';
 import PropertyCard from './components/PropertyCard';
 
 const PROPERTY_NAMES = [
@@ -51,6 +51,38 @@ const Properties: React.FC = () => {
 
     const handleAddProperty = () => {
         navigate('/dashboard/property/add');
+    };
+
+    const filterOptions: Record<string, FilterOption[]> = {
+        status: [
+            { value: 'active', label: 'Active' },
+            { value: 'inactive', label: 'Inactive' },
+            { value: 'pending', label: 'Pending' },
+        ],
+        occupancy: [
+            { value: 'occupied', label: 'Occupied' },
+            { value: 'vacant', label: 'Vacant' },
+            { value: 'partially_occupied', label: 'Partially Occupied' },
+        ],
+        propertyType: [
+            { value: 'single_family', label: 'Single Family' },
+            { value: 'multi_family', label: 'Multi Family' },
+            { value: 'apartment', label: 'Apartment' },
+            { value: 'condo', label: 'Condo' },
+            { value: 'townhouse', label: 'Townhouse' },
+        ],
+        balance: [
+            { value: 'low', label: 'Low (< $25k)' },
+            { value: 'medium', label: 'Medium ($25k - $75k)' },
+            { value: 'high', label: 'High (> $75k)' },
+        ]
+    };
+
+    const filterLabels: Record<string, string> = {
+        status: 'Status',
+        occupancy: 'Occupancy',
+        propertyType: 'Property Type',
+        balance: 'Balance'
     };
 
     const filteredProperties = useMemo(() => {
@@ -104,9 +136,11 @@ const Properties: React.FC = () => {
             <div className="p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem] overflow-visible">
                 <PropertiesHeader onAddProperty={handleAddProperty} />
 
-                <PropertiesFilter
+                <DashboardFilter
+                    filterOptions={filterOptions}
+                    filterLabels={filterLabels}
                     onSearchChange={setSearchQuery}
-                    onFiltersChange={setFilters}
+                    onFiltersChange={(newFilters) => setFilters(newFilters as any)}
                 />
 
                 {filteredProperties.length > 0 ? (
@@ -121,42 +155,11 @@ const Properties: React.FC = () => {
                         </div>
 
                         {/* Pagination */}
-                        <div className="flex justify-center items-center gap-2 mt-8">
-                            <button
-                                onClick={() => handlePageChange(currentPage - 1)}
-                                disabled={currentPage === 1}
-                                className={`p-2 rounded-full transition-colors ${currentPage === 1
-                                    ? 'text-gray-300 cursor-not-allowed'
-                                    : 'text-gray-600 hover:bg-gray-200'
-                                    }`}
-                            >
-                                <ChevronLeft className="w-6 h-6" />
-                            </button>
-
-                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                                <button
-                                    key={page}
-                                    onClick={() => handlePageChange(page)}
-                                    className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-medium transition-all ${currentPage === page
-                                        ? 'bg-[#3A7D76] text-white shadow-lg'
-                                        : 'bg-transparent text-gray-600 border border-gray-300 hover:bg-gray-100'
-                                        }`}
-                                >
-                                    {page}
-                                </button>
-                            ))}
-
-                            <button
-                                onClick={() => handlePageChange(currentPage + 1)}
-                                disabled={currentPage === totalPages}
-                                className={`p-2 rounded-full transition-colors ${currentPage === totalPages
-                                    ? 'text-gray-300 cursor-not-allowed'
-                                    : 'text-gray-600 hover:bg-gray-200'
-                                    }`}
-                            >
-                                <ChevronRight className="w-6 h-6" />
-                            </button>
-                        </div>
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={handlePageChange}
+                        />
                     </>
                 ) : (
                     <div className="text-center py-12 bg-white rounded-2xl">
