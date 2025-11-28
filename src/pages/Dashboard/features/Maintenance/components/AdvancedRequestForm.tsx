@@ -173,7 +173,6 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
                     placeholder="Select Category"
                     required
                     buttonClassName="!bg-white !border-none !rounded-md !py-3"
-                    labelClassName="font-bold text-gray-700"
                 />
                 <CustomDropdown
                     label="Subcategory"
@@ -183,7 +182,6 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
                     placeholder={formData.category ? "Select Subcategory" : "Select Category First"}
                     required
                     buttonClassName="!bg-white !border-none !rounded-md !py-3"
-                    labelClassName="font-bold text-gray-700"
                     disabled={!formData.category}
                 />
             </div>
@@ -198,7 +196,6 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
                     placeholder={formData.subCategory ? "Select Issue" : "Select Subcategory First"}
                     required
                     buttonClassName="!bg-white !border-none !rounded-md !py-3"
-                    labelClassName="font-bold text-gray-700"
                     disabled={!formData.subCategory}
                 />
                 <CustomDropdown
@@ -209,7 +206,6 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
                     placeholder={formData.issue ? "Select Sub-issue" : "Select Issue First"}
                     required
                     buttonClassName="!bg-white !border-none !rounded-md !py-3"
-                    labelClassName="font-bold text-gray-700"
                     disabled={!formData.issue}
                 />
             </div>
