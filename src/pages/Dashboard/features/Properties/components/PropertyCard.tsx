@@ -21,55 +21,53 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
     const navigate = useNavigate();
 
     return (
-        <div className="bg-[#F6F6F8] rounded-[2rem] p-4 shadow-sm relative">
-            <div className="flex gap-4">
-                {/* Image Section */}
-                <div className="w-48 flex-shrink-0">
-                    <img
-                        src={image}
-                        alt={name}
-                        className="w-full h-full object-cover rounded-2xl"
-                    />
-                </div>
-
-                {/* Content Section */}
-                <div className="flex-1 pt-2">
-                    <div className="flex justify-between items-start mb-2">
-                        <span className="bg-[#D1E2D1] text-[#3A6D6C] text-xs px-3 py-1 rounded-full font-medium">
-                            {type}
-                        </span>
-                        <div className="bg-[#82D64D] text-white px-4 py-1.5 rounded-full text-sm font-medium absolute top-4 right-4">
-                            Balance ₹ {balance.toLocaleString()}
-                        </div>
-                    </div>
-
-                    <h3 className="text-lg font-bold text-gray-800 mb-1">{name}</h3>
-                    <p className="text-xs text-gray-600 mb-4 leading-relaxed w-2/3">
-                        {address}
-                    </p>
-
-                    <button
-                        onClick={() => navigate(`/dashboard/properties/${id}`)}
-                        className="bg-[#82D64D] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#72c042] transition-colors"
-                    >
-                        View Property
-                    </button>
+        <div className="bg-[#F6F6F8] rounded-[2rem] p-4 shadow-sm relative flex flex-col h-full">
+            {/* Image Section */}
+            <div className="w-full h-48 mb-4 relative flex-shrink-0">
+                <img
+                    src={image}
+                    alt={name}
+                    className="w-full h-full object-cover rounded-2xl"
+                />
+                <div className="bg-[#82D64D] text-white px-4 py-1.5 rounded-full text-sm font-medium absolute top-3 right-3 shadow-sm">
+                    Balance ₹ {balance.toLocaleString()}
                 </div>
             </div>
 
+            {/* Content Section */}
+            <div className="flex-1 flex flex-col">
+                <div className="flex justify-between items-start mb-2">
+                    <span className="bg-[#D1E2D1] text-[#3A6D6C] text-xs px-3 py-1 rounded-full font-medium">
+                        {type}
+                    </span>
+                </div>
+
+                <h3 className="text-lg font-bold text-gray-800 mb-1">{name}</h3>
+                <p className="text-xs text-gray-600 mb-4 leading-relaxed line-clamp-2">
+                    {address}
+                </p>
+
+                <button
+                    onClick={() => navigate(`/dashboard/properties/${id}`)}
+                    className="bg-[#82D64D] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#72c042] transition-colors w-full mb-4 mt-auto"
+                >
+                    View Property
+                </button>
+            </div>
+
             {/* Action Buttons */}
-            <div className="flex gap-3 mt-6 shadow-md px-2 py-3 rounded-full">
-                <button className="flex items-center gap-2 bg-[#82D64D] text-white px-4 py-2 rounded-full text-xs font-medium hover:bg-[#72c042] transition-colors">
+            <div className="flex gap-2 justify-between mt-auto bg-white shadow-sm px-3 py-3 rounded-2xl overflow-x-auto">
+                <button className="flex items-center justify-center gap-1.5 bg-[#82D64D] text-white px-3 py-2 rounded-full text-[10px] font-medium hover:bg-[#72c042] transition-colors flex-1 whitespace-nowrap">
                     <div className="p-0.5 border border-white rounded-full">
-                        <DollarSign className="w-3 h-3" />
+                        <DollarSign className="w-2.5 h-2.5" />
                     </div>
                     Accounting
                 </button>
-                <button className="flex items-center gap-2 bg-[#82D64D] text-white px-4 py-2 rounded-full text-xs font-medium hover:bg-[#72c042] transition-colors">
+                <button className="flex items-center justify-center gap-1.5 bg-[#82D64D] text-white px-3 py-2 rounded-full text-[10px] font-medium hover:bg-[#72c042] transition-colors flex-1 whitespace-nowrap">
                     <Wrench className="w-3 h-3" />
-                    MR Requests
+                    Requests
                 </button>
-                <button className="flex items-center gap-2 bg-[#82D64D] text-white px-4 py-2 rounded-full text-xs font-medium hover:bg-[#72c042] transition-colors">
+                <button className="flex items-center justify-center gap-1.5 bg-[#82D64D] text-white px-3 py-2 rounded-full text-[10px] font-medium hover:bg-[#72c042] transition-colors flex-1 whitespace-nowrap">
                     <User className="w-3 h-3" />
                     Tenants
                 </button>

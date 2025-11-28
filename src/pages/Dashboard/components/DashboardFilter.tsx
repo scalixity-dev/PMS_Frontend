@@ -1,27 +1,40 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, Plus, MoreHorizontal, X } from 'lucide-react';
 
-interface FilterOption {
+export interface FilterOption {
     value: string;
     label: string;
 }
 
-interface EquipmentsFilterProps {
+export interface DashboardFilterProps {
+    filterOptions: Record<string, FilterOption[]>;
+    filterLabels?: Record<string, string>;
     onSearchChange: (search: string) => void;
-    onFiltersChange: (filters: { status: string[]; occupancy: string[]; propertyType: string[] }) => void;
+    onFiltersChange: (filters: Record<string, string[]>) => void;
+    showMoreFilters?: boolean;
+    showClearAll?: boolean;
+    initialFilters?: Record<string, string[]>;
 }
 
-const EquipmentsFilter: React.FC<EquipmentsFilterProps> = ({ onSearchChange, onFiltersChange }) => {
+const DashboardFilter: React.FC<DashboardFilterProps> = ({
+    filterOptions,
+    filterLabels,
+    onSearchChange,
+    onFiltersChange,
+    showMoreFilters = true,
+    showClearAll = true,
+    initialFilters = {}
+}) => {
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedFilters, setSelectedFilters] = useState<{
-        status: string[];
-        occupancy: string[];
-        propertyType: string[];
-    }>({
-        status: [],
-        occupancy: [],
-        propertyType: []
+    // Initialize selectedFilters based on keys from filterOptions
+    const [selectedFilters, setSelectedFilters] = useState<Record<string, string[]>>(() => {
+        const initial: Record<string, string[]> = {};
+        Object.keys(filterOptions).forEach(key => {
+            initial[key] = initialFilters[key] || [];
+        });
+        return initial;
     });
+
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -41,26 +54,6 @@ const EquipmentsFilter: React.FC<EquipmentsFilterProps> = ({ onSearchChange, onF
         };
     }, [openDropdown]);
 
-    const filterOptions: Record<string, FilterOption[]> = {
-        status: [
-            { value: 'active', label: 'Active' },
-            { value: 'inactive', label: 'Inactive' },
-            { value: 'maintenance', label: 'Under Maintenance' },
-        ],
-        occupancy: [
-            { value: 'occupied', label: 'Occupied' },
-            { value: 'vacant', label: 'Vacant' },
-        ],
-        propertyType: [
-            { value: 'household', label: 'Household' },
-            { value: 'appliances', label: 'Appliances' },
-            { value: 'plumbing', label: 'Plumbing' },
-            { value: 'electrical', label: 'Electrical' },
-            { value: 'exterior', label: 'Exterior' },
-            { value: 'outdoors', label: 'Outdoors' },
-        ]
-    };
-
     const handleSearchChange = (value: string) => {
         setSearchQuery(value);
         onSearchChange(value);
@@ -68,11 +61,11 @@ const EquipmentsFilter: React.FC<EquipmentsFilterProps> = ({ onSearchChange, onF
 
     const handleFilterToggle = (filterType: string, value: string) => {
         setSelectedFilters(prev => {
-            const currentValues = prev[filterType as keyof typeof prev];
+            const currentValues = prev[filterType] || [];
             const newValues = currentValues.includes(value)
                 ? currentValues.filter(v => v !== value)
                 : [...currentValues, value];
-            
+
             const updatedFilters = { ...prev, [filterType]: newValues };
             onFiltersChange(updatedFilters);
             return updatedFilters;
@@ -81,19 +74,20 @@ const EquipmentsFilter: React.FC<EquipmentsFilterProps> = ({ onSearchChange, onF
 
     const handleClearAll = () => {
         setSearchQuery('');
-        setSelectedFilters({ status: [], occupancy: [], propertyType: [] });
+        const clearedFilters: Record<string, string[]> = {};
+        Object.keys(filterOptions).forEach(key => {
+            clearedFilters[key] = [];
+        });
+        setSelectedFilters(clearedFilters);
         onSearchChange('');
-        onFiltersChange({ status: [], occupancy: [], propertyType: [] });
+        onFiltersChange(clearedFilters);
     };
 
     const getFilterLabel = (filterType: string) => {
-        const count = selectedFilters[filterType as keyof typeof selectedFilters].length;
-        const labels: Record<string, string> = {
-            status: 'Status',
-            occupancy: 'Occupancy',
-            propertyType: 'Property Type'
-        };
-        return count > 0 ? `${labels[filterType]} (${count})` : labels[filterType];
+        const count = selectedFilters[filterType]?.length || 0;
+        // Use provided label or capitalize the key
+        const label = filterLabels?.[filterType] || filterType.charAt(0).toUpperCase() + filterType.slice(1).replace(/([A-Z])/g, ' $1').trim();
+        return count > 0 ? `${label} (${count})` : label;
     };
 
     const hasActiveFilters = () => {
@@ -101,7 +95,7 @@ const EquipmentsFilter: React.FC<EquipmentsFilterProps> = ({ onSearchChange, onF
     };
 
     return (
-        <div ref={dropdownRef} className="bg-[#3A6D6C] p-4 rounded-full flex items-center gap-4 mb-8 justify-between relative">
+        <div ref={dropdownRef} className="bg-[#3A6D6C] p-4 rounded-full flex items-center gap-4 mb-8 justify-between relative shadow-md">
             <div className="flex items-center gap-4 flex-1 overflow-visible flex-wrap">
                 <div className="relative flex-shrink-0">
                     <input
@@ -126,12 +120,12 @@ const EquipmentsFilter: React.FC<EquipmentsFilterProps> = ({ onSearchChange, onF
                 </div>
 
                 <div className="flex items-center gap-3">
-                    {['status', 'occupancy', 'propertyType'].map((filterType) => (
+                    {Object.keys(filterOptions).map((filterType) => (
                         <div key={filterType} className="relative">
                             <button
                                 onClick={() => setOpenDropdown(openDropdown === filterType ? null : filterType)}
                                 className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
-                                    selectedFilters[filterType as keyof typeof selectedFilters].length > 0
+                                    (selectedFilters[filterType]?.length || 0) > 0
                                         ? 'bg-[#7BD747] text-white'
                                         : 'bg-white text-gray-700 hover:bg-gray-50'
                                 }`}
@@ -150,7 +144,7 @@ const EquipmentsFilter: React.FC<EquipmentsFilterProps> = ({ onSearchChange, onF
                                             >
                                                 <input
                                                     type="checkbox"
-                                                    checked={selectedFilters[filterType as keyof typeof selectedFilters].includes(option.value)}
+                                                    checked={selectedFilters[filterType]?.includes(option.value)}
                                                     onChange={() => handleFilterToggle(filterType, option.value)}
                                                     className="rounded border-gray-300 text-[#7BD747] focus:ring-[#7BD747]"
                                                 />
@@ -163,24 +157,28 @@ const EquipmentsFilter: React.FC<EquipmentsFilterProps> = ({ onSearchChange, onF
                         </div>
                     ))}
 
-                    <button className="flex items-center gap-2 px-4 py-2 bg-white rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors whitespace-nowrap">
-                        More Filters
-                        <MoreHorizontal className="w-4 h-4 text-gray-800" />
-                    </button>
+                    {showMoreFilters && (
+                        <button className="flex items-center gap-2 px-4 py-2 bg-white rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors whitespace-nowrap">
+                            More Filters
+                            <MoreHorizontal className="w-4 h-4 text-gray-800" />
+                        </button>
+                    )}
                 </div>
             </div>
 
-            <button
-                onClick={handleClearAll}
-                className={`px-6 py-2 bg-white rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors whitespace-nowrap flex-shrink-0 ${
-                    hasActiveFilters() ? 'opacity-100' : 'opacity-50 cursor-not-allowed'
-                }`}
-                disabled={!hasActiveFilters()}
-            >
-                Clear All
-            </button>
+            {showClearAll && (
+                <button
+                    onClick={handleClearAll}
+                    className={`px-6 py-2 bg-white rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors whitespace-nowrap flex-shrink-0 ${
+                        hasActiveFilters() ? 'opacity-100' : 'opacity-50 cursor-not-allowed'
+                    }`}
+                    disabled={!hasActiveFilters()}
+                >
+                    Clear All
+                </button>
+            )}
         </div>
     );
 };
 
-export default EquipmentsFilter;
+export default DashboardFilter;

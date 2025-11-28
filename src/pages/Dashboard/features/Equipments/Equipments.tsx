@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 // import { useNavigate } from 'react-router-dom';
 import EquipmentsHeader from './components/EquipmentsHeader';
 import EquipmentsStats from './components/EquipmentsStats';
-import EquipmentsFilter from './components/EquipmentsFilter';
+import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import EquipmentCard from './components/EquipmentCard';
 
 const MOCK_EQUIPMENTS = [
@@ -66,6 +66,32 @@ const Equipments: React.FC = () => {
         console.log('Add Equipment Clicked');
     };
 
+    const filterOptions: Record<string, FilterOption[]> = {
+        status: [
+            { value: 'active', label: 'Active' },
+            { value: 'inactive', label: 'Inactive' },
+            { value: 'maintenance', label: 'Under Maintenance' },
+        ],
+        occupancy: [
+            { value: 'occupied', label: 'Occupied' },
+            { value: 'vacant', label: 'Vacant' },
+        ],
+        propertyType: [
+            { value: 'household', label: 'Household' },
+            { value: 'appliances', label: 'Appliances' },
+            { value: 'plumbing', label: 'Plumbing' },
+            { value: 'electrical', label: 'Electrical' },
+            { value: 'exterior', label: 'Exterior' },
+            { value: 'outdoors', label: 'Outdoors' },
+        ]
+    };
+
+    const filterLabels: Record<string, string> = {
+        status: 'Status',
+        occupancy: 'Occupancy',
+        propertyType: 'Property Type'
+    };
+
     const filteredEquipments = useMemo(() => {
         return MOCK_EQUIPMENTS.filter(equipment => {
             // Search filter
@@ -103,9 +129,11 @@ const Equipments: React.FC = () => {
 
                 <EquipmentsStats />
 
-                <EquipmentsFilter 
+                <DashboardFilter
+                    filterOptions={filterOptions}
+                    filterLabels={filterLabels}
                     onSearchChange={setSearchQuery}
-                    onFiltersChange={setFilters}
+                    onFiltersChange={(newFilters) => setFilters(newFilters as any)}
                 />
 
                 {filteredEquipments.length > 0 ? (
