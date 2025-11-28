@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Plus, Building, Loader2 } from 'lucide-react';
 import PropertyCard from '../components/PropertyCard';
 import { propertyService } from '../../../../../services/property.service';
+import { leasingService } from '../../../../../services/leasing.service';
 import type { Property, BackendProperty } from '../../../../../services/property.service';
 
 interface PropertySelectionProps {
@@ -51,13 +52,79 @@ const getNextIncompleteStep = (property: BackendProperty): number | null => {
   return null;
 };
 
+// Check if property has all listing data filled (property, leasing, application, contact)
+const isPropertyListingComplete = async (propertyId: string): Promise<boolean> => {
+  try {
+    // Check property details completeness
+    const property = await propertyService.getOne(propertyId);
+    
+    // Property must have: name, address, amenities, photos, description
+    const hasPropertyDetails = !!(
+      property.propertyName &&
+      property.address &&
+      property.amenities?.parking &&
+      property.amenities?.laundry &&
+      property.amenities?.airConditioning &&
+      property.coverPhotoUrl &&
+      property.photos &&
+      property.photos.filter(p => !p.isPrimary).length > 0 &&
+      property.description
+    );
+
+    if (!hasPropertyDetails) {
+      return false;
+    }
+
+    // Check leasing data
+    try {
+      const leasing = await leasingService.getByPropertyId(propertyId);
+      
+      const hasLeasingData = !!(
+        leasing.monthlyRent &&
+        leasing.securityDeposit !== null &&
+        leasing.securityDeposit !== undefined &&
+        leasing.amountRefundable !== null &&
+        leasing.amountRefundable !== undefined &&
+        leasing.dateAvailable &&
+        leasing.minLeaseDuration &&
+        leasing.maxLeaseDuration
+      );
+
+      // Check application settings
+      const hasApplicationSettings = 
+        leasing.onlineRentalApplication !== null &&
+        leasing.onlineRentalApplication !== undefined;
+
+      // Check application fee (if required)
+      let hasApplicationFee = true;
+      if (leasing.requireApplicationFee === true) {
+        hasApplicationFee = leasing.applicationFee !== null && leasing.applicationFee !== undefined;
+      }
+
+      // Check listing contact
+      const hasListingContact = !!(
+        property.listingContactName &&
+        property.listingPhoneNumber &&
+        property.listingEmail
+      );
+
+      return hasLeasingData && hasApplicationSettings && hasApplicationFee && hasListingContact;
+    } catch (leasingErr) {
+      // Leasing doesn't exist, property is incomplete
+      return false;
+    }
+  } catch (err) {
+    // Error fetching property, consider incomplete
+    return false;
+  }
+};
+
 const PropertySelection: React.FC<PropertySelectionProps> = ({ data, updateData, onCreateProperty, onEditProperty, onNext }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [fullPropertyData, setFullPropertyData] = useState<BackendProperty | null>(null);
-  const [loadingPropertyData, setLoadingPropertyData] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -66,9 +133,20 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ data, updateData,
         setLoading(true);
         setError(null);
         const fetchedProperties = await propertyService.getAllTransformed();
-        // Only set properties if we get a valid array from the API
-        // No mock data or fallback - use exactly what the API returns
-        setProperties(Array.isArray(fetchedProperties) ? fetchedProperties : []);
+        const allProperties = Array.isArray(fetchedProperties) ? fetchedProperties : [];
+        
+        // Filter out properties that have all listing data complete
+        // Only show properties with missing data
+        const incompleteProperties: Property[] = [];
+        
+        for (const property of allProperties) {
+          const isComplete = await isPropertyListingComplete(property.id);
+          if (!isComplete) {
+            incompleteProperties.push(property);
+          }
+        }
+        
+        setProperties(incompleteProperties);
       } catch (err) {
         console.error('Error fetching properties:', err);
         setError(err instanceof Error ? err.message : 'Failed to load properties');
@@ -93,14 +171,11 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ data, updateData,
       }
 
       try {
-        setLoadingPropertyData(true);
         const fullProperty = await propertyService.getOne(data.property);
         setFullPropertyData(fullProperty);
       } catch (err) {
         console.error('Error fetching full property data:', err);
         setFullPropertyData(null);
-      } finally {
-        setLoadingPropertyData(false);
       }
     };
 
