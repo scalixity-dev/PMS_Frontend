@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ListingHeader from './components/ListingHeader';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
@@ -157,6 +157,11 @@ const Listing: React.FC = () => {
 
             return matchesSearch && matchesStatus && matchesDaysListed && matchesSyndication;
         });
+    }, [searchQuery, filters]);
+
+    // Reset to first page when filters change
+    useEffect(() => {
+        setCurrentPage(1);
     }, [searchQuery, filters]);
 
     const totalPages = Math.ceil(filteredListings.length / itemsPerPage);
