@@ -35,7 +35,9 @@ const PROPERTY_DETAILS = {
             bedrooms: 3,
             bathrooms: 2,
             sizeSqFt: 1850
-        }
+        },
+        features: ['Renovated', 'Furnished', 'Pet Friendly', 'High Ceilings'],
+        amenities: ['Basketball court', 'Business center', 'Gym', 'Pool', 'Parking']
     }
 };
 
@@ -80,88 +82,95 @@ const PropertyDetail: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Hero Image */}
-                <div className="w-full h-80 rounded-3xl overflow-hidden mb-8 shadow-lg">
-                    <img
-                        src={property.image}
-                        alt={property.name}
-                        className="w-full h-full object-cover"
-                    />
-                </div>
-
-                {/* Property Info Center */}
-                <div className="flex flex-col items-center justify-center mb-10">
-                    <div className="bg-[#E8F3F1] px-6 py-2 rounded-full mb-3">
-                        <h2 className="text-[#3A6D6C] font-bold text-lg">{property.name}</h2>
-                    </div>
-                    <div className="flex items-center text-gray-600 text-sm font-medium mb-6">
-                        <MapPin className="w-4 h-4 mr-2" />
-                        {property.address}
+                {/* Hero Image & Property Info Section */}
+                <div className="mb-10 p-6 shadow-lg rounded-3xl border border-gray-300">
+                    {/* Hero Image */}
+                    <div className="w-full h-80 rounded-3xl overflow-hidden mb-8 shadow-lg">
+                        <img
+                            src={property.image}
+                            alt={property.name}
+                            className="w-full h-full object-cover"
+                        />
                     </div>
 
-                    {/* Quick Stats Pills */}
-                    <div className="flex gap-4 mb-8 flex-wrap justify-center">
-                        <div className="flex items-center bg-white px-4 py-2 rounded-full border border-[#82D64D] shadow-sm">
-                            <div className="w-5 h-5 rounded-full bg-[#82D64D] text-white flex items-center justify-center text-xs font-bold mr-2">
-                                {property.stats.equipment}
-                            </div>
-                            <span className="text-gray-700 text-sm font-medium">Equipment</span>
+                    {/* Property Info Center */}
+                    <div className="flex flex-col items-center justify-center">
+                        <div className="bg-[#E8F3F1] px-6 py-2 rounded-full mb-3">
+                            <h2 className="text-[#3A6D6C] font-bold text-lg">{property.name}</h2>
                         </div>
-                        <div className="flex items-center bg-white px-4 py-2 rounded-full border border-[#82D64D] shadow-sm">
-                            <div className="w-5 h-5 rounded-full bg-[#82D64D] text-white flex items-center justify-center text-xs font-bold mr-2">
-                                {property.stats.recurringRequests}
-                            </div>
-                            <span className="text-gray-700 text-sm font-medium">Recurring Requests</span>
+                        <div className="flex items-center text-gray-600 text-sm font-medium mb-6">
+                            <MapPin className="w-4 h-4 mr-2" />
+                            {property.address}
                         </div>
-                        <div className="flex items-center bg-white px-4 py-2 rounded-full border border-[#82D64D] shadow-sm">
-                            <div className="w-5 h-5 rounded-full bg-[#82D64D] text-white flex items-center justify-center text-xs font-bold mr-2">
-                                {property.stats.pms}
-                            </div>
-                            <span className="text-gray-700 text-sm font-medium">Pms</span>
-                        </div>
-                        <div className="flex items-center bg-white px-4 py-2 rounded-full border border-[#82D64D] shadow-sm">
-                            <div className="w-5 h-5 rounded-full bg-[#82D64D] text-white flex items-center justify-center text-xs font-bold mr-2">
-                                {property.stats.maintenance}
-                            </div>
-                            <span className="text-gray-700 text-sm font-medium">Maintenance</span>
-                        </div>
-                    </div>
 
-                    {/* Assigned Team & Bank */}
-                    <div className="flex gap-6 w-full max-w-4xl justify-center">
-                        <div className="bg-[#F6F6F8] p-6 rounded-[2rem] flex-1 flex flex-col items-center text-center border border-[#82D64D] shadow-sm">
-                            <div className="bg-[#3A6D6C] text-white px-4 py-1.5 rounded-full flex items-center gap-2 mb-4 text-sm font-medium">
-                                <Users className="w-4 h-4" />
-                                Assigned Team
+                        {/* Quick Stats Pills */}
+                        <div className="flex gap-4 mb-8 flex-wrap justify-center">
+                            <div className="flex items-center bg-white px-4 py-2 rounded-full border border-[#82D64D] shadow-sm">
+                                <div className="w-5 h-5 rounded-full bg-[#82D64D] text-white flex items-center justify-center text-xs font-bold mr-2">
+                                    {property.stats.equipment}
+                                </div>
+                                <span className="text-gray-700 text-sm font-medium">Equipment</span>
                             </div>
-                            <p className="text-gray-500 text-sm mb-4">No assigned members</p>
-                            <button className="bg-[#B5E48C] text-[#2c5554] px-6 py-1.5 rounded-full text-sm font-medium hover:bg-[#a3d975] transition-colors">
-                                Assign
-                            </button>
+                            <div className="flex items-center bg-white px-4 py-2 rounded-full border border-[#82D64D] shadow-sm">
+                                <div className="w-5 h-5 rounded-full bg-[#82D64D] text-white flex items-center justify-center text-xs font-bold mr-2">
+                                    {property.stats.recurringRequests}
+                                </div>
+                                <span className="text-gray-700 text-sm font-medium">Recurring Requests</span>
+                            </div>
+                            <div className="flex items-center bg-white px-4 py-2 rounded-full border border-[#82D64D] shadow-sm">
+                                <div className="w-5 h-5 rounded-full bg-[#82D64D] text-white flex items-center justify-center text-xs font-bold mr-2">
+                                    {property.stats.pms}
+                                </div>
+                                <span className="text-gray-700 text-sm font-medium">Pms</span>
+                            </div>
+                            <div className="flex items-center bg-white px-4 py-2 rounded-full border border-[#82D64D] shadow-sm">
+                                <div className="w-5 h-5 rounded-full bg-[#82D64D] text-white flex items-center justify-center text-xs font-bold mr-2">
+                                    {property.stats.maintenance}
+                                </div>
+                                <span className="text-gray-700 text-sm font-medium">Maintenance</span>
+                            </div>
                         </div>
-                        <div className="bg-[#F6F6F8] p-6 rounded-[2rem] flex-1 flex flex-col items-center text-center border border-[#82D64D] shadow-sm">
-                            <div className="bg-[#3A6D6C] text-white px-4 py-1.5 rounded-full flex items-center gap-2 mb-4 text-sm font-medium">
-                                <CreditCard className="w-4 h-4" />
-                                Bank Account
+
+                        {/* Assigned Team & Bank */}
+                        <div className="flex flex-col md:flex-row gap-12 mt-5 w-full justify-center items-center">
+                            <div className="relative w-80">
+                                <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#3d7475] text-white px-10 py-3 rounded-full flex items-center gap-2 font-bold shadow-sm z-10 whitespace-nowrap">
+                                    <Users className="w-5 h-5" strokeWidth={2.5} />
+                                    <span>Assigned Team</span>
+                                </div>
+                                <div className="bg-[#F0F0F6] border-2 border-[#7BD747] rounded-[2.5rem] p-4 pt-10 flex flex-col items-center justify-center h-auto w-full">
+                                    <p className="text-[#5C6B7F] text-center font-medium mb-4">No assigned members</p>
+                                    <button className="py-2 px-6 rounded-full cursor-pointer bg-[#BEFB9B] text-[#2E6819] border border-2 border-[#2E6819] font-bold text-sm hover:opacity-80 transition-opacity">
+                                        Assign
+                                    </button>
+                                </div>
                             </div>
-                            <p className="text-gray-500 text-sm mb-4">No bank account assigned</p>
-                            <button className="bg-[#B5E48C] text-[#2c5554] px-6 py-1.5 rounded-full text-sm font-medium hover:bg-[#a3d975] transition-colors">
-                                Assign
-                            </button>
+                            <div className="relative w-80">
+                                <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#3d7475] text-white px-10 py-3 rounded-full flex items-center gap-2 font-bold shadow-sm z-10 whitespace-nowrap">
+                                    <CreditCard className="w-5 h-5" strokeWidth={2.5} />
+                                    <span>Bank Account</span>
+                                </div>
+                                <div className="bg-[#F0F0F6] border-2 border-[#7BD747] rounded-[2.5rem] p-4 pt-10 flex flex-col items-center justify-center h-auto w-full">
+                                    <p className="text-[#5C6B7F] text-center font-medium mb-4">No bank account assigned</p>
+                                    <button className="py-2 px-6 rounded-full cursor-pointer bg-[#BEFB9B] text-[#2E6819] border border-2 border-[#2E6819] font-bold text-sm hover:opacity-80 transition-opacity">
+                                        Assign
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Tabs */}
                 <div className="flex justify-center mb-8">
-                    <div className="bg-[#E8E8EA] p-1.5 rounded-full flex gap-2">
+                    <div className="bg-[#F6F6F8] py-4 px-2 rounded-full w-full flex justify-center items-center gap-4 shadow-sm">
                         {['Profile', 'Specs', 'Financials', 'Service Providers'].map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab.toLowerCase())}
-                                className={`px-8 py-2 rounded-full text-sm font-medium transition-all ${activeTab === tab.toLowerCase()
-                                        ? 'bg-[#82D64D] text-white shadow-sm'
-                                        : 'text-gray-600 hover:bg-gray-200'
+                                className={`px-10 py-3 rounded-full text-sm font-bold transition-all ${activeTab === tab.toLowerCase()
+                                        ? 'bg-[#82D64D] text-white shadow-md'
+                                        : 'bg-[#E0E0E0] text-gray-700 hover:bg-gray-300'
                                     }`}
                             >
                                 {tab}
@@ -204,6 +213,49 @@ const PropertyDetail: React.FC = () => {
                                 <span className="text-[10px] text-gray-400">1{idx} Nov</span>
                             </div>
                         ))}
+                    </div>
+                </div>
+
+                {/* Features & Amenities Row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    {/* Property Features */}
+                    <div className="bg-white rounded-[2rem] p-6 shadow-sm flex flex-col">
+                        <div className="flex items-center gap-3 mb-4">
+                            <h3 className="text-lg font-bold text-gray-800">Property features</h3>
+                            <span className="bg-[#82D64D] text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full">
+                                {property.features?.length || 0}
+                            </span>
+                        </div>
+                        <div className="flex flex-wrap gap-3">
+                            {property.features?.map((feature, index) => (
+                                <span key={index} className="bg-[#82D64D] text-white px-6 py-2 rounded-full text-sm font-medium">
+                                    {feature}
+                                </span>
+                            ))}
+                            {(!property.features || property.features.length === 0) && (
+                                <span className="text-gray-400 text-sm italic">No features listed</span>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Property Amenities */}
+                    <div className="bg-white rounded-[2rem] p-6 shadow-sm flex flex-col">
+                        <div className="flex items-center gap-3 mb-4">
+                            <h3 className="text-lg font-bold text-gray-800">Property amenities</h3>
+                            <span className="bg-[#82D64D] text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full">
+                                {property.amenities?.length || 0}
+                            </span>
+                        </div>
+                        <div className="flex flex-wrap gap-3">
+                            {property.amenities?.map((amenity, index) => (
+                                <span key={index} className="bg-[#82D64D] text-white px-6 py-2 rounded-full text-sm font-medium">
+                                    {amenity}
+                                </span>
+                            ))}
+                            {(!property.amenities || property.amenities.length === 0) && (
+                                <span className="text-gray-400 text-sm italic">No amenities listed</span>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -253,7 +305,7 @@ const PropertyDetail: React.FC = () => {
                             <div className="bg-[#82D64D] text-white px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium">
                                 <Maximize className="w-4 h-4" />
                                 Size, sq.ft
-                                <span className="bg-white text-[#82D64D] w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold">{property.specifications.sizeSqFt}</span>
+                                <span className="bg-white text-[#82D64D] min-w-[1.25rem] h-5 px-1.5 rounded-full flex items-center justify-center text-xs font-bold">{property.specifications.sizeSqFt}</span>
                             </div>
                         </div>
 

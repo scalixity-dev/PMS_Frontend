@@ -93,7 +93,6 @@ const DueDateMaterialsStep: React.FC<DueDateMaterialsStepProps> = ({ onNext, onB
                     placeholder="Normal"
                     required
                     buttonClassName="!bg-white !border-none !rounded-md !py-3"
-                    labelClassName="font-bold text-gray-700"
                 />
                
             </div>

@@ -137,7 +137,6 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                     placeholder="Select Property"
                     required
                     buttonClassName="!bg-white !border-none !rounded-md !py-3"
-                    labelClassName="font-bold text-gray-700"
                 />
             </div>
 
@@ -410,7 +409,6 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                                 placeholder="Select main category"
                                 required
                                 buttonClassName="!bg-[#7BD747] !border-none !rounded-full !py-3 !text-white !px-6"
-                                labelClassName="font-bold text-gray-700"
                             />
 
                             {/* Equipment Brand */}
