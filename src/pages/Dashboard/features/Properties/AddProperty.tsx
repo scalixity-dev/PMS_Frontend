@@ -61,6 +61,7 @@ const AddProperty: React.FC = () => {
 
   const [customFeatureInput, setCustomFeatureInput] = useState('');
   const [customAmenityInput, setCustomAmenityInput] = useState('');
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   // Refs for file inputs
   const coverPhotoInputRef = useRef<HTMLInputElement>(null);
@@ -153,6 +154,21 @@ const AddProperty: React.FC = () => {
     { value: 'window', label: 'Window Unit' },
     { value: 'portable', label: 'Portable' },
     { value: 'none', label: 'None' },
+  ];
+
+  const unitTypeOptions = [
+    { value: '1BHK', label: '1BHK' },
+    { value: '2BHK', label: '2BHK' },
+    { value: '3BHK', label: '3BHK' },
+    { value: '4BHK', label: '4BHK' },
+    { value: '5BHK', label: '5BHK' },
+    { value: 'Studio', label: 'Studio' },
+    { value: 'Villa', label: 'Villa' },
+    { value: 'Penthouse', label: 'Penthouse' },
+    { value: 'Duplex', label: 'Duplex' },
+    { value: 'Townhouse', label: 'Townhouse' },
+    { value: 'Apartment', label: 'Apartment' },
+    { value: 'Condo', label: 'Condo' },
   ];
 
   const propertyFeaturesList = [
@@ -345,10 +361,180 @@ const AddProperty: React.FC = () => {
     return mapping[value] || 'NONE';
   };
 
+  // Form validation
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    // Required fields
+    if (!formData.propertyName.trim()) {
+      errors.propertyName = 'Property name is required';
+    }
+
+    if (!formData.streetAddress.trim()) {
+      errors.streetAddress = 'Street address is required';
+    }
+
+    if (!formData.city) {
+      errors.city = 'City is required';
+    }
+
+    if (!formData.stateRegion) {
+      errors.stateRegion = 'State/Region is required';
+    }
+
+    if (!formData.zip.trim()) {
+      errors.zip = 'Zip code is required';
+    }
+
+    if (!formData.country) {
+      errors.country = 'Country is required';
+    }
+
+    // Year Built validation (must be integer if provided)
+    if (formData.yearBuilt && formData.yearBuilt.trim() !== '') {
+      const yearValue = parseInt(formData.yearBuilt);
+      if (isNaN(yearValue) || !Number.isInteger(yearValue)) {
+        errors.yearBuilt = 'Year built must be a valid integer';
+      } else if (yearValue < 1000 || yearValue > new Date().getFullYear() + 1) {
+        errors.yearBuilt = `Year built must be between 1000 and ${new Date().getFullYear() + 1}`;
+      }
+    }
+
+    // MLS validation (must be integer if provided)
+    if (formData.mls && formData.mls.trim() !== '') {
+      const mlsValue = parseInt(formData.mls);
+      if (isNaN(mlsValue) || !Number.isInteger(mlsValue)) {
+        errors.mls = 'MLS number must be a valid integer';
+      } else if (mlsValue < 0) {
+        errors.mls = 'MLS number must be a positive number';
+      }
+    }
+
+    // Size validation (must be positive number if provided)
+    if (formData.size && formData.size.trim() !== '') {
+      const sizeValue = parseFloat(formData.size);
+      if (isNaN(sizeValue) || sizeValue <= 0) {
+        errors.size = 'Size must be a positive number';
+      }
+    }
+
+    // Market Rent validation (must be positive number if provided)
+    if (formData.marketRent && formData.marketRent.trim() !== '') {
+      const rentValue = parseFloat(formData.marketRent);
+      if (isNaN(rentValue) || rentValue < 0) {
+        errors.marketRent = 'Market rent must be a positive number';
+      }
+    }
+
+    // Deposit validation (must be positive number if provided)
+    if (formData.deposit && formData.deposit.trim() !== '') {
+      const depositValue = parseFloat(formData.deposit);
+      if (isNaN(depositValue) || depositValue < 0) {
+        errors.deposit = 'Deposit must be a positive number';
+      }
+    }
+
+    // Single unit validations
+    if (formData.propertyType === 'single') {
+      if (!formData.beds) {
+        errors.beds = 'Beds is required';
+      }
+      if (!formData.baths) {
+        errors.baths = 'Baths is required';
+      }
+      if (!formData.size || formData.size.trim() === '') {
+        errors.size = 'Size is required';
+      }
+      if (!formData.marketRent || formData.marketRent.trim() === '') {
+        errors.marketRent = 'Market rent is required';
+      }
+      if (!formData.deposit || formData.deposit.trim() === '') {
+        errors.deposit = 'Deposit is required';
+      }
+      if (!formData.parking) {
+        errors.parking = 'Parking is required';
+      }
+      if (!formData.laundry) {
+        errors.laundry = 'Laundry is required';
+      }
+      if (!formData.ac) {
+        errors.ac = 'Air conditioning is required';
+      }
+    }
+
+    // Multi unit validations
+    if (formData.propertyType === 'multi') {
+      if (formData.units.length === 0) {
+        errors.units = 'At least one unit is required for multi-unit properties';
+      } else {
+        formData.units.forEach((unit, index) => {
+          if (!unit.unitNumber.trim()) {
+            errors[`unit_${index}_unitNumber`] = `Unit ${index + 1} number is required`;
+          }
+          if (!unit.unitType.trim()) {
+            errors[`unit_${index}_unitType`] = `Unit ${index + 1} type is required`;
+          }
+          if (!unit.size || unit.size.trim() === '') {
+            errors[`unit_${index}_size`] = `Unit ${index + 1} size is required`;
+          }
+          if (!unit.beds || unit.beds.trim() === '') {
+            errors[`unit_${index}_beds`] = `Unit ${index + 1} beds is required`;
+          }
+          if (!unit.baths || unit.baths.trim() === '') {
+            errors[`unit_${index}_baths`] = `Unit ${index + 1} baths is required`;
+          }
+          if (!unit.rent || unit.rent.trim() === '') {
+            errors[`unit_${index}_rent`] = `Unit ${index + 1} rent is required`;
+          }
+          if (!unit.deposit || unit.deposit.trim() === '') {
+            errors[`unit_${index}_deposit`] = `Unit ${index + 1} deposit is required`;
+          }
+
+          // Validate unit numeric fields
+          if (unit.size && unit.size.trim() !== '') {
+            const sizeValue = parseFloat(unit.size);
+            if (isNaN(sizeValue) || sizeValue <= 0) {
+              errors[`unit_${index}_size`] = `Unit ${index + 1} size must be a positive number`;
+            }
+          }
+          if (unit.rent && unit.rent.trim() !== '') {
+            const rentValue = parseFloat(unit.rent);
+            if (isNaN(rentValue) || rentValue < 0) {
+              errors[`unit_${index}_rent`] = `Unit ${index + 1} rent must be a positive number`;
+            }
+          }
+          if (unit.deposit && unit.deposit.trim() !== '') {
+            const depositValue = parseFloat(unit.deposit);
+            if (isNaN(depositValue) || depositValue < 0) {
+              errors[`unit_${index}_deposit`] = `Unit ${index + 1} deposit must be a positive number`;
+            }
+          }
+          if (unit.baths && unit.baths.trim() !== '') {
+            const bathsValue = parseFloat(unit.baths);
+            if (isNaN(bathsValue) || bathsValue < 0) {
+              errors[`unit_${index}_baths`] = `Unit ${index + 1} baths must be a positive number`;
+            }
+          }
+        });
+      }
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setValidationErrors({});
+
+    // Validate form before submission
+    if (!validateForm()) {
+      setLoading(false);
+      setError('Please fix the validation errors before submitting');
+      return;
+    }
 
     try {
       // Step 1: Upload cover photo first (if exists)
@@ -378,11 +564,11 @@ const AddProperty: React.FC = () => {
       };
 
       // Add optional fields
-      if (formData.yearBuilt) {
+      if (formData.yearBuilt && formData.yearBuilt.trim() !== '') {
         propertyData.yearBuilt = parseInt(formData.yearBuilt);
       }
-      if (formData.mls && formData.mls !== '') {
-        propertyData.mlsNumber = formData.mls;
+      if (formData.mls && formData.mls.trim() !== '') {
+        propertyData.mlsNumber = parseInt(formData.mls);
       }
       if (formData.size) {
         propertyData.sizeSqft = parseFloat(formData.size);
@@ -461,12 +647,13 @@ const AddProperty: React.FC = () => {
       const createdProperty = await propertyService.create(propertyData);
 
       // Step 5: Upload attachments after property is created
-      // The upload API automatically creates PropertyAttachment records when propertyId is provided
+      // Only upload if there are actual files - the upload API automatically creates PropertyAttachment records when propertyId is provided
       if (formData.attachments.length > 0 && createdProperty.id) {
         await Promise.all(
           formData.attachments.map(file => uploadFile(file, createdProperty.id))
         );
       }
+      // Note: If no attachments are provided, no PropertyAttachment records are created (as expected)
 
       // Step 6: Navigate to properties list
       navigate('/dashboard/properties');
@@ -584,28 +771,66 @@ const AddProperty: React.FC = () => {
               <Input 
                 placeholder="Property Name" 
                 value={formData.propertyName}
-                onChange={(e) => updateFormData('propertyName', e.target.value)}
-                className="bg-white border-gray-200"
+                onChange={(e) => {
+                  updateFormData('propertyName', e.target.value);
+                  if (validationErrors.propertyName) {
+                    setValidationErrors(prev => {
+                      const newErrors = { ...prev };
+                      delete newErrors.propertyName;
+                      return newErrors;
+                    });
+                  }
+                }}
+                className={`bg-white border-gray-200 ${validationErrors.propertyName ? 'border-red-500' : ''}`}
               />
+              {validationErrors.propertyName && (
+                <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.propertyName}</p>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium mb-1 ml-1">Year Built*</label>
                 <Input 
+                  type="number"
                   placeholder="2021" 
                   value={formData.yearBuilt}
-                  onChange={(e) => updateFormData('yearBuilt', e.target.value)}
-                  className="bg-white border-gray-200"
+                  onChange={(e) => {
+                    updateFormData('yearBuilt', e.target.value);
+                    if (validationErrors.yearBuilt) {
+                      setValidationErrors(prev => {
+                        const newErrors = { ...prev };
+                        delete newErrors.yearBuilt;
+                        return newErrors;
+                      });
+                    }
+                  }}
+                  className={`bg-white border-gray-200 ${validationErrors.yearBuilt ? 'border-red-500' : ''}`}
                 />
+                {validationErrors.yearBuilt && (
+                  <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.yearBuilt}</p>
+                )}
               </div>
               <div>
                 <label className="block text-xs font-medium mb-1 ml-1">MLS</label>
                 <Input 
+                  type="number"
                   placeholder="Enter MLS Number" 
                   value={formData.mls}
-                  onChange={(e) => updateFormData('mls', e.target.value)}
-                  className="bg-white border-gray-200"
+                  onChange={(e) => {
+                    updateFormData('mls', e.target.value);
+                    if (validationErrors.mls) {
+                      setValidationErrors(prev => {
+                        const newErrors = { ...prev };
+                        delete newErrors.mls;
+                        return newErrors;
+                      });
+                    }
+                  }}
+                  className={`bg-white border-gray-200 ${validationErrors.mls ? 'border-red-500' : ''}`}
                 />
+                {validationErrors.mls && (
+                  <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.mls}</p>
+                )}
               </div>
             </div>
 
@@ -614,58 +839,124 @@ const AddProperty: React.FC = () => {
               <Input 
                 placeholder="Street Address" 
                 value={formData.streetAddress}
-                onChange={(e) => updateFormData('streetAddress', e.target.value)}
-                className="bg-white border-gray-200"
+                onChange={(e) => {
+                  updateFormData('streetAddress', e.target.value);
+                  if (validationErrors.streetAddress) {
+                    setValidationErrors(prev => {
+                      const newErrors = { ...prev };
+                      delete newErrors.streetAddress;
+                      return newErrors;
+                    });
+                  }
+                }}
+                className={`bg-white border-gray-200 ${validationErrors.streetAddress ? 'border-red-500' : ''}`}
               />
+              {validationErrors.streetAddress && (
+                <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.streetAddress}</p>
+              )}
             </div>
 
             {/* Country & State/Region */}
             <div className="grid grid-cols-2 gap-4">
-              <CustomDropdown
-                label="Country*"
-                value={formData.country}
-                onChange={(value) => updateFormData('country', value)}
-                options={countryOptions}
-                placeholder="Select country"
-                required
-                disabled={countryOptions.length === 0}
-                searchable={true}
-                buttonClassName="bg-white border-gray-200"
-              />
-              <CustomDropdown
-                label="State / Region*"
-                value={formData.stateRegion}
-                onChange={(value) => updateFormData('stateRegion', value)}
-                options={stateOptions}
-                placeholder={formData.country ? "Select state" : "Select country first"}
-                required
-                disabled={!formData.country || stateOptions.length === 0}
-                searchable={true}
-                buttonClassName="bg-white border-gray-200"
-              />
+              <div>
+                <CustomDropdown
+                  label="Country*"
+                  value={formData.country}
+                  onChange={(value) => {
+                    updateFormData('country', value);
+                    if (validationErrors.country) {
+                      setValidationErrors(prev => {
+                        const newErrors = { ...prev };
+                        delete newErrors.country;
+                        return newErrors;
+                      });
+                    }
+                  }}
+                  options={countryOptions}
+                  placeholder="Select country"
+                  required
+                  disabled={countryOptions.length === 0}
+                  searchable={true}
+                  buttonClassName={`bg-white border-gray-200 ${validationErrors.country ? 'border-red-500' : ''}`}
+                />
+                {validationErrors.country && (
+                  <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.country}</p>
+                )}
+              </div>
+              <div>
+                <CustomDropdown
+                  label="State / Region*"
+                  value={formData.stateRegion}
+                  onChange={(value) => {
+                    updateFormData('stateRegion', value);
+                    if (validationErrors.stateRegion) {
+                      setValidationErrors(prev => {
+                        const newErrors = { ...prev };
+                        delete newErrors.stateRegion;
+                        return newErrors;
+                      });
+                    }
+                  }}
+                  options={stateOptions}
+                  placeholder={formData.country ? "Select state" : "Select country first"}
+                  required
+                  disabled={!formData.country || stateOptions.length === 0}
+                  searchable={true}
+                  buttonClassName={`bg-white border-gray-200 ${validationErrors.stateRegion ? 'border-red-500' : ''}`}
+                />
+                {validationErrors.stateRegion && (
+                  <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.stateRegion}</p>
+                )}
+              </div>
             </div>
 
             {/* City & Zip */}
             <div className="grid grid-cols-2 gap-4">
-              <CustomDropdown
-                label="City*"
-                value={formData.city}
-                onChange={(value) => updateFormData('city', value)}
-                options={cityOptions}
-                placeholder={formData.stateRegion ? "Select city" : formData.country ? "Select state first" : "Select country first"}
-                required
-                disabled={!formData.stateRegion || cityOptions.length === 0}
-                searchable={true}
-                buttonClassName="bg-white border-gray-200"
-              />
+              <div>
+                <CustomDropdown
+                  label="City*"
+                  value={formData.city}
+                  onChange={(value) => {
+                    updateFormData('city', value);
+                    if (validationErrors.city) {
+                      setValidationErrors(prev => {
+                        const newErrors = { ...prev };
+                        delete newErrors.city;
+                        return newErrors;
+                      });
+                    }
+                  }}
+                  options={cityOptions}
+                  placeholder={formData.stateRegion ? "Select city" : formData.country ? "Select state first" : "Select country first"}
+                  required
+                  disabled={!formData.stateRegion || cityOptions.length === 0}
+                  searchable={true}
+                  buttonClassName={`bg-white border-gray-200 ${validationErrors.city ? 'border-red-500' : ''}`}
+                />
+                {validationErrors.city && (
+                  <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.city}</p>
+                )}
+              </div>
               <div>
                 <label className="block text-xs font-medium mb-1 ml-1">Zip *</label>
                 <Input 
                   placeholder="Enter Zip code" 
                   value={formData.zip}
-                  onChange={(e) => updateFormData('zip', e.target.value)}
-                  className="bg-white border-gray-200"
+                  onChange={(e) => {
+                    updateFormData('zip', e.target.value);
+                    if (validationErrors.zip) {
+                      setValidationErrors(prev => {
+                        const newErrors = { ...prev };
+                        delete newErrors.zip;
+                        return newErrors;
+                      });
+                    }
+                  }}
+                  className={`bg-white border-gray-200 ${validationErrors.zip ? 'border-red-500' : ''}`}
                 />
+                {validationErrors.zip && (
+                  <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.zip}</p>
+                )}
               </div>
             </div>
           </div>
@@ -756,9 +1047,18 @@ const AddProperty: React.FC = () => {
                   <label className="block text-xs font-medium mb-1 ml-1">Beds*</label>
                   <div className="relative">
                     <select 
-                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-700 outline-none appearance-none"
+                      className={`w-full rounded-lg border bg-white px-3 py-2 text-gray-700 outline-none appearance-none ${validationErrors.beds ? 'border-red-500' : 'border-gray-200'}`}
                       value={formData.beds}
-                      onChange={(e) => updateFormData('beds', e.target.value)}
+                      onChange={(e) => {
+                        updateFormData('beds', e.target.value);
+                        if (validationErrors.beds) {
+                          setValidationErrors(prev => {
+                            const newErrors = { ...prev };
+                            delete newErrors.beds;
+                            return newErrors;
+                          });
+                        }
+                      }}
                     >
                       <option value="">Studio</option>
                       <option value="1">1</option>
@@ -778,14 +1078,26 @@ const AddProperty: React.FC = () => {
                       </svg>
                     </div>
                   </div>
+                  {validationErrors.beds && (
+                    <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.beds}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-medium mb-1 ml-1">Baths*</label>
                   <div className="relative">
                     <select 
-                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-700 outline-none appearance-none"
+                      className={`w-full rounded-lg border bg-white px-3 py-2 text-gray-700 outline-none appearance-none ${validationErrors.baths ? 'border-red-500' : 'border-gray-200'}`}
                       value={formData.baths}
-                      onChange={(e) => updateFormData('baths', e.target.value)}
+                      onChange={(e) => {
+                        updateFormData('baths', e.target.value);
+                        if (validationErrors.baths) {
+                          setValidationErrors(prev => {
+                            const newErrors = { ...prev };
+                            delete newErrors.baths;
+                            return newErrors;
+                          });
+                        }
+                      }}
                     >
                       <option value="">None</option>
                       <option value="1">1</option>
@@ -802,15 +1114,31 @@ const AddProperty: React.FC = () => {
                       </svg>
                     </div>
                   </div>
+                  {validationErrors.baths && (
+                    <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.baths}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-medium mb-1 ml-1">Size, sq.ft*</label>
                   <Input 
+                    type="number"
                     placeholder="500" 
                     value={formData.size}
-                    onChange={(e) => updateFormData('size', e.target.value)}
-                    className="bg-white border-gray-200"
+                    onChange={(e) => {
+                      updateFormData('size', e.target.value);
+                      if (validationErrors.size) {
+                        setValidationErrors(prev => {
+                          const newErrors = { ...prev };
+                          delete newErrors.size;
+                          return newErrors;
+                        });
+                      }
+                    }}
+                    className={`bg-white border-gray-200 ${validationErrors.size ? 'border-red-500' : ''}`}
                   />
+                  {validationErrors.size && (
+                    <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.size}</p>
+                  )}
                 </div>
               </div>
 
@@ -822,12 +1150,26 @@ const AddProperty: React.FC = () => {
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 font-medium">{currencySymbol}</span>
                     <Input 
+                      type="number"
+                      step="0.01"
                       placeholder="0.00" 
                       value={formData.marketRent}
-                      onChange={(e) => updateFormData('marketRent', e.target.value)}
-                      className="bg-white border-gray-200 pl-8"
+                      onChange={(e) => {
+                        updateFormData('marketRent', e.target.value);
+                        if (validationErrors.marketRent) {
+                          setValidationErrors(prev => {
+                            const newErrors = { ...prev };
+                            delete newErrors.marketRent;
+                            return newErrors;
+                          });
+                        }
+                      }}
+                      className={`bg-white border-gray-200 pl-8 ${validationErrors.marketRent ? 'border-red-500' : ''}`}
                     />
                   </div>
+                  {validationErrors.marketRent && (
+                    <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.marketRent}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-medium mb-1 ml-1">
@@ -836,12 +1178,26 @@ const AddProperty: React.FC = () => {
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 font-medium">{currencySymbol}</span>
                     <Input 
+                      type="number"
+                      step="0.01"
                       placeholder="0.00" 
                       value={formData.deposit}
-                      onChange={(e) => updateFormData('deposit', e.target.value)}
-                      className="bg-white border-gray-200 pl-8"
+                      onChange={(e) => {
+                        updateFormData('deposit', e.target.value);
+                        if (validationErrors.deposit) {
+                          setValidationErrors(prev => {
+                            const newErrors = { ...prev };
+                            delete newErrors.deposit;
+                            return newErrors;
+                          });
+                        }
+                      }}
+                      className={`bg-white border-gray-200 pl-8 ${validationErrors.deposit ? 'border-red-500' : ''}`}
                     />
                   </div>
+                  {validationErrors.deposit && (
+                    <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.deposit}</p>
+                  )}
                 </div>
               </div>
             </section>
@@ -854,9 +1210,18 @@ const AddProperty: React.FC = () => {
                   <label className="block text-xs font-medium mb-1 ml-1">Parking*</label>
                   <div className="relative">
                     <select 
-                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-700 outline-none appearance-none"
+                      className={`w-full rounded-lg border bg-white px-3 py-2 text-gray-700 outline-none appearance-none ${validationErrors.parking ? 'border-red-500' : 'border-gray-200'}`}
                       value={formData.parking}
-                      onChange={(e) => updateFormData('parking', e.target.value)}
+                      onChange={(e) => {
+                        updateFormData('parking', e.target.value);
+                        if (validationErrors.parking) {
+                          setValidationErrors(prev => {
+                            const newErrors = { ...prev };
+                            delete newErrors.parking;
+                            return newErrors;
+                          });
+                        }
+                      }}
                     >
                       <option value="">Search</option>
                       {parkingOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
@@ -867,14 +1232,26 @@ const AddProperty: React.FC = () => {
                       </svg>
                     </div>
                   </div>
+                  {validationErrors.parking && (
+                    <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.parking}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-medium mb-1 ml-1">Laundry*</label>
                   <div className="relative">
                     <select 
-                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-700 outline-none appearance-none"
+                      className={`w-full rounded-lg border bg-white px-3 py-2 text-gray-700 outline-none appearance-none ${validationErrors.laundry ? 'border-red-500' : 'border-gray-200'}`}
                       value={formData.laundry}
-                      onChange={(e) => updateFormData('laundry', e.target.value)}
+                      onChange={(e) => {
+                        updateFormData('laundry', e.target.value);
+                        if (validationErrors.laundry) {
+                          setValidationErrors(prev => {
+                            const newErrors = { ...prev };
+                            delete newErrors.laundry;
+                            return newErrors;
+                          });
+                        }
+                      }}
                     >
                       <option value="">Search</option>
                       {laundryOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
@@ -885,14 +1262,26 @@ const AddProperty: React.FC = () => {
                       </svg>
                     </div>
                   </div>
+                  {validationErrors.laundry && (
+                    <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.laundry}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-medium mb-1 ml-1">Air Conditioning*</label>
                   <div className="relative">
                     <select 
-                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-700 outline-none appearance-none"
+                      className={`w-full rounded-lg border bg-white px-3 py-2 text-gray-700 outline-none appearance-none ${validationErrors.ac ? 'border-red-500' : 'border-gray-200'}`}
                       value={formData.ac}
-                      onChange={(e) => updateFormData('ac', e.target.value)}
+                      onChange={(e) => {
+                        updateFormData('ac', e.target.value);
+                        if (validationErrors.ac) {
+                          setValidationErrors(prev => {
+                            const newErrors = { ...prev };
+                            delete newErrors.ac;
+                            return newErrors;
+                          });
+                        }
+                      }}
                     >
                       <option value="">Search</option>
                       {acOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
@@ -903,6 +1292,9 @@ const AddProperty: React.FC = () => {
                       </svg>
                     </div>
                   </div>
+                  {validationErrors.ac && (
+                    <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.ac}</p>
+                  )}
                 </div>
               </div>
             </section>
@@ -980,6 +1372,9 @@ const AddProperty: React.FC = () => {
         {formData.propertyType === 'multi' && (
           <section>
             <h2 className="text-lg font-semibold mb-4 text-gray-800">Units information</h2>
+            {validationErrors.units && (
+              <p className="text-red-500 text-xs mb-2 ml-1">{validationErrors.units}</p>
+            )}
             <div className="space-y-6 mb-8">
               {formData.units.map((unit, index) => (
                 <div key={index} className="bg-white p-6 rounded-xl border border-gray-200 relative">
@@ -997,37 +1392,79 @@ const AddProperty: React.FC = () => {
                       <Input 
                         placeholder={`unit ${index + 1}`}
                         value={unit.unitNumber}
-                        onChange={(e) => updateUnit(index, 'unitNumber', e.target.value)}
-                        className="bg-white border-gray-200"
+                        onChange={(e) => {
+                          updateUnit(index, 'unitNumber', e.target.value);
+                          const errorKey = `unit_${index}_unitNumber`;
+                          if (validationErrors[errorKey]) {
+                            setValidationErrors(prev => {
+                              const newErrors = { ...prev };
+                              delete newErrors[errorKey];
+                              return newErrors;
+                            });
+                          }
+                        }}
+                        className={`bg-white border-gray-200 ${validationErrors[`unit_${index}_unitNumber`] ? 'border-red-500' : ''}`}
                       />
+                      {validationErrors[`unit_${index}_unitNumber`] && (
+                        <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors[`unit_${index}_unitNumber`]}</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-xs font-medium mb-1 ml-1">unit type*</label>
-                      <Input 
-                        placeholder="000" 
-                        value={unit.unitType}
-                        onChange={(e) => updateUnit(index, 'unitType', e.target.value)}
-                        className="bg-white border-gray-200"
-                      />
+                      <div className="relative">
+                        <select 
+                          className={`w-full rounded-lg border bg-white px-3 py-2 text-gray-700 outline-none appearance-none ${validationErrors[`unit_${index}_unitType`] ? 'border-red-500' : 'border-gray-200'}`}
+                          value={unit.unitType}
+                          onChange={(e) => {
+                            updateUnit(index, 'unitType', e.target.value);
+                            const errorKey = `unit_${index}_unitType`;
+                            if (validationErrors[errorKey]) {
+                              setValidationErrors(prev => {
+                                const newErrors = { ...prev };
+                                delete newErrors[errorKey];
+                                return newErrors;
+                              });
+                            }
+                          }}
+                        >
+                          <option value="">Select unit type</option>
+                          {unitTypeOptions.map(opt => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                          <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 1L5 5L9 1" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                      </div>
+                      {validationErrors[`unit_${index}_unitType`] && (
+                        <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors[`unit_${index}_unitType`]}</p>
+                      )}
                     </div>
                     <div>
-                      <label className="block text-xs font-medium mb-1 ml-1">Size,sq.ft*</label>
-                      <div className="relative">
-                         <select 
-                          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-700 outline-none appearance-none"
-                          value={unit.size}
-                          onChange={(e) => updateUnit(index, 'size', e.target.value)}
-                         >
-                           <option value="">Search</option>
-                           <option value="500">500</option>
-                           <option value="1000">1000</option>
-                         </select>
-                         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                           <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                             <path d="M1 1L5 5L9 1" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                           </svg>
-                         </div>
-                      </div>
+                      <label className="block text-xs font-medium mb-1 ml-1">Size, sq.ft*</label>
+                      <Input 
+                        type="number"
+                        step="0.01"
+                        placeholder="500.00" 
+                        value={unit.size}
+                        onChange={(e) => {
+                          updateUnit(index, 'size', e.target.value);
+                          const errorKey = `unit_${index}_size`;
+                          if (validationErrors[errorKey]) {
+                            setValidationErrors(prev => {
+                              const newErrors = { ...prev };
+                              delete newErrors[errorKey];
+                              return newErrors;
+                            });
+                          }
+                        }}
+                        className={`bg-white border-gray-200 ${validationErrors[`unit_${index}_size`] ? 'border-red-500' : ''}`}
+                      />
+                      {validationErrors[`unit_${index}_size`] && (
+                        <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors[`unit_${index}_size`]}</p>
+                      )}
                     </div>
                   </div>
 
@@ -1035,11 +1472,26 @@ const AddProperty: React.FC = () => {
                     <div>
                       <label className="block text-xs font-medium mb-1 ml-1">Baths*</label>
                       <Input 
+                        type="number"
+                        step="0.01"
                         placeholder="0.00" 
                         value={unit.baths}
-                        onChange={(e) => updateUnit(index, 'baths', e.target.value)}
-                        className="bg-white border-gray-200"
+                        onChange={(e) => {
+                          updateUnit(index, 'baths', e.target.value);
+                          const errorKey = `unit_${index}_baths`;
+                          if (validationErrors[errorKey]) {
+                            setValidationErrors(prev => {
+                              const newErrors = { ...prev };
+                              delete newErrors[errorKey];
+                              return newErrors;
+                            });
+                          }
+                        }}
+                        className={`bg-white border-gray-200 ${validationErrors[`unit_${index}_baths`] ? 'border-red-500' : ''}`}
                       />
+                      {validationErrors[`unit_${index}_baths`] && (
+                        <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors[`unit_${index}_baths`]}</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-xs font-medium mb-1 ml-1">
@@ -1048,12 +1500,27 @@ const AddProperty: React.FC = () => {
                       <div className="relative">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 font-medium">{currencySymbol}</span>
                         <Input 
+                          type="number"
+                          step="0.01"
                           placeholder="0.00" 
                           value={unit.rent}
-                          onChange={(e) => updateUnit(index, 'rent', e.target.value)}
-                          className="bg-white border-gray-200 pl-8"
+                          onChange={(e) => {
+                            updateUnit(index, 'rent', e.target.value);
+                            const errorKey = `unit_${index}_rent`;
+                            if (validationErrors[errorKey]) {
+                              setValidationErrors(prev => {
+                                const newErrors = { ...prev };
+                                delete newErrors[errorKey];
+                                return newErrors;
+                              });
+                            }
+                          }}
+                          className={`bg-white border-gray-200 pl-8 ${validationErrors[`unit_${index}_rent`] ? 'border-red-500' : ''}`}
                         />
                       </div>
+                      {validationErrors[`unit_${index}_rent`] && (
+                        <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors[`unit_${index}_rent`]}</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-xs font-medium mb-1 ml-1">
@@ -1062,21 +1529,50 @@ const AddProperty: React.FC = () => {
                       <div className="relative">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 font-medium">{currencySymbol}</span>
                         <Input 
+                          type="number"
+                          step="0.01"
                           placeholder="0.00" 
                           value={unit.deposit}
-                          onChange={(e) => updateUnit(index, 'deposit', e.target.value)}
-                          className="bg-white border-gray-200 pl-8"
+                          onChange={(e) => {
+                            updateUnit(index, 'deposit', e.target.value);
+                            const errorKey = `unit_${index}_deposit`;
+                            if (validationErrors[errorKey]) {
+                              setValidationErrors(prev => {
+                                const newErrors = { ...prev };
+                                delete newErrors[errorKey];
+                                return newErrors;
+                              });
+                            }
+                          }}
+                          className={`bg-white border-gray-200 pl-8 ${validationErrors[`unit_${index}_deposit`] ? 'border-red-500' : ''}`}
                         />
                       </div>
+                      {validationErrors[`unit_${index}_deposit`] && (
+                        <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors[`unit_${index}_deposit`]}</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-xs font-medium mb-1 ml-1">Beds*</label>
                       <Input 
+                        type="number"
                         placeholder="Select beds" 
                         value={unit.beds}
-                        onChange={(e) => updateUnit(index, 'beds', e.target.value)}
-                        className="bg-white border-gray-200"
+                        onChange={(e) => {
+                          updateUnit(index, 'beds', e.target.value);
+                          const errorKey = `unit_${index}_beds`;
+                          if (validationErrors[errorKey]) {
+                            setValidationErrors(prev => {
+                              const newErrors = { ...prev };
+                              delete newErrors[errorKey];
+                              return newErrors;
+                            });
+                          }
+                        }}
+                        className={`bg-white border-gray-200 ${validationErrors[`unit_${index}_beds`] ? 'border-red-500' : ''}`}
                       />
+                      {validationErrors[`unit_${index}_beds`] && (
+                        <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors[`unit_${index}_beds`]}</p>
+                      )}
                     </div>
                   </div>
                 </div>
