@@ -4,38 +4,31 @@ import PropertiesHeader from './components/PropertiesHeader';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
 import PropertyCard from './components/PropertyCard';
+import { propertyService, type BackendProperty } from '../../../../services/property.service';
 
-const PROPERTY_NAMES = [
-    'Sunset Heights', 'Ocean View Villa', 'Maplewood Residency', 'Golden Palm Apartments',
-    'Silver Oak Estate', 'Royal Gardens', 'Emerald Valley', 'Crystal Tower',
-    'Harmony Enclave', 'Willow Creek', 'Sunrise Point', 'Blue Horizon',
-    'Green Meadows', 'Prestige Towers', 'Serenity Homes', 'Urban Nest',
-    'Skyline Lofts', 'Riverfront Villa', 'Mountain View', 'Cedar Grove',
-    'Pine Valley', 'Lakeside Manor', 'Victoria Court', 'Grand Horizon'
-];
-
-const MOCK_PROPERTIES = Array.from({ length: 24 }, (_, i) => ({
-    id: i + 1,
-    name: PROPERTY_NAMES[i] || `Property ${i + 1}`,
-    address: '78 Scheme No 78 - II Indore, MP, 452010, IN',
-    balance: 50000 + (i * 1000),
-    image: i % 3 === 0
-        ? 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1453&q=80'
-        : i % 3 === 1
-            ? 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80'
-            : 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
-    type: 'Single Family',
-    status: i % 4 === 0 ? 'inactive' : 'active',
-    occupancy: i % 3 === 0 ? 'vacant' : 'occupied',
-    propertyType: i % 2 === 0 ? 'single_family' : 'apartment',
-    balanceCategory: i % 3 === 0 ? 'high' : 'medium'
-}));
+// Property interface for the component
+interface Property {
+    id: string;
+    name: string;
+    address: string;
+    balance: number;
+    image: string;
+    type: string;
+    status: 'active' | 'inactive' | 'pending';
+    occupancy: 'vacant' | 'occupied' | 'partially_occupied';
+    propertyType: 'single_family' | 'multi_family' | 'apartment' | 'condo' | 'townhouse';
+    balanceCategory: 'low' | 'medium' | 'high';
+    country?: string;
+}
 
 const Properties: React.FC = () => {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 9;
+    const [properties, setProperties] = useState<Property[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     const [filters, setFilters] = useState<{
         status: string[];
@@ -48,6 +41,130 @@ const Properties: React.FC = () => {
         propertyType: [],
         balance: []
     });
+
+    // Transform backend property to frontend format
+    const transformProperty = (backendProperty: BackendProperty): Property => {
+        // Format address and extract country
+        let address = 'Address not available';
+        let country: string | undefined;
+        if (backendProperty.address) {
+            country = backendProperty.address.country;
+            const addressParts = [
+                backendProperty.address.streetAddress,
+                backendProperty.address.city,
+                backendProperty.address.stateRegion,
+                backendProperty.address.zipCode,
+                backendProperty.address.country,
+            ].filter(part => part && part.trim() !== '');
+            
+            if (addressParts.length > 0) {
+                address = addressParts.join(', ');
+            }
+        }
+
+        // Get image - prioritize coverPhotoUrl, then primary photo, then first photo
+        const image = backendProperty.coverPhotoUrl 
+            || backendProperty.photos?.find((p) => p.isPrimary)?.photoUrl 
+            || backendProperty.photos?.[0]?.photoUrl 
+            || 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1453&q=80';
+
+        // Map status from backend to frontend
+        const statusMap: Record<string, 'active' | 'inactive' | 'pending'> = {
+            'ACTIVE': 'active',
+            'INACTIVE': 'inactive',
+            'ARCHIVED': 'inactive',
+        };
+        const status = backendProperty.status 
+            ? statusMap[backendProperty.status] || 'inactive'
+            : 'inactive';
+
+        // Map property type
+        const propertyTypeMap: Record<string, 'single_family' | 'multi_family' | 'apartment' | 'condo' | 'townhouse'> = {
+            'SINGLE': 'single_family',
+            'MULTI': 'multi_family',
+        };
+        const propertyType = propertyTypeMap[backendProperty.propertyType] || 'single_family';
+
+        // Determine occupancy from leasing data
+        let occupancy: 'vacant' | 'occupied' | 'partially_occupied' = 'vacant';
+        if (backendProperty.leasing?.occupancyStatus) {
+            const occupancyMap: Record<string, 'vacant' | 'occupied' | 'partially_occupied'> = {
+                'VACANT': 'vacant',
+                'OCCUPIED': 'occupied',
+                'PARTIALLY_OCCUPIED': 'partially_occupied',
+            };
+            occupancy = occupancyMap[backendProperty.leasing.occupancyStatus] || 'vacant';
+        }
+
+        // Calculate balance from monthly rent (prioritize leasing monthlyRent, then marketRent)
+        let monthlyRent = 0;
+        
+        // First check if there's monthlyRent in leasing data
+        if (backendProperty.leasing?.monthlyRent) {
+            monthlyRent = typeof backendProperty.leasing.monthlyRent === 'string'
+                ? parseFloat(backendProperty.leasing.monthlyRent) || 0
+                : Number(backendProperty.leasing.monthlyRent) || 0;
+        } 
+        // Fall back to marketRent from property
+        else if (backendProperty.marketRent) {
+            monthlyRent = typeof backendProperty.marketRent === 'string'
+                ? parseFloat(backendProperty.marketRent) || 0
+                : Number(backendProperty.marketRent) || 0;
+        }
+        
+        // Determine balance category based on monthly rent
+        let balanceCategory: 'low' | 'medium' | 'high' = 'medium';
+        if (monthlyRent < 25000) {
+            balanceCategory = 'low';
+        } else if (monthlyRent > 75000) {
+            balanceCategory = 'high';
+        }
+
+        // Get property type label for display
+        const typeLabels: Record<string, string> = {
+            'single_family': 'Single Family',
+            'multi_family': 'Multi Family',
+            'apartment': 'Apartment',
+            'condo': 'Condo',
+            'townhouse': 'Townhouse',
+        };
+        const type = typeLabels[propertyType] || 'Property';
+
+        return {
+            id: backendProperty.id,
+            name: backendProperty.propertyName,
+            address,
+            balance: monthlyRent || 0,
+            image,
+            type,
+            status,
+            occupancy,
+            propertyType,
+            balanceCategory,
+            country,
+        };
+    };
+
+    // Fetch properties from API
+    useEffect(() => {
+        const fetchProperties = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                const backendProperties = await propertyService.getAll();
+                const transformedProperties = backendProperties.map(transformProperty);
+                setProperties(transformedProperties);
+            } catch (err) {
+                console.error('Error fetching properties:', err);
+                setError(err instanceof Error ? err.message : 'Failed to fetch properties');
+                setProperties([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProperties();
+    }, []);
 
     const handleAddProperty = () => {
         navigate('/dashboard/property/add');
@@ -86,7 +203,7 @@ const Properties: React.FC = () => {
     };
 
     const filteredProperties = useMemo(() => {
-        return MOCK_PROPERTIES.filter(property => {
+        return properties.filter(property => {
             // Search filter
             const matchesSearch = searchQuery === '' ||
                 property.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -111,7 +228,7 @@ const Properties: React.FC = () => {
 
             return matchesSearch && matchesStatus && matchesOccupancy && matchesPropertyType && matchesBalance;
         });
-    }, [searchQuery, filters]);
+    }, [properties, searchQuery, filters]);
 
     // Reset to first page when filters change
     useEffect(() => {
@@ -148,13 +265,28 @@ const Properties: React.FC = () => {
                     onFiltersChange={(newFilters) => setFilters(newFilters as any)}
                 />
 
-                {filteredProperties.length > 0 ? (
+                {loading ? (
+                    <div className="text-center py-12 bg-white rounded-2xl">
+                        <p className="text-gray-500 text-lg">Loading properties...</p>
+                    </div>
+                ) : error ? (
+                    <div className="text-center py-12 bg-white rounded-2xl">
+                        <p className="text-red-500 text-lg">Error: {error}</p>
+                        <p className="text-gray-400 text-sm mt-2">Please try refreshing the page</p>
+                    </div>
+                ) : filteredProperties.length > 0 ? (
                     <>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                             {currentProperties.map((property) => (
                                 <PropertyCard
                                     key={property.id}
-                                    {...property}
+                                    id={property.id}
+                                    name={property.name}
+                                    address={property.address}
+                                    balance={property.balance}
+                                    image={property.image}
+                                    type={property.type}
+                                    country={property.country}
                                 />
                             ))}
                         </div>

@@ -1,6 +1,13 @@
-import React, { useState, useRef } from 'react';
-import { Upload, Trash2, Plus, X, Check, FileText } from 'lucide-react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Upload, Trash2, Plus, X, Check, FileText, Undo2 } from 'lucide-react';
+import { Country, State, City } from 'country-state-city';
+import type { ICountry, IState, ICity } from 'country-state-city';
 import Input from '../../../../components/common/Input';
+import CustomDropdown from '../../components/CustomDropdown';
+import { propertyService } from '../../../../services/property.service';
+import { API_ENDPOINTS } from '../../../../config/api.config';
+import { getCurrencySymbol } from '../../../../utils/currency.utils';
 
 interface Unit {
   unitNumber: string;
@@ -13,6 +20,15 @@ interface Unit {
 }
 
 const AddProperty: React.FC = () => {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Location data
+  const [countries, setCountries] = useState<ICountry[]>([]);
+  const [states, setStates] = useState<IState[]>([]);
+  const [cities, setCities] = useState<ICity[]>([]);
+
   // Form State
   const [formData, setFormData] = useState({
     propertyName: '',
@@ -20,7 +36,7 @@ const AddProperty: React.FC = () => {
     mls: '',
     streetAddress: '',
     city: '',
-    state: '',
+    stateRegion: '',
     zip: '',
     country: '',
     propertyType: 'single', // 'single' | 'multi'
@@ -36,6 +52,7 @@ const AddProperty: React.FC = () => {
     features: [] as string[],
     amenities: [] as string[],
     customFeature: '',
+    description: '',
     coverPhoto: null as File | null,
     galleryPhotos: [] as File[],
     attachments: [] as File[],
@@ -43,11 +60,77 @@ const AddProperty: React.FC = () => {
   });
 
   const [customFeatureInput, setCustomFeatureInput] = useState('');
+  const [customAmenityInput, setCustomAmenityInput] = useState('');
 
   // Refs for file inputs
   const coverPhotoInputRef = useRef<HTMLInputElement>(null);
   const galleryPhotosInputRef = useRef<HTMLInputElement>(null);
   const attachmentsInputRef = useRef<HTMLInputElement>(null);
+
+  // Load all countries on mount
+  useEffect(() => {
+    setCountries(Country.getAllCountries());
+  }, []);
+
+  // Load states when country changes
+  useEffect(() => {
+    if (formData.country) {
+      const countryStates = State.getStatesOfCountry(formData.country);
+      setStates(countryStates);
+      // Reset state and city when country changes
+      if (formData.stateRegion) {
+        updateFormData('stateRegion', '');
+      }
+      if (formData.city) {
+        updateFormData('city', '');
+      }
+    } else {
+      setStates([]);
+    }
+  }, [formData.country]);
+
+  // Load cities when state changes
+  useEffect(() => {
+    if (formData.country && formData.stateRegion) {
+      const stateCities = City.getCitiesOfState(formData.country, formData.stateRegion);
+      setCities(stateCities);
+      // Reset city when state changes
+      if (formData.city) {
+        updateFormData('city', '');
+      }
+    } else {
+      setCities([]);
+    }
+  }, [formData.country, formData.stateRegion]);
+
+  // Convert countries to dropdown options
+  const countryOptions = useMemo(() => {
+    return countries.map(country => ({
+      value: country.isoCode,
+      label: country.name
+    })).sort((a, b) => a.label.localeCompare(b.label));
+  }, [countries]);
+
+  // Convert states to dropdown options
+  const stateOptions = useMemo(() => {
+    return states.map(state => ({
+      value: state.isoCode,
+      label: state.name
+    })).sort((a, b) => a.label.localeCompare(b.label));
+  }, [states]);
+
+  // Convert cities to dropdown options
+  const cityOptions = useMemo(() => {
+    return cities.map(city => ({
+      value: city.name,
+      label: city.name
+    })).sort((a, b) => a.label.localeCompare(b.label));
+  }, [cities]);
+
+  // Get current currency symbol based on selected country
+  const currencySymbol = useMemo(() => {
+    return getCurrencySymbol(formData.country);
+  }, [formData.country]);
 
 
   // Options
@@ -117,9 +200,9 @@ const AddProperty: React.FC = () => {
   };
 
   const addCustomAmenity = () => {
-    if (customFeatureInput.trim()) {
-      toggleAmenity(customFeatureInput.trim());
-      setCustomFeatureInput('');
+    if (customAmenityInput.trim()) {
+      toggleAmenity(customAmenityInput.trim());
+      setCustomAmenityInput('');
     }
   };
 
@@ -184,14 +267,225 @@ const AddProperty: React.FC = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Helper function to upload image
+  const uploadImage = async (file: File, propertyId?: string): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (propertyId) {
+      formData.append('propertyId', propertyId);
+    }
+
+    const response = await fetch(API_ENDPOINTS.UPLOAD.IMAGE, {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Failed to upload image' }));
+      throw new Error(errorData.message || 'Failed to upload image');
+    }
+
+    const data = await response.json();
+    return data.url;
+  };
+
+  // Helper function to upload file/document
+  const uploadFile = async (file: File, propertyId?: string): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('category', 'DOCUMENT');
+    if (propertyId) {
+      formData.append('propertyId', propertyId);
+    }
+
+    const response = await fetch(API_ENDPOINTS.UPLOAD.FILE, {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Failed to upload file' }));
+      throw new Error(errorData.message || 'Failed to upload file');
+    }
+
+    const data = await response.json();
+    return data.url;
+  };
+
+  // Map frontend values to backend enum values
+  const mapParkingToBackend = (value: string): 'NONE' | 'STREET' | 'GARAGE' | 'DRIVEWAY' | 'DEDICATED_SPOT' | 'PRIVATE_LOT' | 'ASSIGNED' => {
+    const mapping: Record<string, 'NONE' | 'STREET' | 'GARAGE' | 'DRIVEWAY' | 'DEDICATED_SPOT' | 'PRIVATE_LOT' | 'ASSIGNED'> = {
+      'none': 'NONE',
+      'street': 'STREET',
+      'garage': 'GARAGE',
+      'private_lot': 'PRIVATE_LOT',
+    };
+    return mapping[value] || 'NONE';
+  };
+
+  const mapLaundryToBackend = (value: string): 'NONE' | 'IN_UNIT' | 'ON_SITE' | 'HOOKUPS' => {
+    const mapping: Record<string, 'NONE' | 'IN_UNIT' | 'ON_SITE' | 'HOOKUPS'> = {
+      'none': 'NONE',
+      'in_unit': 'IN_UNIT',
+      'on_site': 'ON_SITE',
+      'hookups': 'HOOKUPS',
+    };
+    return mapping[value] || 'NONE';
+  };
+
+  const mapACToBackend = (value: string): 'NONE' | 'CENTRAL' | 'WINDOW' | 'PORTABLE' | 'COOLER' => {
+    const mapping: Record<string, 'NONE' | 'CENTRAL' | 'WINDOW' | 'PORTABLE' | 'COOLER'> = {
+      'none': 'NONE',
+      'central': 'CENTRAL',
+      'window': 'WINDOW',
+      'portable': 'PORTABLE',
+    };
+    return mapping[value] || 'NONE';
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log(formData);
-    alert('Property Created (Demo)');
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Step 1: Upload cover photo first (if exists)
+      let coverPhotoUrl: string | undefined;
+      if (formData.coverPhoto) {
+        coverPhotoUrl = await uploadImage(formData.coverPhoto);
+      }
+
+      // Step 2: Upload gallery photos
+      const galleryPhotoUrls: string[] = [];
+      for (const photo of formData.galleryPhotos) {
+        const url = await uploadImage(photo);
+        galleryPhotoUrls.push(url);
+      }
+
+      // Step 3: Prepare property data
+      const propertyData: any = {
+        propertyName: formData.propertyName,
+        propertyType: formData.propertyType === 'single' ? 'SINGLE' : 'MULTI',
+        address: {
+          streetAddress: formData.streetAddress,
+          city: formData.city,
+          stateRegion: formData.stateRegion,
+          zipCode: formData.zip,
+          country: formData.country,
+        },
+      };
+
+      // Add optional fields
+      if (formData.yearBuilt) {
+        propertyData.yearBuilt = parseInt(formData.yearBuilt);
+      }
+      if (formData.mls && formData.mls !== '') {
+        propertyData.mlsNumber = formData.mls;
+      }
+      if (formData.size) {
+        propertyData.sizeSqft = parseFloat(formData.size);
+      }
+      if (formData.marketRent) {
+        propertyData.marketRent = parseFloat(formData.marketRent);
+      }
+      if (formData.deposit) {
+        propertyData.depositAmount = parseFloat(formData.deposit);
+      }
+      if (coverPhotoUrl) {
+        propertyData.coverPhotoUrl = coverPhotoUrl;
+      }
+      if (formData.description) {
+        propertyData.description = formData.description;
+      }
+
+      // Add amenities
+      if (formData.parking || formData.laundry || formData.ac) {
+        propertyData.amenities = {
+          parking: mapParkingToBackend(formData.parking),
+          laundry: mapLaundryToBackend(formData.laundry),
+          airConditioning: mapACToBackend(formData.ac),
+          propertyFeatures: formData.features.length > 0 ? formData.features : undefined,
+          propertyAmenities: formData.amenities.length > 0 ? formData.amenities : undefined,
+        };
+      }
+
+      // Add photos (cover photo + gallery photos)
+      const photos: Array<{ photoUrl: string; isPrimary: boolean }> = [];
+      if (coverPhotoUrl) {
+        photos.push({ photoUrl: coverPhotoUrl, isPrimary: true });
+      }
+      galleryPhotoUrls.forEach((url, index) => {
+        photos.push({ photoUrl: url, isPrimary: index === 0 && !coverPhotoUrl });
+      });
+      if (photos.length > 0) {
+        propertyData.photos = photos;
+      }
+
+      // Add single unit details for SINGLE property type
+      if (formData.propertyType === 'single') {
+        // Map beds: "Studio" = 0, "1" = 1, "2" = 2, "3+" = 3
+        let bedsValue: number | undefined;
+        if (formData.beds) {
+          if (formData.beds === 'Studio') {
+            bedsValue = 0;
+          } else if (formData.beds === '3+') {
+            bedsValue = 3;
+          } else {
+            bedsValue = parseInt(formData.beds);
+          }
+        }
+
+        propertyData.singleUnitDetails = {
+          beds: bedsValue,
+          baths: formData.baths ? parseFloat(formData.baths) : undefined,
+          marketRent: formData.marketRent ? parseFloat(formData.marketRent) : undefined,
+          deposit: formData.deposit ? parseFloat(formData.deposit) : undefined,
+        };
+      }
+
+      // Add units for MULTI property type
+      if (formData.propertyType === 'multi' && formData.units.length > 0) {
+        propertyData.units = formData.units.map(unit => ({
+          unitName: unit.unitNumber || `Unit ${unit.unitNumber}`,
+          apartmentType: unit.unitType || undefined,
+          sizeSqft: unit.size ? parseFloat(unit.size) : undefined,
+          beds: unit.beds ? parseInt(unit.beds) : undefined,
+          baths: unit.baths ? parseFloat(unit.baths) : undefined,
+          rent: unit.rent ? parseFloat(unit.rent) : undefined,
+        }));
+      }
+
+      // Step 4: Create property
+      const createdProperty = await propertyService.create(propertyData);
+
+      // Step 5: Upload attachments after property is created
+      // The upload API automatically creates PropertyAttachment records when propertyId is provided
+      if (formData.attachments.length > 0 && createdProperty.id) {
+        await Promise.all(
+          formData.attachments.map(file => uploadFile(file, createdProperty.id))
+        );
+      }
+
+      // Step 6: Navigate to properties list
+      navigate('/dashboard/properties');
+    } catch (err) {
+      console.error('Error creating property:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create property');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="bg-[#DFE5E3] min-h-screen max-w-6xl mx-auto p-8 font-sans rounded-xl text-[#4B5563]">
+      {error && (
+        <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+          <p className="font-semibold">Error:</p>
+          <p>{error}</p>
+        </div>
+      )}
       <form onSubmit={handleSubmit} className="max-w-6xl mx-auto space-y-8">
         
         {/* Property Photo */}
@@ -305,23 +599,13 @@ const AddProperty: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1 ml-1">MLS?</label>
-                <div className="relative">
-                   <select 
-                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-700 outline-none appearance-none"
-                    value={formData.mls}
-                    onChange={(e) => updateFormData('mls', e.target.value)}
-                   >
-                     <option value="">Search</option>
-                     <option value="yes">Yes</option>
-                     <option value="no">No</option>
-                   </select>
-                   <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                     <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                       <path d="M1 1L5 5L9 1" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                     </svg>
-                   </div>
-                </div>
+                <label className="block text-xs font-medium mb-1 ml-1">MLS</label>
+                <Input 
+                  placeholder="Enter MLS Number" 
+                  value={formData.mls}
+                  onChange={(e) => updateFormData('mls', e.target.value)}
+                  className="bg-white border-gray-200"
+                />
               </div>
             </div>
 
@@ -334,44 +618,55 @@ const AddProperty: React.FC = () => {
                 className="bg-white border-gray-200"
               />
             </div>
+
+            {/* Country & State/Region */}
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-medium mb-1 ml-1">City*</label>
-                <Input 
-                  placeholder="City" 
-                  value={formData.city}
-                  onChange={(e) => updateFormData('city', e.target.value)}
-                  className="bg-white border-gray-200"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium mb-1 ml-1">State / Region*</label>
-                <Input 
-                  placeholder="State" 
-                  value={formData.state}
-                  onChange={(e) => updateFormData('state', e.target.value)}
-                  className="bg-white border-gray-200"
-                />
-              </div>
+              <CustomDropdown
+                label="Country*"
+                value={formData.country}
+                onChange={(value) => updateFormData('country', value)}
+                options={countryOptions}
+                placeholder="Select country"
+                required
+                disabled={countryOptions.length === 0}
+                searchable={true}
+                buttonClassName="bg-white border-gray-200"
+              />
+              <CustomDropdown
+                label="State / Region*"
+                value={formData.stateRegion}
+                onChange={(value) => updateFormData('stateRegion', value)}
+                options={stateOptions}
+                placeholder={formData.country ? "Select state" : "Select country first"}
+                required
+                disabled={!formData.country || stateOptions.length === 0}
+                searchable={true}
+                buttonClassName="bg-white border-gray-200"
+              />
             </div>
 
-            <div>
-              <label className="block text-xs font-medium mb-1 ml-1">Zip *</label>
-              <Input 
-                placeholder="Enter Zip code" 
-                value={formData.zip}
-                onChange={(e) => updateFormData('zip', e.target.value)}
-                className="bg-white border-gray-200"
+            {/* City & Zip */}
+            <div className="grid grid-cols-2 gap-4">
+              <CustomDropdown
+                label="City*"
+                value={formData.city}
+                onChange={(value) => updateFormData('city', value)}
+                options={cityOptions}
+                placeholder={formData.stateRegion ? "Select city" : formData.country ? "Select state first" : "Select country first"}
+                required
+                disabled={!formData.stateRegion || cityOptions.length === 0}
+                searchable={true}
+                buttonClassName="bg-white border-gray-200"
               />
-            </div>
-            <div>
-              <label className="block text-xs font-medium mb-1 ml-1">Country *</label>
-              <Input 
-                placeholder="Enter country" 
-                value={formData.country}
-                onChange={(e) => updateFormData('country', e.target.value)}
-                className="bg-white border-gray-200"
-              />
+              <div>
+                <label className="block text-xs font-medium mb-1 ml-1">Zip *</label>
+                <Input 
+                  placeholder="Enter Zip code" 
+                  value={formData.zip}
+                  onChange={(e) => updateFormData('zip', e.target.value)}
+                  className="bg-white border-gray-200"
+                />
+              </div>
             </div>
           </div>
         </section>
@@ -468,7 +763,14 @@ const AddProperty: React.FC = () => {
                       <option value="">Studio</option>
                       <option value="1">1</option>
                       <option value="2">2</option>
-                      <option value="3">3+</option>
+                      <option value="3">3</option>
+                      <option value="4">4</option>
+                      <option value="5">5</option>
+                      <option value="6">6</option>
+                      <option value="7">7</option>
+                      <option value="8">8</option>
+                      <option value="9">9</option>
+                      <option value="10">10+</option>
                     </select>
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
                       <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -479,12 +781,27 @@ const AddProperty: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-xs font-medium mb-1 ml-1">Baths*</label>
-                  <Input 
-                    placeholder="None" 
-                    value={formData.baths}
-                    onChange={(e) => updateFormData('baths', e.target.value)}
-                    className="bg-white border-gray-200"
-                  />
+                  <div className="relative">
+                    <select 
+                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-700 outline-none appearance-none"
+                      value={formData.baths}
+                      onChange={(e) => updateFormData('baths', e.target.value)}
+                    >
+                      <option value="">None</option>
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4">4</option>
+                      <option value="5">5</option>
+                      <option value="6">6</option>
+                      <option value="7">7+</option>
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                      <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M1 1L5 5L9 1" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs font-medium mb-1 ml-1">Size, sq.ft*</label>
@@ -499,22 +816,32 @@ const AddProperty: React.FC = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-xs font-medium mb-1 ml-1">Market Rent*</label>
-                  <Input 
-                    placeholder="0.00" 
-                    value={formData.marketRent}
-                    onChange={(e) => updateFormData('marketRent', e.target.value)}
-                    className="bg-white border-gray-200"
-                  />
+                  <label className="block text-xs font-medium mb-1 ml-1">
+                    Market Rent* {formData.country && <span className="text-xs text-gray-500 font-normal">({currencySymbol})</span>}
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 font-medium">{currencySymbol}</span>
+                    <Input 
+                      placeholder="0.00" 
+                      value={formData.marketRent}
+                      onChange={(e) => updateFormData('marketRent', e.target.value)}
+                      className="bg-white border-gray-200 pl-8"
+                    />
+                  </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium mb-1 ml-1">Deposit*</label>
-                  <Input 
-                    placeholder="0.00" 
-                    value={formData.deposit}
-                    onChange={(e) => updateFormData('deposit', e.target.value)}
-                    className="bg-white border-gray-200"
-                  />
+                  <label className="block text-xs font-medium mb-1 ml-1">
+                    Deposit* {formData.country && <span className="text-xs text-gray-500 font-normal">({currencySymbol})</span>}
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 font-medium">{currencySymbol}</span>
+                    <Input 
+                      placeholder="0.00" 
+                      value={formData.deposit}
+                      onChange={(e) => updateFormData('deposit', e.target.value)}
+                      className="bg-white border-gray-200 pl-8"
+                    />
+                  </div>
                 </div>
               </div>
             </section>
@@ -584,6 +911,7 @@ const AddProperty: React.FC = () => {
             <section>
               <h2 className="text-lg font-semibold mb-4 text-gray-800">Property features</h2>
               <div className="flex flex-wrap gap-3 mb-6">
+                {/* Predefined features */}
                 {propertyFeaturesList.map(feature => (
                   <button
                     key={feature}
@@ -600,6 +928,20 @@ const AddProperty: React.FC = () => {
                     {!formData.features.includes(feature) && <Plus size={12} className="ml-1" />}
                   </button>
                 ))}
+                {/* Custom features (not in predefined list) */}
+                {formData.features
+                  .filter(feature => !propertyFeaturesList.includes(feature))
+                  .map(feature => (
+                    <button
+                      key={feature}
+                      type="button"
+                      onClick={() => toggleFeature(feature)}
+                      className="px-4 py-1.5 rounded-full text-xs font-medium border transition-colors flex items-center gap-2 bg-[#84CC16] text-black border-[#84CC16]"
+                    >
+                      {feature}
+                      <X size={12} className="ml-1" onClick={(e) => { e.stopPropagation(); toggleFeature(feature); }} />
+                    </button>
+                  ))}
               </div>
 
               <div className="mb-6">
@@ -610,7 +952,8 @@ const AddProperty: React.FC = () => {
                       placeholder="Custom Features" 
                       value={customFeatureInput}
                       onChange={(e) => setCustomFeatureInput(e.target.value)}
-                      className="bg-[#84CC16] text-white placeholder-white/80 border-none"
+                      className="bg-[#84CC16] placeholder-white/80 border-none"
+                      style={{ color: 'black' }}
                     />
                   </div>
                   <button 
@@ -699,22 +1042,32 @@ const AddProperty: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium mb-1 ml-1">Rent*</label>
-                      <Input 
-                        placeholder="0.00" 
-                        value={unit.rent}
-                        onChange={(e) => updateUnit(index, 'rent', e.target.value)}
-                        className="bg-white border-gray-200"
-                      />
+                      <label className="block text-xs font-medium mb-1 ml-1">
+                        Rent* {formData.country && <span className="text-xs text-gray-500 font-normal">({currencySymbol})</span>}
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 font-medium">{currencySymbol}</span>
+                        <Input 
+                          placeholder="0.00" 
+                          value={unit.rent}
+                          onChange={(e) => updateUnit(index, 'rent', e.target.value)}
+                          className="bg-white border-gray-200 pl-8"
+                        />
+                      </div>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium mb-1 ml-1">Deposit*</label>
-                      <Input 
-                        placeholder="0.00" 
-                        value={unit.deposit}
-                        onChange={(e) => updateUnit(index, 'deposit', e.target.value)}
-                        className="bg-white border-gray-200"
-                      />
+                      <label className="block text-xs font-medium mb-1 ml-1">
+                        Deposit* {formData.country && <span className="text-xs text-gray-500 font-normal">({currencySymbol})</span>}
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 font-medium">{currencySymbol}</span>
+                        <Input 
+                          placeholder="0.00" 
+                          value={unit.deposit}
+                          onChange={(e) => updateUnit(index, 'deposit', e.target.value)}
+                          className="bg-white border-gray-200 pl-8"
+                        />
+                      </div>
                     </div>
                     <div>
                       <label className="block text-xs font-medium mb-1 ml-1">Beds*</label>
@@ -744,6 +1097,7 @@ const AddProperty: React.FC = () => {
         <section>
           <h2 className="text-lg font-semibold mb-4 text-gray-800">Property amenities</h2>
           <div className="flex flex-wrap gap-3 mb-6">
+            {/* Predefined amenities */}
             {propertyAmenitiesList.map(amenity => (
               <button
                 key={amenity}
@@ -759,37 +1113,73 @@ const AddProperty: React.FC = () => {
                 {formData.amenities.includes(amenity) ? <Check size={12} className="ml-1" /> : <Plus size={12} className="ml-1" />}
               </button>
             ))}
+            {/* Custom amenities (not in predefined list) */}
+            {formData.amenities
+              .filter(amenity => !propertyAmenitiesList.includes(amenity))
+              .map(amenity => (
+                <button
+                  key={amenity}
+                  type="button"
+                  onClick={() => toggleAmenity(amenity)}
+                  className="px-4 py-1.5 rounded-full text-xs font-medium border transition-colors flex items-center gap-2 bg-[#84CC16] text-black border-[#84CC16]"
+                >
+                  {amenity}
+                  <Check size={12} className="ml-1" />
+                </button>
+              ))}
           </div>
 
-          {formData.propertyType === 'multi' && (
-            <div className="mb-6">
-              <label className="block text-xs font-medium mb-2 ml-1">Enter Custom Amenities</label>
-              <div className="flex gap-3">
-                <div className="flex-1">
-                  <Input 
-                    placeholder="Custom Amenities" 
-                    value={customFeatureInput}
-                    onChange={(e) => setCustomFeatureInput(e.target.value)}
-                    className="bg-[#84CC16] text-white placeholder-white/80 border-none"
-                  />
-                </div>
-                <button 
-                  type="button"
-                  onClick={addCustomAmenity}
-                  className="px-8 py-2 bg-[#376F7E] text-white rounded-full text-sm font-medium hover:bg-[#2c5a66]"
-                >
-                  Save
-                </button>
-                <button 
-                  type="button"
-                  onClick={() => setCustomFeatureInput('')}
-                  className="px-8 py-2 bg-[#4B5563] text-white rounded-full text-sm font-medium hover:bg-[#374151]"
-                >
-                  Close
-                </button>
+          {/* Custom Amenities Input - Available for all property types */}
+          <div className="mb-6">
+            <label className="block text-xs font-medium mb-2 ml-1">Enter Custom Amenities</label>
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <Input 
+                  placeholder="Custom Amenities" 
+                  value={customAmenityInput}
+                  onChange={(e) => setCustomAmenityInput(e.target.value)}
+                  className="bg-[#84CC16] placeholder-black/80 border-none"
+                  style={{ color: 'black' }}
+                />
               </div>
+              <button 
+                type="button"
+                onClick={addCustomAmenity}
+                className="px-8 py-2 bg-[#376F7E] text-white rounded-full text-sm font-medium hover:bg-[#2c5a66]"
+              >
+                Save
+              </button>
+              <button 
+                type="button"
+                onClick={() => setCustomAmenityInput('')}
+                className="px-8 py-2 bg-[#4B5563] text-white rounded-full text-sm font-medium hover:bg-[#374151]"
+              >
+                Close
+              </button>
             </div>
-          )}
+          </div>
+        </section>
+
+        {/* Property Description */}
+        <section>
+          <h2 className="text-lg font-semibold mb-4 text-gray-800">Property Description</h2>
+          <div className="w-full bg-[#F3F4F6] rounded-2xl overflow-hidden shadow-sm">
+            {/* Header */}
+            <div className="bg-[#3D7475] px-6 py-4 flex items-center gap-3 text-white">
+              <Undo2 size={20} className="rotate-180" />
+              <span className="font-medium text-lg">Description</span>
+            </div>
+
+            {/* Textarea */}
+            <div className="p-0">
+              <textarea
+                value={formData.description}
+                onChange={(e) => updateFormData('description', e.target.value)}
+                placeholder="Add the marketing description here."
+                className="w-full h-64 p-6 bg-[#F3F4F6] resize-none focus:outline-none text-gray-700 placeholder-gray-500"
+              />
+            </div>
+          </div>
         </section>
 
         {/* Property Attachments */}
@@ -845,15 +1235,18 @@ const AddProperty: React.FC = () => {
         <div className="flex gap-4 pt-4">
           <button
             type="button"
-            className="px-8 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50"
+            onClick={() => navigate('/dashboard/properties')}
+            disabled={loading}
+            className="px-8 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="px-8 py-2 bg-[#376F7E] text-white rounded-lg font-medium hover:bg-[#2c5a66]"
+            disabled={loading}
+            className="px-8 py-2 bg-[#376F7E] text-white rounded-lg font-medium hover:bg-[#2c5a66] disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Create
+            {loading ? 'Creating...' : 'Create'}
           </button>
         </div>
 

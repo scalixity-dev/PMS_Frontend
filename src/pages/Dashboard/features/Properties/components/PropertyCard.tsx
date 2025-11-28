@@ -1,13 +1,15 @@
 import { useNavigate } from 'react-router-dom';
 import { DollarSign, Wrench, User } from 'lucide-react';
+import { getCurrencySymbol } from '../../../../../utils/currency.utils';
 
 interface PropertyCardProps {
-    id: number;
+    id: string | number;
     image: string;
     name: string;
     address: string;
     balance: number;
     type?: string;
+    country?: string;
 }
 
 const PropertyCard: React.FC<PropertyCardProps> = ({
@@ -16,9 +18,11 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
     name,
     address,
     balance,
-    type = 'Single Family'
+    type = 'Single Family',
+    country
 }) => {
     const navigate = useNavigate();
+    const currencySymbol = getCurrencySymbol(country);
 
     return (
         <div className="bg-[#F6F6F8] rounded-[2rem] p-4 shadow-sm relative flex flex-col h-full">
@@ -30,7 +34,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
                     className="w-full h-full object-cover rounded-2xl"
                 />
                 <div className="bg-[#82D64D] text-white px-4 py-1.5 rounded-full text-sm font-medium absolute top-3 right-3 shadow-sm">
-                    Balance ₹ {balance.toLocaleString()}
+                    Balance {currencySymbol} {balance.toLocaleString()}
                 </div>
             </div>
 
