@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PropertiesHeader from './components/PropertiesHeader';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
@@ -111,6 +111,11 @@ const Properties: React.FC = () => {
 
             return matchesSearch && matchesStatus && matchesOccupancy && matchesPropertyType && matchesBalance;
         });
+    }, [searchQuery, filters]);
+
+    // Reset to first page when filters change
+    useEffect(() => {
+        setCurrentPage(1);
     }, [searchQuery, filters]);
 
     const totalPages = Math.ceil(filteredProperties.length / itemsPerPage);
