@@ -7,6 +7,8 @@ import {
     PlayCircle,
     X,
     Plus,
+    List,
+    ChevronDown,
 } from 'lucide-react';
 import { parse, format } from 'date-fns';
 import SelectionModal from './components/SelectionModal';
@@ -696,6 +698,108 @@ const ListingDetail: React.FC = () => {
                             </div>
                         </div>
                     </>
+                )}
+
+                {activeTab === 'statistics' && (
+                    <div className="space-y-8">
+                        {/* Stats Grid */}
+                        <div className="bg-[#F0F0F6] rounded-[2rem] p-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {/* Days listed */}
+                                <div className="bg-[#82D64D] rounded-[2rem] p-6 text-white h-32 flex flex-col justify-between">
+                                    <h3 className="font-bold">Days listed</h3>
+                                    <div className="flex gap-2">
+                                        <span className="bg-white text-[#82D64D] px-4 py-1 rounded-full text-xs font-bold flex items-center gap-2">
+                                            <span className="font-extrabold">1</span> Days
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Enquiries */}
+                                <div className="bg-[#82D64D] rounded-[2rem] p-6 text-white h-32 flex flex-col justify-between">
+                                    <h3 className="font-bold">Enquiries</h3>
+                                    <div className="flex gap-2 flex-wrap">
+                                        <span className="bg-white text-[#82D64D] px-4 py-1 rounded-full text-xs font-bold flex items-center gap-2">
+                                            <span className="font-extrabold">1</span> Messages sent
+                                        </span>
+                                        <span className="bg-white text-[#82D64D] px-4 py-1 rounded-full text-xs font-bold flex items-center gap-2">
+                                            <span className="font-extrabold">0</span> Tours requested
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Activity */}
+                                <div className="bg-[#82D64D] rounded-[2rem] p-6 text-white h-32 flex flex-col justify-between">
+                                    <h3 className="font-bold">Activity</h3>
+                                    <div className="flex gap-2">
+                                        <span className="bg-white text-[#82D64D] px-4 py-1 rounded-full text-xs font-bold flex items-center gap-2">
+                                            <span className="font-extrabold">1</span> Added to favorite
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Applications */}
+                                <div className="bg-[#82D64D] rounded-[2rem] p-6 text-white h-32 flex flex-col justify-between">
+                                    <h3 className="font-bold">Applications</h3>
+                                    <div className="flex gap-2">
+                                        <span className="bg-white text-[#82D64D] px-4 py-1 rounded-full text-xs font-bold flex items-center gap-2">
+                                            <span className="font-extrabold">1</span> New
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Leads */}
+                                <div className="bg-[#82D64D] rounded-[2rem] p-6 text-white h-32 flex flex-col justify-between">
+                                    <h3 className="font-bold">Leads</h3>
+                                    <div className="flex gap-2 flex-wrap">
+                                        <span className="bg-white text-[#82D64D] px-4 py-1 rounded-full text-xs font-bold flex items-center gap-2">
+                                            <span className="font-extrabold">1</span> Leads
+                                        </span>
+                                        <span className="bg-white text-[#82D64D] px-4 py-1 rounded-full text-xs font-bold flex items-center gap-2">
+                                            <span className="font-extrabold">0</span> Premium leads
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Listing views */}
+                                <div className="bg-[#82D64D] rounded-[2rem] p-6 text-white h-32 flex flex-col justify-between">
+                                    <h3 className="font-bold">Listing views</h3>
+                                    <div className="flex gap-2">
+                                        <span className="bg-white text-[#82D64D] px-4 py-1 rounded-full text-xs font-bold flex items-center gap-2">
+                                            <span className="font-extrabold">1</span> Views
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Listing views sources */}
+                        <div>
+                            <div className="flex items-center gap-2 mb-4">
+                                <h3 className="text-lg font-bold text-gray-800">Listing views sources</h3>
+                                <ChevronDown className="w-5 h-5 text-gray-800" />
+                            </div>
+                            <div className="bg-[#F0F0F6] rounded-[2rem] p-12 flex flex-col items-center justify-center text-center">
+                                <div className="bg-[#E3EBDE] p-3 rounded-xl mb-3 shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.25)]">
+                                    <List className="w-6 h-6 text-[#3A6D6C]" />
+                                </div>
+                                <h4 className="text-[#3A6D6C] font-bold mb-1">No listing views</h4>
+                                <p className="text-gray-500 text-xs">There are no listing views.</p>
+                            </div>
+                        </div>
+
+                        {/* Leads sources */}
+                        <div>
+                            <h3 className="text-lg font-bold text-gray-800 mb-4">Leads sources</h3>
+                            <div className="bg-[#F0F0F6] rounded-[2rem] p-12 flex flex-col items-center justify-center text-center">
+                                <div className="bg-[#E3EBDE] p-3 rounded-xl mb-3 shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.25)]">
+                                    <List className="w-6 h-6 text-[#3A6D6C]" />
+                                </div>
+                                <h4 className="text-[#3A6D6C] font-bold mb-1">No leads</h4>
+                                <p className="text-gray-500 text-xs">There are no leads for this listing.</p>
+                            </div>
+                        </div>
+                    </div>
                 )}
             </div>
         </div>

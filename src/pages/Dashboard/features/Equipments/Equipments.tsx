@@ -1,9 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 // import { useNavigate } from 'react-router-dom';
 import EquipmentsHeader from './components/EquipmentsHeader';
 import EquipmentsStats from './components/EquipmentsStats';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import EquipmentCard from './components/EquipmentCard';
+import Pagination from '../../components/Pagination';
 
 const MOCK_EQUIPMENTS = [
     {
@@ -48,9 +49,12 @@ const MOCK_EQUIPMENTS = [
     }
 ];
 
+const ITEMS_PER_PAGE = 9;
+
 const Equipments: React.FC = () => {
     // const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
     const [filters, setFilters] = useState<{
         status: string[];
         occupancy: string[];
@@ -92,29 +96,40 @@ const Equipments: React.FC = () => {
         propertyType: 'Property Type'
     };
 
+    // Reset page when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, filters]);
+
     const filteredEquipments = useMemo(() => {
         return MOCK_EQUIPMENTS.filter(equipment => {
             // Search filter
-            const matchesSearch = searchQuery === '' || 
+            const matchesSearch = searchQuery === '' ||
                 equipment.propertyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 equipment.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 equipment.unit.toLowerCase().includes(searchQuery.toLowerCase());
 
             // Status filter
-            const matchesStatus = filters.status.length === 0 || 
+            const matchesStatus = filters.status.length === 0 ||
                 filters.status.includes(equipment.status);
 
             // Occupancy filter
-            const matchesOccupancy = filters.occupancy.length === 0 || 
+            const matchesOccupancy = filters.occupancy.length === 0 ||
                 filters.occupancy.includes(equipment.occupancy);
 
             // Property Type filter
-            const matchesPropertyType = filters.propertyType.length === 0 || 
+            const matchesPropertyType = filters.propertyType.length === 0 ||
                 filters.propertyType.includes(equipment.propertyType);
 
             return matchesSearch && matchesStatus && matchesOccupancy && matchesPropertyType;
         });
     }, [searchQuery, filters]);
+
+    const totalPages = Math.ceil(filteredEquipments.length / ITEMS_PER_PAGE);
+    const paginatedEquipments = filteredEquipments.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+    );
 
     return (
         <div className="max-w-6xl mx-auto min-h-screen">
@@ -136,15 +151,22 @@ const Equipments: React.FC = () => {
                     onFiltersChange={(newFilters) => setFilters(newFilters as any)}
                 />
 
-                {filteredEquipments.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-50 gap-y-6">
-                        {filteredEquipments.map((equipment) => (
-                            <EquipmentCard
-                                key={equipment.id}
-                                {...equipment}
-                            />
-                        ))}
-                    </div>
+                {paginatedEquipments.length > 0 ? (
+                    <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {paginatedEquipments.map((equipment) => (
+                                <EquipmentCard
+                                    key={equipment.id}
+                                    {...equipment}
+                                />
+                            ))}
+                        </div>
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages || 1}
+                            onPageChange={setCurrentPage}
+                        />
+                    </>
                 ) : (
                     <div className="text-center py-12 bg-white rounded-2xl">
                         <p className="text-gray-500 text-lg">No equipments found matching your filters</p>

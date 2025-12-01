@@ -14,9 +14,9 @@ const EquipmentCard: React.FC<EquipmentCardProps> = ({
     unit
 }) => {
     return (
-        <div className="bg-[#F6F6F8] rounded-[2rem] p-4 shadow-sm flex gap-4 items-center">
+        <div className="bg-[#F6F6F8] rounded-[2rem] p-4 shadow-sm flex flex-col gap-4">
             {/* Image Section */}
-            <div className="w-48 h-32 flex-shrink-0">
+            <div className="w-full h-48 flex-shrink-0">
                 <img
                     src={image}
                     alt={propertyName}
@@ -25,7 +25,7 @@ const EquipmentCard: React.FC<EquipmentCardProps> = ({
             </div>
 
             {/* Content Section */}
-            <div className="flex-1 flex flex-col h-full justify-between py-1">
+            <div className="flex-1 flex flex-col justify-between">
                 <div>
                     <h3 className="text-base font-bold text-gray-800 leading-tight">{propertyName}</h3>
                     <p className="text-xs text-gray-600 mb-3">{category}</p>
@@ -35,7 +35,7 @@ const EquipmentCard: React.FC<EquipmentCardProps> = ({
                     </div>
                 </div>
 
-                <button className="w-fit bg-[#82D64D] text-white px-6 py-1.5 rounded-full text-sm font-medium hover:bg-[#72c042] transition-colors">
+                <button className="w-full bg-[#82D64D] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#72c042] transition-colors">
                     View Equipments
                 </button>
             </div>
