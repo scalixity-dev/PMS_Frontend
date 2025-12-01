@@ -29,6 +29,7 @@ import Properties from './pages/Dashboard/features/Properties/Properties';
 import Equipments from './pages/Dashboard/features/Equipments/Equipments';
 import PropertyDetail from './pages/Dashboard/features/Properties/PropertyDetail';
 import Listing from './pages/Dashboard/features/Listing/Listing';
+import ListingDetail from './pages/Dashboard/features/Listing/ListingDetail';
 import Calendar from './pages/Dashboard/features/Calendar/Calendar';
 import Tasks from './pages/Dashboard/features/Tasks/Tasks';
 // import ListUnit from './pages/Dashboard/features/ListUnit/ListUnit';
@@ -71,6 +72,7 @@ const App: React.FC = () => {
           <Route path="/dashboard/properties" element={<Properties />} />
           <Route path="/dashboard/properties/:id" element={<PropertyDetail />} />
           <Route path="/dashboard/portfolio/listing" element={<Listing />} />
+          <Route path="/dashboard/listings/:id" element={<ListingDetail />} />
           <Route path="/dashboard/calendar" element={<Calendar />} />
           <Route path="/dashboard/tasks" element={<Tasks />} />
           <Route path="/dashboard/equipments" element={<Equipments />} />
