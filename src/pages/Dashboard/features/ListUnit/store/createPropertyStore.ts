@@ -24,8 +24,22 @@ interface CreatePropertyFormData {
   // Features
   features: string[];
   // Photos
-  coverPhoto: any; // Can be string (URL) or object with file/previewUrl
-  galleryPhotos: any[]; // Array of strings (URLs) or objects with file/previewUrl
+// Define photo types
+type PhotoUrl = string;
+interface PhotoFile {
+  file: File;
+  previewUrl: string;
+}
+type Photo = PhotoUrl | PhotoFile;
+
+interface CreatePropertyFormData {
+  // General Info
+  propertyName: string;
+  // ... other fields ...
+  // Photos
+  coverPhoto: Photo | null;
+  galleryPhotos: Photo[];
+  youtubeUrl: string;
   youtubeUrl: string;
   // Marketing
   marketingDescription: string;
