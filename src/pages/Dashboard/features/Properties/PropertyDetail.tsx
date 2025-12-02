@@ -12,6 +12,7 @@ import {
 import SpecsTab from './components/SpecsTab';
 import FinancialsTab from './components/FinancialsTab';
 import ServiceProvidersTab from './components/ServiceProvidersTab';
+import DetailTabs from '../../components/DetailTabs';
 
 // Mock data - in a real app this would come from an API or shared state
 const PROPERTY_DETAILS = {
@@ -165,22 +166,11 @@ const PropertyDetail: React.FC = () => {
                 </div>
 
                 {/* Tabs */}
-                <div className="flex justify-center mb-8">
-                    <div className="bg-[#F6F6F8] py-4 px-2 rounded-full w-full flex justify-center items-center gap-4 shadow-sm">
-                        {['Profile', 'Specs', 'Financials', 'Service Providers'].map((tab) => (
-                            <button
-                                key={tab}
-                                onClick={() => setActiveTab(tab.toLowerCase())}
-                                className={`px-10 py-3 rounded-full text-sm font-bold transition-all ${activeTab === tab.toLowerCase()
-                                    ? 'bg-[#82D64D] text-white shadow-md'
-                                    : 'bg-[#E0E0E0] text-gray-700 hover:bg-gray-300'
-                                    }`}
-                            >
-                                {tab}
-                            </button>
-                        ))}
-                    </div>
-                </div>
+                <DetailTabs
+                    tabs={['Profile', 'Specs', 'Financials', 'Service Providers']}
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                />
 
 
                 {/* Content based on active tab */}

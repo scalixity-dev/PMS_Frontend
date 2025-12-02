@@ -32,6 +32,8 @@ import Listing from './pages/Dashboard/features/Listing/Listing';
 import ListingDetail from './pages/Dashboard/features/Listing/ListingDetail';
 import Calendar from './pages/Dashboard/features/Calendar/Calendar';
 import Tasks from './pages/Dashboard/features/Tasks/Tasks';
+import Tenants from './pages/Dashboard/features/Tenants/Tenants';
+import TenantDetail from './pages/Dashboard/features/Tenants/TenantDetail';
 // import ListUnit from './pages/Dashboard/features/ListUnit/ListUnit';
 
 const App: React.FC = () => {
@@ -104,6 +106,8 @@ const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          <Route path="/dashboard/contacts/tenants" element={<Tenants />} />
+          <Route path="/dashboard/contacts/tenants/:id" element={<TenantDetail />} />
           <Route
             path="/accounting"
             element={

@@ -307,7 +307,7 @@ export default function DashboardSidebar({ open, setOpen }: SidebarProps) {
                 activeDropdown={activeDropdown}
                 setActiveDropdown={setActiveDropdown}
               >
-                <SidebarSubLink label="Tenants" to="/contacts/tenants" isCurrentPath={isCurrentPath} />
+                <SidebarSubLink label="Tenants" to="/dashboard/contacts/tenants" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Service Pros" to="/contacts/service-pros" isCurrentPath={isCurrentPath} />
               </SidebarDropdownLink>
 

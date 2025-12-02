@@ -16,6 +16,7 @@ import CustomDropdown from '../../components/CustomDropdown';
 import DatePicker from '../../../../components/ui/DatePicker';
 import OnlineApplicationModal from './components/OnlineApplicationModal';
 import InviteToApplyModal from './components/InviteToApplyModal';
+import DetailTabs from '../../components/DetailTabs';
 
 const ListingDetail: React.FC = () => {
     const { id } = useParams();
@@ -266,22 +267,11 @@ const ListingDetail: React.FC = () => {
                 </div>
 
                 {/* Tabs */}
-                <div className="flex justify-center mb-8">
-                    <div className="bg-[#F6F6F8] py-4 px-2 rounded-full w-full flex justify-center items-center gap-4 shadow-sm">
-                        {['Listing', 'Statistics'].map((tab) => (
-                            <button
-                                key={tab}
-                                onClick={() => setActiveTab(tab.toLowerCase())}
-                                className={`px-10 py-3 rounded-full text-sm font-bold transition-all ${activeTab === tab.toLowerCase()
-                                    ? 'bg-[#82D64D] text-white shadow-md'
-                                    : 'bg-[#E0E0E0] text-gray-700 hover:bg-gray-300'
-                                    }`}
-                            >
-                                {tab}
-                            </button>
-                        ))}
-                    </div>
-                </div>
+                <DetailTabs
+                    tabs={['Listing', 'Statistics']}
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                />
 
                 {activeTab === 'listing' && (
                     <>
