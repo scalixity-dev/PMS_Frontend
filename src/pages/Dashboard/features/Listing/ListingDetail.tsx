@@ -14,11 +14,17 @@ import { parse, format } from 'date-fns';
 import SelectionModal from './components/SelectionModal';
 import CustomDropdown from '../../components/CustomDropdown';
 import DatePicker from '../../../../components/ui/DatePicker';
+import OnlineApplicationModal from './components/OnlineApplicationModal';
+import InviteToApplyModal from './components/InviteToApplyModal';
 
 const ListingDetail: React.FC = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('listing');
+    const [isOnlineApplicationModalOpen, setIsOnlineApplicationModalOpen] = useState(false);
+    const [isInviteToApplyModalOpen, setIsInviteToApplyModalOpen] = useState(false);
+    const [onlineApplicationStatus, setOnlineApplicationStatus] = useState('Enabled');
+    const [applicationFee, setApplicationFee] = useState<string>('');
 
     // Mock data based on the screenshot
     const listing = {
@@ -144,7 +150,7 @@ const ListingDetail: React.FC = () => {
 
             <div className="bg-[#E0E8E7] rounded-[2rem] p-6 min-h-screen">
                 {/* Header */}
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center gap-6 mb-6">
                     <div className="flex items-center gap-4">
                         <h1 className="text-2xl font-bold text-gray-800">#{id}</h1>
                     </div>
@@ -152,7 +158,10 @@ const ListingDetail: React.FC = () => {
                         <button className="bg-[#467676] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#3A6D6C] transition-colors">
                             List
                         </button>
-                        <button className="bg-[#467676] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#3A6D6C] transition-colors">
+                        <button
+                            onClick={() => setIsInviteToApplyModalOpen(true)}
+                            className="bg-[#467676] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#3A6D6C] transition-colors"
+                        >
                             Invite to apply
                         </button>
                         <button className="bg-[#467676] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#3A6D6C] transition-colors">
@@ -240,23 +249,20 @@ const ListingDetail: React.FC = () => {
                         <div className="z-10 grid grid-cols-[auto_1fr] gap-x-4 gap-y-4 items-center">
                             <h3 className="font-bold">Accept online applications</h3>
                             <div className="flex items-center gap-3">
-                                <span className="bg-[#3A6D6C] px-3 py-1 border border-white rounded-full text-xs">Enabled</span>
-                                <SquarePen className="w-4 h-4" />
+                                <span className="bg-[#3A6D6C] px-3 py-1 border border-white rounded-full text-xs">{onlineApplicationStatus}</span>
+                                <button onClick={() => setIsOnlineApplicationModalOpen(true)}>
+                                    <SquarePen className="w-4 h-4" />
+                                </button>
                             </div>
 
-                            <button className="bg-white text-[#82D64D] px-4 py-1.5 rounded-full text-xs font-bold w-fit">No</button>
-                            <button className="bg-gradient-to-r from-[#3A4E33] to-[#85B474] text-white px-4 py-1.5 border border-white text-xs font-medium w-fit">
-                                Application fee
-                            </button>
+                            {applicationFee && (
+                                <div className="bg-gradient-to-r from-[#3A4E33] to-[#85B474] text-white px-4 py-1.5 border border-white text-xs font-medium w-fit">
+                                    Application fee: ₹{applicationFee}
+                                </div>
+                            )}
                         </div>
                     </div>
 
-                    <div className="bg-[#82D64D] rounded-full p-6 flex items-center justify-between text-white">
-                        <div className="flex items-center gap-3">
-                            <h3 className="font-bold">Posting to Listing website</h3>
-                            <span className="bg-[#3A6D6C] px-3 py-1 border border-white rounded-full text-xs">Enabled</span>
-                        </div>
-                    </div>
                 </div>
 
                 {/* Tabs */}
@@ -801,6 +807,27 @@ const ListingDetail: React.FC = () => {
                         </div>
                     </div>
                 )}
+
+                <OnlineApplicationModal
+                    isOpen={isOnlineApplicationModalOpen}
+                    onClose={() => setIsOnlineApplicationModalOpen(false)}
+                    onSave={(status, fee) => {
+                        setOnlineApplicationStatus(status);
+                        setApplicationFee(fee);
+                        console.log('Online application saved:', { status, fee });
+                    }}
+                    initialStatus={onlineApplicationStatus}
+                    initialFee={applicationFee}
+                />
+
+                <InviteToApplyModal
+                    isOpen={isInviteToApplyModalOpen}
+                    onClose={() => setIsInviteToApplyModalOpen(false)}
+                    onSend={(data) => {
+                        console.log('Invitation sent:', data);
+                        setIsInviteToApplyModalOpen(false);
+                    }}
+                />
             </div>
         </div>
     );
