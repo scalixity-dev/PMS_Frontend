@@ -137,14 +137,17 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ data, updateData,
         
         // Filter out properties that have all listing data complete
         // Only show properties with missing data
-        const incompleteProperties: Property[] = [];
+        // Check completeness in parallel
+        const completenessResults = await Promise.all(
+          allProperties.map(async (property) => ({
+            property,
+            isComplete: await isPropertyListingComplete(property.id)
+          }))
+        );
         
-        for (const property of allProperties) {
-          const isComplete = await isPropertyListingComplete(property.id);
-          if (!isComplete) {
-            incompleteProperties.push(property);
-          }
-        }
+        const incompleteProperties = completenessResults
+          .filter(result => !result.isComplete)
+          .map(result => result.property);
         
         setProperties(incompleteProperties);
       } catch (err) {
