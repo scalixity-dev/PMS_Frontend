@@ -634,7 +634,7 @@ const AddProperty: React.FC = () => {
       // Add units for MULTI property type
       if (formData.propertyType === 'multi' && formData.units.length > 0) {
         propertyData.units = formData.units.map(unit => ({
-          unitName: unit.unitNumber || `Unit ${unit.unitNumber}`,
+          unitName: unit.unitNumber || `Unit ${formData.units.indexOf(unit) + 1}`,
           apartmentType: unit.unitType || undefined,
           sizeSqft: unit.size ? parseFloat(unit.size) : undefined,
           beds: unit.beds ? parseInt(unit.beds) : undefined,
