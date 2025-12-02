@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Upload, Plus, X, AlertCircle } from 'lucide-react';
+import { useCreatePropertyStore } from '../../store/createPropertyStore';
 
 interface PropertyPhotosProps {
-    data: any;
-    updateData: (key: string, value: any) => void;
+    data?: any; // Optional - now using Zustand store
+    updateData?: (key: string, value: any) => void; // Optional - now using Zustand store
 }
 
-const PropertyPhotos: React.FC<PropertyPhotosProps> = ({ data, updateData }) => {
+const PropertyPhotos: React.FC<PropertyPhotosProps> = () => {
+    const { formData: data, updateFormData } = useCreatePropertyStore();
     const coverInputRef = React.useRef<HTMLInputElement>(null);
     const galleryInputRef = React.useRef<HTMLInputElement>(null);
     const [errors, setErrors] = useState<{
@@ -14,6 +16,10 @@ const PropertyPhotos: React.FC<PropertyPhotosProps> = ({ data, updateData }) => 
         galleryPhotos?: string;
         youtubeUrl?: string;
     }>({});
+
+    const updateData = (key: string, value: any) => {
+        updateFormData(key as any, value);
+    };
 
     // Helper function to check if cover photo exists (either URL string or file object)
     const hasCoverPhoto = () => {

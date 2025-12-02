@@ -1,14 +1,20 @@
 import React, { useState } from 'react';
 import { Plus, X } from 'lucide-react';
+import { useCreatePropertyStore } from '../../store/createPropertyStore';
 
 interface PropertyFeaturesProps {
-    data: any;
-    updateData: (key: string, value: any) => void;
+    data?: any; // Optional - now using Zustand store
+    updateData?: (key: string, value: any) => void; // Optional - now using Zustand store
 }
 
-const PropertyFeatures: React.FC<PropertyFeaturesProps> = ({ data, updateData }) => {
+const PropertyFeatures: React.FC<PropertyFeaturesProps> = () => {
+    const { formData: data, updateFormData } = useCreatePropertyStore();
     const [customFeatureInput, setCustomFeatureInput] = useState('');
     const [showCustomInput, setShowCustomInput] = useState(false);
+
+    const updateData = (key: string, value: any) => {
+        updateFormData(key as any, value);
+    };
 
     const defaultFeatures = [
         'Furnished',

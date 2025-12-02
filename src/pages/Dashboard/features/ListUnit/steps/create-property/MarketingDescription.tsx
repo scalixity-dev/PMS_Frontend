@@ -1,12 +1,19 @@
 import React from 'react';
 import { Undo2 } from 'lucide-react';
+import { useCreatePropertyStore } from '../../store/createPropertyStore';
 
 interface MarketingDescriptionProps {
-    data: any;
-    updateData: (key: string, value: any) => void;
+    data?: any; // Optional - now using Zustand store
+    updateData?: (key: string, value: any) => void; // Optional - now using Zustand store
 }
 
-const MarketingDescription: React.FC<MarketingDescriptionProps> = ({ data, updateData }) => {
+const MarketingDescription: React.FC<MarketingDescriptionProps> = () => {
+    const { formData: data, updateFormData } = useCreatePropertyStore();
+    
+    const updateData = (key: string, value: any) => {
+        updateFormData(key as any, value);
+    };
+
     return (
         <div className="w-full flex flex-col items-center">
             <div className="text-center mb-8">
