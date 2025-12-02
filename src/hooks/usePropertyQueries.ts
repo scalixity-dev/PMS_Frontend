@@ -15,7 +15,7 @@ export const propertyQueryKeys = {
  */
 export const useGetProperty = (propertyId: string | null | undefined, enabled: boolean = true) => {
   return useQuery({
-    queryKey: propertyQueryKeys.detail(propertyId || ''),
+    queryKey: propertyId ? propertyQueryKeys.detail(propertyId) : ['properties', 'detail', 'null'] as const,
     queryFn: () => propertyService.getOne(propertyId!),
     enabled: enabled && !!propertyId,
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes
