@@ -4,12 +4,23 @@ import { GoogleIcon, AppleIcon, FacebookIcon } from '../../../../../components/A
 import type { EmailSignupProps } from './signUpProps';
 import { Link } from 'react-router-dom';
 import { authService } from '../../../../../services/auth.service';
+import { useSignUpStore } from '../store/signUpStore';
+import { useCheckEmailExists } from '../../../../../hooks/useAuthQueries';
 
 
-export const EmailSignup: React.FC<EmailSignupProps> = ({ onNext, formData, setFormData }) => {
-  const [isLoading, setIsLoading] = useState(false);
+export const EmailSignup: React.FC<EmailSignupProps> = ({ onNext }) => {
+  const { formData, updateFormData, nextStep } = useSignUpStore();
   const [error, setError] = useState<string>('');
   const navigate = useNavigate();
+
+  // Use store's nextStep if onNext is not provided
+  const handleNext = onNext || nextStep;
+
+  // Use React Query to check email existence
+  const {
+    isLoading,
+    refetch: checkEmail,
+  } = useCheckEmailExists(formData.email || '', false); // Disabled by default, will be triggered manually
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,13 +38,11 @@ export const EmailSignup: React.FC<EmailSignupProps> = ({ onNext, formData, setF
       return;
     }
 
-    setIsLoading(true);
-
     try {
-      // Check if email already exists
-      const emailExists = await authService.checkEmailExists(formData.email);
+      // Check if email already exists using React Query
+      const result = await checkEmail();
       
-      if (emailExists) {
+      if (result.data === true) {
         // Email exists - redirect to login page
         navigate('/login', { 
           state: { email: formData.email },
@@ -41,15 +50,13 @@ export const EmailSignup: React.FC<EmailSignupProps> = ({ onNext, formData, setF
         });
       } else {
         // Email doesn't exist - proceed to registration form
-        onNext();
+        handleNext();
       }
     } catch (err) {
       console.error('Error checking email:', err);
       // On error, proceed to registration (fail open)
       // The registration endpoint will catch duplicate emails
-      onNext();
-    } finally {
-      setIsLoading(false);
+      handleNext();
     }
   };
 
@@ -100,7 +107,7 @@ export const EmailSignup: React.FC<EmailSignupProps> = ({ onNext, formData, setF
               required
               value={formData.email || ''}
               onChange={(e) => {
-                setFormData({ ...formData, email: e.target.value });
+                updateFormData('email', e.target.value);
                 setError(''); // Clear error when user types
               }}
               placeholder="Enter your email"

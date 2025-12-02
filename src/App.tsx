@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import AppLayout from './components/layout/AppLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import DashboardLayout from './components/dashboardlayout/DashboardLayout';
@@ -31,9 +32,25 @@ import PropertyDetail from './pages/Dashboard/features/Properties/PropertyDetail
 import Listing from './pages/Dashboard/features/Listing/Listing';
 // import ListUnit from './pages/Dashboard/features/ListUnit/ListUnit';
 
+// Create a QueryClient instance
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+    mutations: {
+      retry: 0,
+    },
+  },
+});
+
 const App: React.FC = () => {
   return (
-    <BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
       <Routes>
         <Route element={<AppLayout />}>
           <Route path="/" element={<HomePage />} />
@@ -141,6 +158,7 @@ const App: React.FC = () => {
         </Route>
       </Routes>
     </BrowserRouter>
+    </QueryClientProvider>
   );
 };
 

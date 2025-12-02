@@ -2,14 +2,20 @@ import React from 'react';
 import CustomDropdown from '../../../../components/CustomDropdown';
 import { Check } from 'lucide-react';
 import property from '../../../../../../assets/images/property.jpg';
+import { useCreatePropertyStore } from '../../store/createPropertyStore';
 
 interface AddRibbonProps {
-    data: any;
-    updateData: (key: string, value: any) => void;
+    data?: any; // Optional - now using Zustand store
+    updateData?: (key: string, value: any) => void; // Optional - now using Zustand store
 }
 
-const AddRibbon: React.FC<AddRibbonProps> = ({ data, updateData }) => {
+const AddRibbon: React.FC<AddRibbonProps> = () => {
+    const { formData: data, updateFormData } = useCreatePropertyStore();
     const ribbonType = data.ribbonType || 'none';
+
+    const updateData = (key: string, value: any) => {
+        updateFormData(key as any, value);
+    };
 
     const handleTypeChange = (type: string) => {
         updateData('ribbonType', type);

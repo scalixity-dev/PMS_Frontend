@@ -1,24 +1,30 @@
 import type { FC } from 'react';
 import { BedDouble, Bath } from 'lucide-react';
-
-interface PropertyData {
-    propertyName?: string;
-    address?: string;
-    city?: string;
-    stateRegion?: string;
-    zip?: string;
-    marketRent?: number | string;
-    bathrooms?: number | string;
-    beds?: number | string;
-    coverPhotoUrl?: string;
-}
+import { useCreatePropertyStore } from '../../store/createPropertyStore';
 
 interface PropertySummaryMapProps {
-    data: PropertyData;
-    onBack: () => void;
+    data?: any; // Optional - now using Zustand store
+    onBack?: () => void; // Optional - can use store's prevStep
 }
 
-const PropertySummaryMap: FC<PropertySummaryMapProps> = ({ data, onBack }) => {
+const PropertySummaryMap: FC<PropertySummaryMapProps> = ({ onBack }) => {
+    const { formData: data, prevStep } = useCreatePropertyStore();
+    
+    const handleBack = onBack || prevStep;
+
+    // Map form data to display format
+    const propertyData = {
+        propertyName: data.propertyName,
+        address: data.address,
+        city: data.city,
+        stateRegion: data.stateRegion,
+        zip: data.zip,
+        marketRent: data.marketRent,
+        bathrooms: data.bathrooms,
+        beds: data.beds,
+        coverPhotoUrl: typeof data.coverPhoto === 'string' ? data.coverPhoto : data.coverPhoto?.previewUrl,
+    };
+
     return (
         <div className="w-full flex flex-col items-center">
             <div className="text-center mb-8">
@@ -29,10 +35,10 @@ const PropertySummaryMap: FC<PropertySummaryMapProps> = ({ data, onBack }) => {
             <div className="bg-white rounded-xl shadow-md overflow-hidden w-full max-w-md mx-auto">
                 {/* Property Cover Photo or Map Placeholder */}
                 <div className="relative h-48 bg-gray-200">
-                    {data.coverPhotoUrl ? (
+                    {propertyData.coverPhotoUrl ? (
                         <img 
-                            src={data.coverPhotoUrl} 
-                            alt={data.propertyName || 'Property'}
+                            src={propertyData.coverPhotoUrl} 
+                            alt={propertyData.propertyName || 'Property'}
                             className="w-full h-full object-cover"
                         />
                     ) : (
@@ -48,11 +54,11 @@ const PropertySummaryMap: FC<PropertySummaryMapProps> = ({ data, onBack }) => {
                 {/* Property Details */}
                 <div className="p-6">
                     {/* Property Name */}
-                    <h3 className="text-xl font-bold text-gray-900 mb-1">{data.propertyName || 'Property Name'}</h3>
+                    <h3 className="text-xl font-bold text-gray-900 mb-1">{propertyData.propertyName || 'Property Name'}</h3>
 
                     {/* Address */}
                     <p className="text-sm text-gray-600 mb-4">
-                        {[data.address, data.city, data.stateRegion, data.zip].filter(Boolean).join(', ')}
+                        {[propertyData.address, propertyData.city, propertyData.stateRegion, propertyData.zip].filter(Boolean).join(', ')}
                     </p>
 
                     {/* Price and Amenities */}
@@ -60,7 +66,7 @@ const PropertySummaryMap: FC<PropertySummaryMapProps> = ({ data, onBack }) => {
                         {/* Price */}
                         <div className="flex items-baseline gap-1">
                             <span className="text-2xl font-bold text-gray-900">
-                                ₹ {data.marketRent ? Number(data.marketRent).toLocaleString() : '0'}
+                                ₹ {propertyData.marketRent ? Number(propertyData.marketRent).toLocaleString() : '0'}
                             </span>
                             <span className="text-sm text-gray-500">/month</span>
                         </div>
@@ -73,7 +79,7 @@ const PropertySummaryMap: FC<PropertySummaryMapProps> = ({ data, onBack }) => {
                                     <Bath size={16} className="text-orange-600" />
                                 </div>
                                 <span className="w-6 h-6 rounded-full bg-orange-500 text-white text-xs font-medium flex items-center justify-center">
-                                    {data.bathrooms || '0'}
+                                    {propertyData.bathrooms || '0'}
                                 </span>
                             </div>
 
@@ -83,7 +89,7 @@ const PropertySummaryMap: FC<PropertySummaryMapProps> = ({ data, onBack }) => {
                                     <BedDouble size={16} className="text-teal-600" />
                                 </div>
                                 <span className="w-6 h-6 rounded-full bg-teal-500 text-white text-xs font-medium flex items-center justify-center">
-                                    {data.beds || '0'}
+                                    {propertyData.beds || '0'}
                                 </span>
                             </div>
                         </div>
@@ -92,7 +98,7 @@ const PropertySummaryMap: FC<PropertySummaryMapProps> = ({ data, onBack }) => {
                     {/* Action Buttons */}
                     <div className="flex gap-3">
                         <button
-                            onClick={onBack}
+                            onClick={handleBack}
                             className="w-full px-4 py-2.5 bg-gray-700 text-white rounded-lg font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
                         >
                             Delete
