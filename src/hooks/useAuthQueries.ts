@@ -48,15 +48,6 @@ export const useRegister = () => {
     onSuccess: (data) => {
       // Invalidate and refetch current user after successful registration
       queryClient.invalidateQueries({ queryKey: authQueryKeys.currentUser() });
-      // Cache the registered user data
-      queryClient.setQueryData(authQueryKeys.currentUser(), {
-        userId: data.id,
-        email: data.email,
-        fullName: data.fullName,
-        role: data.role,
-        isEmailVerified: data.isEmailVerified,
-        isActive: data.isActive,
-      } as CurrentUser);
     },
   });
 };
