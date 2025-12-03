@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Plus } from 'lucide-react';
 import DetailTabs from '../../components/DetailTabs';
+import CustomTextBox from '../../components/CustomTextBox';
 
 // Mock Data - keyed by tenant ID
 const TENANT_DETAILS: Record<number, any> = {
@@ -148,13 +149,6 @@ const TenantDetail = () => {
         { id: 'requests', label: 'Requests' }
     ];
 
-    const InfoField = ({ label, value }: { label: string; value: string }) => (
-        <div className="flex items-center bg-[#E3EBDE] rounded-full px-4 py-2 shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.25)]">
-            <span className="text-xs font-medium text-gray-600 w-1/3 truncate" title={label}>{label}</span>
-            <span className="text-sm text-gray-800 font-medium w-2/3 truncate pl-2" title={value}>{value}</span>
-        </div>
-    );
-
     const SectionTitle = ({ title }: { title: string }) => (
         <h3 className="text-lg font-semibold text-gray-800 mb-4">{title}</h3>
     );
@@ -281,16 +275,16 @@ const TenantDetail = () => {
                         <section>
                             <SectionTitle title="Personal information" />
                             <div className="bg-[#F6F6F8] rounded-[2rem] p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <InfoField label="First name" value={tenant.personalInfo.firstName} />
-                                <InfoField label="Email" value={tenant.personalInfo.email} />
-                                <InfoField label="Company name" value={tenant.personalInfo.companyName} />
-                                <InfoField label="Middle name" value={tenant.personalInfo.middleName} />
-                                <InfoField label="Additional email 1" value={tenant.personalInfo.additionalEmail} />
-                                <InfoField label="Date of birth" value={tenant.personalInfo.dateOfBirth} />
-                                <InfoField label="Last name" value={tenant.personalInfo.lastName} />
-                                <InfoField label="Phone" value={tenant.personalInfo.phone} />
-                                <InfoField label="Company name" value={tenant.personalInfo.companyName2} />
-                                <InfoField label="Additional Phone" value={tenant.personalInfo.additionalPhone} />
+                                <CustomTextBox label="First name" value={tenant.personalInfo.firstName} />
+                                <CustomTextBox label="Email" value={tenant.personalInfo.email} />
+                                <CustomTextBox label="Company name" value={tenant.personalInfo.companyName} />
+                                <CustomTextBox label="Middle name" value={tenant.personalInfo.middleName} />
+                                <CustomTextBox label="Additional email 1" value={tenant.personalInfo.additionalEmail} />
+                                <CustomTextBox label="Date of birth" value={tenant.personalInfo.dateOfBirth} />
+                                <CustomTextBox label="Last name" value={tenant.personalInfo.lastName} />
+                                <CustomTextBox label="Phone" value={tenant.personalInfo.phone} />
+                                <CustomTextBox label="Company name" value={tenant.personalInfo.companyName2} />
+                                <CustomTextBox label="Additional Phone" value={tenant.personalInfo.additionalPhone} />
                             </div>
                         </section>
 
@@ -298,7 +292,7 @@ const TenantDetail = () => {
                         <section>
                             <SectionTitle title="Forwarding address" />
                             <div className="bg-[#F6F6F8] rounded-[2rem] p-6">
-                                <InfoField label="Property address" value={tenant.forwardingAddress} />
+                                <CustomTextBox label="Property address" value={tenant.forwardingAddress} />
                             </div>
                         </section>
 
@@ -306,13 +300,13 @@ const TenantDetail = () => {
                         <section>
                             <SectionTitle title="Emergency contacts" />
                             <div className="bg-[#F6F6F8] rounded-[2rem] p-6">
-                                {tenant.emergencyContacts.map((contact, index) => (
+                                {tenant.emergencyContacts.map((contact: any, index: number) => (
                                     <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <InfoField label="Name" value={contact.name} />
-                                        <InfoField label="Phone" value={contact.phone} />
-                                        <InfoField label="Relationship" value={contact.relationship} />
+                                        <CustomTextBox label="Name" value={contact.name} />
+                                        <CustomTextBox label="Phone" value={contact.phone} />
+                                        <CustomTextBox label="Relationship" value={contact.relationship} />
                                         <div className="hidden md:block"></div> {/* Spacer */}
-                                        <InfoField label="Email" value={contact.email} />
+                                        <CustomTextBox label="Email" value={contact.email} />
                                     </div>
                                 ))}
                             </div>
@@ -322,13 +316,13 @@ const TenantDetail = () => {
                         <section>
                             <SectionTitle title="Pets" />
                             <div className="bg-[#F6F6F8] rounded-[2rem] p-6">
-                                {tenant.pets.map((pet, index) => (
+                                {tenant.pets.map((pet: any, index: number) => (
                                     <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <InfoField label="Name" value={pet.name} />
-                                        <InfoField label="Breed" value={pet.breed} />
-                                        <InfoField label="Type" value={pet.type} />
+                                        <CustomTextBox label="Name" value={pet.name} />
+                                        <CustomTextBox label="Breed" value={pet.breed} />
+                                        <CustomTextBox label="Type" value={pet.type} />
                                         <div className="hidden md:block"></div> {/* Spacer */}
-                                        <InfoField label="Weight" value={pet.weight} />
+                                        <CustomTextBox label="Weight" value={pet.weight} />
                                     </div>
                                 ))}
                             </div>
@@ -338,14 +332,14 @@ const TenantDetail = () => {
                         <section>
                             <SectionTitle title="Vehicles" />
                             <div className="bg-[#F6F6F8] rounded-[2rem] p-6">
-                                {tenant.vehicles.map((vehicle, index) => (
+                                {tenant.vehicles.map((vehicle: any, index: number) => (
                                     <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <InfoField label="Type" value={vehicle.type} />
-                                        <InfoField label="Year" value={vehicle.year} />
-                                        <InfoField label="Make" value={vehicle.make} />
-                                        <InfoField label="Color" value={vehicle.color} />
-                                        <InfoField label="Registered in" value={vehicle.registeredIn} />
-                                        <InfoField label="License" value={vehicle.license} />
+                                        <CustomTextBox label="Type" value={vehicle.type} />
+                                        <CustomTextBox label="Year" value={vehicle.year} />
+                                        <CustomTextBox label="Make" value={vehicle.make} />
+                                        <CustomTextBox label="Color" value={vehicle.color} />
+                                        <CustomTextBox label="Registered in" value={vehicle.registeredIn} />
+                                        <CustomTextBox label="License" value={vehicle.license} />
                                     </div>
                                 ))}
                             </div>
