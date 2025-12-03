@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Dialog, Transition } from '@headlessui/react';
 import { X } from 'lucide-react';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
-// Importing from ListUnit feature as it's the same animation
-import successAnimation from '../../ListUnit/Success.lottie?url';
+import successAnimationUrl from '../../ListUnit/Success.lottie?url';
 
 interface MaintenanceSuccessModalProps {
     isOpen: boolean;
@@ -26,6 +25,29 @@ const MaintenanceSuccessModal: React.FC<MaintenanceSuccessModalProps> = ({
     const navigate = useNavigate();
     const [isClosing, setIsClosing] = useState(false);
     const timeoutRef = useRef<number | null>(null);
+    const [animationData, setAnimationData] = useState<ArrayBuffer | string | null>(null);
+
+    // Load Lottie file as ArrayBuffer to avoid buffer size mismatch
+    useEffect(() => {
+        const loadAnimation = async () => {
+            try {
+                const response = await fetch(successAnimationUrl);
+                if (!response.ok) {
+                    throw new Error('Failed to load animation');
+                }
+                const arrayBuffer = await response.arrayBuffer();
+                setAnimationData(arrayBuffer);
+            } catch (error) {
+                console.error('Error loading Lottie animation:', error);
+                // Fallback to URL if ArrayBuffer loading fails
+                setAnimationData(successAnimationUrl);
+            }
+        };
+
+        if (isOpen) {
+            loadAnimation();
+        }
+    }, [isOpen]);
 
     useEffect(() => {
         return () => {
@@ -94,12 +116,14 @@ const MaintenanceSuccessModal: React.FC<MaintenanceSuccessModalProps> = ({
                                         {/* Success Icon */}
                                         <div className="mb-2 relative flex items-center justify-center">
                                             <div className="w-40 h-40 pointer-events-none">
-                                                <DotLottieReact
-                                                    src={successAnimation}
-                                                    loop
-                                                    autoplay
-                                                    style={{ width: '100%', height: '100%' }}
-                                                />
+                                                {animationData && (
+                                                    <DotLottieReact
+                                                        src={animationData as any}
+                                                        loop
+                                                        autoplay
+                                                        style={{ width: '100%', height: '100%' }}
+                                                    />
+                                                )}
                                             </div>
                                         </div>
 

@@ -563,11 +563,20 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
           description: formData.marketingDescription || null,
         };
 
-        await updatePropertyMutation.mutateAsync({
+        const updatedProperty = await updatePropertyMutation.mutateAsync({
           propertyId,
           updateData,
         });
-        setCurrentStep(currentStep + 1);
+        
+        // If property is already complete (being edited), allow completing directly from step 7
+        // Otherwise, move to step 8 (AddRibbon)
+        if (initialPropertyId && propertyData) {
+          // Property is being edited and is already complete - complete the form
+          onSubmit(updatedProperty);
+        } else {
+          // New property or incomplete - move to step 8
+          setCurrentStep(currentStep + 1);
+        }
       } catch (err) {
         console.error('Error updating marketing description:', err);
         setError(err instanceof Error ? err.message : 'Failed to save description. Please try again.');
@@ -594,18 +603,10 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
           ribbonTitle: formData.ribbonTitle && formData.ribbonType !== 'none' ? formData.ribbonTitle : null,
         };
 
-        await updatePropertyMutation.mutateAsync({
-          propertyId,
-          updateData,
-        });
-        
-        // After saving ribbon, complete the property creation
-        const backendData = mapFormDataToBackend();
-        // Remove managerId and propertyName from update (they shouldn't change)
-        const { managerId: _, propertyName: __, ...finalUpdateData } = backendData;
+        // The mutation returns the updated property
         const updatedProperty = await updatePropertyMutation.mutateAsync({
           propertyId,
-          updateData: finalUpdateData,
+          updateData,
         });
         
         // Call the onSubmit callback with the updated property
@@ -723,7 +724,11 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
           </button>
           {/* Next Button */}
           <NextStepButton onClick={handleNext} disabled={updatePropertyMutation.isPending || !managerId || !propertyId}>
-            {updatePropertyMutation.isPending ? 'Updating...' : currentStep === 8 ? 'Complete Property' : 'Next'}
+            {updatePropertyMutation.isPending 
+              ? 'Updating...' 
+              : currentStep === 8 || (currentStep === 7 && initialPropertyId && propertyData)
+              ? 'Complete Property' 
+              : 'Next'}
           </NextStepButton>
         </div>
       )}

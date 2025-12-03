@@ -229,6 +229,13 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
   } = useGetProperty(formData.property || null, !!formData.property);
 
   
+  // Helper: shallow compare arrays of objects by id (order-insensitive)
+  const areSameById = (a: { id: string }[] = [], b: { id: string }[] = []) => {
+    if (a.length !== b.length) return false;
+    const setA = new Set(a.map(x => x.id));
+    return b.every(x => setA.has(x.id));
+  };
+
   useEffect(() => {
     // Remove any stale property queries to prevent cross-user data leakage
     queryClient.removeQueries({ queryKey: propertyQueryKeys.all });
@@ -239,48 +246,65 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
 
   // Filter properties based on completeness and active listing status
   useEffect(() => {
-    const filterIncompleteProperties = async () => {
+    let mounted = true;
+
+    (async () => {
       if (!allProperties || allProperties.length === 0) {
-        setIncompleteProperties([]);
-        // If no properties and a property is selected, clear the selection
-        if (formData.property) {
-          updateFormData('property', '');
+        // Only update if it's different
+        if (!areSameById(incompleteProperties, [])) {
+          if (!mounted) return;
+          setIncompleteProperties([]);
         }
         return;
       }
 
-      // Check completeness and active listing status in parallel
-      const propertyChecks = await Promise.all(
-        allProperties.map(async (property) => ({
-          property,
-          isComplete: await isPropertyListingComplete(property.id),
-          hasActiveListing: await hasActiveListing(property.id)
-        }))
-      );
-      
-      // Only show properties that:
-      // 1. Are NOT complete (incomplete properties), AND
-      // 2. Do NOT have an active listing (inactive listing)
-      const incomplete = propertyChecks
-        .filter(result => !result.isComplete && !result.hasActiveListing)
-        .map(result => result.property);
-      
-      setIncompleteProperties(incomplete);
-      
-      // If currently selected property is now complete or has active listing, clear the selection
-      if (formData.property) {
-        const selectedProperty = propertyChecks.find(
-          result => result.property.id === formData.property
+      try {
+        const propertyChecks = await Promise.all(
+          allProperties.map(async (property) => ({
+            property,
+            isComplete: await isPropertyListingComplete(property.id),
+            hasActiveListing: await hasActiveListing(property.id)
+          }))
         );
-        
-        if (selectedProperty && (selectedProperty.isComplete || selectedProperty.hasActiveListing)) {
-          updateFormData('property', '');
-        }
-      }
-    };
 
-    filterIncompleteProperties();
-  }, [allProperties, formData.property, updateFormData]);
+        const newIncomplete = propertyChecks
+          .filter(result => !result.isComplete && !result.hasActiveListing)
+          .map(result => result.property);
+
+        // Only update state if the list actually changed
+        if (!areSameById(incompleteProperties, newIncomplete)) {
+          if (!mounted) return;
+          setIncompleteProperties(newIncomplete);
+        }
+      } catch (err) {
+        // optionally handle/log error
+        console.error('filterIncompleteProperties failed', err);
+      }
+    })();
+
+    return () => { mounted = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allProperties]); // keep dependency on allProperties only
+
+  // Clear selected property if it's no longer in incomplete list
+  useEffect(() => {
+    const currentPropertyId = formData.property; // include current value in deps
+    if (!currentPropertyId) return; // nothing selected
+
+    // If no incomplete properties and property selected -> clear
+    if (!incompleteProperties || incompleteProperties.length === 0) {
+      if (currentPropertyId !== '') {
+        updateFormData('property', '');
+      }
+      return;
+    }
+
+    // If selected property is not in the incomplete list, clear it
+    const isPropertyInList = incompleteProperties.some(p => p.id === currentPropertyId);
+    if (!isPropertyInList && currentPropertyId !== '') {
+      updateFormData('property', '');
+    }
+  }, [incompleteProperties, formData.property, updateFormData]); // now depends on the current selected id
 
   const selectedProperty = incompleteProperties.find(p => p.id === formData.property);
   const error = queryError ? (queryError instanceof Error ? queryError.message : 'Failed to load properties') : null;
