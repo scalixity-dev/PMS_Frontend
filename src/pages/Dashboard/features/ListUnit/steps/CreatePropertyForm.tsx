@@ -9,8 +9,9 @@ import PropertyPhotos from './create-property/PropertyPhotos';
 import MarketingDescription from './create-property/MarketingDescription';
 import AddRibbon from './create-property/AddRibbon';
 import NextStepButton from '../components/NextStepButton';
-import { propertyService } from '../../../../../services/property.service';
 import { authService } from '../../../../../services/auth.service';
+import { useCreatePropertyStore } from '../store/createPropertyStore';
+import { useGetProperty, useUpdateProperty } from '../../../../../hooks/usePropertyQueries';
 
 interface CreatePropertyFormProps {
   onSubmit: (propertyData: any) => void;
@@ -18,46 +19,28 @@ interface CreatePropertyFormProps {
 }
 
 const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, propertyId: initialPropertyId }) => {
-  const [currentStep, setCurrentStep] = useState(1);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Get state from Zustand store
+  const {
+    formData,
+    currentStep,
+    propertyId: storePropertyId,
+    managerId: storeManagerId,
+    setFormData,
+    setCurrentStep,
+    setPropertyId,
+    setManagerId,
+    prevStep: storePrevStep,
+  } = useCreatePropertyStore();
+
   const [error, setError] = useState<string | null>(null);
-  const [managerId, setManagerId] = useState<string | null>(null);
-  const [propertyId, setPropertyId] = useState<string | null>(initialPropertyId || null);
-  const [isLoadingProperty, setIsLoadingProperty] = useState(false);
-  const [formData, setFormData] = useState({
-    // General Info
-    propertyName: '',
-    propertyType: '',
-    isManufactured: '',
-    marketRent: '',
-    beds: '',
-    bathrooms: '',
-    sizeSquareFt: '',
-    yearBuilt: '',
-    address: '',
-    city: '',
-    stateRegion: '',
-    country: '',
-    zip: '',
-    // Basic Amenities
-    parking: '',
-    laundry: '',
-    ac: '',
-    // Extended Amenities
-    extendedAmenities: [] as string[],
-    // Features
-    features: [],
-    // Photos
-    coverPhoto: null,
-    galleryPhotos: [],
-    youtubeUrl: '',
-    // Marketing
-    marketingDescription: '',
-    // Ribbon
-    ribbonType: 'none',
-    ribbonTitle: '',
-    ribbonColor: ''
-  });
+
+  // Use store values or fallback to local state
+  const propertyId = storePropertyId || initialPropertyId || null;
+  const managerId = storeManagerId;
+
+  // React Query hooks
+  const { data: propertyData, isLoading: isLoadingProperty, error: propertyError } = useGetProperty(initialPropertyId || null, !!initialPropertyId);
+  const updatePropertyMutation = useUpdateProperty();
 
   // Get current user ID on mount
   useEffect(() => {
@@ -70,93 +53,85 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
         setError('Failed to load user information. Please refresh the page.');
       }
     };
-    fetchUser();
-  }, []);
+    if (!managerId) {
+      fetchUser();
+    }
+  }, [managerId, setManagerId]);
 
   // Load existing property data if propertyId is provided
   useEffect(() => {
-    const loadPropertyData = async () => {
-      if (!initialPropertyId) return;
+    if (!propertyData) return;
 
-      setIsLoadingProperty(true);
-      setError(null);
+    setPropertyId(propertyData.id);
 
-      try {
-        const property = await propertyService.getOne(initialPropertyId);
-        setPropertyId(property.id);
+    // Map backend property to form data
+    const mappedData: any = {
+      propertyName: propertyData.propertyName || '',
+      propertyType: propertyData.propertyType?.toLowerCase() || '',
+      marketRent: propertyData.marketRent?.toString() || '',
+      address: propertyData.address?.streetAddress || '',
+      city: propertyData.address?.city || '',
+      stateRegion: propertyData.address?.stateRegion || '',
+      country: propertyData.address?.country || '',
+      zip: propertyData.address?.zipCode || '',
+      beds: propertyData.singleUnitDetails?.beds?.toString() || '',
+      bathrooms: propertyData.singleUnitDetails?.baths?.toString() || '',
+      sizeSquareFt: propertyData.sizeSqft?.toString() || '',
+      yearBuilt: propertyData.yearBuilt?.toString() || '',
+      parking: propertyData.amenities?.parking?.toLowerCase() || '',
+      laundry: propertyData.amenities?.laundry?.toLowerCase() || '',
+      ac: propertyData.amenities?.airConditioning?.toLowerCase() || '',
+      extendedAmenities: propertyData.amenities?.propertyAmenities || [],
+      features: propertyData.amenities?.propertyFeatures || [],
+      marketingDescription: propertyData.description || '',
+      coverPhoto: propertyData.coverPhotoUrl || propertyData.photos?.find(p => p.isPrimary)?.photoUrl || null,
+      galleryPhotos: propertyData.photos?.filter(p => !p.isPrimary).map(p => p.photoUrl) || [],
+      youtubeUrl: propertyData.youtubeUrl || '',
+      ribbonType: propertyData.ribbonType?.toLowerCase() || 'none',
+      ribbonTitle: propertyData.ribbonTitle || '',
+    };
 
-        // Map backend property to form data
-        const mappedData: any = {
-          propertyName: property.propertyName || '',
-          propertyType: property.propertyType?.toLowerCase() || '',
-          marketRent: property.marketRent?.toString() || '',
-          address: property.address?.streetAddress || '',
-          city: property.address?.city || '',
-          stateRegion: property.address?.stateRegion || '',
-          country: property.address?.country || '',
-          zip: property.address?.zipCode || '',
-          beds: property.singleUnitDetails?.beds?.toString() || '',
-          bathrooms: property.singleUnitDetails?.baths?.toString() || '',
-          sizeSquareFt: property.sizeSqft?.toString() || '',
-          yearBuilt: property.yearBuilt?.toString() || '',
-          parking: property.amenities?.parking?.toLowerCase() || '',
-          laundry: property.amenities?.laundry?.toLowerCase() || '',
-          ac: property.amenities?.airConditioning?.toLowerCase() || '',
-          extendedAmenities: property.amenities?.propertyAmenities || [],
-          features: property.amenities?.propertyFeatures || [],
-          marketingDescription: property.description || '',
-          coverPhoto: property.coverPhotoUrl || property.photos?.find(p => p.isPrimary)?.photoUrl || null,
-          galleryPhotos: property.photos?.filter(p => !p.isPrimary).map(p => p.photoUrl) || [],
-          youtubeUrl: property.youtubeUrl || '',
-          ribbonType: property.ribbonType?.toLowerCase() || 'none',
-          ribbonTitle: property.ribbonTitle || '',
-        };
+    setFormData((prev) => ({ ...prev, ...mappedData }));
 
-        setFormData(prev => ({ ...prev, ...mappedData }));
+    // Determine starting step based on what's completed
+    // Step 1: GeneralInfo (propertyName, address, beds, bathrooms, etc.)
+    // Step 2: PropertySummaryMap (always show after step 1)
+    // Step 3: BasicAmenities (parking, laundry, ac)
+    // Step 4: BasicAmenitiesExtended (extended amenities)
+    // Step 5: PropertyFeatures (features array)
+    // Step 6: PropertyPhotos (photos)
+    // Step 7: MarketingDescription (description)
+    // Step 8: AddRibbon (optional)
 
-        // Determine starting step based on what's completed
-        // Step 1: GeneralInfo (propertyName, address, beds, bathrooms, etc.)
-        // Step 2: PropertySummaryMap (always show after step 1)
-        // Step 3: BasicAmenities (parking, laundry, ac)
-        // Step 4: BasicAmenitiesExtended (extended amenities)
-        // Step 5: PropertyFeatures (features array)
-        // Step 6: PropertyPhotos (photos)
-        // Step 7: MarketingDescription (description)
-        // Step 8: AddRibbon (optional)
-
-        let startingStep = 1;
-        // If GeneralInfo is completed (has propertyName and address), start from BasicAmenitiesExtended (step 4)
-        if (property.propertyName && property.address) {
-          startingStep = 4; // Start from BasicAmenitiesExtended after BasicAmenities
-          // If BasicAmenitiesExtended is also completed, continue to next steps
-          if (property.amenities?.propertyAmenities && property.amenities.propertyAmenities.length > 0) {
-            if (property.amenities?.propertyFeatures && property.amenities.propertyFeatures.length > 0) {
-              if (property.photos && property.photos.length > 0) {
-                startingStep = 6; // PropertyPhotos completed
-                if (property.description) {
-                  startingStep = 7; // MarketingDescription completed
-                  // Step 8 (AddRibbon) is optional, so we'll start from step 7 if description exists
-                }
-              }
+    let startingStep = 1;
+    // If GeneralInfo is completed (has propertyName and address), start from BasicAmenitiesExtended (step 4)
+    if (propertyData.propertyName && propertyData.address) {
+      startingStep = 4; // Start from BasicAmenitiesExtended after BasicAmenities
+      // If BasicAmenitiesExtended is also completed, continue to next steps
+      if (propertyData.amenities?.propertyAmenities && propertyData.amenities.propertyAmenities.length > 0) {
+        if (propertyData.amenities?.propertyFeatures && propertyData.amenities.propertyFeatures.length > 0) {
+          if (propertyData.photos && propertyData.photos.length > 0) {
+            startingStep = 6; // PropertyPhotos completed
+            if (propertyData.description) {
+              startingStep = 7; // MarketingDescription completed
+              // Step 8 (AddRibbon) is optional, so we'll start from step 7 if description exists
             }
           }
         }
-
-        setCurrentStep(startingStep);
-      } catch (err) {
-        console.error('Error loading property:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load property data. Please try again.');
-      } finally {
-        setIsLoadingProperty(false);
       }
-    };
+    }
 
-    loadPropertyData();
-  }, [initialPropertyId]);
+    setCurrentStep(startingStep);
+  }, [propertyData, setPropertyId, setFormData, setCurrentStep]);
 
-  const updateFormData = (key: string, value: any) => {
-    setFormData(prev => ({ ...prev, [key]: value }));
-  };
+  // Handle property loading error
+  useEffect(() => {
+    if (propertyError) {
+      setError(propertyError instanceof Error ? propertyError.message : 'Failed to load property data. Please try again.');
+    }
+  }, [propertyError]);
+
+  // updateFormData is now handled by the store
 
   // Map frontend amenity values to backend enum values
   // Since BasicAmenities now uses enum values directly, we just validate and pass through
@@ -320,7 +295,6 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
         return;
       }
 
-      setIsSubmitting(true);
       setError(null);
 
       try {
@@ -339,13 +313,14 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
           amenities: amenities,
         };
 
-        await propertyService.update(propertyId, updateData);
-        setCurrentStep(prev => prev + 1);
+        await updatePropertyMutation.mutateAsync({
+          propertyId,
+          updateData,
+        });
+        setCurrentStep(currentStep + 1);
       } catch (err) {
         console.error('Error updating basic amenities:', err);
         setError(err instanceof Error ? err.message : 'Failed to save amenities. Please try again.');
-      } finally {
-        setIsSubmitting(false);
       }
       return;
     }
@@ -357,7 +332,6 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
         return;
       }
 
-      setIsSubmitting(true);
       setError(null);
 
       try {
@@ -376,13 +350,14 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
           amenities: amenities,
         };
 
-        await propertyService.update(propertyId, updateData);
-        setCurrentStep(prev => prev + 1);
+        await updatePropertyMutation.mutateAsync({
+          propertyId,
+          updateData,
+        });
+        setCurrentStep(currentStep + 1);
       } catch (err) {
         console.error('Error updating extended amenities:', err);
         setError(err instanceof Error ? err.message : 'Failed to save extended amenities. Please try again.');
-      } finally {
-        setIsSubmitting(false);
       }
       return;
     }
@@ -394,7 +369,6 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
         return;
       }
 
-      setIsSubmitting(true);
       setError(null);
 
       try {
@@ -413,13 +387,14 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
           amenities: amenities,
         };
 
-        await propertyService.update(propertyId, updateData);
-        setCurrentStep(prev => prev + 1);
+        await updatePropertyMutation.mutateAsync({
+          propertyId,
+          updateData,
+        });
+        setCurrentStep(currentStep + 1);
       } catch (err) {
         console.error('Error updating property features:', err);
         setError(err instanceof Error ? err.message : 'Failed to save features. Please try again.');
-      } finally {
-        setIsSubmitting(false);
       }
       return;
     }
@@ -452,7 +427,6 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
         return;
       }
 
-      setIsSubmitting(true);
       setError(null);
 
       try {
@@ -539,13 +513,14 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
           photos: photos,
         };
 
-        await propertyService.update(propertyId, updateData);
-        setCurrentStep(prev => prev + 1);
+        await updatePropertyMutation.mutateAsync({
+          propertyId,
+          updateData,
+        });
+        setCurrentStep(currentStep + 1);
       } catch (err) {
         console.error('Error uploading photos:', err);
         setError(err instanceof Error ? err.message : 'Failed to upload photos. Please try again.');
-      } finally {
-        setIsSubmitting(false);
       }
       return;
     }
@@ -557,7 +532,6 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
         return;
       }
 
-      setIsSubmitting(true);
       setError(null);
 
       try {
@@ -566,13 +540,14 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
           description: formData.marketingDescription || null,
         };
 
-        await propertyService.update(propertyId, updateData);
-        setCurrentStep(prev => prev + 1);
+        await updatePropertyMutation.mutateAsync({
+          propertyId,
+          updateData,
+        });
+        setCurrentStep(currentStep + 1);
       } catch (err) {
         console.error('Error updating marketing description:', err);
         setError(err instanceof Error ? err.message : 'Failed to save description. Please try again.');
-      } finally {
-        setIsSubmitting(false);
       }
       return;
     }
@@ -584,7 +559,6 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
         return;
       }
 
-      setIsSubmitting(true);
       setError(null);
 
       try {
@@ -597,26 +571,31 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
           ribbonTitle: formData.ribbonTitle && formData.ribbonType !== 'none' ? formData.ribbonTitle : null,
         };
 
-        await propertyService.update(propertyId, updateData);
+        await updatePropertyMutation.mutateAsync({
+          propertyId,
+          updateData,
+        });
         
         // After saving ribbon, complete the property creation
         const backendData = mapFormDataToBackend();
         // Remove managerId and propertyName from update (they shouldn't change)
         const { managerId: _, propertyName: __, ...finalUpdateData } = backendData;
-        const updatedProperty = await propertyService.update(propertyId, finalUpdateData);
+        const updatedProperty = await updatePropertyMutation.mutateAsync({
+          propertyId,
+          updateData: finalUpdateData,
+        });
         
         // Call the onSubmit callback with the updated property
         onSubmit(updatedProperty);
       } catch (err) {
         console.error('Error updating ribbon:', err);
         setError(err instanceof Error ? err.message : 'Failed to save ribbon. Please try again.');
-        setIsSubmitting(false);
       }
       return;
     }
 
     if (currentStep < 8) {
-      setCurrentStep(prev => prev + 1);
+      setCurrentStep(currentStep + 1);
     } else {
       // Update existing property with remaining data
       if (!managerId || !propertyId) {
@@ -624,54 +603,59 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
         return;
       }
 
-      setIsSubmitting(true);
       setError(null);
 
       try {
         const backendData = mapFormDataToBackend();
         // Remove managerId and propertyName from update (they shouldn't change)
         const { managerId: _, propertyName: __, ...updateData } = backendData;
-        const updatedProperty = await propertyService.update(propertyId, updateData);
+        const updatedProperty = await updatePropertyMutation.mutateAsync({
+          propertyId,
+          updateData,
+        });
         
         // Call the onSubmit callback with the updated property
         onSubmit(updatedProperty);
       } catch (err) {
         console.error('Error updating property:', err);
         setError(err instanceof Error ? err.message : 'Failed to update property. Please try again.');
-        setIsSubmitting(false);
       }
     }
   };
 
   const handleBack = () => {
     if (currentStep > 1) {
-      setCurrentStep(prev => prev - 1);
+      storePrevStep();
     }
+  };
+
+  // Helper function to update form data using store
+  const updateFormDataHelper = (key: string, value: any) => {
+    const { updateFormData } = useCreatePropertyStore.getState();
+    updateFormData(key as any, value);
   };
 
   const renderStep = () => {
     switch (currentStep) {
       case 1:
         return <GeneralInfo 
-          data={formData} 
-          updateData={updateFormData} 
           onPropertyCreated={handlePropertyCreated}
           propertyId={propertyId || undefined}
         />;
       case 2:
-        return <PropertySummaryMap data={formData} onBack={handleBack} />;
+        return <PropertySummaryMap onBack={handleBack} />;
       case 3:
-        return <BasicAmenities data={formData} updateData={updateFormData} />;
+        return <BasicAmenities data={formData} updateData={updateFormDataHelper} />;
       case 4:
-        return <BasicAmenitiesExtended data={formData} updateData={updateFormData} />;
+        return <BasicAmenitiesExtended data={formData} updateData={updateFormDataHelper} />;
       case 5:
-        return <PropertyFeatures data={formData} updateData={updateFormData} />;
+        return <PropertyFeatures />;
       case 6:
-        return <PropertyPhotos data={formData} updateData={updateFormData} />;
+        return <PropertyPhotos />;
       case 7:
-        return <MarketingDescription data={formData} updateData={updateFormData} />;
+        return <MarketingDescription />;
       case 8:
-        return <AddRibbon data={formData} updateData={updateFormData} />;
+        return <AddRibbon />;
       default:
         return null;
     }
@@ -708,15 +692,15 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
           {/* Back Button */}
           <button
             onClick={handleBack}
-            disabled={isSubmitting || currentStep === 1}
+            disabled={updatePropertyMutation.isPending || currentStep === 1}
             className="flex items-center gap-2 px-6 py-3 border border-gray-300 text-gray-700 bg-white rounded-lg font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ArrowLeft size={18} />
             Back
           </button>
           {/* Next Button */}
-          <NextStepButton onClick={handleNext} disabled={isSubmitting || !managerId || !propertyId}>
-            {isSubmitting ? 'Updating...' : currentStep === 8 ? 'Complete Property' : 'Next'}
+          <NextStepButton onClick={handleNext} disabled={updatePropertyMutation.isPending || !managerId || !propertyId}>
+            {updatePropertyMutation.isPending ? 'Updating...' : currentStep === 8 ? 'Complete Property' : 'Next'}
           </NextStepButton>
         </div>
       )}

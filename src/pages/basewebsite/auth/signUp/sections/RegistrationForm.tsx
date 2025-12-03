@@ -4,7 +4,8 @@ import type { ICountry, IState } from 'country-state-city';
 import type { RegistrationFormProps } from './signUpProps';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Search, ChevronDown } from 'lucide-react';
-import { authService } from '../../../../../services/auth.service';
+import { useSignUpStore } from '../store/signUpStore';
+import { useRegister, useUpdateProfile, useGetCurrentUser } from '../../../../../hooks/useAuthQueries';
 
 // Helper function to apply consistent styling to inputs/selects
 const inputClasses = (hasValue: boolean = true) =>
@@ -14,7 +15,31 @@ const inputClasses = (hasValue: boolean = true) =>
 
 const labelClasses = "block text-xs font-medium text-gray-700 mb-1";
 
-export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, setFormData, isOAuthSignup = false, userId }) => {
+export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignup: propIsOAuthSignup, userId: propUserId }) => {
+  // Get state from Zustand store
+  const { 
+    formData, 
+    updateFormData,
+    isOAuthSignup: storeIsOAuthSignup,
+    userId: storeUserId,
+    setIsOAuthSignup,
+    setUserId
+  } = useSignUpStore();
+
+  // Use props if provided, otherwise use store values
+  const isOAuthSignup = propIsOAuthSignup ?? storeIsOAuthSignup;
+  const userId = propUserId ?? storeUserId;
+
+  // Update store if props are provided
+  useEffect(() => {
+    if (propIsOAuthSignup !== undefined) {
+      setIsOAuthSignup(propIsOAuthSignup);
+    }
+    if (propUserId !== undefined) {
+      setUserId(propUserId);
+    }
+  }, [propIsOAuthSignup, propUserId, setIsOAuthSignup, setUserId]);
+
   const [countries, setCountries] = useState<ICountry[]>([]);
   const [states, setStates] = useState<IState[]>([]);
   const [showPassword, setShowPassword] = useState(false);
@@ -25,10 +50,14 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
   }>({});
   const [isPhoneCodeOpen, setIsPhoneCodeOpen] = useState(false);
   const [phoneCodeSearch, setPhoneCodeSearch] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const phoneCodeRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+  // React Query hooks
+  const registerMutation = useRegister();
+  const updateProfileMutation = useUpdateProfile();
+  const { data: currentUser, refetch: refetchCurrentUser } = useGetCurrentUser(false); // Disabled by default
 
   useEffect(() => {
     setCountries(Country.getAllCountries());
@@ -40,8 +69,11 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
     } else {
       setStates([]);
     }
-    setFormData({ ...formData, state: '', pincode: '' });
-  }, [formData.country]);
+    if (formData.country) {
+      updateFormData('state', '');
+      updateFormData('pincode', '');
+    }
+  }, [formData.country, updateFormData]);
 
   const phoneCountryCodes = useMemo(() => {
     return Country.getAllCountries().map(country => ({
@@ -122,7 +154,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
 
   // Handle password change
   const handlePasswordChange = (value: string) => {
-    setFormData({ ...formData, password: value });
+    updateFormData('password', value);
     const strengthError = validatePasswordStrength(value);
     const matchError = formData.confirmPassword 
       ? validatePasswordMatch(value, formData.confirmPassword)
@@ -136,7 +168,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
 
   // Handle confirm password change
   const handleConfirmPasswordChange = (value: string) => {
-    setFormData({ ...formData, confirmPassword: value });
+    updateFormData('confirmPassword', value);
     const matchError = validatePasswordMatch(formData.password || '', value);
     
     setPasswordErrors(prev => ({
@@ -177,7 +209,6 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
         return;
       }
 
-      setIsLoading(true);
       setError(null);
 
       try {
@@ -186,7 +217,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
           ? formData.phoneCountryCode.split('|')
           : [undefined, formData.phone];
 
-        await authService.updateProfile({
+        await updateProfileMutation.mutateAsync({
           phoneCountryCode: phoneCountryCode,
           phoneNumber: phoneNumber,
           country: formData.country,
@@ -195,20 +226,19 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
           address: formData.address,
         });
 
-        // Profile update successful - redirect to pricing page with userId for OAuth users
+        // Profile update successful - get current user and redirect
+        const userData = await refetchCurrentUser();
+        const user = userData.data || currentUser;
+        
         if (userId) {
           // Use provided userId
-          const currentUser = await authService.getCurrentUser();
-          navigate(`/pricing?userId=${userId}&email=${encodeURIComponent(currentUser.email)}&newAccount=true&oauth=true`, { replace: true });
-        } else {
+          navigate(`/pricing?userId=${userId}&email=${encodeURIComponent(user?.email || '')}&newAccount=true&oauth=true`, { replace: true });
+        } else if (user) {
           // Fallback: get userId from current user
-          const currentUser = await authService.getCurrentUser();
-          navigate(`/pricing?userId=${currentUser.userId}&email=${encodeURIComponent(currentUser.email)}&newAccount=true&oauth=true`, { replace: true });
+          navigate(`/pricing?userId=${user.userId}&email=${encodeURIComponent(user.email)}&newAccount=true&oauth=true`, { replace: true });
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to update profile. Please try again.');
-      } finally {
-        setIsLoading(false);
       }
       return;
     }
@@ -232,7 +262,6 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
       return;
     }
 
-    setIsLoading(true);
     setError(null);
 
     try {
@@ -241,7 +270,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
         ? formData.phoneCountryCode.split('|')
         : [undefined, formData.phone];
 
-      const response = await authService.register({
+      const response = await registerMutation.mutateAsync({
         email: formData.email!,
         password: formData.password!,
         fullName: formData.fullName!,
@@ -257,8 +286,6 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
       navigate(`/pricing?userId=${response.id}&email=${encodeURIComponent(formData.email!)}&newAccount=true`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -286,7 +313,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
               <input
                 type="text"
                 value={formData.fullName || ''}
-                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                onChange={(e) => updateFormData('fullName', e.target.value)}
                 placeholder="Type full name"
                 className={inputClasses()}
               />
@@ -344,7 +371,8 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
                               type="button"
                               onClick={() => {
                                 const [countryIso] = code.value.split('|');
-                                setFormData({ ...formData, phoneCountryCode: code.value, country: countryIso });
+                                updateFormData('phoneCountryCode', code.value);
+                                updateFormData('country', countryIso);
                                 setIsPhoneCodeOpen(false);
                                 setPhoneCodeSearch('');
                               }}
@@ -371,7 +399,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
                 <input
                   type="tel"
                   value={formData.phone || ''}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={(e) => updateFormData('phone', e.target.value)}
                   placeholder="Type your phone"
                   className="flex-1 px-4 py-3 rounded-r-md focus:outline-none text-sm placeholder-gray-400 border-0"
                 />
@@ -384,7 +412,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
                 <input
                   type="email"
                   value={formData.email || ''}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) => updateFormData('email', e.target.value)}
                   placeholder="Type email address"
                   className={inputClasses()}
                 />
@@ -396,7 +424,11 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
             <label className={labelClasses}>Country</label>
             <select
               value={formData.country || ''}
-              onChange={(e) => setFormData({ ...formData, country: e.target.value, state: '', pincode: '' })}
+              onChange={(e) => {
+                updateFormData('country', e.target.value);
+                updateFormData('state', '');
+                updateFormData('pincode', '');
+              }}
               className={inputClasses(!!formData.country)}
             >
               <option value="" disabled>Select Country</option>
@@ -413,7 +445,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
               <label className={labelClasses}>State</label>
               <select
                 value={formData.state || ''}
-                onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                onChange={(e) => updateFormData('state', e.target.value)}
                 className={inputClasses(!!formData.state)}
                 disabled={!formData.country || states.length === 0} // Disable if no country selected or no states exist
               >
@@ -430,7 +462,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
               <label className={labelClasses}>Pincode</label>
               <input
                 value={formData.pincode || ''}
-                onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
+                onChange={(e) => updateFormData('pincode', e.target.value)}
                 className={inputClasses(!!formData.pincode)}
                 disabled={!formData.state}
               />
@@ -442,7 +474,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
             <input
               type="text"
               value={formData.address || ''}
-              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              onChange={(e) => updateFormData('address', e.target.value)}
               placeholder="Ex: ABC Building, 1890 NY"
               className={inputClasses()}
             />
@@ -511,7 +543,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
               type="checkbox"
               id="terms"
               checked={formData.agreedToTerms || false}
-              onChange={(e) => setFormData({ ...formData, agreedToTerms: e.target.checked })}
+              onChange={(e) => updateFormData('agreedToTerms', e.target.checked)}
               className="mt-1 w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500 transition-all"
             />
             <label htmlFor="terms" className="ml-2 text-sm text-gray-600 cursor-pointer">
@@ -522,10 +554,10 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ formData, se
           <div className="flex justify-center pt-2">
             <button
               onClick={handleRegistration}
-              disabled={!isFormValid || isLoading}
+              disabled={!isFormValid || registerMutation.isPending || updateProfileMutation.isPending}
               className="py-3 px-12 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all font-semibold transform hover:scale-[1.02] active:scale-[0.98]"
             >
-              {isLoading 
+              {(registerMutation.isPending || updateProfileMutation.isPending)
                 ? (isOAuthSignup ? 'Updating profile...' : 'Creating account...') 
                 : (isOAuthSignup ? 'Complete registration' : 'Start my free trial')
               }

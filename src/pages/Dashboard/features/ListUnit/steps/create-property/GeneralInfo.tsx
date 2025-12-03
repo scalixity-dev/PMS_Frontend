@@ -2,25 +2,46 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Country, State, City } from 'country-state-city';
 import type { ICountry, IState, ICity } from 'country-state-city';
 import CustomDropdown from '../../../../components/CustomDropdown';
-import { propertyService } from '../../../../../../services/property.service';
 import { authService } from '../../../../../../services/auth.service';
 import NextStepButton from '../../components/NextStepButton';
 import { getCurrencySymbol } from '../../../../../../utils/currency.utils';
+import { useCreatePropertyStore } from '../../store/createPropertyStore';
+import { useCreateProperty, useUpdateProperty } from '../../../../../../hooks/usePropertyQueries';
 
 interface GeneralInfoProps {
-    data: any;
-    updateData: (key: string, value: any) => void;
+    data?: any; 
+    updateData?: (key: string, value: any) => void; 
     onPropertyCreated?: (propertyId: string) => void;
-    propertyId?: string; // If property already exists, use this to update instead of create
+    propertyId?: string; 
 }
 
-const GeneralInfo: React.FC<GeneralInfoProps> = ({ data, updateData, onPropertyCreated, propertyId }) => {
+const GeneralInfo: React.FC<GeneralInfoProps> = ({ onPropertyCreated, propertyId: propPropertyId }) => {
+    const { 
+        formData: data, 
+        updateFormData,
+        managerId: storeManagerId,
+        propertyId: storePropertyId,
+        setManagerId,
+        setPropertyId
+    } = useCreatePropertyStore();
+
+    // Use prop propertyId if provided, otherwise use store
+    const propertyId = propPropertyId || storePropertyId || undefined;
+    const managerId = storeManagerId;
+
     const [countries, setCountries] = useState<ICountry[]>([]);
     const [states, setStates] = useState<IState[]>([]);
     const [cities, setCities] = useState<ICity[]>([]);
-    const [isSaving, setIsSaving] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
-    const [managerId, setManagerId] = useState<string | null>(null);
+
+    // React Query hooks
+    const createPropertyMutation = useCreateProperty();
+    const updatePropertyMutation = useUpdateProperty();
+
+    // Update function - use store's updateFormData or prop's updateData
+    const updateData = (key: string, value: any) => {
+        updateFormData(key as any, value);
+    };
 
     // Load all countries on mount
     useEffect(() => {
@@ -37,8 +58,10 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ data, updateData, onPropertyC
                 console.error('Failed to fetch user:', error);
             }
         };
-        fetchUser();
-    }, []);
+        if (!managerId) {
+            fetchUser();
+        }
+    }, [managerId, setManagerId]);
 
     // Load states when country changes
     useEffect(() => {
@@ -187,30 +210,33 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ data, updateData, onPropertyC
             return;
         }
 
-        setIsSaving(true);
         setSaveError(null);
 
         try {
             if (propertyId) {
                 // Update existing property
                 const updateData = mapGeneralInfoToBackend();
-                await propertyService.update(propertyId, updateData);
+                await updatePropertyMutation.mutateAsync({
+                    propertyId,
+                    updateData,
+                });
                 if (onPropertyCreated) {
                     onPropertyCreated(propertyId);
                 }
             } else {
                 // Create new property
                 const createData = mapGeneralInfoToBackend();
-                const createdProperty = await propertyService.create(createData);
-                if (onPropertyCreated && createdProperty.id) {
-                    onPropertyCreated(createdProperty.id);
+                const createdProperty = await createPropertyMutation.mutateAsync(createData);
+                if (createdProperty.id) {
+                    setPropertyId(createdProperty.id);
+                    if (onPropertyCreated) {
+                        onPropertyCreated(createdProperty.id);
+                    }
                 }
             }
         } catch (err) {
             console.error('Error saving property:', err);
             setSaveError(err instanceof Error ? err.message : 'Failed to save property. Please try again.');
-        } finally {
-            setIsSaving(false);
         }
     };
 
@@ -452,9 +478,9 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ data, updateData, onPropertyC
                 <div className="flex justify-center pt-6">
                     <NextStepButton 
                         onClick={handleSaveAndContinue} 
-                        disabled={isSaving || !managerId || !isFormValid()}
+                        disabled={createPropertyMutation.isPending || updatePropertyMutation.isPending || !managerId || !isFormValid()}
                     >
-                        {isSaving ? 'Saving...' : propertyId ? 'Update & Continue' : 'Save & Continue'}
+                        {(createPropertyMutation.isPending || updatePropertyMutation.isPending) ? 'Saving...' : propertyId ? 'Update & Continue' : 'Save & Continue'}
                     </NextStepButton>
                 </div>
             </div>

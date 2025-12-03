@@ -5,7 +5,9 @@ export interface BackendProperty {
   id: string;
   propertyName: string;
   propertyType: 'SINGLE' | 'MULTI';
+  status?: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED' | null;
   marketRent?: string | number | null;
+  depositAmount?: string | number | null;
   sizeSqft?: string | number | null;
   yearBuilt?: number | null;
   description?: string | null;
@@ -44,6 +46,10 @@ export interface BackendProperty {
     airConditioning: 'NONE' | 'CENTRAL' | 'WINDOW' | 'PORTABLE' | 'COOLER';
     propertyFeatures?: string[];
     propertyAmenities?: string[];
+  } | null;
+  leasing?: {
+    occupancyStatus?: 'VACANT' | 'OCCUPIED' | 'PARTIALLY_OCCUPIED' | null;
+    monthlyRent?: string | number | null;
   } | null;
 }
 

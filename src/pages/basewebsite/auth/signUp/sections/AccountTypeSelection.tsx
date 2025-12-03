@@ -1,13 +1,18 @@
 import { Link } from "react-router-dom";
 import { CheckCircleIcon, CheckedCircleIcon, HelpCircleIcon } from "../../../../../components/AuthIcons";
 import type { AccountType, AccountTypeSelectionProps } from "./signUpProps";
+import { useSignUpStore } from '../store/signUpStore';
 
-export const AccountTypeSelection: React.FC<AccountTypeSelectionProps> = ({ onNext, formData, setFormData }) => {
+export const AccountTypeSelection: React.FC<AccountTypeSelectionProps> = ({ onNext }) => {
+  const { formData, updateFormData, nextStep } = useSignUpStore();
   const accountTypes: AccountType[] = [
     { id: 'renting', title: "I'm renting", subtitle: 'PMS', type: 'Free account' },
     { id: 'manage', title: 'I manage rentals', subtitle: 'Property Manager', type: 'Start 14-days trail' },
     { id: 'fix', title: 'I fix rentals', subtitle: 'Service Pro', type: 'Free account' }
   ];
+
+  // Use store's nextStep if onNext is not provided
+  const handleNext = onNext || nextStep;
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-white">
@@ -38,7 +43,7 @@ export const AccountTypeSelection: React.FC<AccountTypeSelectionProps> = ({ onNe
               return (
                 <div
                   key={account.id}
-                  onClick={() => setFormData({ ...formData, accountType: account.id })}
+                  onClick={() => updateFormData('accountType', account.id)}
                   className={cardClass}
                 >
                   {/* Top Row: Account Type & Help Icon */}
@@ -75,7 +80,7 @@ export const AccountTypeSelection: React.FC<AccountTypeSelectionProps> = ({ onNe
 
           <div className="flex justify-center">
             <button
-              onClick={onNext}
+              onClick={handleNext}
               disabled={!formData.accountType}
               className="w-full sm:w-auto px-6 sm:px-8 py-2.5 sm:py-3 bg-teal-700 text-white rounded-lg hover:bg-teal-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition text-sm sm:text-base"
             >
