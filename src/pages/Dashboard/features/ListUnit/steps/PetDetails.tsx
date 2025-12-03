@@ -1,34 +1,20 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Undo2, Check } from 'lucide-react';
 import MultiSelectDropdown from '../../../../../../src/components/MultiSelectDropdown';
-import { propertyService } from '../../../../../services/property.service';
+import { useGetProperty } from '../../../../../hooks/usePropertyQueries';
 import { getCurrencySymbol } from '../../../../../utils/currency.utils';
+import { useListUnitStore } from '../store/listUnitStore';
 
 interface PetDetailsProps {
-    data: any;
-    updateData: (key: string, value: any) => void;
     propertyId?: string;
 }
 
-const PetDetails: React.FC<PetDetailsProps> = ({ data, updateData, propertyId }) => {
-    const [property, setProperty] = useState<any>(null);
+const PetDetails: React.FC<PetDetailsProps> = ({ propertyId }) => {
+    const { formData, updateFormData } = useListUnitStore();
     const [showOtherDropdown, setShowOtherDropdown] = useState(false);
 
-    // Fetch property data to get country for currency
-    useEffect(() => {
-        const fetchProperty = async () => {
-            if (!propertyId) return;
-            
-            try {
-                const propertyData = await propertyService.getOne(propertyId);
-                setProperty(propertyData);
-            } catch (err) {
-                console.error('Error fetching property:', err);
-            }
-        };
-
-        fetchProperty();
-    }, [propertyId]);
+    // Use React Query to fetch property data
+    const { data: property } = useGetProperty(propertyId || null, !!propertyId);
 
     // Get currency symbol based on property's country
     const currencySymbol = useMemo(() => {
@@ -37,20 +23,18 @@ const PetDetails: React.FC<PetDetailsProps> = ({ data, updateData, propertyId })
     }, [property?.address?.country]);
 
     const togglePet = (pet: string) => {
-        const currentPets = data.pets || [];
+        const currentPets = formData.pets || [];
         if (currentPets.includes(pet)) {
-            updateData('pets', currentPets.filter((p: string) => p !== pet));
+            updateFormData('pets', currentPets.filter((p: string) => p !== pet));
         } else {
-            updateData('pets', [...currentPets, pet]);
+            updateFormData('pets', [...currentPets, pet]);
         }
     };
 
     const handleOtherChange = (selectedOthers: string[]) => {
-
-
         const mainPets = ['Cat', 'Dog', 'Horse', 'Rabbit'];
-        const currentMainPets = (data.pets || []).filter((p: string) => mainPets.includes(p));
-        updateData('pets', [...currentMainPets, ...selectedOthers]);
+        const currentMainPets = (formData.pets || []).filter((p: string) => mainPets.includes(p));
+        updateFormData('pets', [...currentMainPets, ...selectedOthers]);
     };
 
     const otherOptions = [
@@ -65,7 +49,7 @@ const PetDetails: React.FC<PetDetailsProps> = ({ data, updateData, propertyId })
     const labelClass = "block text-xs font-bold text-gray-700 mb-1 ml-1";
 
     const PetCheckbox = ({ label, value }: { label: string, value: string }) => {
-        const isSelected = (data.pets || []).includes(value);
+        const isSelected = (formData.pets || []).includes(value);
         return (
             <div
                 onClick={() => togglePet(value)}
@@ -116,7 +100,7 @@ const PetDetails: React.FC<PetDetailsProps> = ({ data, updateData, propertyId })
                             <div className="absolute top-14 left-0 w-64 z-20">
                                 <MultiSelectDropdown
                                     options={otherOptions}
-                                    selectedValues={(data.pets || []).filter((p: string) => !['Cat', 'Dog', 'Horse', 'Rabbit'].includes(p))}
+                                    selectedValues={(formData.pets || []).filter((p: string) => !['Cat', 'Dog', 'Horse', 'Rabbit'].includes(p))}
                                     onChange={handleOtherChange}
                                     placeholder="Select other pets"
                                 />
@@ -139,8 +123,8 @@ const PetDetails: React.FC<PetDetailsProps> = ({ data, updateData, propertyId })
                         <input
                             type="number"
                             className={`${inputClass} ${currencySymbol ? 'pl-8' : ''}`}
-                            value={data.petDeposit || ''}
-                            onChange={(e) => updateData('petDeposit', e.target.value)}
+                            value={formData.petDeposit || ''}
+                            onChange={(e) => updateFormData('petDeposit', e.target.value)}
                             placeholder={`${currencySymbol || '₹'} 0.00`}
                         />
                     </div>
@@ -156,8 +140,8 @@ const PetDetails: React.FC<PetDetailsProps> = ({ data, updateData, propertyId })
                         <input
                             type="number"
                             className={`${inputClass} ${currencySymbol ? 'pl-8' : ''}`}
-                            value={data.petRent || ''}
-                            onChange={(e) => updateData('petRent', e.target.value)}
+                            value={formData.petRent || ''}
+                            onChange={(e) => updateFormData('petRent', e.target.value)}
                             placeholder={`${currencySymbol || '₹'} 0.00`}
                         />
                     </div>
@@ -175,8 +159,8 @@ const PetDetails: React.FC<PetDetailsProps> = ({ data, updateData, propertyId })
                 {/* Textarea */}
                 <div className="p-0">
                     <textarea
-                        value={data.petDescription || ''}
-                        onChange={(e) => updateData('petDescription', e.target.value)}
+                        value={formData.petDescription || ''}
+                        onChange={(e) => updateFormData('petDescription', e.target.value)}
                         placeholder="Add the marketing description here."
                         className="w-full h-48 p-6 bg-[#F3F4F6] resize-none focus:outline-none text-gray-700 placeholder-gray-500"
                     />

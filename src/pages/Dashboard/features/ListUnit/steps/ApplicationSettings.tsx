@@ -1,13 +1,14 @@
 import React from 'react';
 import YesNoToggle from '../../../../../components/common/YesNoToggle';
+import { useListUnitStore } from '../store/listUnitStore';
 
 interface ApplicationSettingsProps {
-  data: any;
-  updateData: (key: string, value: any) => void;
   propertyId?: string;
 }
 
-const ApplicationSettings: React.FC<ApplicationSettingsProps> = ({ data, updateData, propertyId }) => {
+const ApplicationSettings: React.FC<ApplicationSettingsProps> = () => {
+  const { formData, updateFormData } = useListUnitStore();
+
   return (
     <div className="w-full flex flex-col items-center">
       <div className="text-center mb-8">
@@ -20,8 +21,8 @@ const ApplicationSettings: React.FC<ApplicationSettingsProps> = ({ data, updateD
       </div>
 
       <YesNoToggle
-        value={data.receiveApplicationsOnline}
-        onChange={(val) => updateData('receiveApplicationsOnline', val)}
+        value={formData.receiveApplicationsOnline}
+        onChange={(val) => updateFormData('receiveApplicationsOnline', val)}
       />
     </div>
   );

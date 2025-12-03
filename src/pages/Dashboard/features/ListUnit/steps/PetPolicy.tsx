@@ -1,13 +1,14 @@
 import React from 'react';
 import YesNoToggle from '../../../../../components/common/YesNoToggle';
+import { useListUnitStore } from '../store/listUnitStore';
 
 interface PetPolicyProps {
-    data: any;
-    updateData: (key: string, value: any) => void;
     propertyId?: string;
 }
 
-const PetPolicy: React.FC<PetPolicyProps> = ({ data, updateData, propertyId }) => {
+const PetPolicy: React.FC<PetPolicyProps> = () => {
+    const { formData, updateFormData } = useListUnitStore();
+
     return (
         <div className="w-full flex flex-col items-center">
             <div className="text-center mb-8">
@@ -20,8 +21,8 @@ const PetPolicy: React.FC<PetPolicyProps> = ({ data, updateData, propertyId }) =
             </div>
 
             <YesNoToggle
-                value={data.petsAllowed}
-                onChange={(val) => updateData('petsAllowed', val)}
+                value={formData.petsAllowed}
+                onChange={(val) => updateFormData('petsAllowed', val)}
             />
         </div>
     );

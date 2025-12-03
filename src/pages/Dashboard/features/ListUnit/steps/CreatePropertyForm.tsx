@@ -30,7 +30,20 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
     setPropertyId,
     setManagerId,
     prevStep: storePrevStep,
+    resetForm,
   } = useCreatePropertyStore();
+
+  // Reset form when component unmounts (unless we're editing an existing property)
+  useEffect(() => {
+    return () => {
+      // Only reset if we're not editing an existing property
+      // This allows the form to persist state while navigating between steps
+      // but resets when the component is completely unmounted
+      if (!initialPropertyId && !storePropertyId) {
+        resetForm();
+      }
+    };
+  }, [initialPropertyId, storePropertyId, resetForm]);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -251,12 +264,22 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
     // Prepare photos
     const photos: Array<{ photoUrl: string; isPrimary: boolean }> = [];
     if (formData.coverPhoto) {
-      photos.push({ photoUrl: formData.coverPhoto, isPrimary: true });
+      // Extract URL from coverPhoto (can be string or PhotoFile object)
+      const coverPhotoUrl = typeof formData.coverPhoto === 'string' 
+        ? formData.coverPhoto 
+        : formData.coverPhoto.previewUrl || '';
+      if (coverPhotoUrl) {
+        photos.push({ photoUrl: coverPhotoUrl, isPrimary: true });
+      }
     }
     if (Array.isArray(formData.galleryPhotos)) {
-      formData.galleryPhotos.forEach((photo: string) => {
-        if (photo && !photos.some(p => p.photoUrl === photo)) {
-          photos.push({ photoUrl: photo, isPrimary: false });
+      formData.galleryPhotos.forEach((photo) => {
+        // Extract URL from photo (can be string or PhotoFile object)
+        const photoUrl = typeof photo === 'string' 
+          ? photo 
+          : photo.previewUrl || '';
+        if (photoUrl && !photos.some(p => p.photoUrl === photoUrl)) {
+          photos.push({ photoUrl: photoUrl, isPrimary: false });
         }
       });
     }
@@ -540,11 +563,20 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
           description: formData.marketingDescription || null,
         };
 
-        await updatePropertyMutation.mutateAsync({
+        const updatedProperty = await updatePropertyMutation.mutateAsync({
           propertyId,
           updateData,
         });
-        setCurrentStep(currentStep + 1);
+        
+        // If property is already complete (being edited), allow completing directly from step 7
+        // Otherwise, move to step 8 (AddRibbon)
+        if (initialPropertyId && propertyData) {
+          // Property is being edited and is already complete - complete the form
+          onSubmit(updatedProperty);
+        } else {
+          // New property or incomplete - move to step 8
+          setCurrentStep(currentStep + 1);
+        }
       } catch (err) {
         console.error('Error updating marketing description:', err);
         setError(err instanceof Error ? err.message : 'Failed to save description. Please try again.');
@@ -571,18 +603,10 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
           ribbonTitle: formData.ribbonTitle && formData.ribbonType !== 'none' ? formData.ribbonTitle : null,
         };
 
-        await updatePropertyMutation.mutateAsync({
-          propertyId,
-          updateData,
-        });
-        
-        // After saving ribbon, complete the property creation
-        const backendData = mapFormDataToBackend();
-        // Remove managerId and propertyName from update (they shouldn't change)
-        const { managerId: _, propertyName: __, ...finalUpdateData } = backendData;
+        // The mutation returns the updated property
         const updatedProperty = await updatePropertyMutation.mutateAsync({
           propertyId,
-          updateData: finalUpdateData,
+          updateData,
         });
         
         // Call the onSubmit callback with the updated property
@@ -700,7 +724,11 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
           </button>
           {/* Next Button */}
           <NextStepButton onClick={handleNext} disabled={updatePropertyMutation.isPending || !managerId || !propertyId}>
-            {updatePropertyMutation.isPending ? 'Updating...' : currentStep === 8 ? 'Complete Property' : 'Next'}
+            {updatePropertyMutation.isPending 
+              ? 'Updating...' 
+              : currentStep === 8 || (currentStep === 7 && initialPropertyId && propertyData)
+              ? 'Complete Property' 
+              : 'Next'}
           </NextStepButton>
         </div>
       )}

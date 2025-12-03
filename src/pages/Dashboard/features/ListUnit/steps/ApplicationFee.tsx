@@ -1,13 +1,14 @@
 import React from 'react';
 import YesNoToggle from '../../../../../components/common/YesNoToggle';
+import { useListUnitStore } from '../store/listUnitStore';
 
 interface ApplicationFeeProps {
-    data: any;
-    updateData: (key: string, value: any) => void;
     propertyId?: string;
 }
 
-const ApplicationFee: React.FC<ApplicationFeeProps> = ({ data, updateData, propertyId }) => {
+const ApplicationFee: React.FC<ApplicationFeeProps> = () => {
+    const { formData, updateFormData } = useListUnitStore();
+
     return (
         <div className="w-full flex flex-col items-center">
             <div className="text-center mb-8">
@@ -20,8 +21,8 @@ const ApplicationFee: React.FC<ApplicationFeeProps> = ({ data, updateData, prope
             </div>
 
             <YesNoToggle
-                value={data.applicationFee}
-                onChange={(val) => updateData('applicationFee', val)}
+                value={formData.applicationFee}
+                onChange={(val) => updateFormData('applicationFee', val)}
             />
         </div>
     );

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { propertyService, type BackendProperty } from '../services/property.service';
+import { propertyService, type BackendProperty, type Property } from '../services/property.service';
 
 // Query keys for React Query
 export const propertyQueryKeys = {
@@ -18,8 +18,8 @@ export const useGetProperty = (propertyId: string | null | undefined, enabled: b
     queryKey: propertyId ? propertyQueryKeys.detail(propertyId) : ['properties', 'detail', 'null'] as const,
     queryFn: () => propertyService.getOne(propertyId!),
     enabled: enabled && !!propertyId,
-    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
-    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    staleTime: 0, // Always consider data stale to ensure fresh fetch
+    gcTime: 0, // Don't keep in cache to prevent cross-user data leakage
     retry: 1,
   });
 };
@@ -34,6 +34,20 @@ export const useGetAllProperties = (enabled: boolean = true) => {
     enabled,
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes
     gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    retry: 1,
+  });
+};
+
+/**
+ * Hook to get all properties (transformed for frontend)
+ */
+export const useGetAllPropertiesTransformed = (enabled: boolean = true) => {
+  return useQuery({
+    queryKey: [...propertyQueryKeys.lists(), 'transformed'] as const,
+    queryFn: () => propertyService.getAllTransformed(),
+    enabled,
+    staleTime: 0, // Always consider data stale to ensure fresh fetch on mount
+    gcTime: 0, // Don't keep in cache to prevent cross-user data leakage
     retry: 1,
   });
 };

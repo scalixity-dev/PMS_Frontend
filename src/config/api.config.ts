@@ -37,5 +37,13 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `${API_BASE_URL}/leasing/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/leasing/${id}`,
   },
+  LISTING: {
+    GET_ALL: `${API_BASE_URL}/listing`,
+    GET_ONE: (id: string) => `${API_BASE_URL}/listing/${id}`,
+    GET_BY_PROPERTY: (propertyId: string) => `${API_BASE_URL}/listing/property/${propertyId}`,
+    CREATE: `${API_BASE_URL}/listing`,
+    UPDATE: (id: string) => `${API_BASE_URL}/listing/${id}`,
+    DELETE: (id: string) => `${API_BASE_URL}/listing/${id}`,
+  },
 };
 
