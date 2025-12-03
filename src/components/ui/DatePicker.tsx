@@ -8,9 +8,11 @@ type DatePickerProps = {
   value?: Date | undefined;
   onChange?: (date?: Date) => void;
   placeholder?: string;
+  className?: string;
+  popoverClassName?: string;
 };
 
-const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, placeholder = 'Select date' }) => {
+const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, placeholder = 'Select date', className, popoverClassName }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
 
@@ -29,14 +31,17 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, placeholder = 
       <button
         type="button"
         onClick={() => setOpen(v => !v)}
-        className="w-full text-left rounded-md bg-white px-4 py-3 text-sm text-gray-700 outline-none shadow-sm focus:ring-2 focus:ring-[#84CC16]/20 flex items-center justify-between"
+        className={cn(
+          "w-full text-left rounded-md bg-white px-4 py-3 text-sm text-gray-700 outline-none shadow-sm focus:ring-2 focus:ring-[#84CC16]/20 flex items-center justify-between",
+          className
+        )}
       >
         <span className={cn(!value && "text-gray-400")}>{value ? format(value, 'MMM dd, yyyy') : placeholder}</span>
-        <CalendarIcon className="w-4 h-4 text-gray-500" />
+        <CalendarIcon className="w-4 h-4 text-gray-500 ml-2" />
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden p-2 w-full">
+        <div className={cn("absolute z-50 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden p-2 w-full", popoverClassName)}>
           <style>{`
             [data-selected-single="true"] {
               background-color: #7BD747 !important;

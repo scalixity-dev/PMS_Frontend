@@ -1,0 +1,267 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ChevronLeft, Plus } from 'lucide-react';
+import DetailTabs from '../../components/DetailTabs';
+
+const TenantDetail = () => {
+    const navigate = useNavigate();
+    const [activeTab, setActiveTab] = useState('profile');
+
+    // Mock Data
+    const tenant = {
+        id: 1,
+        name: 'Anjali Vyas',
+        phone: '+91 8569325417',
+        email: 'Anjli57474@gmail.com',
+        image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200&h=200',
+        outstanding: 45000,
+        deposits: 45000,
+        credits: 45000,
+        personalInfo: {
+            firstName: 'Jay',
+            middleName: 'Kumar',
+            lastName: 'Rai',
+            email: '-',
+            additionalEmail: '-',
+            phone: '+91 78546 21026',
+            additionalPhone: '-',
+            companyName: 'Clever Monts',
+            dateOfBirth: 'dd/mm/yy',
+            companyName2: '-'
+        },
+        forwardingAddress: 'Silicon City Main Rd, Indore Division, MP 452012',
+        emergencyContacts: [
+            { name: 'Jay', relationship: 'bro', email: '-', phone: '+91 78546 21026' }
+        ],
+        pets: [
+            { name: 'Tommy', type: 'Dog', weight: '5', breed: 'german' }
+        ],
+        vehicles: [
+            { type: 'Automobile', make: 'as', registeredIn: 'mp', year: '2021', color: 'red', license: '123641' }
+        ]
+    };
+
+    const tabs = [
+        { id: 'profile', label: 'Profile' },
+        { id: 'leases', label: 'Leases' },
+        { id: 'transactions', label: 'Transactions' },
+        { id: 'insurance', label: 'Insurance' },
+        { id: 'applications', label: 'Applications' },
+        { id: 'requests', label: 'Requests' }
+    ];
+
+    const InfoField = ({ label, value }: { label: string; value: string }) => (
+        <div className="flex items-center bg-[#E3EBDE] rounded-full px-4 py-2 shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.25)]">
+            <span className="text-xs font-medium text-gray-600 w-1/3 truncate" title={label}>{label}</span>
+            <span className="text-sm text-gray-800 font-medium w-2/3 truncate pl-2" title={value}>{value}</span>
+        </div>
+    );
+
+    const SectionTitle = ({ title }: { title: string }) => (
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">{title}</h3>
+    );
+
+    return (
+        <div className="max-w-6xl mx-auto min-h-screen font-outfit pb-10">
+            {/* Breadcrumb */}
+            <div className="inline-flex items-center px-4 py-2 bg-[#E0E5E5] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
+                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>Dashboard</span>
+                <span className="text-gray-500 text-sm mx-1">/</span>
+                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard/contacts/tenants')}>Tenants</span>
+                <span className="text-gray-500 text-sm mx-1">/</span>
+                <span className="text-gray-600 text-sm font-semibold">{tenant.name}</span>
+            </div>
+
+            <div className="p-6 bg-[#E0E5E5] min-h-screen rounded-[2rem]">
+                {/* Header Actions */}
+                <div className="flex justify-between items-center mb-6">
+                    <div className="flex items-center gap-2">
+                        <button onClick={() => navigate(-1)} className="p-2 hover:bg-black/5 rounded-full transition-colors">
+                            <ChevronLeft className="w-6 h-6 text-black" />
+                        </button>
+                        <h1 className="text-2xl font-bold text-black">Tenant</h1>
+                    </div>
+                    <div className="flex gap-3">
+                        <button className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2">
+                            Add Invoice
+                            <Plus className="w-4 h-4" />
+                        </button>
+                        <button className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors">
+                            Action
+                        </button>
+                    </div>
+                </div>
+
+                <div className='shadow-lg rounded-[2rem] p-6 mb-8'>
+                    {/* Top Card */}
+                    <div className="bg-[#F6F6F8] rounded-[2rem] shadow-lg p-6 mb-8">
+                        <div className="flex flex-col lg:flex-row gap-8">
+                            {/* Tenant Info */}
+                            <div className="flex gap-6 items-start">
+                                <img src={tenant.image} alt={tenant.name} className="w-32 h-32 rounded-2xl object-cover" />
+                                <div className="flex flex-col gap-3">
+                                    <div className="bg-[#3A6D6C] text-white p-4 rounded-xl text-center min-w-[200px]">
+                                        <h2 className="font-bold text-lg">{tenant.name}</h2>
+                                        <p className="text-xs opacity-90">{tenant.phone}</p>
+                                        <p className="text-xs opacity-90">{tenant.email}</p>
+                                    </div>
+                                    <button className="w-full bg-[#C8C8C8] text-gray-700 py-2 rounded-full text-sm font-medium hover:bg-[#b8b8b8] transition-colors shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
+                                        View Profile
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Stats & Reports */}
+                            <div className="flex-1 flex flex-col justify-between gap-4">
+                                <div className="grid grid-cols-3 gap-4">
+                                    <div className="bg-[#7BD747] rounded-full px-4 py-3 flex flex-col justify-between h-18 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">
+                                        <span className="text-xs font-semibold text-white">Outstanding</span>
+                                        <div className="flex justify-between items-center">
+                                            <div className="bg-[#E8F5E9] px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">₹{tenant.outstanding.toLocaleString()}.00</div>
+                                            <button className="bg-[#3A6D6C] text-white px-3 py-1 rounded-full text-[10px] font-medium uppercase shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">Received</button>
+                                        </div>
+                                    </div>
+                                    <div className="bg-[#7BD747] rounded-full px-4 py-3 flex flex-col justify-between h-18 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">
+                                        <span className="text-xs font-semibold text-white">Deposits</span>
+                                        <div className="flex justify-between items-center">
+                                            <div className="bg-[#E8F5E9] px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">₹{tenant.deposits.toLocaleString()}.00</div>
+                                            <button className="bg-[#3A6D6C] text-white px-3 py-1 rounded-full text-[10px] font-medium uppercase shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">Action</button>
+                                        </div>
+                                    </div>
+                                    <div className="bg-[#7BD747] rounded-full px-4 py-3 flex flex-col justify-between h-18 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">
+                                        <span className="text-xs font-semibold text-white">Credits</span>
+                                        <div className="flex justify-between items-center">
+                                            <div className="bg-[#E8F5E9] px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">₹{tenant.credits.toLocaleString()}.00</div>
+                                            <button className="bg-[#3A6D6C] text-white px-3 py-1 rounded-full text-[10px] font-medium uppercase shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">Action</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-[#E4E4E4] rounded-[3.5rem] p-4 shadow-lg">
+                                    <h3 className="text-gray-700 font-bold mb-2 ml-1">Reports</h3>
+                                    <div className="flex gap-4">
+                                        <div className="flex-1 bg-[#7BD747] rounded-full px-4 py-3 flex flex-col justify-between min-h-[5rem] shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">
+                                            <div className="flex flex-col">
+                                                <span className="text-xs font-bold text-white">Financial</span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <div className="bg-[#E8F5E9] px-4 py-1 rounded-full text-xs text-gray-600 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">Tenant Statement</div>
+                                                <button className="bg-[#3A6D6C] text-white px-4 py-1.5 rounded-full text-xs font-medium uppercase shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">View</button>
+                                            </div>
+                                        </div>
+                                        <div className="flex-1 bg-[#7BD747] rounded-full px-4 py-3 flex flex-col justify-between min-h-[5rem] shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
+                                            <div className="flex flex-col">
+                                                <span className="text-xs font-bold text-white">Notice</span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <div className="bg-[#E8F5E9] px-4 py-1 rounded-full text-xs text-gray-600 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">Tenant Notice</div>
+                                                <button className="bg-[#3A6D6C] text-white px-4 py-1.5 rounded-full text-xs font-medium uppercase shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">Send</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Tabs */}
+                    <DetailTabs
+                        tabs={tabs}
+                        activeTab={activeTab}
+                        onTabChange={setActiveTab}
+                        className="mb-2"
+                    />
+                </div>
+
+                {/* Tab Content */}
+                {activeTab === 'profile' && (
+                    <div className="space-y-8">
+                        {/* Personal Information */}
+                        <section>
+                            <SectionTitle title="Personal information" />
+                            <div className="bg-[#F6F6F8] rounded-[2rem] p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <InfoField label="First name" value={tenant.personalInfo.firstName} />
+                                <InfoField label="Email" value={tenant.personalInfo.email} />
+                                <InfoField label="Company name" value={tenant.personalInfo.companyName} />
+                                <InfoField label="Middle name" value={tenant.personalInfo.middleName} />
+                                <InfoField label="Additional email 1" value={tenant.personalInfo.additionalEmail} />
+                                <InfoField label="Date of birth" value={tenant.personalInfo.dateOfBirth} />
+                                <InfoField label="Last name" value={tenant.personalInfo.lastName} />
+                                <InfoField label="Phone" value={tenant.personalInfo.phone} />
+                                <InfoField label="Company name" value={tenant.personalInfo.companyName2} />
+                                <InfoField label="Additional Phone" value={tenant.personalInfo.additionalPhone} />
+                            </div>
+                        </section>
+
+                        {/* Forwarding Address */}
+                        <section>
+                            <SectionTitle title="Forwarding address" />
+                            <div className="bg-[#F6F6F8] rounded-[2rem] p-6">
+                                <InfoField label="Property address" value={tenant.forwardingAddress} />
+                            </div>
+                        </section>
+
+                        {/* Emergency Contacts */}
+                        <section>
+                            <SectionTitle title="Emergency contacts" />
+                            <div className="bg-[#F6F6F8] rounded-[2rem] p-6">
+                                {tenant.emergencyContacts.map((contact, index) => (
+                                    <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <InfoField label="Name" value={contact.name} />
+                                        <InfoField label="Phone" value={contact.phone} />
+                                        <InfoField label="Relationship" value={contact.relationship} />
+                                        <div className="hidden md:block"></div> {/* Spacer */}
+                                        <InfoField label="Email" value={contact.email} />
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+
+                        {/* Pets */}
+                        <section>
+                            <SectionTitle title="Pets" />
+                            <div className="bg-[#F6F6F8] rounded-[2rem] p-6">
+                                {tenant.pets.map((pet, index) => (
+                                    <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <InfoField label="Name" value={pet.name} />
+                                        <InfoField label="Breed" value={pet.breed} />
+                                        <InfoField label="Type" value={pet.type} />
+                                        <div className="hidden md:block"></div> {/* Spacer */}
+                                        <InfoField label="Weight" value={pet.weight} />
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+
+                        {/* Vehicles */}
+                        <section>
+                            <SectionTitle title="Vehicles" />
+                            <div className="bg-[#F6F6F8] rounded-[2rem] p-6">
+                                {tenant.vehicles.map((vehicle, index) => (
+                                    <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <InfoField label="Type" value={vehicle.type} />
+                                        <InfoField label="Year" value={vehicle.year} />
+                                        <InfoField label="Make" value={vehicle.make} />
+                                        <InfoField label="Color" value={vehicle.color} />
+                                        <InfoField label="Registered in" value={vehicle.registeredIn} />
+                                        <InfoField label="License" value={vehicle.license} />
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+
+                        {/* Attachments */}
+                        <section>
+                            <SectionTitle title="Attachments" />
+                            <div className="bg-[#F6F6F8] rounded-[2rem] p-12 flex justify-center items-center">
+                                <p className="text-gray-500 font-medium">No attachments yet</p>
+                            </div>
+                        </section>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+export default TenantDetail;

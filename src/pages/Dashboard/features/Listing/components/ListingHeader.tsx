@@ -10,18 +10,18 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({ onAddListing }) => {
     const navigate = useNavigate();
 
     return (
-        <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-                <button
+        <div className="flex items-center justify-start mb-6">
+            <div className="flex items-center gap-6">
+                <div className='flex'>
+                    <button
                     onClick={() => navigate(-1)}
                     className="p-1 hover:bg-gray-100 rounded-full transition-colors"
                 >
                     <ChevronLeft className="w-6 h-6 text-gray-800" />
                 </button>
                 <h1 className="text-2xl font-bold text-gray-800">Listings</h1>
-            </div>
-
-            <div className="flex items-center gap-3">
+                </div>
+            
                 <button
                     className="px-5 py-2 text-sm font-medium text-white bg-[#548C8C] rounded-full hover:bg-[#467676] transition-colors shadow-sm"
                 >
