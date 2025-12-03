@@ -1,5 +1,13 @@
 import { create } from 'zustand';
 
+// Define photo types
+type PhotoUrl = string;
+interface PhotoFile {
+  file: File;
+  previewUrl: string;
+}
+type Photo = PhotoUrl | PhotoFile;
+
 interface CreatePropertyFormData {
   // General Info
   propertyName: string;
@@ -24,22 +32,8 @@ interface CreatePropertyFormData {
   // Features
   features: string[];
   // Photos
-// Define photo types
-type PhotoUrl = string;
-interface PhotoFile {
-  file: File;
-  previewUrl: string;
-}
-type Photo = PhotoUrl | PhotoFile;
-
-interface CreatePropertyFormData {
-  // General Info
-  propertyName: string;
-  // ... other fields ...
-  // Photos
   coverPhoto: Photo | null;
   galleryPhotos: Photo[];
-  youtubeUrl: string;
   youtubeUrl: string;
   // Marketing
   marketingDescription: string;
