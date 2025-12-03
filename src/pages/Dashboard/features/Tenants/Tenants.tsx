@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import DashboardFilter from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
 import TenantCard from './components/TenantCard';
 import { Plus, ChevronLeft } from 'lucide-react';
 
 const Tenants = () => {
+    const navigate = useNavigate();
     const [, setFilters] = useState<Record<string, string[]>>({});
 
     const handleSearchChange = (_search: string) => {
@@ -107,7 +109,7 @@ const Tenants = () => {
                 {/* Header */}
                 <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-2">
-                        <button className="p-2 hover:bg-black/5 rounded-full transition-colors">
+                        <button onClick={() => navigate(-1)} className="p-2 hover:bg-black/5 rounded-full transition-colors">
                             <ChevronLeft className="w-6 h-6 text-black" />
                         </button>
                         <h1 className="text-2xl font-bold text-black">Tenants</h1>

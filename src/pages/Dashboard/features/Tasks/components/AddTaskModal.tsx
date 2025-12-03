@@ -5,22 +5,48 @@ import CustomDropdown from '../../../components/CustomDropdown';
 import DatePicker from '../../../../../components/ui/DatePicker';
 import TimePicker from '../../../../../components/ui/TimePicker';
 
+export interface TaskFormData {
+    title: string;
+    description: string;
+    date: Date | undefined;
+    time: string;
+    assignee: string;
+    property: string;
+    isRecurring: boolean;
+    frequency: string;
+    endDate: Date | undefined;
+}
+
 interface AddTaskModalProps {
     isOpen: boolean;
     onClose: () => void;
+    onSave: (taskData: TaskFormData) => void;
 }
 
-const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose }) => {
-    const [title, setTitle] = useState('');
-    const [description, setDescription] = useState('');
-    const [date, setDate] = useState<Date | undefined>(undefined);
-    const [time, setTime] = useState('');
-    const [assignee, setAssignee] = useState('');
-    const [property, setProperty] = useState('');
-    const [isRecurring, setIsRecurring] = useState(false);
-    const [frequency, setFrequency] = useState('');
-    const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave }) => {
+    const initialFormData = {
+        title: '',
+        description: '',
+        date: undefined as Date | undefined,
+        time: '',
+        assignee: '',
+        property: '',
+        isRecurring: false,
+        frequency: '',
+        endDate: undefined as Date | undefined
+    };
+
+    const [title, setTitle] = useState(initialFormData.title);
+    const [description, setDescription] = useState(initialFormData.description);
+    const [date, setDate] = useState<Date | undefined>(initialFormData.date);
+    const [time, setTime] = useState(initialFormData.time);
+    const [assignee, setAssignee] = useState(initialFormData.assignee);
+    const [property, setProperty] = useState(initialFormData.property);
+    const [isRecurring, setIsRecurring] = useState(initialFormData.isRecurring);
+    const [frequency, setFrequency] = useState(initialFormData.frequency);
+    const [endDate, setEndDate] = useState<Date | undefined>(initialFormData.endDate);
     const [showExitConfirmation, setShowExitConfirmation] = useState(false);
+    const [formErrors, setFormErrors] = useState({ title: false, date: false, time: false });
 
     useEffect(() => {
         if (isOpen) {
@@ -51,8 +77,52 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose }) => {
         { value: 'monthly', label: 'Monthly' },
     ];
 
+    const handleSubmit = () => {
+        // Validate required fields
+        const errors = {
+            title: !title.trim(),
+            date: !date,
+            time: !time.trim()
+        };
+
+        setFormErrors(errors);
+
+        // Prevent submission if any required field is invalid
+        if (errors.title || errors.date || errors.time) {
+            return;
+        }
+
+        // Call onSave with form data
+        const taskData: TaskFormData = {
+            title,
+            description,
+            date,
+            time,
+            assignee,
+            property,
+            isRecurring,
+            frequency,
+            endDate
+        };
+
+        onSave(taskData);
+        onClose();
+    };
+
     const handleCloseAttempt = () => {
-        if (title || description) {
+        // Check if any field differs from initial value (form is dirty)
+        const isDirty = 
+            title !== initialFormData.title ||
+            description !== initialFormData.description ||
+            date !== initialFormData.date ||
+            time !== initialFormData.time ||
+            assignee !== initialFormData.assignee ||
+            property !== initialFormData.property ||
+            isRecurring !== initialFormData.isRecurring ||
+            frequency !== initialFormData.frequency ||
+            endDate !== initialFormData.endDate;
+
+        if (isDirty) {
             setShowExitConfirmation(true);
         } else {
             onClose();
@@ -85,8 +155,11 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose }) => {
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             placeholder="Enter Title"
-                            className="w-full bg-white text-gray-800 placeholder-gray-400 px-3 py-2 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all shadow-sm text-sm"
+                            className={`w-full bg-white text-gray-800 placeholder-gray-400 px-3 py-2 rounded-md outline-none focus:ring-2 transition-all shadow-sm text-sm ${
+                                formErrors.title ? 'ring-2 ring-red-500 focus:ring-red-500' : 'focus:ring-[#3D7475]/20'
+                            }`}
                         />
+                        {formErrors.title && <p className="text-red-500 text-xs mt-1">Title is required</p>}
                     </div>
 
                     {/* Description */}
@@ -110,6 +183,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose }) => {
                                     value={date}
                                     onChange={setDate}
                                     placeholder="Select Date"
+                                    className={formErrors.date ? 'ring-2 ring-red-500' : ''}
                                 />
                             </div>
                             <div className="w-1/3">
@@ -117,9 +191,15 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose }) => {
                                     value={time}
                                     onChange={setTime}
                                     placeholder="Time"
+                                    className={formErrors.time ? 'ring-2 ring-red-500' : ''}
                                 />
                             </div>
                         </div>
+                        {(formErrors.date || formErrors.time) && (
+                            <p className="text-red-500 text-xs mt-1">
+                                {formErrors.date && formErrors.time ? 'Date and time are required' : formErrors.date ? 'Date is required' : 'Time is required'}
+                            </p>
+                        )}
                     </div>
 
                     {/* Assignee */}
@@ -190,6 +270,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose }) => {
                         Cancel
                     </button>
                     <button
+                        onClick={handleSubmit}
                         className="flex-1 bg-[#3D7475] text-white py-2 rounded-md font-bold hover:bg-[#2c5556] transition-colors shadow-md text-sm"
                     >
                         Create
