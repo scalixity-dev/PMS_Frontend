@@ -1,11 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Plus, Building, Loader2 } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
 import PropertyCard from '../components/PropertyCard';
 import { leasingService } from '../../../../../services/leasing.service';
 import { propertyService } from '../../../../../services/property.service';
 import { listingService } from '../../../../../services/listing.service';
-import { useGetAllPropertiesTransformed, useGetProperty, propertyQueryKeys } from '../../../../../hooks/usePropertyQueries';
+import { useGetAllPropertiesTransformed, useGetProperty } from '../../../../../hooks/usePropertyQueries';
 import { useListUnitStore } from '../store/listUnitStore';
 import type { Property, BackendProperty } from '../../../../../services/property.service';
 
@@ -209,9 +208,9 @@ const isPropertyListingComplete = async (propertyId: string): Promise<boolean> =
 
 const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty, onEditProperty, onNext }) => {
   const { formData, updateFormData } = useListUnitStore();
-  const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [incompleteProperties, setIncompleteProperties] = useState<Property[]>([]);
+  const incompletePropertiesRef = useRef<Property[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Use React Query to fetch all properties
@@ -236,10 +235,14 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
     return b.every(x => setA.has(x.id));
   };
 
+  // Keep ref in sync with state
   useEffect(() => {
-    // Remove any stale property queries to prevent cross-user data leakage
-    queryClient.removeQueries({ queryKey: propertyQueryKeys.all });
-    // Refetch to get fresh data for current user
+    incompletePropertiesRef.current = incompleteProperties;
+  }, [incompleteProperties]);
+
+  useEffect(() => {
+    // Refetch properties on mount to ensure fresh data
+    // Cache invalidation is handled at logout/login in DashboardNavbar
     refetchProperties();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty dependency array - only run once on mount
@@ -250,8 +253,8 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
 
     (async () => {
       if (!allProperties || allProperties.length === 0) {
-        // Only update if it's different
-        if (!areSameById(incompleteProperties, [])) {
+        // Only update if it's different - use ref to avoid stale closure
+        if (!areSameById(incompletePropertiesRef.current, [])) {
           if (!mounted) return;
           setIncompleteProperties([]);
         }
@@ -271,8 +274,8 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
           .filter(result => !result.isComplete && !result.hasActiveListing)
           .map(result => result.property);
 
-        // Only update state if the list actually changed
-        if (!areSameById(incompleteProperties, newIncomplete)) {
+        // Only update state if the list actually changed - use ref to avoid stale closure
+        if (!areSameById(incompletePropertiesRef.current, newIncomplete)) {
           if (!mounted) return;
           setIncompleteProperties(newIncomplete);
         }
