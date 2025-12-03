@@ -279,7 +279,7 @@ export default function DashboardSidebar({ open, setOpen }: SidebarProps) {
                 <SidebarSubLink label="Occupancy Board" to="/portfolio/board" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Keys & Locks" to="/portfolio/keys" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Equipment" to="/dashboard/equipments" isCurrentPath={isCurrentPath} />
-                <SidebarSubLink label="Inspections" to="/portfolio/inspections" isCurrentPath={isCurrentPath} />
+
               </SidebarDropdownLink>
 
               {/* 3. Leasing Dropdown */}
@@ -307,7 +307,7 @@ export default function DashboardSidebar({ open, setOpen }: SidebarProps) {
                 activeDropdown={activeDropdown}
                 setActiveDropdown={setActiveDropdown}
               >
-                <SidebarSubLink label="Tenants" to="/contacts/tenants" isCurrentPath={isCurrentPath} />
+                <SidebarSubLink label="Tenants" to="/dashboard/contacts/tenants" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Service Pros" to="/contacts/service-pros" isCurrentPath={isCurrentPath} />
               </SidebarDropdownLink>
 

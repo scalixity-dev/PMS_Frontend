@@ -30,6 +30,11 @@ import Properties from './pages/Dashboard/features/Properties/Properties';
 import Equipments from './pages/Dashboard/features/Equipments/Equipments';
 import PropertyDetail from './pages/Dashboard/features/Properties/PropertyDetail';
 import Listing from './pages/Dashboard/features/Listing/Listing';
+import ListingDetail from './pages/Dashboard/features/Listing/ListingDetail';
+import Calendar from './pages/Dashboard/features/Calendar/Calendar';
+import Tasks from './pages/Dashboard/features/Tasks/Tasks';
+import Tenants from './pages/Dashboard/features/Tenants/Tenants';
+import TenantDetail from './pages/Dashboard/features/Tenants/TenantDetail';
 // import ListUnit from './pages/Dashboard/features/ListUnit/ListUnit';
 
 // Create a QueryClient instance
@@ -86,6 +91,9 @@ const App: React.FC = () => {
           <Route path="/dashboard/properties" element={<Properties />} />
           <Route path="/dashboard/properties/:id" element={<PropertyDetail />} />
           <Route path="/dashboard/portfolio/listing" element={<Listing />} />
+          <Route path="/dashboard/listings/:id" element={<ListingDetail />} />
+          <Route path="/dashboard/calendar" element={<Calendar />} />
+          <Route path="/dashboard/tasks" element={<Tasks />} />
           <Route path="/dashboard/equipments" element={<Equipments />} />
           <Route path="/dashboard/property/add" element={<AddProperty />} />
           <Route path="/dashboard/accounting/transactions/income/add" element={<AddIncomeInvoice />} />
@@ -115,6 +123,8 @@ const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          <Route path="/dashboard/contacts/tenants" element={<Tenants />} />
+          <Route path="/dashboard/contacts/tenants/:id" element={<TenantDetail />} />
           <Route
             path="/accounting"
             element={

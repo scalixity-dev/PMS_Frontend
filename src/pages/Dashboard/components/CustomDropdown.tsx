@@ -16,6 +16,9 @@ interface CustomDropdownProps {
   disabled?: boolean;
   textClassName?: string;
   buttonClassName?: string;
+  dropdownClassName?: string;
+  optionClassName?: string;
+  iconClassName?: string;
   searchable?: boolean;
 }
 
@@ -29,6 +32,9 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
   disabled = false,
   buttonClassName = '',
   textClassName = '',
+  dropdownClassName = '',
+  optionClassName = '',
+  iconClassName = '',
   searchable = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -41,8 +47,8 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
   // Filter options based on search query
   const filteredOptions = searchable && searchQuery
     ? options.filter(option =>
-        option.label.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+      option.label.toLowerCase().includes(searchQuery.toLowerCase())
+    )
     : options;
 
   useEffect(() => {
@@ -102,13 +108,13 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
         </span>
         <ChevronDown
           size={20}
-          className={`text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          className={`text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''} ${iconClassName}`}
         />
       </button>
 
       {/* Dropdown Menu */}
       {isOpen && !disabled && (
-        <div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+        <div className={`absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden animate-in fade-in zoom-in-95 duration-100 ${dropdownClassName}`}>
           {/* Search Input */}
           {searchable && (
             <div className="p-2 border-b border-gray-200">
@@ -135,7 +141,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
                   key={option.value}
                   type="button"
                   onClick={() => handleSelect(option.value)}
-                  className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 text-left"
+                  className={`w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 text-left ${optionClassName}`}
                 >
                   <span className="text-sm text-gray-900">{option.label}</span>
                   {value === option.value && (
