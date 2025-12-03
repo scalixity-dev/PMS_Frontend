@@ -1,13 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Plus, Building, Loader2 } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import PropertyCard from '../components/PropertyCard';
-import { propertyService } from '../../../../../services/property.service';
 import { leasingService } from '../../../../../services/leasing.service';
+import { propertyService } from '../../../../../services/property.service';
+import { listingService } from '../../../../../services/listing.service';
+import { useGetAllPropertiesTransformed, useGetProperty, propertyQueryKeys } from '../../../../../hooks/usePropertyQueries';
+import { useListUnitStore } from '../store/listUnitStore';
 import type { Property, BackendProperty } from '../../../../../services/property.service';
 
 interface PropertySelectionProps {
-  data: any;
-  updateData: (key: string, value: any) => void;
   onCreateProperty: () => void;
   onEditProperty?: (propertyId: string) => void;
   onNext?: (propertyId: string) => void;
@@ -52,6 +54,29 @@ const getNextIncompleteStep = (property: BackendProperty): number | null => {
   return null;
 };
 
+// Check if property has an active listing
+const hasActiveListing = async (propertyId: string): Promise<boolean> => {
+  try {
+    const listings = await listingService.getByPropertyId(propertyId);
+    
+    // If no listings exist, property doesn't have an active listing
+    if (!listings || listings.length === 0) {
+      return false;
+    }
+    
+    // Check if any listing is active (listingStatus === 'ACTIVE' AND isActive === true)
+    const hasActive = listings.some(
+      listing => listing.listingStatus === 'ACTIVE' && listing.isActive === true
+    );
+    
+    return hasActive;
+  } catch (err) {
+    // If error fetching listings (e.g., 404), assume no active listing
+    console.error('Error checking active listing:', err);
+    return false;
+  }
+};
+
 // Check if property has all listing data filled (property, leasing, application, contact)
 const isPropertyListingComplete = async (propertyId: string): Promise<boolean> => {
   try {
@@ -61,14 +86,25 @@ const isPropertyListingComplete = async (propertyId: string): Promise<boolean> =
     // Property must have: name, address, amenities, photos, description
     const hasPropertyDetails = !!(
       property.propertyName &&
+      property.propertyName.trim() !== '' &&
       property.address &&
+      property.address.streetAddress &&
+      property.address.city &&
+      property.address.stateRegion &&
+      property.address.zipCode &&
+      property.address.country &&
       property.amenities?.parking &&
+      property.amenities?.parking !== 'NONE' &&
       property.amenities?.laundry &&
+      property.amenities?.laundry !== 'NONE' &&
       property.amenities?.airConditioning &&
+      property.amenities?.airConditioning !== 'NONE' &&
       property.coverPhotoUrl &&
+      property.coverPhotoUrl.trim() !== '' &&
       property.photos &&
-      property.photos.filter(p => !p.isPrimary).length > 0 &&
-      property.description
+      property.photos.filter((p: { isPrimary: boolean }) => !p.isPrimary).length > 0 &&
+      property.description &&
+      property.description.trim() !== ''
     );
 
     if (!hasPropertyDetails) {
@@ -76,114 +112,178 @@ const isPropertyListingComplete = async (propertyId: string): Promise<boolean> =
     }
 
     // Check leasing data
-    try {
-      const leasing = await leasingService.getByPropertyId(propertyId);
-      
-      const hasLeasingData = !!(
-        leasing.monthlyRent &&
-        leasing.securityDeposit !== null &&
-        leasing.securityDeposit !== undefined &&
-        leasing.amountRefundable !== null &&
-        leasing.amountRefundable !== undefined &&
-        leasing.dateAvailable &&
-        leasing.minLeaseDuration &&
-        leasing.maxLeaseDuration
-      );
-
-      // Check application settings
-      const hasApplicationSettings = 
-        leasing.onlineRentalApplication !== null &&
-        leasing.onlineRentalApplication !== undefined;
-
-      // Check application fee (if required)
-      let hasApplicationFee = true;
-      if (leasing.requireApplicationFee === true) {
-        hasApplicationFee = leasing.applicationFee !== null && leasing.applicationFee !== undefined;
-      }
-
-      // Check listing contact
-      const hasListingContact = !!(
-        property.listingContactName &&
-        property.listingPhoneNumber &&
-        property.listingEmail
-      );
-
-      return hasLeasingData && hasApplicationSettings && hasApplicationFee && hasListingContact;
-    } catch (leasingErr) {
-      // Leasing doesn't exist, property is incomplete
+    const leasing = await leasingService.getByPropertyId(propertyId);
+    
+    // If leasing doesn't exist (null), property is incomplete
+    if (!leasing) {
       return false;
     }
+    
+    // Check all required leasing fields
+    const monthlyRent = typeof leasing.monthlyRent === 'string' 
+      ? parseFloat(leasing.monthlyRent) 
+      : Number(leasing.monthlyRent);
+    
+    const hasLeasingData = !!(
+      leasing.monthlyRent &&
+      monthlyRent > 0 &&
+      leasing.securityDeposit !== null &&
+      leasing.securityDeposit !== undefined &&
+      leasing.amountRefundable !== null &&
+      leasing.amountRefundable !== undefined &&
+      leasing.dateAvailable &&
+      leasing.minLeaseDuration &&
+      leasing.maxLeaseDuration &&
+      leasing.description !== undefined // Description can be empty string but should exist
+    );
+
+    if (!hasLeasingData) {
+      return false;
+    }
+
+    // Check pets policy - if petsAllowed is true, pet details must be filled
+    if (leasing.petsAllowed === true) {
+      const hasPetDetails = !!(
+        Array.isArray(leasing.petCategory) &&
+        leasing.petCategory.length > 0 &&
+        (leasing.petDeposit !== null && leasing.petDeposit !== undefined) &&
+        (leasing.petFee !== null && leasing.petFee !== undefined) &&
+        leasing.petDescription &&
+        leasing.petDescription.trim() !== ''
+      );
+      
+      if (!hasPetDetails) {
+        return false;
+      }
+    }
+
+    // Check application settings - must be explicitly set (not null/undefined)
+    const hasApplicationSettings = 
+      leasing.onlineRentalApplication !== null &&
+      leasing.onlineRentalApplication !== undefined;
+
+    if (!hasApplicationSettings) {
+      return false;
+    }
+
+    // Check application fee (if required)
+    if (leasing.requireApplicationFee === true) {
+      const applicationFee = typeof leasing.applicationFee === 'string'
+        ? parseFloat(leasing.applicationFee)
+        : Number(leasing.applicationFee);
+      
+      const hasApplicationFee = 
+        leasing.applicationFee !== null && 
+        leasing.applicationFee !== undefined &&
+        !isNaN(applicationFee) &&
+        applicationFee > 0;
+      
+      if (!hasApplicationFee) {
+        return false;
+      }
+    }
+
+    // Check listing contact - all fields must be filled
+    const hasListingContact = !!(
+      property.listingContactName &&
+      property.listingContactName.trim() !== '' &&
+      property.listingPhoneNumber &&
+      property.listingPhoneNumber.trim() !== '' &&
+      property.listingEmail &&
+      property.listingEmail.trim() !== '' &&
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(property.listingEmail) // Basic email validation
+    );
+
+    if (!hasListingContact) {
+      return false;
+    }
+
+    // All checks passed - property is complete
+    return true;
   } catch (err) {
     // Error fetching property, consider incomplete
+    console.error('Error checking property completeness:', err);
     return false;
   }
 };
 
-const PropertySelection: React.FC<PropertySelectionProps> = ({ data, updateData, onCreateProperty, onEditProperty, onNext }) => {
+const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty, onEditProperty, onNext }) => {
+  const { formData, updateFormData } = useListUnitStore();
+  const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [fullPropertyData, setFullPropertyData] = useState<BackendProperty | null>(null);
+  const [incompleteProperties, setIncompleteProperties] = useState<Property[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Use React Query to fetch all properties
+  // Refetch on mount to ensure fresh data (important when switching users)
+  const { 
+    data: allProperties = [], 
+    isLoading: loading, 
+    error: queryError,
+    refetch: refetchProperties
+  } = useGetAllPropertiesTransformed();
+
+  // Use React Query to fetch full property data when selected
+  const { 
+    data: fullPropertyData
+  } = useGetProperty(formData.property || null, !!formData.property);
+
+  
   useEffect(() => {
-    const fetchProperties = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const fetchedProperties = await propertyService.getAllTransformed();
-        const allProperties = Array.isArray(fetchedProperties) ? fetchedProperties : [];
-        
-        // Filter out properties that have all listing data complete
-        // Only show properties with missing data
-        // Check completeness in parallel
-        const completenessResults = await Promise.all(
-          allProperties.map(async (property) => ({
-            property,
-            isComplete: await isPropertyListingComplete(property.id)
-          }))
-        );
-        
-        const incompleteProperties = completenessResults
-          .filter(result => !result.isComplete)
-          .map(result => result.property);
-        
-        setProperties(incompleteProperties);
-      } catch (err) {
-        console.error('Error fetching properties:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load properties');
-        // On error, ensure properties array is empty (no mock data)
-        setProperties([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+    // Remove any stale property queries to prevent cross-user data leakage
+    queryClient.removeQueries({ queryKey: propertyQueryKeys.all });
+    // Refetch to get fresh data for current user
+    refetchProperties();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array - only run once on mount
 
-    fetchProperties();
-  }, []);
-
-  const selectedProperty = properties.find(p => p.id === data.property);
-
-  // Fetch full property data when a property is selected
+  // Filter properties based on completeness and active listing status
   useEffect(() => {
-    const fetchFullPropertyData = async () => {
-      if (!data.property) {
-        setFullPropertyData(null);
+    const filterIncompleteProperties = async () => {
+      if (!allProperties || allProperties.length === 0) {
+        setIncompleteProperties([]);
+        // If no properties and a property is selected, clear the selection
+        if (formData.property) {
+          updateFormData('property', '');
+        }
         return;
       }
 
-      try {
-        const fullProperty = await propertyService.getOne(data.property);
-        setFullPropertyData(fullProperty);
-      } catch (err) {
-        console.error('Error fetching full property data:', err);
-        setFullPropertyData(null);
+      // Check completeness and active listing status in parallel
+      const propertyChecks = await Promise.all(
+        allProperties.map(async (property) => ({
+          property,
+          isComplete: await isPropertyListingComplete(property.id),
+          hasActiveListing: await hasActiveListing(property.id)
+        }))
+      );
+      
+      // Only show properties that:
+      // 1. Are NOT complete (incomplete properties), AND
+      // 2. Do NOT have an active listing (inactive listing)
+      const incomplete = propertyChecks
+        .filter(result => !result.isComplete && !result.hasActiveListing)
+        .map(result => result.property);
+      
+      setIncompleteProperties(incomplete);
+      
+      // If currently selected property is now complete or has active listing, clear the selection
+      if (formData.property) {
+        const selectedProperty = propertyChecks.find(
+          result => result.property.id === formData.property
+        );
+        
+        if (selectedProperty && (selectedProperty.isComplete || selectedProperty.hasActiveListing)) {
+          updateFormData('property', '');
+        }
       }
     };
 
-    fetchFullPropertyData();
-  }, [data.property]);
+    filterIncompleteProperties();
+  }, [allProperties, formData.property, updateFormData]);
+
+  const selectedProperty = incompleteProperties.find(p => p.id === formData.property);
+  const error = queryError ? (queryError instanceof Error ? queryError.message : 'Failed to load properties') : null;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -215,7 +315,7 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ data, updateData,
   };
 
   const handleSelect = (propertyId: string) => {
-    updateData('property', propertyId);
+    updateFormData('property', propertyId);
     setIsOpen(false);
   };
 
@@ -225,7 +325,7 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ data, updateData,
   };
 
   const handleDelete = () => {
-    updateData('property', '');
+    updateFormData('property', '');
   };
 
   if (loading) {
@@ -242,12 +342,6 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ data, updateData,
       <div className="bg-transparent p-8 rounded-lg w-full flex flex-col items-center">
         <div className="w-full max-w-md bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-800 text-sm">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
-          >
-            Retry
-          </button>
         </div>
       </div>
     );
@@ -297,12 +391,12 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ data, updateData,
           {isOpen && (
             <div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden animate-in fade-in zoom-in-95 duration-100">
               <div className="max-h-60 overflow-y-auto">
-                {properties.length === 0 ? (
+                {incompleteProperties.length === 0 ? (
                   <div className="p-4 text-center text-gray-500 text-sm">
                     No properties found in database. Create your first property!
                   </div>
                 ) : (
-                  properties.map((property) => (
+                  incompleteProperties.map((property) => (
                     <button
                       key={property.id}
                       onClick={() => handleSelect(property.id)}

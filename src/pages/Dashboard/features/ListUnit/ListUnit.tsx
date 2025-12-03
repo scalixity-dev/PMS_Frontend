@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import Stepper from './components/Stepper';
 import PropertySelection from './steps/PropertySelection';
 import LeasingDetails from './steps/LeasingDetails';
@@ -14,65 +15,68 @@ import NextStepButton from './components/NextStepButton';
 import PetPolicy from './steps/PetPolicy';
 import PetDetails from './steps/PetDetails';
 import { leasingService } from '../../../../services/leasing.service';
+import { listingService } from '../../../../services/listing.service';
+import { useGetProperty, propertyQueryKeys } from '../../../../hooks/usePropertyQueries';
 import { propertyService } from '../../../../services/property.service';
+import { useListUnitStore } from './store/listUnitStore';
+import { useCreatePropertyStore } from './store/createPropertyStore';
 import type { LeaseDuration } from '../../../../services/leasing.service';
 
 const ListUnit: React.FC = () => {
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState(1);
-  const [leasingStep, setLeasingStep] = useState(1); // 1: Details, 2: Pets Policy, 3: Pet Details
-  const [applicationStep, setApplicationStep] = useState(1); // 1: Online Apps, 2: Application Fee, 3: Fee Details, 4: Listing Contact
-  const [showCreateProperty, setShowCreateProperty] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [leasingId, setLeasingId] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    // Step 1
-    property: '',
-    unit: '',
-    bedrooms: '',
-    bathrooms: '',
-    size: '',
-    // Step 2
-    rent: '',
-    deposit: '',
-    refundable: '',
-    leaseDuration: '',
-    minLeaseDuration: '',
-    maxLeaseDuration: '',
-    availableDate: '',
-    monthToMonth: false,
-    petsAllowed: null as boolean | null,
-    pets: [] as string[],
-    petDeposit: '',
-    petRent: '',
-    petDescription: '',
-    // Step 3
-    description: '',
-    amenities: [],
-    publish: false,
-    // Basic Amenities
-    parking: '',
-    laundry: '',
-    ac: '',
-    // Application Settings
-    receiveApplicationsOnline: null as boolean | null,
-    applicationFee: null as boolean | null,
-    applicationFeeAmount: '',
-    // Listing Contact
-    contactName: '',
-    countryCode: '+91',
-    phoneNumber: '',
-    email: '',
-    displayPhonePublicly: false,
-  });
+  const location = useLocation();
+  const queryClient = useQueryClient();
+  const {
+    formData,
+    currentStep,
+    leasingStep,
+    applicationStep,
+    showCreateProperty,
+    showSuccessModal,
+    leasingId,
+    isSubmitting,
+    error,
+    updateFormData,
+    setCurrentStep,
+    setLeasingStep,
+    setApplicationStep,
+    setShowCreateProperty,
+    setShowSuccessModal,
+    setLeasingId,
+    setIsSubmitting,
+    setError,
+    resetForm,
+  } = useListUnitStore();
 
-  const propertyDisplay = formData.property || "New Property";
+  // Get createPropertyStore reset function
+  const { resetForm: resetCreatePropertyForm } = useCreatePropertyStore();
 
-  const updateFormData = (key: string, value: any) => {
-    setFormData(prev => ({ ...prev, [key]: value }));
-  };
+  // Reset both forms and clear cache when component mounts (fresh start)
+  useEffect(() => {
+    // Reset the ListUnit form to initial state
+    resetForm();
+    // Reset the CreateProperty form to initial state
+    resetCreatePropertyForm();
+    // Invalidate property queries to ensure fresh data
+    queryClient.removeQueries({ queryKey: propertyQueryKeys.all });
+  }, [location.pathname, resetForm, resetCreatePropertyForm, queryClient]);
+
+  // Use React Query to fetch property data when property is selected
+  const { data: propertyData } = useGetProperty(formData.property || null, !!formData.property);
+
+  // Get property display name (use property name if available, otherwise fallback to ID or "New Property")
+  const propertyDisplay = propertyData?.propertyName || formData.property || "New Property";
+
+  // Load property contact info when property data is available
+  useEffect(() => {
+    if (propertyData) {
+      updateFormData('contactName', propertyData.listingContactName || '');
+      updateFormData('countryCode', propertyData.listingPhoneCountryCode || '+91');
+      updateFormData('phoneNumber', propertyData.listingPhoneNumber || '');
+      updateFormData('email', propertyData.listingEmail || '');
+      updateFormData('displayPhonePublicly', propertyData.displayPhonePublicly ?? false);
+    }
+  }, [propertyData, updateFormData]);
 
   // Map numeric lease duration to backend enum
   const mapLeaseDuration = (months: string): LeaseDuration => {
@@ -110,12 +114,53 @@ const ListUnit: React.FC = () => {
   useEffect(() => {
     const checkExistingLeasing = async () => {
       if (!formData.property) {
+        // Clear all leasing data when no property is selected
         setLeasingId(null);
+        updateFormData('rent', '');
+        updateFormData('deposit', '');
+        updateFormData('refundable', '');
+        updateFormData('availableDate', '');
+        updateFormData('minLeaseDuration', '');
+        updateFormData('maxLeaseDuration', '');
+        updateFormData('description', '');
+        updateFormData('petsAllowed', null);
+        updateFormData('pets', []);
+        updateFormData('petDeposit', '');
+        updateFormData('petRent', '');
+        updateFormData('petDescription', '');
+        updateFormData('receiveApplicationsOnline', null);
+        updateFormData('applicationFee', null);
+        updateFormData('applicationFeeAmount', '');
         return;
       }
 
+      // Clear all leasing data FIRST before loading new data to prevent data leakage
+      setLeasingId(null);
+      updateFormData('rent', '');
+      updateFormData('deposit', '');
+      updateFormData('refundable', '');
+      updateFormData('availableDate', '');
+      updateFormData('minLeaseDuration', '');
+      updateFormData('maxLeaseDuration', '');
+      updateFormData('description', '');
+      updateFormData('petsAllowed', null);
+      updateFormData('pets', []);
+      updateFormData('petDeposit', '');
+      updateFormData('petRent', '');
+      updateFormData('petDescription', '');
+      updateFormData('receiveApplicationsOnline', null);
+      updateFormData('applicationFee', null);
+      updateFormData('applicationFeeAmount', '');
+
       try {
         const leasing = await leasingService.getByPropertyId(formData.property);
+        
+        // If leasing doesn't exist (null), that's okay - form is already cleared above
+        if (!leasing) {
+          setLeasingId(null);
+          return;
+        }
+        
         setLeasingId(leasing.id);
         // Load existing leasing data into form
         updateFormData('rent', leasing.monthlyRent?.toString() || '');
@@ -162,26 +207,14 @@ const ListUnit: React.FC = () => {
         updateFormData('applicationFee', leasing.requireApplicationFee ?? null);
         updateFormData('applicationFeeAmount', leasing.applicationFee?.toString() || '');
       } catch (err) {
-        // Leasing doesn't exist yet, that's okay
+        // Only log actual errors (not 404s - those are handled above by returning null)
+        console.error('Error fetching leasing:', err);
         setLeasingId(null);
-      }
-
-      // Also load property data for listing contact information
-      try {
-        const property = await propertyService.getOne(formData.property);
-        updateFormData('contactName', property.listingContactName || '');
-        updateFormData('countryCode', property.listingPhoneCountryCode || '+91');
-        updateFormData('phoneNumber', property.listingPhoneNumber || '');
-        updateFormData('email', property.listingEmail || '');
-        updateFormData('displayPhonePublicly', property.displayPhonePublicly ?? false);
-      } catch (err) {
-        // Property might not have contact info yet, that's okay
-        console.error('Error loading property contact info:', err);
       }
     };
 
     checkExistingLeasing();
-  }, [formData.property]);
+  }, [formData.property, updateFormData, setLeasingId]);
 
   // Save pet policy when moving from leasingStep 2
   const handleSavePetPolicy = async () => {
@@ -307,6 +340,7 @@ const ListUnit: React.FC = () => {
     setError(null);
 
     try {
+      // Step 1: Update property with listing contact information
       const updateData: any = {
         listingContactName: formData.contactName,
         listingPhoneCountryCode: formData.countryCode || '+91',
@@ -317,11 +351,18 @@ const ListUnit: React.FC = () => {
 
       await propertyService.update(formData.property, updateData);
 
+      // Step 2: Create listing and update property status to ACTIVE
+      // The backend service will handle both creating the listing and updating property status
+      await listingService.create({
+        propertyId: formData.property,
+        // The backend will automatically populate listing data from property and leasing
+      });
+
       // Show success modal
       setShowSuccessModal(true);
     } catch (err) {
-      console.error('Error saving listing contact:', err);
-      setError(err instanceof Error ? err.message : 'Failed to save listing contact. Please try again.');
+      console.error('Error saving listing contact and creating listing:', err);
+      setError(err instanceof Error ? err.message : 'Failed to save listing contact and create listing. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -475,7 +516,7 @@ const ListUnit: React.FC = () => {
         }
       }
     } else {
-      setCurrentStep(prev => prev - 1);
+      setCurrentStep(currentStep - 1);
     }
   };
 
@@ -526,43 +567,7 @@ const ListUnit: React.FC = () => {
   const handleListAnother = () => {
     setShowSuccessModal(false);
     // Reset form and go to step 1
-    setCurrentStep(1);
-    setLeasingStep(1);
-    setApplicationStep(1);
-    setFormData({
-      property: '',
-      unit: '',
-      bedrooms: '',
-      bathrooms: '',
-      size: '',
-      rent: '',
-      deposit: '',
-      refundable: '',
-      leaseDuration: '',
-      minLeaseDuration: '',
-      maxLeaseDuration: '',
-      availableDate: '',
-      monthToMonth: false,
-      petsAllowed: null,
-      pets: [],
-      petDeposit: '',
-      petRent: '',
-      petDescription: '',
-      description: '',
-      amenities: [],
-      publish: false,
-      parking: '',
-      laundry: '',
-      ac: '',
-      receiveApplicationsOnline: null,
-      applicationFee: null,
-      applicationFeeAmount: '',
-      contactName: '',
-      countryCode: '+91',
-      phoneNumber: '',
-      email: '',
-      displayPhonePublicly: false,
-    });
+    resetForm();
   };
 
   const handleCreateProperty = () => {
@@ -627,8 +632,6 @@ const ListUnit: React.FC = () => {
                       <p className="text-[var(--color-subheading)]">Select the property or unit you want to list or create a new one.</p>
                     </div>
                     <PropertySelection
-                      data={formData}
-                      updateData={updateFormData}
                       onCreateProperty={handleCreateProperty}
                       onEditProperty={handleEditProperty}
                       onNext={handlePropertyNext}
@@ -650,8 +653,6 @@ const ListUnit: React.FC = () => {
                           <p className="text-[var(--color-subheading)]">Add main lease terms and other leasing details if necessary.</p>
                         </div>
                         <LeasingDetails 
-                          data={formData} 
-                          updateData={updateFormData}
                           propertyId={formData.property}
                         />
                         {error && (
@@ -667,7 +668,7 @@ const ListUnit: React.FC = () => {
                       </>
                     ) : leasingStep === 2 ? (
                       <>
-                        <PetPolicy data={formData} updateData={updateFormData} propertyId={formData.property} />
+                        <PetPolicy propertyId={formData.property} />
                         {error && (
                           <div className="w-full max-w-md mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
                             <p className="text-red-800 text-sm">{error}</p>
@@ -681,7 +682,7 @@ const ListUnit: React.FC = () => {
                       </>
                     ) : (
                       <>
-                        <PetDetails data={formData} updateData={updateFormData} propertyId={formData.property} />
+                        <PetDetails propertyId={formData.property} />
                         {error && (
                           <div className="w-full max-w-md mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
                             <p className="text-red-800 text-sm">{error}</p>
@@ -701,7 +702,7 @@ const ListUnit: React.FC = () => {
                   <div className="w-full flex flex-col items-center">
                     {applicationStep === 1 ? (
                       <>
-                        <ApplicationSettings data={formData} updateData={updateFormData} propertyId={formData.property} />
+                        <ApplicationSettings propertyId={formData.property} />
                         {error && (
                           <div className="w-full max-w-md mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
                             <p className="text-red-800 text-sm">{error}</p>
@@ -715,7 +716,7 @@ const ListUnit: React.FC = () => {
                       </>
                     ) : applicationStep === 2 ? (
                       <>
-                        <ApplicationFee data={formData} updateData={updateFormData} propertyId={formData.property} />
+                        <ApplicationFee propertyId={formData.property} />
                         {error && (
                           <div className="w-full max-w-md mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
                             <p className="text-red-800 text-sm">{error}</p>
@@ -729,7 +730,7 @@ const ListUnit: React.FC = () => {
                       </>
                     ) : applicationStep === 3 ? (
                       <>
-                        <ApplicationFeeDetails data={formData} updateData={updateFormData} propertyId={formData.property} />
+                        <ApplicationFeeDetails propertyId={formData.property} />
                         {error && (
                           <div className="w-full max-w-md mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
                             <p className="text-red-800 text-sm">{error}</p>
@@ -743,7 +744,7 @@ const ListUnit: React.FC = () => {
                       </>
                     ) : (
                       <>
-                        <ListingContact data={formData} updateData={updateFormData} onSubmit={handleNext} propertyId={formData.property} />
+                        <ListingContact onSubmit={handleNext} propertyId={formData.property} />
                         {error && (
                           <div className="w-full max-w-md mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
                             <p className="text-red-800 text-sm">{error}</p>

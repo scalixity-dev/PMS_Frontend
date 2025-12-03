@@ -30,7 +30,20 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
     setPropertyId,
     setManagerId,
     prevStep: storePrevStep,
+    resetForm,
   } = useCreatePropertyStore();
+
+  // Reset form when component unmounts (unless we're editing an existing property)
+  useEffect(() => {
+    return () => {
+      // Only reset if we're not editing an existing property
+      // This allows the form to persist state while navigating between steps
+      // but resets when the component is completely unmounted
+      if (!initialPropertyId && !storePropertyId) {
+        resetForm();
+      }
+    };
+  }, [initialPropertyId, storePropertyId, resetForm]);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -251,12 +264,22 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
     // Prepare photos
     const photos: Array<{ photoUrl: string; isPrimary: boolean }> = [];
     if (formData.coverPhoto) {
-      photos.push({ photoUrl: formData.coverPhoto, isPrimary: true });
+      // Extract URL from coverPhoto (can be string or PhotoFile object)
+      const coverPhotoUrl = typeof formData.coverPhoto === 'string' 
+        ? formData.coverPhoto 
+        : formData.coverPhoto.previewUrl || '';
+      if (coverPhotoUrl) {
+        photos.push({ photoUrl: coverPhotoUrl, isPrimary: true });
+      }
     }
     if (Array.isArray(formData.galleryPhotos)) {
-      formData.galleryPhotos.forEach((photo: string) => {
-        if (photo && !photos.some(p => p.photoUrl === photo)) {
-          photos.push({ photoUrl: photo, isPrimary: false });
+      formData.galleryPhotos.forEach((photo) => {
+        // Extract URL from photo (can be string or PhotoFile object)
+        const photoUrl = typeof photo === 'string' 
+          ? photo 
+          : photo.previewUrl || '';
+        if (photoUrl && !photos.some(p => p.photoUrl === photoUrl)) {
+          photos.push({ photoUrl: photoUrl, isPrimary: false });
         }
       });
     }

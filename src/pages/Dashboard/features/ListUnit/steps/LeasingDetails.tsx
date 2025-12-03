@@ -1,37 +1,41 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo, useEffect, useRef } from 'react';
 import { Undo2 } from 'lucide-react';
 import CustomDropdown from '../../../components/CustomDropdown';
 import Toggle from '../../../../../components/Toggle';
-import { propertyService } from '../../../../../services/property.service';
+import { useGetProperty } from '../../../../../hooks/usePropertyQueries';
 import { getCurrencySymbol } from '../../../../../utils/currency.utils';
+import { useListUnitStore } from '../store/listUnitStore';
 
 interface LeasingDetailsProps {
-  data: any;
-  updateData: (key: string, value: any) => void;
   propertyId?: string;
 }
 
-const LeasingDetails: React.FC<LeasingDetailsProps> = ({ data, updateData, propertyId }) => {
-  const [property, setProperty] = useState<any>(null);
+const LeasingDetails: React.FC<LeasingDetailsProps> = ({ propertyId }) => {
+  const { formData, updateFormData } = useListUnitStore();
+  const previousPropertyIdRef = useRef<string | undefined>(propertyId);
+  
+  // Use React Query to fetch property data
+  const { data: property } = useGetProperty(propertyId || null, !!propertyId);
+
+  // Clear form data when propertyId changes to prevent data leakage
+  useEffect(() => {
+    // Only clear if propertyId actually changed (not on initial mount with same property)
+    if (previousPropertyIdRef.current !== undefined && previousPropertyIdRef.current !== propertyId) {
+      // Property changed - clear all leasing fields to prevent showing data from previous property
+      updateFormData('rent', '');
+      updateFormData('deposit', '');
+      updateFormData('refundable', '');
+      updateFormData('availableDate', '');
+      updateFormData('minLeaseDuration', '');
+      updateFormData('maxLeaseDuration', '');
+      updateFormData('description', '');
+    }
+    // Update ref to track current propertyId
+    previousPropertyIdRef.current = propertyId;
+  }, [propertyId, updateFormData]);
   
   const inputClass = "w-full p-3 bg-[#84CC16] text-white placeholder-white/70 border-none rounded-lg focus:ring-2 focus:ring-white/50 outline-none text-center font-medium";
   const labelClass = "block text-xs font-medium text-gray-700 mb-1 ml-1";
-
-  // Fetch property data to get country for currency
-  useEffect(() => {
-    const fetchProperty = async () => {
-      if (!propertyId) return;
-      
-      try {
-        const propertyData = await propertyService.getOne(propertyId);
-        setProperty(propertyData);
-      } catch (err) {
-        console.error('Error fetching property:', err);
-      }
-    };
-
-    fetchProperty();
-  }, [propertyId]);
 
   // Get currency symbol based on property's country
   const currencySymbol = useMemo(() => {
@@ -56,8 +60,8 @@ const LeasingDetails: React.FC<LeasingDetailsProps> = ({ data, updateData, prope
               <input
                 type="number"
                 className={`${inputClass} ${currencySymbol ? 'pl-8' : ''}`}
-                value={data.rent || ''}
-                onChange={(e) => updateData('rent', e.target.value)}
+                value={formData.rent || ''}
+                onChange={(e) => updateFormData('rent', e.target.value)}
                 placeholder={`${currencySymbol || '₹'} 50,000`}
               />
             </div>
@@ -75,8 +79,8 @@ const LeasingDetails: React.FC<LeasingDetailsProps> = ({ data, updateData, prope
               <input
                 type="number"
                 className={`${inputClass} ${currencySymbol ? 'pl-8' : ''}`}
-                value={data.deposit || ''}
-                onChange={(e) => updateData('deposit', e.target.value)}
+                value={formData.deposit || ''}
+                onChange={(e) => updateFormData('deposit', e.target.value)}
                 placeholder={`${currencySymbol || '₹'} 0.00`}
               />
             </div>
@@ -94,8 +98,8 @@ const LeasingDetails: React.FC<LeasingDetailsProps> = ({ data, updateData, prope
               <input
                 type="number"
                 className={`${inputClass} ${currencySymbol ? 'pl-8' : ''}`}
-                value={data.refundable || ''}
-                onChange={(e) => updateData('refundable', e.target.value)}
+                value={formData.refundable || ''}
+                onChange={(e) => updateFormData('refundable', e.target.value)}
                 placeholder={`${currencySymbol || '₹'} 0.00`}
               />
             </div>
@@ -106,10 +110,10 @@ const LeasingDetails: React.FC<LeasingDetailsProps> = ({ data, updateData, prope
             <label className={labelClass}>Date Available*</label>
             <div className="relative">
               <input
-                type={data.availableDate ? "date" : "text"}
+                type={formData.availableDate ? "date" : "text"}
                 className={`${inputClass} cursor-pointer mt-1`}
-                value={data.availableDate || ''}
-                onChange={(e) => updateData('availableDate', e.target.value)}
+                value={formData.availableDate || ''}
+                onChange={(e) => updateFormData('availableDate', e.target.value)}
                 onFocus={(e) => (e.target.type = "date")}
                 onBlur={(e) => {
                   if (!e.target.value) e.target.type = "text";
@@ -124,8 +128,8 @@ const LeasingDetails: React.FC<LeasingDetailsProps> = ({ data, updateData, prope
           <div>
             <CustomDropdown
               label="Min lease duration*"
-              value={data.minLeaseDuration || ''}
-              onChange={(value: string) => updateData('minLeaseDuration', value)}
+              value={formData.minLeaseDuration || ''}
+              onChange={(value: string) => updateFormData('minLeaseDuration', value)}
               options={[
                 { value: '6', label: '6 Months' },
                 { value: '12', label: '12 Months' },
@@ -142,8 +146,8 @@ const LeasingDetails: React.FC<LeasingDetailsProps> = ({ data, updateData, prope
           <div>
             <CustomDropdown
               label="Max lease duration*"
-              value={data.maxLeaseDuration || ''}
-              onChange={(value: string) => updateData('maxLeaseDuration', value)}
+              value={formData.maxLeaseDuration || ''}
+              onChange={(value: string) => updateFormData('maxLeaseDuration', value)}
               options={[
                 { value: '12', label: '12 Months' },
                 { value: '24', label: '24 Months' },
@@ -159,8 +163,8 @@ const LeasingDetails: React.FC<LeasingDetailsProps> = ({ data, updateData, prope
         {/* Month-to-Month Toggle */}
         <div className="flex items-center gap-3 mt-4">
           <Toggle
-            checked={data.monthToMonth || false}
-            onChange={(checked: boolean) => updateData('monthToMonth', checked)}
+            checked={formData.monthToMonth || false}
+            onChange={(checked: boolean) => updateFormData('monthToMonth', checked)}
           />
           <span className="text-sm font-medium text-gray-700">Month-to-Month</span>
         </div>
@@ -177,8 +181,8 @@ const LeasingDetails: React.FC<LeasingDetailsProps> = ({ data, updateData, prope
         {/* Textarea */}
         <div className="p-0">
           <textarea
-            value={data.description || ''}
-            onChange={(e) => updateData('description', e.target.value)}
+            value={formData.description || ''}
+            onChange={(e) => updateFormData('description', e.target.value)}
             placeholder="Add the marketing description here."
             className="w-full h-48 p-6 bg-[#F3F4F6] resize-none focus:outline-none text-gray-700 placeholder-gray-500"
           />
