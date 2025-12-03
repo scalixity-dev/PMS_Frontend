@@ -10,14 +10,18 @@ const MOCK_TASKS = [
         name: 'Anii',
         avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
         date: '01 Nov, 2025 11:00 AM',
-        status: 'Resolved'
+        status: 'Resolved',
+        property: 'prop1',
+        frequency: 'daily'
     },
     {
         id: 2,
         name: 'Anuu',
         avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
         date: '01 Nov, 2025 11:00 AM',
-        status: 'Resolved'
+        status: 'Resolved',
+        property: 'prop2',
+        frequency: 'weekly'
     }
 ];
 
@@ -26,6 +30,12 @@ const Tasks: React.FC = () => {
     const [filters, setFilters] = useState<Record<string, string[]>>({});
     const [selectedTaskIds, setSelectedTaskIds] = useState<number[]>([]);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+    const handleSaveTask = (taskData: any) => {
+        // TODO: Implement task save logic
+        console.log('Saving task:', taskData);
+        setIsAddModalOpen(false);
+    };
 
     const filterOptions: Record<string, FilterOption[]> = {
         status: [
@@ -63,7 +73,31 @@ const Tasks: React.FC = () => {
             const matchesStatus = !filters.status || filters.status.length === 0 ||
                 filters.status.includes(task.status.toLowerCase());
 
-            return matchesSearch && matchesStatus;
+            // Property filter
+            const matchesProperty = !filters.property || filters.property.length === 0 ||
+                filters.property.includes(task.property);
+
+            // Date filter
+            const matchesDate = !filters.date || filters.date.length === 0 ||
+                filters.date.some(dateFilter => {
+                    const taskDate = new Date(task.date);
+                    const today = new Date();
+                    
+                    if (dateFilter === 'today') {
+                        return taskDate.toDateString() === today.toDateString();
+                    } else if (dateFilter === 'week') {
+                        const weekFromNow = new Date();
+                        weekFromNow.setDate(today.getDate() + 7);
+                        return taskDate >= today && taskDate <= weekFromNow;
+                    }
+                    return false;
+                });
+
+            // Frequency filter
+            const matchesFrequency = !filters.frequency || filters.frequency.length === 0 ||
+                filters.frequency.includes(task.frequency);
+
+            return matchesSearch && matchesStatus && matchesProperty && matchesDate && matchesFrequency;
         });
     }, [searchQuery, filters]);
 
@@ -262,7 +296,7 @@ const Tasks: React.FC = () => {
                 </div>
             </div>
 
-            <AddTaskModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
+            <AddTaskModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onSave={handleSaveTask} />
         </div>
     );
 };

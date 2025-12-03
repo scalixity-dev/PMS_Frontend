@@ -1,14 +1,11 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Plus } from 'lucide-react';
 import DetailTabs from '../../components/DetailTabs';
 
-const TenantDetail = () => {
-    const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState('profile');
-
-    // Mock Data
-    const tenant = {
+// Mock Data - keyed by tenant ID
+const TENANT_DETAILS: Record<number, any> = {
+    1: {
         id: 1,
         name: 'Anjali Vyas',
         phone: '+91 8569325417',
@@ -39,7 +36,108 @@ const TenantDetail = () => {
         vehicles: [
             { type: 'Automobile', make: 'as', registeredIn: 'mp', year: '2021', color: 'red', license: '123641' }
         ]
-    };
+    },
+    2: {
+        id: 2,
+        name: 'Rahul Sharma',
+        phone: '+91 9876543210',
+        email: 'rahul.sharma@example.com',
+        image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200&h=200',
+        outstanding: 32000,
+        deposits: 40000,
+        credits: 28000,
+        personalInfo: {
+            firstName: 'Rahul',
+            middleName: 'Kumar',
+            lastName: 'Sharma',
+            email: 'rahul.sharma@example.com',
+            additionalEmail: '-',
+            phone: '+91 9876543210',
+            additionalPhone: '-',
+            companyName: 'Tech Solutions',
+            dateOfBirth: '15/08/1990',
+            companyName2: '-'
+        },
+        forwardingAddress: 'Tech Park, Bangalore, Karnataka 560001',
+        emergencyContacts: [
+            { name: 'Priya Sharma', relationship: 'spouse', email: 'priya@example.com', phone: '+91 9876543211' }
+        ],
+        pets: [],
+        vehicles: [
+            { type: 'Car', make: 'Honda', registeredIn: 'KA', year: '2020', color: 'silver', license: 'KA01AB1234' }
+        ]
+    },
+    3: {
+        id: 3,
+        name: 'Priya Patel',
+        phone: '+91 7890123456',
+        email: 'priya.patel@example.com',
+        image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=200&h=200',
+        outstanding: 0,
+        deposits: 50000,
+        credits: 15000,
+        personalInfo: {
+            firstName: 'Priya',
+            middleName: '',
+            lastName: 'Patel',
+            email: 'priya.patel@example.com',
+            additionalEmail: 'priya.work@example.com',
+            phone: '+91 7890123456',
+            additionalPhone: '+91 7890123457',
+            companyName: 'Design Studio',
+            dateOfBirth: '22/03/1992',
+            companyName2: '-'
+        },
+        forwardingAddress: 'MG Road, Pune, Maharashtra 411001',
+        emergencyContacts: [
+            { name: 'Amit Patel', relationship: 'brother', email: 'amit@example.com', phone: '+91 7890123458' }
+        ],
+        pets: [
+            { name: 'Milo', type: 'Cat', weight: '3', breed: 'persian' }
+        ],
+        vehicles: []
+    },
+    4: {
+        id: 4,
+        name: 'Arjun Mehta',
+        phone: '+91 6543210987',
+        email: 'arjun.mehta@example.com',
+        image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200&h=200',
+        outstanding: 18000,
+        deposits: 35000,
+        credits: 22000,
+        personalInfo: {
+            firstName: 'Arjun',
+            middleName: 'Singh',
+            lastName: 'Mehta',
+            email: 'arjun.mehta@example.com',
+            additionalEmail: '-',
+            phone: '+91 6543210987',
+            additionalPhone: '-',
+            companyName: 'Finance Corp',
+            dateOfBirth: '10/12/1988',
+            companyName2: '-'
+        },
+        forwardingAddress: 'Connaught Place, New Delhi, Delhi 110001',
+        emergencyContacts: [
+            { name: 'Neha Mehta', relationship: 'sister', email: 'neha@example.com', phone: '+91 6543210988' }
+        ],
+        pets: [
+            { name: 'Max', type: 'Dog', weight: '8', breed: 'labrador' }
+        ],
+        vehicles: [
+            { type: 'Motorcycle', make: 'Royal Enfield', registeredIn: 'DL', year: '2019', color: 'black', license: 'DL02XY5678' }
+        ]
+    }
+};
+
+const TenantDetail = () => {
+    const navigate = useNavigate();
+    const { id } = useParams<{ id: string }>();
+    const [activeTab, setActiveTab] = useState('profile');
+
+    // Get tenant by ID from route param, fallback to tenant 1
+    const tenant = TENANT_DETAILS[Number(id)] || TENANT_DETAILS[1];
 
     const tabs = [
         { id: 'profile', label: 'Profile' },
@@ -105,7 +203,10 @@ const TenantDetail = () => {
                                         <p className="text-xs opacity-90">{tenant.phone}</p>
                                         <p className="text-xs opacity-90">{tenant.email}</p>
                                     </div>
-                                    <button className="w-full bg-[#C8C8C8] text-gray-700 py-2 rounded-full text-sm font-medium hover:bg-[#b8b8b8] transition-colors shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
+                                    <button 
+                                        onClick={() => navigate(`/dashboard/contacts/tenants/${tenant.id}/profile`)}
+                                        className="w-full bg-[#C8C8C8] text-gray-700 py-2 rounded-full text-sm font-medium hover:bg-[#b8b8b8] transition-colors shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]"
+                                    >
                                         View Profile
                                     </button>
                                 </div>

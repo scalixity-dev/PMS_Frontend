@@ -37,14 +37,20 @@ const SpecItem: React.FC<SpecItemProps> = ({ icon, title, badges, onEdit, onDele
                 ))}
             </div>
 
-            <div className="flex gap-3 ml-6">
-                <button onClick={onEdit} className="p-2 text-[#3A6D6C] hover:bg-gray-200 rounded-full transition-colors">
-                    <Edit2 className="w-5 h-5" />
-                </button>
-                <button onClick={onDelete} className="p-2 text-red-500 hover:bg-gray-200 rounded-full transition-colors">
-                    <Trash2 className="w-5 h-5" />
-                </button>
-            </div>
+            {(onEdit || onDelete) && (
+                <div className="flex gap-3 ml-6">
+                    {onEdit && (
+                        <button onClick={onEdit} className="p-2 text-[#3A6D6C] hover:bg-gray-200 rounded-full transition-colors">
+                            <Edit2 className="w-5 h-5" />
+                        </button>
+                    )}
+                    {onDelete && (
+                        <button onClick={onDelete} className="p-2 text-red-500 hover:bg-gray-200 rounded-full transition-colors">
+                            <Trash2 className="w-5 h-5" />
+                        </button>
+                    )}
+                </div>
+            )}
         </div>
     );
 };
@@ -91,6 +97,8 @@ const SpecsTab: React.FC = () => {
                                 { label: 'Name', value: item.keyName },
                                 { label: 'Type', value: item.type }
                             ]}
+                            onEdit={() => console.log('Edit key:', item.id)}
+                            onDelete={() => console.log('Delete key:', item.id)}
                         />
                     ))}
                 </div>
@@ -114,6 +122,8 @@ const SpecsTab: React.FC = () => {
                                 { label: 'Paint color', value: item.color },
                                 { label: 'Description', value: item.description }
                             ]}
+                            onEdit={() => console.log('Edit paint:', item.id)}
+                            onDelete={() => console.log('Delete paint:', item.id)}
                         />
                     ))}
                 </div>
@@ -137,6 +147,8 @@ const SpecsTab: React.FC = () => {
                                 { label: 'Door type', value: item.type },
                                 { label: 'Lock type', value: item.lockType }
                             ]}
+                            onEdit={() => console.log('Edit door:', item.id)}
+                            onDelete={() => console.log('Delete door:', item.id)}
                         />
                     ))}
                 </div>
@@ -160,6 +172,8 @@ const SpecsTab: React.FC = () => {
                                 { label: 'Flooring type', value: item.type },
                                 { label: 'Description', value: item.description }
                             ]}
+                            onEdit={() => console.log('Edit flooring:', item.id)}
+                            onDelete={() => console.log('Delete flooring:', item.id)}
                         />
                     ))}
                 </div>

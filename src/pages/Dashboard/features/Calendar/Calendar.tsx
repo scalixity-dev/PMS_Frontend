@@ -126,7 +126,7 @@ const Calendar: React.FC = () => {
                         if (dateStr) {
                             const visibleDate = new Date(dateStr);
                             if (!isSameMonth(visibleDate, currentDate)) {
-                                // Optional: Update header, but might be jittery
+                                setCurrentDate(visibleDate);
                             }
                         }
                     }
@@ -142,7 +142,7 @@ const Calendar: React.FC = () => {
         monthElements.forEach((el) => observer.observe(el));
 
         return () => observer.disconnect();
-    }, [months]);
+    }, [months, currentDate]);
 
     // Sync header with scroll position
     const handleScrollForHeader = () => {

@@ -12,7 +12,7 @@ interface AddReminderModalProps {
 }
 
 const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, onSave }) => {
-    const [formData, setFormData] = useState({
+    const initialFormData = {
         title: '',
         details: '',
         date: undefined as Date | undefined,
@@ -20,8 +20,10 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
         assignee: '',
         property: '',
         isRecurring: false
-    });
+    };
 
+    const [formData, setFormData] = useState(initialFormData);
+    const [formErrors, setFormErrors] = useState({ title: false, date: false, time: false });
     const [showExitConfirmation, setShowExitConfirmation] = useState(false);
 
     const assigneeOptions = [
@@ -64,12 +66,36 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
     };
 
     const handleSubmit = () => {
+        // Validate required fields
+        const errors = {
+            title: !formData.title,
+            date: !formData.date,
+            time: !formData.time
+        };
+
+        setFormErrors(errors);
+
+        // Prevent submission if any required field is invalid
+        if (errors.title || errors.date || errors.time) {
+            return;
+        }
+
         onSave(formData);
         onClose();
     };
 
     const handleCloseAttempt = () => {
-        if (formData.title || formData.details) {
+        // Check if any field differs from initial value (form is dirty)
+        const isDirty = 
+            formData.title !== initialFormData.title ||
+            formData.details !== initialFormData.details ||
+            formData.date !== initialFormData.date ||
+            formData.time !== initialFormData.time ||
+            formData.assignee !== initialFormData.assignee ||
+            formData.property !== initialFormData.property ||
+            formData.isRecurring !== initialFormData.isRecurring;
+
+        if (isDirty) {
             setShowExitConfirmation(true);
         } else {
             onClose();
@@ -104,8 +130,11 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
                             value={formData.title}
                             onChange={handleChange}
                             placeholder="Enter Title"
-                            className="w-full bg-white text-gray-800 placeholder-gray-400 px-3 py-2.5 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all shadow-sm text-sm"
+                            className={`w-full bg-white text-gray-800 placeholder-gray-400 px-3 py-2.5 rounded-md outline-none focus:ring-2 transition-all shadow-sm text-sm ${
+                                formErrors.title ? 'ring-2 ring-red-500 focus:ring-red-500' : 'focus:ring-[#3D7475]/20'
+                            }`}
                         />
+                        {formErrors.title && <p className="text-red-500 text-xs mt-1">Title is required</p>}
                     </div>
 
                     {/* Details */}
@@ -130,6 +159,7 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
                                     value={formData.date}
                                     onChange={handleDateChange}
                                     placeholder="Select Date"
+                                    className={formErrors.date ? 'ring-2 ring-red-500' : ''}
                                 />
                             </div>
                             <div className="w-1/3">
@@ -137,9 +167,15 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
                                     value={formData.time}
                                     onChange={handleTimeChange}
                                     placeholder="Time"
+                                    className={formErrors.time ? 'ring-2 ring-red-500' : ''}
                                 />
                             </div>
                         </div>
+                        {(formErrors.date || formErrors.time) && (
+                            <p className="text-red-500 text-xs mt-1">
+                                {formErrors.date && formErrors.time ? 'Date and time are required' : formErrors.date ? 'Date is required' : 'Time is required'}
+                            </p>
+                        )}
                     </div>
 
                     {/* Assignee */}

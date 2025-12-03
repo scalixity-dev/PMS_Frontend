@@ -57,11 +57,11 @@ const ServiceProvidersTab: React.FC = () => {
             avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=256&q=80',
             serviceType: 'Cable/Satellite',
             details: [
-                { label: 'Service Pro', value: '5' },
+                { label: 'Service Pro', value: 'DirectTV Services Inc.' },
                 { label: 'Phone number', value: '+91 78541 23697' },
-                { label: 'Email', value: 'monthly' },
-                { label: 'Estimated monthly cost', value: '3' },
-                { label: 'Website', value: 'sbi' },
+                { label: 'Email', value: 'support@directtv.com' },
+                { label: 'Estimated monthly cost', value: '$85.00' },
+                { label: 'Website', value: 'https://www.directtv.com' },
             ]
         }
     ];

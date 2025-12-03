@@ -19,13 +19,19 @@ import InviteToApplyModal from './components/InviteToApplyModal';
 import DetailTabs from '../../components/DetailTabs';
 
 const ListingDetail: React.FC = () => {
-    const { id } = useParams();
+    const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('listing');
     const [isOnlineApplicationModalOpen, setIsOnlineApplicationModalOpen] = useState(false);
     const [isInviteToApplyModalOpen, setIsInviteToApplyModalOpen] = useState(false);
     const [onlineApplicationStatus, setOnlineApplicationStatus] = useState('Enabled');
     const [applicationFee, setApplicationFee] = useState<string>('');
+
+    // Guard: Redirect to listings page if id is undefined
+    if (!id) {
+        navigate('/dashboard/portfolio/listing', { replace: true });
+        return null;
+    }
 
     // Mock data based on the screenshot
     const listing = {
@@ -107,34 +113,58 @@ const ListingDetail: React.FC = () => {
 
     const galleryInputRef = useRef<HTMLInputElement>(null);
     const videoInputRef = useRef<HTMLInputElement>(null);
+    // Track object URLs for cleanup
+    const objectURLsRef = useRef<Set<string>>(new Set());
+
+    // Cleanup object URLs on unmount
+    React.useEffect(() => {
+        return () => {
+            objectURLsRef.current.forEach(url => {
+                URL.revokeObjectURL(url);
+            });
+            objectURLsRef.current.clear();
+        };
+    }, []);
 
     const handleDeleteGalleryImage = (index: number) => {
+        const urlToRemove = galleryImages[index];
+        // Revoke object URL if it's one we created
+        if (objectURLsRef.current.has(urlToRemove)) {
+            URL.revokeObjectURL(urlToRemove);
+            objectURLsRef.current.delete(urlToRemove);
+        }
         setGalleryImages(prev => prev.filter((_, i) => i !== index));
     };
 
     const handleDeleteVideoItem = (index: number) => {
+        const urlToRemove = videoItems[index];
+        // Revoke object URL if it's one we created
+        if (objectURLsRef.current.has(urlToRemove)) {
+            URL.revokeObjectURL(urlToRemove);
+            objectURLsRef.current.delete(urlToRemove);
+        }
         setVideoItems(prev => prev.filter((_, i) => i !== index));
     };
 
     const handleGalleryUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setGalleryImages(prev => [reader.result as string, ...prev]);
-            };
-            reader.readAsDataURL(file);
+            // Use object URL instead of data URL to avoid memory issues
+            const objectURL = URL.createObjectURL(file);
+            objectURLsRef.current.add(objectURL);
+            setGalleryImages(prev => [objectURL, ...prev]);
+            // TODO: Upload file to server and replace objectURL with server URL
         }
     };
 
     const handleVideoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setVideoItems(prev => [reader.result as string, ...prev]);
-            };
-            reader.readAsDataURL(file);
+            // Use object URL instead of data URL to avoid memory issues with large videos
+            const objectURL = URL.createObjectURL(file);
+            objectURLsRef.current.add(objectURL);
+            setVideoItems(prev => [objectURL, ...prev]);
+            // TODO: Upload file to server and replace objectURL with server URL
         }
     };
 
@@ -493,8 +523,8 @@ const ListingDetail: React.FC = () => {
                                     )}
                                     {videoItems.map((vid, idx) => (
                                         <div key={idx} className={`${isVideoEditing ? 'min-w-[150px] w-[150px]' : ''} aspect-square rounded-2xl overflow-hidden relative group cursor-pointer flex-shrink-0`}>
-                                            <img src={vid} alt={`Video ${idx}`} className="w-full h-full object-cover" />
-                                            <div className={`absolute inset-0 bg-black/20 flex items-center justify-center ${isGalleryEditing ? '' : 'group-hover:bg-black/30'} transition-colors`}>
+                                            <video src={vid} className="w-full h-full object-cover" muted playsInline />
+                                            <div className={`absolute inset-0 bg-black/20 flex items-center justify-center ${isVideoEditing ? '' : 'group-hover:bg-black/30'} transition-colors`}>
                                                 {!isVideoEditing && <PlayCircle className="w-10 h-10 text-white opacity-80 group-hover:opacity-100" />}
                                             </div>
                                             {isVideoEditing && (
@@ -804,7 +834,6 @@ const ListingDetail: React.FC = () => {
                     onSave={(status, fee) => {
                         setOnlineApplicationStatus(status);
                         setApplicationFee(fee);
-                        console.log('Online application saved:', { status, fee });
                     }}
                     initialStatus={onlineApplicationStatus}
                     initialFee={applicationFee}
@@ -814,7 +843,6 @@ const ListingDetail: React.FC = () => {
                     isOpen={isInviteToApplyModalOpen}
                     onClose={() => setIsInviteToApplyModalOpen(false)}
                     onSend={(data) => {
-                        console.log('Invitation sent:', data);
                         setIsInviteToApplyModalOpen(false);
                     }}
                 />
