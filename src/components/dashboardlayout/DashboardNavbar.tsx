@@ -1,9 +1,11 @@
 // src/components/dashboard/DashboardNavbar.tsx
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { Search, Bell, MessageSquare, Info, User, LogOut, UserCog, FileText, Download } from "lucide-react";
 import logo from "../../assets/images/logo.png";
 import { authService } from "../../services/auth.service";
+import { propertyQueryKeys } from "../../hooks/usePropertyQueries";
 
 interface NavbarProps {
   sidebarOpen: boolean;
@@ -16,6 +18,7 @@ export default function DashboardNavbar({ sidebarOpen, setSidebarOpen }: NavbarP
   const [isLoading, setIsLoading] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   // Fetch current user data
   useEffect(() => {
@@ -51,10 +54,17 @@ export default function DashboardNavbar({ sidebarOpen, setSidebarOpen }: NavbarP
   const handleLogout = async () => {
     try {
       await authService.logout();
+      // Clear all property-related queries on logout to prevent cross-user data leakage
+      queryClient.removeQueries({ queryKey: propertyQueryKeys.all });
+      // Clear all queries to ensure fresh data for next user
+      queryClient.clear();
       // Redirect to login page
       navigate("/login", { replace: true });
     } catch (error) {
       console.error("Logout error:", error);
+      // Clear cache even if logout API call fails
+      queryClient.removeQueries({ queryKey: propertyQueryKeys.all });
+      queryClient.clear();
       // Still redirect even if logout API call fails
       navigate("/login", { replace: true });
     } finally {

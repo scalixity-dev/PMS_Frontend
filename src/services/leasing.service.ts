@@ -123,8 +123,9 @@ class LeasingService {
 
   /**
    * Get leasing by property ID
+   * Returns null if leasing doesn't exist (404), throws error for other failures
    */
-  async getByPropertyId(propertyId: string): Promise<BackendLeasing> {
+  async getByPropertyId(propertyId: string): Promise<BackendLeasing | null> {
     const response = await fetch(API_ENDPOINTS.LEASING.GET_BY_PROPERTY(propertyId), {
       method: 'GET',
       headers: {
@@ -134,6 +135,12 @@ class LeasingService {
     });
 
     if (!response.ok) {
+      // 404 means leasing doesn't exist - this is not an error, just return null
+      if (response.status === 404) {
+        return null;
+      }
+      
+      // For other errors, throw an exception
       let errorMessage = 'Failed to fetch leasing for property';
       try {
         const errorData = await response.json();

@@ -9,7 +9,7 @@ import IssueDefinition from './steps/IssueDefinition';
 import FinalDetails from './steps/FinalDetails';
 import MediaUpload from './steps/MediaUpload';
 import IssueDescription from './steps/IssueDescription';
-import PropertySelection from './steps/PropertySelection';
+import PropertySelection from './steps/MaintanancePropertySelection';
 import CreatePropertyForm from './components/CreatePropertyForm';
 import PrioritySelection from './steps/PrioritySelection';
 import MaintenanceSuccessModal from './components/MaintenanceSuccessModal';

@@ -1,31 +1,17 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { propertyService } from '../../../../../services/property.service';
+import React, { useMemo } from 'react';
+import { useGetProperty } from '../../../../../hooks/usePropertyQueries';
 import { getCurrencySymbol } from '../../../../../utils/currency.utils';
+import { useListUnitStore } from '../store/listUnitStore';
 
 interface ApplicationFeeDetailsProps {
-    data: any;
-    updateData: (key: string, value: any) => void;
     propertyId?: string;
 }
 
-const ApplicationFeeDetails: React.FC<ApplicationFeeDetailsProps> = ({ data, updateData, propertyId }) => {
-    const [property, setProperty] = useState<any>(null);
+const ApplicationFeeDetails: React.FC<ApplicationFeeDetailsProps> = ({ propertyId }) => {
+    const { formData, updateFormData } = useListUnitStore();
 
-    // Fetch property data to get country for currency
-    useEffect(() => {
-        const fetchProperty = async () => {
-            if (!propertyId) return;
-            
-            try {
-                const propertyData = await propertyService.getOne(propertyId);
-                setProperty(propertyData);
-            } catch (err) {
-                console.error('Error fetching property:', err);
-            }
-        };
-
-        fetchProperty();
-    }, [propertyId]);
+    // Use React Query to fetch property data
+    const { data: property } = useGetProperty(propertyId || null, !!propertyId);
 
     // Get currency symbol based on property's country
     const currencySymbol = useMemo(() => {
@@ -54,8 +40,8 @@ const ApplicationFeeDetails: React.FC<ApplicationFeeDetailsProps> = ({ data, upd
                         )}
                         <input
                             type="number"
-                            value={data.applicationFeeAmount || ''}
-                            onChange={(e) => updateData('applicationFeeAmount', e.target.value)}
+                            value={formData.applicationFeeAmount || ''}
+                            onChange={(e) => updateFormData('applicationFeeAmount', e.target.value)}
                             placeholder={`${currencySymbol || '$'} 0.00`}
                             className={`w-full bg-[#84CC16] text-white placeholder-white/80 text-center text-lg font-medium py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#84CC16] ${currencySymbol ? 'pl-8' : ''}`}
                         />
