@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import Stepper from './components/Stepper';
 import PropertySelection from './steps/PropertySelection';
@@ -24,7 +24,6 @@ import type { LeaseDuration } from '../../../../services/leasing.service';
 
 const ListUnit: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const queryClient = useQueryClient();
   const {
     formData,
@@ -51,7 +50,7 @@ const ListUnit: React.FC = () => {
   // Get createPropertyStore reset function
   const { resetForm: resetCreatePropertyForm } = useCreatePropertyStore();
 
-  // Reset both forms and clear cache when component mounts (fresh start)
+  // Reset both forms and clear cache only on initial mount (not on every render)
   useEffect(() => {
     // Reset the ListUnit form to initial state
     resetForm();
@@ -59,7 +58,8 @@ const ListUnit: React.FC = () => {
     resetCreatePropertyForm();
     // Invalidate property queries to ensure fresh data
     queryClient.removeQueries({ queryKey: propertyQueryKeys.all });
-  }, [location.pathname, resetForm, resetCreatePropertyForm, queryClient]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   // Use React Query to fetch property data when property is selected
   const { data: propertyData } = useGetProperty(formData.property || null, !!formData.property);

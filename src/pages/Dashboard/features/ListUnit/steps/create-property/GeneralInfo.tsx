@@ -313,6 +313,91 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onPropertyCreated, propertyId
                     </div>
                 </div>
 
+                
+
+                {/* Year Built */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Year Built*
+                    </label>
+                    <input
+                        type="number"
+                        name="yearBuilt"
+                        value={data.yearBuilt}
+                        onChange={handleChange}
+                        placeholder="0.00"
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] bg-white text-gray-900 placeholder-gray-400"
+                        required
+                    />
+                </div>
+
+                {/* Address */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Address
+                    </label>
+                    <input
+                        type="text"
+                        name="address"
+                        value={data.address || ''}
+                        onChange={handleChange}
+                        placeholder="Enter street address"
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] bg-white text-gray-900 placeholder-gray-400"
+                        required
+                    />
+                </div>
+
+                {/* Country & State/Region */}
+                <div className="grid grid-cols-2 gap-4">
+                    <CustomDropdown
+                        label="Country"
+                        value={data.country}
+                        onChange={handleCountryChange}
+                        options={countryOptions}
+                        placeholder="Select country"
+                        required
+                        disabled={countryOptions.length === 0}
+                        searchable={true}
+                    />
+                    <CustomDropdown
+                        label="State / Region*"
+                        value={data.stateRegion}
+                        onChange={handleStateChange}
+                        options={stateOptions}
+                        placeholder={data.country ? "Select state" : "Select country first"}
+                        required
+                        disabled={!data.country || stateOptions.length === 0}
+                        searchable={true}
+                    />
+                </div>
+
+                {/* City & Zip */}
+                <div className="grid grid-cols-2 gap-4">
+                    <CustomDropdown
+                        label="City"
+                        value={data.city}
+                        onChange={handleCityChange}
+                        options={cityOptions}
+                        placeholder={data.stateRegion ? "Select city" : data.country ? "Select state first" : "Select country first"}
+                        required
+                        disabled={!data.stateRegion || cityOptions.length === 0}
+                        searchable={true}
+                    />
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Zip
+                        </label>
+                        <input
+                            type="text"
+                            name="zip"
+                            value={data.zip}
+                            onChange={handleChange}
+                            placeholder="Zip Code"
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] bg-white text-gray-900 placeholder-gray-400"
+                            required
+                        />
+                    </div>
+                </div>
                 {/* Market Rent & Beds */}
                 <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -377,90 +462,6 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onPropertyCreated, propertyId
                             value={data.sizeSquareFt}
                             onChange={handleChange}
                             placeholder="0.00"
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] bg-white text-gray-900 placeholder-gray-400"
-                            required
-                        />
-                    </div>
-                </div>
-
-                {/* Year Built */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Year Built*
-                    </label>
-                    <input
-                        type="number"
-                        name="yearBuilt"
-                        value={data.yearBuilt}
-                        onChange={handleChange}
-                        placeholder="0.00"
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] bg-white text-gray-900 placeholder-gray-400"
-                        required
-                    />
-                </div>
-
-                {/* Address */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Address*
-                    </label>
-                    <input
-                        type="text"
-                        name="address"
-                        value={data.address || ''}
-                        onChange={handleChange}
-                        placeholder="Enter street address"
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] bg-white text-gray-900 placeholder-gray-400"
-                        required
-                    />
-                </div>
-
-                {/* Country & State/Region */}
-                <div className="grid grid-cols-2 gap-4">
-                    <CustomDropdown
-                        label="Country*"
-                        value={data.country}
-                        onChange={handleCountryChange}
-                        options={countryOptions}
-                        placeholder="Select country"
-                        required
-                        disabled={countryOptions.length === 0}
-                        searchable={true}
-                    />
-                    <CustomDropdown
-                        label="State / Region*"
-                        value={data.stateRegion}
-                        onChange={handleStateChange}
-                        options={stateOptions}
-                        placeholder={data.country ? "Select state" : "Select country first"}
-                        required
-                        disabled={!data.country || stateOptions.length === 0}
-                        searchable={true}
-                    />
-                </div>
-
-                {/* City & Zip */}
-                <div className="grid grid-cols-2 gap-4">
-                    <CustomDropdown
-                        label="City*"
-                        value={data.city}
-                        onChange={handleCityChange}
-                        options={cityOptions}
-                        placeholder={data.stateRegion ? "Select city" : data.country ? "Select state first" : "Select country first"}
-                        required
-                        disabled={!data.stateRegion || cityOptions.length === 0}
-                        searchable={true}
-                    />
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Zip*
-                        </label>
-                        <input
-                            type="text"
-                            name="zip"
-                            value={data.zip}
-                            onChange={handleChange}
-                            placeholder="Zip Code"
                             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] bg-white text-gray-900 placeholder-gray-400"
                             required
                         />

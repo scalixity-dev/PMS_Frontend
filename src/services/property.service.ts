@@ -50,7 +50,26 @@ export interface BackendProperty {
   leasing?: {
     occupancyStatus?: 'VACANT' | 'OCCUPIED' | 'PARTIALLY_OCCUPIED' | null;
     monthlyRent?: string | number | null;
+    securityDeposit?: string | number | null;
+    amountRefundable?: string | number | null;
+    dateAvailable?: string | null;
+    minLeaseDuration?: string | null;
+    maxLeaseDuration?: string | null;
+    description?: string | null;
+    petsAllowed?: boolean | null;
+    petCategory?: string[] | null;
+    petDeposit?: string | number | null;
+    petFee?: string | number | null;
+    petDescription?: string | null;
+    onlineRentalApplication?: boolean | null;
+    requireApplicationFee?: boolean | null;
+    applicationFee?: string | number | null;
   } | null;
+  listings?: Array<{
+    id: string;
+    listingStatus: 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'EXPIRED' | 'ARCHIVED' | 'REMOVED';
+    isActive: boolean;
+  }> | null;
 }
 
 // Frontend Property Interface
@@ -68,9 +87,14 @@ export interface Property {
 class PropertyService {
   /**
    * Get all properties
+   * @param includeListings - Whether to include listings in the response (default: false for performance)
    */
-  async getAll(): Promise<BackendProperty[]> {
-    const response = await fetch(API_ENDPOINTS.PROPERTY.GET_ALL, {
+  async getAll(includeListings: boolean = false): Promise<BackendProperty[]> {
+    const url = includeListings 
+      ? `${API_ENDPOINTS.PROPERTY.GET_ALL}?includeListings=true`
+      : API_ENDPOINTS.PROPERTY.GET_ALL;
+    
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import GeneralInfo from './create-property/GeneralInfo';
 import PropertySummaryMap from './create-property/PropertySummaryMap';
@@ -30,22 +30,12 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
     setPropertyId,
     setManagerId,
     prevStep: storePrevStep,
-    resetForm,
   } = useCreatePropertyStore();
 
-  // Reset form when component unmounts (unless we're editing an existing property)
-  useEffect(() => {
-    return () => {
-      // Only reset if we're not editing an existing property
-      // This allows the form to persist state while navigating between steps
-      // but resets when the component is completely unmounted
-      if (!initialPropertyId && !storePropertyId) {
-        resetForm();
-      }
-    };
-  }, [initialPropertyId, storePropertyId, resetForm]);
-
   const [error, setError] = useState<string | null>(null);
+  
+  // Track if we've just created a property to prevent step reset
+  const isNewlyCreatedRef = useRef(false);
 
   // Use store values or fallback to local state
   const propertyId = storePropertyId || initialPropertyId || null;
@@ -71,9 +61,14 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
     }
   }, [managerId, setManagerId]);
 
-  // Load existing property data if propertyId is provided
+  // Load existing property data ONLY when editing (initialPropertyId is provided)
+  // Don't load data when creating a new property - let GeneralInfo handle that
   useEffect(() => {
-    if (!propertyData) return;
+    // Only load if we have an initialPropertyId (editing mode) and property data
+    if (!initialPropertyId || !propertyData) return;
+    
+    // Don't interfere if we just created this property
+    if (isNewlyCreatedRef.current) return;
 
     setPropertyId(propertyData.id);
 
@@ -106,28 +101,16 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
 
     setFormData((prev) => ({ ...prev, ...mappedData }));
 
-    // Determine starting step based on what's completed
-    // Step 1: GeneralInfo (propertyName, address, beds, bathrooms, etc.)
-    // Step 2: PropertySummaryMap (always show after step 1)
-    // Step 3: BasicAmenities (parking, laundry, ac)
-    // Step 4: BasicAmenitiesExtended (extended amenities)
-    // Step 5: PropertyFeatures (features array)
-    // Step 6: PropertyPhotos (photos)
-    // Step 7: MarketingDescription (description)
-    // Step 8: AddRibbon (optional)
-
+    // Determine starting step based on what's completed (only when editing)
     let startingStep = 1;
-    // If GeneralInfo is completed (has propertyName and address), start from BasicAmenitiesExtended (step 4)
     if (propertyData.propertyName && propertyData.address) {
       startingStep = 4; // Start from BasicAmenitiesExtended after BasicAmenities
-      // If BasicAmenitiesExtended is also completed, continue to next steps
       if (propertyData.amenities?.propertyAmenities && propertyData.amenities.propertyAmenities.length > 0) {
         if (propertyData.amenities?.propertyFeatures && propertyData.amenities.propertyFeatures.length > 0) {
           if (propertyData.photos && propertyData.photos.length > 0) {
             startingStep = 6; // PropertyPhotos completed
             if (propertyData.description) {
               startingStep = 7; // MarketingDescription completed
-              // Step 8 (AddRibbon) is optional, so we'll start from step 7 if description exists
             }
           }
         }
@@ -135,7 +118,7 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
     }
 
     setCurrentStep(startingStep);
-  }, [propertyData, setPropertyId, setFormData, setCurrentStep]);
+  }, [initialPropertyId, propertyData, setPropertyId, setFormData, setCurrentStep]);
 
   // Handle property loading error
   useEffect(() => {
@@ -302,12 +285,17 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
   };
 
   // Handle property creation from GeneralInfo
+  // This is called when GeneralInfo saves - move to step 2 (PropertySummaryMap)
   const handlePropertyCreated = (id: string) => {
+    // Mark that we just created this property
+    isNewlyCreatedRef.current = true;
     setPropertyId(id);
-    // Move to next step after saving GeneralInfo
-    if (currentStep === 1) {
-      setCurrentStep(2);
-    }
+    // Move to step 2 (PropertySummaryMap) after saving GeneralInfo
+    setCurrentStep(2);
+    // Clear the flag after a short delay to allow step update to complete
+    setTimeout(() => {
+      isNewlyCreatedRef.current = false;
+    }, 100);
   };
 
   const handleNext = async () => {
