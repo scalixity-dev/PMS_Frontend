@@ -137,10 +137,6 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onPropertyCreated, propertyId
         updateData(name, value);
     };
 
-    const handleRadioChange = (value: string) => {
-        updateData('isManufactured', value);
-    };
-
     const handleCountryChange = (value: string) => {
         updateData('country', value);
     };
@@ -162,8 +158,6 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onPropertyCreated, propertyId
     const isFormValid = () => {
         return !!(
             data.propertyName &&
-            data.propertyType &&
-            data.isManufactured &&
             data.marketRent &&
             data.beds &&
             data.bathrooms &&
@@ -277,57 +271,6 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onPropertyCreated, propertyId
                         required
                     />
                 </div>
-
-                {/* Property Type */}
-                <CustomDropdown
-                    label="Property Type"
-                    value={data.propertyType}
-                    onChange={(value) => updateData('propertyType', value)}
-                    options={[
-                        { value: 'apartment', label: 'Apartment' },
-                        { value: 'house', label: 'House' },
-                        { value: 'condo', label: 'Condo' },
-                        { value: 'townhouse', label: 'Townhouse' },
-                        { value: 'duplex', label: 'Duplex' }
-                    ]}
-                    placeholder="Property Type"
-                    required
-                />
-
-                {/* Manufactured Home Radio */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Is this property a manufactured/mobile home?*
-                    </label>
-                    <div className="flex gap-6">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                                type="radio"
-                                name="isManufactured"
-                                value="yes"
-                                checked={data.isManufactured === 'yes'}
-                                onChange={() => handleRadioChange('yes')}
-                                className="w-4 h-4 text-[var(--color-primary)] border-gray-300 focus:ring-[var(--color-primary)]"
-                                required
-                            />
-                            <span className="text-sm text-gray-700">Yes</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                                type="radio"
-                                name="isManufactured"
-                                value="no"
-                                checked={data.isManufactured === 'no'}
-                                onChange={() => handleRadioChange('no')}
-                                className="w-4 h-4 text-[var(--color-primary)] border-gray-300 focus:ring-[var(--color-primary)]"
-                                required
-                            />
-                            <span className="text-sm text-gray-700">No</span>
-                        </label>
-                    </div>
-                </div>
-
-                
 
                 {/* Year Built */}
                 <div>
