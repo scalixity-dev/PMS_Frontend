@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Country, State, City } from 'country-state-city';
 import type { ICountry, IState, ICity } from 'country-state-city';
 import CustomDropdown from '../../../../components/CustomDropdown';
@@ -63,36 +63,50 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onPropertyCreated, propertyId
         }
     }, [managerId, setManagerId]);
 
+    // Track previous country/state to detect actual changes (not just initial load)
+    const prevCountryRef = useRef<string | undefined>(data.country);
+    const prevStateRef = useRef<string | undefined>(data.stateRegion);
+
     // Load states when country changes
     useEffect(() => {
         if (data.country) {
             const countryStates = State.getStatesOfCountry(data.country);
             setStates(countryStates);
-            // Reset state and city when country changes
-            if (data.stateRegion) {
-                updateData('stateRegion', '');
+            // Only reset state and city if country actually changed (not on initial load)
+            if (prevCountryRef.current && prevCountryRef.current !== data.country) {
+                if (data.stateRegion) {
+                    updateData('stateRegion', '');
+                }
+                if (data.city) {
+                    updateData('city', '');
+                }
             }
-            if (data.city) {
-                updateData('city', '');
-            }
+            prevCountryRef.current = data.country;
         } else {
             setStates([]);
+            prevCountryRef.current = undefined;
         }
-    }, [data.country]);
+    }, [data.country, updateData]);
 
     // Load cities when state changes
     useEffect(() => {
         if (data.country && data.stateRegion) {
             const stateCities = City.getCitiesOfState(data.country, data.stateRegion);
             setCities(stateCities);
-            // Reset city when state changes
-            if (data.city) {
-                updateData('city', '');
+            // Only reset city if state actually changed (not on initial load)
+            if (prevStateRef.current && prevStateRef.current !== data.stateRegion) {
+                if (data.city) {
+                    updateData('city', '');
+                }
             }
+            prevStateRef.current = data.stateRegion;
         } else {
             setCities([]);
+            if (!data.stateRegion) {
+                prevStateRef.current = undefined;
+            }
         }
-    }, [data.country, data.stateRegion]);
+    }, [data.country, data.stateRegion, updateData]);
 
     // Convert countries to dropdown options
     const countryOptions = useMemo(() => {

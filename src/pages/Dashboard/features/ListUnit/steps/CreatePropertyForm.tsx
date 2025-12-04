@@ -30,16 +30,29 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
     setPropertyId,
     setManagerId,
     prevStep: storePrevStep,
+    resetForm,
   } = useCreatePropertyStore();
 
   const [error, setError] = useState<string | null>(null);
   
   // Track if we've just created a property to prevent step reset
   const isNewlyCreatedRef = useRef(false);
+  
+  // Track previous initialPropertyId to detect when we switch between create/edit
+  const previousInitialPropertyIdRef = useRef<string | undefined>(initialPropertyId);
 
   // Use store values or fallback to local state
   const propertyId = storePropertyId || initialPropertyId || null;
   const managerId = storeManagerId;
+  
+  // Reset form when switching from edit to create mode (initialPropertyId changes from value to undefined)
+  useEffect(() => {
+    // If we had a propertyId before and now we don't (switching to create mode), reset the form
+    if (previousInitialPropertyIdRef.current && !initialPropertyId) {
+      resetForm();
+    }
+    previousInitialPropertyIdRef.current = initialPropertyId;
+  }, [initialPropertyId, resetForm]);
 
   // React Query hooks
   const { data: propertyData, isLoading: isLoadingProperty, error: propertyError } = useGetProperty(initialPropertyId || null, !!initialPropertyId);
@@ -61,21 +74,49 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
     }
   }, [managerId, setManagerId]);
 
-  // Load existing property data ONLY when editing (initialPropertyId is provided)
-  // Don't load data when creating a new property - let GeneralInfo handle that
+  // Track previous propertyId to detect changes
+  const previousPropertyIdRef = useRef<string | undefined>(initialPropertyId);
+  // Track if we've already loaded the data for this property to prevent re-loading
+  const dataLoadedForPropertyRef = useRef<string | null>(null);
+
+  // Load existing property data when editing (initialPropertyId is provided)
+  // When editing, pre-fill all form fields and start from step 1 (like creation flow)
   useEffect(() => {
     // Only load if we have an initialPropertyId (editing mode) and property data
-    if (!initialPropertyId || !propertyData) return;
+    if (!initialPropertyId || !propertyData) {
+      // If we were editing and now we're not, reset the form
+      if (previousPropertyIdRef.current && !initialPropertyId) {
+        resetForm();
+        previousPropertyIdRef.current = undefined;
+        dataLoadedForPropertyRef.current = null;
+      }
+      return;
+    }
     
     // Don't interfere if we just created this property
     if (isNewlyCreatedRef.current) return;
 
+    // If we've already loaded data for this property, don't reload (prevents step reset)
+    if (dataLoadedForPropertyRef.current === propertyData.id) {
+      return;
+    }
+
+    // If propertyId changed, reset form first to avoid mixing data
+    if (previousPropertyIdRef.current && previousPropertyIdRef.current !== initialPropertyId) {
+      resetForm();
+      dataLoadedForPropertyRef.current = null;
+    }
+    previousPropertyIdRef.current = initialPropertyId;
+
     setPropertyId(propertyData.id);
 
-    // Map backend property to form data
+    // Map backend property to form data - pre-fill ALL fields
+    // Note: propertyType in backend is 'SINGLE' | 'MULTI', but form expects 'apartment', 'house', etc.
+    // We'll leave it empty for now and let user select, or map to a default
     const mappedData: any = {
       propertyName: propertyData.propertyName || '',
-      propertyType: propertyData.propertyType?.toLowerCase() || '',
+      propertyType: '', // Property type dropdown uses different values (apartment, house, etc.) - user needs to select
+      isManufactured: '', // Will be set by user in GeneralInfo if needed
       marketRent: propertyData.marketRent?.toString() || '',
       address: propertyData.address?.streetAddress || '',
       city: propertyData.address?.city || '',
@@ -86,9 +127,10 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
       bathrooms: propertyData.singleUnitDetails?.baths?.toString() || '',
       sizeSquareFt: propertyData.sizeSqft?.toString() || '',
       yearBuilt: propertyData.yearBuilt?.toString() || '',
-      parking: propertyData.amenities?.parking?.toLowerCase() || '',
-      laundry: propertyData.amenities?.laundry?.toLowerCase() || '',
-      ac: propertyData.amenities?.airConditioning?.toLowerCase() || '',
+      // Keep amenities in UPPERCASE (enum values) - BasicAmenities expects uppercase
+      parking: propertyData.amenities?.parking || '',
+      laundry: propertyData.amenities?.laundry || '',
+      ac: propertyData.amenities?.airConditioning || '',
       extendedAmenities: propertyData.amenities?.propertyAmenities || [],
       features: propertyData.amenities?.propertyFeatures || [],
       marketingDescription: propertyData.description || '',
@@ -99,26 +141,20 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
       ribbonTitle: propertyData.ribbonTitle || '',
     };
 
-    setFormData((prev) => ({ ...prev, ...mappedData }));
+    // Set all form data at once
+    setFormData(mappedData);
 
-    // Determine starting step based on what's completed (only when editing)
-    let startingStep = 1;
-    if (propertyData.propertyName && propertyData.address) {
-      startingStep = 4; // Start from BasicAmenitiesExtended after BasicAmenities
-      if (propertyData.amenities?.propertyAmenities && propertyData.amenities.propertyAmenities.length > 0) {
-        if (propertyData.amenities?.propertyFeatures && propertyData.amenities.propertyFeatures.length > 0) {
-          if (propertyData.photos && propertyData.photos.length > 0) {
-            startingStep = 6; // PropertyPhotos completed
-            if (propertyData.description) {
-              startingStep = 7; // MarketingDescription completed
-            }
-          }
-        }
-      }
+    // Mark that we've loaded data for this property
+    dataLoadedForPropertyRef.current = propertyData.id;
+
+    // When editing, always start from step 1 (GeneralInfo) with pre-filled data
+    // This makes the edit flow work exactly like creation flow, but with existing data
+    // Only set step to 1 on initial load (when storePropertyId doesn't match or is null)
+    // This prevents resetting step when user navigates through the form
+    if (!storePropertyId || storePropertyId !== propertyData.id) {
+      setCurrentStep(1);
     }
-
-    setCurrentStep(startingStep);
-  }, [initialPropertyId, propertyData, setPropertyId, setFormData, setCurrentStep]);
+  }, [initialPropertyId, propertyData, setPropertyId, setFormData, setCurrentStep, resetForm, currentStep, storePropertyId]);
 
   // Handle property loading error
   useEffect(() => {
