@@ -23,6 +23,7 @@ import ServiceProsPage from './pages/basewebsite/usecases/servicepros';
 import Dashboard from './pages/Dashboard/Dashboard';
 import ListUnit from './pages/Dashboard/features/ListUnit';
 import AddProperty from './pages/Dashboard/features/Properties/AddProperty';
+import EditProperty from './pages/Dashboard/features/Properties/EditProperty';
 import AddIncomeInvoice from './pages/Dashboard/features/Transactions/AddIncomeInvoice';
 import AddExpenseInvoice from './pages/Dashboard/features/Transactions/AddExpenseInvoice';
 import AddMaintenanceRequest from './pages/Dashboard/features/Maintenance/AddMaintenanceRequest';
@@ -98,6 +99,7 @@ const App: React.FC = () => {
             <Route path="/dashboard/tasks" element={<Tasks />} />
             <Route path="/dashboard/equipments" element={<Equipments />} />
             <Route path="/dashboard/property/add" element={<AddProperty />} />
+            <Route path="/dashboard/properties/edit/:id" element={<EditProperty />} />
             <Route path="/dashboard/accounting/transactions/income/add" element={<AddIncomeInvoice />} />
             <Route path="/dashboard/accounting/transactions/expense/add" element={<AddExpenseInvoice />} />
             <Route path="/dashboard/maintenance/request" element={<AddMaintenanceRequest />} />

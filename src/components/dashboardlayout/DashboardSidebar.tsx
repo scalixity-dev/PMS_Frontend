@@ -5,14 +5,13 @@ import { createPortal } from 'react-dom';
 import { SquarePen } from "lucide-react";
 import {
   PiChartLineUpFill, PiChartPieSliceFill, PiBuildingsFill, PiUsersFill,
-  PiCurrencyDollarFill, PiWrenchFill, PiFileTextFill, PiFileFill, PiDownloadFill
+  PiCurrencyDollarFill, PiWrenchFill, PiFileTextFill
 } from "react-icons/pi";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import artworkImage from "../../assets/images/Artwork.png";
 
 // --- Type Definitions (Remain the same) ---
 interface SidebarProps { open: boolean; setOpen: (open: boolean) => void; }
-interface SidebarLinkProps { label: string; to: string; icon: React.ReactNode; }
 interface SidebarSubLinkProps { label: string; to: string; isCurrentPath: (path: string) => boolean; }
 interface SidebarDropdownLinkProps {
   label: string;
@@ -94,25 +93,6 @@ function SidebarDropdownLink({ label, to, icon, children, activeDropdown, setAct
         </div>
       </div>
     </>
-  );
-}
-
-function SidebarLink({ label, to, icon }: SidebarLinkProps) {
-  const location = useLocation();
-  const isActive = location.pathname === to;
-
-  return (
-    <Link
-      to={to}
-      className={`flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors group
-              ${isActive
-          ? "bg-gray-100 font-semibold text-black"
-          : "text-gray-700 hover:bg-gray-100"}`
-      }
-    >
-      <span className={`${isActive ? "text-green-600" : "text-black group-hover:text-black"}`}>{icon}</span>
-      <span className={`${isActive ? "text-green-600" : "text-black group-hover:text-black"}  text-sm font-medium`}>{label}</span>
-    </Link>
   );
 }
 
@@ -275,7 +255,6 @@ export default function DashboardSidebar({ open, setOpen }: SidebarProps) {
                 <SidebarSubLink label="Properties" to="/dashboard/properties" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Units" to="/dashboard/portfolio/units" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Leases" to="/portfolio/leases" isCurrentPath={isCurrentPath} />
-                <SidebarSubLink label="Units" to="/portfolio/units" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Listing" to="/dashboard/portfolio/listing" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Occupancy Board" to="/portfolio/board" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Keys & Locks" to="/portfolio/keys" isCurrentPath={isCurrentPath} />

@@ -1,7 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     ChevronLeft,
+    ChevronDown,
+    Edit,
     MapPin,
     Users,
     Landmark,
@@ -16,17 +18,408 @@ import ServiceProvidersTab from './components/ServiceProvidersTab';
 import DetailTabs from '../../components/DetailTabs';
 import { useGetProperty } from '../../../../hooks/usePropertyQueries';
 import { getCurrencySymbol } from '../../../../utils/currency.utils';
+import { type UnitGroup } from '../Units/components/UnitGroupCard';
+
+// Mock data from Units feature
+const mockUnitsData: UnitGroup[] = [
+    {
+        id: '1',
+        propertyName: 'Downtown Loft',
+        address: '12 MG Road, Bangalore, KA 560001, IN',
+        image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80',
+        status: 'Occupied',
+        units: [
+            {
+                id: 'u1',
+                name: 'Studio',
+                type: 'Single-Family',
+                status: 'Occupied',
+                rent: 18000,
+                beds: 1,
+                baths: 1,
+                sqft: 850,
+                image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80'
+            }
+        ]
+    },
+    {
+        id: '1a',
+        propertyName: 'Skyline Villa',
+        address: '89 Whitefield, Bangalore, KA 560066, IN',
+        image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80',
+        status: 'Vacant',
+        units: [
+            {
+                id: 'u1a',
+                name: 'Penthouse',
+                type: 'Single-Family',
+                status: 'Vacant',
+                rent: 35000,
+                beds: 3,
+                baths: 2,
+                sqft: 1800,
+                image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80'
+            }
+        ]
+    },
+    {
+        id: '2',
+        propertyName: 'Green Valley Complex',
+        address: '45 Residency Road, Mumbai, MH 400020, IN',
+        image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80',
+        status: 'Partially Occupied',
+        units: [
+            {
+                id: 'u2',
+                name: 'Unit A',
+                type: 'Apartment',
+                status: 'Occupied',
+                rent: 22000,
+                beds: 2,
+                baths: 2,
+                sqft: 1400,
+                image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80'
+            },
+            {
+                id: 'u3',
+                name: 'Unit B',
+                type: 'Apartment',
+                status: 'Vacant',
+                rent: 22000,
+                beds: 2,
+                baths: 2,
+                sqft: 1400,
+                image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80'
+            }
+        ]
+    },
+    {
+        id: '3',
+        propertyName: 'Sunrise Apartments',
+        address: '78 Scheme No 78 - II, Indore, MP 452010, IN',
+        image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80',
+        status: 'Partially Occupied',
+        units: [
+            {
+                id: 'u4',
+                name: 'Unit 101',
+                type: 'Apartment',
+                status: 'Occupied',
+                rent: 15000,
+                beds: 2,
+                baths: 1,
+                sqft: 1200,
+                image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80'
+            },
+            {
+                id: 'u5',
+                name: 'Unit 102',
+                type: 'Apartment',
+                status: 'Vacant',
+                rent: 15000,
+                beds: 2,
+                baths: 1,
+                sqft: 1200,
+                image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80'
+            },
+            {
+                id: 'u6',
+                name: 'Unit 103',
+                type: 'Apartment',
+                status: 'Occupied',
+                rent: 15000,
+                beds: 2,
+                baths: 1,
+                sqft: 1200,
+                image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80'
+            },
+            {
+                id: 'u7',
+                name: 'Unit 104',
+                type: 'Apartment',
+                status: 'Vacant',
+                rent: 15000,
+                beds: 2,
+                baths: 1,
+                sqft: 1200,
+                image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80'
+            },
+            {
+                id: 'u8',
+                name: 'Unit 105',
+                type: 'Apartment',
+                status: 'Occupied',
+                rent: 15000,
+                beds: 2,
+                baths: 1,
+                sqft: 1200,
+                image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80'
+            }
+        ]
+    },
+    {
+        id: '4',
+        propertyName: 'Maple Heights',
+        address: '55 Park Street, Kolkata, WB 700016, IN',
+        image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80',
+        status: 'Occupied',
+        units: [
+            {
+                id: 'u9',
+                name: 'Unit 201',
+                type: 'Apartment',
+                status: 'Occupied',
+                rent: 28000,
+                beds: 3,
+                baths: 2,
+                sqft: 1800,
+                image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80'
+            },
+            {
+                id: 'u10',
+                name: 'Unit 202',
+                type: 'Apartment',
+                status: 'Occupied',
+                rent: 28000,
+                beds: 3,
+                baths: 2,
+                sqft: 1800,
+                image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80'
+            },
+            {
+                id: 'u11',
+                name: 'Unit 203',
+                type: 'Apartment',
+                status: 'Occupied',
+                rent: 28000,
+                beds: 3,
+                baths: 2,
+                sqft: 1800,
+                image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80'
+            },
+            {
+                id: 'u12',
+                name: 'Unit 204',
+                type: 'Apartment',
+                status: 'Occupied',
+                rent: 28000,
+                beds: 3,
+                baths: 2,
+                sqft: 1800,
+                image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80'
+            },
+            {
+                id: 'u13',
+                name: 'Unit 205',
+                type: 'Apartment',
+                status: 'Occupied',
+                rent: 28000,
+                beds: 3,
+                baths: 2,
+                sqft: 1800,
+                image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80'
+            },
+            {
+                id: 'u14',
+                name: 'Unit 206',
+                type: 'Apartment',
+                status: 'Occupied',
+                rent: 28000,
+                beds: 3,
+                baths: 2,
+                sqft: 1800,
+                image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80'
+            },
+            {
+                id: 'u15',
+                name: 'Unit 207',
+                type: 'Apartment',
+                status: 'Occupied',
+                rent: 28000,
+                beds: 3,
+                baths: 2,
+                sqft: 1800,
+                image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80'
+            }
+        ]
+    },
+    {
+        id: '5',
+        propertyName: 'Ocean View Residency',
+        address: '33 Marine Drive, Mumbai, MH 400002, IN',
+        image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80',
+        status: 'Partially Occupied',
+        units: [
+            {
+                id: 'u16',
+                name: 'Unit 301',
+                type: 'Apartment',
+                status: 'Occupied',
+                rent: 45000,
+                beds: 4,
+                baths: 3,
+                sqft: 2500,
+                image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80'
+            },
+            {
+                id: 'u17',
+                name: 'Unit 302',
+                type: 'Apartment',
+                status: 'Vacant',
+                rent: 45000,
+                beds: 4,
+                baths: 3,
+                sqft: 2500,
+                image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80'
+            },
+            {
+                id: 'u18',
+                name: 'Unit 303',
+                type: 'Apartment',
+                status: 'Occupied',
+                rent: 45000,
+                beds: 4,
+                baths: 3,
+                sqft: 2500,
+                image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80'
+            },
+            {
+                id: 'u19',
+                name: 'Unit 304',
+                type: 'Apartment',
+                status: 'Vacant',
+                rent: 45000,
+                beds: 4,
+                baths: 3,
+                sqft: 2500,
+                image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80'
+            },
+            {
+                id: 'u20',
+                name: 'Unit 305',
+                type: 'Apartment',
+                status: 'Occupied',
+                rent: 45000,
+                beds: 4,
+                baths: 3,
+                sqft: 2500,
+                image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80'
+            },
+            {
+                id: 'u21',
+                name: 'Unit 306',
+                type: 'Apartment',
+                status: 'Occupied',
+                rent: 45000,
+                beds: 4,
+                baths: 3,
+                sqft: 2500,
+                image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80'
+            },
+            {
+                id: 'u22',
+                name: 'Unit 307',
+                type: 'Apartment',
+                status: 'Vacant',
+                rent: 45000,
+                beds: 4,
+                baths: 3,
+                sqft: 2500,
+                image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80'
+            },
+            {
+                id: 'u23',
+                name: 'Unit 308',
+                type: 'Apartment',
+                status: 'Occupied',
+                rent: 45000,
+                beds: 4,
+                baths: 3,
+                sqft: 2500,
+                image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80'
+            }
+        ]
+    }
+];
 
 const PropertyDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('profile');
+    const [isActionDropdownOpen, setIsActionDropdownOpen] = useState(false);
+    const actionDropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (actionDropdownRef.current && !actionDropdownRef.current.contains(event.target as Node)) {
+                setIsActionDropdownOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     // Fetch property data from backend
     const { data: backendProperty, isLoading, error } = useGetProperty(id || null, !!id);
 
+    // Check if we need to use mock data (when backend returns no data)
+    const mockProperty = useMemo(() => {
+        if (!id || backendProperty) return null;
+
+        // Try to find in mock data
+        return mockUnitsData.find(p => p.id === id);
+    }, [id, backendProperty]);
+
     // Transform backend property to component format
     const property = useMemo(() => {
+        // If we have mock property data, transform it
+        if (mockProperty && !backendProperty) {
+            const firstUnit = mockProperty.units[0];
+            const totalUnits = mockProperty.units.length;
+            const occupiedUnits = mockProperty.units.filter(u => u.status === 'Occupied').length;
+
+            return {
+                id: mockProperty.id,
+                name: mockProperty.propertyName,
+                address: mockProperty.address,
+                country: 'IN',
+                image: mockProperty.image,
+                type: totalUnits > 1 ? 'Multi Family' : 'Single Family',
+                yearBuilt: '--',
+                mlsNumber: '--',
+                status: mockProperty.status,
+                specifications: {
+                    bedrooms: firstUnit?.beds || 0,
+                    bathrooms: firstUnit?.baths || 0,
+                    sizeSqFt: firstUnit?.sqft || 0,
+                },
+                financials: {
+                    balance: firstUnit?.rent || 0,
+                    currency: '₹',
+                },
+                features: [],
+                amenities: [],
+                parking: 'NONE',
+                laundry: 'NONE',
+                airConditioning: 'NONE',
+                description: `${mockProperty.propertyName} is a ${totalUnits > 1 ? `${totalUnits}-unit property` : 'single-family property'} located at ${mockProperty.address}. Currently ${occupiedUnits} of ${totalUnits} units are occupied.`,
+                attachments: [],
+                stats: {
+                    equipment: 0,
+                    recurringRequests: 0,
+                    tenants: occupiedUnits,
+                    maintenance: 0
+                },
+                // Add units data for display
+                units: mockProperty.units,
+                totalUnits,
+                occupiedUnits,
+            };
+        }
+
         if (!backendProperty) return null;
 
         // Format address
@@ -41,16 +434,16 @@ const PropertyDetail: React.FC = () => {
                 backendProperty.address.zipCode,
                 backendProperty.address.country,
             ].filter(part => part && part.trim() !== '');
-            
+
             if (addressParts.length > 0) {
                 address = addressParts.join(', ');
             }
         }
 
         // Get image - prioritize coverPhotoUrl, then primary photo, then first photo
-        const image = backendProperty.coverPhotoUrl 
-            || backendProperty.photos?.find((p) => p.isPrimary)?.photoUrl 
-            || backendProperty.photos?.[0]?.photoUrl 
+        const image = backendProperty.coverPhotoUrl
+            || backendProperty.photos?.find((p) => p.isPrimary)?.photoUrl
+            || backendProperty.photos?.[0]?.photoUrl
             || null;
 
         // Map status
@@ -59,7 +452,7 @@ const PropertyDetail: React.FC = () => {
             'INACTIVE': 'Inactive',
             'ARCHIVED': 'Archived',
         };
-        const status = backendProperty.status 
+        const status = backendProperty.status
             ? statusMap[backendProperty.status] || 'Inactive'
             : 'Inactive';
 
@@ -138,7 +531,7 @@ const PropertyDetail: React.FC = () => {
                 maintenance: 0
             },
         };
-    }, [backendProperty]);
+    }, [backendProperty, mockProperty]);
 
     // Loading state
     if (isLoading) {
@@ -152,8 +545,8 @@ const PropertyDetail: React.FC = () => {
         );
     }
 
-    // Error state
-    if (error || !property) {
+    // Error state - only show error if both backend and mock data failed
+    if ((error || !property) && !mockProperty) {
         return (
             <div className="max-w-6xl mx-auto min-h-screen pb-10 flex items-center justify-center">
                 <div className="text-center">
@@ -169,6 +562,11 @@ const PropertyDetail: React.FC = () => {
                 </div>
             </div>
         );
+    }
+
+    // If property is still null at this point, return null
+    if (!property) {
+        return null;
     }
 
     return (
@@ -198,9 +596,30 @@ const PropertyDetail: React.FC = () => {
                         <button className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5554] transition-colors">
                             Move In
                         </button>
-                        <button className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5554] transition-colors">
-                            Action
-                        </button>
+                        <div className="relative" ref={actionDropdownRef}>
+                            <button
+                                onClick={() => setIsActionDropdownOpen(!isActionDropdownOpen)}
+                                className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5554] transition-colors flex items-center gap-2"
+                            >
+                                Action
+                                <ChevronDown className={`w-4 h-4 transition-transform ${isActionDropdownOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {isActionDropdownOpen && (
+                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 animate-in fade-in zoom-in-95 duration-100 overflow-hidden">
+                                    <button
+                                        onClick={() => {
+                                            setIsActionDropdownOpen(false);
+                                            navigate(`/dashboard/properties/edit/${id}`);
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#3A6D6C] transition-colors flex items-center gap-2"
+                                    >
+                                        <Edit className="w-4 h-4" />
+                                        Edit
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -224,7 +643,7 @@ const PropertyDetail: React.FC = () => {
                                 }}
                             />
                         ) : null}
-                        <div 
+                        <div
                             className={`w-full h-full ${property.image ? 'hidden' : 'flex'} items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300`}
                         >
                             <div className="text-center">
