@@ -10,6 +10,7 @@ export interface BackendProperty {
   depositAmount?: string | number | null;
   sizeSqft?: string | number | null;
   yearBuilt?: number | null;
+  mlsNumber?: string | null;
   description?: string | null;
   coverPhotoUrl?: string | null;
   youtubeUrl?: string | null;
@@ -39,6 +40,12 @@ export interface BackendProperty {
     id: string;
     photoUrl: string;
     isPrimary: boolean;
+  }>;
+  attachments?: Array<{
+    id: string;
+    fileUrl: string;
+    fileType: string;
+    description?: string | null;
   }>;
   amenities?: {
     parking: 'NONE' | 'STREET' | 'GARAGE' | 'DRIVEWAY' | 'DEDICATED_SPOT' | 'PRIVATE_LOT' | 'ASSIGNED';

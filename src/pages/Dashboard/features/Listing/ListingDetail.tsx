@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     ChevronLeft,
@@ -9,6 +9,7 @@ import {
     Plus,
     List,
     ChevronDown,
+    Loader2,
 } from 'lucide-react';
 import { parse, format } from 'date-fns';
 import SelectionModal from './components/SelectionModal';
@@ -17,6 +18,8 @@ import DatePicker from '../../../../components/ui/DatePicker';
 import OnlineApplicationModal from './components/OnlineApplicationModal';
 import InviteToApplyModal from './components/InviteToApplyModal';
 import DetailTabs from '../../components/DetailTabs';
+import { useGetListing } from '../../../../hooks/useListingQueries';
+import { getCurrencySymbol } from '../../../../utils/currency.utils';
 
 const ListingDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -24,100 +27,257 @@ const ListingDetail: React.FC = () => {
     const [activeTab, setActiveTab] = useState('listing');
     const [isOnlineApplicationModalOpen, setIsOnlineApplicationModalOpen] = useState(false);
     const [isInviteToApplyModalOpen, setIsInviteToApplyModalOpen] = useState(false);
-    const [onlineApplicationStatus, setOnlineApplicationStatus] = useState('Enabled');
-    const [applicationFee, setApplicationFee] = useState<string>('');
 
-    // Guard: Redirect to listings page if id is undefined
-    if (!id) {
-        navigate('/dashboard/portfolio/listing', { replace: true });
-        return null;
-    }
-
-    // Mock data based on the screenshot
-    const listing = {
-        id: id,
-        name: 'Luxury Apartment',
-        address: '78 Scheme No 78 - II, Indore, MP 452010, IN',
-        price: 12000.00,
-        expiryDate: '29 Dec, 2025',
-        status: 'Listed',
-        image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1453&q=80',
-        unitDetails: {
-            type: 'Single-Family',
-            bedrooms: 1,
-            size: '1200 sq ft',
-            bathrooms: 0.5,
-            yearBuilt: 2025
-        },
-        basicAmenities: ['Parking', 'Driveway', 'Laundry', 'On-site', 'Air conditioning', 'Central air'],
-        onlineApplications: true,
-        postingEnabled: true,
-        leaseTerms: {
-            dateAvailable: '12 Nov, 2025',
-            securityDeposit: 5000.00,
-            monthlyRent: 12000.00,
-            amountRefundable: 12563,
-            leaseDuration: 'Monthly',
-            monthToMonth: 'No',
-            details: '-'
-        },
-        media: {
-            gallery: [
-                'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1453&q=80',
-                'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80',
-                'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80',
-                'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?ixlib=rb-4.0.3&auto=format&fit=crop&w=1384&q=80'
-            ],
-            video: [
-                'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1453&q=80',
-                'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80',
-                'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80',
-                'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?ixlib=rb-4.0.3&auto=format&fit=crop&w=1384&q=80'
-            ]
-        },
-        promotions: {
-            description: 'A perfect blend of comfort and convenience, this rental offers modern interiors, ample natural light, and a peaceful ambiance. Located close to key amenities, it ensures effortless living with style, making it an ideal choice for those seeking quality and value.'
-        },
-        features: ['Renovated', 'Furnished'],
-        amenities: ['Basketball court', 'Business Court'],
-        contact: {
-            name: 'Shawn James',
-            phone: '+91 78545 21026',
-            email: 'james33434@gmail.com',
-            avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&auto=format&fit=crop&w=256&q=80'
-        }
-    };
-
+    // All hooks must be declared before any conditional returns
     const [isGalleryEditing, setIsGalleryEditing] = useState(false);
     const [isVideoEditing, setIsVideoEditing] = useState(false);
-    const [galleryImages, setGalleryImages] = useState(listing.media.gallery);
-    const [videoItems, setVideoItems] = useState(listing.media.video);
-
     const [isDescriptionEditing, setIsDescriptionEditing] = useState(false);
     const [isRibbonEditing, setIsRibbonEditing] = useState(false);
-    const [promotionDescription, setPromotionDescription] = useState(listing.promotions.description);
-    const [promotionRibbon, setPromotionRibbon] = useState(listing.name);
-
     const [isLeaseTermsEditing, setIsLeaseTermsEditing] = useState(false);
-    const [leaseTerms, setLeaseTerms] = useState(listing.leaseTerms);
-
-    const [features, setFeatures] = useState(listing.features);
-    const [amenities, setAmenities] = useState(listing.amenities);
     const [activeModal, setActiveModal] = useState<'features' | 'amenities' | null>(null);
-
     const [isContactEditing, setIsContactEditing] = useState(false);
-    const [contactDetails, setContactDetails] = useState(listing.contact);
-
-    const availableFeatures = ['Renovated', 'Furnished', 'Hardwood Floor', 'Fire place', 'Internet', 'Carpet', 'Storage', 'Balcony', 'Garden'];
-    const availableAmenities = ['Basketball court', 'Business Court', 'Swimming Pool', 'Gym', 'Tennis Court', 'Clubhouse', 'Playground'];
+    const [galleryImages, setGalleryImages] = useState<string[]>([]);
+    const [videoItems, setVideoItems] = useState<string[]>([]);
+    const [promotionDescription, setPromotionDescription] = useState('');
+    const [promotionRibbon, setPromotionRibbon] = useState('');
+    const [leaseTerms, setLeaseTerms] = useState<any>(null);
+    const [features, setFeatures] = useState<string[]>([]);
+    const [amenities, setAmenities] = useState<string[]>([]);
+    const [contactDetails, setContactDetails] = useState<any>(null);
+    const [onlineApplicationStatus, setOnlineApplicationStatus] = useState('Disabled');
+    const [applicationFee, setApplicationFee] = useState<string>('');
 
     const galleryInputRef = useRef<HTMLInputElement>(null);
     const videoInputRef = useRef<HTMLInputElement>(null);
     // Track object URLs for cleanup
     const objectURLsRef = useRef<Set<string>>(new Set());
 
+    const availableFeatures = ['Renovated', 'Furnished', 'Hardwood Floor', 'Fire place', 'Internet', 'Carpet', 'Storage', 'Balcony', 'Garden'];
+    const availableAmenities = ['Basketball court', 'Business Court', 'Swimming Pool', 'Gym', 'Tennis Court', 'Clubhouse', 'Playground'];
+
+    // Fetch listing data from backend
+    const { data: backendListing, isLoading, error } = useGetListing(id || null, !!id);
+
+    // Transform backend listing to component format
+    const listing = useMemo(() => {
+        if (!backendListing || !backendListing.property) return null;
+
+        const property = backendListing.property;
+        const address = property.address;
+        const amenities = property.amenities;
+        const photos = property.photos || [];
+        const singleUnitDetails = property.singleUnitDetails;
+
+        // Format address
+        let addressStr = 'Address not available';
+        if (address && (address.streetAddress || address.city)) {
+            const addressParts = [
+                address.streetAddress,
+                address.city,
+                address.stateRegion,
+                address.zipCode,
+                address.country,
+            ].filter(part => part && part.trim() !== '');
+            if (addressParts.length > 0) {
+                addressStr = addressParts.join(', ');
+            }
+        }
+
+        // Get image - prioritize coverPhotoUrl, then primary photo, then first photo
+        const image = property.coverPhotoUrl 
+            || photos.find((p: any) => p.isPrimary)?.photoUrl 
+            || photos[0]?.photoUrl 
+            || null;
+
+        // Get gallery images (non-primary photos)
+        const gallery = photos
+            .filter((p: any) => !p.isPrimary)
+            .map((p: any) => p.photoUrl) || [];
+
+        // Get video URL if available
+        const video = property.youtubeUrl ? [property.youtubeUrl] : [];
+
+        // Map status
+        const statusMap: Record<string, string> = {
+            'ACTIVE': 'Listed',
+            'DRAFT': 'Draft',
+            'PAUSED': 'Paused',
+            'EXPIRED': 'Expired',
+            'ARCHIVED': 'Archived',
+            'REMOVED': 'Removed',
+        };
+        const status = statusMap[backendListing.listingStatus] || 'Draft';
+
+        // Get price (monthly rent)
+        const price = backendListing.monthlyRent 
+            ? typeof backendListing.monthlyRent === 'string'
+                ? parseFloat(backendListing.monthlyRent) || 0
+                : Number(backendListing.monthlyRent) || 0
+            : 0;
+
+        // Format expiry date
+        const expiryDate = backendListing.expiresAt 
+            ? format(new Date(backendListing.expiresAt), 'dd MMM, yyyy')
+            : 'No expiry';
+
+        // Get unit details
+        const bedrooms = singleUnitDetails?.beds || 0;
+        const bathrooms = singleUnitDetails?.baths
+            ? typeof singleUnitDetails.baths === 'string'
+                ? parseFloat(singleUnitDetails.baths) || 0
+                : Number(singleUnitDetails.baths) || 0
+            : 0;
+        const sizeSqFt = property.sizeSqft
+            ? typeof property.sizeSqft === 'string'
+                ? parseFloat(property.sizeSqft) || 0
+                : Number(property.sizeSqft) || 0
+            : 0;
+
+        // Map property type
+        const propertyTypeMap: Record<string, string> = {
+            'SINGLE': 'Single-Family',
+            'MULTI': 'Multi-Family',
+        };
+        const unitType = propertyTypeMap[property.propertyType] || 'Property';
+
+        // Get basic amenities
+        const basicAmenities: string[] = [];
+        if (amenities?.parking && amenities.parking !== 'NONE') {
+            basicAmenities.push(amenities.parking.replace(/_/g, ' '));
+        }
+        if (amenities?.laundry && amenities.laundry !== 'NONE') {
+            basicAmenities.push(amenities.laundry.replace(/_/g, ' '));
+        }
+        if (amenities?.airConditioning && amenities.airConditioning !== 'NONE') {
+            basicAmenities.push(amenities.airConditioning.replace(/_/g, ' '));
+        }
+
+        // Format available date
+        const dateAvailable = backendListing.availableFrom
+            ? format(new Date(backendListing.availableFrom), 'dd MMM, yyyy')
+            : '';
+
+        // Get lease duration (from min/max)
+        const leaseDuration = backendListing.minLeaseDuration || backendListing.maxLeaseDuration || 'Monthly';
+
+        // Get month-to-month (if min and max are both monthly or similar)
+        const monthToMonth = backendListing.minLeaseDuration === 'MONTHLY' && backendListing.maxLeaseDuration === 'MONTHLY' ? 'Yes' : 'No';
+
+        return {
+            id: backendListing.id,
+            name: backendListing.title || property.propertyName || 'Property',
+            address: addressStr,
+            price,
+            expiryDate,
+            status,
+            image,
+            country: address?.country,
+            unitDetails: {
+                type: unitType,
+                bedrooms,
+                size: sizeSqFt > 0 ? `${sizeSqFt} sq ft` : 'N/A',
+                bathrooms,
+                yearBuilt: property.yearBuilt || 'N/A'
+            },
+            basicAmenities,
+            onlineApplications: backendListing.onlineApplicationAvailable,
+            postingEnabled: backendListing.isActive,
+            leaseTerms: {
+                dateAvailable,
+                securityDeposit: backendListing.securityDeposit
+                    ? typeof backendListing.securityDeposit === 'string'
+                        ? parseFloat(backendListing.securityDeposit) || 0
+                        : Number(backendListing.securityDeposit) || 0
+                    : 0,
+                monthlyRent: price,
+                amountRefundable: backendListing.amountRefundable
+                    ? typeof backendListing.amountRefundable === 'string'
+                        ? parseFloat(backendListing.amountRefundable) || 0
+                        : Number(backendListing.amountRefundable) || 0
+                    : 0,
+                leaseDuration,
+                monthToMonth,
+                details: backendListing.description || property.description || property.leasing?.description || '-'
+            },
+            media: {
+                gallery,
+                video
+            },
+            promotions: {
+                description: backendListing.description || property.description || ''
+            },
+            // Handle propertyFeatures and propertyAmenities - ensure they're arrays
+            features: (() => {
+                const pf = amenities?.propertyFeatures;
+                if (!pf) return [];
+                if (Array.isArray(pf)) return pf;
+                // Type assertion for string handling
+                const pfStr = pf as unknown as string;
+                if (typeof pfStr === 'string') {
+                    const trimmed = pfStr.trim();
+                    if (!trimmed) return [];
+                    try {
+                        const parsed = JSON.parse(trimmed);
+                        return Array.isArray(parsed) ? parsed : [];
+                    } catch {
+                        return trimmed.split(',').map((f: string) => f.trim()).filter(Boolean);
+                    }
+                }
+                return [];
+            })(),
+            amenities: (() => {
+                const pa = amenities?.propertyAmenities;
+                if (!pa) return [];
+                if (Array.isArray(pa)) return pa;
+                // Type assertion for string handling
+                const paStr = pa as unknown as string;
+                if (typeof paStr === 'string') {
+                    const trimmed = paStr.trim();
+                    if (!trimmed) return [];
+                    try {
+                        const parsed = JSON.parse(trimmed);
+                        return Array.isArray(parsed) ? parsed : [];
+                    } catch {
+                        return trimmed.split(',').map((a: string) => a.trim()).filter(Boolean);
+                    }
+                }
+                return [];
+            })(),
+            contact: {
+                name: property.listingContactName || 'N/A',
+                phone: property.listingPhoneNumber 
+                    ? `${property.listingPhoneCountryCode || ''} ${property.listingPhoneNumber}`.trim()
+                    : 'N/A',
+                email: property.listingEmail || 'N/A',
+                avatar: '' // No avatar in backend
+            },
+            applicationFee: backendListing.applicationFee
+                ? typeof backendListing.applicationFee === 'string'
+                    ? parseFloat(backendListing.applicationFee).toString()
+                    : backendListing.applicationFee.toString()
+                : '',
+            onlineApplicationStatus: backendListing.onlineApplicationAvailable ? 'Enabled' : 'Disabled',
+        };
+    }, [backendListing]);
+
+    // Update state when listing data loads
+    useEffect(() => {
+        if (listing) {
+            setGalleryImages(listing.media.gallery);
+            setVideoItems(listing.media.video);
+            setPromotionDescription(listing.promotions.description);
+            setPromotionRibbon(listing.name);
+            setLeaseTerms(listing.leaseTerms);
+            setFeatures(listing.features);
+            setAmenities(listing.amenities);
+            setContactDetails(listing.contact);
+            setOnlineApplicationStatus(listing.onlineApplicationStatus);
+            setApplicationFee(listing.applicationFee);
+        }
+    }, [listing]);
+
     // Cleanup object URLs on unmount
-    React.useEffect(() => {
+    useEffect(() => {
         return () => {
             objectURLsRef.current.forEach(url => {
                 URL.revokeObjectURL(url);
@@ -125,6 +285,44 @@ const ListingDetail: React.FC = () => {
             objectURLsRef.current.clear();
         };
     }, []);
+
+    // Guard: Redirect to listings page if id is undefined
+    if (!id) {
+        navigate('/dashboard/portfolio/listing', { replace: true });
+        return null;
+    }
+
+    // Loading state
+    if (isLoading) {
+        return (
+            <div className="max-w-7xl mx-auto min-h-screen pb-10 flex items-center justify-center">
+                <div className="text-center">
+                    <Loader2 className="w-8 h-8 animate-spin text-[#3A6D6C] mx-auto mb-4" />
+                    <p className="text-gray-600">Loading listing details...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Error state
+    if (error || !listing) {
+        return (
+            <div className="max-w-7xl mx-auto min-h-screen pb-10 flex items-center justify-center">
+                <div className="text-center">
+                    <p className="text-red-500 text-lg mb-4">
+                        {error instanceof Error ? error.message : 'Failed to load listing details'}
+                    </p>
+                    <button
+                        onClick={() => navigate('/dashboard/portfolio/listing')}
+                        className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5554] transition-colors"
+                    >
+                        Back to Listings
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
 
     const handleDeleteGalleryImage = (index: number) => {
         const urlToRemove = galleryImages[index];
@@ -176,14 +374,14 @@ const ListingDetail: React.FC = () => {
                 <span className="text-gray-500 text-sm mx-1">/</span>
                 <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard/portfolio/listing')}>Listings</span>
                 <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">#{id}</span>
+                <span className="text-gray-600 text-sm font-semibold">{listing?.name || `#${id}`}</span>
             </div>
 
             <div className="bg-[#E0E8E7] rounded-[2rem] p-6 min-h-screen">
                 {/* Header */}
                 <div className="flex items-center gap-6 mb-6">
                     <div className="flex items-center gap-4">
-                        <h1 className="text-2xl font-bold text-gray-800">#{id}</h1>
+                        <h1 className="text-2xl font-bold text-gray-800">{listing?.name || `#${id}`}</h1>
                     </div>
                     <div className="flex gap-3">
                         <button className="bg-[#467676] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#3A6D6C] transition-colors">
@@ -221,13 +419,31 @@ const ListingDetail: React.FC = () => {
                     <div className="flex flex-col lg:flex-row gap-6">
                         {/* Image & Price */}
                         <div className="flex gap-4">
-                            <img
-                                src={listing.image}
-                                alt={listing.name}
-                                className="w-44 h-44 rounded-2xl object-cover"
-                            />
+                            {listing.image ? (
+                                <img
+                                    src={listing.image}
+                                    alt={listing.name}
+                                    className="w-44 h-44 rounded-2xl object-cover"
+                                    onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.style.display = 'none';
+                                        const placeholder = target.nextElementSibling as HTMLElement;
+                                        if (placeholder) {
+                                            placeholder.style.display = 'flex';
+                                        }
+                                    }}
+                                />
+                            ) : null}
+                            <div 
+                                className={`w-44 h-44 ${listing.image ? 'hidden' : 'flex'} items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300 rounded-2xl`}
+                            >
+                                <div className="text-center">
+                                    <div className="text-gray-400 text-4xl mb-1">🏠</div>
+                                    <p className="text-gray-500 text-xs font-medium">No Image</p>
+                                </div>
+                            </div>
                             <div className="bg-[#3A6D6C] text-white p-4 rounded-2xl flex flex-col self-center h-fit min-w-[180px]">
-                                <span className="text-xl font-bold">₹{listing.price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                <span className="text-xl font-bold">{getCurrencySymbol(listing.country)}{listing.price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                                 <span className="text-xs opacity-80">Monthly rent</span>
                                 <span className="text-[10px] opacity-60 mt-1">Listing expires on {listing.expiryDate}</span>
                             </div>
@@ -288,7 +504,7 @@ const ListingDetail: React.FC = () => {
 
                             {applicationFee && (
                                 <div className="bg-gradient-to-r from-[#3A4E33] to-[#85B474] text-white px-4 py-1.5 border border-white text-xs font-medium w-fit">
-                                    Application fee: ₹{applicationFee}
+                                    Application fee: {getCurrencySymbol(listing.country)}{applicationFee}
                                 </div>
                             )}
                         </div>
@@ -329,7 +545,7 @@ const ListingDetail: React.FC = () => {
                                             {isLeaseTermsEditing ? (
                                                 <div className="w-1/2">
                                                     <DatePicker
-                                                        value={leaseTerms.dateAvailable ? parse(leaseTerms.dateAvailable, 'dd MMM, yyyy', new Date()) : undefined}
+                                                        value={leaseTerms?.dateAvailable ? parse(leaseTerms.dateAvailable, 'dd MMM, yyyy', new Date()) : undefined}
                                                         onChange={(date: Date | undefined) => setLeaseTerms({ ...leaseTerms, dateAvailable: date ? format(date, 'dd MMM, yyyy') : '' })}
                                                         placeholder="Select date"
                                                         className="text-xs font-bold text-gray-800 bg-transparent text-right focus:outline-none border-b border-gray-400 w-full rounded-none shadow-none px-0 py-1 justify-end focus:ring-0"
@@ -337,7 +553,7 @@ const ListingDetail: React.FC = () => {
                                                     />
                                                 </div>
                                             ) : (
-                                                <span className="text-xs font-bold text-gray-800 mr-2">{leaseTerms.dateAvailable}</span>
+                                                <span className="text-xs font-bold text-gray-800 mr-2">{leaseTerms?.dateAvailable || 'N/A'}</span>
                                             )}
                                         </div>
                                         <div className="flex justify-between items-center bg-[#E3EBDE] p-3 rounded-full shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.25)]">
@@ -345,12 +561,12 @@ const ListingDetail: React.FC = () => {
                                             {isLeaseTermsEditing ? (
                                                 <input
                                                     type="number"
-                                                    value={leaseTerms.monthlyRent}
+                                                    value={leaseTerms?.monthlyRent || 0}
                                                     onChange={(e) => setLeaseTerms({ ...leaseTerms, monthlyRent: parseFloat(e.target.value) || 0 })}
                                                     className="text-xs font-bold text-gray-800 mr-2 bg-transparent text-right focus:outline-none border-b border-gray-400 w-1/2"
                                                 />
                                             ) : (
-                                                <span className="text-xs font-bold text-gray-800 mr-2">{leaseTerms.monthlyRent.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                                <span className="text-xs font-bold text-gray-800 mr-2">{getCurrencySymbol(listing.country)}{(leaseTerms?.monthlyRent || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                                             )}
                                         </div>
                                         <div className="flex justify-between items-center bg-[#E3EBDE] p-3 rounded-full shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.25)]">
@@ -358,7 +574,7 @@ const ListingDetail: React.FC = () => {
                                             {isLeaseTermsEditing ? (
                                                 <div className="w-1/2">
                                                     <CustomDropdown
-                                                        value={leaseTerms.leaseDuration}
+                                                        value={leaseTerms?.leaseDuration || 'Monthly'}
                                                         onChange={(value) => setLeaseTerms({ ...leaseTerms, leaseDuration: value })}
                                                         options={[
                                                             { value: 'Monthly', label: 'Monthly' },
@@ -370,7 +586,7 @@ const ListingDetail: React.FC = () => {
                                                     />
                                                 </div>
                                             ) : (
-                                                <span className="text-xs font-bold text-gray-800 mr-2">{leaseTerms.leaseDuration}</span>
+                                                <span className="text-xs font-bold text-gray-800 mr-2">{leaseTerms?.leaseDuration || 'N/A'}</span>
                                             )}
                                         </div>
                                     </div>
@@ -380,12 +596,12 @@ const ListingDetail: React.FC = () => {
                                             {isLeaseTermsEditing ? (
                                                 <input
                                                     type="number"
-                                                    value={leaseTerms.securityDeposit}
+                                                    value={leaseTerms?.securityDeposit || 0}
                                                     onChange={(e) => setLeaseTerms({ ...leaseTerms, securityDeposit: parseFloat(e.target.value) || 0 })}
                                                     className="text-xs font-bold text-gray-800 mr-2 bg-transparent text-right focus:outline-none border-b border-gray-400 w-1/2"
                                                 />
                                             ) : (
-                                                <span className="text-xs font-bold text-gray-800 mr-2">₹{leaseTerms.securityDeposit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                                <span className="text-xs font-bold text-gray-800 mr-2">{getCurrencySymbol(listing.country)}{(leaseTerms?.securityDeposit || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                                             )}
                                         </div>
                                         <div className="flex justify-between items-center bg-[#E3EBDE] p-3 rounded-full shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.25)]">
@@ -393,12 +609,12 @@ const ListingDetail: React.FC = () => {
                                             {isLeaseTermsEditing ? (
                                                 <input
                                                     type="number"
-                                                    value={leaseTerms.amountRefundable}
+                                                    value={leaseTerms?.amountRefundable || 0}
                                                     onChange={(e) => setLeaseTerms({ ...leaseTerms, amountRefundable: parseFloat(e.target.value) || 0 })}
                                                     className="text-xs font-bold text-gray-800 mr-2 bg-transparent text-right focus:outline-none border-b border-gray-400 w-1/2"
                                                 />
                                             ) : (
-                                                <span className="text-xs font-bold text-gray-800 mr-2">{leaseTerms.amountRefundable}</span>
+                                                <span className="text-xs font-bold text-gray-800 mr-2">{getCurrencySymbol(listing.country)}{(leaseTerms?.amountRefundable || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                                             )}
                                         </div>
                                         <div className="flex justify-between items-center bg-[#E3EBDE] p-3 rounded-full shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.25)]">
@@ -406,7 +622,7 @@ const ListingDetail: React.FC = () => {
                                             {isLeaseTermsEditing ? (
                                                 <div className="w-1/2">
                                                     <CustomDropdown
-                                                        value={leaseTerms.monthToMonth}
+                                                        value={leaseTerms?.monthToMonth || 'No'}
                                                         onChange={(value) => setLeaseTerms({ ...leaseTerms, monthToMonth: value })}
                                                         options={[
                                                             { value: 'Yes', label: 'Yes' },
@@ -418,7 +634,7 @@ const ListingDetail: React.FC = () => {
                                                     />
                                                 </div>
                                             ) : (
-                                                <span className="text-xs font-bold text-gray-800 mr-2">{leaseTerms.monthToMonth}</span>
+                                                <span className="text-xs font-bold text-gray-800 mr-2">{leaseTerms?.monthToMonth || 'N/A'}</span>
                                             )}
                                         </div>
                                     </div>
@@ -426,12 +642,12 @@ const ListingDetail: React.FC = () => {
                                         <span className="text-xs font-medium text-gray-600 block mb-2">Details</span>
                                         {isLeaseTermsEditing ? (
                                             <textarea
-                                                value={leaseTerms.details}
+                                                value={leaseTerms?.details || ''}
                                                 onChange={(e) => setLeaseTerms({ ...leaseTerms, details: e.target.value })}
                                                 className="text-sm text-gray-800 w-full bg-transparent focus:outline-none border-b border-gray-400 min-h-[60px]"
                                             />
                                         ) : (
-                                            <p className="text-sm text-gray-800">{leaseTerms.details}</p>
+                                            <p className="text-sm text-gray-800">{leaseTerms?.details || '-'}</p>
                                         )}
                                     </div>
                                 </div>
@@ -562,7 +778,13 @@ const ListingDetail: React.FC = () => {
                                 </div>
                             </div>
                             <div className="bg-[#F0F0F6] rounded-[2rem] p-6 flex gap-6">
-                                <img src={listing.image} alt="Promotion" className="w-32 h-32 rounded-2xl object-cover" />
+                                {listing.image ? (
+                                    <img src={listing.image} alt="Promotion" className="w-32 h-32 rounded-2xl object-cover" />
+                                ) : (
+                                    <div className="w-32 h-32 rounded-2xl bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                                        <div className="text-gray-400 text-2xl">🏠</div>
+                                    </div>
+                                )}
                                 <div className="flex-1">
                                     {isRibbonEditing ? (
                                         <input
@@ -572,7 +794,7 @@ const ListingDetail: React.FC = () => {
                                             className="font-bold text-gray-800 mb-2 w-full bg-white border border-gray-300 rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-[#82D64D]"
                                         />
                                     ) : (
-                                        <h4 className="font-bold text-gray-800 mb-2">{promotionRibbon}</h4>
+                                        <h4 className="font-bold text-gray-800 mb-2">{promotionRibbon || listing.name}</h4>
                                     )}
 
                                     {isDescriptionEditing ? (
@@ -582,7 +804,7 @@ const ListingDetail: React.FC = () => {
                                             className="text-sm text-gray-600 leading-relaxed w-full bg-white border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#82D64D] min-h-[100px]"
                                         />
                                     ) : (
-                                        <p className="text-sm text-gray-600 leading-relaxed">{promotionDescription}</p>
+                                        <p className="text-sm text-gray-600 leading-relaxed">{promotionDescription || 'No description available'}</p>
                                     )}
                                 </div>
                             </div>
@@ -668,19 +890,25 @@ const ListingDetail: React.FC = () => {
                             </div>
                             <div className="bg-[#F0F0F6] rounded-[2rem] p-6">
                                 <div className="flex items-center gap-4">
-                                    <img src={contactDetails.avatar} alt={contactDetails.name} className="w-12 h-12 rounded-full object-cover" />
+                                    {contactDetails?.avatar ? (
+                                        <img src={contactDetails.avatar} alt={contactDetails?.name || 'Contact'} className="w-12 h-12 rounded-full object-cover" />
+                                    ) : (
+                                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center text-white font-bold">
+                                            {contactDetails?.name ? contactDetails.name.charAt(0).toUpperCase() : '?'}
+                                        </div>
+                                    )}
                                     <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <div className="bg-[#E8E8EA] px-4 py-2 rounded-full flex items-center gap-3">
                                             <span className="text-xs font-medium text-gray-500">Name</span>
                                             {isContactEditing ? (
                                                 <input
                                                     type="text"
-                                                    value={contactDetails.name}
+                                                    value={contactDetails?.name || ''}
                                                     onChange={(e) => setContactDetails({ ...contactDetails, name: e.target.value })}
                                                     className="text-sm font-bold text-gray-800 bg-transparent focus:outline-none border-b border-gray-400 w-full"
                                                 />
                                             ) : (
-                                                <span className="text-sm font-bold text-gray-800">{contactDetails.name}</span>
+                                                <span className="text-sm font-bold text-gray-800">{contactDetails?.name || 'N/A'}</span>
                                             )}
                                         </div>
                                         <div className="bg-[#E8E8EA] px-4 py-2 rounded-full flex items-center gap-3">
@@ -688,12 +916,12 @@ const ListingDetail: React.FC = () => {
                                             {isContactEditing ? (
                                                 <input
                                                     type="text"
-                                                    value={contactDetails.phone}
+                                                    value={contactDetails?.phone || ''}
                                                     onChange={(e) => setContactDetails({ ...contactDetails, phone: e.target.value })}
                                                     className="text-sm font-bold text-gray-800 bg-transparent focus:outline-none border-b border-gray-400 w-full"
                                                 />
                                             ) : (
-                                                <span className="text-sm font-bold text-gray-800">{contactDetails.phone}</span>
+                                                <span className="text-sm font-bold text-gray-800">{contactDetails?.phone || 'N/A'}</span>
                                             )}
                                         </div>
                                         <div className="bg-[#E8E8EA] px-4 py-2 rounded-full flex items-center gap-3">
@@ -701,12 +929,12 @@ const ListingDetail: React.FC = () => {
                                             {isContactEditing ? (
                                                 <input
                                                     type="text"
-                                                    value={contactDetails.email}
+                                                    value={contactDetails?.email || ''}
                                                     onChange={(e) => setContactDetails({ ...contactDetails, email: e.target.value })}
                                                     className="text-sm font-bold text-gray-800 bg-transparent focus:outline-none border-b border-gray-400 w-full"
                                                 />
                                             ) : (
-                                                <span className="text-sm font-bold text-gray-800">{contactDetails.email}</span>
+                                                <span className="text-sm font-bold text-gray-800">{contactDetails?.email || 'N/A'}</span>
                                             )}
                                         </div>
                                     </div>
@@ -842,7 +1070,7 @@ const ListingDetail: React.FC = () => {
                 <InviteToApplyModal
                     isOpen={isInviteToApplyModalOpen}
                     onClose={() => setIsInviteToApplyModalOpen(false)}
-                    onSend={(data) => {
+                    onSend={() => {
                         setIsInviteToApplyModalOpen(false);
                     }}
                 />
