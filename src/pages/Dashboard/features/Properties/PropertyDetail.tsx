@@ -428,6 +428,7 @@ const PropertyDetail: React.FC = () => {
                 units: mockProp.units,
                 totalUnits,
                 occupiedUnits,
+                isUnitView,
             };
         }
 
@@ -541,6 +542,7 @@ const PropertyDetail: React.FC = () => {
                 tenants: 0,
                 maintenance: 0
             },
+            isUnitView: false,
         };
     }, [backendProperty, mockData]);
 
@@ -734,7 +736,7 @@ const PropertyDetail: React.FC = () => {
 
                 {/* Tabs */}
                 <DetailTabs
-                    tabs={['Profile', 'Specs', 'Financials', 'Service Providers']}
+                    tabs={property.isUnitView ? ['Profile', 'Specs', 'Service Providers'] : ['Profile', 'Specs', 'Financials', 'Service Providers']}
                     activeTab={activeTab}
                     onTabChange={setActiveTab}
                 />
@@ -937,7 +939,7 @@ const PropertyDetail: React.FC = () => {
                 )}
 
                 {activeTab === 'specs' && <SpecsTab />}
-                {activeTab === 'financials' && <FinancialsTab />}
+                {activeTab === 'financials' && !property.isUnitView && <FinancialsTab />}
                 {activeTab === 'service providers' && <ServiceProvidersTab />}
 
             </div>
