@@ -4,99 +4,25 @@ import ListingHeader from './components/ListingHeader';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
 import ListingCard from './components/ListingCard';
+import { useGetAllListings } from '../../../../hooks/useListingQueries';
+import { useGetAllProperties } from '../../../../hooks/usePropertyQueries';
+import type { BackendListing } from '../../../../services/listing.service';
+import type { BackendProperty } from '../../../../services/property.service';
 
-const MOCK_LISTINGS = [
-    {
-        id: 1,
-        name: 'Grove Street',
-        address: '11 Grove Street, Boston, MA 12114, US',
-        price: 8210.00,
-        image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1453&q=80',
-        status: 'listed' as const,
-        bathrooms: 3,
-        bedrooms: 3
-    },
-    {
-        id: 2,
-        name: 'Grove Street',
-        address: '11 Grove Street, Boston, MA 12114, US',
-        price: 8210.00,
-        image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80',
-        status: 'listed' as const,
-        bathrooms: 3,
-        bedrooms: 3
-    },
-    {
-        id: 3,
-        name: 'Grove Street',
-        address: '11 Grove Street, Boston, MA 12114, US',
-        price: 8210.00,
-        image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1453&q=80',
-        status: 'listed' as const,
-        bathrooms: 3,
-        bedrooms: 3
-    },
-    {
-        id: 4,
-        name: 'Grove Street',
-        address: '11 Grove Street, Boston, MA 12114, US',
-        price: null,
-        image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80',
-        status: 'unlisted' as const,
-        bathrooms: 3,
-        bedrooms: 3
-    },
-    {
-        id: 5,
-        name: 'Grove Street',
-        address: '11 Grove Street, Boston, MA 12114, US',
-        price: null,
-        image: 'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?ixlib=rb-4.0.3&auto=format&fit=crop&w=1384&q=80',
-        status: 'unlisted' as const,
-        bathrooms: 3,
-        bedrooms: 3
-    },
-    {
-        id: 6,
-        name: 'Grove Street',
-        address: '11 Grove Street, Boston, MA 12114, US',
-        price: 8210.00,
-        image: 'https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80',
-        status: 'listed' as const,
-        bathrooms: 3,
-        bedrooms: 3
-    },
-    {
-        id: 7,
-        name: 'Grove Street',
-        address: '11 Grove Street, Boston, MA 12114, US',
-        price: 8210.00,
-        image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1453&q=80',
-        status: 'listed' as const,
-        bathrooms: 3,
-        bedrooms: 3
-    },
-    {
-        id: 8,
-        name: 'Grove Street',
-        address: '11 Grove Street, Boston, MA 12114, US',
-        price: 8210.00,
-        image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-4.0.3&auto=format&fit=crop&w=1470&q=80',
-        status: 'listed' as const,
-        bathrooms: 3,
-        bedrooms: 3
-    },
-    {
-        id: 9,
-        name: 'Grove Street',
-        address: '11 Grove Street, Boston, MA 12114, US',
-        price: null,
-        image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1453&q=80',
-        status: 'unlisted' as const,
-        bathrooms: 3,
-        bedrooms: 3
-    },
-];
+// Interface for the combined listing data
+interface ListingCardData {
+    id: number;
+    name: string;
+    address: string;
+    price: number | null;
+    status: 'listed' | 'unlisted';
+    bathrooms: number;
+    bedrooms: number;
+    image: string;
+    country?: string; // Country code for currency
+    listingId?: string; // For navigation to listing detail
+    propertyId: string; // For navigation to list unit
+}
 
 const Listing: React.FC = () => {
     const navigate = useNavigate();
@@ -113,6 +39,10 @@ const Listing: React.FC = () => {
 
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 9;
+
+    // Fetch listings and properties using React Query
+    const { data: listings = [], isLoading: listingsLoading, error: listingsError } = useGetAllListings();
+    const { data: backendProperties = [], isLoading: propertiesLoading, error: propertiesError } = useGetAllProperties();
 
     const handleAddListing = () => {
         navigate('/dashboard/list-unit');
@@ -140,8 +70,118 @@ const Listing: React.FC = () => {
         syndication: 'Syndication'
     };
 
+    // Transform listings and properties into ListingCardData
+    const allListingsData = useMemo(() => {
+        // Create a map of propertyId -> active listing
+        const activeListingsMap = new Map<string, BackendListing>();
+        listings.forEach((listing: BackendListing) => {
+            if (listing.listingStatus === 'ACTIVE' && listing.isActive) {
+                // If property already has an active listing, keep the most recent one
+                const existing = activeListingsMap.get(listing.propertyId);
+                if (!existing || new Date(listing.listedAt) > new Date(existing.listedAt)) {
+                    activeListingsMap.set(listing.propertyId, listing);
+                }
+            }
+        });
+
+        // Create a set of property IDs that have active listings
+        const listedPropertyIds = new Set(activeListingsMap.keys());
+
+        // Transform backend properties into ListingCardData
+        const transformed: ListingCardData[] = backendProperties.map((backendProperty: BackendProperty, index: number) => {
+            const hasActiveListing = listedPropertyIds.has(backendProperty.id);
+            const activeListing = activeListingsMap.get(backendProperty.id);
+
+            // Format address
+            let address = 'Address not available';
+            let country: string | undefined;
+            if (backendProperty.address) {
+                country = backendProperty.address.country;
+                const addressParts = [
+                    backendProperty.address.streetAddress,
+                    backendProperty.address.city,
+                    backendProperty.address.stateRegion,
+                    backendProperty.address.zipCode,
+                    backendProperty.address.country,
+                ].filter(part => part && part.trim() !== '');
+                
+                if (addressParts.length > 0) {
+                    address = addressParts.join(', ');
+                }
+            }
+
+            // Get price from listing or property
+            let price: number | null = null;
+            if (hasActiveListing && activeListing) {
+                // Prefer listingPrice, fallback to monthlyRent
+                if (activeListing.listingPrice !== null && activeListing.listingPrice !== undefined) {
+                    price = typeof activeListing.listingPrice === 'string' 
+                        ? parseFloat(activeListing.listingPrice) 
+                        : Number(activeListing.listingPrice);
+                } else if (activeListing.monthlyRent !== null && activeListing.monthlyRent !== undefined) {
+                    price = typeof activeListing.monthlyRent === 'string' 
+                        ? parseFloat(activeListing.monthlyRent) 
+                        : Number(activeListing.monthlyRent);
+                }
+            } else if (backendProperty.marketRent) {
+                price = typeof backendProperty.marketRent === 'string'
+                    ? parseFloat(backendProperty.marketRent) || 0
+                    : Number(backendProperty.marketRent) || 0;
+                if (price === 0) price = null;
+            }
+
+            // Get bedrooms and bathrooms
+            const bedrooms = backendProperty.singleUnitDetails?.beds || 0;
+            const bathrooms = backendProperty.singleUnitDetails?.baths
+                ? typeof backendProperty.singleUnitDetails.baths === 'string'
+                    ? parseFloat(backendProperty.singleUnitDetails.baths) || 0
+                    : Number(backendProperty.singleUnitDetails.baths) || 0
+                : 0;
+
+            // Get image
+            const image = backendProperty.coverPhotoUrl 
+                || backendProperty.photos?.find((p) => p.isPrimary)?.photoUrl 
+                || backendProperty.photos?.[0]?.photoUrl 
+                || '';
+
+            // Convert backend property ID to number (stable identifier)
+            // Try parsing as number first, fallback to hash if it's a non-numeric string (e.g., UUID)
+            const propertyIdNum = (() => {
+                const parsed = Number(backendProperty.id);
+                if (!isNaN(parsed) && isFinite(parsed)) {
+                    return parsed;
+                }
+                // Deterministic hash for non-numeric IDs (e.g., UUIDs)
+                let hash = 0;
+                for (let i = 0; i < backendProperty.id.length; i++) {
+                    const char = backendProperty.id.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash; // Convert to 32-bit integer
+                }
+                return Math.abs(hash);
+            })();
+
+            return {
+                id: propertyIdNum,
+                name: backendProperty.propertyName,
+                address,
+                price,
+                status: hasActiveListing ? 'listed' : 'unlisted',
+                bathrooms,
+                bedrooms,
+                image,
+                country,
+                listingId: activeListing?.id,
+                propertyId: backendProperty.id,
+            };
+        });
+
+        return transformed;
+    }, [listings, backendProperties]);
+
+    // Filter listings based on search and filters
     const filteredListings = useMemo(() => {
-        return MOCK_LISTINGS.filter(listing => {
+        return allListingsData.filter(listing => {
             // Search filter
             const matchesSearch = searchQuery === '' ||
                 listing.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -151,13 +191,15 @@ const Listing: React.FC = () => {
             const matchesStatus = filters.status.length === 0 ||
                 filters.status.includes(listing.status);
 
-            // Mock logic for other filters as we don't have real data for them
+            // Days listed filter (mock for now - would need listing date)
             const matchesDaysListed = true;
+
+            // Syndication filter (mock for now)
             const matchesSyndication = true;
 
             return matchesSearch && matchesStatus && matchesDaysListed && matchesSyndication;
         });
-    }, [searchQuery, filters]);
+    }, [allListingsData, searchQuery, filters]);
 
     // Reset to first page when filters change
     useEffect(() => {
@@ -175,6 +217,12 @@ const Listing: React.FC = () => {
         setCurrentPage(page);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
+
+    // Loading state
+    const isLoading = listingsLoading || propertiesLoading;
+
+    // Error state
+    const error = listingsError || propertiesError;
 
     return (
         <div className="max-w-7xl mx-auto min-h-screen">
@@ -195,13 +243,34 @@ const Listing: React.FC = () => {
                     showMoreFilters={false}
                 />
 
-                {filteredListings.length > 0 ? (
+                {isLoading ? (
+                    <div className="text-center py-12 bg-white rounded-2xl">
+                        <p className="text-gray-500 text-lg">Loading listings...</p>
+                    </div>
+                ) : error ? (
+                    <div className="text-center py-12 bg-white rounded-2xl">
+                        <p className="text-red-500 text-lg">Error loading listings</p>
+                        <p className="text-gray-400 text-sm mt-2">
+                            {error instanceof Error ? error.message : 'An unexpected error occurred'}
+                        </p>
+                    </div>
+                ) : filteredListings.length > 0 ? (
                     <>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
                             {currentListings.map((listing) => (
                                 <ListingCard
-                                    key={listing.id}
-                                    {...listing}
+                                    key={`${listing.propertyId}-${listing.id}`}
+                                    id={listing.id}
+                                    name={listing.name}
+                                    address={listing.address}
+                                    price={listing.price}
+                                    status={listing.status}
+                                    bathrooms={listing.bathrooms}
+                                    bedrooms={listing.bedrooms}
+                                    image={listing.image}
+                                    country={listing.country}
+                                    listingId={listing.listingId}
+                                    propertyId={listing.propertyId}
                                 />
                             ))}
                         </div>

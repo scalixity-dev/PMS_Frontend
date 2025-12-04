@@ -26,11 +26,12 @@ export const useGetProperty = (propertyId: string | null | undefined, enabled: b
 
 /**
  * Hook to get all properties
+ * @param includeListings - Whether to include listings in the response (default: false for performance)
  */
-export const useGetAllProperties = (enabled: boolean = true) => {
+export const useGetAllProperties = (enabled: boolean = true, includeListings: boolean = false) => {
   return useQuery({
-    queryKey: propertyQueryKeys.lists(),
-    queryFn: () => propertyService.getAll(),
+    queryKey: [...propertyQueryKeys.lists(), includeListings ? 'withListings' : 'withoutListings'] as const,
+    queryFn: () => propertyService.getAll(includeListings),
     enabled,
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes
     gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes

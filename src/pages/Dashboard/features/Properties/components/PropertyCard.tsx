@@ -4,7 +4,7 @@ import { getCurrencySymbol } from '../../../../../utils/currency.utils';
 
 interface PropertyCardProps {
     id: string | number;
-    image: string;
+    image: string | null;
     name: string;
     address: string;
     balance: number;
@@ -28,11 +28,30 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
         <div className="bg-[#F6F6F8] rounded-[2rem] p-4 shadow-sm relative flex flex-col h-full">
             {/* Image Section */}
             <div className="w-full h-48 mb-4 relative flex-shrink-0">
-                <img
-                    src={image}
-                    alt={name}
-                    className="w-full h-full object-cover rounded-2xl"
-                />
+                {image ? (
+                    <img
+                        src={image}
+                        alt={name}
+                        className="w-full h-full object-cover rounded-2xl"
+                        onError={(e) => {
+                            // If image fails to load, show placeholder
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            const placeholder = target.nextElementSibling as HTMLElement;
+                            if (placeholder) {
+                                placeholder.style.display = 'flex';
+                            }
+                        }}
+                    />
+                ) : null}
+                <div 
+                    className={`w-full h-full rounded-2xl ${image ? 'hidden' : 'flex'} items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300`}
+                >
+                    <div className="text-center">
+                        <div className="text-gray-400 text-4xl mb-2">🏠</div>
+                        <p className="text-gray-500 text-xs font-medium">No Image</p>
+                    </div>
+                </div>
                 <div className="bg-[#82D64D] text-white px-4 py-1.5 rounded-full text-sm font-medium absolute top-3 right-3 shadow-sm">
                     Balance {currencySymbol} {balance.toLocaleString()}
                 </div>

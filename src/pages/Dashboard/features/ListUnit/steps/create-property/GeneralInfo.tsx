@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Country, State, City } from 'country-state-city';
 import type { ICountry, IState, ICity } from 'country-state-city';
 import CustomDropdown from '../../../../components/CustomDropdown';
@@ -63,36 +63,50 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onPropertyCreated, propertyId
         }
     }, [managerId, setManagerId]);
 
+    // Track previous country/state to detect actual changes (not just initial load)
+    const prevCountryRef = useRef<string | undefined>(data.country);
+    const prevStateRef = useRef<string | undefined>(data.stateRegion);
+
     // Load states when country changes
     useEffect(() => {
         if (data.country) {
             const countryStates = State.getStatesOfCountry(data.country);
             setStates(countryStates);
-            // Reset state and city when country changes
-            if (data.stateRegion) {
-                updateData('stateRegion', '');
+            // Only reset state and city if country actually changed (not on initial load)
+            if (prevCountryRef.current && prevCountryRef.current !== data.country) {
+                if (data.stateRegion) {
+                    updateData('stateRegion', '');
+                }
+                if (data.city) {
+                    updateData('city', '');
+                }
             }
-            if (data.city) {
-                updateData('city', '');
-            }
+            prevCountryRef.current = data.country;
         } else {
             setStates([]);
+            prevCountryRef.current = undefined;
         }
-    }, [data.country]);
+    }, [data.country, updateData]);
 
     // Load cities when state changes
     useEffect(() => {
         if (data.country && data.stateRegion) {
             const stateCities = City.getCitiesOfState(data.country, data.stateRegion);
             setCities(stateCities);
-            // Reset city when state changes
-            if (data.city) {
-                updateData('city', '');
+            // Only reset city if state actually changed (not on initial load)
+            if (prevStateRef.current && prevStateRef.current !== data.stateRegion) {
+                if (data.city) {
+                    updateData('city', '');
+                }
             }
+            prevStateRef.current = data.stateRegion;
         } else {
             setCities([]);
+            if (!data.stateRegion) {
+                prevStateRef.current = undefined;
+            }
         }
-    }, [data.country, data.stateRegion]);
+    }, [data.country, data.stateRegion, updateData]);
 
     // Convert countries to dropdown options
     const countryOptions = useMemo(() => {
@@ -123,10 +137,6 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onPropertyCreated, propertyId
         updateData(name, value);
     };
 
-    const handleRadioChange = (value: string) => {
-        updateData('isManufactured', value);
-    };
-
     const handleCountryChange = (value: string) => {
         updateData('country', value);
     };
@@ -148,8 +158,6 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onPropertyCreated, propertyId
     const isFormValid = () => {
         return !!(
             data.propertyName &&
-            data.propertyType &&
-            data.isManufactured &&
             data.marketRent &&
             data.beds &&
             data.bathrooms &&
@@ -264,55 +272,89 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onPropertyCreated, propertyId
                     />
                 </div>
 
-                {/* Property Type */}
-                <CustomDropdown
-                    label="Property Type"
-                    value={data.propertyType}
-                    onChange={(value) => updateData('propertyType', value)}
-                    options={[
-                        { value: 'apartment', label: 'Apartment' },
-                        { value: 'house', label: 'House' },
-                        { value: 'condo', label: 'Condo' },
-                        { value: 'townhouse', label: 'Townhouse' },
-                        { value: 'duplex', label: 'Duplex' }
-                    ]}
-                    placeholder="Property Type"
-                    required
-                />
-
-                {/* Manufactured Home Radio */}
+                {/* Year Built */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Is this property a manufactured/mobile home?*
+                        Year Built*
                     </label>
-                    <div className="flex gap-6">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                                type="radio"
-                                name="isManufactured"
-                                value="yes"
-                                checked={data.isManufactured === 'yes'}
-                                onChange={() => handleRadioChange('yes')}
-                                className="w-4 h-4 text-[var(--color-primary)] border-gray-300 focus:ring-[var(--color-primary)]"
-                                required
-                            />
-                            <span className="text-sm text-gray-700">Yes</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                                type="radio"
-                                name="isManufactured"
-                                value="no"
-                                checked={data.isManufactured === 'no'}
-                                onChange={() => handleRadioChange('no')}
-                                className="w-4 h-4 text-[var(--color-primary)] border-gray-300 focus:ring-[var(--color-primary)]"
-                                required
-                            />
-                            <span className="text-sm text-gray-700">No</span>
-                        </label>
-                    </div>
+                    <input
+                        type="number"
+                        name="yearBuilt"
+                        value={data.yearBuilt}
+                        onChange={handleChange}
+                        placeholder="0.00"
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] bg-white text-gray-900 placeholder-gray-400"
+                        required
+                    />
                 </div>
 
+                {/* Address */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Address
+                    </label>
+                    <input
+                        type="text"
+                        name="address"
+                        value={data.address || ''}
+                        onChange={handleChange}
+                        placeholder="Enter street address"
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] bg-white text-gray-900 placeholder-gray-400"
+                        required
+                    />
+                </div>
+
+                {/* Country & State/Region */}
+                <div className="grid grid-cols-2 gap-4">
+                    <CustomDropdown
+                        label="Country"
+                        value={data.country}
+                        onChange={handleCountryChange}
+                        options={countryOptions}
+                        placeholder="Select country"
+                        required
+                        disabled={countryOptions.length === 0}
+                        searchable={true}
+                    />
+                    <CustomDropdown
+                        label="State / Region*"
+                        value={data.stateRegion}
+                        onChange={handleStateChange}
+                        options={stateOptions}
+                        placeholder={data.country ? "Select state" : "Select country first"}
+                        required
+                        disabled={!data.country || stateOptions.length === 0}
+                        searchable={true}
+                    />
+                </div>
+
+                {/* City & Zip */}
+                <div className="grid grid-cols-2 gap-4">
+                    <CustomDropdown
+                        label="City"
+                        value={data.city}
+                        onChange={handleCityChange}
+                        options={cityOptions}
+                        placeholder={data.stateRegion ? "Select city" : data.country ? "Select state first" : "Select country first"}
+                        required
+                        disabled={!data.stateRegion || cityOptions.length === 0}
+                        searchable={true}
+                    />
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Zip
+                        </label>
+                        <input
+                            type="text"
+                            name="zip"
+                            value={data.zip}
+                            onChange={handleChange}
+                            placeholder="Zip Code"
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] bg-white text-gray-900 placeholder-gray-400"
+                            required
+                        />
+                    </div>
+                </div>
                 {/* Market Rent & Beds */}
                 <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -377,90 +419,6 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ onPropertyCreated, propertyId
                             value={data.sizeSquareFt}
                             onChange={handleChange}
                             placeholder="0.00"
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] bg-white text-gray-900 placeholder-gray-400"
-                            required
-                        />
-                    </div>
-                </div>
-
-                {/* Year Built */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Year Built*
-                    </label>
-                    <input
-                        type="number"
-                        name="yearBuilt"
-                        value={data.yearBuilt}
-                        onChange={handleChange}
-                        placeholder="0.00"
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] bg-white text-gray-900 placeholder-gray-400"
-                        required
-                    />
-                </div>
-
-                {/* Address */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Address*
-                    </label>
-                    <input
-                        type="text"
-                        name="address"
-                        value={data.address || ''}
-                        onChange={handleChange}
-                        placeholder="Enter street address"
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] bg-white text-gray-900 placeholder-gray-400"
-                        required
-                    />
-                </div>
-
-                {/* Country & State/Region */}
-                <div className="grid grid-cols-2 gap-4">
-                    <CustomDropdown
-                        label="Country*"
-                        value={data.country}
-                        onChange={handleCountryChange}
-                        options={countryOptions}
-                        placeholder="Select country"
-                        required
-                        disabled={countryOptions.length === 0}
-                        searchable={true}
-                    />
-                    <CustomDropdown
-                        label="State / Region*"
-                        value={data.stateRegion}
-                        onChange={handleStateChange}
-                        options={stateOptions}
-                        placeholder={data.country ? "Select state" : "Select country first"}
-                        required
-                        disabled={!data.country || stateOptions.length === 0}
-                        searchable={true}
-                    />
-                </div>
-
-                {/* City & Zip */}
-                <div className="grid grid-cols-2 gap-4">
-                    <CustomDropdown
-                        label="City*"
-                        value={data.city}
-                        onChange={handleCityChange}
-                        options={cityOptions}
-                        placeholder={data.stateRegion ? "Select city" : data.country ? "Select state first" : "Select country first"}
-                        required
-                        disabled={!data.stateRegion || cityOptions.length === 0}
-                        searchable={true}
-                    />
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Zip*
-                        </label>
-                        <input
-                            type="text"
-                            name="zip"
-                            value={data.zip}
-                            onChange={handleChange}
-                            placeholder="Zip Code"
                             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] bg-white text-gray-900 placeholder-gray-400"
                             required
                         />

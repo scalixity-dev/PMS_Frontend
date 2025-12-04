@@ -29,7 +29,48 @@ export interface BackendListing {
   source?: string | null;
   title?: string | null;
   description?: string | null;
-  property?: any;
+  property?: {
+    id: string;
+    propertyName: string;
+    propertyType: 'SINGLE' | 'MULTI';
+    status?: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED' | null;
+    marketRent?: string | number | null;
+    sizeSqft?: string | number | null;
+    yearBuilt?: number | null;
+    description?: string | null;
+    coverPhotoUrl?: string | null;
+    youtubeUrl?: string | null;
+    listingContactName?: string | null;
+    listingPhoneCountryCode?: string | null;
+    listingPhoneNumber?: string | null;
+    listingEmail?: string | null;
+    address?: {
+      streetAddress: string;
+      city: string;
+      stateRegion: string;
+      zipCode: string;
+      country: string;
+    } | null;
+    amenities?: {
+      parking: 'NONE' | 'STREET' | 'GARAGE' | 'DRIVEWAY' | 'DEDICATED_SPOT' | 'PRIVATE_LOT' | 'ASSIGNED';
+      laundry: 'NONE' | 'IN_UNIT' | 'ON_SITE' | 'HOOKUPS';
+      airConditioning: 'NONE' | 'CENTRAL' | 'WINDOW' | 'PORTABLE' | 'COOLER';
+      propertyFeatures?: string[];
+      propertyAmenities?: string[];
+    } | null;
+    photos?: Array<{
+      id: string;
+      photoUrl: string;
+      isPrimary: boolean;
+    }>;
+    singleUnitDetails?: {
+      beds: number;
+      baths?: string | number | null;
+    } | null;
+    leasing?: {
+      description?: string | null;
+    } | null;
+  };
   unit?: any;
 }
 
