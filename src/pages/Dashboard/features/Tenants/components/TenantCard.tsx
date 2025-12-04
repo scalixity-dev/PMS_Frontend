@@ -3,6 +3,7 @@ import { MoreHorizontal } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface TenantCardProps {
+    id: string | number;
     image: string;
     name: string;
     phone: string;
@@ -10,6 +11,7 @@ interface TenantCardProps {
 }
 
 const TenantCard: React.FC<TenantCardProps> = ({
+    id,
     image,
     name,
     phone,
@@ -95,7 +97,7 @@ const TenantCard: React.FC<TenantCardProps> = ({
                 </div>
 
                 <button
-                    onClick={() => navigate(`/dashboard/contacts/tenants/${1}`)} // Using mock ID 1 for now
+                    onClick={() => navigate(`/dashboard/contacts/tenants/${id}`)}
                     className="w-full bg-[#C8C8C8] text-gray-700 py-1.5 rounded-full text-xs font-medium hover:bg-[#b8b8b8] transition-colors shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]"
                 >
                     View Profile
