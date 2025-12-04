@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Trash2, BedDouble, Bath, Edit } from 'lucide-react';
+import { getCurrencySymbol } from '../../../../../utils/currency.utils';
 
 interface PropertyCardProps {
   property: {
@@ -10,6 +11,7 @@ interface PropertyCardProps {
     bedrooms: number;
     bathrooms: number;
     image?: string;
+    country?: string; // Country code for currency symbol
   };
   onDelete: () => void;
   onBack: () => void;
@@ -18,6 +20,11 @@ interface PropertyCardProps {
 }
 
 const PropertyCard: React.FC<PropertyCardProps> = ({ property, onDelete, onBack, onEdit, onNext }) => {
+  // Get currency symbol based on country
+  const currencySymbol = useMemo(() => {
+    return getCurrencySymbol(property.country);
+  }, [property.country]);
+
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden w-full max-w-md mx-auto">
       {/* Property Image */}
@@ -47,7 +54,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onDelete, onBack,
         <div className="flex items-center justify-between mb-6">
           {/* Price */}
           <div className="flex items-baseline gap-1">
-            <span className="text-2xl font-bold text-gray-900">₹ {property.price.toLocaleString()}</span>
+            <span className="text-2xl font-bold text-gray-900">{currencySymbol} {property.price.toLocaleString()}</span>
             <span className="text-sm text-gray-500">/month</span>
           </div>
           

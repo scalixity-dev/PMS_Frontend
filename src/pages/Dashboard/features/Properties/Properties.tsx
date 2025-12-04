@@ -12,7 +12,7 @@ interface Property {
     name: string;
     address: string;
     balance: number;
-    image: string;
+    image: string | null;
     type: string;
     status: 'active' | 'inactive' | 'pending';
     occupancy: 'vacant' | 'occupied' | 'partially_occupied';
@@ -63,10 +63,11 @@ const Properties: React.FC = () => {
         }
 
         // Get image - prioritize coverPhotoUrl, then primary photo, then first photo
+        // Use null if no image exists to prevent data leakage (sharing same default image)
         const image = backendProperty.coverPhotoUrl 
             || backendProperty.photos?.find((p) => p.isPrimary)?.photoUrl 
             || backendProperty.photos?.[0]?.photoUrl 
-            || 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1453&q=80';
+            || null;
 
         // Map status from backend to frontend
         const statusMap: Record<string, 'active' | 'inactive' | 'pending'> = {
