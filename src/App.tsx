@@ -82,9 +82,9 @@ const App: React.FC = () => {
           <Route
             path="/dashboard"
             element={
-              // <ProtectedRoute>
+              <ProtectedRoute>
               <Dashboard />
-              // </ProtectedRoute>
+              </ProtectedRoute>
             }
           />
           <Route path="/dashboard/list-unit" element={<ListUnit />} />

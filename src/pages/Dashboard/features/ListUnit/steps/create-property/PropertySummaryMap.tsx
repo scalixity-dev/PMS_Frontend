@@ -1,6 +1,8 @@
 import type { FC } from 'react';
+import { useMemo } from 'react';
 import { BedDouble, Bath } from 'lucide-react';
 import { useCreatePropertyStore } from '../../store/createPropertyStore';
+import { getCurrencySymbol } from '../../../../../../utils/currency.utils';
 
 interface PropertySummaryMapProps {
     data?: any; // Optional - now using Zustand store
@@ -11,6 +13,11 @@ const PropertySummaryMap: FC<PropertySummaryMapProps> = ({ onBack }) => {
     const { formData: data, prevStep } = useCreatePropertyStore();
     
     const handleBack = onBack || prevStep;
+
+    // Get current currency symbol based on selected country
+    const currencySymbol = useMemo(() => {
+        return getCurrencySymbol(data.country);
+    }, [data.country]);
 
     // Map form data to display format
     const propertyData = {
@@ -66,7 +73,7 @@ const PropertySummaryMap: FC<PropertySummaryMapProps> = ({ onBack }) => {
                         {/* Price */}
                         <div className="flex items-baseline gap-1">
                             <span className="text-2xl font-bold text-gray-900">
-                                ₹ {propertyData.marketRent ? Number(propertyData.marketRent).toLocaleString() : '0'}
+                                {currencySymbol} {propertyData.marketRent ? Number(propertyData.marketRent).toLocaleString() : '0'}
                             </span>
                             <span className="text-sm text-gray-500">/month</span>
                         </div>

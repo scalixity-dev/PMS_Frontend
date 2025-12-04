@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bath, BedDouble, PlusCircle } from 'lucide-react';
+import { getCurrencySymbol } from '../../../../../utils/currency.utils';
 
 interface ListingCardProps {
     id: number;
@@ -11,6 +12,9 @@ interface ListingCardProps {
     status: 'listed' | 'unlisted';
     bathrooms: number;
     bedrooms: number;
+    country?: string;
+    listingId?: string;
+    propertyId?: string;
 }
 
 const ListingCard: React.FC<ListingCardProps> = ({
@@ -21,9 +25,13 @@ const ListingCard: React.FC<ListingCardProps> = ({
     price,
     status,
     bathrooms,
-    bedrooms
+    bedrooms,
+    country,
+    listingId,
+    propertyId
 }) => {
     const navigate = useNavigate();
+    const currencySymbol = getCurrencySymbol(country);
 
     return (
         <div className="bg-white rounded-[2rem] p-4 shadow-sm flex flex-col h-full border border-gray-100">
@@ -64,7 +72,7 @@ const ListingCard: React.FC<ListingCardProps> = ({
                 <div className="flex justify-between items-center mb-4">
                     <div className="flex items-baseline gap-1">
                         <span className="text-lg font-bold text-gray-800">
-                            {price ? `₹ ${price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '₹ -----'}
+                            {price ? `${currencySymbol} ${price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : `${currencySymbol} -----`}
                         </span>
                         <span className="text-xs text-gray-500">/month</span>
                     </div>
@@ -83,14 +91,14 @@ const ListingCard: React.FC<ListingCardProps> = ({
 
                 {status === 'listed' ? (
                     <button
-                        onClick={() => navigate(`/dashboard/listings/${id}`)}
+                        onClick={() => navigate(listingId ? `/dashboard/listings/${listingId}` : `/dashboard/listings/${id}`)}
                         className="bg-[#467676] text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-[#3A6D6C] transition-colors w-32 mt-auto"
                     >
                         View Listing
                     </button>
                 ) : (
                     <button
-                        onClick={() => navigate(`/dashboard/listings/${id}/list`)}
+                        onClick={() => navigate(propertyId ? `/dashboard/list-unit?propertyId=${propertyId}` : '/dashboard/list-unit')}
                         className="bg-[#467676] text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-[#3A6D6C] transition-colors w-32 mt-auto flex items-center justify-center gap-2"
                     >
                         List a unit

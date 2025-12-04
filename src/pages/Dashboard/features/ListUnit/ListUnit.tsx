@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import Stepper from './components/Stepper';
 import PropertySelection from './steps/PropertySelection';
@@ -24,7 +24,6 @@ import type { LeaseDuration } from '../../../../services/leasing.service';
 
 const ListUnit: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const queryClient = useQueryClient();
   const {
     formData,
@@ -51,7 +50,7 @@ const ListUnit: React.FC = () => {
   // Get createPropertyStore reset function
   const { resetForm: resetCreatePropertyForm } = useCreatePropertyStore();
 
-  // Reset both forms and clear cache when component mounts (fresh start)
+  // Reset both forms and clear cache only on initial mount (not on every render)
   useEffect(() => {
     // Reset the ListUnit form to initial state
     resetForm();
@@ -59,7 +58,8 @@ const ListUnit: React.FC = () => {
     resetCreatePropertyForm();
     // Invalidate property queries to ensure fresh data
     queryClient.removeQueries({ queryKey: propertyQueryKeys.all });
-  }, [location.pathname, resetForm, resetCreatePropertyForm, queryClient]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   // Use React Query to fetch property data when property is selected
   const { data: propertyData } = useGetProperty(formData.property || null, !!formData.property);
@@ -111,6 +111,7 @@ const ListUnit: React.FC = () => {
   };
 
   // Check if leasing exists for property when property is selected
+  // Use propertyData.leasing if available (from backend), otherwise check via API only if needed
   useEffect(() => {
     const checkExistingLeasing = async () => {
       if (!formData.property) {
@@ -152,69 +153,92 @@ const ListUnit: React.FC = () => {
       updateFormData('applicationFee', null);
       updateFormData('applicationFeeAmount', '');
 
-      try {
-        const leasing = await leasingService.getByPropertyId(formData.property);
-        
-        // If leasing doesn't exist (null), that's okay - form is already cleared above
-        if (!leasing) {
+      // First, check if leasing data is already available in propertyData (from backend)
+      // This avoids unnecessary API calls when we know leasing doesn't exist
+      let leasing = null;
+
+      if (propertyData) {
+        // Property data is loaded - check if leasing exists
+        if (propertyData.leasing) {
+          // Leasing exists in property data - call API to get full leasing with id
+          try {
+            leasing = await leasingService.getByPropertyId(formData.property);
+          } catch (err) {
+            // If API call fails, leasing doesn't exist
+            setLeasingId(null);
+            return;
+          }
+        } else {
+          // Property data exists but no leasing - leasing doesn't exist, no need to call API
           setLeasingId(null);
           return;
         }
-        
-        setLeasingId(leasing.id);
-        // Load existing leasing data into form
-        updateFormData('rent', leasing.monthlyRent?.toString() || '');
-        updateFormData('deposit', leasing.securityDeposit?.toString() || '');
-        updateFormData('refundable', leasing.amountRefundable?.toString() || '');
-        updateFormData('availableDate', leasing.dateAvailable ? new Date(leasing.dateAvailable).toISOString().split('T')[0] : '');
-        // Map backend enum to numeric string for frontend
-        const reverseMapping: Record<string, string> = {
-          'ONE_MONTH': '1',
-          'TWO_MONTHS': '2',
-          'THREE_MONTHS': '3',
-          'FOUR_MONTHS': '4',
-          'FIVE_MONTHS': '5',
-          'SIX_MONTHS': '6',
-          'SEVEN_MONTHS': '7',
-          'EIGHT_MONTHS': '8',
-          'NINE_MONTHS': '9',
-          'TEN_MONTHS': '10',
-          'ELEVEN_MONTHS': '11',
-          'TWELVE_MONTHS': '12',
-          'THIRTEEN_MONTHS': '13',
-          'FOURTEEN_MONTHS': '14',
-          'FIFTEEN_MONTHS': '15',
-          'SIXTEEN_MONTHS': '16',
-          'SEVENTEEN_MONTHS': '17',
-          'EIGHTEEN_MONTHS': '18',
-          'NINETEEN_MONTHS': '19',
-          'TWENTY_MONTHS': '20',
-          'TWENTY_ONE_MONTHS': '21',
-          'TWENTY_TWO_MONTHS': '22',
-          'TWENTY_THREE_MONTHS': '23',
-          'TWENTY_FOUR_MONTHS': '24',
-          'THIRTY_SIX_PLUS_MONTHS': '36',
-        };
-        updateFormData('minLeaseDuration', reverseMapping[leasing.minLeaseDuration] || '');
-        updateFormData('maxLeaseDuration', reverseMapping[leasing.maxLeaseDuration] || '');
-        updateFormData('description', leasing.description || '');
-        updateFormData('petsAllowed', leasing.petsAllowed ?? null);
-        updateFormData('pets', leasing.petCategory || []);
-        updateFormData('petDeposit', leasing.petDeposit?.toString() || '');
-        updateFormData('petRent', leasing.petFee?.toString() || '');
-        updateFormData('petDescription', leasing.petDescription || '');
-        updateFormData('receiveApplicationsOnline', leasing.onlineRentalApplication ?? null);
-        updateFormData('applicationFee', leasing.requireApplicationFee ?? null);
-        updateFormData('applicationFeeAmount', leasing.applicationFee?.toString() || '');
-      } catch (err) {
-        // Only log actual errors (not 404s - those are handled above by returning null)
-        console.error('Error fetching leasing:', err);
-        setLeasingId(null);
+      } else {
+        // PropertyData not loaded yet - make API call as fallback
+        try {
+          leasing = await leasingService.getByPropertyId(formData.property);
+        } catch (err) {
+          // If API call fails (including 404), leasing doesn't exist
+          setLeasingId(null);
+          return;
+        }
       }
+
+      // If leasing doesn't exist (null), that's okay - form is already cleared above
+      if (!leasing) {
+        setLeasingId(null);
+        return;
+      }
+      
+      setLeasingId(leasing.id);
+      // Load existing leasing data into form
+      updateFormData('rent', leasing.monthlyRent?.toString() || '');
+      updateFormData('deposit', leasing.securityDeposit?.toString() || '');
+      updateFormData('refundable', leasing.amountRefundable?.toString() || '');
+      updateFormData('availableDate', leasing.dateAvailable ? new Date(leasing.dateAvailable).toISOString().split('T')[0] : '');
+      // Map backend enum to numeric string for frontend
+      const reverseMapping: Record<string, string> = {
+        'ONE_MONTH': '1',
+        'TWO_MONTHS': '2',
+        'THREE_MONTHS': '3',
+        'FOUR_MONTHS': '4',
+        'FIVE_MONTHS': '5',
+        'SIX_MONTHS': '6',
+        'SEVEN_MONTHS': '7',
+        'EIGHT_MONTHS': '8',
+        'NINE_MONTHS': '9',
+        'TEN_MONTHS': '10',
+        'ELEVEN_MONTHS': '11',
+        'TWELVE_MONTHS': '12',
+        'THIRTEEN_MONTHS': '13',
+        'FOURTEEN_MONTHS': '14',
+        'FIFTEEN_MONTHS': '15',
+        'SIXTEEN_MONTHS': '16',
+        'SEVENTEEN_MONTHS': '17',
+        'EIGHTEEN_MONTHS': '18',
+        'NINETEEN_MONTHS': '19',
+        'TWENTY_MONTHS': '20',
+        'TWENTY_ONE_MONTHS': '21',
+        'TWENTY_TWO_MONTHS': '22',
+        'TWENTY_THREE_MONTHS': '23',
+        'TWENTY_FOUR_MONTHS': '24',
+        'THIRTY_SIX_PLUS_MONTHS': '36',
+      };
+      updateFormData('minLeaseDuration', reverseMapping[leasing.minLeaseDuration] || '');
+      updateFormData('maxLeaseDuration', reverseMapping[leasing.maxLeaseDuration] || '');
+      updateFormData('description', leasing.description || '');
+      updateFormData('petsAllowed', leasing.petsAllowed ?? null);
+      updateFormData('pets', leasing.petCategory || []);
+      updateFormData('petDeposit', leasing.petDeposit?.toString() || '');
+      updateFormData('petRent', leasing.petFee?.toString() || '');
+      updateFormData('petDescription', leasing.petDescription || '');
+      updateFormData('receiveApplicationsOnline', leasing.onlineRentalApplication ?? null);
+      updateFormData('applicationFee', leasing.requireApplicationFee ?? null);
+      updateFormData('applicationFeeAmount', leasing.applicationFee?.toString() || '');
     };
 
     checkExistingLeasing();
-  }, [formData.property, updateFormData, setLeasingId]);
+  }, [formData.property, propertyData, updateFormData, setLeasingId]);
 
   // Save pet policy when moving from leasingStep 2
   const handleSavePetPolicy = async () => {
@@ -587,7 +611,7 @@ const ListUnit: React.FC = () => {
   };
 
   const handlePropertyCreated = (propertyData: any) => {
-    console.log('Property Created/Updated:', propertyData);
+    
     const propertyId = propertyData.id || formData.property;
     updateFormData('property', propertyId);
     setShowCreateProperty(false);

@@ -46,7 +46,7 @@ const BasicAmenities: React.FC<BasicAmenitiesProps> = ({ data, updateData }) => 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="space-y-2">
             <CustomDropdown
-              label="Parking*"
+              label="Parking"
               value={data.parking || ''}
               onChange={(value) => updateData('parking', value)}
               options={parkingOptions}
@@ -58,7 +58,7 @@ const BasicAmenities: React.FC<BasicAmenitiesProps> = ({ data, updateData }) => 
           
           <div className="space-y-2">
             <CustomDropdown
-              label="Laundry*"
+              label="Laundry"
               value={data.laundry || ''}
               onChange={(value) => updateData('laundry', value)}
               options={laundryOptions}
@@ -70,7 +70,7 @@ const BasicAmenities: React.FC<BasicAmenitiesProps> = ({ data, updateData }) => 
 
           <div className="space-y-2">
             <CustomDropdown
-              label="Air Conditioning*"
+              label="Air Conditioning"
               value={data.ac || ''}
               onChange={(value) => updateData('ac', value)}
               options={acOptions}

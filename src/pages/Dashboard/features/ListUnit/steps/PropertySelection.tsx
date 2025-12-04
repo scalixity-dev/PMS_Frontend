@@ -1,10 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Plus, Building, Loader2 } from 'lucide-react';
 import PropertyCard from '../components/PropertyCard';
-import { leasingService } from '../../../../../services/leasing.service';
 import { propertyService } from '../../../../../services/property.service';
 import { listingService } from '../../../../../services/listing.service';
-import { useGetAllPropertiesTransformed, useGetProperty } from '../../../../../hooks/usePropertyQueries';
+import { useGetAllProperties, useGetProperty } from '../../../../../hooks/usePropertyQueries';
 import { useListUnitStore } from '../store/listUnitStore';
 import type { Property, BackendProperty } from '../../../../../services/property.service';
 
@@ -53,35 +52,43 @@ const getNextIncompleteStep = (property: BackendProperty): number | null => {
   return null;
 };
 
-// Check if property has an active listing
-const hasActiveListing = async (propertyId: string): Promise<boolean> => {
-  try {
-    const listings = await listingService.getByPropertyId(propertyId);
-    
-    // If no listings exist, property doesn't have an active listing
-    if (!listings || listings.length === 0) {
-      return false;
-    }
-    
-    // Check if any listing is active (listingStatus === 'ACTIVE' AND isActive === true)
-    const hasActive = listings.some(
-      listing => listing.listingStatus === 'ACTIVE' && listing.isActive === true
+// Check if property has an active listing (lazy load if not in property data)
+const checkHasActiveListing = async (property: BackendProperty, listingsCache: Map<string, any[]>): Promise<boolean> => {
+  // If listings are already in property data, use them
+  if (property.listings && property.listings.length > 0) {
+    const hasActive = property.listings.some(
+      (listing: any) => listing.listingStatus === 'ACTIVE' && listing.isActive === true
     );
-    
     return hasActive;
+  }
+  
+  // Otherwise, check cache first
+  const cachedListings = listingsCache.get(property.id);
+  if (cachedListings !== undefined) {
+    return cachedListings.some(
+      (listing: any) => listing.listingStatus === 'ACTIVE' && listing.isActive === true
+    );
+  }
+  
+  // Lazy load listings for this property
+  try {
+    const listings = await listingService.getByPropertyId(property.id);
+    listingsCache.set(property.id, listings);
+    
+    return listings.some(
+      (listing: any) => listing.listingStatus === 'ACTIVE' && listing.isActive === true
+    );
   } catch (err) {
-    // If error fetching listings (e.g., 404), assume no active listing
+    // If error fetching listings, assume no active listing
     console.error('Error checking active listing:', err);
+    listingsCache.set(property.id, []); // Cache empty result
     return false;
   }
 };
 
-// Check if property has all listing data filled (property, leasing, application, contact)
-const isPropertyListingComplete = async (propertyId: string): Promise<boolean> => {
+// Check if property has all listing data filled (using data from BackendProperty)
+const isPropertyListingComplete = (property: BackendProperty): boolean => {
   try {
-    // Check property details completeness
-    const property = await propertyService.getOne(propertyId);
-    
     // Property must have: name, address, amenities, photos, description
     const hasPropertyDetails = !!(
       property.propertyName &&
@@ -110,8 +117,8 @@ const isPropertyListingComplete = async (propertyId: string): Promise<boolean> =
       return false;
     }
 
-    // Check leasing data
-    const leasing = await leasingService.getByPropertyId(propertyId);
+    // Check leasing data (already included in BackendProperty)
+    const leasing = property.leasing;
     
     // If leasing doesn't exist (null), property is incomplete
     if (!leasing) {
@@ -200,7 +207,7 @@ const isPropertyListingComplete = async (propertyId: string): Promise<boolean> =
     // All checks passed - property is complete
     return true;
   } catch (err) {
-    // Error fetching property, consider incomplete
+    // Error checking property, consider incomplete
     console.error('Error checking property completeness:', err);
     return false;
   }
@@ -213,14 +220,16 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
   const incompletePropertiesRef = useRef<Property[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Use React Query to fetch all properties
-  // Refetch on mount to ensure fresh data (important when switching users)
+  // Use React Query to fetch all properties WITHOUT listings for better performance
+  // Listings will be lazy loaded only when checking active status
   const { 
-    data: allProperties = [], 
+    data: allBackendProperties = [], 
     isLoading: loading, 
     error: queryError,
-    refetch: refetchProperties
-  } = useGetAllPropertiesTransformed();
+  } = useGetAllProperties(true, false); // enabled=true, includeListings=false
+  
+  // Transform backend properties to Property format for display (only when needed)
+  // We'll transform on-demand in the filter effect to avoid unnecessary computation
 
   // Use React Query to fetch full property data when selected
   const { 
@@ -240,19 +249,18 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
     incompletePropertiesRef.current = incompleteProperties;
   }, [incompleteProperties]);
 
-  useEffect(() => {
-    // Refetch properties on mount to ensure fresh data
-    // Cache invalidation is handled at logout/login in DashboardNavbar
-    refetchProperties();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty dependency array - only run once on mount
+  // Removed explicit refetch - React Query automatically fetches on mount
+  // Cache invalidation is handled at logout/login in DashboardNavbar
+
+  // Cache for listings to avoid redundant API calls
+  const listingsCacheRef = useRef<Map<string, any[]>>(new Map());
 
   // Filter properties based on completeness and active listing status
   useEffect(() => {
     let mounted = true;
 
     (async () => {
-      if (!allProperties || allProperties.length === 0) {
+      if (!allBackendProperties || allBackendProperties.length === 0) {
         // Only update if it's different - use ref to avoid stale closure
         if (!areSameById(incompletePropertiesRef.current, [])) {
           if (!mounted) return;
@@ -262,14 +270,28 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
       }
 
       try {
+        // Check completeness and active listings for ALL properties
+        // Exclude properties that have active listings (already listed)
         const propertyChecks = await Promise.all(
-          allProperties.map(async (property) => ({
-            property,
-            isComplete: await isPropertyListingComplete(property.id),
-            hasActiveListing: await hasActiveListing(property.id)
-          }))
+          allBackendProperties.map(async (backendProperty) => {
+            const transformedProperty = propertyService.transformProperty(backendProperty);
+            const isComplete = isPropertyListingComplete(backendProperty);
+            
+            // Check for active listings for ALL properties (not just complete ones)
+            // Properties with active listings should be excluded from selection
+            const hasActive = await checkHasActiveListing(backendProperty, listingsCacheRef.current);
+            
+            return {
+              property: transformedProperty,
+              isComplete,
+              hasActiveListing: hasActive
+            };
+          })
         );
 
+        // Filter to show only:
+        // 1. Incomplete properties (need more data)
+        // 2. AND properties without active listings (not already listed)
         const newIncomplete = propertyChecks
           .filter(result => !result.isComplete && !result.hasActiveListing)
           .map(result => result.property);
@@ -287,7 +309,7 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
 
     return () => { mounted = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allProperties]); // keep dependency on allProperties only
+  }, [allBackendProperties]); // keep dependency on allBackendProperties only
 
   // Clear selected property if it's no longer in incomplete list
   useEffect(() => {
@@ -389,6 +411,7 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
           property={{
             ...selectedProperty,
             image: propertyImage,
+            country: fullPropertyData?.address?.country, // Pass country for currency symbol
           }}
           onDelete={handleDelete}
           onBack={handleDelete} // Reusing handleDelete as it clears selection, which is the desired "Back" behavior for now

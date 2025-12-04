@@ -274,7 +274,6 @@ export default function DashboardSidebar({ open, setOpen }: SidebarProps) {
               >
                 <SidebarSubLink label="Properties" to="/dashboard/properties" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Units" to="/portfolio/units" isCurrentPath={isCurrentPath} />
-                <SidebarSubLink label="Leases" to="/portfolio/leases" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Listing" to="/dashboard/portfolio/listing" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Occupancy Board" to="/portfolio/board" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Keys & Locks" to="/portfolio/keys" isCurrentPath={isCurrentPath} />
@@ -292,10 +291,9 @@ export default function DashboardSidebar({ open, setOpen }: SidebarProps) {
                 setActiveDropdown={setActiveDropdown}
               >
                 <SidebarSubLink label="Applications" to="/leasing/applications" isCurrentPath={isCurrentPath} />
-                <SidebarSubLink label="Screenings" to="/leasing/screenings" isCurrentPath={isCurrentPath} />
-                <SidebarSubLink label="Listings" to="/leasing/listings" isCurrentPath={isCurrentPath} />
+                <SidebarSubLink label="Leases" to="/leasing/leases" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Leads" to="/leasing/leads" isCurrentPath={isCurrentPath} />
-                <SidebarSubLink label="Premium leads" to="/leasing/premium-leads" isCurrentPath={isCurrentPath} />
+              
               </SidebarDropdownLink>
 
               {/* 4. Contacts Dropdown */}
@@ -354,10 +352,7 @@ export default function DashboardSidebar({ open, setOpen }: SidebarProps) {
                 <SidebarSubLink label="File manager" to="/documents/file-manager" isCurrentPath={isCurrentPath} />
               </SidebarDropdownLink>
 
-              {/* Other main links */}
-              <SidebarLink label="Reports" to="/reports" icon={<PiFileFill size={24} />} />
-              <hr className='border-gray-300 mx-3' />
-              <SidebarLink label="Downloads" to="/downloads" icon={<PiDownloadFill size={24} />} />
+          
             </nav>
           </div>
 
