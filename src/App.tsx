@@ -37,6 +37,8 @@ import Tasks from './pages/Dashboard/features/Tasks/Tasks';
 import Tenants from './pages/Dashboard/features/Tenants/Tenants';
 import TenantDetail from './pages/Dashboard/features/Tenants/TenantDetail';
 import Units from './pages/Dashboard/features/Units/Units';
+import KeysLocks from './pages/Dashboard/features/KeysLocks/KeysLocks';
+import KeyDetail from './pages/Dashboard/features/KeysLocks/KeyDetail';
 // import ListUnit from './pages/Dashboard/features/ListUnit/ListUnit';
 
 // Create a QueryClient instance
@@ -92,6 +94,8 @@ const App: React.FC = () => {
             <Route path="/dashboard/list-unit" element={<ListUnit />} />
             <Route path="/dashboard/properties" element={<Properties />} />
             <Route path="/dashboard/portfolio/units" element={<Units />} />
+            <Route path="/dashboard/portfolio/keys-locks" element={<KeysLocks />} />
+            <Route path="/dashboard/portfolio/keys-locks/:id" element={<KeyDetail />} />
             <Route path="/dashboard/properties/:id" element={<PropertyDetail />} />
             <Route path="/dashboard/portfolio/listing" element={<Listing />} />
             <Route path="/dashboard/listings/:id" element={<ListingDetail />} />
