@@ -286,9 +286,15 @@ const ListingDetail: React.FC = () => {
         };
     }, []);
 
-    // Guard: Redirect to listings page if id is undefined
+    // Redirect to listings page if id is undefined
+    useEffect(() => {
+        if (!id) {
+            navigate('/dashboard/portfolio/listing', { replace: true });
+        }
+    }, [id, navigate]);
+
+    // Early return if id is missing
     if (!id) {
-        navigate('/dashboard/portfolio/listing', { replace: true });
         return null;
     }
 

@@ -11,24 +11,45 @@ const BasicAmenitiesExtended: React.FC<BasicAmenitiesExtendedProps> = ({ data, u
     const selectedAmenities = data.extendedAmenities || [];
     const [customAmenityInput, setCustomAmenityInput] = useState('');
 
+    // Helper function to get unique amenities array (idempotent deduplication)
+    const getUniqueAmenities = (amenities: string[]): string[] => {
+        return Array.from(new Set(amenities.filter(Boolean)));
+    };
+
+    // Get latest amenities from data to avoid stale closure issues
+    const getLatestAmenities = (): string[] => {
+        return getUniqueAmenities(data.extendedAmenities || []);
+    };
+
     const toggleAmenity = (amenity: string) => {
-        const newAmenities = selectedAmenities.includes(amenity)
-            ? selectedAmenities.filter((a: string) => a !== amenity)
-            : [...selectedAmenities, amenity];
-        updateData('extendedAmenities', newAmenities);
+        const currentAmenities = getLatestAmenities();
+        const newAmenities = currentAmenities.includes(amenity)
+            ? currentAmenities.filter((a: string) => a !== amenity)
+            : [...currentAmenities, amenity];
+        updateData('extendedAmenities', getUniqueAmenities(newAmenities));
     };
 
     const addCustomAmenity = () => {
         const trimmedInput = customAmenityInput.trim();
-        if (trimmedInput && !selectedAmenities.includes(trimmedInput)) {
-            const newAmenities = [...selectedAmenities, trimmedInput];
+        if (!trimmedInput) return;
+        
+        // Read latest amenities to avoid stale closure
+        const currentAmenities = getLatestAmenities();
+        
+        // Idempotent: deduplicate before adding
+        if (!currentAmenities.includes(trimmedInput)) {
+            const newAmenities = getUniqueAmenities([...currentAmenities, trimmedInput]);
             updateData('extendedAmenities', newAmenities);
             setCustomAmenityInput('');
         }
     };
 
     const removeCustomAmenity = (amenity: string) => {
-        const newAmenities = selectedAmenities.filter((a: string) => a !== amenity);
+        // Read latest amenities to avoid stale closure
+        const currentAmenities = getLatestAmenities();
+        const newAmenities = getUniqueAmenities(
+            currentAmenities.filter((a: string) => a !== amenity)
+        );
         updateData('extendedAmenities', newAmenities);
     };
 

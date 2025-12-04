@@ -144,8 +144,25 @@ const Listing: React.FC = () => {
                 || backendProperty.photos?.[0]?.photoUrl 
                 || '';
 
+            // Convert backend property ID to number (stable identifier)
+            // Try parsing as number first, fallback to hash if it's a non-numeric string (e.g., UUID)
+            const propertyIdNum = (() => {
+                const parsed = Number(backendProperty.id);
+                if (!isNaN(parsed) && isFinite(parsed)) {
+                    return parsed;
+                }
+                // Deterministic hash for non-numeric IDs (e.g., UUIDs)
+                let hash = 0;
+                for (let i = 0; i < backendProperty.id.length; i++) {
+                    const char = backendProperty.id.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash; // Convert to 32-bit integer
+                }
+                return Math.abs(hash);
+            })();
+
             return {
-                id: index + 1, // Sequential ID for ListingCard (which expects number)
+                id: propertyIdNum,
                 name: backendProperty.propertyName,
                 address,
                 price,
