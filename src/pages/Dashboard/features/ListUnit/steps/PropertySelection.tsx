@@ -411,6 +411,7 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
           property={{
             ...selectedProperty,
             image: propertyImage,
+            country: fullPropertyData?.address?.country, // Pass country for currency symbol
           }}
           onDelete={handleDelete}
           onBack={handleDelete} // Reusing handleDelete as it clears selection, which is the desired "Back" behavior for now
