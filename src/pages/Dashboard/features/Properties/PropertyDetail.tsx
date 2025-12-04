@@ -366,38 +366,49 @@ const PropertyDetail: React.FC = () => {
     const { data: backendProperty, isLoading, error } = useGetProperty(id || null, !!id);
 
     // Check if we need to use mock data (when backend returns no data)
-    const mockProperty = useMemo(() => {
+    const mockData = useMemo(() => {
         if (!id || backendProperty) return null;
 
-        // Try to find in mock data
-        return mockUnitsData.find(p => p.id === id);
+        // Try to find property by ID
+        const property = mockUnitsData.find(p => p.id === id);
+        if (property) return { property, unit: property.units[0] };
+
+        // Try to find unit by ID
+        for (const p of mockUnitsData) {
+            const unit = p.units.find(u => u.id === id);
+            if (unit) return { property: p, unit };
+        }
+
+        return null;
     }, [id, backendProperty]);
 
     // Transform backend property to component format
     const property = useMemo(() => {
         // If we have mock property data, transform it
-        if (mockProperty && !backendProperty) {
-            const firstUnit = mockProperty.units[0];
-            const totalUnits = mockProperty.units.length;
-            const occupiedUnits = mockProperty.units.filter(u => u.status === 'Occupied').length;
+        if (mockData && !backendProperty) {
+            const { property: mockProp, unit: targetUnit } = mockData;
+            const totalUnits = mockProp.units.length;
+            const occupiedUnits = mockProp.units.filter(u => u.status === 'Occupied').length;
+
+            const isUnitView = targetUnit.id === id;
 
             return {
-                id: mockProperty.id,
-                name: mockProperty.propertyName,
-                address: mockProperty.address,
+                id: mockProp.id,
+                name: isUnitView ? `${mockProp.propertyName} - ${targetUnit.name}` : mockProp.propertyName,
+                address: mockProp.address,
                 country: 'IN',
-                image: mockProperty.image,
+                image: mockProp.image,
                 type: totalUnits > 1 ? 'Multi Family' : 'Single Family',
                 yearBuilt: '--',
                 mlsNumber: '--',
-                status: mockProperty.status,
+                status: mockProp.status,
                 specifications: {
-                    bedrooms: firstUnit?.beds || 0,
-                    bathrooms: firstUnit?.baths || 0,
-                    sizeSqFt: firstUnit?.sqft || 0,
+                    bedrooms: targetUnit?.beds || 0,
+                    bathrooms: targetUnit?.baths || 0,
+                    sizeSqFt: targetUnit?.sqft || 0,
                 },
                 financials: {
-                    balance: firstUnit?.rent || 0,
+                    balance: targetUnit?.rent || 0,
                     currency: '₹',
                 },
                 features: [],
@@ -405,7 +416,7 @@ const PropertyDetail: React.FC = () => {
                 parking: 'NONE',
                 laundry: 'NONE',
                 airConditioning: 'NONE',
-                description: `${mockProperty.propertyName} is a ${totalUnits > 1 ? `${totalUnits}-unit property` : 'single-family property'} located at ${mockProperty.address}. Currently ${occupiedUnits} of ${totalUnits} units are occupied.`,
+                description: `${mockProp.propertyName} is a ${totalUnits > 1 ? `${totalUnits}-unit property` : 'single-family property'} located at ${mockProp.address}. Currently ${occupiedUnits} of ${totalUnits} units are occupied.`,
                 attachments: [],
                 stats: {
                     equipment: 0,
@@ -414,7 +425,7 @@ const PropertyDetail: React.FC = () => {
                     maintenance: 0
                 },
                 // Add units data for display
-                units: mockProperty.units,
+                units: mockProp.units,
                 totalUnits,
                 occupiedUnits,
             };
@@ -531,7 +542,7 @@ const PropertyDetail: React.FC = () => {
                 maintenance: 0
             },
         };
-    }, [backendProperty, mockProperty]);
+    }, [backendProperty, mockData]);
 
     // Loading state
     if (isLoading) {
@@ -546,7 +557,7 @@ const PropertyDetail: React.FC = () => {
     }
 
     // Error state - only show error if both backend and mock data failed
-    if ((error || !property) && !mockProperty) {
+    if ((error || !property) && !mockData) {
         return (
             <div className="max-w-6xl mx-auto min-h-screen pb-10 flex items-center justify-center">
                 <div className="text-center">
@@ -585,7 +596,7 @@ const PropertyDetail: React.FC = () => {
                 <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-4">
                         <button
-                            onClick={() => navigate('/dashboard/properties')}
+                            onClick={() => navigate(-1)}
                             className="p-2 hover:bg-gray-200 rounded-full transition-colors"
                         >
                             <ChevronLeft className="w-6 h-6 text-gray-700" />
