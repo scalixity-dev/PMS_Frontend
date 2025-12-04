@@ -15,19 +15,6 @@ interface UnitGroupCardProps {
     group: UnitGroup;
 }
 
-export interface UnitGroup {
-    id: string;
-    propertyName: string;
-    address: string;
-    image: string;
-    status: 'Occupied' | 'Vacant' | 'Partially Occupied';
-    units: Unit[];
-}
-
-interface UnitGroupCardProps {
-    group: UnitGroup;
-}
-
 const UnitGroupCard: React.FC<UnitGroupCardProps> = ({ group }) => {
     const unitsPerRow = 2;
     const rows: Unit[][] = [];
@@ -40,6 +27,15 @@ const UnitGroupCard: React.FC<UnitGroupCardProps> = ({ group }) => {
     // Calculate the width of the property card + first connector line
     const propertyCardWidth = 280; // Fixed width for alignment
     const offsetWidth = propertyCardWidth; // Spacer should match property card width exactly
+
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'Occupied': return 'bg-[#82D64D]';
+            case 'Vacant': return 'bg-gray-500';
+            case 'Partially Occupied': return 'bg-[#FDB022]';
+            default: return 'bg-gray-500';
+        }
+    };
 
     return (
         <div className="bg-[#F0F0F6] rounded-[2.5rem] p-6 mb-8 shadow-lg">
@@ -60,7 +56,7 @@ const UnitGroupCard: React.FC<UnitGroupCardProps> = ({ group }) => {
                                     alt={group.propertyName}
                                     className="w-full h-full object-cover"
                                 />
-                                <div className="absolute top-3 right-3 bg-[#82D64D] text-white text-xs px-3 py-1 rounded-full font-medium">
+                                <div className={`absolute top-3 right-3 ${getStatusColor(group.status)} text-white text-xs px-3 py-1 rounded-full font-medium`}>
                                     {group.status}
                                 </div>
                             </div>

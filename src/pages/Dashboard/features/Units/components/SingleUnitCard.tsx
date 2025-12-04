@@ -7,6 +7,11 @@ interface SingleUnitCardProps {
 }
 
 const SingleUnitCard: React.FC<SingleUnitCardProps> = ({ group }) => {
+    // Guard: Check if units array exists and has at least one unit
+    if (!group.units || group.units.length === 0) {
+        return null; // or return an empty state placeholder
+    }
+
     const unit = group.units[0];
     const isOccupied = unit.status === 'Occupied';
 
@@ -14,7 +19,7 @@ const SingleUnitCard: React.FC<SingleUnitCardProps> = ({ group }) => {
         switch (status) {
             case 'Occupied': return 'bg-[#82D64D]';
             case 'Vacant': return 'bg-gray-500';
-            case 'Partially Occupied': return 'bg-[#82D64D]';
+            case 'Partially Occupied': return 'bg-[#FDB022]';
             default: return 'bg-gray-500';
         }
     };

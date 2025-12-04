@@ -10,7 +10,7 @@ const Units: React.FC = () => {
 
     // Mock Data
     const allUnitGroups: UnitGroup[] = [
-        // Single Unit Property
+        // Single Unit Property - Occupied
         {
             id: '1',
             propertyName: 'Downtown Loft',
@@ -28,6 +28,27 @@ const Units: React.FC = () => {
                     baths: 1,
                     sqft: 850,
                     image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80'
+                }
+            ]
+        },
+        // Single Unit Property - Vacant
+        {
+            id: '1a',
+            propertyName: 'Skyline Villa',
+            address: '89 Whitefield, Bangalore, KA 560066, IN',
+            image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80',
+            status: 'Vacant',
+            units: [
+                {
+                    id: 'u1a',
+                    name: 'Penthouse',
+                    type: 'Single-Family',
+                    status: 'Vacant',
+                    rent: 35000,
+                    beds: 3,
+                    baths: 2,
+                    sqft: 1800,
+                    image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80'
                 }
             ]
         },
@@ -321,8 +342,9 @@ const Units: React.FC = () => {
                 group.address.toLowerCase().includes(searchQuery.toLowerCase());
 
             // Basic filter implementation - can be expanded based on specific requirements
+            // Treat 'Partially Occupied' as occupied for filtering purposes
             const matchesDisplay = !filters.display?.length ||
-                (filters.display.includes('occupied') && group.status === 'Occupied') ||
+                (filters.display.includes('occupied') && (group.status === 'Occupied' || group.status === 'Partially Occupied')) ||
                 (filters.display.includes('vacant') && group.status === 'Vacant');
 
             return matchesSearch && matchesDisplay;

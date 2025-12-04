@@ -36,7 +36,7 @@ const UnitItem: React.FC<UnitItemProps> = ({ unit }) => {
                         alt={unit.name}
                         className="w-full h-full object-cover"
                     />
-                    <span className={`absolute top-1.5 right-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold text-white ${isOccupied ? 'bg-[#82D64D]' : 'bg-[#82D64D]'}`}>
+                    <span className={`absolute top-1.5 right-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold text-white ${isOccupied ? 'bg-[#82D64D]' : 'bg-[#9CA3AF]'}`}>
                         {unit.status}
                     </span>
                 </div>
