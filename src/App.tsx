@@ -29,6 +29,8 @@ import AddExpenseInvoice from './pages/Dashboard/features/Transactions/AddExpens
 import AddMaintenanceRequest from './pages/Dashboard/features/Maintenance/AddMaintenanceRequest';
 import Properties from './pages/Dashboard/features/Properties/Properties';
 import Equipments from './pages/Dashboard/features/Equipments/Equipments';
+import EquipmentDetail from './pages/Dashboard/features/Equipments/EquipmentDetail';
+import CreateEquipment from './pages/Dashboard/features/Equipments/CreateEquipment';
 import PropertyDetail from './pages/Dashboard/features/Properties/PropertyDetail';
 import Listing from './pages/Dashboard/features/Listing/Listing';
 import ListingDetail from './pages/Dashboard/features/Listing/ListingDetail';
@@ -102,6 +104,8 @@ const App: React.FC = () => {
             <Route path="/dashboard/calendar" element={<Calendar />} />
             <Route path="/dashboard/tasks" element={<Tasks />} />
             <Route path="/dashboard/equipments" element={<Equipments />} />
+            <Route path="/dashboard/equipments/add" element={<CreateEquipment />} />
+            <Route path="/dashboard/equipments/:id" element={<EquipmentDetail />} />
             <Route path="/dashboard/property/add" element={<AddProperty />} />
             <Route path="/dashboard/properties/edit/:id" element={<EditProperty />} />
             <Route path="/dashboard/accounting/transactions/income/add" element={<AddIncomeInvoice />} />
