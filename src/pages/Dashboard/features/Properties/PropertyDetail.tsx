@@ -15,9 +15,13 @@ import {
 import SpecsTab from './components/SpecsTab';
 import FinancialsTab from './components/FinancialsTab';
 import ServiceProvidersTab from './components/ServiceProvidersTab';
+import PhotoGalleryModal from './components/PhotoGalleryModal';
 import DetailTabs from '../../components/DetailTabs';
 import { useGetProperty } from '../../../../hooks/usePropertyQueries';
-import { getCurrencySymbol } from '../../../../utils/currency.utils';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import type { ChartConfig } from "@/components/ui/chart";
+import { Label, Legend, Pie, PieChart } from "recharts";
+
 import { type UnitGroup } from '../Units/components/UnitGroupCard';
 
 // Mock data from Units feature
@@ -347,6 +351,8 @@ const PropertyDetail: React.FC = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('profile');
     const [isActionDropdownOpen, setIsActionDropdownOpen] = useState(false);
+    const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+    const [galleryStartIndex, setGalleryStartIndex] = useState(0);
     const actionDropdownRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -392,12 +398,22 @@ const PropertyDetail: React.FC = () => {
 
             const isUnitView = targetUnit.id === id;
 
+            const photos = [
+                mockProp.image,
+                'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80',
+                'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80',
+                'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80',
+                'https://images.unsplash.com/photo-1600596542815-27b88e39e169?auto=format&fit=crop&w=800&q=80',
+                'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=800&q=80',
+            ];
+
             return {
                 id: mockProp.id,
                 name: isUnitView ? `${mockProp.propertyName} - ${targetUnit.name}` : mockProp.propertyName,
                 address: mockProp.address,
                 country: 'IN',
                 image: mockProp.image,
+                photos,
                 type: totalUnits > 1 ? 'Multi Family' : 'Single Family',
                 yearBuilt: '--',
                 mlsNumber: '--',
@@ -429,6 +445,8 @@ const PropertyDetail: React.FC = () => {
                 totalUnits,
                 occupiedUnits,
                 isUnitView,
+                marketRent: targetUnit?.rent || 0,
+                deposit: (targetUnit?.rent || 0) * 1.5,
             };
         }
 
@@ -509,12 +527,24 @@ const PropertyDetail: React.FC = () => {
         const laundry = backendProperty.amenities?.laundry || 'NONE';
         const airConditioning = backendProperty.amenities?.airConditioning || 'NONE';
 
+        // Get deposit
+        let deposit = 0;
+        if (backendProperty.leasing?.securityDeposit) {
+            deposit = typeof backendProperty.leasing.securityDeposit === 'string'
+                ? parseFloat(backendProperty.leasing.securityDeposit) || 0
+                : Number(backendProperty.leasing.securityDeposit) || 0;
+        }
+
+        let photos = backendProperty.photos?.map((p: any) => p.photoUrl) || [];
+        if (photos.length === 0 && image) photos = [image];
+
         return {
             id: backendProperty.id,
             name: backendProperty.propertyName,
             address,
             country,
             image,
+            photos,
             type,
             yearBuilt: backendProperty.yearBuilt?.toString() || '--',
             mlsNumber: backendProperty.mlsNumber || '--',
@@ -526,7 +556,7 @@ const PropertyDetail: React.FC = () => {
             },
             financials: {
                 balance: monthlyRent,
-                currency: getCurrencySymbol(country),
+                currency: '$',
             },
             features,
             amenities,
@@ -543,6 +573,11 @@ const PropertyDetail: React.FC = () => {
                 maintenance: 0
             },
             isUnitView: false,
+            marketRent: monthlyRent,
+            deposit,
+            units: backendProperty.units || [],
+            totalUnits: backendProperty.units?.length || 0,
+            occupiedUnits: 0, // TODO: Update when backend provides unit status
         };
     }, [backendProperty, mockData]);
 
@@ -637,37 +672,63 @@ const PropertyDetail: React.FC = () => {
                 </div>
 
                 {/* Hero Image & Property Info Section */}
-                <div className="mb-10 p-6 shadow-lg rounded-3xl border border-gray-300">
-                    {/* Hero Image */}
-                    <div className="w-full h-80 rounded-3xl overflow-hidden mb-8 shadow-lg">
-                        {property.image ? (
+                <div className="mb-10 p-6 rounded-[2rem] shadow-lg">
+                    {/* Hero Image Banner (Fixed Cover) */}
+                    <div
+                        className="w-full h-[400px] rounded-[2rem] overflow-hidden mb-6 shadow-md relative group cursor-pointer"
+                        onClick={() => {
+                            setGalleryStartIndex(0);
+                            setIsGalleryOpen(true);
+                        }}
+                    >
+                        {property.photos && property.photos.length > 0 ? (
                             <img
-                                src={property.image}
+                                src={property.photos[0]}
                                 alt={property.name}
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
-                                    // If image fails to load, show placeholder
                                     const target = e.target as HTMLImageElement;
                                     target.style.display = 'none';
                                     const placeholder = target.nextElementSibling as HTMLElement;
-                                    if (placeholder) {
-                                        placeholder.style.display = 'flex';
-                                    }
+                                    if (placeholder) placeholder.style.display = 'flex';
                                 }}
                             />
                         ) : null}
                         <div
-                            className={`w-full h-full ${property.image ? 'hidden' : 'flex'} items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300`}
+                            className={`w-full h-full ${property.photos && property.photos.length > 0 ? 'hidden' : 'flex'} items-center justify-center bg-gray-100 rounded-[2rem]`}
                         >
                             <div className="text-center">
-                                <div className="text-gray-400 text-6xl mb-2">🏠</div>
-                                <p className="text-gray-500 text-sm font-medium">No Image Available</p>
+                                <div className="text-gray-300 text-6xl mb-2">🏠</div>
+                                <p className="text-gray-400 text-sm font-medium">No Image Available</p>
                             </div>
                         </div>
                     </div>
 
+                    {/* Thumbnails Carousel */}
+                    <div className="flex items-center justify-between mb-8">
+                        {/* Scrollable thumbnails */}
+                        <div className="flex gap-4 overflow-x-auto scrollbar-hide py-2 w-full">
+                            {property.photos && property.photos.slice(1).map((photo: string, index: number) => (
+                                <button
+                                    key={index}
+                                    onClick={() => {
+                                        setGalleryStartIndex(index + 1);
+                                        setIsGalleryOpen(true);
+                                    }}
+                                    className="relative flex-shrink-0 w-24 h-24 rounded-2xl overflow-hidden transition-all duration-300 opacity-90 hover:opacity-100 hover:scale-105 shadow-sm hover:shadow-md"
+                                >
+                                    <img
+                                        src={photo}
+                                        alt={`View ${index + 1}`}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
                     {/* Property Info Center */}
-                    <div className="flex flex-col items-center justify-center">
+                    <div className="p-6 flex flex-col items-center">
                         <div className="bg-[#E8F3F1] px-6 py-2 rounded-full mb-3">
                             <h2 className="text-[#3A6D6C] font-bold text-lg">{property?.name || 'Property'}</h2>
                         </div>
@@ -743,207 +804,345 @@ const PropertyDetail: React.FC = () => {
 
 
                 {/* Content based on active tab */}
-                {activeTab === 'profile' && (
-                    <>
-                        {/* Financials Chart Section */}
-                        <div className="bg-white rounded-[2rem] p-8 mb-8 shadow-sm">
-                            <div className="flex justify-between items-center mb-6">
-                                <h3 className="text-lg font-bold text-gray-800">Financials, {property?.financials?.currency || 'INR'}</h3>
-                                <button className="border border-gray-200 px-4 py-1.5 rounded-lg text-xs font-medium text-gray-600 flex items-center gap-2">
-                                    See All <ChevronLeft className="w-3 h-3 rotate-180" />
-                                </button>
-                            </div>
-
-                            {/* Mock Chart Visualization */}
-                            <div className="relative h-48 flex items-end justify-between gap-4 px-4">
-                                {/* Grid lines */}
-                                <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-8">
-                                    {[1, 2, 3, 4].map(i => (
-                                        <div key={i} className="border-t border-dashed border-gray-200 w-full h-0"></div>
-                                    ))}
+                {
+                    activeTab === 'profile' && (
+                        <>
+                            {/* Financials Chart Section */}
+                            <div className="bg-white rounded-[2rem] p-8 mb-8 shadow-sm">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="text-lg font-bold text-gray-800">Financials, {property?.financials?.currency || 'INR'}</h3>
+                                    <button className="border border-gray-200 px-4 py-1.5 rounded-lg text-xs font-medium text-gray-600 flex items-center gap-2">
+                                        See All <ChevronLeft className="w-3 h-3 rotate-180" />
+                                    </button>
                                 </div>
 
-                                {/* Bars */}
-                                {[10, 12, 12, 20, 12, 12, 12, 12].map((height, idx) => (
-                                    <div key={idx} className="flex flex-col items-center gap-2 z-10 w-full">
-                                        {idx === 3 && property?.financials && (
-                                            <div className="mb-2 bg-[#E8E8EA] px-3 py-1.5 rounded-lg shadow-sm text-xs font-bold text-gray-700 flex items-center gap-1">
-                                                <div className="w-2 h-2 rounded-full bg-[#3A6D6C]"></div>
-                                                {property.financials.currency} {property.financials.balance.toLocaleString()}
-                                            </div>
-                                        )}
-                                        <div
-                                            className={`w-full max-w-[40px] rounded-t-lg ${idx === 3 ? 'bg-[#10B981]' : 'bg-[#E8F3F1]'}`}
-                                            style={{ height: `${height * 5}px` }}
-                                        ></div>
-                                        <span className="text-[10px] text-gray-400">1{idx} Nov</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Features & Amenities Row */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                            {/* Property Features */}
-                            <div className="bg-white rounded-[2rem] p-6 shadow-sm flex flex-col">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <h3 className="text-lg font-bold text-gray-800">Property features</h3>
-                                    <span className="bg-[#82D64D] text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full">
-                                        {property.features?.length || 0}
-                                    </span>
-                                </div>
-                                <div className="flex flex-wrap gap-3">
-                                    {property?.features && property.features.length > 0 ? (
-                                        property.features.map((feature, index) => (
-                                            <span key={index} className="bg-[#82D64D] text-white px-6 py-2 rounded-full text-sm font-medium">
-                                                {feature}
-                                            </span>
-                                        ))
-                                    ) : (
-                                        <span className="text-gray-400 text-sm italic">No features listed</span>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Property Amenities */}
-                            <div className="bg-white rounded-[2rem] p-6 shadow-sm flex flex-col">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <h3 className="text-lg font-bold text-gray-800">Property amenities</h3>
-                                    <span className="bg-[#82D64D] text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full">
-                                        {property.amenities?.length || 0}
-                                    </span>
-                                </div>
-                                <div className="flex flex-wrap gap-3">
-                                    {property?.amenities && property.amenities.length > 0 ? (
-                                        property.amenities.map((amenity, index) => (
-                                            <span key={index} className="bg-[#82D64D] text-white px-6 py-2 rounded-full text-sm font-medium">
-                                                {amenity}
-                                            </span>
-                                        ))
-                                    ) : (
-                                        <span className="text-gray-400 text-sm italic">No amenities listed</span>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* General Information */}
-                        <div className="mb-8">
-                            <h3 className="text-lg font-bold text-gray-800 mb-4">General information</h3>
-                            <div className="bg-[#E8E8EA] rounded-[2rem] p-6">
-                                <div className="grid grid-cols-4 gap-6 mb-6">
-                                    <div>
-                                        <label className="block text-xs font-medium text-gray-600 mb-2">Property name</label>
-                                        <div className="bg-white rounded-xl px-4 py-3 text-sm text-gray-700 shadow-sm">
-                                            {property?.name || '--'}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-gray-600 mb-2">Year built</label>
-                                        <div className="bg-white rounded-xl px-4 py-3 text-sm text-gray-700 shadow-sm">
-                                            {property?.yearBuilt || '--'}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-gray-600 mb-2">MLS #</label>
-                                        <div className="bg-white rounded-xl px-4 py-3 text-sm text-gray-700 shadow-sm">
-                                            {property?.mlsNumber || '--'}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-gray-600 mb-2">Property status</label>
-                                        <div className="bg-white rounded-xl px-4 py-3 text-sm text-gray-700 shadow-sm">
-                                            {property?.status || '--'}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <h4 className="text-base font-bold text-gray-700 mb-4">{property?.type || 'Property'}</h4>
-                                <div className="flex gap-4 mb-6">
-                                    <div className="bg-[#82D64D] text-white px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium">
-                                        <BedDouble className="w-4 h-4" />
-                                        Bedrooms
-                                        <span className="bg-white text-[#82D64D] w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold">{property?.specifications?.bedrooms || 0}</span>
-                                    </div>
-                                    <div className="bg-[#82D64D] text-white px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium">
-                                        <Bath className="w-4 h-4" />
-                                        Bathrooms
-                                        <span className="bg-white text-[#82D64D] w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold">{property?.specifications?.bathrooms || 0}</span>
-                                    </div>
-                                    <div className="bg-[#82D64D] text-white px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium">
-                                        <Maximize className="w-4 h-4" />
-                                        Size, sq.ft
-                                        <span className="bg-white text-[#82D64D] min-w-[1.25rem] h-5 px-1.5 rounded-full flex items-center justify-center text-xs font-bold">{property?.specifications?.sizeSqFt || 0}</span>
-                                    </div>
-                                </div>
-
-                                <div className="bg-[#DCDCDF] rounded-2xl p-6 grid grid-cols-3 gap-6">
-                                    <div>
-                                        <label className="block text-xs font-medium text-gray-600 mb-2">Parking</label>
-                                        <div className="bg-white rounded-xl px-4 py-3 text-sm text-gray-700 shadow-sm">
-                                            {property?.parking && property.parking !== 'NONE' ? property.parking.replace(/_/g, ' ') : 'None'}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-gray-600 mb-2">Laundry</label>
-                                        <div className="bg-white rounded-xl px-4 py-3 text-sm text-gray-700 shadow-sm">
-                                            {property?.laundry && property.laundry !== 'NONE' ? property.laundry.replace(/_/g, ' ') : 'None'}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-gray-600 mb-2">Air Conditioning</label>
-                                        <div className="bg-white rounded-xl px-4 py-3 text-sm text-gray-700 shadow-sm">
-                                            {property?.airConditioning && property.airConditioning !== 'NONE' ? property.airConditioning.replace(/_/g, ' ') : 'None'}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Details */}
-                        <div className="mb-8">
-                            <h3 className="text-lg font-bold text-gray-800 mb-4">Details</h3>
-                            <div className="bg-[#E8E8EA] rounded-[2rem] p-6 min-h-[160px]">
-                                {property?.description ? (
-                                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{property.description}</p>
-                                ) : (
-                                    <p className="text-gray-400 text-sm italic">No description available</p>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Property Attachments */}
-                        <div className="mb-8">
-                            <h3 className="text-lg font-bold text-gray-800 mb-4">Property attachments</h3>
-                            <div className="bg-[#E8E8EA] rounded-[2rem] p-6 min-h-[160px]">
-                                {property?.attachments && property.attachments.length > 0 ? (
-                                    <div className="flex flex-wrap gap-4">
-                                        {property.attachments.map((attachment: any, index: number) => (
-                                            <a
-                                                key={index}
-                                                href={attachment.fileUrl}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="bg-white px-4 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                                            >
-                                                {attachment.description || attachment.fileType || 'Attachment'}
-                                            </a>
+                                {/* Mock Chart Visualization */}
+                                <div className="relative h-48 flex items-end justify-between gap-4 px-4">
+                                    {/* Grid lines */}
+                                    <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-8">
+                                        {[1, 2, 3, 4].map(i => (
+                                            <div key={i} className="border-t border-dashed border-gray-200 w-full h-0"></div>
                                         ))}
                                     </div>
+
+                                    {/* Bars */}
+                                    {[10, 12, 12, 20, 12, 12, 12, 12].map((height, idx) => (
+                                        <div key={idx} className="flex flex-col items-center gap-2 z-10 w-full">
+                                            {idx === 3 && property?.financials && (
+                                                <div className="mb-2 bg-[#E8E8EA] px-3 py-1.5 rounded-lg shadow-sm text-xs font-bold text-gray-700 flex items-center gap-1">
+                                                    <div className="w-2 h-2 rounded-full bg-[#3A6D6C]"></div>
+                                                    {property.financials.currency} {property.financials.balance.toLocaleString()}
+                                                </div>
+                                            )}
+                                            <div
+                                                className={`w-full max-w-[40px] rounded-t-lg ${idx === 3 ? 'bg-[#10B981]' : 'bg-[#E8F3F1]'}`}
+                                                style={{ height: `${height * 5}px` }}
+                                            ></div>
+                                            <span className="text-[10px] text-gray-400">1{idx} Nov</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Features & Amenities Row (Conditional for Multi Family) */}
+                            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6 mb-8">
+                                {property.type === 'Multi Family' ? (
+                                    <>
+                                        {/* Column 1: Property Amenities (Replaces Features) */}
+                                        <div className="bg-white rounded-[2rem] p-6 shadow-sm flex flex-col">
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <h3 className="text-lg font-bold text-gray-800">Property amenities</h3>
+                                                <span className="bg-[#82D64D] text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full">
+                                                    {property.amenities?.length || 0}
+                                                </span>
+                                            </div>
+                                            <div className="flex flex-wrap gap-3">
+                                                {property?.amenities && property.amenities.length > 0 ? (
+                                                    property.amenities.filter((amenity: any) => typeof amenity === 'string').map((amenity: string, index: number) => (
+                                                        <span key={index} className="bg-[#82D64D] text-white px-6 py-2 rounded-full text-sm font-medium">
+                                                            {amenity}
+                                                        </span>
+                                                    ))
+                                                ) : (
+                                                    <span className="text-gray-400 text-sm italic">No amenities listed</span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Column 2: Units Occupancy Pie Chart (Replaces Amenities) */}
+                                        <div className="bg-white rounded-[2rem] p-6 shadow-sm flex flex-col w-[340px]">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <h3 className="text-lg font-bold text-gray-800">Units Occupancy</h3>
+                                                <button className="bg-[#3A6D6C] text-white px-4 py-1.5 rounded-full text-xs font-medium hover:bg-[#2c5554] transition-colors">
+                                                    View Units
+                                                </button>
+                                            </div>
+                                            <ChartContainer
+                                                config={{
+                                                    units: {
+                                                        label: "Units",
+                                                    },
+                                                    occupied: {
+                                                        label: "Occupied",
+                                                        color: "#7E22CE",
+                                                    },
+                                                    vacant: {
+                                                        label: "Vacant",
+                                                        color: "#D8B4FE",
+                                                    },
+                                                } satisfies ChartConfig}
+                                                className="mx-auto h-min w-full"
+                                            >
+                                                <PieChart>
+                                                    <ChartTooltip
+                                                        cursor={false}
+                                                        content={<ChartTooltipContent hideLabel className="bg-white border-gray-200 border shadow-lg rounded-md" />}
+                                                    />
+                                                    <Legend
+                                                        layout="vertical"
+                                                        verticalAlign="middle"
+                                                        align="left"
+                                                        iconType="circle"
+                                                        iconSize={8}
+                                                        formatter={(value) => {
+                                                            const config = {
+                                                                occupied: "Occupied",
+                                                                vacant: "Vacant"
+                                                            } as const;
+                                                            return <span className="text-gray-700 font-semibold text-sm">{config[value as keyof typeof config] || value}</span>;
+                                                        }}
+                                                        wrapperStyle={{ paddingLeft: "20px" }}
+                                                    />
+                                                    <Pie
+                                                        data={[
+                                                            { browser: "occupied", units: property.occupiedUnits || 0, fill: "var(--color-occupied)" },
+                                                            { browser: "vacant", units: (property.totalUnits || 0) - (property.occupiedUnits || 0), fill: "var(--color-vacant)" }
+                                                        ]}
+                                                        dataKey="units"
+                                                        nameKey="browser"
+                                                        innerRadius={55}
+                                                        outerRadius={80}
+                                                        strokeWidth={0}
+                                                    >
+                                                        <Label
+                                                            content={({ viewBox }) => {
+                                                                if (viewBox && "width" in viewBox && "height" in viewBox) {
+                                                                    const centerX = (viewBox.width || 0) * 0.7;
+                                                                    const centerY = (viewBox.height || 0) * 0.5;
+                                                                    return (
+                                                                        <text
+                                                                            x={centerX}
+                                                                            y={centerY}
+                                                                            textAnchor="middle"
+                                                                            dominantBaseline="middle"
+                                                                        >
+                                                                            <tspan
+                                                                                x={centerX}
+                                                                                y={centerY + 4}
+                                                                                className="fill-gray-900 text-2xl font-bold"
+                                                                            >
+                                                                                {property.totalUnits}
+                                                                            </tspan>
+                                                                            <tspan
+                                                                                x={centerX}
+                                                                                y={centerY + 24}
+                                                                                className="fill-gray-500 text-xs"
+                                                                            >
+                                                                                Total Units
+                                                                            </tspan>
+                                                                        </text>
+                                                                    )
+                                                                }
+                                                            }}
+                                                        />
+                                                    </Pie>
+                                                </PieChart>
+                                            </ChartContainer>
+                                        </div>
+                                    </>
                                 ) : (
-                                    <p className="text-gray-500 text-sm">No attachments added</p>
+                                    <>
+                                        {/* Property Features */}
+                                        <div className="bg-white rounded-[2rem] p-6 shadow-sm flex flex-col">
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <h3 className="text-lg font-bold text-gray-800">Property features</h3>
+                                                <span className="bg-[#82D64D] text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full">
+                                                    {property.features?.length || 0}
+                                                </span>
+                                            </div>
+                                            <div className="flex flex-wrap gap-3">
+                                                {property?.features && property.features.length > 0 ? (
+                                                    property.features.map((feature, index) => (
+                                                        <span key={index} className="bg-[#82D64D] text-white px-6 py-2 rounded-full text-sm font-medium">
+                                                            {feature}
+                                                        </span>
+                                                    ))
+                                                ) : (
+                                                    <span className="text-gray-400 text-sm italic">No features listed</span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Property Amenities */}
+                                        <div className="bg-white rounded-[2rem] p-6 shadow-sm flex flex-col">
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <h3 className="text-lg font-bold text-gray-800">Property amenities</h3>
+                                                <span className="bg-[#82D64D] text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full">
+                                                    {property.amenities?.length || 0}
+                                                </span>
+                                            </div>
+                                            <div className="flex flex-wrap gap-3">
+                                                {property?.amenities && property.amenities.length > 0 ? (
+                                                    property.amenities.map((amenity, index) => (
+                                                        <span key={index} className="bg-[#82D64D] text-white px-6 py-2 rounded-full text-sm font-medium">
+                                                            {amenity}
+                                                        </span>
+                                                    ))
+                                                ) : (
+                                                    <span className="text-gray-400 text-sm italic">No amenities listed</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </>
                                 )}
                             </div>
-                        </div>
-                    </>
-                )}
+
+                            {/* General Information */}
+                            <div className="mb-8">
+                                <h3 className="text-lg font-bold text-gray-800 mb-4">General information</h3>
+                                <div className="bg-[#E8E8EA] rounded-[2rem] p-6">
+                                    <div className="grid grid-cols-4 gap-6 mb-6">
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-2">Property name</label>
+                                            <div className="bg-white rounded-xl px-4 py-3 text-sm text-gray-700 shadow-sm">
+                                                {property?.name || '--'}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-2">Year built</label>
+                                            <div className="bg-white rounded-xl px-4 py-3 text-sm text-gray-700 shadow-sm">
+                                                {property?.yearBuilt || '--'}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-2">MLS #</label>
+                                            <div className="bg-white rounded-xl px-4 py-3 text-sm text-gray-700 shadow-sm">
+                                                {property?.mlsNumber || '--'}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-2">Property status</label>
+                                            <div className="bg-white rounded-xl px-4 py-3 text-sm text-gray-700 shadow-sm">
+                                                {property?.status || '--'}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <h4 className="text-base font-bold text-gray-700 mb-4">{property?.type || 'Property'}</h4>
+                                    <div className="flex gap-4 mb-6">
+                                        <div className="bg-[#82D64D] text-white px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium">
+                                            <BedDouble className="w-4 h-4" />
+                                            Bedrooms
+                                            <span className="bg-white text-[#82D64D] w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold">{property?.specifications?.bedrooms || 0}</span>
+                                        </div>
+                                        <div className="bg-[#82D64D] text-white px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium">
+                                            <Bath className="w-4 h-4" />
+                                            Bathrooms
+                                            <span className="bg-white text-[#82D64D] w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold">{property?.specifications?.bathrooms || 0}</span>
+                                        </div>
+                                        <div className="bg-[#82D64D] text-white px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium">
+                                            <Maximize className="w-4 h-4" />
+                                            Size, sq.ft
+                                            <span className="bg-white text-[#82D64D] min-w-[1.25rem] h-5 px-1.5 rounded-full flex items-center justify-center text-xs font-bold">{property?.specifications?.sizeSqFt || 0}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-[#DCDCDF] rounded-2xl p-6 grid grid-cols-3 gap-6">
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-2">Parking</label>
+                                            <div className="bg-white rounded-xl px-4 py-3 text-sm text-gray-700 shadow-sm">
+                                                {property?.parking && property.parking !== 'NONE' ? property.parking.replace(/_/g, ' ') : 'None'}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-2">Laundry</label>
+                                            <div className="bg-white rounded-xl px-4 py-3 text-sm text-gray-700 shadow-sm">
+                                                {property?.laundry && property.laundry !== 'NONE' ? property.laundry.replace(/_/g, ' ') : 'None'}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-2">Air Conditioning</label>
+                                            <div className="bg-white rounded-xl px-4 py-3 text-sm text-gray-700 shadow-sm">
+                                                {property?.airConditioning && property.airConditioning !== 'NONE' ? property.airConditioning.replace(/_/g, ' ') : 'None'}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-2">Market Rent</label>
+                                            <div className="bg-white rounded-xl px-4 py-3 text-sm text-gray-700 shadow-sm">
+                                                {property?.financials?.currency} {property?.marketRent?.toLocaleString() || '0'}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-600 mb-2">Deposit</label>
+                                            <div className="bg-white rounded-xl px-4 py-3 text-sm text-gray-700 shadow-sm">
+                                                {property?.financials?.currency} {property?.deposit?.toLocaleString() || '0'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Details */}
+                            <div className="mb-8">
+                                <h3 className="text-lg font-bold text-gray-800 mb-4">Details</h3>
+                                <div className="bg-[#E8E8EA] rounded-[2rem] p-6 min-h-[160px]">
+                                    {property?.description ? (
+                                        <p className="text-sm text-gray-700 whitespace-pre-wrap">{property.description}</p>
+                                    ) : (
+                                        <p className="text-gray-400 text-sm italic">No description available</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Property Attachments */}
+                            <div className="mb-8">
+                                <h3 className="text-lg font-bold text-gray-800 mb-4">Property attachments</h3>
+                                <div className="bg-[#E8E8EA] rounded-[2rem] p-6 min-h-[160px]">
+                                    {property?.attachments && property.attachments.length > 0 ? (
+                                        <div className="flex flex-wrap gap-4">
+                                            {property.attachments.map((attachment: any, index: number) => (
+                                                <a
+                                                    key={index}
+                                                    href={attachment.fileUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="bg-white px-4 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                >
+                                                    {attachment.description || attachment.fileType || 'Attachment'}
+                                                </a>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-gray-500 text-sm">No attachments added</p>
+                                    )}
+                                </div>
+                            </div>
+                        </>
+                    )
+                }
 
                 {activeTab === 'specs' && <SpecsTab />}
                 {activeTab === 'financials' && !property.isUnitView && <FinancialsTab />}
                 {activeTab === 'service providers' && <ServiceProvidersTab />}
 
-            </div>
-        </div>
+                <PhotoGalleryModal
+                    isOpen={isGalleryOpen}
+                    onClose={() => setIsGalleryOpen(false)}
+                    images={property.photos || []}
+                    initialIndex={galleryStartIndex}
+                />
+            </div >
+        </div >
     );
 };
 
