@@ -10,6 +10,7 @@ interface PropertyCardProps {
     balance: number;
     type?: string;
     country?: string;
+    propertyType?: 'single_apartment' | 'multi_apartment';
 }
 
 const PropertyCard: React.FC<PropertyCardProps> = ({
@@ -18,11 +19,13 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
     name,
     address,
     balance,
-    type = 'Single Family',
-    country
+    type = 'Single Apartment',
+    country,
+    propertyType = 'single_apartment'
 }) => {
     const navigate = useNavigate();
     const currencySymbol = getCurrencySymbol(country);
+    const isSingleApartment = propertyType === 'single_apartment';
 
     return (
         <div className="bg-[#F6F6F8] rounded-[2rem] p-4 shadow-sm relative flex flex-col h-full">
@@ -52,9 +55,11 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
                         <p className="text-gray-500 text-xs font-medium">No Image</p>
                     </div>
                 </div>
-                <div className="bg-[#82D64D] text-white px-4 py-1.5 rounded-full text-sm font-medium absolute top-3 right-3 shadow-sm">
-                    Balance {currencySymbol} {balance.toLocaleString()}
-                </div>
+                {isSingleApartment && (
+                    <div className="bg-[#82D64D] text-white px-4 py-1.5 rounded-full text-sm font-medium absolute top-3 right-3 shadow-sm">
+                        Balance {currencySymbol} {balance.toLocaleString()}
+                    </div>
+                )}
             </div>
 
             {/* Content Section */}
