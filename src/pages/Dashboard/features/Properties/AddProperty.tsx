@@ -62,6 +62,16 @@ const AddProperty: React.FC = () => {
   const [customFeatureInput, setCustomFeatureInput] = useState('');
   const [customAmenityInput, setCustomAmenityInput] = useState('');
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [attachmentErrors, setAttachmentErrors] = useState<string[]>([]);
+
+  // Allowed MIME types for document attachments
+  const allowedDocumentTypes = [
+    'application/pdf',
+    'application/msword', // .doc
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+    'application/vnd.ms-excel', // .xls
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+  ];
 
   // Refs for file inputs
   const coverPhotoInputRef = useRef<HTMLInputElement>(null);
@@ -259,8 +269,29 @@ const AddProperty: React.FC = () => {
 
   const handleAttachmentsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const newAttachments = Array.from(e.target.files);
-      setFormData(prev => ({ ...prev, attachments: [...prev.attachments, ...newAttachments] }));
+      const files = Array.from(e.target.files);
+      const validFiles: File[] = [];
+      const invalidFiles: string[] = [];
+
+      files.forEach(file => {
+        if (allowedDocumentTypes.includes(file.type)) {
+          validFiles.push(file);
+        } else {
+          invalidFiles.push(file.name);
+        }
+      });
+
+      if (invalidFiles.length > 0) {
+        setAttachmentErrors(prev => [...prev, ...invalidFiles]);
+        // Clear errors after 5 seconds
+        setTimeout(() => {
+          setAttachmentErrors(prev => prev.filter(name => !invalidFiles.includes(name)));
+        }, 5000);
+      }
+
+      if (validFiles.length > 0) {
+        setFormData(prev => ({ ...prev, attachments: [...prev.attachments, ...validFiles] }));
+      }
     }
   };
 
@@ -860,7 +891,7 @@ const AddProperty: React.FC = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <CustomDropdown
-                  label="Country*"
+                  label="Country"
                   value={formData.country}
                   onChange={(value) => {
                     updateFormData('country', value);
@@ -885,7 +916,7 @@ const AddProperty: React.FC = () => {
               </div>
               <div>
                 <CustomDropdown
-                  label="State / Region*"
+                  label="State / Region"
                   value={formData.stateRegion}
                   onChange={(value) => {
                     updateFormData('stateRegion', value);
@@ -914,7 +945,7 @@ const AddProperty: React.FC = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <CustomDropdown
-                  label="City*"
+                  label="City"
                   value={formData.city}
                   onChange={(value) => {
                     updateFormData('city', value);
@@ -1686,9 +1717,22 @@ const AddProperty: React.FC = () => {
             ref={attachmentsInputRef}
             onChange={handleAttachmentsChange}
             multiple
+            accept=".pdf,.doc,.docx,.xls,.xlsx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             className="hidden"
           />
           
+          {attachmentErrors.length > 0 && (
+            <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+              <p className="font-semibold mb-2">Invalid file types:</p>
+              <ul className="list-disc list-inside text-sm">
+                {attachmentErrors.map((fileName, i) => (
+                  <li key={i}>{fileName}</li>
+                ))}
+              </ul>
+              <p className="text-xs mt-2">Allowed types: PDF, Word (.doc, .docx), Excel (.xls, .xlsx)</p>
+            </div>
+          )}
+
           {formData.attachments.length > 0 && (
             <div className="flex flex-col gap-2 mb-4">
               {formData.attachments.map((file, i) => (
@@ -1723,6 +1767,7 @@ const AddProperty: React.FC = () => {
                 <Upload className="text-gray-800" size={24} />
               </div>
               <span className="text-xs font-medium text-gray-500">Upload Attachments</span>
+              <span className="text-xs text-gray-400 mt-1">PDF, Word, Excel only</span>
             </div>
           </div>
         </section>
