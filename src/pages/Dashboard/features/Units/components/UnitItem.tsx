@@ -1,5 +1,5 @@
 import React from 'react';
-// import { Check, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export interface Unit {
     id: string;
@@ -18,6 +18,7 @@ interface UnitItemProps {
 }
 
 const UnitItem: React.FC<UnitItemProps> = ({ unit }) => {
+    const navigate = useNavigate();
     const isOccupied = unit.status === 'Occupied';
 
     return (
@@ -91,7 +92,10 @@ const UnitItem: React.FC<UnitItemProps> = ({ unit }) => {
                         Move in
                     </button>
                 )}
-                <button className="bg-[#3A6D6C] text-white w-full py-1.5 rounded-md text-xs font-bold hover:bg-[#2c5251] transition-colors shadow-sm">
+                <button 
+                    onClick={() => navigate(`/dashboard/properties/${unit.id}`)}
+                    className="bg-[#3A6D6C] text-white w-full py-1.5 rounded-md text-xs font-bold hover:bg-[#2c5251] transition-colors shadow-sm"
+                >
                     View Unit
                 </button>
             </div>

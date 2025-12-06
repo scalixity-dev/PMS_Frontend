@@ -1,6 +1,7 @@
 import React from 'react';
 import UnitItem, { type Unit } from './UnitItem';
 import CustomTextBox from '../../../components/CustomTextBox';
+import { getStatusColor } from '../utils';
 
 export interface UnitGroup {
     id: string;
@@ -27,15 +28,6 @@ const UnitGroupCard: React.FC<UnitGroupCardProps> = ({ group }) => {
     // Calculate the width of the property card + first connector line
     const propertyCardWidth = 280; // Fixed width for alignment
     const offsetWidth = propertyCardWidth; // Spacer should match property card width exactly
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'Occupied': return 'bg-[#82D64D]';
-            case 'Vacant': return 'bg-gray-500';
-            case 'Partially Occupied': return 'bg-[#FDB022]';
-            default: return 'bg-gray-500';
-        }
-    };
 
     return (
         <div className="bg-[#F0F0F6] rounded-[2.5rem] p-6 mb-8 shadow-lg">

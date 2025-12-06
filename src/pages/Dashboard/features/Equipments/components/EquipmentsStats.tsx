@@ -29,7 +29,7 @@ const EquipmentsStats: React.FC = () => {
 
             {/* Warranty Expiration Stat */}
             <div className="bg-[#82D64D] rounded-full px-2 py-2 flex items-center gap-3 min-w-fit">
-                <span className="text-white font-medium ml-4 text-sm">Warrenty expiration</span>
+                <span className="text-white font-medium ml-4 text-sm">Warranty expiration</span>
                 <div className="bg-white rounded-full px-3 py-1 flex items-center gap-2">
                     <span className="font-bold text-sm">0</span>
                     <span className="text-xs text-gray-600">Days</span>
