@@ -31,6 +31,7 @@ import Properties from './pages/Dashboard/features/Properties/Properties';
 import Equipments from './pages/Dashboard/features/Equipments/Equipments';
 import EquipmentDetail from './pages/Dashboard/features/Equipments/EquipmentDetail';
 import CreateEquipment from './pages/Dashboard/features/Equipments/CreateEquipment';
+import MoveIn from './pages/Dashboard/features/MoveIn/MoveIn';
 import PropertyDetail from './pages/Dashboard/features/Properties/PropertyDetail';
 import Listing from './pages/Dashboard/features/Listing/Listing';
 import ListingDetail from './pages/Dashboard/features/Listing/ListingDetail';
@@ -111,6 +112,7 @@ const App: React.FC = () => {
             <Route path="/dashboard/accounting/transactions/income/add" element={<AddIncomeInvoice />} />
             <Route path="/dashboard/accounting/transactions/expense/add" element={<AddExpenseInvoice />} />
             <Route path="/dashboard/maintenance/request" element={<AddMaintenanceRequest />} />
+            <Route path="/dashboard/movein" element={<MoveIn />} />
             <Route
               path="/portfolio"
               element={

@@ -7,9 +7,10 @@ interface TimePickerProps {
     onChange: (time: string) => void;
     placeholder?: string;
     className?: string;
+    buttonClassName?: string;
 }
 
-const TimePicker: React.FC<TimePickerProps> = ({ value, onChange, placeholder = "Select time", className }) => {
+const TimePicker: React.FC<TimePickerProps> = ({ value, onChange, placeholder = "Select time", className, buttonClassName }) => {
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -41,7 +42,10 @@ const TimePicker: React.FC<TimePickerProps> = ({ value, onChange, placeholder = 
             <button
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full bg-white text-gray-800 placeholder-gray-400 px-4 py-3 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all shadow-sm flex items-center justify-between border border-transparent hover:border-gray-200"
+                className={cn(
+                    "w-full bg-white text-gray-800 placeholder-gray-400 px-4 py-3 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all shadow-sm flex items-center justify-between border border-transparent hover:border-gray-200",
+                    buttonClassName
+                )}
             >
                 <span className={cn("text-sm", !value && "text-gray-400")}>
                     {value || placeholder}
