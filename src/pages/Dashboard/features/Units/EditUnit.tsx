@@ -221,13 +221,13 @@ const EditUnit: React.FC = () => {
 
   // Helper function to upload image
   const uploadImage = async (file: File): Promise<string> => {
-    const formData = new FormData();
-    formData.append('file', file);
+    const uploadFormData = new FormData();
+    uploadFormData.append('file', file);
 
     const response = await fetch(API_ENDPOINTS.UPLOAD.IMAGE, {
       method: 'POST',
       credentials: 'include',
-      body: formData,
+      body: uploadFormData,
     });
 
     if (!response.ok) {
