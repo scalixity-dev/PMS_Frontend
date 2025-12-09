@@ -16,7 +16,7 @@ interface Property {
     type: string;
     status: 'active' | 'inactive' | 'pending';
     occupancy: 'vacant' | 'occupied' | 'partially_occupied';
-    propertyType: 'single_family' | 'multi_family' | 'apartment' | 'condo' | 'townhouse';
+    propertyType: 'single_apartment' | 'multi_apartment';
     balanceCategory: 'low' | 'medium' | 'high';
     country?: string;
 }
@@ -80,11 +80,11 @@ const Properties: React.FC = () => {
             : 'inactive';
 
         // Map property type
-        const propertyTypeMap: Record<string, 'single_family' | 'multi_family' | 'apartment' | 'condo' | 'townhouse'> = {
-            'SINGLE': 'single_family',
-            'MULTI': 'multi_family',
+        const propertyTypeMap: Record<string, 'single_apartment' | 'multi_apartment'> = {
+            'SINGLE': 'single_apartment',
+            'MULTI': 'multi_apartment',
         };
-        const propertyType = propertyTypeMap[backendProperty.propertyType] || 'single_family';
+        const propertyType = propertyTypeMap[backendProperty.propertyType] || 'single_apartment';
 
         // Determine occupancy from leasing data
         let occupancy: 'vacant' | 'occupied' | 'partially_occupied' = 'vacant';
@@ -123,11 +123,8 @@ const Properties: React.FC = () => {
 
         // Get property type label for display
         const typeLabels: Record<string, string> = {
-            'single_family': 'Single Family',
-            'multi_family': 'Multi Family',
-            'apartment': 'Apartment',
-            'condo': 'Condo',
-            'townhouse': 'Townhouse',
+            'single_apartment': 'Single Apartment',
+            'multi_apartment': 'Multi Apartment',
         };
         const type = typeLabels[propertyType] || 'Property';
 
@@ -183,11 +180,8 @@ const Properties: React.FC = () => {
             { value: 'partially_occupied', label: 'Partially Occupied' },
         ],
         propertyType: [
-            { value: 'single_family', label: 'Single Family' },
-            { value: 'multi_family', label: 'Multi Family' },
-            { value: 'apartment', label: 'Apartment' },
-            { value: 'condo', label: 'Condo' },
-            { value: 'townhouse', label: 'Townhouse' },
+            { value: 'single_apartment', label: 'Single Apartment' },
+            { value: 'multi_apartment', label: 'Multi Apartment' },
         ],
         balance: [
             { value: 'low', label: 'Low (< $25k)' },
@@ -288,6 +282,7 @@ const Properties: React.FC = () => {
                                     image={property.image}
                                     type={property.type}
                                     country={property.country}
+                                    propertyType={property.propertyType}
                                 />
                             ))}
                         </div>

@@ -10,9 +10,10 @@ type DatePickerProps = {
   placeholder?: string;
   className?: string;
   popoverClassName?: string;
+  disabled?: boolean;
 };
 
-const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, placeholder = 'Select date', className, popoverClassName }) => {
+const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, placeholder = 'Select date', className, popoverClassName, disabled }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
 
@@ -30,9 +31,11 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, placeholder = 
     <div className="relative" ref={ref}>
       <button
         type="button"
-        onClick={() => setOpen(v => !v)}
+        onClick={() => !disabled && setOpen(v => !v)}
+        disabled={disabled}
         className={cn(
           "w-full text-left rounded-md bg-white px-4 py-3 text-sm text-gray-700 outline-none shadow-sm focus:ring-2 focus:ring-[#84CC16]/20 flex items-center justify-between",
+          disabled && "opacity-50 cursor-not-allowed bg-gray-100",
           className
         )}
       >
@@ -61,43 +64,15 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, placeholder = 
             .rdp-month {
               width: 100%;
             }
-            .rdp-month_caption {
-              font-size: 0.875rem;
-              margin-bottom: 0.5rem;
-            }
-            .rdp-weekdays {
-              display: grid;
-              grid-template-columns: repeat(7, 1fr);
-              gap: 0;
-              margin-bottom: 0.25rem;
-            }
-            .rdp-weekday {
-              width: 100%;
-              text-align: center;
-              font-size: 0.75rem;
-              font-weight: 500;
-              color: #374151;
-              padding: 0.125rem;
-            }
-            .rdp-week {
-              display: grid;
-              grid-template-columns: repeat(7, 1fr);
-              gap: 0;
-              margin-bottom: 0.125rem;
-            }
             .rdp-day {
-              width: 100%;
-              aspect-ratio: 1;
-              display: flex;
-              align-items: center;
-              justify-content: center;
+              aspect-ratio: auto !important;
+              height: 40px;
             }
             .rdp-day button {
-              width: 100%;
-              height: 100%;
-              max-width: 2rem;
-              max-height: 2rem;
-              font-size: 0.75rem;
+              width: 100% !important;
+              height: 100% !important;
+              max-width: none !important;
+              max-height: none !important;
             }
             [data-slot="button"] {
               padding: 0 !important;
