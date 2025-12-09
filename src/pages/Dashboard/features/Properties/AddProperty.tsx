@@ -282,10 +282,12 @@ const AddProperty: React.FC = () => {
       });
 
       if (invalidFiles.length > 0) {
-        setAttachmentErrors(prev => [...prev, ...invalidFiles]);
+        const errorId = Date.now();
+        const errorsWithId = invalidFiles.map(name => ({ id: errorId, name }));
+        setAttachmentErrors(prev => [...prev, ...errorsWithId]);
         // Clear errors after 5 seconds
         setTimeout(() => {
-          setAttachmentErrors(prev => prev.filter(name => !invalidFiles.includes(name)));
+          setAttachmentErrors(prev => prev.filter(err => err.id !== errorId));
         }, 5000);
       }
 
