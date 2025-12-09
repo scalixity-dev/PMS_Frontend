@@ -10,6 +10,7 @@ export interface UnitGroup {
     image: string;
     status: 'Occupied' | 'Vacant' | 'Partially Occupied';
     units: Unit[];
+    propertyType?: 'SINGLE' | 'MULTI';
 }
 
 interface UnitGroupCardProps {

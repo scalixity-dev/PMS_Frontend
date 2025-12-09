@@ -165,6 +165,7 @@ const Units: React.FC = () => {
                     image,
                     status,
                     units,
+                    propertyType: property.propertyType,
                 };
             });
     }, [properties, unitQueries, multiProperties]);
