@@ -617,16 +617,14 @@ const AddProperty: React.FC = () => {
         propertyData.description = formData.description;
       }
 
-      // Add amenities
-      if (formData.parking || formData.laundry || formData.ac) {
-        propertyData.amenities = {
-          parking: mapParkingToBackend(formData.parking),
-          laundry: mapLaundryToBackend(formData.laundry),
-          airConditioning: mapACToBackend(formData.ac),
-          propertyFeatures: formData.features.length > 0 ? formData.features : undefined,
-          propertyAmenities: formData.amenities.length > 0 ? formData.amenities : undefined,
-        };
-      }
+      // Add amenities - always send amenities data (even if values are 'none')
+      propertyData.amenities = {
+        parking: mapParkingToBackend(formData.parking || 'none'),
+        laundry: mapLaundryToBackend(formData.laundry || 'none'),
+        airConditioning: mapACToBackend(formData.ac || 'none'),
+        propertyFeatures: formData.features.length > 0 ? formData.features : undefined,
+        propertyAmenities: formData.amenities.length > 0 ? formData.amenities : undefined,
+      };
 
       // Add photos (cover photo + gallery photos)
       const photos: Array<{ photoUrl: string; isPrimary: boolean }> = [];

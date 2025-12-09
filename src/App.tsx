@@ -33,6 +33,8 @@ import Equipments from './pages/Dashboard/features/Equipments/Equipments';
 import EquipmentDetail from './pages/Dashboard/features/Equipments/EquipmentDetail';
 import CreateEquipment from './pages/Dashboard/features/Equipments/CreateEquipment';
 import PropertyDetail from './pages/Dashboard/features/Properties/PropertyDetail';
+import UnitPropertyDetail from './pages/Dashboard/features/Units/UnitPropertyDetail';
+import EditUnit from './pages/Dashboard/features/Units/EditUnit';
 import Listing from './pages/Dashboard/features/Listing/Listing';
 import ListingDetail from './pages/Dashboard/features/Listing/ListingDetail';
 import Calendar from './pages/Dashboard/features/Calendar/Calendar';
@@ -91,66 +93,32 @@ const App: React.FC = () => {
                 path="/dashboard"
                 element={
                   <ProtectedRoute>
-            <Route path="/usecases/landlord" element={<LandlordUseCasesPage />} />
-            <Route path="/usecases/tenant" element={<TenantPage />} />
-            <Route path="/usecases/servicepros" element={<ServiceProsPage />} />
-            <Route path="/features/screening" element={<ScreeningPage />} />
-            <Route path="/features/lease" element={<LeasePage />} />
-            <Route path="/features/finance" element={<FinancePage />} />
-            <Route path="/features/leads" element={<LeadsPage />} />
-            <Route path="/features/team" element={<TeamPage />} />
-            <Route path="/resources" element={<ResourcePage />} />
-            <Route path="/pricing" element={<PricingPage />} />
-            <Route path="*" element={<HomePage />} />
-          </Route>
-          <Route element={<DashboardLayout />}>
-            <Route
-              path="/dashboard"
-              element={
-                // <ProtectedRoute>
-                <Dashboard />
-                // </ProtectedRoute>
-              }
-            />
-            <Route path="/dashboard/list-unit" element={<ListUnit />} />
-            <Route path="/dashboard/properties" element={<Properties />} />
-            <Route path="/dashboard/portfolio/units" element={<Units />} />
-            <Route path="/dashboard/portfolio/keys-locks" element={<KeysLocks />} />
-            <Route path="/dashboard/portfolio/keys-locks/:id" element={<KeyDetail />} />
-            <Route path="/dashboard/properties/:id" element={<PropertyDetail />} />
-            <Route path="/dashboard/portfolio/listing" element={<Listing />} />
-            <Route path="/dashboard/listings/:id" element={<ListingDetail />} />
-            <Route path="/dashboard/calendar" element={<Calendar />} />
-            <Route path="/dashboard/tasks" element={<Tasks />} />
-            <Route path="/dashboard/equipments" element={<Equipments />} />
-            <Route path="/dashboard/equipments/add" element={<CreateEquipment />} />
-            <Route path="/dashboard/equipments/:id" element={<EquipmentDetail />} />
-            <Route path="/dashboard/property/add" element={<AddProperty />} />
-            <Route path="/dashboard/properties/edit/:id" element={<EditProperty />} />
-            <Route path="/dashboard/accounting/transactions/income/add" element={<AddIncomeInvoice />} />
-            <Route path="/dashboard/accounting/transactions/expense/add" element={<AddExpenseInvoice />} />
-            <Route path="/dashboard/maintenance/request" element={<AddMaintenanceRequest />} />
-            <Route
-              path="/portfolio"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
+                    <Dashboard />
                   </ProtectedRoute>
                 }
               />
               <Route path="/dashboard/list-unit" element={<ListUnit />} />
               <Route path="/dashboard/properties" element={<Properties />} />
-              <Route path="/dashboard/portfolio/units" element={<Units />} />
               <Route path="/dashboard/properties/:id" element={<PropertyDetail />} />
+              <Route path="/dashboard/properties/edit/:id" element={<EditProperty />} />
+              <Route path="/dashboard/units/edit/:unitId" element={<EditUnit />} />
+              <Route path="/dashboard/units/:unitId" element={<UnitPropertyDetail />} />
+              <Route path="/dashboard/property/add" element={<AddProperty />} />
+              <Route path="/dashboard/portfolio/units" element={<Units />} />
+              <Route path="/dashboard/portfolio/keys-locks" element={<KeysLocks />} />
+              <Route path="/dashboard/portfolio/keys-locks/:id" element={<KeyDetail />} />
               <Route path="/dashboard/portfolio/listing" element={<Listing />} />
               <Route path="/dashboard/listings/:id" element={<ListingDetail />} />
               <Route path="/dashboard/calendar" element={<Calendar />} />
               <Route path="/dashboard/tasks" element={<Tasks />} />
               <Route path="/dashboard/equipments" element={<Equipments />} />
-              <Route path="/dashboard/property/add" element={<AddProperty />} />
+              <Route path="/dashboard/equipments/add" element={<CreateEquipment />} />
+              <Route path="/dashboard/equipments/:id" element={<EquipmentDetail />} />
               <Route path="/dashboard/accounting/transactions/income/add" element={<AddIncomeInvoice />} />
               <Route path="/dashboard/accounting/transactions/expense/add" element={<AddExpenseInvoice />} />
               <Route path="/dashboard/maintenance/request" element={<AddMaintenanceRequest />} />
+              <Route path="/dashboard/contacts/tenants" element={<Tenants />} />
+              <Route path="/dashboard/contacts/tenants/:id" element={<TenantDetail />} />
               <Route
                 path="/portfolio"
                 element={
@@ -175,8 +143,6 @@ const App: React.FC = () => {
                   </ProtectedRoute>
                 }
               />
-              <Route path="/dashboard/contacts/tenants" element={<Tenants />} />
-              <Route path="/dashboard/contacts/tenants/:id" element={<TenantDetail />} />
               <Route
                 path="/accounting"
                 element={

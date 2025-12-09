@@ -42,12 +42,21 @@ const UnitGroupCard: React.FC<UnitGroupCardProps> = ({ group }) => {
 
                             <CustomTextBox value={group.address} className="mb-4 w-fit" valueClassName="!text-xs" />
 
-                            <div className="relative h-40 w-40 rounded-2xl overflow-hidden">
-                                <img
-                                    src={group.image}
-                                    alt={group.propertyName}
-                                    className="w-full h-full object-cover"
-                                />
+                            <div className="relative h-40 w-40 rounded-2xl overflow-hidden bg-gray-100">
+                                {group.image ? (
+                                    <img
+                                        src={group.image}
+                                        alt={group.propertyName}
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                                        <div className="text-center">
+                                            <div className="text-gray-300 text-3xl mb-1">🏠</div>
+                                            <p className="text-gray-400 text-[10px] font-medium">No Image</p>
+                                        </div>
+                                    </div>
+                                )}
                                 <div className={`absolute top-3 right-3 ${getStatusColor(group.status)} text-white text-xs px-3 py-1 rounded-full font-medium`}>
                                     {group.status}
                                 </div>
@@ -76,7 +85,7 @@ const UnitGroupCard: React.FC<UnitGroupCardProps> = ({ group }) => {
                                     <div className="absolute -left-5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-gray-600 text-white flex items-center justify-center text-sm font-bold z-20 border-4 border-[#F0F0F6]">
                                         {globalIndex + 1}
                                     </div>
-                                    <UnitItem unit={unit} />
+                                    <UnitItem unit={unit} propertyId={group.id} />
                                 </div>
                             </div>
                         );

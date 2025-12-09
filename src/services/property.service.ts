@@ -35,7 +35,27 @@ export interface BackendProperty {
   units?: Array<{
     id: string;
     unitName: string;
-  }>;
+    apartmentType?: string | null;
+    sizeSqft?: string | number | null;
+    beds?: number | null;
+    baths?: string | number | null;
+    rent?: string | number | null;
+    listings?: Array<{
+      id: string;
+      occupancyStatus?: 'VACANT' | 'OCCUPIED' | 'PARTIALLY_OCCUPIED' | null;
+      listingStatus?: string;
+    }>;
+    leasing?: {
+      id: string;
+    } | null;
+  }> | {
+    count: number;
+    units: Array<{
+      id: string;
+      unitName: string;
+      status: 'VACANT' | 'OCCUPIED';
+    }>;
+  };
   photos?: Array<{
     id: string;
     photoUrl: string;
@@ -202,9 +222,14 @@ class PropertyService {
 
   /**
    * Get a single property by ID
+   * @param includeFullUnitDetails - For MULTI properties, return full unit details instead of simplified data
    */
-  async getOne(propertyId: string): Promise<BackendProperty> {
-    const response = await fetch(API_ENDPOINTS.PROPERTY.GET_ONE(propertyId), {
+  async getOne(propertyId: string, includeFullUnitDetails: boolean = false): Promise<BackendProperty> {
+    const url = includeFullUnitDetails 
+      ? `${API_ENDPOINTS.PROPERTY.GET_ONE(propertyId)}?includeFullUnitDetails=true`
+      : API_ENDPOINTS.PROPERTY.GET_ONE(propertyId);
+    
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -256,6 +281,48 @@ class PropertyService {
   async getAllTransformed(): Promise<Property[]> {
     const backendProperties = await this.getAll();
     return backendProperties.map((prop) => this.transformProperty(prop));
+  }
+
+  /**
+   * Get all units from all properties
+   */
+  async getAllUnits(): Promise<BackendProperty[]> {
+    const response = await fetch(API_ENDPOINTS.PROPERTY.GET_ALL_UNITS, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include', // Include cookies for JWT
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to fetch units';
+      
+      try {
+        const errorData = await response.json();
+        
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join('. ');
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+        
+        console.error('Units fetch error:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+        });
+      } catch (parseError) {
+        errorMessage = `Failed to fetch units: ${response.statusText}`;
+        console.error('Failed to parse error response:', parseError);
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
   }
 
   /**
@@ -403,6 +470,48 @@ class PropertyService {
         });
       } catch (parseError) {
         errorMessage = `Failed to update property: ${response.statusText}`;
+        console.error('Failed to parse error response:', parseError);
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Delete a property
+   */
+  async delete(propertyId: string): Promise<{ message: string; property: BackendProperty }> {
+    const response = await fetch(API_ENDPOINTS.PROPERTY.DELETE(propertyId), {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include', // Include cookies for JWT
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to delete property';
+      
+      try {
+        const errorData = await response.json();
+        
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join('. ');
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+        
+        console.error('Property deletion error:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+        });
+      } catch (parseError) {
+        errorMessage = `Failed to delete property: ${response.statusText}`;
         console.error('Failed to parse error response:', parseError);
       }
       
