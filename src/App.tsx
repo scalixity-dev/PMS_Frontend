@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { TanStackDevtools } from '@tanstack/react-devtools';
 import AppLayout from './components/layout/AppLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import DashboardLayout from './components/dashboardlayout/DashboardLayout';
@@ -63,130 +64,134 @@ export const queryClient = new QueryClient({
 
 const App: React.FC = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Routes>
-          <Route element={<AppLayout />}>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignUpPage />} />
-            <Route path="/signup/oauth-complete" element={<OAuthCompletePage />} />
-            <Route path="/otp" element={<OtpPage />} />
-            <Route path="/auth/callback" element={<OAuthCallbackPage />} />
+    <>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <Routes>
+            <Route element={<AppLayout />}>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignUpPage />} />
+              <Route path="/signup/oauth-complete" element={<OAuthCompletePage />} />
+              <Route path="/otp" element={<OtpPage />} />
+              <Route path="/auth/callback" element={<OAuthCallbackPage />} />
 
 
-            <Route path="/usecases/landlord" element={<LandlordUseCasesPage />} />
-            <Route path="/usecases/tenant" element={<TenantPage />} />
-            <Route path="/usecases/servicepros" element={<ServiceProsPage />} />
-            <Route path="/features/screening" element={<ScreeningPage />} />
-            <Route path="/features/lease" element={<LeasePage />} />
-            <Route path="/features/finance" element={<FinancePage />} />
-            <Route path="/features/leads" element={<LeadsPage />} />
-            <Route path="/features/team" element={<TeamPage />} />
-            <Route path="/resources" element={<ResourcePage />} />
-            <Route path="/pricing" element={<PricingPage />} />
-            <Route path="*" element={<HomePage />} />
-          </Route>
-          <Route element={<DashboardLayout />}>
-            <Route
-              path="/dashboard"
-              element={
-                // <ProtectedRoute>
-                <Dashboard />
-                // </ProtectedRoute>
-              }
-            />
-            <Route path="/dashboard/list-unit" element={<ListUnit />} />
-            <Route path="/dashboard/properties" element={<Properties />} />
-            <Route path="/dashboard/portfolio/units" element={<Units />} />
-            <Route path="/dashboard/portfolio/keys-locks" element={<KeysLocks />} />
-            <Route path="/dashboard/portfolio/keys-locks/:id" element={<KeyDetail />} />
-            <Route path="/dashboard/properties/:id" element={<PropertyDetail />} />
-            <Route path="/dashboard/portfolio/listing" element={<Listing />} />
-            <Route path="/dashboard/listings/:id" element={<ListingDetail />} />
-            <Route path="/dashboard/calendar" element={<Calendar />} />
-            <Route path="/dashboard/tasks" element={<Tasks />} />
-            <Route path="/dashboard/equipments" element={<Equipments />} />
-            <Route path="/dashboard/equipments/add" element={<CreateEquipment />} />
-            <Route path="/dashboard/equipments/:id" element={<EquipmentDetail />} />
-            <Route path="/dashboard/property/add" element={<AddProperty />} />
-            <Route path="/dashboard/properties/edit/:id" element={<EditProperty />} />
-            <Route path="/dashboard/accounting/transactions/income/add" element={<AddIncomeInvoice />} />
-            <Route path="/dashboard/accounting/transactions/expense/add" element={<AddExpenseInvoice />} />
-            <Route path="/dashboard/maintenance/request" element={<AddMaintenanceRequest />} />
-            <Route path="/dashboard/movein" element={<MoveIn />} />
-            <Route
-              path="/portfolio"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/leasing"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/contacts"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="/dashboard/contacts/tenants" element={<Tenants />} />
-            <Route path="/dashboard/contacts/tenants/:id" element={<TenantDetail />} />
-            <Route path="/dashboard/portfolio/leases" element={<Leases />} />
-            <Route path="/dashboard/portfolio/leases/:id" element={<LeaseDetail />} />
-            <Route
-              path="/accounting"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/maintenance"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/documents"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/reports"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/downloads"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </QueryClientProvider>
+              <Route path="/usecases/landlord" element={<LandlordUseCasesPage />} />
+              <Route path="/usecases/tenant" element={<TenantPage />} />
+              <Route path="/usecases/servicepros" element={<ServiceProsPage />} />
+              <Route path="/features/screening" element={<ScreeningPage />} />
+              <Route path="/features/lease" element={<LeasePage />} />
+              <Route path="/features/finance" element={<FinancePage />} />
+              <Route path="/features/leads" element={<LeadsPage />} />
+              <Route path="/features/team" element={<TeamPage />} />
+              <Route path="/resources" element={<ResourcePage />} />
+              <Route path="/pricing" element={<PricingPage />} />
+              <Route path="*" element={<HomePage />} />
+            </Route>
+            <Route element={<DashboardLayout />}>
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/dashboard/list-unit" element={<ListUnit />} />
+              <Route path="/dashboard/properties" element={<Properties />} />
+              <Route path="/dashboard/portfolio/units" element={<Units />} />
+              <Route path="/dashboard/portfolio/keys-locks" element={<KeysLocks />} />
+              <Route path="/dashboard/portfolio/keys-locks/:id" element={<KeyDetail />} />
+              <Route path="/dashboard/properties/:id" element={<PropertyDetail />} />
+              <Route path="/dashboard/portfolio/listing" element={<Listing />} />
+              <Route path="/dashboard/listings/:id" element={<ListingDetail />} />
+              <Route path="/dashboard/calendar" element={<Calendar />} />
+              <Route path="/dashboard/tasks" element={<Tasks />} />
+              <Route path="/dashboard/equipments" element={<Equipments />} />
+              <Route path="/dashboard/equipments/add" element={<CreateEquipment />} />
+              <Route path="/dashboard/equipments/:id" element={<EquipmentDetail />} />
+              <Route path="/dashboard/property/add" element={<AddProperty />} />
+              <Route path="/dashboard/properties/edit/:id" element={<EditProperty />} />
+              <Route path="/dashboard/accounting/transactions/income/add" element={<AddIncomeInvoice />} />
+              <Route path="/dashboard/accounting/transactions/expense/add" element={<AddExpenseInvoice />} />
+              <Route path="/dashboard/maintenance/request" element={<AddMaintenanceRequest />} />
+              <Route path="/dashboard/movein" element={<MoveIn />} />
+              <Route path="/dashboard/contacts/tenants" element={<Tenants />} />
+              <Route path="/dashboard/contacts/tenants/:id" element={<TenantDetail />} />
+              <Route path="/dashboard/portfolio/leases" element={<Leases />} />
+              <Route path="/dashboard/portfolio/leases/:id" element={<LeaseDetail />} />
+
+              <Route
+                path="/portfolio"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/leasing"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/contacts"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/accounting"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/maintenance"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/documents"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/reports"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/downloads"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </QueryClientProvider>
+      <TanStackDevtools />
+    </>
   );
 };
 
