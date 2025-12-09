@@ -103,7 +103,10 @@ const EditUnit: React.FC = () => {
   const parkingOptions = [
     { value: 'garage', label: 'Garage' },
     { value: 'street', label: 'Street Parking' },
+    { value: 'driveway', label: 'Driveway' },
+    { value: 'dedicated_spot', label: 'Dedicated Spot' },
     { value: 'private_lot', label: 'Private Lot' },
+    { value: 'assigned', label: 'Assigned' },
     { value: 'none', label: 'None' },
   ];
 
@@ -118,6 +121,7 @@ const EditUnit: React.FC = () => {
     { value: 'central', label: 'Central Air' },
     { value: 'window', label: 'Window Unit' },
     { value: 'portable', label: 'Portable' },
+    { value: 'cooler', label: 'Cooler' },
     { value: 'none', label: 'None' },
   ];
 
@@ -272,9 +276,17 @@ const EditUnit: React.FC = () => {
       'none': 'NONE',
       'street': 'STREET',
       'garage': 'GARAGE',
+      'driveway': 'DRIVEWAY',
+      'dedicated_spot': 'DEDICATED_SPOT',
       'private_lot': 'PRIVATE_LOT',
+      'assigned': 'ASSIGNED',
     };
-    return mapping[value] || 'NONE';
+    // All backend enum cases are explicitly handled above
+    if (!(value in mapping)) {
+      console.warn(`Unknown parking value: ${value}, defaulting to NONE`);
+      return 'NONE';
+    }
+    return mapping[value];
   };
 
   const mapLaundryToBackend = (value: string): 'NONE' | 'IN_UNIT' | 'ON_SITE' | 'HOOKUPS' => {
@@ -293,8 +305,14 @@ const EditUnit: React.FC = () => {
       'central': 'CENTRAL',
       'window': 'WINDOW',
       'portable': 'PORTABLE',
+      'cooler': 'COOLER',
     };
-    return mapping[value] || 'NONE';
+    // All backend enum cases are explicitly handled above
+    if (!(value in mapping)) {
+      console.warn(`Unknown AC value: ${value}, defaulting to NONE`);
+      return 'NONE';
+    }
+    return mapping[value];
   };
 
   // Form validation
