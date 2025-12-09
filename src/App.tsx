@@ -42,6 +42,8 @@ import TenantDetail from './pages/Dashboard/features/Tenants/TenantDetail';
 import Units from './pages/Dashboard/features/Units/Units';
 import KeysLocks from './pages/Dashboard/features/KeysLocks/KeysLocks';
 import KeyDetail from './pages/Dashboard/features/KeysLocks/KeyDetail';
+import Leases from './pages/Dashboard/features/Leases/Leases';
+import LeaseDetail from './pages/Dashboard/features/Leases/LeaseDetail';
 // import ListUnit from './pages/Dashboard/features/ListUnit/ListUnit';
 
 // Create a QueryClient instance
@@ -139,6 +141,8 @@ const App: React.FC = () => {
             />
             <Route path="/dashboard/contacts/tenants" element={<Tenants />} />
             <Route path="/dashboard/contacts/tenants/:id" element={<TenantDetail />} />
+            <Route path="/dashboard/portfolio/leases" element={<Leases />} />
+            <Route path="/dashboard/portfolio/leases/:id" element={<LeaseDetail />} />
             <Route
               path="/accounting"
               element={

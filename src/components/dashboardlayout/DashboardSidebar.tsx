@@ -254,7 +254,7 @@ export default function DashboardSidebar({ open, setOpen }: SidebarProps) {
               >
                 <SidebarSubLink label="Properties" to="/dashboard/properties" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Units" to="/dashboard/portfolio/units" isCurrentPath={isCurrentPath} />
-                <SidebarSubLink label="Leases" to="/portfolio/leases" isCurrentPath={isCurrentPath} />
+                <SidebarSubLink label="Leases" to="/dashboard/portfolio/leases" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Listing" to="/dashboard/portfolio/listing" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Occupancy Board" to="/portfolio/board" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Keys & Locks" to="/dashboard/portfolio/keys-locks" isCurrentPath={isCurrentPath} />

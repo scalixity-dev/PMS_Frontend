@@ -10,6 +10,7 @@ interface CustomTextBoxProps {
     className?: string;
     labelClassName?: string;
     valueClassName?: string;
+    multiline?: boolean;
 }
 
 /**
@@ -34,35 +35,47 @@ const CustomTextBox: React.FC<CustomTextBoxProps> = ({
     readOnly = true,
     className = '',
     labelClassName = '',
-    valueClassName = ''
+    valueClassName = '',
+    multiline = false
 }) => {
     return (
-        <div className={`flex items-center bg-[#E3EBDE] rounded-full px-3 py-1.5 shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.25)] ${className}`}>
+        <div className={`flex ${multiline ? 'items-start' : 'items-center'} bg-[#E3EBDE] rounded-full px-3 py-1.5 shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.25)] ${className}`}>
             {label && (
-                <span 
-                    className={`text-[10px] font-medium text-gray-600 ${label ? 'w-1/3' : ''} truncate ${labelClassName}`} 
+                <span
+                    className={`text-[10px] font-medium text-gray-600 ${label ? 'w-1/3' : ''} ${multiline ? 'whitespace-normal' : 'truncate'} ${labelClassName}`}
                     title={label}
                 >
                     {label}
                 </span>
             )}
             {readOnly ? (
-                <span 
-                    className={`text-xs text-gray-800 font-medium ${label ? 'w-2/3 pl-2' : 'w-full'} truncate ${valueClassName}`} 
+                <span
+                    className={`text-xs text-gray-800 font-medium ${label ? 'w-2/3 pl-2' : 'w-full'} ${multiline ? 'whitespace-normal break-words' : 'truncate'} ${valueClassName}`}
                     title={value}
                 >
                     {value}
                 </span>
             ) : (
-                <input
-                    type="text"
-                    value={value}
-                    onChange={(e) => onChange?.(e.target.value)}
-                    placeholder={placeholder}
-                    disabled={disabled}
-                    className={`text-xs text-gray-800 font-medium ${label ? 'w-2/3 pl-2' : 'w-full'} bg-transparent border-none outline-none focus:ring-0 ${valueClassName}`}
-                    title={value}
-                />
+                multiline ? (
+                    <textarea
+                        value={value}
+                        onChange={(e) => onChange?.(e.target.value)}
+                        placeholder={placeholder}
+                        disabled={disabled}
+                        className={`text-xs text-gray-800 font-medium ${label ? 'w-2/3 pl-2' : 'w-full'} bg-transparent border-none outline-none focus:ring-0 resize-none h-full ${valueClassName}`}
+                        title={value}
+                    />
+                ) : (
+                    <input
+                        type="text"
+                        value={value}
+                        onChange={(e) => onChange?.(e.target.value)}
+                        placeholder={placeholder}
+                        disabled={disabled}
+                        className={`text-xs text-gray-800 font-medium ${label ? 'w-2/3 pl-2' : 'w-full'} bg-transparent border-none outline-none focus:ring-0 ${valueClassName}`}
+                        title={value}
+                    />
+                )
             )}
         </div>
     );
