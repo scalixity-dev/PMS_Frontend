@@ -8,6 +8,7 @@ import CustomDropdown from '../../components/CustomDropdown';
 import { useGetProperty, useUpdateProperty } from '../../../../hooks/usePropertyQueries';
 import { API_ENDPOINTS } from '../../../../config/api.config';
 import { getCurrencySymbol } from '../../../../utils/currency.utils';
+import { isSummaryUnits } from '../../../../services/property.service';
 
 interface Unit {
   unitNumber: string;
@@ -118,11 +119,12 @@ const EditProperty: React.FC = () => {
           // Handle both array format and new object format { count, units: [...] }
           let unitsArray: any[] = [];
           if (property.units) {
-            if (Array.isArray(property.units)) {
+            if (isSummaryUnits(property.units)) {
+              // Summary format: { count, units: [...] }
+              unitsArray = property.units.units;
+            } else {
+              // Detailed array format
               unitsArray = property.units;
-            } else if (typeof property.units === 'object' && 'units' in property.units) {
-              // New format: { count, units: [...] }
-              unitsArray = (property.units as any).units || [];
             }
           }
           return unitsArray.map((u: any) => ({
@@ -707,15 +709,12 @@ const EditProperty: React.FC = () => {
 
       // Add single unit details for SINGLE property type
       if (formData.propertyType === 'single') {
-        // Map beds: "Studio" = 0, "1" = 1, "2" = 2, "3+" = 3
+      
         let bedsValue: number | undefined;
-        if (formData.beds) {
-          if (formData.beds === 'Studio') {
-            bedsValue = 0;
-          } else if (formData.beds === '3+') {
-            bedsValue = 3;
-          } else {
-            bedsValue = parseInt(formData.beds);
+        if (formData.beds && formData.beds.trim() !== '') {
+          const parsed = parseInt(formData.beds, 10);
+          if (!isNaN(parsed)) {
+            bedsValue = parsed;
           }
         }
 
@@ -1138,7 +1137,7 @@ const EditProperty: React.FC = () => {
                         }
                       }}
                     >
-                      <option value="">Studio</option>
+                      <option value="0">Studio</option>
                       <option value="1">1</option>
                       <option value="2">2</option>
                       <option value="3">3</option>

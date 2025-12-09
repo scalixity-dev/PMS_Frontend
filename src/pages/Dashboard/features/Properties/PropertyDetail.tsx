@@ -21,7 +21,7 @@ import DeletePropertyModal from './components/DeletePropertyModal';
 import DetailTabs from '../../components/DetailTabs';
 import { useGetProperty } from '../../../../hooks/usePropertyQueries';
 import { useGetUnit } from '../../../../hooks/useUnitQueries';
-import { propertyService } from '../../../../services/property.service';
+import { propertyService, isSummaryUnits } from '../../../../services/property.service';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import type { ChartConfig } from "@/components/ui/chart";
 import { Label, Legend, Pie, PieChart } from "recharts";
@@ -356,18 +356,7 @@ const PropertyDetail: React.FC = () => {
     const [searchParams] = useSearchParams();
     const unitId = searchParams.get('unitId'); // Get unit ID from query parameter
 
-    // Redirect to UnitPropertyDetail if viewing a unit
-    useEffect(() => {
-        if (unitId && id) {
-            navigate(`/dashboard/units/${unitId}?propertyId=${id}`, { replace: true });
-            return;
-        }
-    }, [unitId, id, navigate]);
-
-    // Early return if redirecting (prevents rendering property detail)
-    if (unitId && id) {
-        return null;
-    }
+    // All hooks must be declared before any early returns
     const [activeTab, setActiveTab] = useState('profile');
     const [isActionDropdownOpen, setIsActionDropdownOpen] = useState(false);
     const [isGalleryOpen, setIsGalleryOpen] = useState(false);
@@ -376,6 +365,14 @@ const PropertyDetail: React.FC = () => {
     const [isDeleting, setIsDeleting] = useState(false);
     const [deleteError, setDeleteError] = useState<string | null>(null);
     const actionDropdownRef = useRef<HTMLDivElement>(null);
+
+    // Redirect to UnitPropertyDetail if viewing a unit
+    useEffect(() => {
+        if (unitId && id) {
+            navigate(`/dashboard/units/${unitId}?propertyId=${id}`, { replace: true });
+            return;
+        }
+    }, [unitId, id, navigate]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -398,6 +395,12 @@ const PropertyDetail: React.FC = () => {
     
     const isLoading = isLoadingProperty || isLoadingUnit;
     const error = propertyError || unitError;
+
+    // Early return if redirecting (prevents rendering property detail)
+    // This must come after all hooks to maintain hook call order
+    if (unitId && id) {
+        return null;
+    }
 
     // Delete handler
     const handleDelete = async () => {
@@ -507,9 +510,9 @@ const PropertyDetail: React.FC = () => {
                 selectedUnit = fullUnitData;
             } else if (backendProperty.units) {
                 // Fallback to simplified unit data from property response
-                const unitsArray = Array.isArray(backendProperty.units) 
-                    ? backendProperty.units 
-                    : (backendProperty.units as any)?.units || [];
+                const unitsArray = isSummaryUnits(backendProperty.units)
+                    ? backendProperty.units.units
+                    : backendProperty.units;
                 selectedUnit = unitsArray.find((u: any) => u.id === unitId);
             }
         }
@@ -692,15 +695,17 @@ const PropertyDetail: React.FC = () => {
             marketRent: monthlyRent,
             deposit,
             // Handle units structure: for MULTI properties, backend returns { count, units: [...] }
-            units: Array.isArray(backendProperty.units) 
-                ? backendProperty.units 
-                : (backendProperty.units as any)?.units || [],
-            totalUnits: Array.isArray(backendProperty.units)
-                ? backendProperty.units.length
-                : (backendProperty.units as any)?.count || 0,
-            occupiedUnits: Array.isArray(backendProperty.units)
-                ? 0 // TODO: Calculate from unit status when available
-                : ((backendProperty.units as any)?.units || []).filter((u: any) => u.status === 'OCCUPIED').length || 0,
+            units: backendProperty.units
+                ? (isSummaryUnits(backendProperty.units) ? backendProperty.units.units : backendProperty.units)
+                : [],
+            totalUnits: backendProperty.units
+                ? (isSummaryUnits(backendProperty.units) ? backendProperty.units.count : backendProperty.units.length)
+                : 0,
+            occupiedUnits: backendProperty.units
+                ? (isSummaryUnits(backendProperty.units)
+                    ? backendProperty.units.units.filter((u: any) => u.status === 'OCCUPIED').length
+                    : 0) // TODO: Calculate from unit status when available for detailed array
+                : 0,
         };
     }, [backendProperty, mockData, unitId, fullUnitData]);
 

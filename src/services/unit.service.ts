@@ -10,6 +10,7 @@ export interface BackendUnit {
   beds?: number | null;
   baths?: string | number | null;
   rent?: string | number | null;
+  deposit?: string | number | null;
   coverPhotoUrl?: string | null;
   description?: string | null;
   photos?: Array<{
@@ -201,6 +202,7 @@ class UnitService {
     beds?: number;
     baths?: number;
     rent?: number;
+    deposit?: number;
     coverPhotoUrl?: string;
     description?: string;
     amenities?: {

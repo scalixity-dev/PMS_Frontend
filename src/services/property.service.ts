@@ -1,5 +1,38 @@
 import { API_ENDPOINTS } from '../config/api.config';
 
+// Type definitions for units
+export type DetailedUnitsArray = Array<{
+  id: string;
+  unitName: string;
+  apartmentType?: string | null;
+  sizeSqft?: string | number | null;
+  beds?: number | null;
+  baths?: string | number | null;
+  rent?: string | number | null;
+  listings?: Array<{
+    id: string;
+    occupancyStatus?: 'VACANT' | 'OCCUPIED' | 'PARTIALLY_OCCUPIED' | null;
+    listingStatus?: string;
+  }>;
+  leasing?: {
+    id: string;
+  } | null;
+}>;
+
+export type SummaryUnits = {
+  count: number;
+  units: Array<{
+    id: string;
+    unitName: string;
+    status: 'VACANT' | 'OCCUPIED';
+  }>;
+};
+
+// Type guard to check if units is in summary format
+export function isSummaryUnits(units: DetailedUnitsArray | SummaryUnits | undefined): units is SummaryUnits {
+  return units !== undefined && !Array.isArray(units) && 'count' in units;
+}
+
 // Backend Property Response Types
 export interface BackendProperty {
   id: string;
@@ -32,30 +65,7 @@ export interface BackendProperty {
     beds: number;
     baths?: string | number | null;
   } | null;
-  units?: Array<{
-    id: string;
-    unitName: string;
-    apartmentType?: string | null;
-    sizeSqft?: string | number | null;
-    beds?: number | null;
-    baths?: string | number | null;
-    rent?: string | number | null;
-    listings?: Array<{
-      id: string;
-      occupancyStatus?: 'VACANT' | 'OCCUPIED' | 'PARTIALLY_OCCUPIED' | null;
-      listingStatus?: string;
-    }>;
-    leasing?: {
-      id: string;
-    } | null;
-  }> | {
-    count: number;
-    units: Array<{
-      id: string;
-      unitName: string;
-      status: 'VACANT' | 'OCCUPIED';
-    }>;
-  };
+  units?: DetailedUnitsArray | SummaryUnits;
   photos?: Array<{
     id: string;
     photoUrl: string;
@@ -201,12 +211,18 @@ class PropertyService {
       || '';
 
     // Determine unit name
-    const unit =
-      backendProperty.propertyType === 'MULTI' && backendProperty.units?.[0]
-        ? backendProperty.units[0].unitName
-        : backendProperty.propertyType === 'SINGLE'
-        ? 'Single Unit'
-        : 'Property';
+    let unit = 'Property';
+    if (backendProperty.propertyType === 'MULTI' && backendProperty.units) {
+      if (isSummaryUnits(backendProperty.units)) {
+        // Summary format: use first unit from summary.units if available
+        unit = backendProperty.units.units[0]?.unitName || 'Property';
+      } else {
+        // Detailed array format: use first unit
+        unit = backendProperty.units[0]?.unitName || 'Property';
+      }
+    } else if (backendProperty.propertyType === 'SINGLE') {
+      unit = 'Single Unit';
+    }
 
     return {
       id: backendProperty.id,

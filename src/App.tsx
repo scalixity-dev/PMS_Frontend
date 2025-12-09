@@ -186,8 +186,8 @@ const App: React.FC = () => {
             </Route>
           </Routes>
         </BrowserRouter>
+        <TanStackDevtools />
       </QueryClientProvider>
-      <TanStackDevtools />
     </>
   );
 };

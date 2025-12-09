@@ -36,7 +36,7 @@ const EditUnit: React.FC = () => {
     amenities: [] as string[],
     customFeature: '',
     customAmenity: '',
-    galleryPhotos: [] as File[],
+    galleryPhotos: [] as Array<{ file: File; url: string }>,
   });
 
   const [coverPhotoFile, setCoverPhotoFile] = useState<File | null>(null);
@@ -84,6 +84,20 @@ const EditUnit: React.FC = () => {
   // Refs for file inputs
   const coverPhotoInputRef = useRef<HTMLInputElement>(null);
   const galleryPhotosInputRef = useRef<HTMLInputElement>(null);
+  
+  // Ref to track object URLs for cleanup
+  const galleryPhotoUrlsRef = useRef<string[]>([]);
+
+  // Cleanup: Revoke all object URLs on unmount
+  useEffect(() => {
+    return () => {
+      // Revoke all gallery photo URLs
+      galleryPhotoUrlsRef.current.forEach(url => {
+        URL.revokeObjectURL(url);
+      });
+      galleryPhotoUrlsRef.current = [];
+    };
+  }, []); // Empty deps - only run on unmount
 
   // Options
   const parkingOptions = [
@@ -197,7 +211,11 @@ const EditUnit: React.FC = () => {
 
   const handleGalleryPhotosChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const newPhotos = Array.from(e.target.files);
+      const newPhotos = Array.from(e.target.files).map(file => {
+        const url = URL.createObjectURL(file);
+        galleryPhotoUrlsRef.current.push(url);
+        return { file, url };
+      });
       setFormData(prev => ({ ...prev, galleryPhotos: [...prev.galleryPhotos, ...newPhotos] }));
     }
   };
@@ -209,10 +227,19 @@ const EditUnit: React.FC = () => {
   };
 
   const removeGalleryPhoto = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      galleryPhotos: prev.galleryPhotos.filter((_, i) => i !== index)
-    }));
+    setFormData(prev => {
+      // Revoke the URL for the photo being removed
+      const photoToRemove = prev.galleryPhotos[index];
+      if (photoToRemove) {
+        URL.revokeObjectURL(photoToRemove.url);
+        // Remove from ref tracking
+        galleryPhotoUrlsRef.current = galleryPhotoUrlsRef.current.filter(url => url !== photoToRemove.url);
+      }
+      return {
+        ...prev,
+        galleryPhotos: prev.galleryPhotos.filter((_, i) => i !== index)
+      };
+    });
   };
 
   const removeExistingGalleryPhoto = (index: number) => {
@@ -282,8 +309,14 @@ const EditUnit: React.FC = () => {
       errors.beds = 'Beds is required';
     }
 
+
     if (!formData.baths || formData.baths.trim() === '') {
       errors.baths = 'Baths is required';
+    } else {
+      const bathsValue = parseFloat(formData.baths);
+      if (isNaN(bathsValue) || bathsValue < 0) {
+        errors.baths = 'Baths must be a positive number';
+      }
     }
 
     if (formData.size && formData.size.trim() !== '') {
@@ -304,13 +337,6 @@ const EditUnit: React.FC = () => {
       const depositValue = parseFloat(formData.deposit);
       if (isNaN(depositValue) || depositValue < 0) {
         errors.deposit = 'Deposit must be a positive number';
-      }
-    }
-
-    if (formData.baths && formData.baths.trim() !== '') {
-      const bathsValue = parseFloat(formData.baths);
-      if (isNaN(bathsValue) || bathsValue < 0) {
-        errors.baths = 'Baths must be a positive number';
       }
     }
 
@@ -343,7 +369,7 @@ const EditUnit: React.FC = () => {
       // Step 2: Upload gallery photos
       const galleryPhotoUrls: string[] = [...existingGalleryPhotoUrls];
       for (const photo of formData.galleryPhotos) {
-        const url = await uploadImage(photo);
+        const url = await uploadImage(photo.file);
         galleryPhotoUrls.push(url);
       }
 
@@ -533,7 +559,7 @@ const EditUnit: React.FC = () => {
             {formData.galleryPhotos.map((photo, i) => (
               <div key={i} className="bg-white rounded-xl border border-gray-200 w-40 h-40 flex flex-col items-center justify-center relative overflow-hidden">
                 <img
-                  src={URL.createObjectURL(photo)}
+                  src={photo.url}
                   alt={`Gallery ${i}`}
                   className="w-full h-full object-cover"
                 />

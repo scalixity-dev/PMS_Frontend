@@ -13,7 +13,16 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        console.log('ProtectedRoute: Checking authentication...');
         const user = await authService.getCurrentUser();
+        console.log('ProtectedRoute: User retrieved:', {
+          userId: user.userId,
+          email: user.email,
+          role: user.role,
+          isActive: user.isActive,
+          isEmailVerified: user.isEmailVerified
+        });
+        
         // Verify user is property manager (or has property manager role) and account is active
         // Role might be 'PROPERTY_MANAGER', 'property_manager', or similar variations
         const isPropertyManager = user.role && (
@@ -22,6 +31,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
           user.role === 'property_manager'
         );
         
+        console.log('ProtectedRoute: Validation results:', {
+          isPropertyManager,
+          isActive: user.isActive,
+          isEmailVerified: user.isEmailVerified
+        });
+        
         // User must be:
         // 1. Property manager
         // 2. Account must be active (isActive = true)
@@ -29,12 +44,20 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         // Note: Backend JwtAuthGuard already checks for active subscription,
         // so if getCurrentUser succeeds, user has an active subscription
         if (isPropertyManager && user.isActive && user.isEmailVerified) {
+          console.log('ProtectedRoute: Authentication successful');
           setIsAuthenticated(true);
         } else {
+          console.warn('ProtectedRoute: Authentication failed - user does not meet requirements');
           setIsAuthenticated(false);
         }
       } catch (error) {
-        console.error('Authentication check failed:', error);
+        console.error('ProtectedRoute: Authentication check failed:', error);
+        if (error instanceof Error) {
+          console.error('Error message:', error.message);
+          if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+            console.error('401 Unauthorized - No valid authentication token found');
+          }
+        }
         setIsAuthenticated(false);
       } finally {
         setIsLoading(false);
