@@ -117,8 +117,10 @@ const MoveInSuccessModal: React.FC<MoveInSuccessModalProps> = ({
                                         <div className="mb-1 relative flex items-center justify-center">
                                             <div className="w-28 h-28 pointer-events-none">
                                                 <DotLottieReact
-                                                    data={animationData instanceof ArrayBuffer ? animationData : undefined}
-                                                    src={typeof animationData === 'string' ? animationData : successAnimationUrl}
+                                                    {...(animationData instanceof ArrayBuffer
+                                                        ? { data: animationData }
+                                                        : { src: typeof animationData === 'string' ? animationData : successAnimationUrl }
+                                                    )}
                                                     loop
                                                     autoplay
                                                     style={{ width: '100%', height: '100%' }}
