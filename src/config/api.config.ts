@@ -24,6 +24,14 @@ export const API_ENDPOINTS = {
     CREATE: `${API_BASE_URL}/property`,
     UPDATE: (id: string) => `${API_BASE_URL}/property/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/property/${id}`,
+    GET_ALL_UNITS: `${API_BASE_URL}/property/units/all`,
+  },
+  UNIT: {
+    GET_ALL_BY_PROPERTY: (propertyId: string) => `${API_BASE_URL}/unit/property/${propertyId}`,
+    GET_ONE: (id: string) => `${API_BASE_URL}/unit/${id}`,
+    CREATE: (propertyId: string) => `${API_BASE_URL}/unit/property/${propertyId}`,
+    UPDATE: (id: string) => `${API_BASE_URL}/unit/${id}`,
+    DELETE: (id: string) => `${API_BASE_URL}/unit/${id}`,
   },
   UPLOAD: {
     FILE: `${API_BASE_URL}/upload/file`,

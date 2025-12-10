@@ -1,12 +1,16 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { UnitGroup } from './UnitGroupCard';
 import CustomTextBox from '../../../components/CustomTextBox';
+import { getStatusColor } from '../utils';
 
 interface SingleUnitCardProps {
     group: UnitGroup;
 }
 
 const SingleUnitCard: React.FC<SingleUnitCardProps> = ({ group }) => {
+    const navigate = useNavigate();
+    
     // Guard: Check if units array exists and has at least one unit
     if (!group.units || group.units.length === 0) {
         return null; // or return an empty state placeholder
@@ -14,13 +18,16 @@ const SingleUnitCard: React.FC<SingleUnitCardProps> = ({ group }) => {
 
     const unit = group.units[0];
     const isOccupied = unit.status === 'Occupied';
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'Occupied': return 'bg-[#82D64D]';
-            case 'Vacant': return 'bg-gray-500';
-            case 'Partially Occupied': return 'bg-[#FDB022]';
-            default: return 'bg-gray-500';
+    
+    // Determine navigation based on property type
+    // SINGLE properties should go to PropertyDetail, MULTI properties should go to UnitPropertyDetail
+    const handleViewUnit = () => {
+        if (group.propertyType === 'SINGLE') {
+            // Navigate to property detail page for single unit properties
+            navigate(`/dashboard/properties/${group.id}`);
+        } else {
+            // Navigate to unit detail page for multi-unit properties
+            navigate(`/dashboard/units/${unit.id}?propertyId=${group.id}`);
         }
     };
 
@@ -38,12 +45,21 @@ const SingleUnitCard: React.FC<SingleUnitCardProps> = ({ group }) => {
 
             <div className="flex gap-6 items-center">
                 {/* Left Image */}
-                <div className="w-[300px] h-[220px] rounded-[2rem] overflow-hidden flex-shrink-0">
-                    <img
-                        src={group.image}
-                        alt={group.propertyName}
-                        className="w-full h-full object-cover"
-                    />
+                <div className="w-[300px] h-[220px] rounded-[2rem] overflow-hidden flex-shrink-0 bg-gray-100">
+                    {unit.image ? (
+                        <img
+                            src={unit.image}
+                            alt={unit.name}
+                            className="w-full h-full object-cover"
+                        />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                            <div className="text-center">
+                                <div className="text-gray-300 text-4xl mb-2">🏠</div>
+                                <p className="text-gray-400 text-sm font-medium">No Image</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Right Green Box */}
@@ -62,9 +78,17 @@ const SingleUnitCard: React.FC<SingleUnitCardProps> = ({ group }) => {
 
                         <div className="ml-auto">
                             {isOccupied ? (
-                                <button className="bg-[#5F6D7E] text-white px-6 py-1.5 rounded-full text-sm font-medium hover:bg-[#4a5563] transition-colors border border-white/30">
-                                    Unlist
-                                </button>
+                                <div className="flex gap-2">
+                                    <button className="bg-[#5F6D7E] text-white px-6 py-1.5 rounded-full text-sm font-medium hover:bg-[#4a5563] transition-colors border border-white/30">
+                                        Unlist
+                                    </button>
+                                    <button 
+                                        onClick={handleViewUnit}
+                                        className="bg-[#3A6D6C] text-white px-6 py-1.5 rounded-md text-sm font-medium hover:bg-[#2c5251] transition-colors border border-white/30"
+                                    >
+                                        View Unit
+                                    </button>
+                                </div>
                             ) : (
                                 <div className="flex gap-2">
                                     <button className="bg-[#5F6D7E] text-white px-6 py-1.5 rounded-full text-sm font-medium hover:bg-[#4a5563] transition-colors border border-white/30">
@@ -72,6 +96,12 @@ const SingleUnitCard: React.FC<SingleUnitCardProps> = ({ group }) => {
                                     </button>
                                     <button className="bg-[#5F6D7E] text-white px-6 py-1.5 rounded-full text-sm font-medium hover:bg-[#4a5563] transition-colors border border-white/30">
                                         Move in
+                                    </button>
+                                    <button 
+                                        onClick={handleViewUnit}
+                                        className="bg-[#3A6D6C] text-white px-6 py-1.5 rounded-md text-sm font-medium hover:bg-[#2c5251] transition-colors border border-white/30"
+                                    >
+                                        View Unit
                                     </button>
                                 </div>
                             )}

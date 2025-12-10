@@ -8,15 +8,17 @@ export const propertyQueryKeys = {
   list: (filters?: any) => [...propertyQueryKeys.lists(), filters] as const,
   details: () => [...propertyQueryKeys.all, 'detail'] as const,
   detail: (id: string) => [...propertyQueryKeys.details(), id] as const,
+  units: () => [...propertyQueryKeys.all, 'units'] as const,
 };
 
 /**
  * Hook to get a single property by ID
+ * @param includeFullUnitDetails - For MULTI properties, return full unit details instead of simplified data
  */
-export const useGetProperty = (propertyId: string | null | undefined, enabled: boolean = true) => {
+export const useGetProperty = (propertyId: string | null | undefined, enabled: boolean = true, includeFullUnitDetails: boolean = false) => {
   return useQuery({
-    queryKey: propertyId ? propertyQueryKeys.detail(propertyId) : ['properties', 'detail', 'null'] as const,
-    queryFn: () => propertyService.getOne(propertyId!),
+    queryKey: propertyId ? [...propertyQueryKeys.detail(propertyId), includeFullUnitDetails] : ['properties', 'detail', 'null'] as const,
+    queryFn: () => propertyService.getOne(propertyId!, includeFullUnitDetails),
     enabled: enabled && !!propertyId,
     staleTime: 0, // Always consider data stale to ensure fresh fetch
     gcTime: 0, // Don't keep in cache to prevent cross-user data leakage
@@ -94,6 +96,20 @@ export const useUpdateProperty = () => {
       // Update the cached property
       queryClient.setQueryData(propertyQueryKeys.detail(variables.propertyId), data);
     },
+  });
+};
+
+/**
+ * Hook to get all units from all properties
+ */
+export const useGetAllUnits = (enabled: boolean = true) => {
+  return useQuery({
+    queryKey: propertyQueryKeys.units(),
+    queryFn: () => propertyService.getAllUnits(),
+    enabled,
+    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    retry: 1,
   });
 };
 
