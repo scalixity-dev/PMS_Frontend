@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Check, Search } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface DropdownOption {
   value: string;
@@ -100,8 +101,11 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
         type="button"
         onClick={handleOpen}
         disabled={disabled}
-        className={`w-full flex items-center justify-between px-4 py-2.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:border-[var(--color-primary)] cursor-pointer'
-          } ${buttonClassName}`}
+        className={cn(
+          "w-full flex items-center justify-between px-4 py-2.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all",
+          disabled ? 'opacity-50 cursor-not-allowed' : 'hover:border-[var(--color-primary)] cursor-pointer',
+          buttonClassName
+        )}
       >
         <span className={`${selectedOption ? 'text-gray-900' : 'text-gray-400'} ${textClassName}`}>
           {selectedOption ? selectedOption.label : placeholder}

@@ -11,9 +11,11 @@ type DatePickerProps = {
   className?: string;
   popoverClassName?: string;
   disabled?: boolean;
+  iconClassName?: string;
+  placeholderClassName?: string;
 };
 
-const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, placeholder = 'Select date', className, popoverClassName, disabled }) => {
+const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, placeholder = 'Select date', className, popoverClassName, disabled, iconClassName, placeholderClassName }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
 
@@ -39,8 +41,8 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, placeholder = 
           className
         )}
       >
-        <span className={cn(!value && "text-gray-400")}>{value ? format(value, 'MMM dd, yyyy') : placeholder}</span>
-        <CalendarIcon className="w-4 h-4 text-gray-500 ml-2" />
+        <span className={cn(!value && "text-gray-400", !value && placeholderClassName)}>{value ? format(value, 'MMM dd, yyyy') : placeholder}</span>
+        <CalendarIcon className={cn("w-4 h-4 text-gray-500 ml-2", iconClassName)} />
       </button>
 
       {open && (
@@ -66,7 +68,7 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, placeholder = 
             }
             .rdp-day {
               aspect-ratio: auto !important;
-              height: 40px;
+              height: 28px;
             }
             .rdp-day button {
               width: 100% !important;

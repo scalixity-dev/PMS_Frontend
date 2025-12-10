@@ -254,7 +254,7 @@ export default function DashboardSidebar({ open, setOpen }: SidebarProps) {
               >
                 <SidebarSubLink label="Properties" to="/dashboard/properties" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Units" to="/dashboard/portfolio/units" isCurrentPath={isCurrentPath} />
-                <SidebarSubLink label="Leases" to="/portfolio/leases" isCurrentPath={isCurrentPath} />
+                <SidebarSubLink label="Leases" to="/dashboard/portfolio/leases" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Listing" to="/dashboard/portfolio/listing" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Occupancy Board" to="/portfolio/board" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Keys & Locks" to="/dashboard/portfolio/keys-locks" isCurrentPath={isCurrentPath} />
@@ -299,10 +299,10 @@ export default function DashboardSidebar({ open, setOpen }: SidebarProps) {
                 activeDropdown={activeDropdown}
                 setActiveDropdown={setActiveDropdown}
               >
-                <SidebarSubLink label="Transactions" to="/accounting/transactions" isCurrentPath={isCurrentPath} />
+                <SidebarSubLink label="Transactions" to="/dashboard/accounting/transactions" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Payments" to="/accounting/payments" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Balances" to="/accounting/balances" isCurrentPath={isCurrentPath} />
-                <SidebarSubLink label="Recurring" to="/accounting/recurring" isCurrentPath={isCurrentPath} />
+                <SidebarSubLink label="Recurring" to="/dashboard/accounting/transactions/recurring-expense/add" isCurrentPath={isCurrentPath} />
               </SidebarDropdownLink>
 
               {/* 6. Maintenance Dropdown */}

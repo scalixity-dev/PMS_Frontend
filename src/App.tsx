@@ -25,13 +25,20 @@ import Dashboard from './pages/Dashboard/Dashboard';
 import ListUnit from './pages/Dashboard/features/ListUnit';
 import AddProperty from './pages/Dashboard/features/Properties/AddProperty';
 import EditProperty from './pages/Dashboard/features/Properties/EditProperty';
+import Transactions from './pages/Dashboard/features/Transactions/Transactions';
 import AddIncomeInvoice from './pages/Dashboard/features/Transactions/AddIncomeInvoice';
+import RecurringExpense from './pages/Dashboard/features/Transactions/RecurringExpense';
+import ReturnDeposit from './pages/Dashboard/features/Transactions/ReturnDeposit';
+import ApplyDepositAndCredit from './pages/Dashboard/features/Transactions/ApplyDepositAndCredit';
+import BulkPaymentsExpense from './pages/Dashboard/features/Transactions/BulkPaymentsExpense';
+import ExpensePayments from './pages/Dashboard/features/Transactions/ExpensePayments';
 import AddExpenseInvoice from './pages/Dashboard/features/Transactions/AddExpenseInvoice';
 import AddMaintenanceRequest from './pages/Dashboard/features/Maintenance/AddMaintenanceRequest';
 import Properties from './pages/Dashboard/features/Properties/Properties';
 import Equipments from './pages/Dashboard/features/Equipments/Equipments';
 import EquipmentDetail from './pages/Dashboard/features/Equipments/EquipmentDetail';
 import CreateEquipment from './pages/Dashboard/features/Equipments/CreateEquipment';
+import MoveIn from './pages/Dashboard/features/MoveIn/MoveIn';
 import PropertyDetail from './pages/Dashboard/features/Properties/PropertyDetail';
 import UnitPropertyDetail from './pages/Dashboard/features/Units/UnitPropertyDetail';
 import EditUnit from './pages/Dashboard/features/Units/EditUnit';
@@ -44,6 +51,8 @@ import TenantDetail from './pages/Dashboard/features/Tenants/TenantDetail';
 import Units from './pages/Dashboard/features/Units/Units';
 import KeysLocks from './pages/Dashboard/features/KeysLocks/KeysLocks';
 import KeyDetail from './pages/Dashboard/features/KeysLocks/KeyDetail';
+import Leases from './pages/Dashboard/features/Leases/Leases';
+import LeaseDetail from './pages/Dashboard/features/Leases/LeaseDetail';
 // import ListUnit from './pages/Dashboard/features/ListUnit/ListUnit';
 
 // Create a QueryClient instance
@@ -99,6 +108,9 @@ const App: React.FC = () => {
               />
               <Route path="/dashboard/list-unit" element={<ListUnit />} />
               <Route path="/dashboard/properties" element={<Properties />} />
+              <Route path="/dashboard/portfolio/units" element={<Units />} />
+              <Route path="/dashboard/portfolio/keys-locks" element={<KeysLocks />} />
+              <Route path="/dashboard/portfolio/keys-locks/:id" element={<KeyDetail />} />
               <Route path="/dashboard/properties/:id" element={<PropertyDetail />} />
               <Route path="/dashboard/properties/edit/:id" element={<EditProperty />} />
               <Route path="/dashboard/units/edit/:unitId" element={<EditUnit />} />
@@ -114,9 +126,23 @@ const App: React.FC = () => {
               <Route path="/dashboard/equipments" element={<Equipments />} />
               <Route path="/dashboard/equipments/add" element={<CreateEquipment />} />
               <Route path="/dashboard/equipments/:id" element={<EquipmentDetail />} />
+              <Route path="/dashboard/property/add" element={<AddProperty />} />
+              <Route path="/dashboard/properties/edit/:id" element={<EditProperty />} />
+              <Route path="/dashboard/accounting/transactions" element={<Transactions />} />
               <Route path="/dashboard/accounting/transactions/income/add" element={<AddIncomeInvoice />} />
               <Route path="/dashboard/accounting/transactions/expense/add" element={<AddExpenseInvoice />} />
+              <Route path="/dashboard/accounting/transactions/recurring-expense/add" element={<RecurringExpense />} />
+              <Route path="/dashboard/accounting/transactions/return-deposit" element={<ReturnDeposit />} />
+              <Route path="/dashboard/accounting/transactions/apply-deposit" element={<ApplyDepositAndCredit />} />
+              <Route path="/dashboard/accounting/transactions/bulk-payments-expense" element={<BulkPaymentsExpense />} />
+              <Route path="/dashboard/accounting/transactions/expense-payments" element={<ExpensePayments />} />
               <Route path="/dashboard/maintenance/request" element={<AddMaintenanceRequest />} />
+              <Route path="/dashboard/movein" element={<MoveIn />} />
+              <Route path="/dashboard/contacts/tenants" element={<Tenants />} />
+              <Route path="/dashboard/contacts/tenants/:id" element={<TenantDetail />} />
+              <Route path="/dashboard/portfolio/leases" element={<Leases />} />
+              <Route path="/dashboard/portfolio/leases/:id" element={<LeaseDetail />} />
+
               <Route path="/dashboard/contacts/tenants" element={<Tenants />} />
               <Route path="/dashboard/contacts/tenants/:id" element={<TenantDetail />} />
               <Route
