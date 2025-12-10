@@ -25,7 +25,13 @@ import Dashboard from './pages/Dashboard/Dashboard';
 import ListUnit from './pages/Dashboard/features/ListUnit';
 import AddProperty from './pages/Dashboard/features/Properties/AddProperty';
 import EditProperty from './pages/Dashboard/features/Properties/EditProperty';
+import Transactions from './pages/Dashboard/features/Transactions/Transactions';
 import AddIncomeInvoice from './pages/Dashboard/features/Transactions/AddIncomeInvoice';
+import RecurringExpense from './pages/Dashboard/features/Transactions/RecurringExpense';
+import ReturnDeposit from './pages/Dashboard/features/Transactions/ReturnDeposit';
+import ApplyDepositAndCredit from './pages/Dashboard/features/Transactions/ApplyDepositAndCredit';
+import BulkPaymentsExpense from './pages/Dashboard/features/Transactions/BulkPaymentsExpense';
+import ExpensePayments from './pages/Dashboard/features/Transactions/ExpensePayments';
 import AddExpenseInvoice from './pages/Dashboard/features/Transactions/AddExpenseInvoice';
 import AddMaintenanceRequest from './pages/Dashboard/features/Maintenance/AddMaintenanceRequest';
 import Properties from './pages/Dashboard/features/Properties/Properties';
@@ -113,8 +119,14 @@ const App: React.FC = () => {
               <Route path="/dashboard/equipments/:id" element={<EquipmentDetail />} />
               <Route path="/dashboard/property/add" element={<AddProperty />} />
               <Route path="/dashboard/properties/edit/:id" element={<EditProperty />} />
+              <Route path="/dashboard/accounting/transactions" element={<Transactions />} />
               <Route path="/dashboard/accounting/transactions/income/add" element={<AddIncomeInvoice />} />
               <Route path="/dashboard/accounting/transactions/expense/add" element={<AddExpenseInvoice />} />
+              <Route path="/dashboard/accounting/transactions/recurring-expense/add" element={<RecurringExpense />} />
+              <Route path="/dashboard/accounting/transactions/return-deposit" element={<ReturnDeposit />} />
+              <Route path="/dashboard/accounting/transactions/apply-deposit" element={<ApplyDepositAndCredit />} />
+              <Route path="/dashboard/accounting/transactions/bulk-payments-expense" element={<BulkPaymentsExpense />} />
+              <Route path="/dashboard/accounting/transactions/expense-payments" element={<ExpensePayments />} />
               <Route path="/dashboard/maintenance/request" element={<AddMaintenanceRequest />} />
               <Route path="/dashboard/movein" element={<MoveIn />} />
               <Route path="/dashboard/contacts/tenants" element={<Tenants />} />

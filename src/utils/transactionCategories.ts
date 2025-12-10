@@ -1,0 +1,15 @@
+export const TRANSACTION_CATEGORIES = [
+    { value: 'advertising', label: 'Advertising' },
+    { value: 'cleaning_maintenance', label: 'Cleaning & Maintenance' },
+    { value: 'repairs', label: 'Repairs' },
+    { value: 'utilities', label: 'Utilities' },
+    { value: 'insurance', label: 'Insurance' },
+    { value: 'property_taxes', label: 'Property Taxes' },
+    { value: 'management_fees', label: 'Management Fees' },
+    { value: 'mortgage_interest', label: 'Mortgage Interest / Other Interest' },
+    { value: 'supplies', label: 'Supplies' },
+    { value: 'legal_professional_fees', label: 'Legal & Professional Fees' },
+    { value: 'commissions', label: 'Commissions' },
+    { value: 'depreciation_amortization', label: 'Depreciation / Amortization' },
+    { value: 'miscellaneous', label: 'Miscellaneous / Other' },
+];

@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import TransactionTypeToggle from './components/TransactionTypeToggle';
+import TransactionToggle from './components/TransactionToggle';
 import DatePicker from '../../../../components/ui/DatePicker';
 import CustomDropdown from '../../components/CustomDropdown';
 import PayerPayeeDropdown from './components/PayerPayeeDropdown';
 import AddTenantModal from './components/AddTenantModal';
+import { TRANSACTION_CATEGORIES } from '../../../../utils/transactionCategories';
 
 const AddExpenseInvoice: React.FC = () => {
     const navigate = useNavigate();
     const [expenseType, setExpenseType] = useState<'property' | 'general'>('property');
+    const [category, setCategory] = useState<string>('');
     const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
     const [currency, setCurrency] = useState<string>('');
     const [isPaid, setIsPaid] = useState<boolean>(false);
@@ -33,11 +35,14 @@ const AddExpenseInvoice: React.FC = () => {
                 </div>
 
                 {/* Toggle */}
-                <div className="flex justify-start mb-10">
-                    <TransactionTypeToggle
+                <div className="mb-10">
+                    <TransactionToggle
                         value={expenseType}
-                        onChange={setExpenseType}
-                        text={{ property: 'Property Expense', general: 'General Expense' }}
+                        onChange={(val) => setExpenseType(val as 'property' | 'general')}
+                        options={[
+                            { label: 'Property Expense', value: 'property' },
+                            { label: 'General Expense', value: 'general' }
+                        ]}
                     />
                 </div>
 
@@ -49,10 +54,13 @@ const AddExpenseInvoice: React.FC = () => {
                     <div className="col-span-1 md:col-span-2 ">
                         <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Category & subcategory*</label>
                         <div className="relative">
-                            <input
-                                type="text"
-                                placeholder="General Expense"
-                                className="w-full rounded-md bg-white px-4 py-3 text-sm text-gray-700 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#84CC16]/20 transition-all shadow-sm"
+                            <CustomDropdown
+                                value={category}
+                                onChange={setCategory}
+                                options={TRANSACTION_CATEGORIES}
+                                placeholder="Select Category"
+                                searchable={true}
+                                buttonClassName="!py-3 !rounded-md !border-0 !shadow-sm focus:!ring-[#3A6D6C]/20 w-full"
                             />
                         </div>
                     </div>
