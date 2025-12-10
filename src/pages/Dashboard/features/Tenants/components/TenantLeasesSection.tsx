@@ -13,11 +13,16 @@ interface Lease {
 interface TenantLeasesSectionProps {
     tenant: {
         id: number;
-        name: string;
+        tenantName: string;
+        tenantInitial: string;
+        date: string;
+        time: string;
+        status: string;
+        property: string;
     };
 }
 
-const TenantLeasesSection = ({}: TenantLeasesSectionProps) => {
+const TenantLeasesSection = ({tenant}: TenantLeasesSectionProps) => {
     // Mock lease data
     const leases: Lease[] = [
         {
@@ -89,7 +94,11 @@ const TenantLeasesSection = ({}: TenantLeasesSectionProps) => {
                         </div>
 
                             {/* View Button */}
-                            <button className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-xs font-medium hover:bg-[#2c5251] transition-colors shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] flex items-center gap-2">
+                            
+                            <button
+                                className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-xs font-medium hover:bg-[#2c5251] transition-colors shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] flex items-center gap-2"
+                                onClick={() => {}}
+                            >
                                 <Eye className="w-4 h-4" />
                                 View
                             </button>

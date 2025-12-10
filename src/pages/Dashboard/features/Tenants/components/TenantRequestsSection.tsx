@@ -12,7 +12,11 @@ interface Request {
 interface TenantRequestsSectionProps {
     tenant: {
         id: number;
-        name: string;
+        tenantName: string;
+        tenantInitial: string;
+        status: string;
+        description: string;
+        property: string;
     };
 }
 
@@ -81,7 +85,10 @@ const TenantRequestsSection = ({ tenant }: TenantRequestsSectionProps) => {
                     </div>
 
                     {/* View Button */}
-                    <button className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-xs font-medium hover:bg-[#2c5251] transition-colors shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] flex items-center gap-2 flex-shrink-0">
+                    <button
+                        className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-xs font-medium hover:bg-[#2c5251] transition-colors shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] flex items-center gap-2 flex-shrink-0"
+                        onClick={() => {}}
+                    >
                         <Eye className="w-4 h-4" />
                         View
                     </button>

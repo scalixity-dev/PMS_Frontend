@@ -1,7 +1,46 @@
 import CustomTextBox from '@/pages/Dashboard/components/CustomTextBox'
-import React from 'react'
 
-const TenantProfileSection = ({ tenant }: { tenant: any }) => {
+interface TenantProfileSectionProps {
+    tenant: {
+        id: number;
+        name: string;
+        personalInfo: {
+            firstName: string;
+            middleName: string;
+            lastName: string;
+            email: string;
+            additionalEmail: string;
+            phone: string;
+            additionalPhone: string;
+            companyName: string;
+            companyName2: string;
+            dateOfBirth: string;
+        };
+        forwardingAddress: string;
+        emergencyContacts: Array<{
+            name: string;
+            phone: string;
+            relationship: string;
+            email: string;
+        }>;
+        pets: Array<{
+            name: string;
+            breed: string;
+            type: string;
+            weight: string;
+        }>;
+        vehicles: Array<{
+            type: string;
+            year: string;
+            make: string;
+            color: string;
+            registeredIn: string;
+            license: string;
+        }>;
+    };
+}
+
+const TenantProfileSection = ({ tenant }: TenantProfileSectionProps) => {
     const SectionTitle = ({ title }: { title: string }) => (
         <h3 className="text-lg font-semibold text-gray-800 mb-4">{title}</h3>
     );

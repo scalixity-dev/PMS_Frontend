@@ -14,7 +14,13 @@ interface Transaction {
 interface TenantTransactionsSectionProps {
     tenant: {
         id: number;
-        name: string;
+        status: 'Paid' | 'Void' | 'Pending';
+        dueDate: string;
+        category: string;
+        property: string;
+        contact: string;
+        total: number;
+        balance: number;
     };
 }
 
@@ -99,13 +105,22 @@ const TenantTransactionsSection = ({ tenant }: TenantTransactionsSectionProps) =
                                 ₹{transaction.balance.toLocaleString()}
                             </span>
                             <div className="flex items-center gap-2">
-                                <button className="p-1.5 hover:bg-gray-100 rounded-full transition-colors">
+                                <button
+                                    className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+                                    onClick={() => {}}
+                                >
                                     <Edit className="w-4 h-4 text-gray-600" />
                                 </button>
-                                <button className="p-1.5 hover:bg-gray-100 rounded-full transition-colors">
+                                <button
+                                    className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+                                    onClick={() => {}}
+                                >
                                     <Trash2 className="w-4 h-4 text-red-600" />
                                 </button>
-                                <button className="p-1.5 hover:bg-gray-100 rounded-full transition-colors">
+                                <button
+                                    className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+                                    onClick={() => {}}
+                                >
                                     <MoreHorizontal className="w-4 h-4 text-gray-600" />
                                 </button>
                             </div>
