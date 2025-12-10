@@ -101,7 +101,7 @@ const ExpensePayments: React.FC = () => {
                     </div>
 
                     {/* Methods */}
-                    <div className={`col-span-1 md:col-span-${activeTab === 'General Expense' ? '1' : '2'}`}>
+                    <div className={`col-span-1 ${activeTab === 'General Expense' ? 'md:col-span-1' : 'md:col-span-2'}`}>
                         <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Methods *</label>
                         <div className="relative">
                             <CustomDropdown
