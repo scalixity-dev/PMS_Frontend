@@ -8,20 +8,23 @@ import { useListUnitStore } from '../store/listUnitStore';
 
 interface LeasingDetailsProps {
   propertyId?: string;
+  unitId?: string;
 }
 
-const LeasingDetails: React.FC<LeasingDetailsProps> = ({ propertyId }) => {
+const LeasingDetails: React.FC<LeasingDetailsProps> = ({ propertyId, unitId }) => {
   const { formData, updateFormData } = useListUnitStore();
   const previousPropertyIdRef = useRef<string | undefined>(propertyId);
+  const previousUnitIdRef = useRef<string | undefined>(unitId);
   
   // Use React Query to fetch property data
   const { data: property } = useGetProperty(propertyId || null, !!propertyId);
 
-  // Clear form data when propertyId changes to prevent data leakage
+  // Clear form data when propertyId or unitId changes to prevent data leakage
   useEffect(() => {
-    // Only clear if propertyId actually changed (not on initial mount with same property)
-    if (previousPropertyIdRef.current !== undefined && previousPropertyIdRef.current !== propertyId) {
-      // Property changed - clear all leasing fields to prevent showing data from previous property
+    // Only clear if propertyId or unitId actually changed (not on initial mount with same property/unit)
+    if ((previousPropertyIdRef.current !== undefined && previousPropertyIdRef.current !== propertyId) ||
+        (previousUnitIdRef.current !== undefined && previousUnitIdRef.current !== unitId)) {
+      // Property or unit changed - clear all leasing fields to prevent showing data from previous property/unit
       updateFormData('rent', '');
       updateFormData('deposit', '');
       updateFormData('refundable', '');
@@ -30,9 +33,10 @@ const LeasingDetails: React.FC<LeasingDetailsProps> = ({ propertyId }) => {
       updateFormData('maxLeaseDuration', '');
       updateFormData('description', '');
     }
-    // Update ref to track current propertyId
+    // Update refs to track current propertyId and unitId
     previousPropertyIdRef.current = propertyId;
-  }, [propertyId, updateFormData]);
+    previousUnitIdRef.current = unitId;
+  }, [propertyId, unitId, updateFormData]);
   
   const inputClass = "w-full p-3 bg-[#84CC16] text-white placeholder-white/70 border-none rounded-lg focus:ring-2 focus:ring-white/50 outline-none text-center font-medium";
   const labelClass = "block text-xs font-medium text-gray-700 mb-1 ml-1";

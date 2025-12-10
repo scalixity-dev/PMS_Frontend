@@ -1,11 +1,15 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { ChevronDown, Plus, Building, Loader2 } from 'lucide-react';
+import { useQueries } from '@tanstack/react-query';
 import PropertyCard from '../components/PropertyCard';
 import { propertyService } from '../../../../../services/property.service';
 import { listingService } from '../../../../../services/listing.service';
+import { unitService } from '../../../../../services/unit.service';
 import { useGetAllProperties, useGetProperty } from '../../../../../hooks/usePropertyQueries';
+import { useGetUnit } from '../../../../../hooks/useUnitQueries';
 import { useListUnitStore } from '../store/listUnitStore';
 import type { Property, BackendProperty } from '../../../../../services/property.service';
+import type { BackendUnit } from '../../../../../services/unit.service';
 
 interface PropertySelectionProps {
   onCreateProperty: () => void;
@@ -57,7 +61,7 @@ const checkHasActiveListing = async (property: BackendProperty, listingsCache: M
   // If listings are already in property data, use them
   if (property.listings && property.listings.length > 0) {
     const hasActive = property.listings.some(
-      (listing: any) => listing.listingStatus === 'ACTIVE' && listing.isActive === true
+      (listing: any) => listing.listingStatus === 'ACTIVE' && listing.isActive === true && !listing.unitId
     );
     return hasActive;
   }
@@ -66,7 +70,7 @@ const checkHasActiveListing = async (property: BackendProperty, listingsCache: M
   const cachedListings = listingsCache.get(property.id);
   if (cachedListings !== undefined) {
     return cachedListings.some(
-      (listing: any) => listing.listingStatus === 'ACTIVE' && listing.isActive === true
+      (listing: any) => listing.listingStatus === 'ACTIVE' && listing.isActive === true && !listing.unitId
     );
   }
   
@@ -76,7 +80,7 @@ const checkHasActiveListing = async (property: BackendProperty, listingsCache: M
     listingsCache.set(property.id, listings);
     
     return listings.some(
-      (listing: any) => listing.listingStatus === 'ACTIVE' && listing.isActive === true
+      (listing: any) => listing.listingStatus === 'ACTIVE' && listing.isActive === true && !listing.unitId
     );
   } catch (err) {
     // If error fetching listings, assume no active listing
@@ -85,6 +89,7 @@ const checkHasActiveListing = async (property: BackendProperty, listingsCache: M
     return false;
   }
 };
+
 
 // Check if property has all listing data filled (using data from BackendProperty)
 const isPropertyListingComplete = (property: BackendProperty): boolean => {
@@ -213,10 +218,23 @@ const isPropertyListingComplete = (property: BackendProperty): boolean => {
   }
 };
 
+// Interface for selectable items (properties or units)
+interface SelectableItem {
+  id: string;
+  name: string;
+  address: string;
+  type: 'property' | 'unit';
+  propertyId: string;
+  unitId?: string;
+  propertyType?: 'SINGLE' | 'MULTI';
+  image?: string;
+}
+
 const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty, onEditProperty, onNext }) => {
   const { formData, updateFormData } = useListUnitStore();
   const [isOpen, setIsOpen] = useState(false);
   const [incompleteProperties, setIncompleteProperties] = useState<Property[]>([]);
+  const [selectableItems, setSelectableItems] = useState<SelectableItem[]>([]);
   const incompletePropertiesRef = useRef<Property[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -228,13 +246,31 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
     error: queryError,
   } = useGetAllProperties(true, false); // enabled=true, includeListings=false
   
-  // Transform backend properties to Property format for display (only when needed)
-  // We'll transform on-demand in the filter effect to avoid unnecessary computation
+  // Get all MULTI properties to fetch their units
+  const multiProperties = useMemo(() => {
+    return allBackendProperties.filter(p => p.propertyType === 'MULTI') || [];
+  }, [allBackendProperties]);
+
+  // Fetch units for all MULTI properties in parallel
+  const unitQueries = useQueries({
+    queries: multiProperties.map(property => ({
+      queryKey: ['units', 'list', property.id],
+      queryFn: () => unitService.getAllByProperty(property.id),
+      enabled: !!property.id,
+      staleTime: 2 * 60 * 1000,
+      gcTime: 5 * 60 * 1000,
+      retry: 1,
+    })),
+  });
 
   // Use React Query to fetch full property data when selected
   const { 
     data: fullPropertyData
   } = useGetProperty(formData.property || null, !!formData.property);
+
+  // Fetch unit data if unitId is selected
+  const selectedUnitId = formData.unit || null;
+  const { data: selectedUnitData } = useGetUnit(selectedUnitId, !!selectedUnitId);
 
   
   // Helper: shallow compare arrays of objects by id (order-insensitive)
@@ -255,7 +291,7 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
   // Cache for listings to avoid redundant API calls
   const listingsCacheRef = useRef<Map<string, any[]>>(new Map());
 
-  // Filter properties based on completeness and active listing status
+  // Filter properties and units based on completeness and active listing status
   useEffect(() => {
     let mounted = true;
 
@@ -265,41 +301,141 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
         if (!areSameById(incompletePropertiesRef.current, [])) {
           if (!mounted) return;
           setIncompleteProperties([]);
+          setSelectableItems([]);
         }
         return;
       }
 
       try {
+        // Create a map of propertyId -> units data from unit queries
+        const unitsByPropertyId = new Map<string, BackendUnit[]>();
+        multiProperties.forEach((property, index) => {
+          const unitsData = unitQueries[index]?.data;
+          if (unitsData && Array.isArray(unitsData)) {
+            unitsByPropertyId.set(property.id, unitsData);
+          }
+        });
+
         // Check completeness and active listings for ALL properties
-        // Exclude properties that have active listings (already listed)
         const propertyChecks = await Promise.all(
           allBackendProperties.map(async (backendProperty) => {
             const transformedProperty = propertyService.transformProperty(backendProperty);
             const isComplete = isPropertyListingComplete(backendProperty);
             
-            // Check for active listings for ALL properties (not just complete ones)
-            // Properties with active listings should be excluded from selection
+            // Check for active property-level listings (not unit-level)
             const hasActive = await checkHasActiveListing(backendProperty, listingsCacheRef.current);
             
             return {
               property: transformedProperty,
+              backendProperty,
               isComplete,
               hasActiveListing: hasActive
             };
           })
         );
 
-        // Filter to show only:
-        // 1. Incomplete properties (need more data)
-        // 2. AND properties without active listings (not already listed)
+        // Filter incomplete properties (for SINGLE properties or MULTI properties without units)
         const newIncomplete = propertyChecks
-          .filter(result => !result.isComplete && !result.hasActiveListing)
+          .filter(result => {
+            // For MULTI properties, we'll show units separately, so exclude them from property list
+            if (result.backendProperty.propertyType === 'MULTI') {
+              return false;
+            }
+            return !result.isComplete && !result.hasActiveListing;
+          })
           .map(result => result.property);
+
+        // Build selectable items list
+        const items: SelectableItem[] = [];
+
+        // Add SINGLE properties that are incomplete and don't have active listings
+        propertyChecks.forEach((result) => {
+          if (result.backendProperty.propertyType === 'SINGLE' && !result.isComplete && !result.hasActiveListing) {
+            const address = result.backendProperty.address
+              ? `${result.backendProperty.address.streetAddress}, ${result.backendProperty.address.city}, ${result.backendProperty.address.stateRegion} ${result.backendProperty.address.zipCode}, ${result.backendProperty.address.country}`
+              : 'Address not available';
+
+            items.push({
+              id: result.backendProperty.id,
+              name: result.backendProperty.propertyName,
+              address,
+              type: 'property',
+              propertyId: result.backendProperty.id,
+              propertyType: 'SINGLE',
+              image: result.backendProperty.coverPhotoUrl || result.backendProperty.photos?.[0]?.photoUrl || '',
+            });
+          }
+        });
+
+        // Add units from MULTI properties that don't have active listings
+        // For MULTI properties, we need to check each unit individually
+        for (const result of propertyChecks) {
+          if (result.backendProperty.propertyType === 'MULTI' && !result.isComplete) {
+            const units = unitsByPropertyId.get(result.backendProperty.id) || [];
+            const propertyAddress = result.backendProperty.address
+              ? `${result.backendProperty.address.streetAddress}, ${result.backendProperty.address.city}, ${result.backendProperty.address.stateRegion} ${result.backendProperty.address.zipCode}, ${result.backendProperty.address.country}`
+              : 'Address not available';
+
+            // Check each unit for active listings
+            for (const unit of units) {
+              // Check if unit has active listing
+              try {
+                const unitListings = await listingService.getByPropertyId(result.backendProperty.id);
+                const hasActiveUnitListing = unitListings.some(
+                  (listing: any) => listing.unitId === unit.id && listing.listingStatus === 'ACTIVE' && listing.isActive === true
+                );
+
+                if (!hasActiveUnitListing) {
+                  const unitImage = unit.photos?.find((p: any) => p.isPrimary)?.photoUrl 
+                    || unit.photos?.[0]?.photoUrl 
+                    || unit.coverPhotoUrl 
+                    || result.backendProperty.coverPhotoUrl 
+                    || '';
+
+                  items.push({
+                    id: unit.id,
+                    name: `${result.backendProperty.propertyName} - ${unit.unitName || 'Unit'}`,
+                    address: propertyAddress,
+                    type: 'unit',
+                    propertyId: result.backendProperty.id,
+                    unitId: unit.id,
+                    propertyType: 'MULTI',
+                    image: unitImage,
+                  });
+                }
+              } catch (err) {
+                console.error('Error checking unit listing:', err);
+                // If error, include the unit anyway
+                const unitImage = unit.photos?.find((p: any) => p.isPrimary)?.photoUrl 
+                  || unit.photos?.[0]?.photoUrl 
+                  || unit.coverPhotoUrl 
+                  || result.backendProperty.coverPhotoUrl 
+                  || '';
+
+                items.push({
+                  id: unit.id,
+                  name: `${result.backendProperty.propertyName} - ${unit.unitName || 'Unit'}`,
+                  address: propertyAddress,
+                  type: 'unit',
+                  propertyId: result.backendProperty.id,
+                  unitId: unit.id,
+                  propertyType: 'MULTI',
+                  image: unitImage,
+                });
+              }
+            }
+          }
+        }
 
         // Only update state if the list actually changed - use ref to avoid stale closure
         if (!areSameById(incompletePropertiesRef.current, newIncomplete)) {
           if (!mounted) return;
           setIncompleteProperties(newIncomplete);
+        }
+
+        // Update selectable items
+        if (mounted) {
+          setSelectableItems(items);
         }
       } catch (err) {
         // optionally handle/log error
@@ -309,28 +445,43 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
 
     return () => { mounted = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allBackendProperties]); // keep dependency on allBackendProperties only
+  }, [allBackendProperties, multiProperties, unitQueries]); // keep dependency on allBackendProperties, multiProperties, and unitQueries
 
-  // Clear selected property if it's no longer in incomplete list
+  // Clear selected property/unit if it's no longer in selectable list
   useEffect(() => {
-    const currentPropertyId = formData.property; // include current value in deps
-    if (!currentPropertyId) return; // nothing selected
+    const currentPropertyId = formData.property;
+    const currentUnitId = formData.unit;
 
-    // If no incomplete properties and property selected -> clear
-    if (!incompleteProperties || incompleteProperties.length === 0) {
-      if (currentPropertyId !== '') {
+    // If no selectable items and something selected -> clear
+    if (!selectableItems || selectableItems.length === 0) {
+      if (currentPropertyId !== '' || currentUnitId !== '') {
         updateFormData('property', '');
+        updateFormData('unit', '');
       }
       return;
     }
 
-    // If selected property is not in the incomplete list, clear it
-    const isPropertyInList = incompleteProperties.some(p => p.id === currentPropertyId);
-    if (!isPropertyInList && currentPropertyId !== '') {
-      updateFormData('property', '');
-    }
-  }, [incompleteProperties, formData.property, updateFormData]); // now depends on the current selected id
+    // If selected property/unit is not in the selectable list, clear it
+    const isInList = selectableItems.some(item => 
+      item.propertyId === currentPropertyId && 
+      (item.type === 'property' || item.unitId === currentUnitId)
+    );
 
+    if (!isInList && (currentPropertyId !== '' || currentUnitId !== '')) {
+      updateFormData('property', '');
+      updateFormData('unit', '');
+    }
+  }, [selectableItems, formData.property, formData.unit, updateFormData]);
+
+  // Find selected item (property or unit)
+  const selectedItem = selectableItems.find(item => {
+    if (formData.unit) {
+      return item.type === 'unit' && item.unitId === formData.unit;
+    }
+    return item.type === 'property' && item.propertyId === formData.property;
+  });
+  
+  // For backward compatibility, also check incompleteProperties
   const selectedProperty = incompleteProperties.find(p => p.id === formData.property);
   const error = queryError ? (queryError instanceof Error ? queryError.message : 'Failed to load properties') : null;
 
@@ -350,6 +501,12 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
   const handleNext = () => {
     if (!fullPropertyData || !onNext) return;
 
+    // If a unit is selected, we can proceed directly (units don't need property completion)
+    if (formData.unit && selectedUnitData) {
+      onNext(fullPropertyData.id);
+      return;
+    }
+
     const nextStep = getNextIncompleteStep(fullPropertyData);
     
     if (nextStep !== null) {
@@ -363,8 +520,13 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
     }
   };
 
-  const handleSelect = (propertyId: string) => {
-    updateFormData('property', propertyId);
+  const handleSelect = (item: SelectableItem) => {
+    updateFormData('property', item.propertyId);
+    if (item.type === 'unit' && item.unitId) {
+      updateFormData('unit', item.unitId);
+    } else {
+      updateFormData('unit', ''); // Clear unit if selecting a property
+    }
     setIsOpen(false);
   };
 
@@ -375,6 +537,7 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
 
   const handleDelete = () => {
     updateFormData('property', '');
+    updateFormData('unit', '');
   };
 
   if (loading) {
@@ -396,26 +559,58 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
     );
   }
 
-  // Get cover photo URL from full property data if available, otherwise use transformed property image
-  const propertyImage = fullPropertyData?.coverPhotoUrl 
+  // Get cover photo URL from full property data or selected unit data
+  const propertyImage = selectedUnitData?.photos?.find((p: any) => p.isPrimary)?.photoUrl
+    || selectedUnitData?.photos?.[0]?.photoUrl
+    || selectedUnitData?.coverPhotoUrl
+    || fullPropertyData?.coverPhotoUrl 
     || fullPropertyData?.photos?.find((p) => p.isPrimary)?.photoUrl 
     || fullPropertyData?.photos?.[0]?.photoUrl 
+    || selectedItem?.image
     || selectedProperty?.image 
     || '';
 
+  // Get display name
+  const displayName = selectedItem?.name || selectedProperty?.name || '';
+
+  // Get address
+  const address = selectedItem?.address || selectedProperty?.address || '';
+
+  // Get price, bedrooms, bathrooms from unit or property
+  const price = selectedUnitData?.rent 
+    ? (typeof selectedUnitData.rent === 'string' ? parseFloat(selectedUnitData.rent) : Number(selectedUnitData.rent))
+    : (fullPropertyData?.marketRent 
+      ? (typeof fullPropertyData.marketRent === 'string' ? parseFloat(fullPropertyData.marketRent) : Number(fullPropertyData.marketRent))
+      : 0);
+  
+  const bedrooms = selectedUnitData?.beds || fullPropertyData?.singleUnitDetails?.beds || 0;
+  const bathrooms = selectedUnitData?.baths
+    ? (typeof selectedUnitData.baths === 'string' ? parseFloat(selectedUnitData.baths) : Number(selectedUnitData.baths))
+    : (fullPropertyData?.singleUnitDetails?.baths
+      ? (typeof fullPropertyData.singleUnitDetails.baths === 'string' ? parseFloat(fullPropertyData.singleUnitDetails.baths) : Number(fullPropertyData.singleUnitDetails.baths))
+      : 0);
+
+  // Get country
+  const country = fullPropertyData?.address?.country || (selectedItem?.address ? selectedItem.address.split(', ').pop() : undefined);
+
   return (
     <div className="bg-transparent p-8 rounded-lg w-full flex flex-col items-center">
-      {selectedProperty ? (
+      {selectedItem || selectedProperty ? (
         // Show Property Card when selected
         <PropertyCard
           property={{
-            ...selectedProperty,
+            id: selectedItem?.propertyId || selectedProperty?.id || '',
+            name: displayName,
+            address,
+            price,
+            bedrooms,
+            bathrooms,
             image: propertyImage,
-            country: fullPropertyData?.address?.country, // Pass country for currency symbol
+            country,
           }}
           onDelete={handleDelete}
           onBack={handleDelete} // Reusing handleDelete as it clears selection, which is the desired "Back" behavior for now
-          onEdit={onEditProperty ? () => onEditProperty(selectedProperty.id) : undefined}
+          onEdit={onEditProperty && (selectedItem?.type === 'property' || selectedProperty) ? () => onEditProperty(selectedItem?.propertyId || selectedProperty?.id || '') : undefined}
           onNext={onNext ? handleNext : undefined}
         />
       ) : (
@@ -441,24 +636,29 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
           {isOpen && (
             <div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden animate-in fade-in zoom-in-95 duration-100">
               <div className="max-h-60 overflow-y-auto">
-                {incompleteProperties.length === 0 ? (
+                {selectableItems.length === 0 ? (
                   <div className="p-4 text-center text-gray-500 text-sm">
-                    No properties found in database. Create your first property!
+                    No properties or units found. Create your first property!
                   </div>
                 ) : (
-                  incompleteProperties.map((property) => (
+                  selectableItems.map((item) => (
                     <button
-                      key={property.id}
-                      onClick={() => handleSelect(property.id)}
+                      key={`${item.type}-${item.id}`}
+                      onClick={() => handleSelect(item)}
                       className="w-full flex items-center justify-between p-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                          item.type === 'unit' ? 'bg-green-50 text-green-600' : 'bg-blue-50 text-blue-600'
+                        }`}>
                           <Building size={16} />
                         </div>
-                        <div className="text-left">
-                          <p className="text-sm font-medium text-gray-900">{property.name}</p>
-                          <p className="text-xs text-gray-500">{property.unit}</p>
+                        <div className="text-left flex-1">
+                          <p className="text-sm font-medium text-gray-900">{item.name}</p>
+                          <p className="text-xs text-gray-500 truncate">{item.address}</p>
+                          {item.type === 'unit' && (
+                            <p className="text-xs text-green-600 mt-0.5">Unit</p>
+                          )}
                         </div>
                       </div>
                     </button>

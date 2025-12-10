@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import TransactionTypeToggle from './components/TransactionTypeToggle';
+import TransactionToggle from './components/TransactionToggle';
 import DatePicker from '../../../../components/ui/DatePicker';
 import CustomDropdown from '../../components/CustomDropdown';
 import PayerPayeeDropdown from './components/PayerPayeeDropdown';
@@ -33,11 +33,14 @@ const AddIncomeInvoice: React.FC = () => {
 				</div>
 
 				{/* Toggle */}
-				<div className="flex justify-start mb-10">
-					<TransactionTypeToggle
+				<div className="mb-10">
+					<TransactionToggle
 						value={incomeType}
-						onChange={setIncomeType}
-						text={{ property: 'Property Income', general: 'General Income' }}
+						onChange={(val) => setIncomeType(val as 'property' | 'general')}
+						options={[
+							{ label: 'Property Income', value: 'property' },
+							{ label: 'General Income', value: 'general' }
+						]}
 					/>
 				</div>
 
