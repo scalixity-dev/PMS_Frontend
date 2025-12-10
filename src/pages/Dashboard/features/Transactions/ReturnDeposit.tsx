@@ -141,14 +141,10 @@ const ReturnDeposit: React.FC = () => {
                 <AddTenantModal
                     isOpen={isAddTenantModalOpen}
                     onClose={() => setIsAddTenantModalOpen(false)}
-                 <AddTenantModal
-                     isOpen={isAddTenantModalOpen}
-                     onClose={() => setIsAddTenantModalOpen(false)}
-                     onSave={(data) => {
-                         // TODO: Implement proper tenant creation logic
-                         setIsAddTenantModalOpen(false);
-                     }}
-                 />
+                    onSave={(_data) => {
+                        // TODO: Implement proper tenant creation logic
+                        setIsAddTenantModalOpen(false);
+                    }}
                 />
 
             </div>
