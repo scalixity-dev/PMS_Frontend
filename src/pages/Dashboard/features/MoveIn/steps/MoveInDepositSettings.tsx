@@ -19,8 +19,14 @@ const DEPOSIT_CATEGORIES = [
     'Security Deposit'
 ];
 
+interface DepositData {
+    category: string;
+    amount: string;
+    invoiceDate: Date | undefined;
+}
+
 interface MoveInDepositSettingsProps {
-    onNext: () => void;
+    onNext: (data: DepositData) => void;
     onBack: () => void;
 }
 
@@ -58,6 +64,9 @@ const MoveInDepositSettings: React.FC<MoveInDepositSettingsProps> = ({ onNext })
                                     placeholder="00.00"
                                     value={amount}
                                     onChange={(e) => setAmount(e.target.value)}
+                                    min="0"
+                                    step="0.01"
+                                    required
                                     className="bg-transparent text-white placeholder-white/70 outline-none w-full"
                                 />
                             </div>
@@ -85,7 +94,11 @@ const MoveInDepositSettings: React.FC<MoveInDepositSettingsProps> = ({ onNext })
 
             <div className="w-full max-w-md mt-16 flex justify-center">
                 <button
-                    onClick={onNext}
+                    onClick={() => onNext({
+                        category: selectedCategory,
+                        amount,
+                        invoiceDate,
+                    })}
                     className="px-12 py-3 rounded-lg font-medium text-white transition-all bg-[#3D7475] hover:bg-[#2c5554] shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
                 >
                     Next

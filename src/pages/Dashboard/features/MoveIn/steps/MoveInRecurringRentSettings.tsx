@@ -3,8 +3,16 @@ import DatePicker from '../../../../../components/ui/DatePicker';
 import CustomCheckbox from '../../../../../components/ui/CustomCheckbox';
 import SearchableDropdown from '../../../../../components/ui/SearchableDropdown';
 
+interface RecurringRentData {
+    invoiceSchedule: string;
+    startOn: Date | undefined;
+    endOn: Date | undefined;
+    isMonthToMonth: boolean;
+    markPastPaid: boolean;
+}
+
 interface MoveInRecurringRentSettingsProps {
-    onNext: () => void;
+    onNext: (data: RecurringRentData) => void;
     onBack: () => void;
     amount: string;
     onAmountChange: (amount: string) => void;
@@ -51,6 +59,9 @@ const MoveInRecurringRentSettings: React.FC<MoveInRecurringRentSettingsProps> = 
                                     placeholder="0.00"
                                     value={amount}
                                     onChange={(e) => onAmountChange(e.target.value)}
+                                    min="0"
+                                    step="0.01"
+                                    required
                                     className="bg-transparent text-white placeholder-white/70 outline-none w-full"
                                 />
                             </div>
@@ -122,7 +133,13 @@ const MoveInRecurringRentSettings: React.FC<MoveInRecurringRentSettingsProps> = 
 
             <div className="w-full max-w-md mt-16 flex justify-center">
                 <button
-                    onClick={onNext}
+                    onClick={() => onNext({
+                        invoiceSchedule,
+                        startOn,
+                        endOn,
+                        isMonthToMonth,
+                        markPastPaid,
+                    })}
                     className="px-12 py-3 rounded-lg font-medium text-white transition-all bg-[#3D7475] hover:bg-[#2c5554] shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
                 >
                     Next

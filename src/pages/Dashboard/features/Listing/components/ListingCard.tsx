@@ -4,7 +4,7 @@ import { Bath, BedDouble, PlusCircle } from 'lucide-react';
 import { getCurrencySymbol } from '../../../../../utils/currency.utils';
 
 interface ListingCardProps {
-    id: number;
+    id: string;
     image: string;
     name: string;
     address: string;

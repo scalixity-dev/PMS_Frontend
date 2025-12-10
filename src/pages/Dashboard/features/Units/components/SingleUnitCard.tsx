@@ -18,6 +18,18 @@ const SingleUnitCard: React.FC<SingleUnitCardProps> = ({ group }) => {
 
     const unit = group.units[0];
     const isOccupied = unit.status === 'Occupied';
+    
+    // Determine navigation based on property type
+    // SINGLE properties should go to PropertyDetail, MULTI properties should go to UnitPropertyDetail
+    const handleViewUnit = () => {
+        if (group.propertyType === 'SINGLE') {
+            // Navigate to property detail page for single unit properties
+            navigate(`/dashboard/properties/${group.id}`);
+        } else {
+            // Navigate to unit detail page for multi-unit properties
+            navigate(`/dashboard/units/${unit.id}?propertyId=${group.id}`);
+        }
+    };
 
     return (
         <div className="bg-[#F0F0F6] rounded-[2.5rem] p-6 mb-8 shadow-lg">
@@ -33,12 +45,21 @@ const SingleUnitCard: React.FC<SingleUnitCardProps> = ({ group }) => {
 
             <div className="flex gap-6 items-center">
                 {/* Left Image */}
-                <div className="w-[300px] h-[220px] rounded-[2rem] overflow-hidden flex-shrink-0">
-                    <img
-                        src={group.image}
-                        alt={group.propertyName}
-                        className="w-full h-full object-cover"
-                    />
+                <div className="w-[300px] h-[220px] rounded-[2rem] overflow-hidden flex-shrink-0 bg-gray-100">
+                    {unit.image ? (
+                        <img
+                            src={unit.image}
+                            alt={unit.name}
+                            className="w-full h-full object-cover"
+                        />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                            <div className="text-center">
+                                <div className="text-gray-300 text-4xl mb-2">🏠</div>
+                                <p className="text-gray-400 text-sm font-medium">No Image</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Right Green Box */}
@@ -62,7 +83,7 @@ const SingleUnitCard: React.FC<SingleUnitCardProps> = ({ group }) => {
                                         Unlist
                                     </button>
                                     <button 
-                                        onClick={() => navigate(`/dashboard/properties/${group.id}`)}
+                                        onClick={handleViewUnit}
                                         className="bg-[#3A6D6C] text-white px-6 py-1.5 rounded-md text-sm font-medium hover:bg-[#2c5251] transition-colors border border-white/30"
                                     >
                                         View Unit
@@ -77,7 +98,7 @@ const SingleUnitCard: React.FC<SingleUnitCardProps> = ({ group }) => {
                                         Move in
                                     </button>
                                     <button 
-                                        onClick={() => navigate(`/dashboard/properties/${group.id}`)}
+                                        onClick={handleViewUnit}
                                         className="bg-[#3A6D6C] text-white px-6 py-1.5 rounded-md text-sm font-medium hover:bg-[#2c5251] transition-colors border border-white/30"
                                     >
                                         View Unit

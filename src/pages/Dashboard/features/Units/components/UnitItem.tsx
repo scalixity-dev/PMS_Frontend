@@ -15,11 +15,17 @@ export interface Unit {
 
 interface UnitItemProps {
     unit: Unit;
+    propertyId: string;
 }
 
-const UnitItem: React.FC<UnitItemProps> = ({ unit }) => {
+const UnitItem: React.FC<UnitItemProps> = ({ unit, propertyId }) => {
     const navigate = useNavigate();
     const isOccupied = unit.status === 'Occupied';
+    
+    const handleViewUnit = () => {
+        // Navigate to unit detail page
+        navigate(`/dashboard/units/${unit.id}?propertyId=${propertyId}`);
+    };
 
     return (
         <div className="bg-[#d9ebd3] rounded-[2rem] p-3 flex gap-2 min-w-[300px] shadow-lg border border-white/50">
@@ -31,12 +37,21 @@ const UnitItem: React.FC<UnitItemProps> = ({ unit }) => {
                 <span className="bg-white px-3 py-0.5 rounded-full text-[10px] font-medium text-gray-600 w-fit shadow-sm border border-gray-100">
                     {unit.type}
                 </span>
-                <div className="relative w-full h-24 rounded-xl overflow-hidden mt-1">
-                    <img
-                        src={unit.image}
-                        alt={unit.name}
-                        className="w-full h-full object-cover"
-                    />
+                <div className="relative w-full h-24 rounded-xl overflow-hidden mt-1 bg-gray-100">
+                    {unit.image ? (
+                        <img
+                            src={unit.image}
+                            alt={unit.name}
+                            className="w-full h-full object-cover"
+                        />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                            <div className="text-center">
+                                <div className="text-gray-300 text-2xl mb-1">🏠</div>
+                                <p className="text-gray-400 text-[8px] font-medium">No Image</p>
+                            </div>
+                        </div>
+                    )}
                     <span className={`absolute top-1.5 right-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold text-white ${isOccupied ? 'bg-[#82D64D]' : 'bg-[#9CA3AF]'}`}>
                         {unit.status}
                     </span>
@@ -93,7 +108,7 @@ const UnitItem: React.FC<UnitItemProps> = ({ unit }) => {
                     </button>
                 )}
                 <button 
-                    onClick={() => navigate(`/dashboard/properties/${unit.id}`)}
+                    onClick={handleViewUnit}
                     className="bg-[#3A6D6C] text-white w-full py-1.5 rounded-md text-xs font-bold hover:bg-[#2c5251] transition-colors shadow-sm"
                 >
                     View Unit

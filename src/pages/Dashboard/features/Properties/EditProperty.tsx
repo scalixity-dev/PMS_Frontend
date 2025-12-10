@@ -8,6 +8,7 @@ import CustomDropdown from '../../components/CustomDropdown';
 import { useGetProperty, useUpdateProperty } from '../../../../hooks/usePropertyQueries';
 import { API_ENDPOINTS } from '../../../../config/api.config';
 import { getCurrencySymbol } from '../../../../utils/currency.utils';
+import { isSummaryUnits } from '../../../../services/property.service';
 
 interface Unit {
   unitNumber: string;
@@ -22,7 +23,7 @@ interface Unit {
 const EditProperty: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { data: property } = useGetProperty(id);
+  const { data: property } = useGetProperty(id, true, true); // Include full unit details for editing
   const updateProperty = useUpdateProperty();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -71,15 +72,32 @@ const EditProperty: React.FC = () => {
   // Populate form data when property data is loaded
   useEffect(() => {
     if (property) {
+      isInitializingRef.current = true;
+      
+      const country = property.address?.country || '';
+      const stateRegion = property.address?.stateRegion || '';
+      const city = property.address?.city || '';
+      
+      // Load states and cities immediately when property data is available
+      if (country) {
+        const countryStates = State.getStatesOfCountry(country);
+        setStates(countryStates);
+        
+        if (stateRegion) {
+          const stateCities = City.getCitiesOfState(country, stateRegion);
+          setCities(stateCities);
+        }
+      }
+      
       setFormData({
         propertyName: property.propertyName || '',
         yearBuilt: property.yearBuilt?.toString() || '',
         mls: property.mlsNumber?.toString() || '',
         streetAddress: property.address?.streetAddress || '',
-        city: property.address?.city || '',
-        stateRegion: property.address?.stateRegion || '',
+        city: city,
+        stateRegion: stateRegion,
         zip: property.address?.zipCode || '',
-        country: property.address?.country || '',
+        country: country,
         propertyType: property.propertyType === 'SINGLE' ? 'single' : 'multi',
         isManufactured: false, // Not available in backend type yet
         beds: property.singleUnitDetails?.beds?.toString() || '',
@@ -97,15 +115,29 @@ const EditProperty: React.FC = () => {
         coverPhoto: null,
         galleryPhotos: [],
         attachments: [],
-        units: (property.units as any[])?.map((u: any) => ({
-          unitNumber: u.unitName || '',
-          unitType: u.apartmentType || '',
-          size: u.sizeSqft?.toString() || '',
-          baths: u.baths?.toString() || '',
-          rent: u.rent?.toString() || '',
-          deposit: '', // Not in Unit type
-          beds: u.beds?.toString() || ''
-        })) || []
+        units: (() => {
+          // Handle both array format and new object format { count, units: [...] }
+          let unitsArray: any[] = [];
+          if (property.units) {
+            if (isSummaryUnits(property.units)) {
+              // Summary format: { count, units: [...] }
+              unitsArray = property.units.units;
+            } else {
+              // Detailed array format
+              unitsArray = property.units;
+            }
+          }
+          return unitsArray.map((u: any) => ({
+            id: u.id, // Include unit ID for updates
+            unitNumber: u.unitName || '',
+            unitType: u.apartmentType || '',
+            size: u.sizeSqft?.toString() || '',
+            baths: u.baths?.toString() || '',
+            rent: u.rent?.toString() || '',
+            deposit: '', // Not in Unit type
+            beds: u.beds?.toString() || ''
+          }));
+        })()
       });
 
       if (property.coverPhotoUrl) {
@@ -115,6 +147,11 @@ const EditProperty: React.FC = () => {
       if (property.photos) {
         setExistingGalleryPhotoUrls(property.photos.filter(p => !p.isPrimary).map(p => p.photoUrl));
       }
+      
+      // Reset initialization flag after a short delay to allow state/city loading
+      setTimeout(() => {
+        isInitializingRef.current = false;
+      }, 500);
     }
   }, [property]);
 
@@ -128,17 +165,22 @@ const EditProperty: React.FC = () => {
     setCountries(Country.getAllCountries());
   }, []);
 
+  // Track if we're initializing from property data to avoid resetting values
+  const isInitializingRef = useRef(false);
+
   // Load states when country changes
   useEffect(() => {
     if (formData.country) {
       const countryStates = State.getStatesOfCountry(formData.country);
       setStates(countryStates);
-      // Reset state and city when country changes
-      if (formData.stateRegion) {
-        updateFormData('stateRegion', '');
-      }
-      if (formData.city) {
-        updateFormData('city', '');
+      // Only reset state and city when country changes if we're not initializing from property data
+      if (!isInitializingRef.current) {
+        if (formData.stateRegion) {
+          updateFormData('stateRegion', '');
+        }
+        if (formData.city) {
+          updateFormData('city', '');
+        }
       }
     } else {
       setStates([]);
@@ -150,8 +192,8 @@ const EditProperty: React.FC = () => {
     if (formData.country && formData.stateRegion) {
       const stateCities = City.getCitiesOfState(formData.country, formData.stateRegion);
       setCities(stateCities);
-      // Reset city when state changes
-      if (formData.city) {
+      // Only reset city when state changes if we're not initializing from property data
+      if (!isInitializingRef.current && formData.city) {
         updateFormData('city', '');
       }
     } else {
@@ -644,16 +686,14 @@ const EditProperty: React.FC = () => {
         updateData.description = formData.description;
       }
 
-      // Add amenities
-      if (formData.parking || formData.laundry || formData.ac) {
-        updateData.amenities = {
-          parking: mapParkingToBackend(formData.parking),
-          laundry: mapLaundryToBackend(formData.laundry),
-          airConditioning: mapACToBackend(formData.ac),
-          propertyFeatures: formData.features.length > 0 ? formData.features : undefined,
-          propertyAmenities: formData.amenities.length > 0 ? formData.amenities : undefined,
-        };
-      }
+      // Add amenities - always send amenities data (even if values are 'none')
+      updateData.amenities = {
+        parking: mapParkingToBackend(formData.parking || 'none'),
+        laundry: mapLaundryToBackend(formData.laundry || 'none'),
+        airConditioning: mapACToBackend(formData.ac || 'none'),
+        propertyFeatures: formData.features.length > 0 ? formData.features : undefined,
+        propertyAmenities: formData.amenities.length > 0 ? formData.amenities : undefined,
+      };
 
       // Add photos (cover photo + gallery photos)
       const photos: Array<{ photoUrl: string; isPrimary: boolean }> = [];
@@ -669,15 +709,12 @@ const EditProperty: React.FC = () => {
 
       // Add single unit details for SINGLE property type
       if (formData.propertyType === 'single') {
-        // Map beds: "Studio" = 0, "1" = 1, "2" = 2, "3+" = 3
+      
         let bedsValue: number | undefined;
-        if (formData.beds) {
-          if (formData.beds === 'Studio') {
-            bedsValue = 0;
-          } else if (formData.beds === '3+') {
-            bedsValue = 3;
-          } else {
-            bedsValue = parseInt(formData.beds);
+        if (formData.beds && formData.beds.trim() !== '') {
+          const parsed = parseInt(formData.beds, 10);
+          if (!isNaN(parsed)) {
+            bedsValue = parsed;
           }
         }
 
@@ -692,6 +729,7 @@ const EditProperty: React.FC = () => {
       // Add units for MULTI property type
       if (formData.propertyType === 'multi' && formData.units.length > 0) {
         updateData.units = formData.units.map(unit => ({
+          id: (unit as any).id, // Include unit ID if it exists (for updates)
           unitName: unit.unitNumber || `Unit ${formData.units.indexOf(unit) + 1}`,
           apartmentType: unit.unitType || undefined,
           sizeSqft: unit.size ? parseFloat(unit.size) : undefined,
@@ -1099,7 +1137,7 @@ const EditProperty: React.FC = () => {
                         }
                       }}
                     >
-                      <option value="">Studio</option>
+                      <option value="0">Studio</option>
                       <option value="1">1</option>
                       <option value="2">2</option>
                       <option value="3">3</option>
