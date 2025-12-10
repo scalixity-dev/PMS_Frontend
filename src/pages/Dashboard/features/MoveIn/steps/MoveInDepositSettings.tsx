@@ -58,6 +58,9 @@ const MoveInDepositSettings: React.FC<MoveInDepositSettingsProps> = ({ onNext })
                                     placeholder="00.00"
                                     value={amount}
                                     onChange={(e) => setAmount(e.target.value)}
+                                    min="0"
+                                    step="0.01"
+                                    required
                                     className="bg-transparent text-white placeholder-white/70 outline-none w-full"
                                 />
                             </div>
