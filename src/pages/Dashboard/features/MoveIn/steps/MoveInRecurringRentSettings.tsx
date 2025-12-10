@@ -51,6 +51,9 @@ const MoveInRecurringRentSettings: React.FC<MoveInRecurringRentSettingsProps> = 
                                     placeholder="0.00"
                                     value={amount}
                                     onChange={(e) => onAmountChange(e.target.value)}
+                                    min="0"
+                                    step="0.01"
+                                    required
                                     className="bg-transparent text-white placeholder-white/70 outline-none w-full"
                                 />
                             </div>
