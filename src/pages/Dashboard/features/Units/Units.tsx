@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { useQueries } from '@tanstack/react-query';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
+import Pagination from '../../components/Pagination';
 import UnitGroupCard, { type UnitGroup } from './components/UnitGroupCard';
 import SingleUnitCard from './components/SingleUnitCard';
 import { useGetAllProperties } from '../../../../hooks/usePropertyQueries';
@@ -11,6 +12,8 @@ import type { Unit } from './components/UnitItem';
 const Units: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [filters, setFilters] = useState<Record<string, string[]>>({});
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 9;
     const { data: properties, isLoading: isLoadingProperties, error: propertiesError } = useGetAllProperties();
 
     // Get all MULTI properties to fetch their units
@@ -187,6 +190,25 @@ const Units: React.FC = () => {
         });
     }, [allUnitGroups, searchQuery, filters]);
 
+    // Reset to first page when filters or search change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, filters]);
+
+    // Calculate pagination
+    const totalPages = Math.ceil(unitGroups.length / itemsPerPage);
+
+    // Get current page items
+    const currentUnitGroups = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        return unitGroups.slice(startIndex, startIndex + itemsPerPage);
+    }, [unitGroups, currentPage, itemsPerPage]);
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     const filterOptions: Record<string, FilterOption[]> = {
         display: [
             { value: 'all', label: 'All' },
@@ -287,15 +309,24 @@ const Units: React.FC = () => {
                         )}
                     </div>
                 ) : (
-                <div className="flex flex-col">
-                    {unitGroups.map(group => (
-                        group.units.length === 1 ? (
-                            <SingleUnitCard key={group.id} group={group} />
-                        ) : (
-                            <UnitGroupCard key={group.id} group={group} />
-                        )
-                    ))}
-                </div>
+                    <>
+                        <div className="flex flex-col">
+                            {currentUnitGroups.map(group => (
+                                group.units.length === 1 ? (
+                                    <SingleUnitCard key={group.id} group={group} />
+                                ) : (
+                                    <UnitGroupCard key={group.id} group={group} />
+                                )
+                            ))}
+                        </div>
+                        {totalPages > 1 && (
+                            <Pagination
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                onPageChange={handlePageChange}
+                            />
+                        )}
+                    </>
                 )}
             </div>
         </div>
