@@ -14,7 +14,7 @@ import type { BackendUnit } from '../../../../services/unit.service';
 
 // Interface for the combined listing data
 interface ListingCardData {
-    id: number;
+    id: string;
     name: string;
     address: string;
     price: number | null;
@@ -208,23 +208,8 @@ const Listing: React.FC = () => {
                         image = primaryPhoto?.photoUrl || backendProperty.photos[0].photoUrl;
                     }
 
-                    // Generate stable ID for unit
-                    const unitIdNum = (() => {
-                        const parsed = Number(unit.id);
-                        if (!isNaN(parsed) && isFinite(parsed)) {
-                            return parsed;
-                        }
-                        let hash = 0;
-                        for (let i = 0; i < unit.id.length; i++) {
-                            const char = unit.id.charCodeAt(i);
-                            hash = ((hash << 5) - hash) + char;
-                            hash = hash & hash;
-                        }
-                        return Math.abs(hash);
-                    })();
-
                     transformed.push({
-                        id: unitIdNum,
+                        id: unit.id,
                         name: `${backendProperty.propertyName} - ${unit.unitName || 'Unit'}`,
                         address: propertyAddress,
                         price,
@@ -298,25 +283,8 @@ const Listing: React.FC = () => {
                     || backendProperty.photos?.[0]?.photoUrl 
                     || '';
 
-                // Convert backend property ID to number (stable identifier)
-                // Try parsing as number first, fallback to hash if it's a non-numeric string (e.g., UUID)
-                const propertyIdNum = (() => {
-                    const parsed = Number(backendProperty.id);
-                    if (!isNaN(parsed) && isFinite(parsed)) {
-                        return parsed;
-                    }
-                    // Deterministic hash for non-numeric IDs (e.g., UUIDs)
-                    let hash = 0;
-                    for (let i = 0; i < backendProperty.id.length; i++) {
-                        const char = backendProperty.id.charCodeAt(i);
-                        hash = ((hash << 5) - hash) + char;
-                        hash = hash & hash; // Convert to 32-bit integer
-                    }
-                    return Math.abs(hash);
-                })();
-
                 transformed.push({
-                    id: propertyIdNum,
+                    id: backendProperty.id,
                     name: backendProperty.propertyName,
                     address,
                     price,
@@ -414,7 +382,7 @@ const Listing: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
                             {currentListings.map((listing) => (
                                 <ListingCard
-                                    key={`${listing.propertyId}-${listing.id}`}
+                                    key={listing.id}
                                     id={listing.id}
                                     name={listing.name}
                                     address={listing.address}

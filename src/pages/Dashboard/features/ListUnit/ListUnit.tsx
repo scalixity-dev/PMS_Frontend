@@ -23,6 +23,35 @@ import { useListUnitStore } from './store/listUnitStore';
 import { useCreatePropertyStore } from './store/createPropertyStore';
 import type { LeaseDuration } from '../../../../services/leasing.service';
 
+// Reverse mapping from backend enum to frontend numeric string
+const LEASE_DURATION_REVERSE_MAP: Record<string, string> = {
+  'ONE_MONTH': '1',
+  'TWO_MONTHS': '2',
+  'THREE_MONTHS': '3',
+  'FOUR_MONTHS': '4',
+  'FIVE_MONTHS': '5',
+  'SIX_MONTHS': '6',
+  'SEVEN_MONTHS': '7',
+  'EIGHT_MONTHS': '8',
+  'NINE_MONTHS': '9',
+  'TEN_MONTHS': '10',
+  'ELEVEN_MONTHS': '11',
+  'TWELVE_MONTHS': '12',
+  'THIRTEEN_MONTHS': '13',
+  'FOURTEEN_MONTHS': '14',
+  'FIFTEEN_MONTHS': '15',
+  'SIXTEEN_MONTHS': '16',
+  'SEVENTEEN_MONTHS': '17',
+  'EIGHTEEN_MONTHS': '18',
+  'NINETEEN_MONTHS': '19',
+  'TWENTY_MONTHS': '20',
+  'TWENTY_ONE_MONTHS': '21',
+  'TWENTY_TWO_MONTHS': '22',
+  'TWENTY_THREE_MONTHS': '23',
+  'TWENTY_FOUR_MONTHS': '24',
+  'THIRTY_SIX_PLUS_MONTHS': '36',
+};
+
 const ListUnit: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -171,35 +200,8 @@ const ListUnit: React.FC = () => {
             updateFormData('refundable', leasing.amountRefundable?.toString() || '');
             updateFormData('availableDate', leasing.dateAvailable ? new Date(leasing.dateAvailable).toISOString().split('T')[0] : '');
             // Map backend enum to numeric string for frontend
-            const reverseMapping: Record<string, string> = {
-              'ONE_MONTH': '1',
-              'TWO_MONTHS': '2',
-              'THREE_MONTHS': '3',
-              'FOUR_MONTHS': '4',
-              'FIVE_MONTHS': '5',
-              'SIX_MONTHS': '6',
-              'SEVEN_MONTHS': '7',
-              'EIGHT_MONTHS': '8',
-              'NINE_MONTHS': '9',
-              'TEN_MONTHS': '10',
-              'ELEVEN_MONTHS': '11',
-              'TWELVE_MONTHS': '12',
-              'THIRTEEN_MONTHS': '13',
-              'FOURTEEN_MONTHS': '14',
-              'FIFTEEN_MONTHS': '15',
-              'SIXTEEN_MONTHS': '16',
-              'SEVENTEEN_MONTHS': '17',
-              'EIGHTEEN_MONTHS': '18',
-              'NINETEEN_MONTHS': '19',
-              'TWENTY_MONTHS': '20',
-              'TWENTY_ONE_MONTHS': '21',
-              'TWENTY_TWO_MONTHS': '22',
-              'TWENTY_THREE_MONTHS': '23',
-              'TWENTY_FOUR_MONTHS': '24',
-              'THIRTY_SIX_PLUS_MONTHS': '36',
-            };
-            updateFormData('minLeaseDuration', reverseMapping[leasing.minLeaseDuration] || '');
-            updateFormData('maxLeaseDuration', reverseMapping[leasing.maxLeaseDuration] || '');
+            updateFormData('minLeaseDuration', LEASE_DURATION_REVERSE_MAP[leasing.minLeaseDuration] || '');
+            updateFormData('maxLeaseDuration', LEASE_DURATION_REVERSE_MAP[leasing.maxLeaseDuration] || '');
             updateFormData('description', leasing.description || '');
             updateFormData('petsAllowed', leasing.petsAllowed ?? null);
             updateFormData('pets', leasing.petCategory || []);
@@ -267,35 +269,8 @@ const ListUnit: React.FC = () => {
       updateFormData('refundable', leasing.amountRefundable?.toString() || '');
       updateFormData('availableDate', leasing.dateAvailable ? new Date(leasing.dateAvailable).toISOString().split('T')[0] : '');
       // Map backend enum to numeric string for frontend
-      const reverseMapping: Record<string, string> = {
-        'ONE_MONTH': '1',
-        'TWO_MONTHS': '2',
-        'THREE_MONTHS': '3',
-        'FOUR_MONTHS': '4',
-        'FIVE_MONTHS': '5',
-        'SIX_MONTHS': '6',
-        'SEVEN_MONTHS': '7',
-        'EIGHT_MONTHS': '8',
-        'NINE_MONTHS': '9',
-        'TEN_MONTHS': '10',
-        'ELEVEN_MONTHS': '11',
-        'TWELVE_MONTHS': '12',
-        'THIRTEEN_MONTHS': '13',
-        'FOURTEEN_MONTHS': '14',
-        'FIFTEEN_MONTHS': '15',
-        'SIXTEEN_MONTHS': '16',
-        'SEVENTEEN_MONTHS': '17',
-        'EIGHTEEN_MONTHS': '18',
-        'NINETEEN_MONTHS': '19',
-        'TWENTY_MONTHS': '20',
-        'TWENTY_ONE_MONTHS': '21',
-        'TWENTY_TWO_MONTHS': '22',
-        'TWENTY_THREE_MONTHS': '23',
-        'TWENTY_FOUR_MONTHS': '24',
-        'THIRTY_SIX_PLUS_MONTHS': '36',
-      };
-      updateFormData('minLeaseDuration', reverseMapping[leasing.minLeaseDuration] || '');
-      updateFormData('maxLeaseDuration', reverseMapping[leasing.maxLeaseDuration] || '');
+      updateFormData('minLeaseDuration', LEASE_DURATION_REVERSE_MAP[leasing.minLeaseDuration] || '');
+      updateFormData('maxLeaseDuration', LEASE_DURATION_REVERSE_MAP[leasing.maxLeaseDuration] || '');
       updateFormData('description', leasing.description || '');
       updateFormData('petsAllowed', leasing.petsAllowed ?? null);
       updateFormData('pets', leasing.petCategory || []);

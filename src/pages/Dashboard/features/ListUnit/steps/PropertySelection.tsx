@@ -383,60 +383,60 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
 
         // Add units from MULTI properties that don't have active listings
         // For MULTI properties, we need to check each unit individually
-        for (const result of propertyChecks) {
-          if (result.backendProperty.propertyType === 'MULTI' && !result.isComplete) {
-            const units = unitsByPropertyId.get(result.backendProperty.id) || [];
-            const propertyAddress = result.backendProperty.address
-              ? `${result.backendProperty.address.streetAddress}, ${result.backendProperty.address.city}, ${result.backendProperty.address.stateRegion} ${result.backendProperty.address.zipCode}, ${result.backendProperty.address.country}`
-              : 'Address not available';
+        // First, fetch and cache listings for all MULTI properties
+        const propertyListingsCache = new Map<string, any[]>();
+        const multiPropertyResults = propertyChecks.filter(
+          result => result.backendProperty.propertyType === 'MULTI' && !result.isComplete
+        );
 
-            // Check each unit for active listings
-            for (const unit of units) {
-              // Check if unit has active listing
-              try {
-                const unitListings = await listingService.getByPropertyId(result.backendProperty.id);
-                const hasActiveUnitListing = unitListings.some(
-                  (listing: any) => listing.unitId === unit.id && listing.listingStatus === 'ACTIVE' && listing.isActive === true
-                );
+        // Fetch listings for all MULTI properties in parallel
+        await Promise.all(
+          multiPropertyResults.map(async (result) => {
+            try {
+              const listings = await listingService.getByPropertyId(result.backendProperty.id);
+              propertyListingsCache.set(result.backendProperty.id, listings);
+            } catch (err) {
+              console.error(`Error fetching listings for property ${result.backendProperty.id}:`, err);
+              // Cache empty array on error - treat as no active listings (include units as fallback)
+              propertyListingsCache.set(result.backendProperty.id, []);
+            }
+          })
+        );
 
-                if (!hasActiveUnitListing) {
-                  const unitImage = unit.photos?.find((p: any) => p.isPrimary)?.photoUrl 
-                    || unit.photos?.[0]?.photoUrl 
-                    || unit.coverPhotoUrl 
-                    || result.backendProperty.coverPhotoUrl 
-                    || '';
+        // Now iterate units and check against cached listings
+        for (const result of multiPropertyResults) {
+          const units = unitsByPropertyId.get(result.backendProperty.id) || [];
+          const propertyAddress = result.backendProperty.address
+            ? `${result.backendProperty.address.streetAddress}, ${result.backendProperty.address.city}, ${result.backendProperty.address.stateRegion} ${result.backendProperty.address.zipCode}, ${result.backendProperty.address.country}`
+            : 'Address not available';
 
-                  items.push({
-                    id: unit.id,
-                    name: `${result.backendProperty.propertyName} - ${unit.unitName || 'Unit'}`,
-                    address: propertyAddress,
-                    type: 'unit',
-                    propertyId: result.backendProperty.id,
-                    unitId: unit.id,
-                    propertyType: 'MULTI',
-                    image: unitImage,
-                  });
-                }
-              } catch (err) {
-                console.error('Error checking unit listing:', err);
-                // If error, include the unit anyway
-                const unitImage = unit.photos?.find((p: any) => p.isPrimary)?.photoUrl 
-                  || unit.photos?.[0]?.photoUrl 
-                  || unit.coverPhotoUrl 
-                  || result.backendProperty.coverPhotoUrl 
-                  || '';
+          // Get cached listings for this property
+          const propertyListings = propertyListingsCache.get(result.backendProperty.id) || [];
 
-                items.push({
-                  id: unit.id,
-                  name: `${result.backendProperty.propertyName} - ${unit.unitName || 'Unit'}`,
-                  address: propertyAddress,
-                  type: 'unit',
-                  propertyId: result.backendProperty.id,
-                  unitId: unit.id,
-                  propertyType: 'MULTI',
-                  image: unitImage,
-                });
-              }
+          // Check each unit for active listings using cached data
+          for (const unit of units) {
+            // Check if unit has active listing from cached listings
+            const hasActiveUnitListing = propertyListings.some(
+              (listing: any) => listing.unitId === unit.id && listing.listingStatus === 'ACTIVE' && listing.isActive === true
+            );
+
+            if (!hasActiveUnitListing) {
+              const unitImage = unit.photos?.find((p: any) => p.isPrimary)?.photoUrl 
+                || unit.photos?.[0]?.photoUrl 
+                || unit.coverPhotoUrl 
+                || result.backendProperty.coverPhotoUrl 
+                || '';
+
+              items.push({
+                id: unit.id,
+                name: `${result.backendProperty.propertyName} - ${unit.unitName || 'Unit'}`,
+                address: propertyAddress,
+                type: 'unit',
+                propertyId: result.backendProperty.id,
+                unitId: unit.id,
+                propertyType: 'MULTI',
+                image: unitImage,
+              });
             }
           }
         }
