@@ -19,8 +19,14 @@ const DEPOSIT_CATEGORIES = [
     'Security Deposit'
 ];
 
+interface DepositData {
+    category: string;
+    amount: string;
+    invoiceDate: Date | undefined;
+}
+
 interface MoveInDepositSettingsProps {
-    onNext: () => void;
+    onNext: (data: DepositData) => void;
     onBack: () => void;
 }
 
@@ -93,8 +99,6 @@ const MoveInDepositSettings: React.FC<MoveInDepositSettingsProps> = ({ onNext })
                         amount,
                         invoiceDate,
                     })}
-                    className="px-12 py-3 rounded-lg font-medium text-white transition-all bg-[#3D7475] hover:bg-[#2c5554] shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-                >
                     className="px-12 py-3 rounded-lg font-medium text-white transition-all bg-[#3D7475] hover:bg-[#2c5554] shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
                 >
                     Next

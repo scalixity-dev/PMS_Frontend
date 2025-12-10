@@ -135,7 +135,8 @@ const MoveIn: React.FC = () => {
         }
     }
 
-    const handleDepositSettingsNext = () => {
+    const handleDepositSettingsNext = (data?: { category: string; amount: string; invoiceDate: Date | undefined }) => {
+        // TODO: Store deposit data if needed
         // Proceed to Step 8 (Late Fees)
         setCurrentStep(8);
     }
