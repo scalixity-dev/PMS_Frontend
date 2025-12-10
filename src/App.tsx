@@ -27,10 +27,15 @@ import AddProperty from './pages/Dashboard/features/Properties/AddProperty';
 import EditProperty from './pages/Dashboard/features/Properties/EditProperty';
 import Transactions from './pages/Dashboard/features/Transactions/Transactions';
 import AddIncomeInvoice from './pages/Dashboard/features/Transactions/AddIncomeInvoice';
+import RecurringIncome from './pages/Dashboard/features/Transactions/RecurringIncome';
 import RecurringExpense from './pages/Dashboard/features/Transactions/RecurringExpense';
 import ReturnDeposit from './pages/Dashboard/features/Transactions/ReturnDeposit';
 import ApplyDepositAndCredit from './pages/Dashboard/features/Transactions/ApplyDepositAndCredit';
+import BulkPaymentsIncome from './pages/Dashboard/features/Transactions/BulkPaymentsIncome';
 import BulkPaymentsExpense from './pages/Dashboard/features/Transactions/BulkPaymentsExpense';
+import Deposit from './pages/Dashboard/features/Transactions/Deposit';
+import Credits from './pages/Dashboard/features/Transactions/Credits';
+import IncomePayments from './pages/Dashboard/features/Transactions/IncomePayments';
 import ExpensePayments from './pages/Dashboard/features/Transactions/ExpensePayments';
 import AddExpenseInvoice from './pages/Dashboard/features/Transactions/AddExpenseInvoice';
 import AddMaintenanceRequest from './pages/Dashboard/features/Maintenance/AddMaintenanceRequest';
@@ -121,11 +126,16 @@ const App: React.FC = () => {
               <Route path="/dashboard/properties/edit/:id" element={<EditProperty />} />
               <Route path="/dashboard/accounting/transactions" element={<Transactions />} />
               <Route path="/dashboard/accounting/transactions/income/add" element={<AddIncomeInvoice />} />
+              <Route path="/dashboard/accounting/transactions/income-payments" element={<IncomePayments />} />
+              <Route path="/dashboard/accounting/transactions/recurring-income/add" element={<RecurringIncome />} />
               <Route path="/dashboard/accounting/transactions/expense/add" element={<AddExpenseInvoice />} />
               <Route path="/dashboard/accounting/transactions/recurring-expense/add" element={<RecurringExpense />} />
               <Route path="/dashboard/accounting/transactions/return-deposit" element={<ReturnDeposit />} />
               <Route path="/dashboard/accounting/transactions/apply-deposit" element={<ApplyDepositAndCredit />} />
+              <Route path="/dashboard/accounting/transactions/bulk-payments-income" element={<BulkPaymentsIncome />} />
               <Route path="/dashboard/accounting/transactions/bulk-payments-expense" element={<BulkPaymentsExpense />} />
+              <Route path="/dashboard/accounting/transactions/deposit/add" element={<Deposit />} />
+              <Route path="/dashboard/accounting/transactions/credits/add" element={<Credits />} />
               <Route path="/dashboard/accounting/transactions/expense-payments" element={<ExpensePayments />} />
               <Route path="/dashboard/maintenance/request" element={<AddMaintenanceRequest />} />
               <Route path="/dashboard/movein" element={<MoveIn />} />

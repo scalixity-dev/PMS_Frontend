@@ -4,7 +4,7 @@ import { ChevronDown, Plus, X } from 'lucide-react';
 export interface PayerPayeeOption {
     id: string;
     label: string;
-    type: 'Service Pro' | 'tenant';
+    type: 'Service Pro' | 'tenant' | 'other';
 }
 
 interface PayerPayeeDropdownProps {
@@ -109,8 +109,8 @@ const PayerPayeeDropdown: React.FC<PayerPayeeDropdownProps> = ({
                                                 key={option.id}
                                                 onClick={() => handleSelect(option.id)}
                                                 className={`w-full text-left px-4 py-2 rounded-full text-sm font-medium transition-colors ${value === option.id
-                                                        ? 'bg-[#84CC16] text-white'
-                                                        : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                                                    ? 'bg-[#84CC16] text-white'
+                                                    : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
                                                     }`}
                                             >
                                                 {option.label}
@@ -130,8 +130,29 @@ const PayerPayeeDropdown: React.FC<PayerPayeeDropdownProps> = ({
                                                 key={option.id}
                                                 onClick={() => handleSelect(option.id)}
                                                 className={`w-full text-left px-4 py-2 rounded-full text-sm font-medium transition-colors ${value === option.id
-                                                        ? 'bg-[#84CC16] text-white'
-                                                        : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                                                    ? 'bg-[#84CC16] text-white'
+                                                    : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                                                    }`}
+                                            >
+                                                {option.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Other Group */}
+                            {options.filter(opt => opt.type === 'other').length > 0 && (
+                                <div className="mt-4">
+                                    <h4 className="text-xs font-bold text-gray-800 mb-2">Other</h4>
+                                    <div className="space-y-2">
+                                        {options.filter(opt => opt.type === 'other').map(option => (
+                                            <button
+                                                key={option.id}
+                                                onClick={() => handleSelect(option.id)}
+                                                className={`w-full text-left px-4 py-2 rounded-full text-sm font-medium transition-colors ${value === option.id
+                                                    ? 'bg-[#84CC16] text-white'
+                                                    : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
                                                     }`}
                                             >
                                                 {option.label}
