@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
     ChevronLeft,
     ChevronDown,
     Edit,
+    Trash2,
     MapPin,
     Users,
     Landmark,
@@ -16,8 +17,11 @@ import SpecsTab from './components/SpecsTab';
 import FinancialsTab from './components/FinancialsTab';
 import ServiceProvidersTab from './components/ServiceProvidersTab';
 import PhotoGalleryModal from './components/PhotoGalleryModal';
+import DeletePropertyModal from './components/DeletePropertyModal';
 import DetailTabs from '../../components/DetailTabs';
 import { useGetProperty } from '../../../../hooks/usePropertyQueries';
+import { useGetUnit } from '../../../../hooks/useUnitQueries';
+import { propertyService, isSummaryUnits } from '../../../../services/property.service';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import type { ChartConfig } from "@/components/ui/chart";
 import { Label, Legend, Pie, PieChart } from "recharts";
@@ -349,11 +353,26 @@ const mockUnitsData: UnitGroup[] = [
 const PropertyDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const unitId = searchParams.get('unitId'); // Get unit ID from query parameter
+
+    // All hooks must be declared before any early returns
     const [activeTab, setActiveTab] = useState('profile');
     const [isActionDropdownOpen, setIsActionDropdownOpen] = useState(false);
     const [isGalleryOpen, setIsGalleryOpen] = useState(false);
     const [galleryStartIndex, setGalleryStartIndex] = useState(0);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [deleteError, setDeleteError] = useState<string | null>(null);
     const actionDropdownRef = useRef<HTMLDivElement>(null);
+
+    // Redirect to UnitPropertyDetail if viewing a unit
+    useEffect(() => {
+        if (unitId && id) {
+            navigate(`/dashboard/units/${unitId}?propertyId=${id}`, { replace: true });
+            return;
+        }
+    }, [unitId, id, navigate]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -369,7 +388,37 @@ const PropertyDetail: React.FC = () => {
     }, []);
 
     // Fetch property data from backend
-    const { data: backendProperty, isLoading, error } = useGetProperty(id || null, !!id);
+    const { data: backendProperty, isLoading: isLoadingProperty, error: propertyError } = useGetProperty(id || null, !!id);
+    
+    // Fetch full unit data if viewing a specific unit
+    const { data: fullUnitData, isLoading: isLoadingUnit, error: unitError } = useGetUnit(unitId || null, !!unitId && !!id);
+    
+    const isLoading = isLoadingProperty || isLoadingUnit;
+    const error = propertyError || unitError;
+
+    // Early return if redirecting (prevents rendering property detail)
+    // This must come after all hooks to maintain hook call order
+    if (unitId && id) {
+        return null;
+    }
+
+    // Delete handler
+    const handleDelete = async () => {
+        if (!id) return;
+
+        setIsDeleting(true);
+        setDeleteError(null);
+
+        try {
+            await propertyService.delete(id);
+            // Navigate to properties list after successful deletion
+            navigate('/dashboard/properties');
+        } catch (err) {
+            console.error('Error deleting property:', err);
+            setDeleteError(err instanceof Error ? err.message : 'Failed to delete property');
+            setIsDeleting(false);
+        }
+    };
 
     // Check if we need to use mock data (when backend returns no data)
     const mockData = useMemo(() => {
@@ -452,6 +501,22 @@ const PropertyDetail: React.FC = () => {
 
         if (!backendProperty) return null;
 
+        // Check if we're viewing a specific unit
+        // Use full unit data from unit service if available, otherwise fall back to property response
+        let selectedUnit: any = null;
+        if (unitId && backendProperty.propertyType === 'MULTI') {
+            if (fullUnitData) {
+                // Use full unit data from unit service (includes photos, amenities, etc.)
+                selectedUnit = fullUnitData;
+            } else if (backendProperty.units) {
+                // Fallback to simplified unit data from property response
+                const unitsArray = isSummaryUnits(backendProperty.units)
+                    ? backendProperty.units.units
+                    : backendProperty.units;
+                selectedUnit = unitsArray.find((u: any) => u.id === unitId);
+            }
+        }
+
         // Format address
         let address = 'Address not available';
         let country: string | undefined;
@@ -470,11 +535,20 @@ const PropertyDetail: React.FC = () => {
             }
         }
 
-        // Get image - prioritize coverPhotoUrl, then primary photo, then first photo
-        const image = backendProperty.coverPhotoUrl
-            || backendProperty.photos?.find((p) => p.isPrimary)?.photoUrl
-            || backendProperty.photos?.[0]?.photoUrl
-            || null;
+        // Get image - for unit view, prioritize unit photos, otherwise use property photos
+        let image: string | null = null;
+        if (selectedUnit && fullUnitData) {
+            // Use unit photos if available
+            image = fullUnitData.photos && fullUnitData.photos.length > 0
+                ? (fullUnitData.photos.find((p: any) => p.isPrimary)?.photoUrl || fullUnitData.photos[0].photoUrl)
+                : fullUnitData.coverPhotoUrl || null;
+        } else {
+            // Use property photos
+            image = backendProperty.coverPhotoUrl
+                || backendProperty.photos?.find((p) => p.isPrimary)?.photoUrl
+                || backendProperty.photos?.[0]?.photoUrl
+                || null;
+        }
 
         // Map status
         const statusMap: Record<string, string> = {
@@ -493,59 +567,102 @@ const PropertyDetail: React.FC = () => {
         };
         const type = propertyTypeMap[backendProperty.propertyType] || 'Property';
 
-        // Get specifications
-        const bedrooms = backendProperty.singleUnitDetails?.beds || 0;
-        const bathrooms = backendProperty.singleUnitDetails?.baths
-            ? typeof backendProperty.singleUnitDetails.baths === 'string'
-                ? parseFloat(backendProperty.singleUnitDetails.baths) || 0
-                : Number(backendProperty.singleUnitDetails.baths) || 0
-            : 0;
-        const sizeSqFt = backendProperty.sizeSqft
-            ? typeof backendProperty.sizeSqft === 'string'
-                ? parseFloat(backendProperty.sizeSqft) || 0
-                : Number(backendProperty.sizeSqft) || 0
-            : 0;
-
-        // Get financials
+        // Get specifications - use unit data if viewing a specific unit
+        let bedrooms = 0;
+        let bathrooms = 0;
+        let sizeSqFt = 0;
         let monthlyRent = 0;
-        if (backendProperty.leasing?.monthlyRent) {
-            monthlyRent = typeof backendProperty.leasing.monthlyRent === 'string'
-                ? parseFloat(backendProperty.leasing.monthlyRent) || 0
-                : Number(backendProperty.leasing.monthlyRent) || 0;
-        } else if (backendProperty.marketRent) {
-            monthlyRent = typeof backendProperty.marketRent === 'string'
-                ? parseFloat(backendProperty.marketRent) || 0
-                : Number(backendProperty.marketRent) || 0;
+        let deposit = 0;
+
+        if (selectedUnit) {
+            // Use unit-specific data
+            bedrooms = selectedUnit.beds || 0;
+            bathrooms = selectedUnit.baths
+                ? (typeof selectedUnit.baths === 'string' ? parseFloat(selectedUnit.baths) : Number(selectedUnit.baths)) || 0
+                : 0;
+            sizeSqFt = selectedUnit.sizeSqft
+                ? (typeof selectedUnit.sizeSqft === 'string' ? parseFloat(selectedUnit.sizeSqft) : Number(selectedUnit.sizeSqft)) || 0
+                : 0;
+            monthlyRent = selectedUnit.rent
+                ? (typeof selectedUnit.rent === 'string' ? parseFloat(selectedUnit.rent) : Number(selectedUnit.rent)) || 0
+                : 0;
+            // Get deposit from unit if available (from backend simplified response)
+            if (selectedUnit.deposit !== undefined && selectedUnit.deposit !== null) {
+                deposit = typeof selectedUnit.deposit === 'string'
+                    ? parseFloat(selectedUnit.deposit) || 0
+                    : Number(selectedUnit.deposit) || 0;
+            }
+        } else {
+            // Use property-level data
+            bedrooms = backendProperty.singleUnitDetails?.beds || 0;
+            bathrooms = backendProperty.singleUnitDetails?.baths
+                ? typeof backendProperty.singleUnitDetails.baths === 'string'
+                    ? parseFloat(backendProperty.singleUnitDetails.baths) || 0
+                    : Number(backendProperty.singleUnitDetails.baths) || 0
+                : 0;
+            sizeSqFt = backendProperty.sizeSqft
+                ? typeof backendProperty.sizeSqft === 'string'
+                    ? parseFloat(backendProperty.sizeSqft) || 0
+                    : Number(backendProperty.sizeSqft) || 0
+                : 0;
+
+            // Get financials
+            if (backendProperty.leasing?.monthlyRent) {
+                monthlyRent = typeof backendProperty.leasing.monthlyRent === 'string'
+                    ? parseFloat(backendProperty.leasing.monthlyRent) || 0
+                    : Number(backendProperty.leasing.monthlyRent) || 0;
+            } else if (backendProperty.marketRent) {
+                monthlyRent = typeof backendProperty.marketRent === 'string'
+                    ? parseFloat(backendProperty.marketRent) || 0
+                    : Number(backendProperty.marketRent) || 0;
+            }
         }
 
-        // Get features and amenities from backend
-        const features = backendProperty.amenities?.propertyFeatures || [];
-        const amenities = backendProperty.amenities?.propertyAmenities || [];
-
-        // Get parking, laundry, AC
-        const parking = backendProperty.amenities?.parking || 'NONE';
-        const laundry = backendProperty.amenities?.laundry || 'NONE';
-        const airConditioning = backendProperty.amenities?.airConditioning || 'NONE';
-
-        // Get deposit
-        let deposit = 0;
-        if (backendProperty.leasing?.securityDeposit) {
+        // Get deposit (only if not already set from unit)
+        if (deposit === 0 && backendProperty.leasing?.securityDeposit) {
             deposit = typeof backendProperty.leasing.securityDeposit === 'string'
                 ? parseFloat(backendProperty.leasing.securityDeposit) || 0
                 : Number(backendProperty.leasing.securityDeposit) || 0;
         }
 
-        let photos = backendProperty.photos?.map((p: any) => p.photoUrl) || [];
+        // Get features and amenities from backend
+        // For unit view, use unit amenities if available, otherwise property amenities
+        const unitAmenities = selectedUnit?.amenities;
+        const features = unitAmenities?.propertyFeatures || backendProperty.amenities?.propertyFeatures || [];
+        const amenities = unitAmenities?.propertyAmenities || backendProperty.amenities?.propertyAmenities || [];
+
+        // Get parking, laundry, AC - use unit amenities if available
+        const parking = unitAmenities?.parking || backendProperty.amenities?.parking || 'NONE';
+        const laundry = unitAmenities?.laundry || backendProperty.amenities?.laundry || 'NONE';
+        const airConditioning = unitAmenities?.airConditioning || backendProperty.amenities?.airConditioning || 'NONE';
+
+        // Get photos - use unit photos if viewing a unit, otherwise use property photos
+        let photos: string[] = [];
+        if (selectedUnit && fullUnitData && fullUnitData.photos && fullUnitData.photos.length > 0) {
+            // Use unit photos
+            photos = fullUnitData.photos.map((p: any) => p.photoUrl);
+        } else {
+            // Use property photos
+            photos = backendProperty.photos?.map((p: any) => p.photoUrl) || [];
+        }
         if (photos.length === 0 && image) photos = [image];
+
+        // Determine if this is a unit view
+        const isUnitView = !!selectedUnit;
+
+        // Build property name - include unit name if viewing a specific unit
+        const propertyName = selectedUnit
+            ? `${backendProperty.propertyName} - ${selectedUnit.unitName || 'Unit'}`
+            : backendProperty.propertyName;
 
         return {
             id: backendProperty.id,
-            name: backendProperty.propertyName,
+            name: propertyName,
             address,
             country,
             image,
             photos,
-            type,
+            type: selectedUnit ? 'Single Family' : type, // Show as single family when viewing a unit
             yearBuilt: backendProperty.yearBuilt?.toString() || '--',
             mlsNumber: backendProperty.mlsNumber || '--',
             status,
@@ -563,23 +680,34 @@ const PropertyDetail: React.FC = () => {
             parking,
             laundry,
             airConditioning,
-            description: backendProperty.description || '',
+            description: selectedUnit 
+                ? `${backendProperty.propertyName} - ${selectedUnit.unitName || 'Unit'}. ${backendProperty.description || ''}`
+                : backendProperty.description || '',
             attachments: backendProperty.attachments || [],
             // Mock stats for now (can be replaced with real data when available)
             stats: {
                 equipment: 0,
                 recurringRequests: 0,
-                tenants: 0,
+                tenants: isUnitView ? (selectedUnit?.listings?.[0]?.occupancyStatus === 'OCCUPIED' || selectedUnit?.leasing ? 1 : 0) : 0,
                 maintenance: 0
             },
-            isUnitView: false,
+            isUnitView,
             marketRent: monthlyRent,
             deposit,
-            units: backendProperty.units || [],
-            totalUnits: backendProperty.units?.length || 0,
-            occupiedUnits: 0, // TODO: Update when backend provides unit status
+            // Handle units structure: for MULTI properties, backend returns { count, units: [...] }
+            units: backendProperty.units
+                ? (isSummaryUnits(backendProperty.units) ? backendProperty.units.units : backendProperty.units)
+                : [],
+            totalUnits: backendProperty.units
+                ? (isSummaryUnits(backendProperty.units) ? backendProperty.units.count : backendProperty.units.length)
+                : 0,
+            occupiedUnits: backendProperty.units
+                ? (isSummaryUnits(backendProperty.units)
+                    ? backendProperty.units.units.filter((u: any) => u.status === 'OCCUPIED').length
+                    : 0) // TODO: Calculate from unit status when available for detailed array
+                : 0,
         };
-    }, [backendProperty, mockData]);
+    }, [backendProperty, mockData, unitId, fullUnitData]);
 
     // Loading state
     if (isLoading) {
@@ -665,6 +793,16 @@ const PropertyDetail: React.FC = () => {
                                         <Edit className="w-4 h-4" />
                                         Edit
                                     </button>
+                                    <button
+                                        onClick={() => {
+                                            setIsActionDropdownOpen(false);
+                                            setIsDeleteModalOpen(true);
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                        Delete
+                                    </button>
                                 </div>
                             )}
                         </div>
@@ -677,8 +815,10 @@ const PropertyDetail: React.FC = () => {
                     <div
                         className="w-full h-[400px] rounded-[2rem] overflow-hidden mb-6 shadow-md relative group cursor-pointer"
                         onClick={() => {
-                            setGalleryStartIndex(0);
-                            setIsGalleryOpen(true);
+                            if (property.photos && property.photos.length > 0) {
+                                setGalleryStartIndex(0);
+                                setIsGalleryOpen(true);
+                            }
                         }}
                     >
                         {property.photos && property.photos.length > 0 ? (
@@ -873,7 +1013,11 @@ const PropertyDetail: React.FC = () => {
                                         <div className="bg-white rounded-[2rem] p-6 shadow-sm flex flex-col w-[340px]">
                                             <div className="flex items-center justify-between mb-4">
                                                 <h3 className="text-lg font-bold text-gray-800">Units Occupancy</h3>
-                                                <button className="bg-[#3A6D6C] text-white px-4 py-1.5 rounded-full text-xs font-medium hover:bg-[#2c5554] transition-colors">
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => navigate('/dashboard/portfolio/units')}
+                                                    className="bg-[#3A6D6C] text-white px-4 py-1.5 rounded-full text-xs font-medium hover:bg-[#2c5554] transition-colors"
+                                                >
                                                     View Units
                                                 </button>
                                             </div>
@@ -972,7 +1116,7 @@ const PropertyDetail: React.FC = () => {
                                             </div>
                                             <div className="flex flex-wrap gap-3">
                                                 {property?.features && property.features.length > 0 ? (
-                                                    property.features.map((feature, index) => (
+                                                    property.features.map((feature: string, index: number) => (
                                                         <span key={index} className="bg-[#82D64D] text-white px-6 py-2 rounded-full text-sm font-medium">
                                                             {feature}
                                                         </span>
@@ -993,7 +1137,7 @@ const PropertyDetail: React.FC = () => {
                                             </div>
                                             <div className="flex flex-wrap gap-3">
                                                 {property?.amenities && property.amenities.length > 0 ? (
-                                                    property.amenities.map((amenity, index) => (
+                                                    property.amenities.map((amenity: string, index: number) => (
                                                         <span key={index} className="bg-[#82D64D] text-white px-6 py-2 rounded-full text-sm font-medium">
                                                             {amenity}
                                                         </span>
@@ -1038,57 +1182,62 @@ const PropertyDetail: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    <h4 className="text-base font-bold text-gray-700 mb-4">{property?.type || 'Property'}</h4>
-                                    <div className="flex gap-4 mb-6">
-                                        <div className="bg-[#82D64D] text-white px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium">
-                                            <BedDouble className="w-4 h-4" />
-                                            Bedrooms
-                                            <span className="bg-white text-[#82D64D] w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold">{property?.specifications?.bedrooms || 0}</span>
-                                        </div>
-                                        <div className="bg-[#82D64D] text-white px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium">
-                                            <Bath className="w-4 h-4" />
-                                            Bathrooms
-                                            <span className="bg-white text-[#82D64D] w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold">{property?.specifications?.bathrooms || 0}</span>
-                                        </div>
-                                        <div className="bg-[#82D64D] text-white px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium">
-                                            <Maximize className="w-4 h-4" />
-                                            Size, sq.ft
-                                            <span className="bg-white text-[#82D64D] min-w-[1.25rem] h-5 px-1.5 rounded-full flex items-center justify-center text-xs font-bold">{property?.specifications?.sizeSqFt || 0}</span>
-                                        </div>
-                                    </div>
+                                    {/* Specifications Section - Only for Single Family Properties */}
+                                    {property?.type === 'Single Family' && (
+                                        <>
+                                            <h4 className="text-base font-bold text-gray-700 mb-4">{property?.type || 'Property'}</h4>
+                                            <div className="flex gap-4 mb-6">
+                                                <div className="bg-[#82D64D] text-white px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium">
+                                                    <BedDouble className="w-4 h-4" />
+                                                    Bedrooms
+                                                    <span className="bg-white text-[#82D64D] w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold">{property?.specifications?.bedrooms || 0}</span>
+                                                </div>
+                                                <div className="bg-[#82D64D] text-white px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium">
+                                                    <Bath className="w-4 h-4" />
+                                                    Bathrooms
+                                                    <span className="bg-white text-[#82D64D] w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold">{property?.specifications?.bathrooms || 0}</span>
+                                                </div>
+                                                <div className="bg-[#82D64D] text-white px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium">
+                                                    <Maximize className="w-4 h-4" />
+                                                    Size, sq.ft
+                                                    <span className="bg-white text-[#82D64D] min-w-[1.25rem] h-5 px-1.5 rounded-full flex items-center justify-center text-xs font-bold">{property?.specifications?.sizeSqFt || 0}</span>
+                                                </div>
+                                            </div>
 
-                                    <div className="bg-[#DCDCDF] rounded-2xl p-6 grid grid-cols-3 gap-6">
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-600 mb-2">Parking</label>
-                                            <div className="bg-white rounded-xl px-4 py-3 text-sm text-gray-700 shadow-sm">
-                                                {property?.parking && property.parking !== 'NONE' ? property.parking.replace(/_/g, ' ') : 'None'}
+                                            <div className="bg-[#DCDCDF] rounded-2xl p-6 grid grid-cols-3 gap-6">
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-600 mb-2">Parking</label>
+                                                    <div className="bg-white rounded-xl px-4 py-3 text-sm text-gray-700 shadow-sm">
+                                                        {property?.parking && property.parking !== 'NONE' ? property.parking.replace(/_/g, ' ') : 'None'}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-600 mb-2">Laundry</label>
+                                                    <div className="bg-white rounded-xl px-4 py-3 text-sm text-gray-700 shadow-sm">
+                                                        {property?.laundry && property.laundry !== 'NONE' ? property.laundry.replace(/_/g, ' ') : 'None'}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-600 mb-2">Air Conditioning</label>
+                                                    <div className="bg-white rounded-xl px-4 py-3 text-sm text-gray-700 shadow-sm">
+                                                        {property?.airConditioning && property.airConditioning !== 'NONE' ? property.airConditioning.replace(/_/g, ' ') : 'None'}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-600 mb-2">Market Rent</label>
+                                                    <div className="bg-white rounded-xl px-4 py-3 text-sm text-gray-700 shadow-sm">
+                                                        {property?.financials?.currency} {property?.marketRent?.toLocaleString() || '0'}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-600 mb-2">Deposit</label>
+                                                    <div className="bg-white rounded-xl px-4 py-3 text-sm text-gray-700 shadow-sm">
+                                                        {property?.financials?.currency} {property?.deposit?.toLocaleString() || '0'}
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-600 mb-2">Laundry</label>
-                                            <div className="bg-white rounded-xl px-4 py-3 text-sm text-gray-700 shadow-sm">
-                                                {property?.laundry && property.laundry !== 'NONE' ? property.laundry.replace(/_/g, ' ') : 'None'}
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-600 mb-2">Air Conditioning</label>
-                                            <div className="bg-white rounded-xl px-4 py-3 text-sm text-gray-700 shadow-sm">
-                                                {property?.airConditioning && property.airConditioning !== 'NONE' ? property.airConditioning.replace(/_/g, ' ') : 'None'}
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-600 mb-2">Market Rent</label>
-                                            <div className="bg-white rounded-xl px-4 py-3 text-sm text-gray-700 shadow-sm">
-                                                {property?.financials?.currency} {property?.marketRent?.toLocaleString() || '0'}
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-600 mb-2">Deposit</label>
-                                            <div className="bg-white rounded-xl px-4 py-3 text-sm text-gray-700 shadow-sm">
-                                                {property?.financials?.currency} {property?.deposit?.toLocaleString() || '0'}
-                                            </div>
-                                        </div>
-                                    </div>
+                                        </>
+                                    )}
                                 </div>
                             </div>
 
@@ -1141,6 +1290,30 @@ const PropertyDetail: React.FC = () => {
                     images={property.photos || []}
                     initialIndex={galleryStartIndex}
                 />
+
+                <DeletePropertyModal
+                    isOpen={isDeleteModalOpen}
+                    onClose={() => {
+                        setIsDeleteModalOpen(false);
+                        setDeleteError(null);
+                    }}
+                    onConfirm={handleDelete}
+                    propertyName={property?.name || 'Property'}
+                    isLoading={isDeleting}
+                />
+
+                {deleteError && (
+                    <div className="fixed bottom-4 right-4 bg-red-100 border border-red-400 text-red-700 px-6 py-3 rounded-lg shadow-lg z-50 max-w-md">
+                        <p className="font-semibold">Error deleting property:</p>
+                        <p className="text-sm">{deleteError}</p>
+                        <button
+                            onClick={() => setDeleteError(null)}
+                            className="mt-2 text-xs underline hover:no-underline"
+                        >
+                            Dismiss
+                        </button>
+                    </div>
+                )}
             </div >
         </div >
     );

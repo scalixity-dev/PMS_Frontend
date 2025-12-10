@@ -332,6 +332,8 @@ class AuthService {
   async login(email: string, password: string): Promise<LoginResponse> {
     const deviceFingerprint = this.generateDeviceFingerprint();
     
+    console.log('Attempting login to:', API_ENDPOINTS.AUTH.LOGIN);
+    
     const response = await fetch(API_ENDPOINTS.AUTH.LOGIN, {
       method: 'POST',
       headers: {
@@ -342,12 +344,19 @@ class AuthService {
       body: JSON.stringify({ email, password }),
     });
 
+    console.log('Login response status:', response.status, response.statusText);
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({
         message: 'Login failed',
         statusCode: response.status,
       }));
-      console.error('API Error:', errorData);
+      console.error('Login API Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorData,
+      });
+      
       let errorMessage = 'Login failed. Please check your credentials.';
       if (errorData.message) {
         if (Array.isArray(errorData.message)) {
@@ -356,10 +365,23 @@ class AuthService {
           errorMessage = errorData.message;
         }
       }
+      
+      // Add status code to error message for 401
+      if (response.status === 401) {
+        errorMessage = `Unauthorized (401): ${errorMessage}`;
+      }
+      
       throw new Error(errorMessage);
     }
 
-    return response.json();
+    const data = await response.json();
+    console.log('Login successful, response data:', {
+      hasUser: !!data.user,
+      requiresDeviceVerification: data.requiresDeviceVerification,
+      message: data.message
+    });
+    
+    return data;
   }
 
   /**

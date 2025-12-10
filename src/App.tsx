@@ -40,6 +40,8 @@ import EquipmentDetail from './pages/Dashboard/features/Equipments/EquipmentDeta
 import CreateEquipment from './pages/Dashboard/features/Equipments/CreateEquipment';
 import MoveIn from './pages/Dashboard/features/MoveIn/MoveIn';
 import PropertyDetail from './pages/Dashboard/features/Properties/PropertyDetail';
+import UnitPropertyDetail from './pages/Dashboard/features/Units/UnitPropertyDetail';
+import EditUnit from './pages/Dashboard/features/Units/EditUnit';
 import Listing from './pages/Dashboard/features/Listing/Listing';
 import ListingDetail from './pages/Dashboard/features/Listing/ListingDetail';
 import Calendar from './pages/Dashboard/features/Calendar/Calendar';
@@ -110,6 +112,13 @@ const App: React.FC = () => {
               <Route path="/dashboard/portfolio/keys-locks" element={<KeysLocks />} />
               <Route path="/dashboard/portfolio/keys-locks/:id" element={<KeyDetail />} />
               <Route path="/dashboard/properties/:id" element={<PropertyDetail />} />
+              <Route path="/dashboard/properties/edit/:id" element={<EditProperty />} />
+              <Route path="/dashboard/units/edit/:unitId" element={<EditUnit />} />
+              <Route path="/dashboard/units/:unitId" element={<UnitPropertyDetail />} />
+              <Route path="/dashboard/property/add" element={<AddProperty />} />
+              <Route path="/dashboard/portfolio/units" element={<Units />} />
+              <Route path="/dashboard/portfolio/keys-locks" element={<KeysLocks />} />
+              <Route path="/dashboard/portfolio/keys-locks/:id" element={<KeyDetail />} />
               <Route path="/dashboard/portfolio/listing" element={<Listing />} />
               <Route path="/dashboard/listings/:id" element={<ListingDetail />} />
               <Route path="/dashboard/calendar" element={<Calendar />} />
@@ -134,6 +143,8 @@ const App: React.FC = () => {
               <Route path="/dashboard/portfolio/leases" element={<Leases />} />
               <Route path="/dashboard/portfolio/leases/:id" element={<LeaseDetail />} />
 
+              <Route path="/dashboard/contacts/tenants" element={<Tenants />} />
+              <Route path="/dashboard/contacts/tenants/:id" element={<TenantDetail />} />
               <Route
                 path="/portfolio"
                 element={
@@ -201,8 +212,8 @@ const App: React.FC = () => {
             </Route>
           </Routes>
         </BrowserRouter>
+        <TanStackDevtools />
       </QueryClientProvider>
-      <TanStackDevtools />
     </>
   );
 };

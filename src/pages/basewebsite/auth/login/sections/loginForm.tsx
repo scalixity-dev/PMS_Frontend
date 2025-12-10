@@ -67,17 +67,34 @@ const LoginForm: React.FC = () => {
         try {
             const response = await authService.login(email, password);
             
+            console.log('Login response:', {
+                hasUser: !!response.user,
+                requiresDeviceVerification: response.requiresDeviceVerification,
+                hasToken: !!response.token,
+                user: response.user
+            });
+            
             // Check if device verification is required
             if (response.requiresDeviceVerification) {
                 // Redirect to OTP page for device verification
+                console.log('Device verification required, redirecting to OTP');
                 navigate(`/otp?userId=${response.user.id}&email=${response.user.email}&type=device`, { replace: true });
             } else {
-               
+                // Wait a moment to ensure cookie is set before navigation
+                console.log('Login successful, waiting for cookie to be set...');
+                await new Promise(resolve => setTimeout(resolve, 200));
+                console.log('Navigating to dashboard');
                 navigate('/dashboard', { replace: true });
             }
         } catch (err) {
+            console.error('Login error:', err);
             const errorMessage = err instanceof Error ? err.message : 'Login failed. Please try again.';
             setError(errorMessage);
+            
+            // If it's a 401, provide more specific error
+            if (err instanceof Error && errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
+                setError('Invalid email or password. Please check your credentials and try again.');
+            }
         } finally {
             setIsLoading(false);
         }

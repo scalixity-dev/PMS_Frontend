@@ -1,13 +1,16 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueries } from '@tanstack/react-query';
 import ListingHeader from './components/ListingHeader';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
 import ListingCard from './components/ListingCard';
 import { useGetAllListings } from '../../../../hooks/useListingQueries';
 import { useGetAllProperties } from '../../../../hooks/usePropertyQueries';
+import { unitService } from '../../../../services/unit.service';
 import type { BackendListing } from '../../../../services/listing.service';
 import type { BackendProperty } from '../../../../services/property.service';
+import type { BackendUnit } from '../../../../services/unit.service';
 
 // Interface for the combined listing data
 interface ListingCardData {
@@ -44,6 +47,27 @@ const Listing: React.FC = () => {
     const { data: listings = [], isLoading: listingsLoading, error: listingsError } = useGetAllListings();
     const { data: backendProperties = [], isLoading: propertiesLoading, error: propertiesError } = useGetAllProperties();
 
+    // Get all MULTI properties to fetch their units
+    const multiProperties = useMemo(() => {
+        return backendProperties.filter(p => p.propertyType === 'MULTI') || [];
+    }, [backendProperties]);
+
+    // Fetch units for all MULTI properties in parallel
+    const unitQueries = useQueries({
+        queries: multiProperties.map(property => ({
+            queryKey: ['units', 'list', property.id],
+            queryFn: () => unitService.getAllByProperty(property.id),
+            enabled: !!property.id,
+            staleTime: 2 * 60 * 1000,
+            gcTime: 5 * 60 * 1000,
+            retry: 1,
+        })),
+    });
+
+    // Combine loading and error states for units
+    const isLoadingUnits = unitQueries.some(query => query.isLoading);
+    const unitsError = unitQueries.find(query => query.error)?.error;
+
     const handleAddListing = () => {
         navigate('/dashboard/list-unit');
     };
@@ -72,14 +96,26 @@ const Listing: React.FC = () => {
 
     // Transform listings and properties into ListingCardData
     const allListingsData = useMemo(() => {
-        // Create a map of propertyId -> active listing
+        // Create a map of propertyId -> active listing (for properties)
         const activeListingsMap = new Map<string, BackendListing>();
+        // Create a map of unitId -> active listing (for units)
+        const activeUnitListingsMap = new Map<string, BackendListing>();
+        
         listings.forEach((listing: BackendListing) => {
             if (listing.listingStatus === 'ACTIVE' && listing.isActive) {
-                // If property already has an active listing, keep the most recent one
-                const existing = activeListingsMap.get(listing.propertyId);
-                if (!existing || new Date(listing.listedAt) > new Date(existing.listedAt)) {
-                    activeListingsMap.set(listing.propertyId, listing);
+                // Check if listing is for a unit or property
+                if (listing.unitId) {
+                    // Unit listing
+                    const existing = activeUnitListingsMap.get(listing.unitId);
+                    if (!existing || new Date(listing.listedAt) > new Date(existing.listedAt)) {
+                        activeUnitListingsMap.set(listing.unitId, listing);
+                    }
+                } else {
+                    // Property listing
+                    const existing = activeListingsMap.get(listing.propertyId);
+                    if (!existing || new Date(listing.listedAt) > new Date(existing.listedAt)) {
+                        activeListingsMap.set(listing.propertyId, listing);
+                    }
                 }
             }
         });
@@ -87,97 +123,216 @@ const Listing: React.FC = () => {
         // Create a set of property IDs that have active listings
         const listedPropertyIds = new Set(activeListingsMap.keys());
 
-        // Transform backend properties into ListingCardData
-        const transformed: ListingCardData[] = backendProperties.map((backendProperty: BackendProperty, index: number) => {
-            const hasActiveListing = listedPropertyIds.has(backendProperty.id);
-            const activeListing = activeListingsMap.get(backendProperty.id);
+        // Create a map of propertyId -> units data from unit queries
+        const unitsByPropertyId = new Map<string, BackendUnit[]>();
+        multiProperties.forEach((property, index) => {
+            const unitsData = unitQueries[index]?.data;
+            if (unitsData && Array.isArray(unitsData)) {
+                unitsByPropertyId.set(property.id, unitsData);
+            }
+        });
 
-            // Format address
-            let address = 'Address not available';
-            let country: string | undefined;
-            if (backendProperty.address) {
-                country = backendProperty.address.country;
-                const addressParts = [
-                    backendProperty.address.streetAddress,
-                    backendProperty.address.city,
-                    backendProperty.address.stateRegion,
-                    backendProperty.address.zipCode,
-                    backendProperty.address.country,
-                ].filter(part => part && part.trim() !== '');
+        const transformed: ListingCardData[] = [];
+
+        // Process MULTI properties - each unit becomes a separate listing
+        backendProperties.forEach((backendProperty: BackendProperty) => {
+            if (backendProperty.propertyType === 'MULTI') {
+                const units = unitsByPropertyId.get(backendProperty.id) || [];
                 
-                if (addressParts.length > 0) {
-                    address = addressParts.join(', ');
+                // Format address for the property
+                let propertyAddress = 'Address not available';
+                let country: string | undefined;
+                if (backendProperty.address) {
+                    country = backendProperty.address.country;
+                    const addressParts = [
+                        backendProperty.address.streetAddress,
+                        backendProperty.address.city,
+                        backendProperty.address.stateRegion,
+                        backendProperty.address.zipCode,
+                        backendProperty.address.country,
+                    ].filter(part => part && part.trim() !== '');
+                    
+                    if (addressParts.length > 0) {
+                        propertyAddress = addressParts.join(', ');
+                    }
                 }
+
+                // Transform each unit into a ListingCardData
+                units.forEach((unit: BackendUnit) => {
+                    const activeListing = activeUnitListingsMap.get(unit.id);
+                    const hasActiveListing = !!activeListing;
+
+                    // Get price from unit listing, unit leasing, or unit rent
+                    let price: number | null = null;
+                    if (hasActiveListing && activeListing) {
+                        if (activeListing.listingPrice !== null && activeListing.listingPrice !== undefined) {
+                            price = typeof activeListing.listingPrice === 'string' 
+                                ? parseFloat(activeListing.listingPrice) 
+                                : Number(activeListing.listingPrice);
+                        } else if (activeListing.monthlyRent !== null && activeListing.monthlyRent !== undefined) {
+                            price = typeof activeListing.monthlyRent === 'string' 
+                                ? parseFloat(activeListing.monthlyRent) 
+                                : Number(activeListing.monthlyRent);
+                        }
+                    } else if (unit.leasing?.monthlyRent) {
+                        price = typeof unit.leasing.monthlyRent === 'string'
+                            ? parseFloat(unit.leasing.monthlyRent) || 0
+                            : Number(unit.leasing.monthlyRent) || 0;
+                        if (price === 0) price = null;
+                    } else if (unit.rent) {
+                        price = typeof unit.rent === 'string'
+                            ? parseFloat(unit.rent) || 0
+                            : Number(unit.rent) || 0;
+                        if (price === 0) price = null;
+                    }
+
+                    // Get bedrooms and bathrooms from unit
+                    const bedrooms = unit.beds || 0;
+                    const bathrooms = unit.baths
+                        ? typeof unit.baths === 'string'
+                            ? parseFloat(unit.baths) || 0
+                            : Number(unit.baths) || 0
+                        : 0;
+
+                    // Get image from unit photos or coverPhotoUrl
+                    let image = '';
+                    if (unit.photos && Array.isArray(unit.photos) && unit.photos.length > 0) {
+                        const primaryPhoto = unit.photos.find((p) => p.isPrimary);
+                        image = primaryPhoto?.photoUrl || unit.photos[0].photoUrl;
+                    } else if (unit.coverPhotoUrl) {
+                        image = unit.coverPhotoUrl;
+                    } else if (backendProperty.coverPhotoUrl) {
+                        image = backendProperty.coverPhotoUrl;
+                    } else if (backendProperty.photos && backendProperty.photos.length > 0) {
+                        const primaryPhoto = backendProperty.photos.find((p) => p.isPrimary);
+                        image = primaryPhoto?.photoUrl || backendProperty.photos[0].photoUrl;
+                    }
+
+                    // Generate stable ID for unit
+                    const unitIdNum = (() => {
+                        const parsed = Number(unit.id);
+                        if (!isNaN(parsed) && isFinite(parsed)) {
+                            return parsed;
+                        }
+                        let hash = 0;
+                        for (let i = 0; i < unit.id.length; i++) {
+                            const char = unit.id.charCodeAt(i);
+                            hash = ((hash << 5) - hash) + char;
+                            hash = hash & hash;
+                        }
+                        return Math.abs(hash);
+                    })();
+
+                    transformed.push({
+                        id: unitIdNum,
+                        name: `${backendProperty.propertyName} - ${unit.unitName || 'Unit'}`,
+                        address: propertyAddress,
+                        price,
+                        status: hasActiveListing ? 'listed' : 'unlisted',
+                        bathrooms,
+                        bedrooms,
+                        image,
+                        country,
+                        listingId: activeListing?.id,
+                        propertyId: backendProperty.id,
+                    });
+                });
             }
+        });
 
-            // Get price from listing or property
-            let price: number | null = null;
-            if (hasActiveListing && activeListing) {
-                // Prefer listingPrice, fallback to monthlyRent
-                if (activeListing.listingPrice !== null && activeListing.listingPrice !== undefined) {
-                    price = typeof activeListing.listingPrice === 'string' 
-                        ? parseFloat(activeListing.listingPrice) 
-                        : Number(activeListing.listingPrice);
-                } else if (activeListing.monthlyRent !== null && activeListing.monthlyRent !== undefined) {
-                    price = typeof activeListing.monthlyRent === 'string' 
-                        ? parseFloat(activeListing.monthlyRent) 
-                        : Number(activeListing.monthlyRent);
+        // Process SINGLE properties - show as before
+        backendProperties.forEach((backendProperty: BackendProperty) => {
+            if (backendProperty.propertyType === 'SINGLE') {
+                const hasActiveListing = listedPropertyIds.has(backendProperty.id);
+                const activeListing = activeListingsMap.get(backendProperty.id);
+
+                // Format address
+                let address = 'Address not available';
+                let country: string | undefined;
+                if (backendProperty.address) {
+                    country = backendProperty.address.country;
+                    const addressParts = [
+                        backendProperty.address.streetAddress,
+                        backendProperty.address.city,
+                        backendProperty.address.stateRegion,
+                        backendProperty.address.zipCode,
+                        backendProperty.address.country,
+                    ].filter(part => part && part.trim() !== '');
+                    
+                    if (addressParts.length > 0) {
+                        address = addressParts.join(', ');
+                    }
                 }
-            } else if (backendProperty.marketRent) {
-                price = typeof backendProperty.marketRent === 'string'
-                    ? parseFloat(backendProperty.marketRent) || 0
-                    : Number(backendProperty.marketRent) || 0;
-                if (price === 0) price = null;
+
+                // Get price from listing or property
+                let price: number | null = null;
+                if (hasActiveListing && activeListing) {
+                    // Prefer listingPrice, fallback to monthlyRent
+                    if (activeListing.listingPrice !== null && activeListing.listingPrice !== undefined) {
+                        price = typeof activeListing.listingPrice === 'string' 
+                            ? parseFloat(activeListing.listingPrice) 
+                            : Number(activeListing.listingPrice);
+                    } else if (activeListing.monthlyRent !== null && activeListing.monthlyRent !== undefined) {
+                        price = typeof activeListing.monthlyRent === 'string' 
+                            ? parseFloat(activeListing.monthlyRent) 
+                            : Number(activeListing.monthlyRent);
+                    }
+                } else if (backendProperty.marketRent) {
+                    price = typeof backendProperty.marketRent === 'string'
+                        ? parseFloat(backendProperty.marketRent) || 0
+                        : Number(backendProperty.marketRent) || 0;
+                    if (price === 0) price = null;
+                }
+
+                // Get bedrooms and bathrooms
+                const bedrooms = backendProperty.singleUnitDetails?.beds || 0;
+                const bathrooms = backendProperty.singleUnitDetails?.baths
+                    ? typeof backendProperty.singleUnitDetails.baths === 'string'
+                        ? parseFloat(backendProperty.singleUnitDetails.baths) || 0
+                        : Number(backendProperty.singleUnitDetails.baths) || 0
+                    : 0;
+
+                // Get image
+                const image = backendProperty.coverPhotoUrl 
+                    || backendProperty.photos?.find((p) => p.isPrimary)?.photoUrl 
+                    || backendProperty.photos?.[0]?.photoUrl 
+                    || '';
+
+                // Convert backend property ID to number (stable identifier)
+                // Try parsing as number first, fallback to hash if it's a non-numeric string (e.g., UUID)
+                const propertyIdNum = (() => {
+                    const parsed = Number(backendProperty.id);
+                    if (!isNaN(parsed) && isFinite(parsed)) {
+                        return parsed;
+                    }
+                    // Deterministic hash for non-numeric IDs (e.g., UUIDs)
+                    let hash = 0;
+                    for (let i = 0; i < backendProperty.id.length; i++) {
+                        const char = backendProperty.id.charCodeAt(i);
+                        hash = ((hash << 5) - hash) + char;
+                        hash = hash & hash; // Convert to 32-bit integer
+                    }
+                    return Math.abs(hash);
+                })();
+
+                transformed.push({
+                    id: propertyIdNum,
+                    name: backendProperty.propertyName,
+                    address,
+                    price,
+                    status: hasActiveListing ? 'listed' : 'unlisted',
+                    bathrooms,
+                    bedrooms,
+                    image,
+                    country,
+                    listingId: activeListing?.id,
+                    propertyId: backendProperty.id,
+                });
             }
-
-            // Get bedrooms and bathrooms
-            const bedrooms = backendProperty.singleUnitDetails?.beds || 0;
-            const bathrooms = backendProperty.singleUnitDetails?.baths
-                ? typeof backendProperty.singleUnitDetails.baths === 'string'
-                    ? parseFloat(backendProperty.singleUnitDetails.baths) || 0
-                    : Number(backendProperty.singleUnitDetails.baths) || 0
-                : 0;
-
-            // Get image
-            const image = backendProperty.coverPhotoUrl 
-                || backendProperty.photos?.find((p) => p.isPrimary)?.photoUrl 
-                || backendProperty.photos?.[0]?.photoUrl 
-                || '';
-
-            // Convert backend property ID to number (stable identifier)
-            // Try parsing as number first, fallback to hash if it's a non-numeric string (e.g., UUID)
-            const propertyIdNum = (() => {
-                const parsed = Number(backendProperty.id);
-                if (!isNaN(parsed) && isFinite(parsed)) {
-                    return parsed;
-                }
-                // Deterministic hash for non-numeric IDs (e.g., UUIDs)
-                let hash = 0;
-                for (let i = 0; i < backendProperty.id.length; i++) {
-                    const char = backendProperty.id.charCodeAt(i);
-                    hash = ((hash << 5) - hash) + char;
-                    hash = hash & hash; // Convert to 32-bit integer
-                }
-                return Math.abs(hash);
-            })();
-
-            return {
-                id: propertyIdNum,
-                name: backendProperty.propertyName,
-                address,
-                price,
-                status: hasActiveListing ? 'listed' : 'unlisted',
-                bathrooms,
-                bedrooms,
-                image,
-                country,
-                listingId: activeListing?.id,
-                propertyId: backendProperty.id,
-            };
         });
 
         return transformed;
-    }, [listings, backendProperties]);
+    }, [listings, backendProperties, multiProperties, unitQueries]);
 
     // Filter listings based on search and filters
     const filteredListings = useMemo(() => {
@@ -219,10 +374,10 @@ const Listing: React.FC = () => {
     };
 
     // Loading state
-    const isLoading = listingsLoading || propertiesLoading;
+    const isLoading = listingsLoading || propertiesLoading || isLoadingUnits;
 
     // Error state
-    const error = listingsError || propertiesError;
+    const error = listingsError || propertiesError || unitsError;
 
     return (
         <div className="max-w-7xl mx-auto min-h-screen">

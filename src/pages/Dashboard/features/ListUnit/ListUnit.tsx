@@ -17,6 +17,7 @@ import PetDetails from './steps/PetDetails';
 import { leasingService } from '../../../../services/leasing.service';
 import { listingService } from '../../../../services/listing.service';
 import { useGetProperty, propertyQueryKeys } from '../../../../hooks/usePropertyQueries';
+import { useGetUnit } from '../../../../hooks/useUnitQueries';
 import { propertyService } from '../../../../services/property.service';
 import { useListUnitStore } from './store/listUnitStore';
 import { useCreatePropertyStore } from './store/createPropertyStore';
@@ -64,6 +65,9 @@ const ListUnit: React.FC = () => {
   // Use React Query to fetch property data when property is selected
   const { data: propertyData } = useGetProperty(formData.property || null, !!formData.property);
 
+  // Use React Query to fetch unit data when unit is selected
+  const { data: unitData } = useGetUnit(formData.unit || null, !!formData.unit);
+
   // Get property display name (use property name if available, otherwise fallback to ID or "New Property")
   const propertyDisplay = propertyData?.propertyName || formData.property || "New Property";
 
@@ -110,8 +114,8 @@ const ListUnit: React.FC = () => {
     return mapping[months] || 'TWELVE_MONTHS';
   };
 
-  // Check if leasing exists for property when property is selected
-  // Use propertyData.leasing if available (from backend), otherwise check via API only if needed
+  // Check if leasing exists for property/unit when property/unit is selected
+  // Use propertyData.leasing or unitData.leasing if available (from backend), otherwise check via API only if needed
   useEffect(() => {
     const checkExistingLeasing = async () => {
       if (!formData.property) {
@@ -153,6 +157,72 @@ const ListUnit: React.FC = () => {
       updateFormData('applicationFee', null);
       updateFormData('applicationFeeAmount', '');
 
+      // If a unit is selected, check for unit-level leasing
+      if (formData.unit && unitData) {
+        // Unit is selected - check unit-level leasing
+        if (unitData.leasing && unitData.leasing.id) {
+          // Unit has leasing - fetch full leasing data
+          try {
+            const leasing = await leasingService.getOne(unitData.leasing.id);
+            setLeasingId(leasing.id);
+            // Load existing leasing data into form
+            updateFormData('rent', leasing.monthlyRent?.toString() || '');
+            updateFormData('deposit', leasing.securityDeposit?.toString() || '');
+            updateFormData('refundable', leasing.amountRefundable?.toString() || '');
+            updateFormData('availableDate', leasing.dateAvailable ? new Date(leasing.dateAvailable).toISOString().split('T')[0] : '');
+            // Map backend enum to numeric string for frontend
+            const reverseMapping: Record<string, string> = {
+              'ONE_MONTH': '1',
+              'TWO_MONTHS': '2',
+              'THREE_MONTHS': '3',
+              'FOUR_MONTHS': '4',
+              'FIVE_MONTHS': '5',
+              'SIX_MONTHS': '6',
+              'SEVEN_MONTHS': '7',
+              'EIGHT_MONTHS': '8',
+              'NINE_MONTHS': '9',
+              'TEN_MONTHS': '10',
+              'ELEVEN_MONTHS': '11',
+              'TWELVE_MONTHS': '12',
+              'THIRTEEN_MONTHS': '13',
+              'FOURTEEN_MONTHS': '14',
+              'FIFTEEN_MONTHS': '15',
+              'SIXTEEN_MONTHS': '16',
+              'SEVENTEEN_MONTHS': '17',
+              'EIGHTEEN_MONTHS': '18',
+              'NINETEEN_MONTHS': '19',
+              'TWENTY_MONTHS': '20',
+              'TWENTY_ONE_MONTHS': '21',
+              'TWENTY_TWO_MONTHS': '22',
+              'TWENTY_THREE_MONTHS': '23',
+              'TWENTY_FOUR_MONTHS': '24',
+              'THIRTY_SIX_PLUS_MONTHS': '36',
+            };
+            updateFormData('minLeaseDuration', reverseMapping[leasing.minLeaseDuration] || '');
+            updateFormData('maxLeaseDuration', reverseMapping[leasing.maxLeaseDuration] || '');
+            updateFormData('description', leasing.description || '');
+            updateFormData('petsAllowed', leasing.petsAllowed ?? null);
+            updateFormData('pets', leasing.petCategory || []);
+            updateFormData('petDeposit', leasing.petDeposit?.toString() || '');
+            updateFormData('petRent', leasing.petFee?.toString() || '');
+            updateFormData('petDescription', leasing.petDescription || '');
+            updateFormData('receiveApplicationsOnline', leasing.onlineRentalApplication ?? null);
+            updateFormData('applicationFee', leasing.requireApplicationFee ?? null);
+            updateFormData('applicationFeeAmount', leasing.applicationFee?.toString() || '');
+          } catch (err) {
+            // If API call fails, leasing doesn't exist
+            setLeasingId(null);
+            return;
+          }
+        } else {
+          // Unit data exists but no leasing - leasing doesn't exist
+          setLeasingId(null);
+          return;
+        }
+        return; // Exit early for unit-level leasing
+      }
+
+      // For property-level leasing (SINGLE properties or when no unit is selected)
       // First, check if leasing data is already available in propertyData (from backend)
       // This avoids unnecessary API calls when we know leasing doesn't exist
       let leasing = null;
@@ -238,7 +308,7 @@ const ListUnit: React.FC = () => {
     };
 
     checkExistingLeasing();
-  }, [formData.property, propertyData, updateFormData, setLeasingId]);
+  }, [formData.property, formData.unit, propertyData, unitData, updateFormData, setLeasingId]);
 
   // Save pet policy when moving from leasingStep 2
   const handleSavePetPolicy = async () => {
@@ -379,7 +449,8 @@ const ListUnit: React.FC = () => {
       // The backend service will handle both creating the listing and updating property status
       await listingService.create({
         propertyId: formData.property,
-        // The backend will automatically populate listing data from property and leasing
+        unitId: formData.unit || undefined, // Include unitId if a unit is selected
+        // The backend will automatically populate listing data from property/unit and leasing
       });
 
       // Show success modal
@@ -468,12 +539,19 @@ const ListUnit: React.FC = () => {
       return;
     }
 
+    // For MULTI properties, unitId is required
+    if (propertyData?.propertyType === 'MULTI' && !formData.unit) {
+      setError('Unit is required for MULTI properties. Please select a unit first.');
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
 
     try {
       const leasingData = {
         propertyId: formData.property,
+        unitId: formData.unit || undefined, // Include unitId if a unit is selected (required for MULTI properties)
         monthlyRent: parseFloat(formData.rent),
         securityDeposit: parseFloat(formData.deposit),
         amountRefundable: parseFloat(formData.refundable),
@@ -678,6 +756,7 @@ const ListUnit: React.FC = () => {
                         </div>
                         <LeasingDetails 
                           propertyId={formData.property}
+                          unitId={formData.unit || undefined}
                         />
                         {error && (
                           <div className="w-full max-w-md mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
