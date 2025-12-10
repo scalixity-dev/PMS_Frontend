@@ -15,7 +15,6 @@ interface SidebarProps { open: boolean; setOpen: (open: boolean) => void; }
 interface SidebarSubLinkProps { label: string; to: string; isCurrentPath: (path: string) => boolean; }
 interface SidebarDropdownLinkProps {
   label: string;
-  to: string;
   icon: React.ReactNode;
   children: React.ReactNode;
   isCurrentPath: (path: string) => boolean;
@@ -43,10 +42,21 @@ function SidebarSubLink({ label, to, isCurrentPath }: SidebarSubLinkProps) {
   );
 }
 
-function SidebarDropdownLink({ label, to, icon, children, activeDropdown, setActiveDropdown }: SidebarDropdownLinkProps) {
+function SidebarDropdownLink({ label, icon, children, activeDropdown, setActiveDropdown }: SidebarDropdownLinkProps) {
   const location = useLocation();
 
-  const isActiveRoute = location.pathname.startsWith(to) && to !== "/";
+  const isActiveRoute = React.Children.toArray(children).some((child) => {
+    if (React.isValidElement(child) && (child.props as any).to) {
+      const path = (child.props as any).to;
+      // Handle root dashboard path specifically to prevent it from matching everything
+      if (path === '/dashboard') {
+        return location.pathname === path;
+      }
+      return location.pathname === path || location.pathname.startsWith(`${path}/`);
+    }
+    return false;
+  });
+
   const isOpen = activeDropdown === label;
 
   const handleClick = () => {
@@ -232,7 +242,6 @@ export default function DashboardSidebar({ open, setOpen }: SidebarProps) {
               {/* 1. Dashboard Dropdown */}
               < SidebarDropdownLink
                 label="Dashboard"
-                to="/dashboard"
                 icon={< PiChartLineUpFill size={24} />}
                 isCurrentPath={isCurrentPath}
                 activeDropdown={activeDropdown}
@@ -246,7 +255,6 @@ export default function DashboardSidebar({ open, setOpen }: SidebarProps) {
               {/* 2. Portfolio Dropdown */}
               <SidebarDropdownLink
                 label="Portfolio"
-                to="/portfolio"
                 icon={<PiChartPieSliceFill size={24} />}
                 isCurrentPath={isCurrentPath}
                 activeDropdown={activeDropdown}
@@ -254,9 +262,7 @@ export default function DashboardSidebar({ open, setOpen }: SidebarProps) {
               >
                 <SidebarSubLink label="Properties" to="/dashboard/properties" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Units" to="/dashboard/portfolio/units" isCurrentPath={isCurrentPath} />
-                <SidebarSubLink label="Leases" to="/dashboard/portfolio/leases" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Listing" to="/dashboard/portfolio/listing" isCurrentPath={isCurrentPath} />
-                <SidebarSubLink label="Occupancy Board" to="/portfolio/board" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Keys & Locks" to="/dashboard/portfolio/keys-locks" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Equipment" to="/dashboard/equipments" isCurrentPath={isCurrentPath} />
 
@@ -265,14 +271,13 @@ export default function DashboardSidebar({ open, setOpen }: SidebarProps) {
               {/* 3. Leasing Dropdown */}
               <SidebarDropdownLink
                 label="Leasing"
-                to="/leasing"
                 icon={<PiBuildingsFill size={24} />}
                 isCurrentPath={isCurrentPath}
                 activeDropdown={activeDropdown}
                 setActiveDropdown={setActiveDropdown}
               >
                 <SidebarSubLink label="Applications" to="/leasing/applications" isCurrentPath={isCurrentPath} />
-                <SidebarSubLink label="Leases" to="/leasing/leases" isCurrentPath={isCurrentPath} />
+                <SidebarSubLink label="Leases" to="/dashboard/leasing/leases" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Leads" to="/leasing/leads" isCurrentPath={isCurrentPath} />
 
               </SidebarDropdownLink>
@@ -280,7 +285,6 @@ export default function DashboardSidebar({ open, setOpen }: SidebarProps) {
               {/* 4. Contacts Dropdown */}
               <SidebarDropdownLink
                 label="Contacts"
-                to="/contacts"
                 icon={<PiUsersFill size={24} />}
                 isCurrentPath={isCurrentPath}
                 activeDropdown={activeDropdown}
@@ -293,7 +297,6 @@ export default function DashboardSidebar({ open, setOpen }: SidebarProps) {
               {/* 5. Accounting Dropdown */}
               <SidebarDropdownLink
                 label="Accounting"
-                to="/accounting"
                 icon={<PiCurrencyDollarFill size={24} />}
                 isCurrentPath={isCurrentPath}
                 activeDropdown={activeDropdown}
@@ -308,7 +311,6 @@ export default function DashboardSidebar({ open, setOpen }: SidebarProps) {
               {/* 6. Maintenance Dropdown */}
               <SidebarDropdownLink
                 label="Maintenance"
-                to="/maintenance"
                 icon={<PiWrenchFill size={24} />}
                 isCurrentPath={isCurrentPath}
                 activeDropdown={activeDropdown}
@@ -322,7 +324,6 @@ export default function DashboardSidebar({ open, setOpen }: SidebarProps) {
               {/* 7. Documents Dropdown */}
               <SidebarDropdownLink
                 label="Documents"
-                to="/documents"
                 icon={<PiFileTextFill size={24} />}
                 isCurrentPath={isCurrentPath}
                 activeDropdown={activeDropdown}
