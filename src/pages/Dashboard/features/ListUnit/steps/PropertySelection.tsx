@@ -90,20 +90,6 @@ const checkHasActiveListing = async (property: BackendProperty, listingsCache: M
   }
 };
 
-// Check if unit has an active listing
-const checkUnitHasActiveListing = async (unitId: string, listingsCache: Map<string, any[]>): Promise<boolean> => {
-  // Check cache first
-  const cachedListings = listingsCache.get(unitId);
-  if (cachedListings !== undefined) {
-    return cachedListings.some(
-      (listing: any) => listing.listingStatus === 'ACTIVE' && listing.isActive === true && listing.unitId === unitId
-    );
-  }
-  
-  // Lazy load listings for this unit (we'll need to fetch by property and filter by unitId)
-  // For now, return false and let the parent handle fetching
-  return false;
-};
 
 // Check if property has all listing data filled (using data from BackendProperty)
 const isPropertyListingComplete = (property: BackendProperty): boolean => {
