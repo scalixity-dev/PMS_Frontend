@@ -474,10 +474,12 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
   }, [selectableItems, formData.property, formData.unit, updateFormData]);
 
   // Find selected item (property or unit)
-  const selectedItem = selectableItems.find(item => 
-    item.propertyId === formData.property && 
-    (item.type === 'property' || item.unitId === formData.unit)
-  );
+  const selectedItem = selectableItems.find(item => {
+    if (formData.unit) {
+      return item.type === 'unit' && item.unitId === formData.unit;
+    }
+    return item.type === 'property' && item.propertyId === formData.property;
+  });
   
   // For backward compatibility, also check incompleteProperties
   const selectedProperty = incompleteProperties.find(p => p.id === formData.property);
