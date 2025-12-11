@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Plus, Settings, MoveVertical, Edit, Trash2, Check } from 'lucide-react';
+import { ChevronLeft, Plus, Settings, Edit, Trash2, Check } from 'lucide-react';
 import DashboardFilter from '../../components/DashboardFilter';
 
 // Mock Data
@@ -12,7 +12,7 @@ export const keysData = [
         type: 'Main Door',
         property: 'Luxury Property',
         unit: '-----',
-        assignee: 'UnAssignee',
+        assignee: 'Unassigned',
         keyDescription: 'This is a main door key for the luxury property. It gives access to the main entrance.',
         propertyDescription: 'A beautiful luxury property located in the heart of the city. Features modern amenities and spacious living areas.',
         propertyAddress: '78 Scheme No 78 - II, Indore, MP 452010, IN'
@@ -23,7 +23,7 @@ export const keysData = [
         type: 'Main Door',
         property: 'Abc Property',
         unit: '-----',
-        assignee: 'UnAssignee',
+        assignee: 'Unassigned',
         keyDescription: 'Spare key for the back door.',
         propertyDescription: 'Cozy apartment in a quiet neighborhood.',
         propertyAddress: '123 Main St, Anytown, USA'
@@ -115,17 +115,13 @@ const KeysLocks = () => {
                         <h1 className="text-2xl font-bold text-black">Keys & Locks</h1>
                     </div>
                     <div className="flex gap-3">
-                        <button className="px-5 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2 shadow-sm">
+                        <button onClick={() => navigate('/dashboard/portfolio/add-key')} className="px-5 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2 shadow-sm">
                             Add Request
                             <Plus className="w-4 h-4" />
                         </button>
                         <button className="px-5 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2 shadow-sm">
                             Edit Settings
                             <Settings className="w-4 h-4" />
-                        </button>
-                        <button className="px-5 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2 shadow-sm">
-                            Expand View
-                            <MoveVertical className="w-4 h-4" />
                         </button>
                     </div>
                 </div>

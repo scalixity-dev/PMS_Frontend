@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { SquarePen } from "lucide-react";
+import { SquarePen, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   PiChartLineUpFill, PiChartPieSliceFill, PiBuildingsFill, PiUsersFill,
   PiCurrencyDollarFill, PiWrenchFill, PiFileTextFill
@@ -10,8 +10,15 @@ import {
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import artworkImage from "../../assets/images/Artwork.png";
 
+const SidebarContext = React.createContext<{ collapsed: boolean }>({ collapsed: false });
+
 // --- Type Definitions (Remain the same) ---
-interface SidebarProps { open: boolean; setOpen: (open: boolean) => void; }
+interface SidebarProps {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  collapsed: boolean;
+  setCollapsed: (collapsed: boolean) => void;
+}
 interface SidebarSubLinkProps { label: string; to: string; isCurrentPath: (path: string) => boolean; }
 interface SidebarDropdownLinkProps {
   label: string;
@@ -44,6 +51,10 @@ function SidebarSubLink({ label, to, isCurrentPath }: SidebarSubLinkProps) {
 
 function SidebarDropdownLink({ label, icon, children, activeDropdown, setActiveDropdown }: SidebarDropdownLinkProps) {
   const location = useLocation();
+  const { collapsed } = React.useContext(SidebarContext);
+  const [isHovered, setIsHovered] = useState(false);
+  const linkRef = useRef<HTMLDivElement>(null);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
 
   const isActiveRoute = React.Children.toArray(children).some((child) => {
     if (React.isValidElement(child) && (child.props as any).to) {
@@ -60,6 +71,7 @@ function SidebarDropdownLink({ label, icon, children, activeDropdown, setActiveD
   const isOpen = activeDropdown === label;
 
   const handleClick = () => {
+    if (collapsed) return; // Don't toggle dropdown in collapsed mode
     if (isOpen) {
       setActiveDropdown(null);
     }
@@ -68,40 +80,82 @@ function SidebarDropdownLink({ label, icon, children, activeDropdown, setActiveD
     }
   };
 
+  const handleMouseEnter = () => {
+    if (collapsed && linkRef.current) {
+      const rect = linkRef.current.getBoundingClientRect();
+      setMenuPosition({ top: rect.top, left: rect.right + 10 });
+      setIsHovered(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+  };
 
   return (
     <>
-      {/* Main Dropdown Link */}
       <div
-        className={`flex items-center justify-between px-3 py-2.5 rounded-md transition-colors cursor-pointer 
-                  ${isActiveRoute ? "bg-gray-100 font-semibold text-black" : "text-gray-700 hover:bg-gray-100 group"}`}
+        ref={linkRef}
+        className={`flex items-center px-3 py-2.5 rounded-md transition-colors cursor-pointer 
+                  ${isActiveRoute ? "bg-gray-100 font-semibold text-black" : "text-gray-700 hover:bg-gray-100 group"}
+                  ${collapsed ? "justify-center" : "justify-between"}`}
         onClick={handleClick}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
-        <div className="flex items-center gap-3">
-          <span className={`${isActiveRoute ? "text-green-600" : "text-black group-hover:text-black"}`}>{icon}</span>
-          <span className={`${isActiveRoute ? "text-green-600" : "text-black group-hover:text-black"} text-sm font-medium`}>{label}</span>
+        <div className={`flex items-center gap-3 ${collapsed ? 'justify-center w-full' : ''}`}>
+          <span className={`${isActiveRoute ? "text-green-600" : "text-black group-hover:text-black"}`}>
+            {icon}
+          </span>
+          {!collapsed && (
+            <span className={`${isActiveRoute ? "text-green-600" : "text-black group-hover:text-black"} text-sm font-medium`}>
+              {label}
+            </span>
+          )}
         </div>
         {/* Dropdown Arrow/Indicator */}
-        <svg
-          className={`w-3 h-3 transition-transform duration-200 ${isOpen ? 'rotate-90' : 'rotate-0'}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
-        </svg>
+        {!collapsed && (
+          <svg
+            className={`w-3 h-3 transition-transform duration-200 ${isOpen ? 'rotate-90' : 'rotate-0'}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+          </svg>
+        )}
       </div>
 
-      {/* Sub-links Container with Transition */}
-      <div
-        className={`overflow-hidden transition-all duration-500 ease-in-out 
-                ${isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
-      >
-        <div className="ml-8 mt-1 space-y-0.5">
-          {children}
+      {/* Sub-links Container (Normal Mode) */}
+      {!collapsed && (
+        <div
+          className={`overflow-hidden transition-all duration-500 ease-in-out 
+                  ${isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
+        >
+          <div className="ml-8 mt-1 space-y-0.5">
+            {children}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Floating Menu (Collapsed Mode) */}
+      {collapsed && isHovered && createPortal(
+        <div
+          className="fixed bg-white rounded-lg shadow-xl border border-gray-100 z-[9999] py-2 w-48 animate-in fade-in zoom-in-95 duration-100"
+          style={{ top: menuPosition.top, left: menuPosition.left }}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          <div className="px-3 py-2 font-semibold text-gray-900 border-b border-gray-100 mb-1 text-sm bg-gray-50/50">
+            {label}
+          </div>
+          <div className="p-1 space-y-0.5">
+            {children}
+          </div>
+        </div>,
+        document.body
+      )}
     </>
   );
 }
@@ -109,7 +163,7 @@ function SidebarDropdownLink({ label, icon, children, activeDropdown, setActiveD
 /**
  * Main Sidebar Component (SCROLLBAR HIDDEN)
  */
-export default function DashboardSidebar({ open, setOpen }: SidebarProps) {
+export default function DashboardSidebar({ open, setOpen, collapsed, setCollapsed }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
@@ -165,7 +219,7 @@ export default function DashboardSidebar({ open, setOpen }: SidebarProps) {
   const isCurrentPath = (path: string) => location.pathname === path;
 
   return (
-    <>
+    <SidebarContext.Provider value={{ collapsed }}>
       {/* Dark overlay for mobile/tablet */}
       {open && (
         <div
@@ -175,20 +229,42 @@ export default function DashboardSidebar({ open, setOpen }: SidebarProps) {
       )}
       {/* Sidebar - HIDING SCROLLBAR HERE */}
       <aside
-        className={`fixed lg:static z-50 top-16 left-0 w-55 h-[calc(100vh-32px)] 
-        bg-white shadow-md transform lg:translate-x-0 transition-transform duration-300 overflow-y-auto scrollbar-hide
-        ${open ? "translate-x-0" : "-translate-x-full"}`}
+        className={`fixed lg:static z-50 top-16 left-0 h-[calc(100vh-32px)] 
+        bg-white shadow-md transform lg:translate-x-0 transition-all duration-300 overflow-y-auto scrollbar-hide
+        ${open ? "translate-x-0" : "-translate-x-full"}
+        ${collapsed ? "w-20" : "w-55"}`}
       >
         <div className="relative h-full flex flex-col justify-between">
+          {/* Collapse Toggle Button */}
+          <div className={`px-4 pt-4 flex ${collapsed ? 'justify-center' : 'justify-end'}`}>
+            <button
+              onClick={() => setCollapsed(!collapsed)}
+              className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-2"
+            >
+              {collapsed ? (
+                <ChevronRight size={20} />
+              ) : (
+                <>
+                  <span className="text-sm font-medium">Collapse</span>
+                  <ChevronLeft size={20} />
+                </>
+              )}
+            </button>
+          </div>
           <div className="flex-grow">
             {/* Create New Button */}
-            <div className="relative px-4 pt-4 pb-2" ref={createNewRef}>
+            <div className={`relative pt-4 pb-2 transition-all ${collapsed ? 'px-2' : 'px-4'}`} ref={createNewRef}>
               <button
                 onClick={toggleCreateNew}
-                className="w-full bg-gradient-to-r from-[#1BCB40] to-[#7CD947] hover:opacity-95 text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-all focus:outline-none focus:ring-2 focus:ring-[#1BCB40]/40 shadow-[0_20px_60px_rgba(27,203,64,0.32)] hover:shadow-[0_28px_90px_rgba(27,203,64,0.44)]"
+                className={`w-full bg-gradient-to-r from-[#1BCB40] to-[#7CD947] hover:opacity-95 text-white font-semibold rounded-lg flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-[#1BCB40]/40 shadow-[0_20px_60px_rgba(27,203,64,0.32)] hover:shadow-[0_28px_90px_rgba(27,203,64,0.44)]
+                  ${collapsed ? 'h-12 w-12 mx-auto rounded-xl p-0' : 'py-3 px-4 gap-2'}`}
               >
-                Create New
-                <SquarePen size={20} className="text-white" />
+                {collapsed ? <SquarePen size={24} className="text-white" /> : (
+                  <>
+                    Create New
+                    <SquarePen size={20} className="text-white" />
+                  </>
+                )}
               </button>
 
               {/* Flyout Menu - Using Portal to escape sidebar overflow/transform context */}
@@ -208,32 +284,17 @@ export default function DashboardSidebar({ open, setOpen }: SidebarProps) {
                     >
                       List a unit
                     </button>
-                    {/* <button className="px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-green-600 border-b border-gray-100 transition-colors text-left">
-                      Invite to apply
-                    </button>
-                    <button className="px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-green-600 border-b border-gray-100 transition-colors text-left">
-                      Screen a tenant
-                    </button>
-                    <button className="px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-green-600 border-b border-gray-100 transition-colors text-left">
-                      Create new property
-                    </button>
-                    <button className="px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-green-600 border-b border-gray-100 transition-colors text-left">
-                      Record an income
-                    </button>
-                    <button className="px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-green-600 border-b border-gray-100 transition-colors text-left">
-                      Record an expense
-                    </button>
-                    <button className="px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-green-600 transition-colors text-left">
-                      Record a request
-                    </button> */}
+                    {/* ... other items (commented out in original) ... */}
                   </div>
                 </div>,
                 document.body
               )}
 
-              <div className="pointer-events-none absolute left-4 right-4 top-[64px] h-28">
-                <div className="w-full h-full rounded-xl bg-gradient-to-b from-[#1BCB40]/40 to-transparent filter blur-[20px] opacity-40" />
-              </div>
+              {!collapsed && (
+                <div className="pointer-events-none absolute left-4 right-4 top-[64px] h-28">
+                  <div className="w-full h-full rounded-xl bg-gradient-to-b from-[#1BCB40]/40 to-transparent filter blur-[20px] opacity-40" />
+                </div>
+              )}
             </div>
 
             {/* Navigation */}
@@ -339,15 +400,17 @@ export default function DashboardSidebar({ open, setOpen }: SidebarProps) {
           </div>
 
           {/* Artwork at Bottom */}
-          <div className="p-4 mt-auto">
+          <div className={`p-4 mt-auto transition-all duration-300 ${collapsed ? 'opacity-0 scale-0 h-0 p-0 overflow-hidden' : 'opacity-100'}`}>
             <img
               src={artworkImage}
               alt="Decorative artwork"
               className="mx-auto object-fill opacity-90 blur-[3px]"
             />
           </div>
+
+
         </div>
       </aside >
-    </>
+    </SidebarContext.Provider>
   );
 }
