@@ -236,18 +236,15 @@ export default function DashboardSidebar({ open, setOpen, collapsed, setCollapse
       >
         <div className="relative h-full flex flex-col justify-between">
           {/* Collapse Toggle Button */}
-          <div className={`px-4 pt-4 flex ${collapsed ? 'justify-center' : 'justify-end'}`}>
+          <div className="flex justify-end px-3 pt-3">
             <button
               onClick={() => setCollapsed(!collapsed)}
-              className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-2"
+              className={`p-1.5 rounded-lg text-gray-400 hover:text-[#1BCB40] hover:bg-green-50 transition-all duration-200 ${collapsed ? 'mx-auto' : ''}`}
             >
               {collapsed ? (
                 <ChevronRight size={20} />
               ) : (
-                <>
-                  <span className="text-sm font-medium">Collapse</span>
-                  <ChevronLeft size={20} />
-                </>
+                <ChevronLeft size={20} />
               )}
             </button>
           </div>
@@ -256,15 +253,18 @@ export default function DashboardSidebar({ open, setOpen, collapsed, setCollapse
             <div className={`relative pt-4 pb-2 transition-all ${collapsed ? 'px-2' : 'px-4'}`} ref={createNewRef}>
               <button
                 onClick={toggleCreateNew}
-                className={`w-full bg-gradient-to-r from-[#1BCB40] to-[#7CD947] hover:opacity-95 text-white font-semibold rounded-lg flex items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-[#1BCB40]/40 shadow-[0_20px_60px_rgba(27,203,64,0.32)] hover:shadow-[0_28px_90px_rgba(27,203,64,0.44)]
-                  ${collapsed ? 'h-12 w-12 mx-auto rounded-xl p-0' : 'py-3 px-4 gap-2'}`}
+                className={`bg-gradient-to-r from-[#1BCB40] to-[#7CD947] hover:opacity-95 text-white font-semibold flex items-center justify-center transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#1BCB40]/40 shadow-[0_20px_60px_rgba(27,203,64,0.32)] hover:shadow-[0_28px_90px_rgba(27,203,64,0.44)] overflow-hidden
+                  ${collapsed ? 'w-12 h-12 rounded-xl mx-auto' : 'w-full py-3 px-4 rounded-lg'}`}
               >
-                {collapsed ? <SquarePen size={24} className="text-white" /> : (
-                  <>
+                <div className={`flex items-center justify-center transition-all duration-300 ${collapsed ? '' : 'gap-2'}`}>
+                  <span
+                    className={`whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out ${collapsed ? 'max-w-0 opacity-0 w-0' : 'max-w-[150px] opacity-100 w-auto'
+                      }`}
+                  >
                     Create New
-                    <SquarePen size={20} className="text-white" />
-                  </>
-                )}
+                  </span>
+                  <SquarePen className={`text-white transition-all duration-300 ${collapsed ? 'w-6 h-6' : 'w-5 h-5'}`} />
+                </div>
               </button>
 
               {/* Flyout Menu - Using Portal to escape sidebar overflow/transform context */}
