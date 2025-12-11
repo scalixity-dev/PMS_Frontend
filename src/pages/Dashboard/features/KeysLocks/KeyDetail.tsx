@@ -4,7 +4,7 @@ import { ChevronLeft, Edit, Trash2 } from 'lucide-react';
 import CustomTextBox from '../../components/CustomTextBox';
 import { keysData } from './KeysLocks';
 import AssignKeyModal from './AssignKeyModal';
-import DeleteConfirmationModal from './DeleteConfirmationModal';
+import ConfirmationModal from './ConfirmationModal';
 
 const KeyDetail = () => {
     const navigate = useNavigate();
@@ -13,11 +13,18 @@ const KeyDetail = () => {
     const [isActionDropdownOpen, setIsActionDropdownOpen] = React.useState(false);
     const [isAssignModalOpen, setIsAssignModalOpen] = React.useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
+    const [isUnassignModalOpen, setIsUnassignModalOpen] = React.useState(false);
 
     const handleAssignKey = (property: string) => {
         console.log('Assigned to:', property);
         // Add logic to update key assignment here
         setIsAssignModalOpen(false);
+    };
+
+    const handleUnassignKey = () => {
+        console.log('Unassigning key...');
+        // Add logic to unassign key here
+        setIsUnassignModalOpen(false);
     };
 
     const handleDeleteKey = () => {
@@ -58,7 +65,10 @@ const KeyDetail = () => {
                             Assign
                         </button>
                     ) : (
-                        <button className="px-6 py-2 bg-red-500 text-white rounded-full text-sm font-medium hover:bg-red-600 transition-colors shadow-sm">
+                        <button
+                            onClick={() => setIsUnassignModalOpen(true)}
+                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-red-600 transition-colors shadow-sm"
+                        >
                             Unassign
                         </button>
                     )}
@@ -178,10 +188,22 @@ const KeyDetail = () => {
                 onAssign={handleAssignKey}
             />
 
-            <DeleteConfirmationModal
+            <ConfirmationModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={handleDeleteKey}
+                title="You're about to delete this key"
+                message="Are you sure you want to delete it?"
+                confirmLabel="Delete"
+            />
+
+            <ConfirmationModal
+                isOpen={isUnassignModalOpen}
+                onClose={() => setIsUnassignModalOpen(false)}
+                onConfirm={handleUnassignKey}
+                title="Unassign Key"
+                message="Are you sure you want to unassign this key?"
+                confirmLabel="Unassign"
             />
         </div>
     );

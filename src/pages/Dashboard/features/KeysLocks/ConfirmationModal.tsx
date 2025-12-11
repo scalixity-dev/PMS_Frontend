@@ -1,20 +1,24 @@
 import React from 'react';
 import { X, AlertTriangle } from 'lucide-react';
 
-interface DeleteConfirmationModalProps {
+interface ConfirmationModalProps {
     isOpen: boolean;
     onClose: () => void;
     onConfirm: () => void;
-    title?: string;
-    message?: string;
+    title: string;
+    message: string;
+    confirmLabel?: string;
+    cancelLabel?: string;
 }
 
-const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
+const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
     isOpen,
     onClose,
     onConfirm,
-    title = "You're about to delete this key",
-    message = "Are you sure you want to delete it?"
+    title,
+    message,
+    confirmLabel = "Confirm",
+    cancelLabel = "Cancel"
 }) => {
     if (!isOpen) return null;
 
@@ -42,13 +46,13 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
                             onClick={onClose}
                             className="flex-1 bg-[#535D68] text-white px-6 py-3 rounded-lg font-medium shadow-sm hover:bg-[#434b54] transition-colors"
                         >
-                            Cancel
+                            {cancelLabel}
                         </button>
                         <button
                             onClick={onConfirm}
                             className="flex-1 bg-[#3A6D6C] text-white px-6 py-3 rounded-lg font-medium shadow-sm hover:bg-[#2c5251] transition-colors"
                         >
-                            Confirm
+                            {confirmLabel}
                         </button>
                     </div>
                 </div>
@@ -57,4 +61,4 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
     );
 };
 
-export default DeleteConfirmationModal;
+export default ConfirmationModal;
