@@ -1,3 +1,4 @@
+// Fixed implicit any
 import React, { useState } from 'react';
 import CustomDropdown from '../../../components/CustomDropdown';
 import DatePicker from '../../../../../components/ui/DatePicker';
@@ -20,19 +21,20 @@ interface PropertyTenantsStepProps {
     onNext: () => void;
     onBack: () => void;
     properties: Array<{ id: string; name: string; address: string }>;
+    initialData?: any;
 }
 
-const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBack, properties }) => {
-    const [selectedProperty, setSelectedProperty] = useState('');
-    const [linkEquipment, setLinkEquipment] = useState(false);
-    const [selectedEquipment, setSelectedEquipment] = useState('');
+const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBack, properties, initialData }) => {
+    const [selectedProperty, setSelectedProperty] = useState(initialData?.property || '');
+    const [linkEquipment, setLinkEquipment] = useState(!!initialData?.equipment);
+    const [selectedEquipment, setSelectedEquipment] = useState(initialData?.equipment || '');
     const [showEquipmentDropdown, setShowEquipmentDropdown] = useState(false);
     const [equipmentSearchQuery, setEquipmentSearchQuery] = useState('');
     const [showCreateEquipmentModal, setShowCreateEquipmentModal] = useState(false);
     const [showExitConfirmation, setShowExitConfirmation] = useState(false);
-    const [tenantAuthorization, setTenantAuthorization] = useState(false);
-    const [dateOptions, setDateOptions] = useState<DateOption[]>([]);
-    const [pmsList, setPmsList] = useState([
+    const [tenantAuthorization, setTenantAuthorization] = useState(initialData?.tenantAuthorization || false);
+    const [dateOptions, setDateOptions] = useState<DateOption[]>(initialData?.dateOptions || []);
+    const [pmsList, setPmsList] = useState(initialData?.pmsList || [
         { id: 1, name: 'Atul', status: 'Pending', share: true },
         { id: 2, name: 'Ajay', status: 'Pending', share: true },
     ]);
@@ -62,7 +64,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
     }));
 
     const togglePmsShare = (id: number) => {
-        setPmsList(pmsList.map(pms =>
+        setPmsList(pmsList.map((pms: any) =>
             pms.id === id ? { ...pms, share: !pms.share } : pms
         ));
     };
@@ -251,7 +253,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                         <div>Share</div>
                     </div>
                     <div className="bg-white rounded-b-xl overflow-hidden">
-                        {pmsList.map((pms, index) => (
+                        {pmsList.map((pms: any, index: number) => (
                             <div key={pms.id} className={`grid grid-cols-3 px-8 py-4 items-center ${index !== pmsList.length - 1 ? 'border-b border-gray-100' : ''}`}>
                                 <div className="flex items-center gap-4">
                                     <div className="w-10 h-10 rounded-full bg-[#E0E7FF] flex items-center justify-center border border-gray-200">

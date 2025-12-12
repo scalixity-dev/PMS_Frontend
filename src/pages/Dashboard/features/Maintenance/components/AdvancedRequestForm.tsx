@@ -5,16 +5,17 @@ import { Upload, Video } from 'lucide-react';
 interface AdvancedRequestFormProps {
     onNext: (data: any) => void;
     onDiscard: () => void;
+    initialData?: any;
 }
 
-const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDiscard }) => {
+const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDiscard, initialData }) => {
     const [formData, setFormData] = useState({
-        category: '',
-        subCategory: '',
-        issue: '',
-        subIssue: '',
-        title: '',
-        details: ''
+        category: initialData?.category || '',
+        subCategory: initialData?.subCategory || '',
+        issue: initialData?.issue || '',
+        subIssue: initialData?.subIssue || '',
+        title: initialData?.title || '',
+        details: initialData?.details || ''
     });
 
     // Category to SubCategories mapping
@@ -115,7 +116,7 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
     const handleChange = (field: string, value: string) => {
         setFormData(prev => {
             const updated = { ...prev, [field]: value };
-            
+
             // Reset dependent fields when parent field changes
             if (field === 'category') {
                 updated.subCategory = '';
@@ -127,7 +128,7 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
             } else if (field === 'issue') {
                 updated.subIssue = '';
             }
-            
+
             return updated;
         });
     };

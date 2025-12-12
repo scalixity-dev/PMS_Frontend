@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Plus, Settings, Edit, Trash2, Check } from 'lucide-react';
+import { ChevronLeft, Plus, Edit, Trash2, Check } from 'lucide-react';
 import DashboardFilter from '../../components/DashboardFilter';
 
 // Mock Data
@@ -118,10 +118,6 @@ const KeysLocks = () => {
                         <button onClick={() => navigate('/dashboard/portfolio/add-key')} className="px-5 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2 shadow-sm">
                             Add Request
                             <Plus className="w-4 h-4" />
-                        </button>
-                        <button className="px-5 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2 shadow-sm">
-                            Edit Settings
-                            <Settings className="w-4 h-4" />
                         </button>
                     </div>
                 </div>

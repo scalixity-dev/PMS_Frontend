@@ -377,7 +377,7 @@ export default function DashboardSidebar({ open, setOpen, collapsed, setCollapse
                 activeDropdown={activeDropdown}
                 setActiveDropdown={setActiveDropdown}
               >
-                <SidebarSubLink label="Requests" to="/maintenance/requests" isCurrentPath={isCurrentPath} />
+                <SidebarSubLink label="Requests" to="/dashboard/maintenance/requests" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Requests Board" to="/maintenance/board" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Recurring" to="/maintenance/recurring" isCurrentPath={isCurrentPath} />
               </SidebarDropdownLink>
