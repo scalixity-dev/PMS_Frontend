@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Upload, Edit, Trash2 } from 'lucide-react';
 import CustomDropdown from '../../components/CustomDropdown';
@@ -18,17 +18,38 @@ const AddKey = () => {
     const [details, setDetails] = useState(keyItem?.keyDescription || '');
     const [image, setImage] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const imageUrlRef = useRef<string | null>(null);
+
+    // Cleanup blob URL on component unmount
+    useEffect(() => {
+        return () => {
+            if (imageUrlRef.current) {
+                URL.revokeObjectURL(imageUrlRef.current);
+            }
+        };
+    }, []);
 
     const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
+            // Revoke the previous blob URL to free up memory
+            if (imageUrlRef.current) {
+                URL.revokeObjectURL(imageUrlRef.current);
+            }
+            // Create and store the new blob URL
             const imageUrl = URL.createObjectURL(file);
+            imageUrlRef.current = imageUrl;
             setImage(imageUrl);
         }
     };
 
     const handleDeleteImage = (e: React.MouseEvent) => {
         e.stopPropagation();
+        // Revoke the blob URL to free up memory
+        if (imageUrlRef.current) {
+            URL.revokeObjectURL(imageUrlRef.current);
+            imageUrlRef.current = null;
+        }
         setImage(null);
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
