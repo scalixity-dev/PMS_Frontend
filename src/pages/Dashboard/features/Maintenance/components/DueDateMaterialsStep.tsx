@@ -12,13 +12,19 @@ interface Material {
 interface DueDateMaterialsStepProps {
     onNext: (data: { dateInitiated: Date | undefined; dateDue: Date | undefined; priority: string; materials: Material[] }) => void;
     onBack: () => void;
+    initialData?: {
+        dateInitiated?: Date;
+        dateDue?: Date;
+        priority?: string;
+        materials?: Material[];
+    };
 }
 
-const DueDateMaterialsStep: React.FC<DueDateMaterialsStepProps> = ({ onNext, onBack }) => {
-    const [dateInitiated, setDateInitiated] = useState<Date | undefined>(new Date());
-    const [dateDue, setDateDue] = useState<Date | undefined>(undefined);
-    const [priority, setPriority] = useState('');
-    const [materials, setMaterials] = useState<Material[]>([]);
+const DueDateMaterialsStep: React.FC<DueDateMaterialsStepProps> = ({ onNext, onBack, initialData }) => {
+    const [dateInitiated, setDateInitiated] = useState<Date | undefined>(initialData?.dateInitiated || new Date());
+    const [dateDue, setDateDue] = useState<Date | undefined>(initialData?.dateDue);
+    const [priority, setPriority] = useState(initialData?.priority || '');
+    const [materials, setMaterials] = useState<Material[]>(initialData?.materials || []);
 
     const handleAddMaterial = () => {
         const newMaterial: Material = {
@@ -30,13 +36,13 @@ const DueDateMaterialsStep: React.FC<DueDateMaterialsStepProps> = ({ onNext, onB
     };
 
     const handleMaterialChange = (id: string, field: 'name', value: string) => {
-        setMaterials(materials.map(m => 
+        setMaterials(prev => prev.map(m =>
             m.id === id ? { ...m, [field]: value } : m
         ));
     };
 
     const handleQuantityChange = (id: string, delta: number) => {
-        setMaterials(materials.map(m => {
+        setMaterials(prev => prev.map(m => {
             if (m.id === id) {
                 const newQuantity = Math.max(1, m.quantity + delta);
                 return { ...m, quantity: newQuantity };
@@ -46,7 +52,7 @@ const DueDateMaterialsStep: React.FC<DueDateMaterialsStepProps> = ({ onNext, onB
     };
 
     const handleDeleteMaterial = (id: string) => {
-        setMaterials(materials.filter(m => m.id !== id));
+        setMaterials(prev => prev.filter(m => m.id !== id));
     };
 
     return (
@@ -94,7 +100,7 @@ const DueDateMaterialsStep: React.FC<DueDateMaterialsStepProps> = ({ onNext, onB
                     required
                     buttonClassName="!bg-white !border-none !rounded-md !py-3"
                 />
-               
+
             </div>
 
             {/* Materials Section */}
@@ -127,7 +133,7 @@ const DueDateMaterialsStep: React.FC<DueDateMaterialsStepProps> = ({ onNext, onB
                                         className="w-full rounded-md border border-gray-300 px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#3D7475]/20 focus:border-[#3D7475]"
                                     />
                                 </div>
-                                
+
                                 <div className="flex items-center gap-2 mt-6">
                                     <button
                                         onClick={() => handleQuantityChange(material.id, -1)}

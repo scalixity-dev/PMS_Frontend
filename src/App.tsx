@@ -27,13 +27,20 @@ import AddProperty from './pages/Dashboard/features/Properties/AddProperty';
 import EditProperty from './pages/Dashboard/features/Properties/EditProperty';
 import Transactions from './pages/Dashboard/features/Transactions/Transactions';
 import AddIncomeInvoice from './pages/Dashboard/features/Transactions/AddIncomeInvoice';
+import RecurringIncome from './pages/Dashboard/features/Transactions/RecurringIncome';
 import RecurringExpense from './pages/Dashboard/features/Transactions/RecurringExpense';
 import ReturnDeposit from './pages/Dashboard/features/Transactions/ReturnDeposit';
 import ApplyDepositAndCredit from './pages/Dashboard/features/Transactions/ApplyDepositAndCredit';
+import BulkPaymentsIncome from './pages/Dashboard/features/Transactions/BulkPaymentsIncome';
 import BulkPaymentsExpense from './pages/Dashboard/features/Transactions/BulkPaymentsExpense';
+import Deposit from './pages/Dashboard/features/Transactions/Deposit';
+import Credits from './pages/Dashboard/features/Transactions/Credits';
+import IncomePayments from './pages/Dashboard/features/Transactions/IncomePayments';
 import ExpensePayments from './pages/Dashboard/features/Transactions/ExpensePayments';
 import AddExpenseInvoice from './pages/Dashboard/features/Transactions/AddExpenseInvoice';
 import AddMaintenanceRequest from './pages/Dashboard/features/Maintenance/AddMaintenanceRequest';
+import Requests from './pages/Dashboard/features/Maintenance/MaintenanceRequests';
+import MaintenanceRequestsDetail from './pages/Dashboard/features/Maintenance/MaintenanceRequestsDetail';
 import Properties from './pages/Dashboard/features/Properties/Properties';
 import Equipments from './pages/Dashboard/features/Equipments/Equipments';
 import EquipmentDetail from './pages/Dashboard/features/Equipments/EquipmentDetail';
@@ -53,6 +60,9 @@ import KeysLocks from './pages/Dashboard/features/KeysLocks/KeysLocks';
 import KeyDetail from './pages/Dashboard/features/KeysLocks/KeyDetail';
 import Leases from './pages/Dashboard/features/Leases/Leases';
 import LeaseDetail from './pages/Dashboard/features/Leases/LeaseDetail';
+import AddKey from './pages/Dashboard/features/KeysLocks/AddKey';
+import ServicePros from './pages/Dashboard/features/ServicePros/ServicePros';
+import ServiceProsDetail from './pages/Dashboard/features/ServicePros/ServiceProsDetail';
 // import ListUnit from './pages/Dashboard/features/ListUnit/ListUnit';
 
 // Create a QueryClient instance
@@ -110,6 +120,8 @@ const App: React.FC = () => {
               <Route path="/dashboard/properties" element={<Properties />} />
               <Route path="/dashboard/portfolio/units" element={<Units />} />
               <Route path="/dashboard/portfolio/keys-locks" element={<KeysLocks />} />
+              <Route path="/dashboard/portfolio/add-key" element={<AddKey />} />
+              <Route path="/dashboard/portfolio/edit-key/:id" element={<AddKey />} />
               <Route path="/dashboard/portfolio/keys-locks/:id" element={<KeyDetail />} />
               <Route path="/dashboard/properties/:id" element={<PropertyDetail />} />
               <Route path="/dashboard/properties/edit/:id" element={<EditProperty />} />
@@ -130,21 +142,27 @@ const App: React.FC = () => {
               <Route path="/dashboard/properties/edit/:id" element={<EditProperty />} />
               <Route path="/dashboard/accounting/transactions" element={<Transactions />} />
               <Route path="/dashboard/accounting/transactions/income/add" element={<AddIncomeInvoice />} />
+              <Route path="/dashboard/accounting/transactions/income-payments" element={<IncomePayments />} />
+              <Route path="/dashboard/accounting/transactions/recurring-income/add" element={<RecurringIncome />} />
               <Route path="/dashboard/accounting/transactions/expense/add" element={<AddExpenseInvoice />} />
               <Route path="/dashboard/accounting/transactions/recurring-expense/add" element={<RecurringExpense />} />
               <Route path="/dashboard/accounting/transactions/return-deposit" element={<ReturnDeposit />} />
               <Route path="/dashboard/accounting/transactions/apply-deposit" element={<ApplyDepositAndCredit />} />
+              <Route path="/dashboard/accounting/transactions/bulk-payments-income" element={<BulkPaymentsIncome />} />
               <Route path="/dashboard/accounting/transactions/bulk-payments-expense" element={<BulkPaymentsExpense />} />
+              <Route path="/dashboard/accounting/transactions/deposit/add" element={<Deposit />} />
+              <Route path="/dashboard/accounting/transactions/credits/add" element={<Credits />} />
               <Route path="/dashboard/accounting/transactions/expense-payments" element={<ExpensePayments />} />
               <Route path="/dashboard/maintenance/request" element={<AddMaintenanceRequest />} />
+              <Route path="/dashboard/maintenance/requests" element={<Requests />} />
+              <Route path="/dashboard/maintenance/requests/:id" element={<MaintenanceRequestsDetail />} />
               <Route path="/dashboard/movein" element={<MoveIn />} />
               <Route path="/dashboard/contacts/tenants" element={<Tenants />} />
               <Route path="/dashboard/contacts/tenants/:id" element={<TenantDetail />} />
-              <Route path="/dashboard/portfolio/leases" element={<Leases />} />
+              <Route path="/dashboard/contacts/service-pros" element={<ServicePros />} />
+              <Route path="/dashboard/contacts/service-pros/:id" element={<ServiceProsDetail />} />
+              <Route path="/dashboard/leasing/leases" element={<Leases />} />
               <Route path="/dashboard/portfolio/leases/:id" element={<LeaseDetail />} />
-
-              <Route path="/dashboard/contacts/tenants" element={<Tenants />} />
-              <Route path="/dashboard/contacts/tenants/:id" element={<TenantDetail />} />
               <Route
                 path="/portfolio"
                 element={

@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Plus } from 'lucide-react';
 import DetailTabs from '../../components/DetailTabs';
-import CustomTextBox from '../../components/CustomTextBox';
 import TenantProfileSection from './components/TenantProfileSection';
 import TenantLeasesSection from './components/TenantLeasesSection';
 import TenantTransactionsSection from './components/TenantTransactionsSection';
@@ -176,7 +175,19 @@ const TenantDetail = () => {
                         <h1 className="text-2xl font-bold text-black">Tenant</h1>
                     </div>
                     <div className="flex gap-3">
-                        <button className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2">
+                        <button
+                            onClick={() => navigate('/dashboard/accounting/transactions/income/add', {
+                                state: {
+                                    prefilledPayer: {
+                                        id: tenant.id,
+                                        label: tenant.name,
+                                        type: 'tenant'
+                                    },
+                                    prefilledLease: 'Lease #101' // Mock lease for now
+                                }
+                            })}
+                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2"
+                        >
                             Add Invoice
                             <Plus className="w-4 h-4" />
                         </button>
@@ -199,7 +210,7 @@ const TenantDetail = () => {
                                         <p className="text-xs opacity-90">{tenant.phone}</p>
                                         <p className="text-xs opacity-90">{tenant.email}</p>
                                     </div>
-                                    <button 
+                                    <button
                                         onClick={() => navigate(`/dashboard/contacts/tenants/${tenant.id}/profile`)}
                                         className="w-full bg-[#C8C8C8] text-gray-700 py-2 rounded-full text-sm font-medium hover:bg-[#b8b8b8] transition-colors shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]"
                                     >

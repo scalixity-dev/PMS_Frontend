@@ -10,6 +10,7 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
 
   return (
     <div className="flex min-h-screen bg-gray-100 flex-col">
@@ -18,11 +19,18 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       </div>
 
       <div className="flex flex-1 pt-20">
-        <div className="fixed left-0 top-16 bottom-0 z-40 h-[calc(100vh-32px)]">
-          <DashboardSidebar open={sidebarOpen} setOpen={setSidebarOpen} />
+        <div className={`fixed left-0 top-16 bottom-0 z-40 h-[calc(100vh-32px)] transition-all duration-300 ${sidebarCollapsed ? 'w-20' : 'w-55'}`}>
+          <DashboardSidebar
+            open={sidebarOpen}
+            setOpen={setSidebarOpen}
+            collapsed={sidebarCollapsed}
+            setCollapsed={setSidebarCollapsed}
+          />
         </div>
 
-        <main className="p-4 md:p-6 flex-1 ml-0 lg:ml-55 overflow-y-auto">{children || <Outlet />}</main>
+        <main className={`p-4 md:p-6 flex-1 ml-0 transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-55'} overflow-y-auto`}>
+          {children || <Outlet />}
+        </main>
       </div>
     </div>
   );

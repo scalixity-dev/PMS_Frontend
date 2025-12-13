@@ -149,19 +149,34 @@ const Transactions: React.FC = () => {
                                     >
                                         Income invoice
                                     </button>
-                                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">
+                                    <button
+                                        onClick={() => navigate('/dashboard/accounting/transactions/income-payments')}
+                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100"
+                                    >
                                         Income payment
                                     </button>
-                                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">
+                                    <button
+                                        onClick={() => navigate('/dashboard/accounting/transactions/recurring-income/add')}
+                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100"
+                                    >
                                         Recurring income
                                     </button>
-                                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">
+                                    <button
+                                        onClick={() => navigate('/dashboard/accounting/transactions/bulk-payments-income')}
+                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100"
+                                    >
                                         Bulk change
                                     </button>
-                                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">
+                                    <button
+                                        onClick={() => navigate('/dashboard/accounting/transactions/deposit/add')}
+                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100"
+                                    >
                                         Deposit
                                     </button>
-                                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                    <button
+                                        onClick={() => navigate('/dashboard/accounting/transactions/credits/add')}
+                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                                    >
                                         Credits
                                     </button>
                                 </div>
