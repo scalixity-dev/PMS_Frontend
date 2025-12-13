@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronDown } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import TransactionToggle from './components/TransactionToggle';
 import DatePicker from '../../../../components/ui/DatePicker';
 import CustomDropdown from '../../components/CustomDropdown';
 import PayerPayeeDropdown from './components/PayerPayeeDropdown';
-import AddTenantModal from './components/AddTenantModal';
+import AddTenantModal from '../Tenants/components/AddTenantModal';
 
 const AddIncomeInvoice: React.FC = () => {
 	const navigate = useNavigate();
@@ -15,6 +15,20 @@ const AddIncomeInvoice: React.FC = () => {
 	const [isPaid, setIsPaid] = useState<boolean>(false);
 	const [payerPayee, setPayerPayee] = useState<string>('');
 	const [isAddTenantModalOpen, setIsAddTenantModalOpen] = useState(false);
+	const [lease, setLease] = useState<string>('');
+	const [showLeaseInput, setShowLeaseInput] = useState(false);
+	const location = useLocation();
+
+	// Pre-fill data if passed from navigation state
+	React.useEffect(() => {
+		if (location.state?.prefilledPayer) {
+			setPayerPayee(location.state.prefilledPayer.label);
+		}
+		if (location.state?.prefilledLease) {
+			setLease(location.state.prefilledLease);
+			setShowLeaseInput(true);
+		}
+	}, [location.state]);
 
 	return (
 		<div className="p-6 max-w-6xl mx-auto font-['Urbanist']">
@@ -99,6 +113,25 @@ const AddIncomeInvoice: React.FC = () => {
 						onClose={() => setIsAddTenantModalOpen(false)}
 						onSave={(data) => console.log('New Tenant Data:', data)}
 					/>
+
+					{/* Lease Field - Only shown when navigating from Tenant Detail */}
+					{showLeaseInput && (
+						<div className="col-span-1 md:col-span-2">
+							<label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Lease</label>
+							<div className="relative">
+								<CustomDropdown
+									value={lease}
+									onChange={setLease}
+									options={[
+										{ value: 'Lease #101', label: 'Lease #101' },
+										{ value: 'Lease #102', label: 'Lease #102' },
+									]}
+									placeholder="Select Lease"
+									buttonClassName="!rounded-md"
+								/>
+							</div>
+						</div>
+					)}
 					{/* Currency (Only for General Income) or Spacer */}
 					{incomeType === 'general' ? (
 						<div className="col-span-1 md:col-span-1">

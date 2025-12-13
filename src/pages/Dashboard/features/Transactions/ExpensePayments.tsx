@@ -3,7 +3,7 @@ import { ChevronLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PayerPayeeDropdown from './components/PayerPayeeDropdown';
 import TransactionToggle from './components/TransactionToggle';
-import AddTenantModal from './components/AddTenantModal';
+import AddTenantModal from '../Tenants/components/AddTenantModal';
 import CustomDropdown from '../../components/CustomDropdown';
 import DatePicker from '../../../../components/ui/DatePicker';
 import { TRANSACTION_CATEGORIES } from '../../../../utils/transactionCategories';

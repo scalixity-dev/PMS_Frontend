@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import DatePicker from '../../../../components/ui/DatePicker';
 import PayerPayeeDropdown from './components/PayerPayeeDropdown';
 import TransactionToggle from './components/TransactionToggle';
-import AddTenantModal from './components/AddTenantModal';
+import AddTenantModal from '../Tenants/components/AddTenantModal';
 import CustomDropdown from '../../components/CustomDropdown';
 import { TRANSACTION_CATEGORIES } from '../../../../utils/transactionCategories';
 

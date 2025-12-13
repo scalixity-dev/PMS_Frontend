@@ -77,7 +77,7 @@ const PayerPayeeDropdown: React.FC<PayerPayeeDropdownProps> = ({
                             onClick={onAddTenant}
                             className="bg-[#84CC16] hover:bg-[#76b814] text-white text-xs font-semibold px-4 py-2 rounded-full flex items-center gap-2 transition-colors"
                         >
-                            Add tenant
+                            Add service pro
                             <Plus size={14} className="stroke-[3]" />
                         </button>
                         <button onClick={() => setIsOpen(false)} className="text-white hover:bg-white/10 p-1 rounded-full transition-colors">

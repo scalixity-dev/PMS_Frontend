@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardFilter from '../../components/DashboardFilter';
-import Pagination from '../../components/Pagination';
-import TenantCard from './components/TenantCard';
-import AddTenantModal from './components/AddTenantModal';
+import Pagination from '../../components/Pagination'; // Uncommented
+import ServiceProCard from './components/ServiceProCard';
+import AddServiceProModal from './components/AddServiceProModal';
 import { Plus, ChevronLeft } from 'lucide-react';
 
-const Tenants = () => {
+const ServicePros = () => {
     const navigate = useNavigate();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [, setFilters] = useState<Record<string, string[]>>({});
@@ -17,59 +17,66 @@ const Tenants = () => {
 
     const handleFiltersChange = (newFilters: Record<string, string[]>) => {
         setFilters(newFilters);
-        // console.log('Filters:', newFilters);
     };
 
     const filterOptions = {
-        tenantType: [
-            { value: 'active', label: 'Active' },
-            { value: 'past', label: 'Past' },
-            { value: 'prospective', label: 'Prospective' }
+        serviceProType: [
+            { value: 'individual', label: 'Individual' },
+            { value: 'company', label: 'Company' }
         ],
-        propertyUnits: [
-            { value: 'unit1', label: 'Unit 1' },
-            { value: 'unit2', label: 'Unit 2' }
+        category: [
+            { value: 'cleaning', label: 'Cleaning' },
+            { value: 'maintenance', label: 'Maintenance' },
+            { value: 'appraisal', label: 'Appraisal' }
         ],
-        lease: [
-            { value: 'active', label: 'Active' },
-            { value: 'expired', label: 'Expired' }
+        connection: [
+            { value: 'connected', label: 'Connected' },
+            { value: 'pending', label: 'Pending' }
         ]
     };
 
     const filterLabels = {
-        tenantType: 'Tenant Type',
-        propertyUnits: 'Property & Units',
-        lease: 'Lease'
+        serviceProType: 'Service Pro type',
+        category: 'Category & Sub-category',
+        connection: 'Connection'
     };
 
-    const tenants = [
+    const servicePros = [
         {
             id: 1,
-            name: 'Anjali Vyas',
-            phone: '+91 8569325417',
-            email: 'Anjli57474@gmail.com',
-            image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200&h=200'
+            initials: 'SR',
+            name: 'sam rao',
+            phone: '+91 78965 41236',
+            category: 'Commercial Cleaning Services',
+            bgColor: 'bg-[#4ad1a6]',
+            image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200&h=200'
         },
         {
             id: 2,
-            name: 'Sam Curren',
-            phone: '+91 8569325417',
-            email: 'Currensam@gmail.com',
+            initials: 'VR',
+            name: 'vijay rfgdd',
+            phone: '+91 70326 59874',
+            category: 'Appraiser',
+            bgColor: 'bg-[#4ad1a6]',
             image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200&h=200'
         },
         {
             id: 3,
-            name: 'Herry Gurney',
-            phone: '+91 8569325417',
-            email: 'Herrygurnwe@gmail.com',
-            image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=200&h=200'
+            initials: 'AB',
+            name: 'Alex Brown',
+            phone: '+1 555 123 4567',
+            category: 'Plumbing Services',
+            bgColor: 'bg-[#4ad1a6]',
+            image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=200&h=200'
         },
         {
             id: 4,
-            name: 'James Fos',
-            phone: '+91 8569325417',
-            email: 'Jamesfos@gmail.com',
-            image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200&h=200'
+            initials: 'JD',
+            name: 'John Doe',
+            phone: '+1 555 987 6543',
+            category: 'Electrical Services',
+            bgColor: 'bg-[#4ad1a6]',
+            image: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?auto=format&fit=crop&q=80&w=200&h=200'
         }
     ];
 
@@ -82,14 +89,14 @@ const Tenants = () => {
         setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
     };
 
-    const sortedTenants = [...tenants].sort((a, b) => {
+    const sortedServicePros = [...servicePros].sort((a, b) => {
         return sortOrder === 'asc'
             ? a.name.localeCompare(b.name)
             : b.name.localeCompare(a.name);
     });
 
-    const totalPages = Math.ceil(sortedTenants.length / itemsPerPage);
-    const currentTenants = sortedTenants.slice(
+    const totalPages = Math.ceil(sortedServicePros.length / itemsPerPage);
+    const currentServicePros = sortedServicePros.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
     );
@@ -102,19 +109,22 @@ const Tenants = () => {
     return (
         <div className="max-w-6xl mx-auto min-h-screen font-outfit">
             <div className="inline-flex items-center px-4 py-2 bg-[#E0E5E5] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                <span className="text-[#4ad1a6] text-sm font-semibold">Contacts</span>
+                <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
                 <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">Tenants</span>
+                <span className="text-gray-600 text-sm font-semibold">Service Pros</span>
             </div>
 
             <div className="p-6 bg-[#E0E5E5] min-h-screen rounded-[2rem]">
                 {/* Header */}
                 <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-2">
-                        <button onClick={() => navigate(-1)} className="p-2 hover:bg-black/5 rounded-full transition-colors">
-                            <ChevronLeft className="w-6 h-6 text-black" />
+                        {/* Adding Back button like Tenants page */}
+                        <button onClick={() => navigate(-1)} className="p-2 hover:bg-black/5 rounded-full transition-colors text-black">
+                            <ChevronLeft className="w-6 h-6" />
                         </button>
-                        <h1 className="text-2xl font-bold text-black">Tenants</h1>
+                        <h1 className="text-2xl font-bold text-black flex items-center gap-2">
+                            Service Pros
+                        </h1>
                     </div>
                     <div className="flex gap-3">
                         <button className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors">
@@ -124,7 +134,7 @@ const Tenants = () => {
                             onClick={() => setIsAddModalOpen(true)}
                             className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2"
                         >
-                            Add Tenants
+                            Add service pro
                             <Plus className="w-4 h-4" />
                         </button>
                     </div>
@@ -157,16 +167,16 @@ const Tenants = () => {
                         </svg>
                     </button>
                     <div className="bg-[#3A6D6C] text-white px-4 py-1 rounded-full text-sm">
-                        {tenants.length} tenants
+                        {servicePros.length} service pros
                     </div>
                 </div>
 
-                {/* Tenants Grid */}
+                {/* Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                    {currentTenants.map((tenant) => (
-                        <TenantCard
-                            key={tenant.id}
-                            {...tenant}
+                    {currentServicePros.map((pro) => (
+                        <ServiceProCard
+                            key={pro.id}
+                            {...pro}
                         />
                     ))}
                 </div>
@@ -177,12 +187,12 @@ const Tenants = () => {
                     onPageChange={handlePageChange}
                 />
 
-                <AddTenantModal
+                <AddServiceProModal
                     isOpen={isAddModalOpen}
                     onClose={() => setIsAddModalOpen(false)}
                     onSave={(data) => {
-                        console.log('New Tenant:', data);
-                        // Handle save logic
+                        console.log('New Service Pro:', data);
+                        // Handle save logic here
                     }}
                 />
             </div>
@@ -190,4 +200,4 @@ const Tenants = () => {
     );
 };
 
-export default Tenants;
+export default ServicePros;

@@ -61,6 +61,8 @@ import KeyDetail from './pages/Dashboard/features/KeysLocks/KeyDetail';
 import Leases from './pages/Dashboard/features/Leases/Leases';
 import LeaseDetail from './pages/Dashboard/features/Leases/LeaseDetail';
 import AddKey from './pages/Dashboard/features/KeysLocks/AddKey';
+import ServicePros from './pages/Dashboard/features/ServicePros/ServicePros';
+import ServiceProsDetail from './pages/Dashboard/features/ServicePros/ServiceProsDetail';
 // import ListUnit from './pages/Dashboard/features/ListUnit/ListUnit';
 
 // Create a QueryClient instance
@@ -157,11 +159,10 @@ const App: React.FC = () => {
               <Route path="/dashboard/movein" element={<MoveIn />} />
               <Route path="/dashboard/contacts/tenants" element={<Tenants />} />
               <Route path="/dashboard/contacts/tenants/:id" element={<TenantDetail />} />
+              <Route path="/dashboard/contacts/service-pros" element={<ServicePros />} />
+              <Route path="/dashboard/contacts/service-pros/:id" element={<ServiceProsDetail />} />
               <Route path="/dashboard/leasing/leases" element={<Leases />} />
               <Route path="/dashboard/portfolio/leases/:id" element={<LeaseDetail />} />
-
-              <Route path="/dashboard/contacts/tenants" element={<Tenants />} />
-              <Route path="/dashboard/contacts/tenants/:id" element={<TenantDetail />} />
               <Route
                 path="/portfolio"
                 element={

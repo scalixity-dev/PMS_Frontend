@@ -352,7 +352,7 @@ export default function DashboardSidebar({ open, setOpen, collapsed, setCollapse
                 setActiveDropdown={setActiveDropdown}
               >
                 <SidebarSubLink label="Tenants" to="/dashboard/contacts/tenants" isCurrentPath={isCurrentPath} />
-                <SidebarSubLink label="Service Pros" to="/contacts/service-pros" isCurrentPath={isCurrentPath} />
+                <SidebarSubLink label="Service Pros" to="/dashboard/contacts/service-pros" isCurrentPath={isCurrentPath} />
               </SidebarDropdownLink>
 
               {/* 5. Accounting Dropdown */}
