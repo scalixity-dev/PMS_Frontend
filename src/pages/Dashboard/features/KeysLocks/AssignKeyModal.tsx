@@ -20,13 +20,18 @@ const AssignKeyModal: React.FC<AssignKeyModalProps> = ({ isOpen, onClose, onAssi
     ];
 
     useEffect(() => {
+        // Capture the current overflow value before making any changes
+        const previousOverflow = document.body.style.overflow || '';
+        
         if (isOpen) {
             document.body.style.overflow = 'hidden';
         } else {
-            document.body.style.overflow = 'unset';
+            document.body.style.overflow = previousOverflow;
         }
+        
         return () => {
-            document.body.style.overflow = 'unset';
+            // Restore the original overflow value on cleanup
+            document.body.style.overflow = previousOverflow;
         };
     }, [isOpen]);
 
