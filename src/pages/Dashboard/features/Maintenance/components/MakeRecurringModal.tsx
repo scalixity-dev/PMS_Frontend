@@ -1,6 +1,75 @@
 import React, { useState, useEffect } from 'react';
 import { X, ChevronLeft, ChevronDown, Check } from 'lucide-react';
 
+interface CustomDropdownProps {
+    label: string;
+    value: string;
+    options: string[];
+    isOpen: boolean;
+    setIsOpen: (v: boolean) => void;
+    onSelect: (v: string) => void;
+}
+
+interface ReadOnlyFieldProps {
+    label: string;
+    value?: string;
+}
+
+const CustomDropdown = React.memo<CustomDropdownProps>(({
+    label,
+    value,
+    options,
+    isOpen,
+    setIsOpen,
+    onSelect
+}) => (
+    <div className="relative">
+        <label className="block text-sm font-bold text-gray-700 mb-2">{label}*</label>
+        <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="w-full text-left px-4 py-3 bg-white border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#3A6D6C] flex items-center justify-between"
+        >
+            <span className={value ? "text-gray-700" : "text-gray-400"}>
+                {value || `Select ${label}`}
+            </span>
+            <ChevronDown className="w-4 h-4 text-gray-400" />
+        </button>
+        {isOpen && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-100 rounded-lg shadow-xl z-[60] overflow-hidden max-h-60 overflow-y-auto">
+                {options.map((option) => (
+                    <button
+                        key={option}
+                        onClick={() => {
+                            onSelect(option);
+                            setIsOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-50 transition-colors flex items-center justify-between
+                            ${option === value ? 'bg-gray-50' : ''}
+                        `}
+                    >
+                        <span className="text-gray-700">{option}</span>
+                        {option === value && <Check className="w-4 h-4 text-[#3A6D6C]" />}
+                    </button>
+                ))}
+            </div>
+        )}
+    </div>
+));
+
+CustomDropdown.displayName = 'CustomDropdown';
+
+const ReadOnlyField = React.memo<ReadOnlyFieldProps>(({ label, value }) => (
+    <div>
+        <label className="block text-sm font-bold text-gray-700 mb-2">{label}*</label>
+        <div className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-500 shadow-sm flex items-center justify-between">
+            <span>{value || 'N/A'}</span>
+            <ChevronDown className="w-4 h-4 text-gray-300" />
+        </div>
+    </div>
+));
+
+ReadOnlyField.displayName = 'ReadOnlyField';
+
 interface MakeRecurringModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -49,64 +118,6 @@ const MakeRecurringModal: React.FC<MakeRecurringModalProps> = ({
         onSave({ startDate, endDate, frequency, postInAdvance });
         onClose();
     };
-
-    const CustomDropdown = ({
-        label,
-        value,
-        options,
-        isOpen,
-        setIsOpen,
-        onSelect
-    }: {
-        label: string,
-        value: string,
-        options: string[],
-        isOpen: boolean,
-        setIsOpen: (v: boolean) => void,
-        onSelect: (v: string) => void
-    }) => (
-        <div className="relative">
-            <label className="block text-sm font-bold text-gray-700 mb-2">{label}*</label>
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="w-full text-left px-4 py-3 bg-white border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#3A6D6C] flex items-center justify-between"
-            >
-                <span className={value ? "text-gray-700" : "text-gray-400"}>
-                    {value || `Select ${label}`}
-                </span>
-                <ChevronDown className="w-4 h-4 text-gray-400" />
-            </button>
-            {isOpen && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-100 rounded-lg shadow-xl z-[60] overflow-hidden max-h-60 overflow-y-auto">
-                    {options.map((option) => (
-                        <button
-                            key={option}
-                            onClick={() => {
-                                onSelect(option);
-                                setIsOpen(false);
-                            }}
-                            className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-50 transition-colors flex items-center justify-between
-                                ${option === value ? 'bg-gray-50' : ''}
-                            `}
-                        >
-                            <span className="text-gray-700">{option}</span>
-                            {option === value && <Check className="w-4 h-4 text-[#3A6D6C]" />}
-                        </button>
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-
-    const ReadOnlyField = ({ label, value }: { label: string, value?: string }) => (
-        <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">{label}*</label>
-            <div className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-500 shadow-sm flex items-center justify-between">
-                <span>{value || 'N/A'}</span>
-                <ChevronDown className="w-4 h-4 text-gray-300" />
-            </div>
-        </div>
-    );
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">

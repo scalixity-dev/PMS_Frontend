@@ -6,6 +6,22 @@ import TenantCard from './components/TenantCard';
 import AddTenantModal from './components/AddTenantModal';
 import { Plus, ChevronLeft } from 'lucide-react';
 
+interface Tenant {
+    id: number;
+    name: string;
+    phone: string;
+    email: string;
+    image?: string;
+}
+
+interface NewTenantData {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    companyName?: string;
+}
+
 const Tenants = () => {
     const navigate = useNavigate();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -42,7 +58,7 @@ const Tenants = () => {
         lease: 'Lease'
     };
 
-    const tenants = [
+    const [tenants, setTenants] = useState<Tenant[]>([
         {
             id: 1,
             name: 'Anjali Vyas',
@@ -71,7 +87,7 @@ const Tenants = () => {
             email: 'Jamesfos@gmail.com',
             image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200&h=200'
         }
-    ];
+    ]);
 
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
@@ -180,9 +196,19 @@ const Tenants = () => {
                 <AddTenantModal
                     isOpen={isAddModalOpen}
                     onClose={() => setIsAddModalOpen(false)}
-                    onSave={(data) => {
-                        console.log('New Tenant:', data);
-                        // Handle save logic
+                    onSave={(data: NewTenantData) => {
+                        // Create new tenant object with proper structure
+                        const newTenant: Tenant = {
+                            id: tenants.length > 0 ? Math.max(...tenants.map(t => t.id)) + 1 : 1,
+                            name: `${data.firstName} ${data.lastName}`.trim(),
+                            phone: data.phone,
+                            email: data.email,
+                            // Optional: use a placeholder image or leave undefined
+                            image: undefined
+                        };
+                        // Add new tenant to state
+                        setTenants(prev => [...prev, newTenant]);
+                        console.log('New Tenant Added:', newTenant);
                     }}
                 />
             </div>

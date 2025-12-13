@@ -36,13 +36,13 @@ const DueDateMaterialsStep: React.FC<DueDateMaterialsStepProps> = ({ onNext, onB
     };
 
     const handleMaterialChange = (id: string, field: 'name', value: string) => {
-        setMaterials(materials.map(m =>
+        setMaterials(prev => prev.map(m =>
             m.id === id ? { ...m, [field]: value } : m
         ));
     };
 
     const handleQuantityChange = (id: string, delta: number) => {
-        setMaterials(materials.map(m => {
+        setMaterials(prev => prev.map(m => {
             if (m.id === id) {
                 const newQuantity = Math.max(1, m.quantity + delta);
                 return { ...m, quantity: newQuantity };
@@ -52,7 +52,7 @@ const DueDateMaterialsStep: React.FC<DueDateMaterialsStepProps> = ({ onNext, onB
     };
 
     const handleDeleteMaterial = (id: string) => {
-        setMaterials(materials.filter(m => m.id !== id));
+        setMaterials(prev => prev.filter(m => m.id !== id));
     };
 
     return (

@@ -17,6 +17,13 @@ interface Equipment {
     category: string;
 }
 
+interface Pms {
+    id: number;
+    name: string;
+    status: string;
+    share: boolean;
+}
+
 interface PropertyTenantsStepProps {
     onNext: () => void;
     onBack: () => void;
@@ -34,7 +41,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
     const [showExitConfirmation, setShowExitConfirmation] = useState(false);
     const [tenantAuthorization, setTenantAuthorization] = useState(initialData?.tenantAuthorization || false);
     const [dateOptions, setDateOptions] = useState<DateOption[]>(initialData?.dateOptions || []);
-    const [pmsList, setPmsList] = useState(initialData?.pmsList || [
+    const [pmsList, setPmsList] = useState<Pms[]>(initialData?.pmsList || [
         { id: 1, name: 'Atul', status: 'Pending', share: true },
         { id: 2, name: 'Ajay', status: 'Pending', share: true },
     ]);
@@ -64,7 +71,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
     }));
 
     const togglePmsShare = (id: number) => {
-        setPmsList(pmsList.map((pms: any) =>
+        setPmsList(prev => prev.map((pms: Pms) =>
             pms.id === id ? { ...pms, share: !pms.share } : pms
         ));
     };

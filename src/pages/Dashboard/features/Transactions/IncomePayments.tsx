@@ -122,12 +122,11 @@ const IncomePayments: React.FC = () => {
                                     value={currency}
                                     onChange={setCurrency}
                                     options={[
-                                        { value: 'USD', label: 'In Ruppes' }, // Matching mockup placeholder "In Ruppes" but using standard codes as values, actually let's match the mockup text if possible or stick to standard. Mockup says "In Ruppes" which implies INR or a label. The dropdown in mockup shows "In Ruppes".
                                         { value: 'INR', label: 'In Rupees' },
                                         { value: 'USD', label: 'In Dollars' },
                                         { value: 'EUR', label: 'In Euros' },
                                     ]}
-                                    placeholder="In Ruppes"
+                                    placeholder="In Rupees"
                                     buttonClassName="!py-3 !rounded-md !border-0 !shadow-sm focus:!ring-[#3A6D6C]/20 w-full"
                                 />
                             </div>
@@ -143,7 +142,7 @@ const IncomePayments: React.FC = () => {
                         Methods was col-span-2 or col-span-1 depending on currency.
                         Let's follow logically. 
                     */}
-                    <div className={`col-span-1 md:col-span-${activeTab === 'General Income' ? '1' : '2'}`}>
+                    <div className={activeTab === 'General Income' ? 'col-span-1 md:col-span-1' : 'col-span-1 md:col-span-2'}>
                         <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Methods *</label>
                         <div className="relative">
                             <CustomDropdown

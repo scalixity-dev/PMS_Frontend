@@ -129,7 +129,7 @@ const Deposit: React.FC = () => {
                     )}
 
                     {/* Methods */}
-                    <div className={`col-span-1 md:col-span-${activeTab === 'General Deposit' ? '1' : '2'}`}>
+                    <div className={activeTab === 'General Deposit' ? 'col-span-1 md:col-span-1' : 'col-span-1 md:col-span-2'}>
                         <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Methods *</label>
                         <div className="relative">
                             <CustomDropdown

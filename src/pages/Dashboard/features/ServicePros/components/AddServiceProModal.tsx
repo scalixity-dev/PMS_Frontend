@@ -1,14 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, AlertTriangle } from 'lucide-react';
+
+interface FormData {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    companyName: string;
+}
 
 interface AddServiceProModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (data: any) => void;
+    onSave: (data: FormData) => void;
 }
 
 const AddServiceProModal: React.FC<AddServiceProModalProps> = ({ isOpen, onClose, onSave }) => {
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<FormData>({
         firstName: '',
         lastName: '',
         email: '',
@@ -17,6 +25,21 @@ const AddServiceProModal: React.FC<AddServiceProModalProps> = ({ isOpen, onClose
     });
 
     const [showExitConfirmation, setShowExitConfirmation] = useState(false);
+
+    // Reset stale state when modal opens
+    useEffect(() => {
+        if (isOpen) {
+            setShowExitConfirmation(false);
+            // Optionally reset form data when modal opens
+            setFormData({
+                firstName: '',
+                lastName: '',
+                email: '',
+                phone: '',
+                companyName: ''
+            });
+        }
+    }, [isOpen]);
 
     if (!isOpen) return null;
 

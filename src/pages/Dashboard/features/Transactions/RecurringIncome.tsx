@@ -44,7 +44,16 @@ const RecurringIncome: React.FC = () => {
     const [frequency, setFrequency] = useState<string>('');
     const [currency, setCurrency] = useState<string>('');
     const [method, setMethod] = useState<string>('');
+    const [amount, setAmount] = useState<string>('');
     const [isAddTenantModalOpen, setIsAddTenantModalOpen] = useState(false);
+
+    const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        // Allow empty string, numbers, and decimal point
+        if (value === '' || /^\d*\.?\d*$/.test(value)) {
+            setAmount(value);
+        }
+    };
 
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit">
@@ -142,6 +151,8 @@ const RecurringIncome: React.FC = () => {
                         <div className="relative">
                             <input
                                 type="text"
+                                value={amount}
+                                onChange={handleAmountChange}
                                 placeholder="0.00"
                                 className="w-full rounded-md bg-white px-4 py-3 text-sm text-gray-700 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#7BD747]/20 transition-all shadow-sm"
                             />
@@ -149,7 +160,7 @@ const RecurringIncome: React.FC = () => {
                     </div>
 
                     {/* Methods - Reusing Logic from IncomePayments */}
-                    <div className={`col-span-1 md:col-span-${incomeType === 'General Income' ? '1' : '2'}`}>
+                    <div className={incomeType === 'General Income' ? 'col-span-1 md:col-span-1' : 'col-span-1 md:col-span-2'}>
                         <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Methods *</label>
                         <div className="relative">
                             <CustomDropdown
@@ -172,12 +183,11 @@ const RecurringIncome: React.FC = () => {
                                     value={currency}
                                     onChange={setCurrency}
                                     options={[
-                                        { value: 'USD', label: 'In Ruppes' },
                                         { value: 'INR', label: 'In Rupees' },
                                         { value: 'USD', label: 'In Dollars' },
                                         { value: 'EUR', label: 'In Euros' },
                                     ]}
-                                    placeholder="In Ruppes"
+                                    placeholder="In Rupees"
                                     buttonClassName="!py-3 !rounded-md !border-0 !shadow-sm focus:!ring-[#3A6D6C]/20 w-full"
                                 />
                             </div>
