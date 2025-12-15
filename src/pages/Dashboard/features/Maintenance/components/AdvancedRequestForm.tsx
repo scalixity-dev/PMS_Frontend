@@ -1,21 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import CustomDropdown from '../../../components/CustomDropdown';
 import { Upload, Video } from 'lucide-react';
 
 interface AdvancedRequestFormProps {
     onNext: (data: any) => void;
     onDiscard: () => void;
+    initialData?: any;
 }
 
-const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDiscard }) => {
+const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDiscard, initialData }) => {
     const [formData, setFormData] = useState({
-        category: '',
-        subCategory: '',
-        issue: '',
-        subIssue: '',
-        title: '',
-        details: ''
+        category: initialData?.category || '',
+        subCategory: initialData?.subCategory || '',
+        issue: initialData?.issue || '',
+        subIssue: initialData?.subIssue || '',
+        title: initialData?.title || '',
+        details: initialData?.details || ''
     });
+    
+    // Track if user has edited the form to avoid clobbering their changes
+    const formTouchedRef = useRef(false);
+
+    // Update form when initialData arrives or changes, but only if user hasn't edited yet
+    useEffect(() => {
+        if (initialData && !formTouchedRef.current) {
+            setFormData({
+                category: initialData.category || '',
+                subCategory: initialData.subCategory || '',
+                issue: initialData.issue || '',
+                subIssue: initialData.subIssue || '',
+                title: initialData.title || '',
+                details: initialData.details || ''
+            });
+        }
+    }, [initialData]);
 
     // Category to SubCategories mapping
     const categorySubCategories: Record<string, Array<{ value: string; label: string }>> = {
@@ -113,9 +131,12 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
     };
 
     const handleChange = (field: string, value: string) => {
+        // Mark form as touched when user makes any change
+        formTouchedRef.current = true;
+        
         setFormData(prev => {
             const updated = { ...prev, [field]: value };
-            
+
             // Reset dependent fields when parent field changes
             if (field === 'category') {
                 updated.subCategory = '';
@@ -127,7 +148,7 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
             } else if (field === 'issue') {
                 updated.subIssue = '';
             }
-            
+
             return updated;
         });
     };
