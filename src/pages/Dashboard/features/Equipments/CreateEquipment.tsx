@@ -242,13 +242,21 @@ const CreateEquipment = () => {
                 });
             } else {
                 // Create new equipment
-                await createEquipmentMutation.mutateAsync(equipmentData);
+                const createdEquipment = await createEquipmentMutation.mutateAsync(equipmentData);
 
                 // Then, if there are any uploaded files, attach them to the property
                 if (uploadedFiles.length > 0 && formData.propertyId) {
-                    await Promise.all(
-                        uploadedFiles.map(file => uploadAttachmentFile(file, formData.propertyId)),
-                    );
+                    try {
+                        await Promise.all(
+                            uploadedFiles.map(file => uploadAttachmentFile(file, formData.propertyId)),
+                        );
+                    } catch (uploadError) {
+                        console.error('Some attachments failed to upload:', uploadError);
+                        // Equipment created, but warn user about attachment failure
+                        alert('Equipment created, but some attachments failed to upload. Please try adding them again.');
+                        navigate('/dashboard/equipments');
+                        return;
+                    }
                 }
             }
 
