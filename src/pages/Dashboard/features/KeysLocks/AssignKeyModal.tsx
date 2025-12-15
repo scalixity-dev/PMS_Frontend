@@ -30,6 +30,8 @@ const AssignKeyModal: React.FC<AssignKeyModalProps> = ({ isOpen, onClose, onAssi
 
     if (!isOpen) return null;
 
+    const hasProperties = properties.length > 0;
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
             <div className="bg-[#E0E5E5] w-full max-w-md rounded-3xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col">
@@ -55,9 +57,9 @@ const AssignKeyModal: React.FC<AssignKeyModalProps> = ({ isOpen, onClose, onAssi
                             <SearchableDropdown
                                 label="Assign To *"
                                 value={selectedProperty}
-                                options={properties.length > 0 ? properties : ['No properties available']}
+                                options={hasProperties ? properties : []}
                                 onChange={setSelectedProperty}
-                                placeholder="Select or enter name"
+                                placeholder={hasProperties ? 'Select or enter name' : 'No properties available'}
                                 className="w-full"
                             />
                         </div>
@@ -67,10 +69,13 @@ const AssignKeyModal: React.FC<AssignKeyModalProps> = ({ isOpen, onClose, onAssi
                     <div>
                         <button
                             onClick={() => {
-                                if (selectedProperty) {
-                                    onAssign(selectedProperty);
+                                // Guard: only assign when there are real properties and a valid selection
+                                if (!hasProperties || !selectedProperty) {
+                                    return;
                                 }
+                                onAssign(selectedProperty);
                             }}
+                            disabled={!hasProperties || !selectedProperty}
                             className="bg-[#3A6D6C] text-white px-8 py-2.5 rounded-lg font-medium shadow-sm hover:bg-[#2c5251] transition-colors"
                         >
                             Assign

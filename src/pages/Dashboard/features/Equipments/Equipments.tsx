@@ -114,7 +114,7 @@ const Equipments: React.FC = () => {
 
     // Transform backend equipment to display format
     const transformedEquipment = useMemo(() => {
-        return equipment.map((eq: BackendEquipment & { category?: any }) => {
+        return equipment.map((eq: BackendEquipment) => {
             // Handle category being either a string or an object { id, name, description }
             const categoryName =
                 typeof eq.category === 'string'
@@ -123,11 +123,17 @@ const Equipments: React.FC = () => {
                         ? eq.category.name ?? ''
                         : '';
 
+            // Handle subcategory being an object { id, name, description } or string (provided by backend)
+            const subcategoryName =
+                typeof eq.subcategory === 'object'
+                    ? eq.subcategory?.name || ''
+                    : (eq.subcategory || '');
+
             return {
                 id: eq.id,
                 brand: eq.brand,
                 category: categoryName,
-                subcategory: '', // Backend doesn't have subcategory, can be added if needed
+                subcategory: subcategoryName, // Extracted from backend subcategory object
                 property: eq.property?.propertyName || '-',
                 status: mapStatus(eq.status),
                 occupancy: eq.unitId ? 'occupied' : 'vacant', // Simplified logic

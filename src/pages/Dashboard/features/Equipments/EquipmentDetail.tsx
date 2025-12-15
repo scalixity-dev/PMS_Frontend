@@ -55,7 +55,8 @@ const EquipmentDetail = () => {
         );
     }
 
-    const equipmentTyped = equipment as BackendEquipment & { category?: any; subcategory?: any; property?: any };
+    // Strongly-typed backend equipment (see BackendEquipment in equipment.service.ts)
+    const equipmentTyped = equipment as BackendEquipment;
     // Handle category being either a string or an object { id, name, description }
     const categoryLabel =
         typeof equipmentTyped.category === 'string'
@@ -73,7 +74,8 @@ const EquipmentDetail = () => {
     // Prefer property cover photo (or primary photo) for the Property section image
     const propertyImageUrl =
         equipmentTyped.property?.coverPhotoUrl ||
-        equipmentTyped.property?.photos?.find((p: any) => p.isPrimary)?.photoUrl ||
+        equipmentTyped.property?.photos?.find((p) => p.isPrimary)?.photoUrl ||
+        equipmentTyped.property?.photos?.[0]?.photoUrl ||
         imageUrl;
 
     return (

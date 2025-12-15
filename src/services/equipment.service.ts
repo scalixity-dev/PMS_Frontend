@@ -7,7 +7,18 @@ export interface BackendEquipment {
   propertyId: string;
   unitId?: string | null;
   singleUnitDetailId?: string | null;
-  category: string;
+  // Can be a simple string or an expanded object from Prisma include
+  category: string | {
+    id: string;
+    name: string;
+    description?: string | null;
+  };
+  // Optional subcategory object when included from backend
+  subcategory?: {
+    id: string;
+    name: string;
+    description?: string | null;
+  } | null;
   brand: string;
   model: string;
   serialNumber: string;
@@ -21,6 +32,13 @@ export interface BackendEquipment {
   property?: {
     id: string;
     propertyName: string;
+    // Main cover photo for property, if any
+    coverPhotoUrl?: string | null;
+    // Additional property photos with primary flag
+    photos?: Array<{
+      photoUrl: string;
+      isPrimary?: boolean | null;
+    }>;
     address?: {
       streetAddress: string;
       city: string;

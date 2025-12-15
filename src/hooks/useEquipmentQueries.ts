@@ -60,7 +60,7 @@ export const useGetEquipmentByProperty = (propertyId: string | null, enabled: bo
  * Hook to get a single equipment by ID
  */
 export const useGetEquipment = (id: string | null, enabled: boolean = true) => {
-  return useQuery({
+  return useQuery<BackendEquipment, Error>({
     queryKey: id ? equipmentQueryKeys.detail(id) : ['equipment', 'detail', 'null'],
     queryFn: () => equipmentService.getOne(id!),
     enabled: enabled && !!id,
