@@ -165,7 +165,7 @@ const CreateEquipment = () => {
         });
 
         if (invalidFiles.length > 0) {
-            const errorMessage = `Invalid file types: ${invalidFiles.join(', ')}. Allowed: PDF, Word, Excel.`;
+            const errorMessage = `Invalid file types: ${invalidFiles.join(', ')}. Allowed: PDF, Word, Excel, Text.`;
             setAttachmentErrors(prev => [...prev, errorMessage]);
             // Auto-clear this batch of errors after 5 seconds
             setTimeout(() => {
