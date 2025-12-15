@@ -258,15 +258,18 @@ const KeyDetail = () => {
 
                         <div className="flex gap-6">
                             <div className="w-48 h-32 rounded-2xl overflow-hidden flex-shrink-0 relative group bg-gray-200 flex items-center justify-center">
-                                {keyData.property?.address ? (
-                                    <div className="text-gray-400 text-xs text-center p-4">
-                                        Property Image
-                                    </div>
+                                {keyData.property?.coverPhotoUrl ? (
+                                    <img
+                                        src={keyData.property.coverPhotoUrl}
+                                        alt={keyData.property.propertyName}
+                                        className="w-full h-full object-cover"
+                                    />
                                 ) : (
                                     <div className="text-gray-400 text-xs text-center p-4">
                                         No image available
                                     </div>
                                 )}
+                            </div>
                             </div>
 
                             <div className="flex-1 flex flex-col gap-4">
