@@ -57,10 +57,10 @@ const CreateEquipment = () => {
         !!formData.categoryId
     );
 
-    // Clear subcategory when category changes
-    useEffect(() => {
-        setFormData(prev => ({ ...prev, subcategoryId: '' }));
-    }, [formData.categoryId]);
+    const categoryOptions = useGetCategories().data || [];
+    const subcategoryOptions = useGetEquipmentSubcategories(formData.categoryId).data || [];
+
+    // Pre-fill form data when equipment is being edited
 
     // Pre-fill form when editing
     useEffect(() => {
@@ -165,7 +165,7 @@ const CreateEquipment = () => {
         });
 
         if (invalidFiles.length > 0) {
-            const errorMessage = `Invalid file types: ${invalidFiles.join(', ')}. Allowed: PDF, Word, Excel.`;
+            const errorMessage = `Invalid file types: ${invalidFiles.join(', ')}. Allowed: PDF, Word, Excel, Text.`;
             setAttachmentErrors(prev => [...prev, errorMessage]);
             // Auto-clear this batch of errors after 5 seconds
             setTimeout(() => {
@@ -242,13 +242,21 @@ const CreateEquipment = () => {
                 });
             } else {
                 // Create new equipment
-                await createEquipmentMutation.mutateAsync(equipmentData);
+                const createdEquipment = await createEquipmentMutation.mutateAsync(equipmentData);
 
                 // Then, if there are any uploaded files, attach them to the property
                 if (uploadedFiles.length > 0 && formData.propertyId) {
-                    await Promise.all(
-                        uploadedFiles.map(file => uploadAttachmentFile(file, formData.propertyId)),
-                    );
+                    try {
+                        await Promise.all(
+                            uploadedFiles.map(file => uploadAttachmentFile(file, formData.propertyId)),
+                        );
+                    } catch (uploadError) {
+                        console.error('Some attachments failed to upload:', uploadError);
+                        // Equipment created, but warn user about attachment failure
+                        alert('Equipment created, but some attachments failed to upload. Please try adding them again.');
+                        navigate('/dashboard/equipments');
+                        return;
+                    }
                 }
             }
 
@@ -376,7 +384,7 @@ const CreateEquipment = () => {
                                 <span className="text-sm font-medium text-gray-600">
                                     {isUploading ? 'Uploading...' : 'Upload Equipment Photo'}
                                 </span>
-                                <span className="text-xs text-gray-500 mt-1">Click to upload or drag and drop</span>
+                                <span className="text-xs text-gray-500 mt-1">Click to upload</span>
                             </div>
                         )}
                         <input 
