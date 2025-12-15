@@ -1,16 +1,27 @@
-import  { useState } from 'react';
-import { Upload, Check } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Upload, Check, Loader2 } from 'lucide-react';
 import CustomDropdown from '../../components/CustomDropdown';
 import DatePicker from '../../../../components/ui/DatePicker';
 import { format } from 'date-fns';
+import { useCreateEquipment } from '../../../../hooks/useEquipmentQueries';
+import { useGetAllProperties } from '../../../../hooks/usePropertyQueries';
+import { API_ENDPOINTS } from '../../../../config/api.config';
 
 const CreateEquipment = () => {
+    const navigate = useNavigate();
+    const { data: properties = [], isLoading: isLoadingProperties } = useGetAllProperties();
+    const createEquipmentMutation = useCreateEquipment();
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+
     const [formData, setFormData] = useState({
         category: '',
         brand: '',
         model: '',
         price: '',
-        property: '',
+        propertyId: '',
         serial: '',
         installationDate: '',
         warrantyExpirationDate: '',
@@ -22,6 +33,63 @@ const CreateEquipment = () => {
 
     const handleInputChange = (field: string, value: any) => {
         setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            setIsUploading(true);
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await fetch(API_ENDPOINTS.UPLOAD.IMAGE, {
+                    method: 'POST',
+                    credentials: 'include',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to upload image');
+                }
+
+                const data = await response.json();
+                setUploadedImageUrl(data.url || data.imageUrl || data.path);
+            } catch (error) {
+                console.error('Error uploading image:', error);
+                alert('Failed to upload image. Please try again.');
+            } finally {
+                setIsUploading(false);
+            }
+        }
+    };
+
+    const handleSubmit = async () => {
+        if (!formData.category || !formData.brand || !formData.model || !formData.price || !formData.propertyId || !formData.serial || !formData.installationDate) {
+            alert('Please fill in all required fields');
+            return;
+        }
+
+        try {
+            const equipmentData = {
+                propertyId: formData.propertyId,
+                category: formData.category,
+                brand: formData.brand,
+                model: formData.model,
+                serialNumber: formData.serial,
+                price: parseFloat(formData.price.replace(/[^0-9.]/g, '')) || 0,
+                dateOfInstallation: formData.installationDate,
+                equipmentDetails: formData.description || undefined,
+                photoUrl: uploadedImageUrl || undefined,
+                status: 'ACTIVE' as const,
+            };
+
+            await createEquipmentMutation.mutateAsync(equipmentData);
+            navigate('/dashboard/equipments');
+        } catch (error) {
+            console.error('Error creating equipment:', error);
+            alert(error instanceof Error ? error.message : 'Failed to create equipment');
+        }
     };
 
     return (
@@ -47,13 +115,36 @@ const CreateEquipment = () => {
                             backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px'
                         }}
                     />
-                    <div className="z-10 flex flex-col items-center">
-                        <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center mb-3">
-                            <Upload className="w-6 h-6 text-white" />
+                    {uploadedImageUrl ? (
+                        <>
+                            <img src={uploadedImageUrl} alt="Equipment" className="w-full h-full object-contain relative z-10" />
+                            {isUploading && (
+                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
+                                    <Loader2 className="w-8 h-8 animate-spin text-white" />
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        <div className="z-10 flex flex-col items-center">
+                            <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center mb-3">
+                                {isUploading ? (
+                                    <Loader2 className="w-6 h-6 text-white animate-spin" />
+                                ) : (
+                                    <Upload className="w-6 h-6 text-white" />
+                                )}
+                            </div>
+                            <span className="text-sm font-medium text-gray-600">
+                                {isUploading ? 'Uploading...' : 'Upload Cover Photos'}
+                            </span>
                         </div>
-                        <span className="text-sm font-medium text-gray-600">Upload Cover Photos</span>
-                    </div>
-                    <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" />
+                    )}
+                    <input 
+                        type="file" 
+                        ref={fileInputRef}
+                        onChange={handleImageUpload}
+                        accept="image/*"
+                        className="absolute inset-0 opacity-0 cursor-pointer" 
+                    />
                 </div>
 
                 {/* General Information */}
@@ -105,16 +196,23 @@ const CreateEquipment = () => {
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-600 mb-2">Property *</label>
-                            <CustomDropdown
-                                options={[
-                                    { value: 'prop1', label: 'Property 1' },
-                                    { value: 'prop2', label: 'Property 2' }
-                                ]}
-                                value={formData.property}
-                                onChange={(val) => handleInputChange('property', val)}
-                                placeholder="Type here"
-                                buttonClassName="w-full bg-white rounded-xl border-none h-12"
-                            />
+                            {isLoadingProperties ? (
+                                <div className="flex items-center gap-2 h-12">
+                                    <Loader2 className="w-4 h-4 animate-spin text-[#3A6D6C]" />
+                                    <span className="text-sm text-gray-500">Loading properties...</span>
+                                </div>
+                            ) : (
+                                <CustomDropdown
+                                    options={properties.map(prop => ({
+                                        value: prop.id,
+                                        label: prop.propertyName,
+                                    }))}
+                                    value={formData.propertyId}
+                                    onChange={(val) => handleInputChange('propertyId', val)}
+                                    placeholder="Select Property"
+                                    buttonClassName="w-full bg-white rounded-xl border-none h-12"
+                                />
+                            )}
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-600 mb-2">Serial *</label>
@@ -211,7 +309,14 @@ const CreateEquipment = () => {
 
                 {/* Create Button */}
                 <div>
-                    <button className="px-8 py-3 bg-[#3A6D6C] text-white rounded-lg font-medium hover:bg-[#2c5251] transition-colors shadow-sm">
+                    <button 
+                        onClick={handleSubmit}
+                        disabled={createEquipmentMutation.isPending || isUploading}
+                        className="px-8 py-3 bg-[#3A6D6C] text-white rounded-lg font-medium hover:bg-[#2c5251] transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
+                    >
+                        {(createEquipmentMutation.isPending || isUploading) && (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                        )}
                         Create
                     </button>
                 </div>

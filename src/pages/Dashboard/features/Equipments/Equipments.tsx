@@ -1,10 +1,24 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Edit, Trash2, Check, ChevronLeft, Plus } from 'lucide-react';
+import { Edit, Trash2, Check, ChevronLeft, Plus, Loader2 } from 'lucide-react';
 import EquipmentsStats from './components/EquipmentsStats';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
+import { useGetAllEquipment, useDeleteEquipment } from '../../../../hooks/useEquipmentQueries';
+import type { BackendEquipment } from '../../../../services/equipment.service';
 
+// Map backend status to display format
+const mapStatus = (status: string): string => {
+  const statusMap: Record<string, string> = {
+    'ACTIVE': 'active',
+    'UNDER_MAINTENANCE': 'maintenance',
+    'REPLACED': 'inactive',
+    'DISPOSED': 'inactive',
+  };
+  return statusMap[status] || status.toLowerCase();
+};
+
+// Legacy mock data for reference (can be removed)
 export const MOCK_EQUIPMENTS = [
     {
         id: 96325,
@@ -82,7 +96,7 @@ const Equipments: React.FC = () => {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const [selectedItems, setSelectedItems] = useState<number[]>([]);
+    const [selectedItems, setSelectedItems] = useState<string[]>([]);
     const [filters, setFilters] = useState<{
         status: string[];
         category: string[];
@@ -93,8 +107,54 @@ const Equipments: React.FC = () => {
         property: []
     });
 
+    // Fetch equipment from backend
+    const { data: equipment = [], isLoading, error } = useGetAllEquipment();
+    const deleteEquipmentMutation = useDeleteEquipment();
+
+    // Transform backend equipment to display format
+    const transformedEquipment = useMemo(() => {
+        return equipment.map((eq: BackendEquipment) => ({
+            id: eq.id,
+            brand: eq.brand,
+            category: eq.category,
+            subcategory: '', // Backend doesn't have subcategory, can be added if needed
+            property: eq.property?.propertyName || '-',
+            status: mapStatus(eq.status),
+            occupancy: eq.unitId ? 'occupied' : 'vacant', // Simplified logic
+            propertyType: 'household', // Default value
+            description: eq.equipmentDetails || '',
+            model: eq.model,
+            serial: eq.serialNumber,
+            price: typeof eq.price === 'string' ? eq.price : `$${eq.price}`,
+            warrantyExpiration: '', // Not in backend model, can be added
+            additionalEmail: '', // Not in backend model
+            image: eq.photoUrl || '',
+        }));
+    }, [equipment]);
+
+    // Get unique categories and properties for filters
+    const uniqueCategories = useMemo(() => {
+        const categories = new Set(equipment.map((eq: BackendEquipment) => eq.category));
+        return Array.from(categories).map(cat => ({
+            value: cat.toLowerCase().replace(/\s+/g, '_'),
+            label: cat,
+        }));
+    }, [equipment]);
+
+    const uniqueProperties = useMemo(() => {
+        const properties = new Set(
+            equipment
+                .map((eq: BackendEquipment) => eq.property?.propertyName)
+                .filter(Boolean)
+        );
+        return Array.from(properties).map((prop, idx) => ({
+            value: `prop${idx + 1}`,
+            label: prop as string,
+        }));
+    }, [equipment]);
+
     const filterOptions: Record<string, FilterOption[]> = {
-        property: [
+        property: uniqueProperties.length > 0 ? uniqueProperties : [
             { value: 'prop1', label: 'Property 1' },
             { value: 'prop2', label: 'Property 2' },
         ],
@@ -103,7 +163,7 @@ const Equipments: React.FC = () => {
             { value: 'inactive', label: 'Inactive' },
             { value: 'maintenance', label: 'Under Maintenance' },
         ],
-        category: [
+        category: uniqueCategories.length > 0 ? uniqueCategories : [
             { value: 'electric_meter', label: 'Electric meter' },
             { value: 'appliances', label: 'Appliances' },
         ]
@@ -121,24 +181,25 @@ const Equipments: React.FC = () => {
     }, [searchQuery, filters]);
 
     const filteredEquipments = useMemo(() => {
-        return MOCK_EQUIPMENTS.filter(equipment => {
+        return transformedEquipment.filter(item => {
             // Search filter
             const matchesSearch = searchQuery === '' ||
-                equipment.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                equipment.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                String(equipment.id).includes(searchQuery);
+                item.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                item.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                item.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                item.model.toLowerCase().includes(searchQuery.toLowerCase());
 
             // Status filter
             const matchesStatus = filters.status.length === 0 ||
-                filters.status.includes(equipment.status);
+                filters.status.includes(item.status);
 
             // Category filter
             const matchesCategory = filters.category.length === 0 ||
-                filters.category.some(cat => equipment.category.toLowerCase().includes(cat.replace('_', ' ')));
+                filters.category.some(cat => item.category.toLowerCase().includes(cat.replace('_', ' ')));
 
             return matchesSearch && matchesStatus && matchesCategory;
         });
-    }, [searchQuery, filters]);
+    }, [transformedEquipment, searchQuery, filters]);
 
     const totalPages = Math.ceil(filteredEquipments.length / ITEMS_PER_PAGE);
     const paginatedEquipments = filteredEquipments.slice(
@@ -146,7 +207,7 @@ const Equipments: React.FC = () => {
         currentPage * ITEMS_PER_PAGE
     );
 
-    const toggleSelection = (id: number) => {
+    const toggleSelection = (id: string) => {
         if (selectedItems.includes(id)) {
             setSelectedItems(selectedItems.filter(item => item !== id));
         } else {
@@ -155,11 +216,28 @@ const Equipments: React.FC = () => {
     };
 
     const toggleAll = () => {
-        if (selectedItems.length === paginatedEquipments.length) {
+        if (selectedItems.length === paginatedEquipments.length && paginatedEquipments.length > 0) {
             setSelectedItems([]);
         } else {
             setSelectedItems(paginatedEquipments.map(item => item.id));
         }
+    };
+
+    const handleDelete = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (window.confirm('Are you sure you want to delete this equipment?')) {
+            try {
+                await deleteEquipmentMutation.mutateAsync(id);
+            } catch (error) {
+                console.error('Error deleting equipment:', error);
+                alert(error instanceof Error ? error.message : 'Failed to delete equipment');
+            }
+        }
+    };
+
+    const handleEdit = (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        navigate(`/dashboard/equipments/edit/${id}`);
     };
 
     return (
@@ -197,7 +275,26 @@ const Equipments: React.FC = () => {
                     onFiltersChange={(newFilters) => setFilters(newFilters as any)}
                 />
 
+                {/* Loading State */}
+                {isLoading && (
+                    <div className="flex items-center justify-center py-12 mt-8">
+                        <Loader2 className="w-8 h-8 animate-spin text-[#3A6D6C]" />
+                        <p className="ml-4 text-gray-600">Loading equipment...</p>
+                    </div>
+                )}
+
+                {/* Error State */}
+                {error && !isLoading && (
+                    <div className="bg-red-50 border border-red-200 rounded-2xl p-6 mt-8">
+                        <p className="text-red-800">
+                            {error instanceof Error ? error.message : 'Failed to load equipment'}
+                        </p>
+                    </div>
+                )}
+
                 {/* Table Section */}
+                {!isLoading && !error && (
+                <>
                 <div className="bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm mt-8">
                     {/* Table Header */}
                     <div className="text-white px-6 py-4 grid grid-cols-[40px_80px_1fr_1.5fr_1fr_120px] gap-4 items-center text-sm font-medium">
@@ -238,7 +335,7 @@ const Equipments: React.FC = () => {
                                         </div>
                                     </button>
                                 </div>
-                                <div className="font-bold text-gray-800 text-sm">{item.id}</div>
+                                <div className="font-bold text-gray-800 text-sm">{item.id.slice(0, 8)}</div>
                                 <div className="font-semibold text-gray-800 text-sm">{item.brand}</div>
                                 <div className="text-gray-800 text-sm font-semibold">
                                     {item.category} {item.subcategory ? `/ ${item.subcategory}` : ''}
@@ -250,20 +347,15 @@ const Equipments: React.FC = () => {
                                         Assign
                                     </button>
                                     <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            // Add edit logic here
-                                        }}
+                                        onClick={(e) => handleEdit(item.id, e)}
                                         className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
                                     >
                                         <Edit className="w-5 h-5" />
                                     </button>
                                     <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            // Add delete logic here
-                                        }}
-                                        className="text-red-500 hover:text-red-600 transition-colors"
+                                        onClick={(e) => handleDelete(item.id, e)}
+                                        disabled={deleteEquipmentMutation.isPending}
+                                        className="text-red-500 hover:text-red-600 transition-colors disabled:opacity-50"
                                     >
                                         <Trash2 className="w-5 h-5" />
                                     </button>
@@ -284,6 +376,8 @@ const Equipments: React.FC = () => {
                         totalPages={totalPages}
                         onPageChange={setCurrentPage}
                     />
+                )}
+                </>
                 )}
             </div >
         </div >

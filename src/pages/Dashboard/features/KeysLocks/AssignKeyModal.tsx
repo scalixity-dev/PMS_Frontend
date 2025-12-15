@@ -5,19 +5,12 @@ import SearchableDropdown from '../../../../components/ui/SearchableDropdown';
 interface AssignKeyModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onAssign: (property: string) => void;
+    onAssign: (issuedTo: string) => void;
+    properties?: string[];
 }
 
-const AssignKeyModal: React.FC<AssignKeyModalProps> = ({ isOpen, onClose, onAssign }) => {
+const AssignKeyModal: React.FC<AssignKeyModalProps> = ({ isOpen, onClose, onAssign, properties = [] }) => {
     const [selectedProperty, setSelectedProperty] = useState('');
-
-    const properties = [
-        "Raj Villa",
-        "Abc",
-        "Luxury App",
-        "Sunrise Apartments",
-        "Golden Heights"
-    ];
 
     useEffect(() => {
         // Capture the current overflow value before making any changes
@@ -60,11 +53,11 @@ const AssignKeyModal: React.FC<AssignKeyModalProps> = ({ isOpen, onClose, onAssi
                             {/* The SearchableDropdown handles the label and search functionality internally or we wrap it */}
                             {/* Looking at the component definition: SearchableDropdown accepts label, value, options, onChange, placeholder */}
                             <SearchableDropdown
-                                label="Property *"
+                                label="Assign To *"
                                 value={selectedProperty}
-                                options={properties}
+                                options={properties.length > 0 ? properties : ['No properties available']}
                                 onChange={setSelectedProperty}
-                                placeholder="Select Property"
+                                placeholder="Select or enter name"
                                 className="w-full"
                             />
                         </div>
