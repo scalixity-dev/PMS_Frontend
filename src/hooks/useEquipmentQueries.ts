@@ -1,5 +1,19 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { equipmentService, type BackendEquipment, type CreateEquipmentDto, type UpdateEquipmentDto } from '../services/equipment.service';
+import { API_ENDPOINTS } from '../config/api.config';
+
+export interface EquipmentCategory {
+  id: string;
+  name: string;
+  description?: string | null;
+  subcategories?: EquipmentSubcategory[];
+}
+
+export interface EquipmentSubcategory {
+  id: string;
+  name: string;
+  description?: string | null;
+}
 
 // Query keys for React Query
 export const equipmentQueryKeys = {
@@ -10,6 +24,8 @@ export const equipmentQueryKeys = {
   detail: (id: string) => [...equipmentQueryKeys.details(), id] as const,
   byProperty: (propertyId: string) => [...equipmentQueryKeys.all, 'property', propertyId] as const,
   byUnit: (unitId: string) => [...equipmentQueryKeys.all, 'unit', unitId] as const,
+  categories: () => [...equipmentQueryKeys.all, 'categories'] as const,
+  subcategories: (categoryId: string) => [...equipmentQueryKeys.all, 'subcategories', categoryId] as const,
 };
 
 /**
@@ -126,6 +142,98 @@ export const useDeleteEquipment = () => {
         queryClient.invalidateQueries({ queryKey: equipmentQueryKeys.byProperty(data.equipment.propertyId) });
       }
     },
+  });
+};
+
+/**
+ * Hook to get all equipment categories
+ */
+export const useGetEquipmentCategories = (enabled: boolean = true) => {
+  return useQuery({
+    queryKey: equipmentQueryKeys.categories(),
+    queryFn: async (): Promise<EquipmentCategory[]> => {
+      const response = await fetch(API_ENDPOINTS.EQUIPMENT.GET_CATEGORIES, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        let errorMessage = 'Failed to fetch equipment categories';
+        
+        try {
+          const errorData = await response.json();
+          
+          if (Array.isArray(errorData.message)) {
+            errorMessage = errorData.message.join('. ');
+          } else if (errorData.message) {
+            errorMessage = errorData.message;
+          } else if (errorData.error) {
+            errorMessage = errorData.error;
+          }
+        } catch (parseError) {
+          errorMessage = `Failed to fetch equipment categories: ${response.statusText}`;
+        }
+        
+        throw new Error(errorMessage);
+      }
+
+      return response.json();
+    },
+    enabled,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes (categories don't change often)
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    retry: 1,
+  });
+};
+
+/**
+ * Hook to get subcategories for a specific category
+ */
+export const useGetEquipmentSubcategories = (categoryId: string | null, enabled: boolean = true) => {
+  return useQuery({
+    queryKey: categoryId ? equipmentQueryKeys.subcategories(categoryId) : ['equipment', 'subcategories', 'null'],
+    queryFn: async (): Promise<EquipmentSubcategory[]> => {
+      if (!categoryId) {
+        return [];
+      }
+
+      const response = await fetch(API_ENDPOINTS.EQUIPMENT.GET_SUBCATEGORIES(categoryId), {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        let errorMessage = 'Failed to fetch equipment subcategories';
+        
+        try {
+          const errorData = await response.json();
+          
+          if (Array.isArray(errorData.message)) {
+            errorMessage = errorData.message.join('. ');
+          } else if (errorData.message) {
+            errorMessage = errorData.message;
+          } else if (errorData.error) {
+            errorMessage = errorData.error;
+          }
+        } catch (parseError) {
+          errorMessage = `Failed to fetch equipment subcategories: ${response.statusText}`;
+        }
+        
+        throw new Error(errorMessage);
+      }
+
+      return response.json();
+    },
+    enabled: enabled && !!categoryId,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    retry: 1,
   });
 };
 

@@ -70,6 +70,8 @@ export const API_ENDPOINTS = {
     CREATE: `${API_BASE_URL}/equipment`,
     UPDATE: (id: string) => `${API_BASE_URL}/equipment/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/equipment/${id}`,
+    GET_CATEGORIES: `${API_BASE_URL}/equipment/categories/all`,
+    GET_SUBCATEGORIES: (categoryId: string) => `${API_BASE_URL}/equipment/categories/${categoryId}/subcategories`,
   },
 };
 

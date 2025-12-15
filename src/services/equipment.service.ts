@@ -42,7 +42,8 @@ export interface CreateEquipmentDto {
   propertyId: string;
   unitId?: string;
   singleUnitDetailId?: string;
-  category: string;
+  categoryId: string;
+  subcategoryId?: string;
   brand: string;
   model: string;
   serialNumber: string;
@@ -57,7 +58,8 @@ export interface UpdateEquipmentDto {
   propertyId?: string;
   unitId?: string | null;
   singleUnitDetailId?: string | null;
-  category?: string;
+  categoryId?: string;
+  subcategoryId?: string | null;
   brand?: string;
   model?: string;
   serialNumber?: string;
@@ -266,9 +268,7 @@ class EquipmentService {
   async delete(id: string): Promise<{ message: string; equipment: BackendEquipment }> {
     const response = await fetch(API_ENDPOINTS.EQUIPMENT.DELETE(id), {
       method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: {},
       credentials: 'include',
     });
 
