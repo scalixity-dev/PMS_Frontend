@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronDown } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import PayerPayeeDropdown from './components/PayerPayeeDropdown';
+import AddServiceProModal from '../ServicePros/components/AddServiceProModal';
+import { TRANSACTION_CATEGORIES } from '../../../../utils/transactionCategories';
 import TransactionToggle from './components/TransactionToggle';
 import DatePicker from '../../../../components/ui/DatePicker';
 import CustomDropdown from '../../components/CustomDropdown';
-import PayerPayeeDropdown from './components/PayerPayeeDropdown';
-import AddTenantModal from './components/AddTenantModal';
-import { TRANSACTION_CATEGORIES } from '../../../../utils/transactionCategories';
 
 const AddExpenseInvoice: React.FC = () => {
     const navigate = useNavigate();
@@ -16,7 +16,15 @@ const AddExpenseInvoice: React.FC = () => {
     const [currency, setCurrency] = useState<string>('');
     const [isPaid, setIsPaid] = useState<boolean>(false);
     const [payerPayee, setPayerPayee] = useState<string>('');
-    const [isAddTenantModalOpen, setIsAddTenantModalOpen] = useState(false);
+    const [isAddServiceProModalOpen, setIsAddServiceProModalOpen] = useState(false);
+    const location = useLocation();
+
+    // Pre-fill payer/payee if passed from navigation state
+    React.useEffect(() => {
+        if (location.state?.prefilledPayer) {
+            setPayerPayee(location.state.prefilledPayer.label);
+        }
+    }, [location.state]);
 
     return (
         <div className="p-6 max-w-6xl mx-auto font-['Urbanist']">
@@ -93,17 +101,23 @@ const AddExpenseInvoice: React.FC = () => {
                                 value={payerPayee}
                                 onChange={setPayerPayee}
                                 options={[
-                                    { id: '2', label: 'Ojshav Saxena', type: 'tenant' },
+                                    // Mock Service Pros
+                                    { id: '1', label: 'Sam Rao', type: 'Service Pro' },
+                                    { id: '2', label: 'Vijay Rfgdd', type: 'Service Pro' },
+                                    { id: '3', label: 'Alex Brown', type: 'Service Pro' },
+                                    { id: '4', label: 'John Doe', type: 'Service Pro' },
+                                    // Mock Tenant for example
+                                    { id: 't1', label: 'Ojshav Saxena', type: 'tenant' },
                                 ]}
-                                onAddTenant={() => setIsAddTenantModalOpen(true)}
+                                onAddTenant={() => setIsAddServiceProModalOpen(true)}
                             />
                         </div>
                     </div>
 
-                    <AddTenantModal
-                        isOpen={isAddTenantModalOpen}
-                        onClose={() => setIsAddTenantModalOpen(false)}
-                        onSave={(data) => console.log('New Tenant Data:', data)}
+                    <AddServiceProModal
+                        isOpen={isAddServiceProModalOpen}
+                        onClose={() => setIsAddServiceProModalOpen(false)}
+                        onSave={(data) => console.log('New Service Pro Data:', data)}
                     />
                     {/* Currency (Only for General Expense) or Spacer */}
                     {expenseType === 'general' ? (

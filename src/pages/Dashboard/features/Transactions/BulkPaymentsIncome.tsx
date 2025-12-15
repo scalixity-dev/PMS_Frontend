@@ -19,18 +19,18 @@ const MOCK_PROPERTIES: Record<string, { value: string, label: string }[]> = {
 
 const MOCK_INVOICES: Record<string, any[]> = {
     'prop_1': [
-        { id: 'INV-20251122-8492', dueOn: '08 Dec', category: 'Maintenance', balance: '+69,0000', amount: '₹ 50,000' },
-        { id: 'INV-20251123-9999', dueOn: '10 Dec', category: 'Repair', balance: '+12,0000', amount: '₹ 10,000' }
+        { id: 'INV-20251122-8492', dueOn: '08 Dec', category: 'Rent', balance: '+69,0000', amount: '₹ 50,000' },
+        { id: 'INV-20251123-9999', dueOn: '10 Dec', category: 'Deposit', balance: '+12,0000', amount: '₹ 10,000' }
     ],
     'prop_2': [
-        { id: 'INV-20251201-1111', dueOn: '15 Dec', category: 'Cleaning', balance: '+5,000', amount: '₹ 5,000' }
+        { id: 'INV-20251201-1111', dueOn: '15 Dec', category: 'Laundry', balance: '+5,000', amount: '₹ 5,000' }
     ],
     'prop_3': [
         { id: 'INV-20250101-2222', dueOn: '01 Jan', category: 'Rent', balance: '+25,000', amount: '₹ 25,000' }
     ]
 };
 
-const BulkPaymentsExpense: React.FC = () => {
+const BulkPaymentsIncome: React.FC = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<'Invoice' | 'General Invoices'>('Invoice');
     const [payerPayee, setPayerPayee] = useState<string>('');
@@ -54,10 +54,8 @@ const BulkPaymentsExpense: React.FC = () => {
                 <span className="text-gray-500 text-sm mx-1">/</span>
                 <span className="text-gray-600 text-sm font-semibold">Transactions</span>
                 <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">Bulk payments expense</span>
+                <span className="text-gray-600 text-sm font-semibold">Bulk payments income</span>
             </div>
-
-
 
             <div className="p-6 bg-[#DFE5E3] min-h-screen rounded-[2rem] overflow-visible">
                 {/* Header */}
@@ -67,7 +65,7 @@ const BulkPaymentsExpense: React.FC = () => {
                         className="flex items-center gap-2 text-xl font-bold text-gray-800 hover:text-gray-600 transition-colors"
                     >
                         <ChevronLeft className="w-6 h-6" />
-                        Bulk payments expense
+                        Bulk payments income
                     </button>
                     <button className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium shadow-sm hover:bg-[#2c5251] transition-colors">
                         Action
@@ -176,4 +174,4 @@ const BulkPaymentsExpense: React.FC = () => {
     );
 };
 
-export default BulkPaymentsExpense;
+export default BulkPaymentsIncome;

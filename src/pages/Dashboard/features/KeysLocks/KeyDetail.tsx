@@ -1,14 +1,38 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Edit, Trash2 } from 'lucide-react';
 import CustomTextBox from '../../components/CustomTextBox';
 import { keysData } from './KeysLocks';
+import AssignKeyModal from './AssignKeyModal';
+import ConfirmationModal from './ConfirmationModal';
 
 const KeyDetail = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const keyItem = keysData.find(k => k.id === Number(id));
     const [isActionDropdownOpen, setIsActionDropdownOpen] = React.useState(false);
+    const [isAssignModalOpen, setIsAssignModalOpen] = React.useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
+    const [isUnassignModalOpen, setIsUnassignModalOpen] = React.useState(false);
+
+    const handleAssignKey = (property: string) => {
+        console.log('Assigned to:', property);
+        // Add logic to update key assignment here
+        setIsAssignModalOpen(false);
+    };
+
+    const handleUnassignKey = () => {
+        console.log('Unassigning key...');
+        // Add logic to unassign key here
+        setIsUnassignModalOpen(false);
+    };
+
+    const handleDeleteKey = () => {
+        console.log('Deleting key...');
+        // Add logic to delete key here
+        setIsDeleteModalOpen(false);
+        navigate('/dashboard/portfolio/keys-locks'); // Navigate back after delete
+    };
 
     if (!keyItem) {
         return <div>Key not found</div>;
@@ -33,9 +57,21 @@ const KeyDetail = () => {
                     </button>
                     <h1 className="text-2xl font-bold text-black mr-auto">Keys</h1>
 
-                    <button className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm">
-                        Unassign
-                    </button>
+                    {keyItem.assignee === 'Unassigned' ? (
+                        <button
+                            onClick={() => setIsAssignModalOpen(true)}
+                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm"
+                        >
+                            Assign
+                        </button>
+                    ) : (
+                        <button
+                            onClick={() => setIsUnassignModalOpen(true)}
+                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-red-600 transition-colors shadow-sm"
+                        >
+                            Unassign
+                        </button>
+                    )}
                     <div className="relative">
                         <button
                             onClick={() => setIsActionDropdownOpen(!isActionDropdownOpen)}
@@ -44,24 +80,30 @@ const KeyDetail = () => {
                             Action
                         </button>
                         {isActionDropdownOpen && (
-                            <div className="absolute right-0 mt-2 w-auto min-w-[4rem] bg-white rounded-lg shadow-lg z-10 border border-gray-100 overflow-hidden">
+                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-10 border border-gray-100 overflow-hidden">
                                 <button
-                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors whitespace-nowrap"
+                                    className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3 border-b border-gray-50 last:border-0"
                                     onClick={() => {
                                         setIsActionDropdownOpen(false);
-                                        // Add edit logic
+                                        navigate(`/dashboard/portfolio/edit-key/${id}`);
                                     }}
                                 >
-                                    Edit
+                                    <div className="p-1.5 bg-[#E8F0F0] rounded-md text-[#3A6D6C]">
+                                        <Edit size={16} />
+                                    </div>
+                                    <span className="font-medium">Edit</span>
                                 </button>
                                 <button
-                                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors whitespace-nowrap"
+                                    className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-3"
                                     onClick={() => {
                                         setIsActionDropdownOpen(false);
-                                        // Add delete logic
+                                        setIsDeleteModalOpen(true);
                                     }}
                                 >
-                                    Delete
+                                    <div className="p-1.5 bg-red-50 rounded-md text-red-500">
+                                        <Trash2 size={16} />
+                                    </div>
+                                    <span className="font-medium">Delete</span>
                                 </button>
                             </div>
                         )}
@@ -139,6 +181,30 @@ const KeyDetail = () => {
                     </div>
                 </div>
             </div>
+
+            <AssignKeyModal
+                isOpen={isAssignModalOpen}
+                onClose={() => setIsAssignModalOpen(false)}
+                onAssign={handleAssignKey}
+            />
+
+            <ConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={handleDeleteKey}
+                title="You're about to delete this key"
+                message="Are you sure you want to delete it?"
+                confirmLabel="Delete"
+            />
+
+            <ConfirmationModal
+                isOpen={isUnassignModalOpen}
+                onClose={() => setIsUnassignModalOpen(false)}
+                onConfirm={handleUnassignKey}
+                title="Unassign Key"
+                message="Are you sure you want to unassign this key?"
+                confirmLabel="Unassign"
+            />
         </div>
     );
 };

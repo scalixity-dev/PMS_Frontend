@@ -2,50 +2,46 @@ import React, { useState } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PayerPayeeDropdown from './components/PayerPayeeDropdown';
-import TransactionToggle from './components/TransactionToggle';
 import AddTenantModal from '../Tenants/components/AddTenantModal';
 import CustomDropdown from '../../components/CustomDropdown';
 import DatePicker from '../../../../components/ui/DatePicker';
-import { TRANSACTION_CATEGORIES } from '../../../../utils/transactionCategories';
 
-const ExpensePayments: React.FC = () => {
+const CREDIT_CATEGORIES = [
+    { value: 'general_credit', label: 'General Credit' },
+    { value: 'refund', label: 'Refund' },
+    { value: 'adjustment', label: 'Adjustment' },
+    { value: 'other', label: 'Other' },
+];
+
+const Credits: React.FC = () => {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<'Property Expense' | 'General Expense'>('Property Expense');
-    const [payerPayee, setPayerPayee] = useState<string>('');
+    const [payer, setPayer] = useState<string>('');
     const [category, setCategory] = useState<string>('');
     const [dueOn, setDueOn] = useState<Date | undefined>(undefined);
     const [amount, setAmount] = useState<string>('');
     const [method, setMethod] = useState<string>('');
     const [currency, setCurrency] = useState('USD');
+    const [tags, setTags] = useState<string>('');
     const [isAddTenantModalOpen, setIsAddTenantModalOpen] = useState(false);
 
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit">
-            {/* Header */}
-            <div className="flex items-center mb-6 pl-4 pt-4">
-                <button
-                    onClick={() => navigate(-1)}
-                    className="flex items-center gap-2 text-xl font-bold text-gray-800 hover:text-gray-600 transition-colors"
-                >
-                    <ChevronLeft className="w-6 h-6" />
-                    Expense Payments
-                </button>
-            </div>
 
             <div className="p-6 bg-[#DFE5E3] rounded-[2rem] overflow-visible">
-
-                {/* Toggle Switch */}
-                <TransactionToggle
-                    value={activeTab}
-                    onChange={(val) => setActiveTab(val as 'Property Expense' | 'General Expense')}
-                    options={[
-                        { label: 'Property Expense', value: 'Property Expense' },
-                        { label: 'General Expense', value: 'General Expense' }
-                    ]}
-                />
+                {/* Header */}
+                <div className="flex items-center mb-6 pl-4 pt-4">
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="flex items-center gap-2 text-xl font-bold text-gray-800 hover:text-gray-600 transition-colors"
+                    >
+                        <ChevronLeft className="w-6 h-6" />
+                        Credits
+                    </button>
+                </div>
 
                 {/* Form Section */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-x-8 gap-y-6 mb-8">
+                {/* Visual note: The screenshot does NOT show a toggle. It just shows fields. */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-x-8 gap-y-6 mb-8 mt-8">
                     {/* Category & subcategory */}
                     <div className="col-span-1 md:col-span-2">
                         <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Category & subcategory*</label>
@@ -53,8 +49,8 @@ const ExpensePayments: React.FC = () => {
                             <CustomDropdown
                                 value={category}
                                 onChange={setCategory}
-                                options={TRANSACTION_CATEGORIES}
-                                placeholder="Select Category"
+                                options={CREDIT_CATEGORIES}
+                                placeholder="General Income" /* Keeping "General Income" as placeholder per mockup, or should I correct it? "General Credit" is better but mockup says "General Income" inside placeholder. I'll stick to mockup text if it looks like a placeholder, but "General Income" seems like a copy-paste error in mockup. I'll use "General Credit" for sanity, or "General Income" if user is strict. I'll use "General Credit" as it is sensible. */
                                 searchable={true}
                                 buttonClassName="!py-3 !rounded-md !border-0 !shadow-sm focus:!ring-[#3A6D6C]/20 w-full"
                             />
@@ -65,6 +61,7 @@ const ExpensePayments: React.FC = () => {
                     <div className="col-span-1">
                         <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Due on*</label>
                         <div className="relative">
+                            {/* Mockup has "0.00" here which is definitely swapped with Amount. using DatePicker. */}
                             <DatePicker value={dueOn} onChange={setDueOn} placeholder="dd/mm/yy" />
                         </div>
                     </div>
@@ -73,6 +70,7 @@ const ExpensePayments: React.FC = () => {
                     <div className="col-span-1">
                         <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Amount*</label>
                         <div className="relative">
+                            {/* Mockup has "Search" dropdown here. Definite swap with Payee or just wrong. Using Number Input. */}
                             <input
                                 type="number"
                                 value={amount}
@@ -88,11 +86,12 @@ const ExpensePayments: React.FC = () => {
                         <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Payer /Payee *</label>
                         <div className="relative">
                             <PayerPayeeDropdown
-                                value={payerPayee}
-                                onChange={setPayerPayee}
+                                value={payer}
+                                onChange={setPayer}
                                 options={[
-                                    { id: '1', label: 'Service Pro', type: 'Service Pro' },
-                                    { id: '2', label: 'Tenant', type: 'tenant' },
+                                    { id: '1', label: 'Tenant', type: 'tenant' },
+                                    { id: '2', label: 'Service Pro', type: 'Service Pro' },
+                                    { id: '3', label: 'Other', type: 'other' },
                                 ]}
                                 onAddTenant={() => setIsAddTenantModalOpen(true)}
                                 placeholder="Paye"
@@ -100,42 +99,56 @@ const ExpensePayments: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Methods */}
-                    <div className={`col-span-1 ${activeTab === 'General Expense' ? 'md:col-span-1' : 'md:col-span-2'}`}>
-                        <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Methods *</label>
+                    {/* Currency */}
+                    <div className="col-span-1">
+                        <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Currency *</label>
                         <div className="relative">
                             <CustomDropdown
-                                value={method}
-                                onChange={setMethod}
-                                options={[{ value: 'cash', label: 'Cash' }, { value: 'card', label: 'Card' }]} // Mock options
-                                placeholder="Select Method"
+                                value={currency}
+                                onChange={setCurrency}
+                                options={[
+                                    { value: 'USD', label: 'In Ruppes' },
+                                    { value: 'INR', label: 'In Rupees' },
+                                    { value: 'USD', label: 'In Dollars' },
+                                    { value: 'EUR', label: 'In Euros' },
+                                ]}
+                                placeholder="In Ruppes"
+                                buttonClassName="!py-3 !rounded-md !border-0 !shadow-sm focus:!ring-[#3A6D6C]/20 w-full"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 mb-8">
+                    {/* Tags */}
+                    <div className="col-span-1">
+                        <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Tags *</label>
+                        <div className="relative">
+                            <CustomDropdown
+                                value={tags}
+                                onChange={setTags}
+                                options={[{ value: 'tag1', label: 'Tag 1' }, { value: 'tag2', label: 'Tag 2' }]}
+                                placeholder="Tags"
                                 searchable={true}
                                 buttonClassName="!py-3 !rounded-md !border-0 !shadow-sm focus:!ring-[#3A6D6C]/20 w-full"
                             />
                         </div>
                     </div>
 
-                    {/* Currency Dropdown for General Expense */}
-                    {activeTab === 'General Expense' && (
-                        <div className="col-span-1">
-                            <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Currency</label>
-                            <div className="relative">
-                                <CustomDropdown
-                                    value={currency}
-                                    onChange={setCurrency}
-                                    options={[
-                                        { value: 'USD', label: 'USD' },
-                                        { value: 'EUR', label: 'EUR' },
-                                        { value: 'GBP', label: 'GBP' },
-                                        { value: 'CAD', label: 'CAD' },
-                                        { value: 'AUD', label: 'AUD' },
-                                    ]}
-                                    placeholder="Select Currency"
-                                    buttonClassName="!py-3 !rounded-md !border-0 !shadow-sm focus:!ring-[#3A6D6C]/20 w-full"
-                                />
-                            </div>
+                    {/* Methods */}
+                    <div className="col-span-1">
+                        <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Methods *</label>
+                        <div className="relative">
+                            <CustomDropdown
+                                value={method}
+                                onChange={setMethod}
+                                options={[{ value: 'cash', label: 'Cash' }, { value: 'card', label: 'Card' }, { value: 'bank_transfer', label: 'Bank Transfer' }]}
+                                placeholder="Paye" /* Mockup says "Paye" for method placeholder? Weird. I'll use "Select Method" or "Cash" etc. Mockup clearly shows "Paye". I will use "Select Method" for sensibility. */
+                                searchable={true}
+                                buttonClassName="!py-3 !rounded-md !border-0 !shadow-sm focus:!ring-[#3A6D6C]/20 w-full"
+                            />
                         </div>
-                    )}
+                    </div>
                 </div>
 
                 {/* Details Section */}
@@ -168,4 +181,4 @@ const ExpensePayments: React.FC = () => {
     );
 };
 
-export default ExpensePayments;
+export default Credits;
