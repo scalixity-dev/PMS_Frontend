@@ -33,7 +33,8 @@ const KeepPropertySection: React.FC = () => {
       showBackgroundCard={false}
       imageSrc="/Group.png"
       backgroundImageSrc="/rental-lease.png"
-      backgroundImageTranslate="translate(180px, 120px)"
+      backgroundImageTranslate="translate(-20px, 30px)"
+      backgroundImageClassName="translate-x-10 sm:translate-x-20 lg:translate-x-20 2xl:translate-x-32"
       showImageShadow={false}
       imageNoTranslate
       imageTranslate="translate-x-4 translate-y-6 lg:translate-x-10 lg:translate-y-12"
@@ -41,7 +42,7 @@ const KeepPropertySection: React.FC = () => {
       titleMarginBottom="mb-4"
       descriptionMarginBottom="mb-6"
       sectionClassName="bg-transparent"
-      sectionPaddingClassName="px-6 sm:px-10 lg:px-0 py-20 "
+      sectionPaddingClassName="px-6 sm:px-10 2xl:px-0 py-2 "
       contentPaddingClassName="px-0"
       maxWidthClassName="max-w-7xl"
       embeddedContent={
