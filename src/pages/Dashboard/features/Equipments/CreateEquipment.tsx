@@ -57,9 +57,6 @@ const CreateEquipment = () => {
         !!formData.categoryId
     );
 
-    const categoryOptions = useGetCategories().data || [];
-    const subcategoryOptions = useGetEquipmentSubcategories(formData.categoryId).data || [];
-
     // Pre-fill form data when equipment is being edited
 
     // Pre-fill form when editing
