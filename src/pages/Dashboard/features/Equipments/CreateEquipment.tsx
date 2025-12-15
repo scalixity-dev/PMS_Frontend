@@ -384,7 +384,7 @@ const CreateEquipment = () => {
                                 <span className="text-sm font-medium text-gray-600">
                                     {isUploading ? 'Uploading...' : 'Upload Equipment Photo'}
                                 </span>
-                                <span className="text-xs text-gray-500 mt-1">Click to upload or drag and drop</span>
+                                <span className="text-xs text-gray-500 mt-1">Click to upload</span>
                             </div>
                         )}
                         <input 
