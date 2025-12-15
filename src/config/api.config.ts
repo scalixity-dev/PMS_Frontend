@@ -53,5 +53,25 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `${API_BASE_URL}/listing/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/listing/${id}`,
   },
+  KEYS: {
+    GET_ALL: `${API_BASE_URL}/keys-and-locks`,
+    GET_ONE: (id: string) => `${API_BASE_URL}/keys-and-locks/${id}`,
+    GET_BY_PROPERTY: (propertyId: string) => `${API_BASE_URL}/keys-and-locks/property/${propertyId}`,
+    GET_BY_UNIT: (unitId: string) => `${API_BASE_URL}/keys-and-locks/unit/${unitId}`,
+    CREATE: `${API_BASE_URL}/keys-and-locks`,
+    UPDATE: (id: string) => `${API_BASE_URL}/keys-and-locks/${id}`,
+    DELETE: (id: string) => `${API_BASE_URL}/keys-and-locks/${id}`,
+  },
+  EQUIPMENT: {
+    GET_ALL: `${API_BASE_URL}/equipment`,
+    GET_ONE: (id: string) => `${API_BASE_URL}/equipment/${id}`,
+    GET_BY_PROPERTY: (propertyId: string) => `${API_BASE_URL}/equipment/property/${propertyId}`,
+    GET_BY_UNIT: (unitId: string) => `${API_BASE_URL}/equipment/unit/${unitId}`,
+    CREATE: `${API_BASE_URL}/equipment`,
+    UPDATE: (id: string) => `${API_BASE_URL}/equipment/${id}`,
+    DELETE: (id: string) => `${API_BASE_URL}/equipment/${id}`,
+    GET_CATEGORIES: `${API_BASE_URL}/equipment/categories/all`,
+    GET_SUBCATEGORIES: (categoryId: string) => `${API_BASE_URL}/equipment/categories/${categoryId}/subcategories`,
+  },
 };
 

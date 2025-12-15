@@ -5,19 +5,12 @@ import SearchableDropdown from '../../../../components/ui/SearchableDropdown';
 interface AssignKeyModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onAssign: (property: string) => void;
+    onAssign: (issuedTo: string) => void;
+    properties?: string[];
 }
 
-const AssignKeyModal: React.FC<AssignKeyModalProps> = ({ isOpen, onClose, onAssign }) => {
+const AssignKeyModal: React.FC<AssignKeyModalProps> = ({ isOpen, onClose, onAssign, properties = [] }) => {
     const [selectedProperty, setSelectedProperty] = useState('');
-
-    const properties = [
-        "Raj Villa",
-        "Abc",
-        "Luxury App",
-        "Sunrise Apartments",
-        "Golden Heights"
-    ];
 
     useEffect(() => {
         // Capture the current overflow value before making any changes
@@ -36,6 +29,8 @@ const AssignKeyModal: React.FC<AssignKeyModalProps> = ({ isOpen, onClose, onAssi
     }, [isOpen]);
 
     if (!isOpen) return null;
+
+    const hasProperties = properties.length > 0;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
@@ -60,11 +55,11 @@ const AssignKeyModal: React.FC<AssignKeyModalProps> = ({ isOpen, onClose, onAssi
                             {/* The SearchableDropdown handles the label and search functionality internally or we wrap it */}
                             {/* Looking at the component definition: SearchableDropdown accepts label, value, options, onChange, placeholder */}
                             <SearchableDropdown
-                                label="Property *"
+                                label="Assign To *"
                                 value={selectedProperty}
-                                options={properties}
+                                options={hasProperties ? properties : []}
                                 onChange={setSelectedProperty}
-                                placeholder="Select Property"
+                                placeholder={hasProperties ? 'Select or enter name' : 'No properties available'}
                                 className="w-full"
                             />
                         </div>
@@ -74,10 +69,13 @@ const AssignKeyModal: React.FC<AssignKeyModalProps> = ({ isOpen, onClose, onAssi
                     <div>
                         <button
                             onClick={() => {
-                                if (selectedProperty) {
-                                    onAssign(selectedProperty);
+                                // Guard: only assign when there are real properties and a valid selection
+                                if (!hasProperties || !selectedProperty) {
+                                    return;
                                 }
+                                onAssign(selectedProperty);
                             }}
+                            disabled={!hasProperties || !selectedProperty}
                             className="bg-[#3A6D6C] text-white px-8 py-2.5 rounded-lg font-medium shadow-sm hover:bg-[#2c5251] transition-colors"
                         >
                             Assign

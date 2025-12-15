@@ -6,8 +6,10 @@ import Pagination from '../../components/Pagination';
 import UnitGroupCard, { type UnitGroup } from './components/UnitGroupCard';
 import SingleUnitCard from './components/SingleUnitCard';
 import { useGetAllProperties } from '../../../../hooks/usePropertyQueries';
+import { useGetAllListings } from '../../../../hooks/useListingQueries';
 import { unitService } from '../../../../services/unit.service';
 import type { Unit } from './components/UnitItem';
+import type { BackendListing } from '../../../../services/listing.service';
 
 const Units: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -15,6 +17,7 @@ const Units: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 9;
     const { data: properties, isLoading: isLoadingProperties, error: propertiesError } = useGetAllProperties();
+    const { data: listings = [], isLoading: isLoadingListings, error: listingsError } = useGetAllListings();
 
     // Get all MULTI properties to fetch their units
     const multiProperties = useMemo(() => {
@@ -36,8 +39,34 @@ const Units: React.FC = () => {
     // Combine loading and error states
     const isLoadingUnits = unitQueries.some(query => query.isLoading);
     const unitsError = unitQueries.find(query => query.error)?.error;
-    const isLoading = isLoadingProperties || isLoadingUnits;
-    const error = propertiesError || unitsError;
+    const isLoading = isLoadingProperties || isLoadingUnits || isLoadingListings;
+    const error = propertiesError || unitsError || listingsError;
+
+    // Create maps of active listings for quick lookup
+    const activeListingsMap = useMemo(() => {
+        const propertyListingsMap = new Map<string, BackendListing>();
+        const unitListingsMap = new Map<string, BackendListing>();
+
+        listings.forEach((listing: BackendListing) => {
+            if (listing.listingStatus === 'ACTIVE' && listing.isActive) {
+                if (listing.unitId) {
+                    // Unit-level listing
+                    const existing = unitListingsMap.get(listing.unitId);
+                    if (!existing || new Date(listing.listedAt) > new Date(existing.listedAt)) {
+                        unitListingsMap.set(listing.unitId, listing);
+                    }
+                } else {
+                    // Property-level listing
+                    const existing = propertyListingsMap.get(listing.propertyId);
+                    if (!existing || new Date(listing.listedAt) > new Date(existing.listedAt)) {
+                        propertyListingsMap.set(listing.propertyId, listing);
+                    }
+                }
+            }
+        });
+
+        return { propertyListingsMap, unitListingsMap };
+    }, [listings]);
 
     // Transform backend properties to UnitGroup format
     const allUnitGroups: UnitGroup[] = useMemo(() => {
@@ -84,19 +113,28 @@ const Units: React.FC = () => {
                     if (unitsData.length > 0) {
                         // Transform MULTI property units from unit service
                         units = unitsData.map((unit: any) => {
-                            // Determine unit status
+                            // Determine unit status - only Occupied if there's an active lease/tenant
+                            // Having leasing data doesn't mean occupied - it just means leasing terms are set
                             let unitStatus: 'Occupied' | 'Vacant' = 'Vacant';
-                            if (unit.listings && Array.isArray(unit.listings) && unit.listings.length > 0) {
-                                const activeListing = unit.listings[0];
-                                if (activeListing.occupancyStatus === 'OCCUPIED' || activeListing.occupancyStatus === 'PARTIALLY_OCCUPIED') {
+                            
+                            // Check if unit has an active listing with OCCUPIED status
+                            // First check the fetched listings map (most reliable)
+                            const activeListing = activeListingsMap.unitListingsMap.get(unit.id);
+                            if (activeListing && (activeListing.occupancyStatus === 'OCCUPIED' || activeListing.occupancyStatus === 'PARTIALLY_OCCUPIED')) {
+                                unitStatus = 'Occupied';
+                            } else if (unit.listings && Array.isArray(unit.listings) && unit.listings.length > 0) {
+                                // Fallback to unit's listings array if available
+                                const unitListing = unit.listings.find((l: any) => 
+                                    l.listingStatus === 'ACTIVE' && 
+                                    l.isActive && 
+                                    (l.occupancyStatus === 'OCCUPIED' || l.occupancyStatus === 'PARTIALLY_OCCUPIED')
+                                );
+                                if (unitListing) {
                                     unitStatus = 'Occupied';
                                 }
-                            } else if (unit.leasing) {
-                                unitStatus = 'Occupied';
                             }
-
-                            // Get unit image - prioritize unit photos, then coverPhotoUrl
-                            // Show empty string (no image) if unit has no photos or coverPhotoUrl
+                            
+                          
                             let unitImage = '';
                             if (unit.photos && Array.isArray(unit.photos) && unit.photos.length > 0) {
                                 // Use primary photo or first photo
@@ -106,6 +144,9 @@ const Units: React.FC = () => {
                                 unitImage = unit.coverPhotoUrl;
                             }
                             // If no unit photos or coverPhotoUrl, unitImage remains empty string (will show "No Image")
+
+                            // Check if unit has an active listing
+                            const hasActiveListing = activeListingsMap.unitListingsMap.has(unit.id);
 
                             return {
                                 id: unit.id,
@@ -117,6 +158,7 @@ const Units: React.FC = () => {
                                 baths: unit.baths ? (typeof unit.baths === 'string' ? parseFloat(unit.baths) : Number(unit.baths)) : 0,
                                 sqft: unit.sizeSqft ? (typeof unit.sizeSqft === 'string' ? parseFloat(unit.sizeSqft) : Number(unit.sizeSqft)) : 0,
                                 image: unitImage,
+                                hasActiveListing,
                             };
                         });
 
@@ -134,17 +176,28 @@ const Units: React.FC = () => {
                     // Transform SINGLE property to a unit
                     const singleUnit = property.singleUnitDetails;
                     
-                    // Determine status for single unit
+                    // Determine status for single unit - only Occupied if there's an active lease/tenant
                     let unitStatus: 'Occupied' | 'Vacant' = 'Vacant';
-                    // Check if property has active listings (property-level listings)
-                    if (property.listings && Array.isArray(property.listings) && property.listings.length > 0) {
-                        // For SINGLE properties, if there's an active listing, check leasing for occupancy
-                        if (property.leasing) {
+                    
+                    // Check if property has an active listing with OCCUPIED status
+                    // First check the fetched listings map (most reliable)
+                    const activeListing = activeListingsMap.propertyListingsMap.get(property.id);
+                    if (activeListing && (activeListing.occupancyStatus === 'OCCUPIED' || activeListing.occupancyStatus === 'PARTIALLY_OCCUPIED')) {
+                        unitStatus = 'Occupied';
+                    } else if (property.listings && Array.isArray(property.listings) && property.listings.length > 0) {
+                        // Fallback to property's listings array if available
+                        const propertyListing = property.listings.find((l: any) => 
+                            l.listingStatus === 'ACTIVE' && 
+                            l.isActive && 
+                            (l.occupancyStatus === 'OCCUPIED' || l.occupancyStatus === 'PARTIALLY_OCCUPIED')
+                        );
+                        if (propertyListing) {
                             unitStatus = 'Occupied';
                         }
-                    } else if (property.leasing) {
-                        unitStatus = 'Occupied';
                     }
+                    
+                    // Check if property has an active listing
+                    const hasActiveListing = activeListingsMap.propertyListingsMap.has(property.id);
 
                     units = [{
                         id: property.id,
@@ -156,6 +209,7 @@ const Units: React.FC = () => {
                         baths: singleUnit.baths ? (typeof singleUnit.baths === 'string' ? parseFloat(singleUnit.baths) : Number(singleUnit.baths)) : 0,
                         sqft: property.sizeSqft ? (typeof property.sizeSqft === 'string' ? parseFloat(property.sizeSqft) : Number(property.sizeSqft)) : 0,
                         image: image,
+                        hasActiveListing,
                     }];
 
                     status = unitStatus;
@@ -171,7 +225,7 @@ const Units: React.FC = () => {
                     propertyType: property.propertyType,
                 };
             });
-    }, [properties, unitQueries, multiProperties]);
+    }, [properties, unitQueries, multiProperties, activeListingsMap]);
 
     const unitGroups = useMemo(() => {
         return allUnitGroups.filter(group => {

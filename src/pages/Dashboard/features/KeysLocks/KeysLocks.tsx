@@ -1,86 +1,92 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Plus, Edit, Trash2, Check } from 'lucide-react';
+import { ChevronLeft, Plus, Edit, Trash2, Check, Loader2 } from 'lucide-react';
 import DashboardFilter from '../../components/DashboardFilter';
+import { useGetAllKeys, useDeleteKey } from '../../../../hooks/useKeysQueries';
+import type { BackendKey } from '../../../../services/keys.service';
 
-// Mock Data
-// Mock Data
-export const keysData = [
-    {
-        id: 1,
-        name: 'Xyz',
-        type: 'Main Door',
-        property: 'Luxury Property',
-        unit: '-----',
-        assignee: 'Unassigned',
-        keyDescription: 'This is a main door key for the luxury property. It gives access to the main entrance.',
-        propertyDescription: 'A beautiful luxury property located in the heart of the city. Features modern amenities and spacious living areas.',
-        propertyAddress: '78 Scheme No 78 - II, Indore, MP 452010, IN'
-    },
-    {
-        id: 2,
-        name: 'Abc',
-        type: 'Main Door',
-        property: 'Abc Property',
-        unit: '-----',
-        assignee: 'Unassigned',
-        keyDescription: 'Spare key for the back door.',
-        propertyDescription: 'Cozy apartment in a quiet neighborhood.',
-        propertyAddress: '123 Main St, Anytown, USA'
-    },
-    {
-        id: 3,
-        name: 'Njdsbjs',
-        type: 'Main Door',
-        property: 'Avasa Dept.',
-        unit: '-----',
-        assignee: 'UnAssignee',
-        keyDescription: 'Key for the storage unit.',
-        propertyDescription: 'Commercial property with high foot traffic.',
-        propertyAddress: '456 Market St, Business District'
-    },
-    {
-        id: 4,
-        name: 'New',
-        type: 'Main Door',
-        property: 'C1 Apartment',
-        unit: '-----',
-        assignee: 'UnAssignee',
-        keyDescription: 'Master key for all units.',
-        propertyDescription: 'Residential complex with swimming pool and gym.',
-        propertyAddress: '789 Park Ave, Suburbia'
-    },
-];
+// Map backend key type to display format
+const mapKeyType = (keyType: string): string => {
+  const typeMap: Record<string, string> = {
+    'DOOR': 'Main Door',
+    'MAILBOX': 'Mailbox',
+    'GARAGE': 'Garage',
+    'GATE': 'Gate',
+    'STORAGE': 'Storage',
+    'OTHER': 'Other',
+  };
+  return typeMap[keyType] || keyType;
+};
 
 const KeysLocks = () => {
     const navigate = useNavigate();
-    const [selectedItems, setSelectedItems] = useState<number[]>([]);
+    const [selectedItems, setSelectedItems] = useState<string[]>([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filters, setFilters] = useState<Record<string, string[]>>({});
+    
+    // Fetch keys from backend
+    const { data: keys = [], isLoading, error } = useGetAllKeys();
+    const deleteKeyMutation = useDeleteKey();
+
+    // Transform backend keys to display format
+    const transformedKeys = useMemo(() => {
+        return keys.map((key: BackendKey) => ({
+            id: key.id,
+            name: key.keyName,
+            type: mapKeyType(key.keyType),
+            property: key.property?.propertyName || 'Unknown Property',
+            unit: key.unit?.unitName || '-----',
+            assignee: key.issuedTo || 'Unassigned',
+            status: key.status,
+            keyDescription: key.description || '',
+            propertyDescription: key.property?.address 
+                ? `${key.property.address.streetAddress}, ${key.property.address.city}, ${key.property.address.stateRegion} ${key.property.address.zipCode}, ${key.property.address.country}`
+                : '',
+            propertyAddress: key.property?.address 
+                ? `${key.property.address.streetAddress}, ${key.property.address.city}, ${key.property.address.stateRegion} ${key.property.address.zipCode}, ${key.property.address.country}`
+                : 'Address not available',
+            keyPhotoUrl: key.keyPhotoUrl,
+        }));
+    }, [keys]);
+
+    // Filter keys based on search and filters
+    const filteredKeys = useMemo(() => {
+        return transformedKeys.filter(key => {
+            const matchesSearch = !searchQuery || 
+                key.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                key.property.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                key.type.toLowerCase().includes(searchQuery.toLowerCase());
+            
+            const matchesStatus = !filters.keyStatus?.length || 
+                filters.keyStatus.includes('all') ||
+                (filters.keyStatus.includes('active') && (key.status === 'AVAILABLE' || key.status === 'ISSUED')) ||
+                (filters.keyStatus.includes('inactive') && (key.status === 'INACTIVE' || key.status === 'LOST' || key.status === 'DAMAGED'));
+            
+            return matchesSearch && matchesStatus;
+        });
+    }, [transformedKeys, searchQuery, filters]);
 
     const handleSearchChange = (search: string) => {
-        console.log('Search:', search);
+        setSearchQuery(search);
     };
 
-    const handleFiltersChange = (filters: Record<string, string[]>) => {
-        console.log('Filters:', filters);
+    const handleFiltersChange = (newFilters: Record<string, string[]>) => {
+        setFilters(newFilters);
     };
 
     const filterOptions = {
         keyStatus: [
+            { value: 'all', label: 'All' },
             { value: 'active', label: 'Active' },
             { value: 'inactive', label: 'Inactive' }
         ],
-        propertyUnits: [
-            { value: 'prop1', label: 'Property 1' },
-            { value: 'prop2', label: 'Property 2' }
-        ]
     };
 
     const filterLabels = {
         keyStatus: 'Key Status',
-        propertyUnits: 'Property & Units'
     };
 
-    const toggleSelection = (id: number) => {
+    const toggleSelection = (id: string) => {
         if (selectedItems.includes(id)) {
             setSelectedItems(selectedItems.filter(item => item !== id));
         } else {
@@ -89,11 +95,27 @@ const KeysLocks = () => {
     };
 
     const toggleAll = () => {
-        if (selectedItems.length === keysData.length) {
+        if (selectedItems.length === filteredKeys.length && filteredKeys.length > 0) {
             setSelectedItems([]);
         } else {
-            setSelectedItems(keysData.map(item => item.id));
+            setSelectedItems(filteredKeys.map(item => item.id));
         }
+    };
+
+    const handleDelete = async (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (window.confirm('Are you sure you want to delete this key?')) {
+            try {
+                await deleteKeyMutation.mutateAsync(id);
+            } catch (error) {
+                console.error('Error deleting key:', error);
+            }
+        }
+    };
+
+    const handleEdit = (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        navigate(`/dashboard/portfolio/edit-key/${id}`);
     };
 
     return (
@@ -116,7 +138,7 @@ const KeysLocks = () => {
                     </div>
                     <div className="flex gap-3">
                         <button onClick={() => navigate('/dashboard/portfolio/add-key')} className="px-5 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2 shadow-sm">
-                            Add Request
+                            Add Keys
                             <Plus className="w-4 h-4" />
                         </button>
                     </div>
@@ -130,77 +152,97 @@ const KeysLocks = () => {
                     onFiltersChange={handleFiltersChange}
                 />
 
-                {/* Table Section */}
-                <div className="bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm mt-8">
-                    {/* Table Header */}
-                    <div className="text-white px-6 py-4 grid grid-cols-[40px_40px_1fr_1fr_1.5fr_1fr_1fr_80px] gap-4 items-center text-sm font-medium">
-                        <div className="flex items-center justify-center ml-7">
-                            <button onClick={toggleAll} className="flex items-center justify-center">
-                                <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${selectedItems.length === keysData.length && keysData.length > 0 ? 'bg-[#7BD747]' : 'bg-white/20 border border-white/50'}`}>
-                                    {selectedItems.length === keysData.length && keysData.length > 0 && <Check className="w-3.5 h-3.5 text-white" />}
-                                </div>
-                            </button>
-                        </div>
-                        <div></div> {/* Spacer for ID */}
-                        <div>Name</div>
-                        <div>Type</div>
-                        <div>Property</div>
-                        <div>Unit</div>
-                        <div>Assignee</div>
-                        <div></div>
+                {/* Loading State */}
+                {isLoading && (
+                    <div className="flex items-center justify-center py-12 mt-8">
+                        <Loader2 className="w-8 h-8 animate-spin text-[#3A6D6C]" />
+                        <p className="ml-4 text-gray-600">Loading keys...</p>
                     </div>
-                </div>
+                )}
 
-                {/* Table Body */}
-                <div className="flex flex-col gap-3 bg-[#F0F0F6] p-4 rounded-[2rem] rounded-t">
-                    {keysData.map((item) => (
-                        <div
-                            key={item.id}
-                            onClick={() => navigate(`/dashboard/portfolio/keys-locks/${item.id}`)}
-                            className="bg-white rounded-2xl px-6 py-4 grid grid-cols-[40px_40px_1fr_1fr_1.5fr_1fr_1fr_80px] gap-4 items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                        >
-                            <div className="flex items-center justify-center">
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        toggleSelection(item.id);
-                                    }}
-                                    className="flex items-center justify-center"
-                                >
-                                    <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${selectedItems.includes(item.id) ? 'bg-[#7BD747]' : 'bg-gray-200'}`}>
-                                        {selectedItems.includes(item.id) && <Check className="w-3.5 h-3.5 text-white" />}
-                                    </div>
-                                </button>
-                            </div>
-                            <div className="font-bold text-gray-800 text-sm">{item.id}</div>
-                            <div className="font-semibold text-[#2E6819] text-sm">{item.name}</div>
-                            <div className="text-[#2E6819] text-sm font-semibold">{item.type}</div>
-                            <div className="text-[#2E6819] text-sm font-semibold">{item.property}</div>
-                            <div className="text-gray-400 text-sm font-medium tracking-widest">{item.unit}</div>
-                            <div className="text-[#4ad1a6] text-sm font-semibold">{item.assignee}</div>
-                            <div className="flex items-center justify-end gap-3">
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        // Add edit logic here
-                                    }}
-                                    className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
-                                >
-                                    <Edit className="w-5 h-5" />
-                                </button>
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        // Add delete logic here
-                                    }}
-                                    className="text-red-500 hover:text-red-600 transition-colors"
-                                >
-                                    <Trash2 className="w-5 h-5" />
-                                </button>
+                {/* Error State */}
+                {error && !isLoading && (
+                    <div className="bg-red-50 border border-red-200 rounded-2xl p-6 mt-8">
+                        <p className="text-red-800">
+                            {error instanceof Error ? error.message : 'Failed to load keys'}
+                        </p>
+                    </div>
+                )}
+
+                {/* Table Section */}
+                {!isLoading && !error && (
+                    <>
+                        <div className="bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm mt-8">
+                            {/* Table Header */}
+                            <div className="text-white px-6 py-4 grid grid-cols-[40px_1fr_1fr_1.5fr_1fr_1fr_80px] gap-4 items-center text-sm font-medium">
+                                <div className="flex items-center justify-center ml-7">
+                                    <button onClick={toggleAll} className="flex items-center justify-center">
+                                        <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${selectedItems.length === filteredKeys.length && filteredKeys.length > 0 ? 'bg-[#7BD747]' : 'bg-white/20 border border-white/50'}`}>
+                                            {selectedItems.length === filteredKeys.length && filteredKeys.length > 0 && <Check className="w-3.5 h-3.5 text-white" />}
+                                        </div>
+                                    </button>
+                                </div>
+                                <div>Name</div>
+                                <div>Type</div>
+                                <div>Property</div>
+                                <div>Unit</div>
+                                <div>Assignee</div>
+                                <div></div>
                             </div>
                         </div>
-                    ))}
-                </div>
+
+                        {/* Table Body */}
+                        <div className="flex flex-col gap-3 bg-[#F0F0F6] p-4 rounded-[2rem] rounded-t">
+                            {filteredKeys.length === 0 ? (
+                                <div className="bg-white rounded-2xl px-6 py-12 text-center">
+                                    <p className="text-gray-500">No keys found</p>
+                                </div>
+                            ) : (
+                                filteredKeys.map((item) => (
+                                    <div
+                                        key={item.id}
+                                        onClick={() => navigate(`/dashboard/portfolio/keys-locks/${item.id}`)}
+                                        className="bg-white rounded-2xl px-6 py-4 grid grid-cols-[40px_1fr_1fr_1.5fr_1fr_1fr_80px] gap-4 items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                                    >
+                                        <div className="flex items-center justify-center">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    toggleSelection(item.id);
+                                                }}
+                                                className="flex items-center justify-center"
+                                            >
+                                                <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${selectedItems.includes(item.id) ? 'bg-[#7BD747]' : 'bg-gray-200'}`}>
+                                                    {selectedItems.includes(item.id) && <Check className="w-3.5 h-3.5 text-white" />}
+                                                </div>
+                                            </button>
+                                        </div>
+                                        <div className="font-semibold text-[#2E6819] text-sm">{item.name}</div>
+                                        <div className="text-[#2E6819] text-sm font-semibold">{item.type}</div>
+                                        <div className="text-[#2E6819] text-sm font-semibold">{item.property}</div>
+                                        <div className="text-gray-400 text-sm font-medium tracking-widest">{item.unit}</div>
+                                        <div className="text-[#4ad1a6] text-sm font-semibold">{item.assignee}</div>
+                                        <div className="flex items-center justify-end gap-3">
+                                            <button
+                                                onClick={(e) => handleEdit(item.id, e)}
+                                                className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
+                                            >
+                                                <Edit className="w-5 h-5" />
+                                            </button>
+                                            <button
+                                                onClick={(e) => handleDelete(item.id, e)}
+                                                disabled={deleteKeyMutation.isPending}
+                                                className="text-red-500 hover:text-red-600 transition-colors disabled:opacity-50"
+                                            >
+                                                <Trash2 className="w-5 h-5" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </>
+                )}
             </div>
         </div>
     );
