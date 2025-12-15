@@ -42,6 +42,7 @@ import AddMaintenanceRequest from './pages/Dashboard/features/Maintenance/AddMai
 import Requests from './pages/Dashboard/features/Maintenance/MaintenanceRequests';
 import MaintenanceRequestsDetail from './pages/Dashboard/features/Maintenance/MaintenanceRequestsDetail';
 import Properties from './pages/Dashboard/features/Properties/Properties';
+import ImportProperties from './pages/Dashboard/features/Properties/ImportProperties/ImportProperties';
 import Equipments from './pages/Dashboard/features/Equipments/Equipments';
 import EquipmentDetail from './pages/Dashboard/features/Equipments/EquipmentDetail';
 import CreateEquipment from './pages/Dashboard/features/Equipments/CreateEquipment';
@@ -117,7 +118,7 @@ const App: React.FC = () => {
                 }
               />
               <Route path="/dashboard/list-unit" element={<ListUnit />} />
-              <Route path="/dashboard/properties" element={<Properties />} />
+
               <Route path="/dashboard/portfolio/units" element={<Units />} />
               <Route path="/dashboard/portfolio/keys-locks" element={<KeysLocks />} />
               <Route path="/dashboard/portfolio/add-key" element={<AddKey />} />
@@ -140,6 +141,8 @@ const App: React.FC = () => {
               <Route path="/dashboard/equipments/:id" element={<EquipmentDetail />} />
               <Route path="/dashboard/property/add" element={<AddProperty />} />
               <Route path="/dashboard/properties/edit/:id" element={<EditProperty />} />
+              <Route path="/dashboard/properties" element={<Properties />} />
+              <Route path="/dashboard/properties/import" element={<ImportProperties />} />
               <Route path="/dashboard/accounting/transactions" element={<Transactions />} />
               <Route path="/dashboard/accounting/transactions/income/add" element={<AddIncomeInvoice />} />
               <Route path="/dashboard/accounting/transactions/income-payments" element={<IncomePayments />} />
