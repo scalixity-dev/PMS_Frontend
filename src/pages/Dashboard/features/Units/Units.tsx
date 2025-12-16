@@ -93,10 +93,13 @@ const Units: React.FC = () => {
                 return false;
             })
             .map(property => {
-                // Format address
-                const address = property.address
-                    ? `${property.address.streetAddress}, ${property.address.city}, ${property.address.stateRegion} ${property.address.zipCode}, ${property.address.country}`
-                    : 'Address not available';
+                // Format address and extract country
+                let address = 'Address not available';
+                let country: string | undefined;
+                if (property.address) {
+                    country = property.address.country;
+                    address = `${property.address.streetAddress}, ${property.address.city}, ${property.address.stateRegion} ${property.address.zipCode}, ${property.address.country}`;
+                }
 
                 // Get cover photo or first photo - for multi-apartment, use empty string if no image
                 const image = property.propertyType === 'MULTI'
@@ -223,6 +226,7 @@ const Units: React.FC = () => {
                     status,
                     units,
                     propertyType: property.propertyType,
+                    country,
                 };
             });
     }, [properties, unitQueries, multiProperties, activeListingsMap]);
