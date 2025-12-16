@@ -1,17 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardFilter from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
 import TenantCard from './components/TenantCard';
 import { Plus, ChevronLeft } from 'lucide-react';
-
-interface Tenant {
-    id: number;
-    name: string;
-    phone: string;
-    email: string;
-    image?: string;
-}
+import { tenantService, type Tenant } from '../../../../services/tenant.service';
 
 
 
@@ -50,36 +43,28 @@ const Tenants = () => {
         lease: 'Lease'
     };
 
-    const [tenants] = useState<Tenant[]>([
-        {
-            id: 1,
-            name: 'Anjali Vyas',
-            phone: '+91 8569325417',
-            email: 'Anjli57474@gmail.com',
-            image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200&h=200'
-        },
-        {
-            id: 2,
-            name: 'Sam Curren',
-            phone: '+91 8569325417',
-            email: 'Currensam@gmail.com',
-            image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200&h=200'
-        },
-        {
-            id: 3,
-            name: 'Herry Gurney',
-            phone: '+91 8569325417',
-            email: 'Herrygurnwe@gmail.com',
-            image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=200&h=200'
-        },
-        {
-            id: 4,
-            name: 'James Fos',
-            phone: '+91 8569325417',
-            email: 'Jamesfos@gmail.com',
-            image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200&h=200'
-        }
-    ]);
+    const [tenants, setTenants] = useState<Tenant[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchTenants = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                const backendTenants = await tenantService.getAll();
+                const transformedTenants = backendTenants.map((tenant) => tenantService.transformTenant(tenant));
+                setTenants(transformedTenants);
+            } catch (err) {
+                console.error('Error fetching tenants:', err);
+                setError(err instanceof Error ? err.message : 'Failed to fetch tenants');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchTenants();
+    }, []);
 
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
@@ -152,33 +137,51 @@ const Tenants = () => {
                         onClick={handleSortToggle}
                         className="flex items-center gap-1 hover:bg-black/5 px-2 py-1 rounded-lg transition-colors"
                     >
-                        <span className="text-lg font-bold text-black">Abc</span>
-                        <svg
-                            width="10"
-                            height="6"
-                            viewBox="0 0 10 6"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                            className={`transition-transform duration-200 ${sortOrder === 'desc' ? 'rotate-180' : ''}`}
-                        >
-                            <path d="M1 1L5 5L9 1" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
+                        
                     </button>
                     <div className="bg-[#3A6D6C] text-white px-4 py-1 rounded-full text-sm">
                         {tenants.length} tenants
                     </div>
                 </div>
 
+                {/* Loading State */}
+                {loading && (
+                    <div className="text-center py-12">
+                        <p className="text-gray-600">Loading tenants...</p>
+                    </div>
+                )}
+
+                {/* Error State */}
+                {error && !loading && (
+                    <div className="text-center py-12">
+                        <p className="text-red-600">Error: {error}</p>
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="mt-4 px-4 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors"
+                        >
+                            Retry
+                        </button>
+                    </div>
+                )}
+
                 {/* Tenants Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                    {currentTenants.map((tenant) => (
-                        <TenantCard
-                            key={tenant.id}
-                            {...tenant}
-                            image={tenant.image || ''}
-                        />
-                    ))}
-                </div>
+                {!loading && !error && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                        {currentTenants.length > 0 ? (
+                            currentTenants.map((tenant) => (
+                                <TenantCard
+                                    key={tenant.id}
+                                    {...tenant}
+                                    image={tenant.image || ''}
+                                />
+                            ))
+                        ) : (
+                            <div className="col-span-full text-center py-12">
+                                <p className="text-gray-600">No tenants found</p>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 <Pagination
                     currentPage={currentPage}

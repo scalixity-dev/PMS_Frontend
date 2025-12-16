@@ -21,6 +21,11 @@ export interface BackendKey {
   property?: {
     id: string;
     propertyName: string;
+    coverPhotoUrl?: string | null;
+    photos?: Array<{
+      photoUrl: string;
+      isPrimary?: boolean | null;
+    }>;
     address?: {
       streetAddress: string;
       city: string;

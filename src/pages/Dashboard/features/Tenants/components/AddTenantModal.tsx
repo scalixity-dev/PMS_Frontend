@@ -108,17 +108,7 @@ const AddTenantModal: React.FC<AddTenantModalProps> = ({ isOpen, onClose, onSave
                     </div>
 
                     {/* Company Name */}
-                    <div>
-                        <label className="block text-xs font-bold text-gray-800 mb-2 ml-1">Company Name*</label>
-                        <input
-                            type="text"
-                            name="companyName"
-                            value={formData.companyName}
-                            onChange={handleChange}
-                            placeholder="Company Name"
-                            className="w-full bg-[#84CC16] text-white placeholder-white/70 px-6 py-3 rounded-full outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all"
-                        />
-                    </div>
+                    
                 </div>
 
                 {/* Footer */}
