@@ -471,7 +471,9 @@ class TenantService {
 
     return {
       id: backendTenant.id,
-      name: `${backendTenant.firstName} ${backendTenant.middleName || ''} ${backendTenant.lastName}`.trim(),
+      name: [backendTenant.firstName, backendTenant.middleName, backendTenant.lastName]
+        .filter(Boolean)
+        .join(' '),
       phone: phone,
       email: email,
       image: backendTenant.profilePhotoUrl || undefined,
