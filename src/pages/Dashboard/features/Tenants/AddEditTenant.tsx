@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Plus, Trash2, Upload, FileText, X } from 'lucide-react';
+import { format, parse, differenceInYears } from 'date-fns';
+import DatePicker from '../../../../components/ui/DatePicker';
+import CustomDropdown from '../../components/CustomDropdown';
 
 // Mock Data for Edit Mode
 const MOCK_TENANT_DATA: Record<string, any> = {
@@ -10,7 +13,7 @@ const MOCK_TENANT_DATA: Record<string, any> = {
             middleName: '',
             lastName: 'Vyas',
             companyName: 'Tech Corp',
-            dateOfBirth: '1990-05-15',
+            dateOfBirth: '15/05/1990',
             email: 'Anjli57474@gmail.com',
             phone: '+91 8569325417',
             age: '33',
@@ -40,7 +43,7 @@ const MOCK_TENANT_DATA: Record<string, any> = {
             middleName: '',
             lastName: 'Curren',
             companyName: 'Design Studio',
-            dateOfBirth: '1988-08-20',
+            dateOfBirth: '20/08/1988',
             email: 'Currensam@gmail.com',
             phone: '+91 8569325417',
             age: '35',
@@ -66,6 +69,60 @@ const MOCK_TENANT_DATA: Record<string, any> = {
     }
 };
 
+// US States Data
+const US_STATES = [
+    { value: 'AL', label: 'Alabama' },
+    { value: 'AK', label: 'Alaska' },
+    { value: 'AZ', label: 'Arizona' },
+    { value: 'AR', label: 'Arkansas' },
+    { value: 'CA', label: 'California' },
+    { value: 'CO', label: 'Colorado' },
+    { value: 'CT', label: 'Connecticut' },
+    { value: 'DE', label: 'Delaware' },
+    { value: 'FL', label: 'Florida' },
+    { value: 'GA', label: 'Georgia' },
+    { value: 'HI', label: 'Hawaii' },
+    { value: 'ID', label: 'Idaho' },
+    { value: 'IL', label: 'Illinois' },
+    { value: 'IN', label: 'Indiana' },
+    { value: 'IA', label: 'Iowa' },
+    { value: 'KS', label: 'Kansas' },
+    { value: 'KY', label: 'Kentucky' },
+    { value: 'LA', label: 'Louisiana' },
+    { value: 'ME', label: 'Maine' },
+    { value: 'MD', label: 'Maryland' },
+    { value: 'MA', label: 'Massachusetts' },
+    { value: 'MI', label: 'Michigan' },
+    { value: 'MN', label: 'Minnesota' },
+    { value: 'MS', label: 'Mississippi' },
+    { value: 'MO', label: 'Missouri' },
+    { value: 'MT', label: 'Montana' },
+    { value: 'NE', label: 'Nebraska' },
+    { value: 'NV', label: 'Nevada' },
+    { value: 'NH', label: 'New Hampshire' },
+    { value: 'NJ', label: 'New Jersey' },
+    { value: 'NM', label: 'New Mexico' },
+    { value: 'NY', label: 'New York' },
+    { value: 'NC', label: 'North Carolina' },
+    { value: 'ND', label: 'North Dakota' },
+    { value: 'OH', label: 'Ohio' },
+    { value: 'OK', label: 'Oklahoma' },
+    { value: 'OR', label: 'Oregon' },
+    { value: 'PA', label: 'Pennsylvania' },
+    { value: 'RI', label: 'Rhode Island' },
+    { value: 'SC', label: 'South Carolina' },
+    { value: 'SD', label: 'South Dakota' },
+    { value: 'TN', label: 'Tennessee' },
+    { value: 'TX', label: 'Texas' },
+    { value: 'UT', label: 'Utah' },
+    { value: 'VT', label: 'Vermont' },
+    { value: 'VA', label: 'Virginia' },
+    { value: 'WA', label: 'Washington' },
+    { value: 'WV', label: 'West Virginia' },
+    { value: 'WI', label: 'Wisconsin' },
+    { value: 'WY', label: 'Wyoming' }
+];
+
 // Reusable Components
 const SectionHeader = ({ title, onRemove, onAdd, showAdd }: { title: string, onRemove?: () => void, onAdd?: () => void, showAdd?: boolean }) => (
     <div className="flex items-center gap-4 mb-4">
@@ -89,7 +146,7 @@ const SectionHeader = ({ title, onRemove, onAdd, showAdd }: { title: string, onR
     </div>
 );
 
-const InputField = ({ label, placeholder, value, onChange, name, type = "text", className = "flex-1" }: any) => (
+const InputField = ({ label, placeholder, value, onChange, name, type = "text", className = "flex-1", error }: any) => (
     <div className={className}>
         <label className="block text-xs font-bold text-gray-600 mb-2 ml-1">{label}*</label>
         <input
@@ -98,8 +155,9 @@ const InputField = ({ label, placeholder, value, onChange, name, type = "text", 
             value={value}
             onChange={onChange}
             placeholder={placeholder}
-            className="w-full bg-white border border-gray-200 text-gray-800 px-6 py-3 rounded-md outline-none focus:ring-2 focus:ring-[#3A6D6C]/20 transition-all font-medium placeholder:text-gray-400"
+            className={`w-full bg-white border ${error ? 'border-red-500' : 'border-gray-200'} text-gray-800 px-6 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[#3A6D6C]/20 transition-all font-medium placeholder:text-gray-400`}
         />
+        {error && <span className="text-xs text-red-500 mt-1 ml-1">{error}</span>}
     </div>
 );
 
@@ -121,6 +179,8 @@ const AddEditTenant = () => {
         pets: false,
         vehicles: false
     });
+
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
     // Form Data
     const [formData, setFormData] = useState({
@@ -199,6 +259,13 @@ const AddEditTenant = () => {
         }));
     };
 
+    const handleForwardingAddressDropdownChange = (name: string, value: string) => {
+        setFormData(prev => ({
+            ...prev,
+            forwardingAddress: { ...prev.forwardingAddress, [name]: value }
+        }));
+    };
+
     // Generic list handlers
     const handleListChange = (section: 'emergencyContacts' | 'pets' | 'vehicles', id: number, field: string, value: string) => {
         setFormData(prev => ({
@@ -257,6 +324,32 @@ const AddEditTenant = () => {
 
     const handleRemoveDocument = (index: number) => {
         setDocuments(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleSubmit = () => {
+        const newErrors: Record<string, string> = {};
+        if (!formData.personalInfo.firstName) newErrors.firstName = 'First Name is required';
+        if (!formData.personalInfo.lastName) newErrors.lastName = 'Last Name is required';
+        if (!formData.personalInfo.phone) newErrors.phone = 'Phone is required';
+        if (!formData.personalInfo.email) newErrors.email = 'Email is required';
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
+            // Scroll to top to see errors
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+
+        // Clear errors
+        setErrors({});
+
+        console.log('Submitting Form Data:', formData);
+        console.log('Profile Photo:', profilePhoto);
+        console.log('Documents:', documents);
+
+        // Simulate API call and success navigation
+        alert('Tenant updated successfully! (Data logged to console)');
+        navigate('/dashboard/contacts/tenants');
     };
 
     const AddSectionButton = ({ onClick, label }: { onClick: () => void, label: string }) => (
@@ -327,14 +420,54 @@ const AddEditTenant = () => {
                 <div className="mb-8">
                     <h2 className="text-lg font-bold text-gray-800 mb-4">Personal Information</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                        <InputField label="First Name" name="firstName" value={formData.personalInfo.firstName} onChange={handlePersonalInfoChange} placeholder="First Name" />
+                        <InputField label="First Name" name="firstName" value={formData.personalInfo.firstName} onChange={handlePersonalInfoChange} placeholder="First Name" error={errors.firstName} />
                         <InputField label="Middle Name" name="middleName" value={formData.personalInfo.middleName} onChange={handlePersonalInfoChange} placeholder="Middle Name" />
-                        <InputField label="Last Name" name="lastName" value={formData.personalInfo.lastName} onChange={handlePersonalInfoChange} placeholder="Last Name" />
+                        <InputField label="Last Name" name="lastName" value={formData.personalInfo.lastName} onChange={handlePersonalInfoChange} placeholder="Last Name" error={errors.lastName} />
                         <InputField label="Company Name" name="companyName" value={formData.personalInfo.companyName} onChange={handlePersonalInfoChange} placeholder="Company Name" />
-                        <InputField label="Date of birth" name="dateOfBirth" value={formData.personalInfo.dateOfBirth} onChange={handlePersonalInfoChange} placeholder="dd/mm/yy" />
-                        <InputField label="Email" name="email" value={formData.personalInfo.email} onChange={handlePersonalInfoChange} placeholder="Email Address" type="email" />
-                        <InputField label="Phone Number" name="phone" value={formData.personalInfo.phone} onChange={handlePersonalInfoChange} placeholder="Phone Number" />
-                        <InputField label="Age" name="age" value={formData.personalInfo.age} onChange={handlePersonalInfoChange} placeholder="Enter age" />
+                        <div className="flex-1">
+                            <label className="block text-xs font-bold text-gray-600 mb-2 ml-1">Date of birth</label>
+                            <DatePicker
+                                value={formData.personalInfo.dateOfBirth ? parse(formData.personalInfo.dateOfBirth, 'dd/MM/yyyy', new Date()) : undefined}
+                                onChange={(date) => {
+                                    if (date) {
+                                        const dateString = format(date, 'dd/MM/yyyy');
+                                        const age = differenceInYears(new Date(), date).toString();
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            personalInfo: {
+                                                ...prev.personalInfo,
+                                                dateOfBirth: dateString,
+                                                age: age
+                                            }
+                                        }));
+                                    } else {
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            personalInfo: {
+                                                ...prev.personalInfo,
+                                                dateOfBirth: '',
+                                                age: ''
+                                            }
+                                        }));
+                                    }
+                                }}
+                                placeholder="Select Date"
+                                className="w-full bg-white border border-gray-200 text-gray-800 px-6 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[#3A6D6C]/20 transition-all font-medium"
+                            />
+                        </div>
+                        <InputField label="Email" name="email" value={formData.personalInfo.email} onChange={handlePersonalInfoChange} placeholder="Email Address" type="email" error={errors.email} />
+                        <InputField label="Phone Number" name="phone" value={formData.personalInfo.phone} onChange={handlePersonalInfoChange} placeholder="Phone Number" error={errors.phone} />
+                        <InputField label="Phone Number" name="phone" value={formData.personalInfo.phone} onChange={handlePersonalInfoChange} placeholder="Phone Number" error={errors.phone} />
+                        <div className="flex-1">
+                            <label className="block text-xs font-bold text-gray-600 mb-2 ml-1">Age</label>
+                            <input
+                                type="text"
+                                value={formData.personalInfo.age}
+                                readOnly
+                                className="w-full bg-gray-50 border border-gray-200 text-gray-500 px-6 py-3 rounded-lg outline-none font-medium cursor-not-allowed"
+                                placeholder="Age (Calculated)"
+                            />
+                        </div>
                     </div>
                 </div>
 
@@ -353,16 +486,16 @@ const AddEditTenant = () => {
                             <InputField label="Zip" name="zip" value={formData.forwardingAddress.zip} onChange={handleForwardingAddressChange} placeholder="Zip" />
                             <div className="flex-1">
                                 <label className="block text-xs font-bold text-gray-600 mb-2 ml-1">Country*</label>
-                                <select
-                                    name="country"
+                                <CustomDropdown
                                     value={formData.forwardingAddress.country}
-                                    onChange={handleForwardingAddressChange}
-                                    className="w-full bg-white border border-gray-200 text-gray-800 px-6 py-3 rounded-md outline-none focus:ring-2 focus:ring-[#3A6D6C]/20 transition-all font-medium appearance-none"
-                                >
-                                    <option value="">Country</option>
-                                    <option value="USA">USA</option>
-                                    <option value="India">India</option>
-                                </select>
+                                    onChange={(value) => handleForwardingAddressDropdownChange('country', value)}
+                                    options={[
+                                        { value: 'USA', label: 'USA' },
+                                        { value: 'India', label: 'India' }
+                                    ]}
+                                    placeholder="Country"
+                                    buttonClassName="w-full bg-white border border-gray-200 text-gray-800 px-6 py-2.5 rounded-lg outline-none focus:ring-2 focus:ring-[#3A6D6C]/20 transition-all font-medium"
+                                />
                             </div>
                         </div>
                     </div>
@@ -415,7 +548,7 @@ const AddEditTenant = () => {
                                         value={contact.details}
                                         onChange={(e) => handleListChange('emergencyContacts', contact.id, 'details', e.target.value)}
                                         placeholder="Type Details here.."
-                                        className="w-full bg-white border border-gray-200 text-gray-800 px-6 py-4 rounded-md outline-none focus:ring-2 focus:ring-[#3A6D6C]/20 transition-all font-medium placeholder:text-gray-400 min-h-[120px] resize-none"
+                                        className="w-full bg-white border border-gray-200 text-gray-800 px-6 py-4 rounded-lg outline-none focus:ring-2 focus:ring-[#3A6D6C]/20 transition-all font-medium placeholder:text-gray-400 min-h-[120px] resize-none"
                                     ></textarea>
                                 </div>
                             </div>
@@ -447,15 +580,16 @@ const AddEditTenant = () => {
                                 )}
                                 <div className="flex-1">
                                     <label className="block text-xs font-bold text-gray-600 mb-2 ml-1">Type*</label>
-                                    <select
+                                    <CustomDropdown
                                         value={pet.type}
-                                        onChange={(e) => handleListChange('pets', pet.id, 'type', e.target.value)}
-                                        className="w-full bg-white border border-gray-200 text-gray-800 px-6 py-3 rounded-md outline-none focus:ring-2 focus:ring-[#3A6D6C]/20 transition-all font-medium appearance-none"
-                                    >
-                                        <option value="">Choose</option>
-                                        <option value="Dog">Dog</option>
-                                        <option value="Cat">Cat</option>
-                                    </select>
+                                        onChange={(value) => handleListChange('pets', pet.id, 'type', value)}
+                                        options={[
+                                            { value: 'Dog', label: 'Dog' },
+                                            { value: 'Cat', label: 'Cat' }
+                                        ]}
+                                        placeholder="Choose"
+                                        buttonClassName="w-full bg-white border border-gray-200 text-gray-800 px-6 py-2.5 rounded-lg outline-none focus:ring-2 focus:ring-[#3A6D6C]/20 transition-all font-medium"
+                                    />
                                 </div>
                                 <InputField label="Name" value={pet.name} onChange={(e: any) => handleListChange('pets', pet.id, 'name', e.target.value)} placeholder="Name" />
                                 <InputField label="Weight" value={pet.weight} onChange={(e: any) => handleListChange('pets', pet.id, 'weight', e.target.value)} placeholder="Weight" />
@@ -490,15 +624,16 @@ const AddEditTenant = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                                     <div className="flex-1">
                                         <label className="block text-xs font-bold text-gray-600 mb-2 ml-1">Type*</label>
-                                        <select
+                                        <CustomDropdown
                                             value={vehicle.type}
-                                            onChange={(e) => handleListChange('vehicles', vehicle.id, 'type', e.target.value)}
-                                            className="w-full bg-white border border-gray-200 text-gray-800 px-6 py-3 rounded-md outline-none focus:ring-2 focus:ring-[#3A6D6C]/20 transition-all font-medium appearance-none"
-                                        >
-                                            <option value="">Choose</option>
-                                            <option value="Car">Car</option>
-                                            <option value="Bike">Bike</option>
-                                        </select>
+                                            onChange={(value) => handleListChange('vehicles', vehicle.id, 'type', value)}
+                                            options={[
+                                                { value: 'Car', label: 'Car' },
+                                                { value: 'Bike', label: 'Bike' }
+                                            ]}
+                                            placeholder="Choose"
+                                            buttonClassName="w-full bg-white border border-gray-200 text-gray-800 px-6 py-2.5 rounded-lg outline-none focus:ring-2 focus:ring-[#3A6D6C]/20 transition-all font-medium"
+                                        />
                                     </div>
                                     <InputField label="Make" value={vehicle.make} onChange={(e: any) => handleListChange('vehicles', vehicle.id, 'make', e.target.value)} placeholder="Type Here" />
                                     <InputField label="Model" value={vehicle.model} onChange={(e: any) => handleListChange('vehicles', vehicle.id, 'model', e.target.value)} placeholder="Type Here" />
@@ -507,28 +642,25 @@ const AddEditTenant = () => {
                                     <div className="flex-1">
                                         <label className="block text-xs font-bold text-gray-600 mb-2 ml-1">License plate*</label>
                                         <div className="flex gap-2">
-                                            <select className="w-24 bg-white border border-gray-200 text-gray-800 px-4 py-3 rounded-md outline-none focus:ring-2 focus:ring-[#3A6D6C]/20 transition-all font-medium appearance-none">
-                                                <option>State</option>
-                                            </select>
                                             <input
                                                 type="text"
                                                 value={vehicle.licensePlate}
                                                 onChange={(e) => handleListChange('vehicles', vehicle.id, 'licensePlate', e.target.value)}
                                                 placeholder="Type"
-                                                className="flex-1 bg-white border border-gray-200 text-gray-800 px-6 py-3 rounded-md outline-none focus:ring-2 focus:ring-[#3A6D6C]/20 transition-all font-medium"
+                                                className="flex-1 bg-white border border-gray-200 text-gray-800 px-6 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[#3A6D6C]/20 transition-all font-medium"
                                             />
                                         </div>
                                     </div>
                                     <div className="flex-1">
                                         <label className="block text-xs font-bold text-gray-600 mb-2 ml-1">Registered in*</label>
-                                        <select
+                                        <CustomDropdown
                                             value={vehicle.registeredIn}
-                                            onChange={(e) => handleListChange('vehicles', vehicle.id, 'registeredIn', e.target.value)}
-                                            className="w-full bg-white border border-gray-200 text-gray-800 px-6 py-3 rounded-md outline-none focus:ring-2 focus:ring-[#3A6D6C]/20 transition-all font-medium appearance-none"
-                                        >
-                                            <option value="">Type here</option>
-                                            <option value="State1">State1</option>
-                                        </select>
+                                            onChange={(value) => handleListChange('vehicles', vehicle.id, 'registeredIn', value)}
+                                            options={US_STATES}
+                                            searchable={true}
+                                            placeholder="Select State"
+                                            buttonClassName="w-full bg-white border border-gray-200 text-gray-800 px-6 py-2.5 rounded-lg outline-none focus:ring-2 focus:ring-[#3A6D6C]/20 transition-all font-medium"
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -537,8 +669,6 @@ const AddEditTenant = () => {
                 ) : (
                     <AddSectionButton onClick={() => toggleSection('vehicles', true)} label="Vehicles" />
                 )}
-
-                {/* Upload Documents - Functional */}
                 <div className="mb-8">
                     <input
                         type="file"
@@ -585,7 +715,10 @@ const AddEditTenant = () => {
 
                 {/* Action Buttons */}
                 <div className="flex justify-start gap-4">
-                    <button className="bg-[#3A6D6C] text-white px-8 py-3 rounded-md font-semibold shadow-lg hover:bg-[#2c5251] transition-colors">
+                    <button
+                        onClick={handleSubmit}
+                        className="bg-[#3A6D6C] text-white px-8 py-3 rounded-md font-semibold shadow-lg hover:bg-[#2c5251] transition-colors"
+                    >
                         Update
                     </button>
                 </div>

@@ -163,11 +163,20 @@ const TenantDetail = () => {
     const menuItems = [
         { label: 'Edit', action: () => navigate(`/dashboard/contacts/tenants/edit/${id}`) },
         { label: 'Send connection', action: () => { } },
-        { label: 'Move in', action: () => { } },
-        { label: 'Add invoice', action: () => { } },
+        { label: 'Move in', action: () => navigate(`/dashboard/movein?tenantId=${id}`) },
+        { label: 'Add invoice', action: () => navigate(`/dashboard/accounting/transactions/income/add?tenantId=${id}`) },
         { label: 'Add insurance', action: () => { } },
         { label: 'Archive', action: () => { } },
-        { label: 'Delete', action: () => { }, isDestructive: true },
+        {
+            label: 'Delete',
+            action: () => {
+                if (window.confirm('Are you sure you want to delete this tenant?')) {
+                    console.log('Deleting tenant:', id);
+                    navigate('/dashboard/contacts/tenants');
+                }
+            },
+            isDestructive: true
+        },
     ];
 
     // Get tenant by ID from route param, fallback to tenant 1
