@@ -9,6 +9,8 @@ import { DayButton, DayPicker, getDefaultClassNames } from "react-day-picker"
 import { cn } from "../../lib/utils"
 import { Button, buttonVariants } from "./button"
 
+type CalendarView = "days" | "months" | "years"
+
 function Calendar({
   className,
   classNames,
@@ -22,10 +24,140 @@ function Calendar({
   buttonVariant?: React.ComponentProps<typeof Button>["variant"]
 }) {
   const defaultClassNames = getDefaultClassNames()
+  const [view, setView] = React.useState<CalendarView>("days")
+  const yearContainerRef = React.useRef<HTMLDivElement>(null)
+  
+  // Safely access selected date
+  const getSelectedDate = () => {
+    if ('selected' in props && props.selected instanceof Date) {
+      return props.selected
+    }
+    return new Date()
+  }
+  
+  const initialDate = getSelectedDate()
+  const [selectedYear, setSelectedYear] = React.useState<number>(initialDate.getFullYear())
+  const [selectedMonth, setSelectedMonth] = React.useState<number>(initialDate.getMonth())
+  const [displayMonth, setDisplayMonth] = React.useState<Date>(initialDate)
+
+  // Scroll to selected year when year view opens
+  React.useEffect(() => {
+    if (view === "years" && yearContainerRef.current) {
+      const yearIndex = years.findIndex(y => y === selectedYear)
+      if (yearIndex !== -1) {
+        // Calculate approximate scroll position (each button is ~36px + gap)
+        const scrollPosition = Math.floor(yearIndex / 4) * 42 - 42
+        yearContainerRef.current.scrollTop = Math.max(0, scrollPosition)
+      }
+    }
+  }, [view])
+
+  // Generate years array (current year ± 100 years)
+  const currentYear = new Date().getFullYear()
+  const years = Array.from({ length: 201 }, (_, i) => currentYear - 100 + i)
+  
+  // Month names
+  const months = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ]
+
+  const handleYearSelect = (year: number) => {
+    setSelectedYear(year)
+    setView("months")
+  }
+
+  const handleMonthSelect = (monthIndex: number) => {
+    setSelectedMonth(monthIndex)
+    const newDate = new Date(selectedYear, monthIndex, 1)
+    setDisplayMonth(newDate)
+    setView("days")
+  }
+
+  const handleYearClick = () => {
+    setView("years")
+  }
+
+  const handleMonthClick = () => {
+    setView("months")
+  }
+
+  // Render year selection view
+  if (view === "years") {
+    return (
+      <div
+        className={cn(
+          "bg-background group/calendar p-3 [--cell-size:2rem]",
+          className
+        )}
+      >
+        <div className="flex flex-col gap-2">
+          <div className="text-center font-medium text-sm mb-1">Select Year</div>
+          <div ref={yearContainerRef} className="grid grid-cols-4 gap-1.5 max-h-[196px] overflow-y-auto">
+            {years.map((year) => (
+              <Button
+                key={year}
+                variant={year === selectedYear ? "default" : "ghost"}
+                className={cn(
+                  "h-9 text-xs",
+                  year === selectedYear && "bg-primary text-primary-foreground"
+                )}
+                onClick={() => handleYearSelect(year)}
+              >
+                {year}
+              </Button>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Render month selection view
+  if (view === "months") {
+    return (
+      <div
+        className={cn(
+          "bg-background group/calendar p-3 [--cell-size:2rem]",
+          className
+        )}
+      >
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-center mb-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setView("years")}
+              className="text-sm font-medium hover:underline h-8"
+            >
+              {selectedYear}
+            </Button>
+          </div>
+          <div className="grid grid-cols-3 gap-1.5">
+            {months.map((month, index) => (
+              <Button
+                key={month}
+                variant={index === selectedMonth ? "default" : "ghost"}
+                className={cn(
+                  "h-9 text-xs px-1",
+                  index === selectedMonth && "bg-primary text-primary-foreground"
+                )}
+                onClick={() => handleMonthSelect(index)}
+              >
+                {month.slice(0, 3)}
+              </Button>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
+      month={displayMonth}
+      onMonthChange={setDisplayMonth}
       className={cn(
         "bg-background group/calendar p-3 [--cell-size:2rem] [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent",
         String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,
@@ -46,7 +178,7 @@ function Calendar({
         ),
         month: cn("flex w-full flex-col gap-4", defaultClassNames.month),
         nav: cn(
-          "absolute inset-x-0 top-0 flex w-full items-center justify-between gap-1",
+          "absolute inset-x-0 top-0 flex w-full items-center justify-between gap-1 pointer-events-none [&>*]:pointer-events-auto",
           defaultClassNames.nav
         ),
         button_previous: cn(
@@ -60,7 +192,7 @@ function Calendar({
           defaultClassNames.button_next
         ),
         month_caption: cn(
-          "flex h-[--cell-size] w-full items-center justify-center px-[--cell-size]",
+          "flex h-[--cell-size] w-full items-center justify-center px-[--cell-size] relative z-10",
           defaultClassNames.month_caption
         ),
         dropdowns: cn(
@@ -131,6 +263,29 @@ function Calendar({
               className={cn(className)}
               {...props}
             />
+          )
+        },
+        MonthCaption: ({ calendarMonth }) => {
+          const monthName = calendarMonth.date.toLocaleString("default", { month: "long" })
+          const year = calendarMonth.date.getFullYear()
+          
+          return (
+            <div className="flex items-center justify-center gap-1">
+              <button
+                type="button"
+                onClick={handleMonthClick}
+                className="text-sm font-medium hover:underline focus:outline-none cursor-pointer"
+              >
+                {monthName}
+              </button>
+              <button
+                type="button"
+                onClick={handleYearClick}
+                className="text-sm font-medium hover:underline focus:outline-none cursor-pointer"
+              >
+                {year}
+              </button>
+            </div>
           )
         },
         Chevron: ({ className, orientation, ...props }) => {
