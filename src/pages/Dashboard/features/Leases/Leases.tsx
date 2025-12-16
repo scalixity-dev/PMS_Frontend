@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Trash2, ChevronLeft, Eye } from 'lucide-react';
+import { Trash2, ChevronLeft, Eye, ChevronDown } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
 
@@ -141,10 +141,21 @@ const Leases: React.FC = () => {
                         <ChevronLeft className="w-6 h-6" />
                         Leases
                     </button>
+                    <div className="flex gap-3 ml-4">
+                        <button
+                            onClick={() => navigate('/dashboard/movein')}
+                            className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm"
+                        >
+                            Move in
+                        </button>
+                        <button className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm">
+                            Import
+                        </button>
+                    </div>
                 </div>
 
                 {/* Stats Section Placeholder */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="bg-[#F0F0F6] p-4 flex flex-wrap gap-4 rounded-full shadow-md mb-8 items-center justify-start">
                     <div className="bg-[#7BD747] rounded-full p-1 pl-1 flex items-center justify-between shadow-sm h-14 w-60">
                         <div className="flex flex-col justify-center pl-4">
                             <span className="text-white text-xs font-semibold">Active leases</span>
@@ -192,7 +203,7 @@ const Leases: React.FC = () => {
                 <div className='mb-4 flex items-center'>
                     <div className="bg-[#7BD747] rounded-full px-4 py-2 flex items-center gap-2 shadow-sm">
                         <span className="text-white font-semibold pr-2 border-r border-white/30">Luxury Apartments</span>
-                        <span className="text-white text-xs">▼</span>
+                        <ChevronDown className="text-white w-4 h-4 ml-1" />
                         <div className="bg-white rounded-full px-2 py-0.5 flex items-center gap-1">
                             <span className="text-gray-600 text-xs font-medium">Lease</span>
                             <div className="bg-gray-200 rounded-full w-4 h-4 flex items-center justify-center">
@@ -262,7 +273,7 @@ const Leases: React.FC = () => {
                 <div className='mb-4 mt-8 flex items-center'>
                     <div className="bg-[#7BD747] rounded-full px-4 py-2 flex items-center gap-2 shadow-sm">
                         <span className="text-white font-semibold pr-2 border-r border-white/30">Grove Street</span>
-                        <span className="text-white text-xs">▼</span>
+                        <ChevronDown className="text-white w-4 h-4 ml-1" />
                         <div className="bg-white rounded-full px-2 py-0.5 flex items-center gap-1">
                             <span className="text-gray-600 text-xs font-medium">Lease</span>
                             <div className="bg-gray-200 rounded-full w-4 h-4 flex items-center justify-center">
