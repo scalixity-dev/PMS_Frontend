@@ -128,8 +128,16 @@ const KeyDetail = () => {
     }
 
     const isAssigned = keyData.issuedTo && keyData.status === 'ISSUED';
+    
+    // Determine property image URL with fallback chain
+    const propertyImageUrl =
+        keyData.property?.coverPhotoUrl ||
+        keyData.property?.photos?.find((p) => p.isPrimary)?.photoUrl ||
+        keyData.property?.photos?.[0]?.photoUrl ||
+        'https://via.placeholder.com/300x300?text=No+Image';
 
     return (
+        <>
         <div className="max-w-7xl mx-auto min-h-screen font-outfit">
             {/* Breadcrumb */}
             <div className="inline-flex items-center px-4 py-2 bg-[#E0E5E5] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
@@ -258,10 +266,10 @@ const KeyDetail = () => {
 
                         <div className="flex gap-6">
                             <div className="w-48 h-32 rounded-2xl overflow-hidden flex-shrink-0 relative group bg-gray-200 flex items-center justify-center">
-                                {keyData.property?.coverPhotoUrl ? (
+                                {propertyImageUrl && propertyImageUrl !== 'https://via.placeholder.com/300x300?text=No+Image' ? (
                                     <img
-                                        src={keyData.property.coverPhotoUrl}
-                                        alt={keyData.property.propertyName}
+                                        src={propertyImageUrl}
+                                        alt={keyData.property?.propertyName || 'Property'}
                                         className="w-full h-full object-cover"
                                     />
                                 ) : (
@@ -269,7 +277,6 @@ const KeyDetail = () => {
                                         No image available
                                     </div>
                                 )}
-                            </div>
                             </div>
 
                             <div className="flex-1 flex flex-col gap-4">
@@ -337,8 +344,9 @@ const KeyDetail = () => {
                     </div>
                 </div>
             </div>
+        </div>
 
-            <AssignKeyModal
+        <AssignKeyModal
                 isOpen={isAssignModalOpen}
                 onClose={() => setIsAssignModalOpen(false)}
                 onAssign={handleAssignKey}
@@ -362,7 +370,7 @@ const KeyDetail = () => {
                 message="Are you sure you want to unassign this key?"
                 confirmLabel="Unassign"
             />
-        </div>
+        </>
     );
 };
 

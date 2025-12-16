@@ -73,5 +73,17 @@ export const API_ENDPOINTS = {
     GET_CATEGORIES: `${API_BASE_URL}/equipment/categories/all`,
     GET_SUBCATEGORIES: (categoryId: string) => `${API_BASE_URL}/equipment/categories/${categoryId}/subcategories`,
   },
+  TENANT: {
+    GET_ALL: `${API_BASE_URL}/tenant`,
+    GET_ONE: (id: string) => `${API_BASE_URL}/tenant/${id}`,
+    GET_BY_USER: (userId: string) => `${API_BASE_URL}/tenant/user/${userId}`,
+    CREATE: `${API_BASE_URL}/tenant`,
+    UPDATE: (id: string) => `${API_BASE_URL}/tenant/${id}`,
+    DELETE: (id: string) => `${API_BASE_URL}/tenant/${id}`,
+    UPLOAD_PROFILE_PHOTO: (id: string) => `${API_BASE_URL}/tenant/${id}/profile-photo`,
+    UPLOAD_DOCUMENT: (id: string) => `${API_BASE_URL}/tenant/${id}/documents`,
+    GET_DOCUMENTS: (id: string) => `${API_BASE_URL}/tenant/${id}/documents`,
+    DELETE_DOCUMENT: (documentId: string) => `${API_BASE_URL}/tenant/documents/${documentId}`,
+  },
 };
 
