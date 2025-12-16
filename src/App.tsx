@@ -139,6 +139,7 @@ const App: React.FC = () => {
               <Route path="/dashboard/tasks" element={<Tasks />} />
               <Route path="/dashboard/equipments" element={<Equipments />} />
               <Route path="/dashboard/equipments/add" element={<CreateEquipment />} />
+              <Route path="/dashboard/equipments/edit/:id" element={<CreateEquipment />} />
               <Route path="/dashboard/equipments/:id" element={<EquipmentDetail />} />
               <Route path="/dashboard/property/add" element={<AddProperty />} />
               <Route path="/dashboard/properties/edit/:id" element={<EditProperty />} />

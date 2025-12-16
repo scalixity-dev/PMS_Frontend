@@ -11,6 +11,7 @@ export interface Unit {
     baths: number;
     sqft: number;
     image: string;
+    hasActiveListing?: boolean;
 }
 
 interface UnitItemProps {
@@ -97,8 +98,11 @@ const UnitItem: React.FC<UnitItemProps> = ({ unit, propertyId }) => {
 
             {/* Column 3: Actions */}
             <div className="flex flex-col gap-2 justify-center w-22 mt-10">
-                {!isOccupied && (
-                    <button className="bg-[#82D64D] text-white w-full py-1.5 rounded-full text-xs font-bold hover:bg-[#72c042] transition-colors shadow-sm">
+                {!isOccupied && !unit.hasActiveListing && (
+                    <button 
+                        onClick={() => navigate(`/dashboard/list-unit?propertyId=${propertyId}${unit.id !== propertyId ? `&unitId=${unit.id}` : ''}`)}
+                        className="bg-[#82D64D] text-white w-full py-1.5 rounded-full text-xs font-bold hover:bg-[#72c042] transition-colors shadow-sm"
+                    >
                         List
                     </button>
                 )}

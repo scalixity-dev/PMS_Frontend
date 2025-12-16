@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, Calendar, Edit, Paperclip, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
+import { ChevronLeft, Calendar, Edit, Paperclip, ChevronDown, ChevronUp, Trash2, Loader2 } from 'lucide-react';
 import CustomTextBox from '../../components/CustomTextBox';
-import { MOCK_EQUIPMENTS } from './Equipments';
+import { useGetEquipment } from '../../../../hooks/useEquipmentQueries';
+import type { BackendEquipment } from '../../../../services/equipment.service';
 
 const EquipmentDetail = () => {
     const navigate = useNavigate();
-    const { id } = useParams();
-    const equipment = MOCK_EQUIPMENTS.find(e => e.id === Number(id));
+    const { id } = useParams<{ id: string }>();
 
     const [isActionDropdownOpen, setIsActionDropdownOpen] = useState(false);
 
@@ -21,10 +21,62 @@ const EquipmentDetail = () => {
     const toggleSection = (section: keyof typeof sections) => {
         setSections(prev => ({ ...prev, [section]: !prev[section] }));
     };
+    
+    // Fetch equipment details from backend
+    const { data: equipment, isLoading, error } = useGetEquipment(id ?? null, !!id);
 
-    if (!equipment) {
-        return <div>Equipment not found</div>;
+    if (isLoading) {
+        return (
+            <div className="max-w-7xl mx-auto min-h-screen font-outfit flex items-center justify-center">
+                <div className="flex flex-col items-center gap-3">
+                    <Loader2 className="w-8 h-8 animate-spin text-[#3A6D6C]" />
+                    <span className="text-sm text-gray-600">Loading equipment details...</span>
+                </div>
+            </div>
+        );
     }
+
+    if (error || !equipment) {
+        return (
+            <div className="max-w-7xl mx-auto min-h-screen font-outfit flex items-center justify-center">
+                <div className="bg-red-50 border border-red-200 rounded-2xl p-6 max-w-md text-center">
+                    <p className="text-red-800 font-semibold mb-2">Unable to load equipment details</p>
+                    <p className="text-sm text-red-700 mb-4">
+                        {error instanceof Error ? error.message : 'Equipment not found'}
+                    </p>
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors"
+                    >
+                        Go back
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // Strongly-typed backend equipment (see BackendEquipment in equipment.service.ts)
+    const equipmentTyped = equipment as BackendEquipment;
+    // Handle category being either a string or an object { id, name, description }
+    const categoryLabel =
+        typeof equipmentTyped.category === 'string'
+            ? equipmentTyped.category
+            : equipmentTyped.category && typeof equipmentTyped.category === 'object'
+                ? equipmentTyped.category.name ?? 'Unknown category'
+                : 'Unknown category';
+    // Handle subcategory being an object { id, name, description }
+    const subcategoryLabel =
+        equipmentTyped.subcategory && typeof equipmentTyped.subcategory === 'object'
+            ? equipmentTyped.subcategory.name ?? ''
+            : '';
+    const imageUrl = equipmentTyped.photoUrl || 'https://via.placeholder.com/300x300?text=No+Image';
+    const propertyName = equipmentTyped.property?.propertyName || 'Unassigned property';
+    // Prefer property cover photo (or primary photo) for the Property section image
+    const propertyImageUrl =
+        equipmentTyped.property?.coverPhotoUrl ||
+        equipmentTyped.property?.photos?.find((p) => p.isPrimary)?.photoUrl ||
+        equipmentTyped.property?.photos?.[0]?.photoUrl ||
+        imageUrl;
 
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit">
@@ -36,9 +88,6 @@ const EquipmentDetail = () => {
                         Equipments
                     </button>
                     <div className="flex gap-3 ml-4">
-                        <button className="px-6 py-1.5 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm">
-                            Assign
-                        </button>
                         <div className="relative">
                             <button
                                 onClick={() => setIsActionDropdownOpen(!isActionDropdownOpen)}
@@ -75,24 +124,32 @@ const EquipmentDetail = () => {
                         {/* Image */}
                         <div className="w-48 h-48 rounded-2xl overflow-hidden flex-shrink-0">
                             <img
-                                src={equipment.image}
-                                alt={equipment.category}
+                                src={imageUrl}
+                                alt={categoryLabel}
                                 className="w-full h-full object-cover"
                             />
                         </div>
 
                         {/* Green Header Card */}
                         <div className="flex-1 bg-[#82D64D] rounded-[2rem] p-8 flex flex-col justify-center gap-4">
-                            <h2 className="text-white text-xl font-bold">Equipment no. {equipment.id}</h2>
+                            <h2 className="text-white text-xl font-bold">Equipment no. {equipmentTyped.id}</h2>
                             <div className="flex gap-3">
                                 <CustomTextBox
-                                    value={`${equipment.category} ${equipment.subcategory ? `/ ${equipment.subcategory}` : ''}`}
+                                    value={categoryLabel}
                                     readOnly={true}
                                     className="bg-[#E3EBDE] rounded-full px-5 py-2"
                                     valueClassName="text-gray-800 text-base font-semibold"
                                 />
+                                {subcategoryLabel && (
+                                    <CustomTextBox
+                                        value={subcategoryLabel}
+                                        readOnly={true}
+                                        className="bg-[#E3EBDE] rounded-full px-5 py-2"
+                                        valueClassName="text-gray-800 text-base font-semibold"
+                                    />
+                                )}
                                 <CustomTextBox
-                                    value={equipment.brand}
+                                    value={equipmentTyped.brand}
                                     readOnly={true}
                                     className="bg-[#E3EBDE] rounded-full px-5 py-2"
                                     valueClassName="text-gray-800 text-base font-semibold"
@@ -105,19 +162,22 @@ const EquipmentDetail = () => {
                     <div>
                         <h3 className="text-gray-700 font-bold mb-3 ml-2">Property</h3>
                         <div className="bg-[#F0F0F6] border border-white rounded-[2rem] p-4 flex gap-6 shadow-sm">
-                            <div className="w-48 h-32 rounded-lg overflow-hidden flex-shrink-0 relative">
-                                <img
-                                    src="https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&q=80&w=400"
-                                    alt="Property"
-                                    className="w-full h-full object-cover"
-                                />
-                                <button className="absolute top-2 left-2 px-3 py-1 bg-[#82D64D] text-white text-xs font-medium rounded-full hover:bg-[#72bd42] transition-colors">
-                                    Unassign
-                                </button>
+                            <div className="w-48 h-32 rounded-lg overflow-hidden flex-shrink-0">
+                                {equipmentTyped.property ? (
+                                    <img
+                                        src={propertyImageUrl}
+                                        alt={propertyName}
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full bg-gray-200 flex items-center justify-center text-xs text-gray-500">
+                                        No property image
+                                    </div>
+                                )}
                             </div>
                             <div className="flex-1 rounded-xl">
                                 <CustomTextBox
-                                    value={equipment.description || "No description available"}
+                                    value={equipmentTyped.equipmentDetails || "No description available"}
                                     readOnly={true}
                                     className="h-full items-start border-none p-0 rounded-lg"
                                     valueClassName="text-gray-600 text-sm whitespace-pre-wrap w-full"
@@ -144,7 +204,7 @@ const EquipmentDetail = () => {
                                 <div className="flex items-center gap-4">
                                     <label className="w-24 text-sm font-medium text-gray-600">Model</label>
                                     <CustomTextBox
-                                        value={equipment.model || '--'}
+                                        value={equipmentTyped.model || '--'}
                                         readOnly={true}
                                         className="bg-[#E0E8E7] rounded-full h-10 flex-1"
                                         valueClassName="text-gray-700 text-sm"
@@ -153,7 +213,8 @@ const EquipmentDetail = () => {
                                 <div className="flex items-center gap-4">
                                     <label className="w-48 text-sm font-medium text-gray-600">Warranty expiration date</label>
                                     <CustomTextBox
-                                        value={equipment.warrantyExpiration || '-'}
+                                        // Warranty is not in backend model yet
+                                        value={'-'}
                                         readOnly={true}
                                         className="bg-[#E0E8E7] rounded-full h-10 flex-1"
                                         valueClassName="text-gray-700 text-sm"
@@ -162,7 +223,7 @@ const EquipmentDetail = () => {
                                 <div className="flex items-center gap-4">
                                     <label className="w-24 text-sm font-medium text-gray-600">Serial</label>
                                     <CustomTextBox
-                                        value={equipment.serial || '---'}
+                                        value={equipmentTyped.serialNumber || '---'}
                                         readOnly={true}
                                         className="bg-[#E0E8E7] rounded-full h-10 flex-1"
                                         valueClassName="text-gray-700 text-sm"
@@ -171,7 +232,8 @@ const EquipmentDetail = () => {
                                 <div className="flex items-center gap-4">
                                     <label className="w-48 text-sm font-medium text-gray-600">Additional email 1</label>
                                     <CustomTextBox
-                                        value={equipment.additionalEmail || '-'}
+                                        // Additional email not in backend model
+                                        value={'-'}
                                         readOnly={true}
                                         className="bg-[#E0E8E7] rounded-full h-10 flex-1"
                                         valueClassName="text-gray-700 text-sm"
@@ -180,7 +242,13 @@ const EquipmentDetail = () => {
                                 <div className="flex items-center gap-4">
                                     <label className="w-24 text-sm font-medium text-gray-600">Price</label>
                                     <CustomTextBox
-                                        value={equipment.price || '---'}
+                                        value={
+                                            equipmentTyped.price
+                                                ? typeof equipmentTyped.price === 'string'
+                                                    ? equipmentTyped.price
+                                                    : `$${equipmentTyped.price}`
+                                                : '---'
+                                        }
                                         readOnly={true}
                                         className="bg-[#E0E8E7] rounded-full h-10 flex-1"
                                         valueClassName="text-gray-700 text-sm"
@@ -190,25 +258,7 @@ const EquipmentDetail = () => {
                         )}
                     </div>
 
-                    {/* Check up */}
-                    <div>
-                        <button
-                            onClick={() => toggleSection('checkup')}
-                            className="flex items-center gap-2 text-gray-800 font-bold text-lg mb-4"
-                        >
-                            Check up
-                            {sections.checkup ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
-                        </button>
-                        {sections.checkup && (
-                            <div className="bg-[#F0F0F6] rounded-[2rem] p-12 flex justify-center items-center">
-                                <div className="flex flex-col items-center gap-2 text-[#3A6D6C]">
-                                    <Calendar className="w-8 h-8" />
-                                    <span className="text-xs font-medium">No scheduled check up yet</span>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
+                    
                     {/* Related requests */}
                     <div>
                         <button
