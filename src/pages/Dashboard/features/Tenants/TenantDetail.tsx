@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Plus } from 'lucide-react';
 import DetailTabs from '../../components/DetailTabs';
@@ -141,6 +141,43 @@ const TenantDetail = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
     const [activeTab, setActiveTab] = useState('profile');
+    const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
+    const actionMenuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (actionMenuRef.current && !actionMenuRef.current.contains(event.target as Node)) {
+                setIsActionMenuOpen(false);
+            }
+        };
+
+        if (isActionMenuOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isActionMenuOpen]);
+
+    const menuItems = [
+        { label: 'Edit', action: () => navigate(`/dashboard/contacts/tenants/edit/${id}`) },
+        { label: 'Send connection', action: () => { } },
+        { label: 'Move in', action: () => navigate(`/dashboard/movein?tenantId=${id}`) },
+        { label: 'Add invoice', action: () => navigate(`/dashboard/accounting/transactions/income/add?tenantId=${id}`) },
+        { label: 'Add insurance', action: () => { } },
+        { label: 'Archive', action: () => { } },
+        {
+            label: 'Delete',
+            action: () => {
+                if (window.confirm('Are you sure you want to delete this tenant?')) {
+                    console.log('Deleting tenant:', id);
+                    navigate('/dashboard/contacts/tenants');
+                }
+            },
+            isDestructive: true
+        },
+    ];
 
     // Get tenant by ID from route param, fallback to tenant 1
     const tenant = TENANT_DETAILS[Number(id)] || TENANT_DETAILS[1];
@@ -191,9 +228,34 @@ const TenantDetail = () => {
                             Add Invoice
                             <Plus className="w-4 h-4" />
                         </button>
-                        <button className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors">
-                            Action
-                        </button>
+                        <div className="relative" ref={actionMenuRef}>
+                            <button
+                                onClick={() => setIsActionMenuOpen(!isActionMenuOpen)}
+                                className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors"
+                            >
+                                Action
+                            </button>
+                            {isActionMenuOpen && (
+                                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 z-10 overflow-hidden">
+                                    {menuItems.map((item, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => {
+                                                item.action();
+                                                setIsActionMenuOpen(false);
+                                            }}
+                                            className={`w-full text-left px-4 py-2.5 text-sm transition-colors border-b border-gray-50 last:border-none
+                                                ${item.isDestructive
+                                                    ? 'text-red-600 hover:bg-red-50'
+                                                    : 'text-gray-700 hover:bg-gray-50'
+                                                }`}
+                                        >
+                                            {item.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 

@@ -56,7 +56,7 @@ const Properties: React.FC = () => {
                 backendProperty.address.zipCode,
                 backendProperty.address.country,
             ].filter(part => part && part.trim() !== '');
-            
+
             if (addressParts.length > 0) {
                 address = addressParts.join(', ');
             }
@@ -64,9 +64,9 @@ const Properties: React.FC = () => {
 
         // Get image - prioritize coverPhotoUrl, then primary photo, then first photo
         // Use null if no image exists to prevent data leakage (sharing same default image)
-        const image = backendProperty.coverPhotoUrl 
-            || backendProperty.photos?.find((p) => p.isPrimary)?.photoUrl 
-            || backendProperty.photos?.[0]?.photoUrl 
+        const image = backendProperty.coverPhotoUrl
+            || backendProperty.photos?.find((p) => p.isPrimary)?.photoUrl
+            || backendProperty.photos?.[0]?.photoUrl
             || null;
 
         // Map status from backend to frontend
@@ -75,7 +75,7 @@ const Properties: React.FC = () => {
             'INACTIVE': 'inactive',
             'ARCHIVED': 'inactive',
         };
-        const status = backendProperty.status 
+        const status = backendProperty.status
             ? statusMap[backendProperty.status] || 'inactive'
             : 'inactive';
 
@@ -99,20 +99,20 @@ const Properties: React.FC = () => {
 
         // Calculate balance from monthly rent (prioritize leasing monthlyRent, then marketRent)
         let monthlyRent = 0;
-        
+
         // First check if there's monthlyRent in leasing data
         if (backendProperty.leasing?.monthlyRent) {
             monthlyRent = typeof backendProperty.leasing.monthlyRent === 'string'
                 ? parseFloat(backendProperty.leasing.monthlyRent) || 0
                 : Number(backendProperty.leasing.monthlyRent) || 0;
-        } 
+        }
         // Fall back to marketRent from property
         else if (backendProperty.marketRent) {
             monthlyRent = typeof backendProperty.marketRent === 'string'
                 ? parseFloat(backendProperty.marketRent) || 0
                 : Number(backendProperty.marketRent) || 0;
         }
-        
+
         // Determine balance category based on monthly rent
         let balanceCategory: 'low' | 'medium' | 'high' = 'medium';
         if (monthlyRent < 25000) {
@@ -166,6 +166,10 @@ const Properties: React.FC = () => {
 
     const handleAddProperty = () => {
         navigate('/dashboard/property/add');
+    };
+
+    const handleImport = () => {
+        navigate('/dashboard/properties/import');
     };
 
     const filterOptions: Record<string, FilterOption[]> = {
@@ -251,7 +255,7 @@ const Properties: React.FC = () => {
             </div>
 
             <div className="p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem] overflow-visible">
-                <PropertiesHeader onAddProperty={handleAddProperty} />
+                <PropertiesHeader onAddProperty={handleAddProperty} onImport={handleImport} />
 
                 <DashboardFilter
                     filterOptions={filterOptions}
