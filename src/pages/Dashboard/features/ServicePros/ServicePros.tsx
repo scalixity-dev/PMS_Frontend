@@ -3,12 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import DashboardFilter from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination'; // Uncommented
 import ServiceProCard from './components/ServiceProCard';
-import AddServiceProModal from './components/AddServiceProModal';
+// import AddServiceProModal from './components/AddServiceProModal';
 import { Plus, ChevronLeft } from 'lucide-react';
 
 const ServicePros = () => {
     const navigate = useNavigate();
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [, setFilters] = useState<Record<string, string[]>>({});
 
     const handleSearchChange = (_search: string) => {
@@ -131,7 +130,7 @@ const ServicePros = () => {
                             Import
                         </button>
                         <button
-                            onClick={() => setIsAddModalOpen(true)}
+                            onClick={() => navigate('/dashboard/contacts/service-pros/add')}
                             className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2"
                         >
                             Add service pro
@@ -187,14 +186,14 @@ const ServicePros = () => {
                     onPageChange={handlePageChange}
                 />
 
-                <AddServiceProModal
+                {/* <AddServiceProModal
                     isOpen={isAddModalOpen}
                     onClose={() => setIsAddModalOpen(false)}
                     onSave={(data) => {
                         console.log('New Service Pro:', data);
                         // Handle save logic here
                     }}
-                />
+                /> */}
             </div>
         </div>
     );
