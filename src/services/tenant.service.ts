@@ -464,12 +464,16 @@ class TenantService {
     // Get email from user if available, otherwise from contactBookEntry
     const email = backendTenant.user?.email || backendTenant.contactBookEntry?.email || 'N/A';
     
-    // Get phone number, fallback to email if no phone
-    const phone = backendTenant.phoneNumber || email;
+    // Get phone number with country code if available
+    const phone = backendTenant.phoneNumber 
+      ? `${backendTenant.phoneCountryCode || ''}${backendTenant.phoneNumber}`.trim() 
+      : 'N/A';
 
     return {
       id: backendTenant.id,
-      name: `${backendTenant.firstName} ${backendTenant.middleName || ''} ${backendTenant.lastName}`.trim(),
+      name: [backendTenant.firstName, backendTenant.middleName, backendTenant.lastName]
+        .filter(Boolean)
+        .join(' '),
       phone: phone,
       email: email,
       image: backendTenant.profilePhotoUrl || undefined,
