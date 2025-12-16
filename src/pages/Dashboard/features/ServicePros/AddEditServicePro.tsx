@@ -337,10 +337,10 @@ const AddEditServicePro = () => {
                     <div className="relative group">
                         <div
                             onClick={() => profileInputRef.current?.click()}
-                            className={`w-32 h-32 rounded-full bg-white border-2 border-dashed ${profilePhoto ? 'border-transparent' : 'border-gray-300'} flex flex-col items-center justify-center overflow-hidden cursor-pointer hover:border-[#3A6D6C] transition-colors relative`}
+                            className={`w-32 h-32 rounded-2xl bg-white border-2 border-dashed ${profilePhoto ? 'border-transparent' : 'border-gray-300'} flex flex-col items-center justify-center overflow-hidden cursor-pointer hover:border-[#3A6D6C] transition-colors relative`}
                         >
                             {profilePhoto ? (
-                                <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
+                                <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover rounded-2xl" />
                             ) : (
                                 <>
                                     <div className="absolute inset-0 bg-gray-50 hover:bg-gray-100 transition-colors" />
