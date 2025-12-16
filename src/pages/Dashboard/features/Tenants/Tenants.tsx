@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import DashboardFilter from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
 import TenantCard from './components/TenantCard';
-import AddTenantModal from './components/AddTenantModal';
 import { Plus, ChevronLeft } from 'lucide-react';
 
 interface Tenant {
@@ -14,17 +13,10 @@ interface Tenant {
     image?: string;
 }
 
-interface NewTenantData {
-    firstName: string;
-    lastName: string;
-    email: string;
-    phone: string;
-    companyName?: string;
-}
+
 
 const Tenants = () => {
     const navigate = useNavigate();
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [, setFilters] = useState<Record<string, string[]>>({});
 
     const handleSearchChange = (_search: string) => {
@@ -58,7 +50,7 @@ const Tenants = () => {
         lease: 'Lease'
     };
 
-    const [tenants, setTenants] = useState<Tenant[]>([
+    const [tenants] = useState<Tenant[]>([
         {
             id: 1,
             name: 'Anjali Vyas',
@@ -137,7 +129,7 @@ const Tenants = () => {
                             Import
                         </button>
                         <button
-                            onClick={() => setIsAddModalOpen(true)}
+                            onClick={() => navigate('/dashboard/contacts/tenants/add')}
                             className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2"
                         >
                             Add Tenants
@@ -183,6 +175,7 @@ const Tenants = () => {
                         <TenantCard
                             key={tenant.id}
                             {...tenant}
+                            image={tenant.image || ''}
                         />
                     ))}
                 </div>
@@ -193,24 +186,7 @@ const Tenants = () => {
                     onPageChange={handlePageChange}
                 />
 
-                <AddTenantModal
-                    isOpen={isAddModalOpen}
-                    onClose={() => setIsAddModalOpen(false)}
-                    onSave={(data: NewTenantData) => {
-                        // Create new tenant object with proper structure
-                        const newTenant: Tenant = {
-                            id: tenants.length > 0 ? Math.max(...tenants.map(t => t.id)) + 1 : 1,
-                            name: `${data.firstName} ${data.lastName}`.trim(),
-                            phone: data.phone,
-                            email: data.email,
-                            // Optional: use a placeholder image or leave undefined
-                            image: undefined
-                        };
-                        // Add new tenant to state
-                        setTenants(prev => [...prev, newTenant]);
-                        console.log('New Tenant Added:', newTenant);
-                    }}
-                />
+
             </div>
         </div>
     );

@@ -38,7 +38,7 @@ const TenantCard: React.FC<TenantCardProps> = ({
     }, [isMenuOpen]);
 
     const menuItems = [
-        { label: 'Edit', action: () => { } },
+        { label: 'Edit', action: () => navigate(`/dashboard/contacts/tenants/edit/${id}`) },
         { label: 'Send connection', action: () => { } },
         { label: 'Move in', action: () => { } },
         { label: 'Add invoice', action: () => { } },

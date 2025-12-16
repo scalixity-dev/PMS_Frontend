@@ -55,6 +55,7 @@ import ListingDetail from './pages/Dashboard/features/Listing/ListingDetail';
 import Calendar from './pages/Dashboard/features/Calendar/Calendar';
 import Tasks from './pages/Dashboard/features/Tasks/Tasks';
 import Tenants from './pages/Dashboard/features/Tenants/Tenants';
+import AddEditTenant from './pages/Dashboard/features/Tenants/AddEditTenant';
 import TenantDetail from './pages/Dashboard/features/Tenants/TenantDetail';
 import Units from './pages/Dashboard/features/Units/Units';
 import KeysLocks from './pages/Dashboard/features/KeysLocks/KeysLocks';
@@ -161,6 +162,8 @@ const App: React.FC = () => {
               <Route path="/dashboard/maintenance/requests/:id" element={<MaintenanceRequestsDetail />} />
               <Route path="/dashboard/movein" element={<MoveIn />} />
               <Route path="/dashboard/contacts/tenants" element={<Tenants />} />
+              <Route path="/dashboard/contacts/tenants/add" element={<AddEditTenant />} />
+              <Route path="/dashboard/contacts/tenants/edit/:id" element={<AddEditTenant />} />
               <Route path="/dashboard/contacts/tenants/:id" element={<TenantDetail />} />
               <Route path="/dashboard/contacts/service-pros" element={<ServicePros />} />
               <Route path="/dashboard/contacts/service-pros/:id" element={<ServiceProsDetail />} />
