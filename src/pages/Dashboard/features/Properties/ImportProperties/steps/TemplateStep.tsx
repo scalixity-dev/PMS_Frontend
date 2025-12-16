@@ -30,7 +30,7 @@ const TemplateStep: React.FC = () => {
                         onClick={handleDownload}
                         className="px-6 py-2 bg-[#447D7C] text-white font-medium rounded-md hover:bg-[#325c5b] transition-colors shadow-sm"
                     >
-                        Download an examples
+                        Download an example
                     </button>
                 </div>
             </div>

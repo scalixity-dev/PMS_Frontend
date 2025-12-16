@@ -88,7 +88,7 @@ const ImportSuccessModal: React.FC<ImportSuccessModalProps> = ({
                                                     {successCount}
                                                 </div>
                                                 <span className="text-[#3A6D6C] text-sm font-medium whitespace-nowrap">
-                                                    Succesfuly imported
+                                                    Successfully imported
                                                 </span>
                                             </div>
 

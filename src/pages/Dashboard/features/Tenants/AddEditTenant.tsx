@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Plus, Trash2, Upload, FileText, X } from 'lucide-react';
-import { format, parse, differenceInYears } from 'date-fns';
+import { format, parse, differenceInYears, isValid } from 'date-fns';
 import DatePicker from '../../../../components/ui/DatePicker';
 import CustomDropdown from '../../components/CustomDropdown';
 
@@ -427,9 +427,13 @@ const AddEditTenant = () => {
                         <div className="flex-1">
                             <label className="block text-xs font-bold text-gray-600 mb-2 ml-1">Date of birth</label>
                             <DatePicker
-                                value={formData.personalInfo.dateOfBirth ? parse(formData.personalInfo.dateOfBirth, 'dd/MM/yyyy', new Date()) : undefined}
+                                value={(() => {
+                                    if (!formData.personalInfo.dateOfBirth) return undefined;
+                                    const parsedDate = parse(formData.personalInfo.dateOfBirth, 'dd/MM/yyyy', new Date());
+                                    return isValid(parsedDate) ? parsedDate : undefined;
+                                })()}
                                 onChange={(date) => {
-                                    if (date) {
+                                    if (date && isValid(date)) {
                                         const dateString = format(date, 'dd/MM/yyyy');
                                         const age = differenceInYears(new Date(), date).toString();
                                         setFormData(prev => ({
@@ -456,7 +460,6 @@ const AddEditTenant = () => {
                             />
                         </div>
                         <InputField label="Email" name="email" value={formData.personalInfo.email} onChange={handlePersonalInfoChange} placeholder="Email Address" type="email" error={errors.email} />
-                        <InputField label="Phone Number" name="phone" value={formData.personalInfo.phone} onChange={handlePersonalInfoChange} placeholder="Phone Number" error={errors.phone} />
                         <InputField label="Phone Number" name="phone" value={formData.personalInfo.phone} onChange={handlePersonalInfoChange} placeholder="Phone Number" error={errors.phone} />
                         <div className="flex-1">
                             <label className="block text-xs font-bold text-gray-600 mb-2 ml-1">Age</label>

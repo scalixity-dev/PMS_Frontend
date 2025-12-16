@@ -40,6 +40,31 @@ function Calendar({
   const [selectedMonth, setSelectedMonth] = React.useState<number>(initialDate.getMonth())
   const [displayMonth, setDisplayMonth] = React.useState<Date>(initialDate)
 
+  // Sync internal state with selected prop changes
+  React.useEffect(() => {
+    const currentSelectedDate = getSelectedDate()
+    const newYear = currentSelectedDate.getFullYear()
+    const newMonth = currentSelectedDate.getMonth()
+    const newDate = currentSelectedDate.getDate()
+    
+    // Only update if year, month, or date has changed to avoid infinite loops
+    if (
+      newYear !== selectedYear ||
+      newMonth !== selectedMonth ||
+      newDate !== displayMonth.getDate() ||
+      displayMonth.getFullYear() !== newYear ||
+      displayMonth.getMonth() !== newMonth
+    ) {
+      setSelectedYear(newYear)
+      setSelectedMonth(newMonth)
+      setDisplayMonth(new Date(newYear, newMonth, newDate))
+    }
+  }, ['selected' in props ? props.selected : undefined])
+
+  // Generate years array (current year ± 100 years)
+  const currentYear = new Date().getFullYear()
+  const years = Array.from({ length: 201 }, (_, i) => currentYear - 100 + i)
+
   // Scroll to selected year when year view opens
   React.useEffect(() => {
     if (view === "years" && yearContainerRef.current) {
@@ -50,11 +75,7 @@ function Calendar({
         yearContainerRef.current.scrollTop = Math.max(0, scrollPosition)
       }
     }
-  }, [view])
-
-  // Generate years array (current year ± 100 years)
-  const currentYear = new Date().getFullYear()
-  const years = Array.from({ length: 201 }, (_, i) => currentYear - 100 + i)
+  }, [view, selectedYear, years])
   
   // Month names
   const months = [

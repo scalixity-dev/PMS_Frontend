@@ -37,7 +37,16 @@ const UploadStep: React.FC<UploadStepProps> = ({ file, onFileSelect }) => {
     };
 
     const validateAndSetFile = (uploadedFile: File) => {
-        // Simple validation for extensions could go here
+        // Validate file extension
+        const allowedExtensions = ['.csv', '.xls', '.xlsx'];
+        const fileName = uploadedFile.name.toLowerCase();
+        const isValidExtension = allowedExtensions.some(ext => fileName.endsWith(ext));
+        
+        if (!isValidExtension) {
+            alert(`Invalid file type. Please upload a file with one of the following extensions: ${allowedExtensions.join(', ')}`);
+            return;
+        }
+        
         onFileSelect(uploadedFile);
     };
 
