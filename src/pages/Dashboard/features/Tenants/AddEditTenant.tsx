@@ -95,6 +95,9 @@ const AddEditTenant = () => {
     const profileInputRef = useRef<HTMLInputElement>(null);
     const documentsInputRef = useRef<HTMLInputElement>(null);
 
+    // Track current blob URL for cleanup
+    const currentBlobUrlRef = useRef<string | null>(null);
+
     // Image cropping state
     const [showCropModal, setShowCropModal] = useState(false);
     const [imageToCrop, setImageToCrop] = useState<string | null>(null);
@@ -206,6 +209,34 @@ const AddEditTenant = () => {
         }
     }, [tenantError, setSubmitError]);
 
+    // Manage blob URL cleanup for profile photo
+    useEffect(() => {
+        const previousBlobUrl = currentBlobUrlRef.current;
+        
+        // If profilePhoto is a blob URL, update the ref
+        if (profilePhoto && profilePhoto.startsWith('blob:')) {
+            // If there's a previous blob URL that's different, revoke it
+            if (previousBlobUrl && previousBlobUrl !== profilePhoto && previousBlobUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(previousBlobUrl);
+            }
+            currentBlobUrlRef.current = profilePhoto;
+        } else {
+            // If profilePhoto is not a blob URL (or is null), revoke previous blob URL if it exists
+            if (previousBlobUrl && previousBlobUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(previousBlobUrl);
+                currentBlobUrlRef.current = null;
+            }
+        }
+
+        // Cleanup function: revoke blob URL on unmount
+        return () => {
+            if (currentBlobUrlRef.current && currentBlobUrlRef.current.startsWith('blob:')) {
+                URL.revokeObjectURL(currentBlobUrlRef.current);
+                currentBlobUrlRef.current = null;
+            }
+        };
+    }, [profilePhoto]);
+
     // Load all countries on mount
     useEffect(() => {
         setCountries(Country.getAllCountries());
@@ -312,15 +343,10 @@ const AddEditTenant = () => {
     };
 
     const handleCropComplete = (croppedImageUrl: string, croppedFile: File) => {
+        // The useEffect will handle blob URL cleanup when profilePhoto changes
         setProfilePhoto(croppedImageUrl, croppedFile);
         setShowCropModal(false);
         setImageToCrop(null);
-        // Clean up the object URL after a delay to prevent memory leaks
-        setTimeout(() => {
-            if (croppedImageUrl.startsWith('blob:')) {
-                URL.revokeObjectURL(croppedImageUrl);
-            }
-        }, 100);
     };
 
     const handleCropCancel = () => {
@@ -330,6 +356,7 @@ const AddEditTenant = () => {
     };
 
     const handleRemoveProfilePhoto = () => {
+        // The useEffect will handle blob URL cleanup when profilePhoto becomes null
         setProfilePhoto(null, null);
         if (profileInputRef.current) profileInputRef.current.value = '';
     };
