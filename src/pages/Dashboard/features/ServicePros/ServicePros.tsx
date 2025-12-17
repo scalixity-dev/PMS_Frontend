@@ -113,7 +113,7 @@ const ServicePros = () => {
                 <span className="text-gray-600 text-sm font-semibold">Service Pros</span>
             </div>
 
-            <div className="p-6 bg-[#E0E5E5] min-h-screen rounded-[2rem]">
+            <div className="p-6 bg-[#E0E5E5] min-h-screen rounded-[2rem] flex flex-col">
                 {/* Header */}
                 <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-2">
@@ -180,11 +180,13 @@ const ServicePros = () => {
                     ))}
                 </div>
 
-                <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages || 1}
-                    onPageChange={handlePageChange}
-                />
+                <div className="mt-auto">
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages || 1}
+                        onPageChange={handlePageChange}
+                    />
+                </div>
 
                 {/* <AddServiceProModal
                     isOpen={isAddModalOpen}
