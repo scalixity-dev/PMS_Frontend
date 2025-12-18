@@ -54,7 +54,6 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onCancel, onCre
                         required
                         buttonClassName="!border-none !px-6 !py-3 !rounded-md !bg-white"
                         textClassName="font-medium text-gray-700"
-                        labelClassName="font-bold !ml-1"
                     />
                 </div>
 
@@ -123,7 +122,6 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onCancel, onCre
                                 required
                                 buttonClassName="!border-none !px-6 !py-3 !rounded-md !bg-white"
                                 textClassName="font-medium text-gray-700"
-                                labelClassName="font-bold !ml-1"
                             />
                         </div>
                     </div>

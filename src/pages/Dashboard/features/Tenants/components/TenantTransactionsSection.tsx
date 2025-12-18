@@ -11,20 +11,7 @@ interface Transaction {
     balance: number;
 }
 
-interface TenantTransactionsSectionProps {
-    tenant: {
-        id: number;
-        status: 'Paid' | 'Void' | 'Pending';
-        dueDate: string;
-        category: string;
-        property: string;
-        contact: string;
-        total: number;
-        balance: number;
-    };
-}
-
-const TenantTransactionsSection = ({ tenant }: TenantTransactionsSectionProps) => {
+const TenantTransactionsSection = () => {
     // Mock transaction data
     const transactions: Transaction[] = [
         {
@@ -107,19 +94,19 @@ const TenantTransactionsSection = ({ tenant }: TenantTransactionsSectionProps) =
                             <div className="flex items-center gap-2">
                                 <button
                                     className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
-                                    onClick={() => {}}
+                                    onClick={() => { }}
                                 >
                                     <Edit className="w-4 h-4 text-gray-600" />
                                 </button>
                                 <button
                                     className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
-                                    onClick={() => {}}
+                                    onClick={() => { }}
                                 >
                                     <Trash2 className="w-4 h-4 text-red-600" />
                                 </button>
                                 <button
                                     className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
-                                    onClick={() => {}}
+                                    onClick={() => { }}
                                 >
                                     <MoreHorizontal className="w-4 h-4 text-gray-600" />
                                 </button>

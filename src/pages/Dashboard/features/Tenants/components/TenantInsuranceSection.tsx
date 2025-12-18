@@ -1,11 +1,4 @@
-interface TenantInsuranceSectionProps {
-    tenant: {
-        id: number;
-        name: string;
-    };
-}
-
-const TenantInsuranceSection = ({ tenant }: TenantInsuranceSectionProps) => {
+const TenantInsuranceSection = () => {
     return (
         <div>
             

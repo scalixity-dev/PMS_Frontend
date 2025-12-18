@@ -1,6 +1,5 @@
 import React from 'react';
 import { Clock, Calendar } from 'lucide-react';
-import { cn } from '@/lib/utils'; // Assuming cn utility is available, otherwise I'll use template literals
 
 interface MoveInLateFeesTypeProps {
     onNext: (type: 'one-time' | 'daily') => void;
