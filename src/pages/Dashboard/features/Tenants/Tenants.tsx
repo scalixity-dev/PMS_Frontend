@@ -100,7 +100,7 @@ const Tenants = () => {
                 <span className="text-gray-600 text-sm font-semibold">Tenants</span>
             </div>
 
-            <div className="p-6 bg-[#E0E5E5] min-h-screen rounded-[2rem]">
+            <div className="p-6 bg-[#E0E5E5] min-h-screen rounded-[2rem] flex flex-col">
                 {/* Header */}
                 <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-2">
@@ -137,8 +137,19 @@ const Tenants = () => {
                         onClick={handleSortToggle}
                         className="flex items-center gap-1 hover:bg-black/5 px-2 py-1 rounded-lg transition-colors"
                     >
-                        
+                        <span className="text-lg font-bold text-black">Abc</span>
+                        <svg
+                            width="10"
+                            height="6"
+                            viewBox="0 0 10 6"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                            className={`transition-transform duration-200 ${sortOrder === 'desc' ? 'rotate-180' : ''}`}
+                        >
+                            <path d="M1 1L5 5L9 1" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
                     </button>
+
                     <div className="bg-[#3A6D6C] text-white px-4 py-1 rounded-full text-sm">
                         {tenants.length} tenants
                     </div>
@@ -166,13 +177,14 @@ const Tenants = () => {
 
                 {/* Tenants Grid */}
                 {!loading && !error && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                         {currentTenants.length > 0 ? (
                             currentTenants.map((tenant) => (
                                 <TenantCard
                                     key={tenant.id}
                                     {...tenant}
                                     image={tenant.image || ''}
+                                    propertyName="Sunset Apartments, Unit 4B"
                                 />
                             ))
                         ) : (
@@ -183,11 +195,13 @@ const Tenants = () => {
                     </div>
                 )}
 
-                <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages || 1}
-                    onPageChange={handlePageChange}
-                />
+                <div className="mt-auto">
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages || 1}
+                        onPageChange={handlePageChange}
+                    />
+                </div>
 
 
             </div>

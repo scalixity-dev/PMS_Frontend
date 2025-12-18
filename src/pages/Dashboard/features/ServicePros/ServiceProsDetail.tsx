@@ -190,7 +190,7 @@ const ServiceProsDetail = () => {
 
                             {isActionMenuOpen && (
                                 <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 z-10 overflow-hidden">
-                                    <button onClick={() => setIsActionMenuOpen(false)} className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors flex items-center gap-2">
+                                    <button onClick={() => navigate(`/dashboard/contacts/service-pros/edit/${id}`)} className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors flex items-center gap-2">
                                         <Edit className="w-4 h-4" />
                                         Edit
                                     </button>
