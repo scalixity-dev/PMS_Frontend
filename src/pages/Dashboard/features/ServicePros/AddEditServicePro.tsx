@@ -164,6 +164,7 @@ const AddEditServicePro = () => {
     const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
     const [documents, setDocuments] = useState<File[]>([]);
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [submitError, setSubmitError] = useState<string | null>(null);
 
     const [formData, setFormData] = useState({
         general: {
@@ -273,6 +274,23 @@ const AddEditServicePro = () => {
     const handleProfilePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
+
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                setSubmitError('Please select a valid image file');
+                if (profileInputRef.current) profileInputRef.current.value = '';
+                return;
+            }
+
+            // Validate file size (max 10MB to match AddEditTenant.tsx)
+            const maxSize = 10 * 1024 * 1024; // 10MB
+            if (file.size > maxSize) {
+                setSubmitError('Image size must not exceed 10MB');
+                if (profileInputRef.current) profileInputRef.current.value = '';
+                return;
+            }
+
+            setSubmitError(null);
             const reader = new FileReader();
             reader.onload = (ev) => {
                 if (ev.target?.result) setProfilePhoto(ev.target.result as string);
@@ -283,6 +301,7 @@ const AddEditServicePro = () => {
 
     const handleRemoveProfilePhoto = () => {
         setProfilePhoto(null);
+        setSubmitError(null);
         if (profileInputRef.current) profileInputRef.current.value = '';
     };
 
@@ -324,6 +343,13 @@ const AddEditServicePro = () => {
                         <h1 className="text-2xl font-bold text-black">{isEditMode ? 'Edit Service Pro' : 'Add Service Pro'}</h1>
                     </div>
                 </div>
+
+                {/* Error Message */}
+                {submitError && (
+                    <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <p className="text-red-600 text-sm font-medium">{submitError}</p>
+                    </div>
+                )}
 
                 {/* Profile Photo - Centered & Circular (Matches AddEditTenant) */}
                 <div className="flex flex-col items-center justify-center mb-8">
