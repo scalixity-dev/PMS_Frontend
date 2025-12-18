@@ -271,23 +271,23 @@ const AddProperty: React.FC = () => {
     if (e.target.files) {
       const files = Array.from(e.target.files);
       const validFiles: File[] = [];
-      const invalidFiles: string[] = [];
+      const invalidFiles: { id: number; name: string }[] = [];
 
       files.forEach(file => {
         if (allowedDocumentTypes.includes(file.type)) {
           validFiles.push(file);
         } else {
-          invalidFiles.push(file.name);
+          invalidFiles.push({ id: Date.now() + Math.random(), name: file.name });
         }
       });
 
       if (invalidFiles.length > 0) {
-        // Store invalid filenames as simple strings
+        // Store invalid filenames as objects with id and name
         setAttachmentErrors(prev => [...prev, ...invalidFiles]);
         // Clear these specific errors after 5 seconds
         setTimeout(() => {
           setAttachmentErrors(prev =>
-            prev.filter(err => !invalidFiles.includes(err)),
+            prev.filter(err => !invalidFiles.some(invalid => invalid.id === err.id)),
           );
         }, 5000);
       }

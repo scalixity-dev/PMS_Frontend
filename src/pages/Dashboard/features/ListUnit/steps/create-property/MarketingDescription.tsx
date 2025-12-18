@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Undo2 } from 'lucide-react';
+import ReactQuill from 'react-quill-new';
+import 'react-quill/dist/quill.snow.css';
 import { useCreatePropertyStore } from '../../store/createPropertyStore';
 
 interface MarketingDescriptionProps {
@@ -13,6 +15,35 @@ const MarketingDescription: React.FC<MarketingDescriptionProps> = () => {
     const updateData = (key: string, value: any) => {
         updateFormData(key as any, value);
     };
+
+  // Quill toolbar & formats: allow bold, italic, lists, headings, etc.
+  const quillModules = useMemo(
+    () => ({
+      toolbar: [
+        [{ header: [1, 2, 3, false] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        [{ indent: '-1' }, { indent: '+1' }],
+        [{ align: [] }],
+        ['link'],
+        ['clean'],
+      ],
+    }),
+    [],
+  );
+
+  const quillFormats: string[] = [
+    'header',
+    'bold',
+    'italic',
+    'underline',
+    'strike',
+    'list',
+    'bullet',
+    'indent',
+    'align',
+    'link',
+  ];
 
     return (
         <div className="w-full flex flex-col items-center">
@@ -28,13 +59,16 @@ const MarketingDescription: React.FC<MarketingDescriptionProps> = () => {
                     <span className="font-medium text-lg">Description</span>
                 </div>
 
-                {/* Textarea */}
+                {/* Rich text editor */}
                 <div className="p-0">
-                    <textarea
+                    <ReactQuill
+                        theme="snow"
                         value={data.marketingDescription || ''}
-                        onChange={(e) => updateData('marketingDescription', e.target.value)}
+                        onChange={(value: string) => updateData('marketingDescription', value)}
                         placeholder="Add the marketing description here."
-                        className="w-full h-64 p-6 bg-[#F3F4F6] resize-none focus:outline-none text-gray-700 placeholder-gray-500"
+                        modules={quillModules}
+                        formats={quillFormats}
+                        className="bg-[#F3F4F6]"
                     />
                 </div>
             </div>
