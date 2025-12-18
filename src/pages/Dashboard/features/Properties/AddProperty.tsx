@@ -62,7 +62,7 @@ const AddProperty: React.FC = () => {
   const [customFeatureInput, setCustomFeatureInput] = useState('');
   const [customAmenityInput, setCustomAmenityInput] = useState('');
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
-  const [attachmentErrors, setAttachmentErrors] = useState<string[]>([]);
+  const [attachmentErrors, setAttachmentErrors] = useState<{ id: number; name: string }[]>([]);
 
   // Allowed MIME types for document attachments
   const allowedDocumentTypes = [
@@ -705,12 +705,12 @@ const AddProperty: React.FC = () => {
         </div>
       )}
       <form onSubmit={handleSubmit} className="max-w-6xl mx-auto space-y-8">
-        
+
         {/* Property Photo */}
         <section>
           <h2 className="text-lg font-semibold mb-3 text-gray-800">Property photo</h2>
-          <input 
-            type="file" 
+          <input
+            type="file"
             ref={coverPhotoInputRef}
             onChange={handleCoverPhotoChange}
             accept="image/*"
@@ -718,13 +718,13 @@ const AddProperty: React.FC = () => {
           />
           {formData.coverPhoto ? (
             <div className="bg-white rounded-xl border-2 border-dashed border-gray-300 p-2 flex flex-col items-center justify-center h-64 relative overflow-hidden">
-              <img 
-                src={URL.createObjectURL(formData.coverPhoto)} 
-                alt="Property Cover" 
+              <img
+                src={URL.createObjectURL(formData.coverPhoto)}
+                alt="Property Cover"
                 className="w-full h-full object-cover rounded-lg"
               />
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={removeCoverPhoto}
                 className="absolute top-4 right-4 bg-white/80 p-2 rounded-full text-gray-600 hover:text-red-500 hover:bg-white transition-colors"
               >
@@ -732,7 +732,7 @@ const AddProperty: React.FC = () => {
               </button>
             </div>
           ) : (
-            <div 
+            <div
               onClick={() => coverPhotoInputRef.current?.click()}
               className="bg-white rounded-xl border-2 border-dashed border-gray-300 p-8 flex flex-col items-center justify-center h-64 relative cursor-pointer hover:bg-gray-50 transition-colors"
             >
@@ -749,8 +749,8 @@ const AddProperty: React.FC = () => {
         {/* Gallery Photos */}
         <section>
           <h2 className="text-lg font-semibold mb-3 text-gray-800">Gallery Photos</h2>
-          <input 
-            type="file" 
+          <input
+            type="file"
             ref={galleryPhotosInputRef}
             onChange={handleGalleryPhotosChange}
             accept="image/*"
@@ -760,13 +760,13 @@ const AddProperty: React.FC = () => {
           <div className="flex gap-4 flex-wrap">
             {formData.galleryPhotos.map((photo, i) => (
               <div key={i} className="bg-white rounded-xl border border-gray-200 w-40 h-40 flex flex-col items-center justify-center relative overflow-hidden">
-                <img 
-                  src={URL.createObjectURL(photo)} 
-                  alt={`Gallery ${i}`} 
+                <img
+                  src={URL.createObjectURL(photo)}
+                  alt={`Gallery ${i}`}
                   className="w-full h-full object-cover"
                 />
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => removeGalleryPhoto(i)}
                   className="absolute top-2 right-2 bg-white/80 p-1.5 rounded-full text-gray-600 hover:text-red-500 hover:bg-white transition-colors"
                 >
@@ -774,10 +774,10 @@ const AddProperty: React.FC = () => {
                 </button>
               </div>
             ))}
-            
+
             {/* Add More Button */}
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={() => galleryPhotosInputRef.current?.click()}
               className="w-40 h-40 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center bg-white hover:bg-gray-50 transition-colors"
             >
@@ -799,8 +799,8 @@ const AddProperty: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
             <div>
               <label className="block text-xs font-medium mb-1 ml-1">Property Name*</label>
-              <Input 
-                placeholder="Property Name" 
+              <Input
+                placeholder="Property Name"
                 value={formData.propertyName}
                 onChange={(e) => {
                   updateFormData('propertyName', e.target.value);
@@ -821,9 +821,9 @@ const AddProperty: React.FC = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium mb-1 ml-1">Year Built*</label>
-                <Input 
+                <Input
                   type="number"
-                  placeholder="2021" 
+                  placeholder="2021"
                   value={formData.yearBuilt}
                   onChange={(e) => {
                     updateFormData('yearBuilt', e.target.value);
@@ -843,9 +843,9 @@ const AddProperty: React.FC = () => {
               </div>
               <div>
                 <label className="block text-xs font-medium mb-1 ml-1">MLS</label>
-                <Input 
+                <Input
                   type="number"
-                  placeholder="Enter MLS Number" 
+                  placeholder="Enter MLS Number"
                   value={formData.mls}
                   onChange={(e) => {
                     updateFormData('mls', e.target.value);
@@ -867,8 +867,8 @@ const AddProperty: React.FC = () => {
 
             <div>
               <label className="block text-xs font-medium mb-1 ml-1">Street address*</label>
-              <Input 
-                placeholder="Street Address" 
+              <Input
+                placeholder="Street Address"
                 value={formData.streetAddress}
                 onChange={(e) => {
                   updateFormData('streetAddress', e.target.value);
@@ -970,8 +970,8 @@ const AddProperty: React.FC = () => {
               </div>
               <div>
                 <label className="block text-xs font-medium mb-1 ml-1">Zip *</label>
-                <Input 
-                  placeholder="Enter Zip code" 
+                <Input
+                  placeholder="Enter Zip code"
                   value={formData.zip}
                   onChange={(e) => {
                     updateFormData('zip', e.target.value);
@@ -998,18 +998,16 @@ const AddProperty: React.FC = () => {
           <h2 className="text-lg font-semibold mb-4 text-gray-800">Property type</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Single Unit */}
-            <div 
-              className={`p-6 rounded-2xl border cursor-pointer transition-all ${
-                formData.propertyType === 'single' 
-                  ? 'bg-white border-gray-200 shadow-sm' 
+            <div
+              className={`p-6 rounded-2xl border cursor-pointer transition-all ${formData.propertyType === 'single'
+                  ? 'bg-white border-gray-200 shadow-sm'
                   : 'bg-white/50 border-transparent hover:bg-white'
-              }`}
+                }`}
               onClick={() => updateFormData('propertyType', 'single')}
             >
               <div className="flex items-center gap-2 mb-3">
-                <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
-                  formData.propertyType === 'single' ? 'border-green-500' : 'border-gray-400'
-                }`}>
+                <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${formData.propertyType === 'single' ? 'border-green-500' : 'border-gray-400'
+                  }`}>
                   {formData.propertyType === 'single' && <div className="w-3 h-3 bg-green-500 rounded-full" />}
                 </div>
                 <span className="font-semibold text-gray-800">Single Unit type</span>
@@ -1020,18 +1018,16 @@ const AddProperty: React.FC = () => {
             </div>
 
             {/* Multi Unit */}
-            <div 
-              className={`p-6 rounded-2xl border cursor-pointer transition-all ${
-                formData.propertyType === 'multi' 
-                  ? 'bg-white border-gray-200 shadow-sm' 
+            <div
+              className={`p-6 rounded-2xl border cursor-pointer transition-all ${formData.propertyType === 'multi'
+                  ? 'bg-white border-gray-200 shadow-sm'
                   : 'bg-white/50 border-transparent hover:bg-white'
-              }`}
+                }`}
               onClick={() => updateFormData('propertyType', 'multi')}
             >
               <div className="flex items-center gap-2 mb-3">
-                <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
-                  formData.propertyType === 'multi' ? 'border-green-500' : 'border-gray-400'
-                }`}>
+                <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${formData.propertyType === 'multi' ? 'border-green-500' : 'border-gray-400'
+                  }`}>
                   {formData.propertyType === 'multi' && <div className="w-3 h-3 bg-green-500 rounded-full" />}
                 </div>
                 <span className="font-semibold text-gray-800">Multi Unit type</span>
@@ -1052,24 +1048,22 @@ const AddProperty: React.FC = () => {
               <div className="mb-6">
                 <p className="text-sm mb-3 text-gray-700">Is this property a manufactured/mobile home?*</p>
                 <div className="flex gap-4">
-                   <button
-                     type="button"
-                     onClick={() => updateFormData('isManufactured', true)}
-                     className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-medium transition-colors ${
-                       formData.isManufactured ? 'bg-[#84CC16] text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                     }`}
-                   >
-                     {formData.isManufactured && <Check size={14} />} Yes
-                   </button>
-                   <button
-                     type="button"
-                     onClick={() => updateFormData('isManufactured', false)}
-                     className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-medium transition-colors ${
-                       !formData.isManufactured ? 'bg-[#84CC16] text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                     }`}
-                   >
-                     {!formData.isManufactured && <Check size={14} />} No
-                   </button>
+                  <button
+                    type="button"
+                    onClick={() => updateFormData('isManufactured', true)}
+                    className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-medium transition-colors ${formData.isManufactured ? 'bg-[#84CC16] text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                      }`}
+                  >
+                    {formData.isManufactured && <Check size={14} />} Yes
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateFormData('isManufactured', false)}
+                    className={`flex items-center gap-2 px-6 py-2 rounded-full text-sm font-medium transition-colors ${!formData.isManufactured ? 'bg-[#84CC16] text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                      }`}
+                  >
+                    {!formData.isManufactured && <Check size={14} />} No
+                  </button>
                 </div>
               </div>
 
@@ -1077,7 +1071,7 @@ const AddProperty: React.FC = () => {
                 <div>
                   <label className="block text-xs font-medium mb-1 ml-1">Beds*</label>
                   <div className="relative">
-                    <select 
+                    <select
                       className={`w-full rounded-lg border bg-white px-3 py-2 text-gray-700 outline-none appearance-none ${validationErrors.beds ? 'border-red-500' : 'border-gray-200'}`}
                       value={formData.beds}
                       onChange={(e) => {
@@ -1105,7 +1099,7 @@ const AddProperty: React.FC = () => {
                     </select>
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
                       <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M1 1L5 5L9 1" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M1 1L5 5L9 1" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     </div>
                   </div>
@@ -1116,7 +1110,7 @@ const AddProperty: React.FC = () => {
                 <div>
                   <label className="block text-xs font-medium mb-1 ml-1">Baths*</label>
                   <div className="relative">
-                    <select 
+                    <select
                       className={`w-full rounded-lg border bg-white px-3 py-2 text-gray-700 outline-none appearance-none ${validationErrors.baths ? 'border-red-500' : 'border-gray-200'}`}
                       value={formData.baths}
                       onChange={(e) => {
@@ -1141,7 +1135,7 @@ const AddProperty: React.FC = () => {
                     </select>
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
                       <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M1 1L5 5L9 1" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M1 1L5 5L9 1" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     </div>
                   </div>
@@ -1151,9 +1145,9 @@ const AddProperty: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-xs font-medium mb-1 ml-1">Size, sq.ft*</label>
-                  <Input 
+                  <Input
                     type="number"
-                    placeholder="500" 
+                    placeholder="500"
                     value={formData.size}
                     onChange={(e) => {
                       updateFormData('size', e.target.value);
@@ -1180,10 +1174,10 @@ const AddProperty: React.FC = () => {
                   </label>
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 font-medium">{currencySymbol}</span>
-                    <Input 
+                    <Input
                       type="number"
                       step="0.01"
-                      placeholder="0.00" 
+                      placeholder="0.00"
                       value={formData.marketRent}
                       onChange={(e) => {
                         updateFormData('marketRent', e.target.value);
@@ -1208,10 +1202,10 @@ const AddProperty: React.FC = () => {
                   </label>
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 font-medium">{currencySymbol}</span>
-                    <Input 
+                    <Input
                       type="number"
                       step="0.01"
-                      placeholder="0.00" 
+                      placeholder="0.00"
                       value={formData.deposit}
                       onChange={(e) => {
                         updateFormData('deposit', e.target.value);
@@ -1240,7 +1234,7 @@ const AddProperty: React.FC = () => {
                 <div>
                   <label className="block text-xs font-medium mb-1 ml-1">Parking*</label>
                   <div className="relative">
-                    <select 
+                    <select
                       className={`w-full rounded-lg border bg-white px-3 py-2 text-gray-700 outline-none appearance-none ${validationErrors.parking ? 'border-red-500' : 'border-gray-200'}`}
                       value={formData.parking}
                       onChange={(e) => {
@@ -1259,7 +1253,7 @@ const AddProperty: React.FC = () => {
                     </select>
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
                       <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M1 1L5 5L9 1" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M1 1L5 5L9 1" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     </div>
                   </div>
@@ -1270,7 +1264,7 @@ const AddProperty: React.FC = () => {
                 <div>
                   <label className="block text-xs font-medium mb-1 ml-1">Laundry*</label>
                   <div className="relative">
-                    <select 
+                    <select
                       className={`w-full rounded-lg border bg-white px-3 py-2 text-gray-700 outline-none appearance-none ${validationErrors.laundry ? 'border-red-500' : 'border-gray-200'}`}
                       value={formData.laundry}
                       onChange={(e) => {
@@ -1289,7 +1283,7 @@ const AddProperty: React.FC = () => {
                     </select>
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
                       <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M1 1L5 5L9 1" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M1 1L5 5L9 1" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     </div>
                   </div>
@@ -1300,7 +1294,7 @@ const AddProperty: React.FC = () => {
                 <div>
                   <label className="block text-xs font-medium mb-1 ml-1">Air Conditioning*</label>
                   <div className="relative">
-                    <select 
+                    <select
                       className={`w-full rounded-lg border bg-white px-3 py-2 text-gray-700 outline-none appearance-none ${validationErrors.ac ? 'border-red-500' : 'border-gray-200'}`}
                       value={formData.ac}
                       onChange={(e) => {
@@ -1319,7 +1313,7 @@ const AddProperty: React.FC = () => {
                     </select>
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
                       <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M1 1L5 5L9 1" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M1 1L5 5L9 1" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     </div>
                   </div>
@@ -1340,11 +1334,10 @@ const AddProperty: React.FC = () => {
                     key={feature}
                     type="button"
                     onClick={() => toggleFeature(feature)}
-                    className={`px-4 py-1.5 rounded-full text-xs font-medium border transition-colors flex items-center gap-2 ${
-                      formData.features.includes(feature)
+                    className={`px-4 py-1.5 rounded-full text-xs font-medium border transition-colors flex items-center gap-2 ${formData.features.includes(feature)
                         ? 'bg-[#84CC16] text-white border-[#84CC16]'
                         : 'bg-white text-gray-600 border-gray-300 hover:border-[#84CC16]'
-                    }`}
+                      }`}
                   >
                     {feature}
                     {formData.features.includes(feature) && <X size={12} className="ml-1" onClick={(e) => { e.stopPropagation(); toggleFeature(feature); }} />}
@@ -1371,22 +1364,22 @@ const AddProperty: React.FC = () => {
                 <label className="block text-xs font-medium mb-2 ml-1">Enter Custom Features</label>
                 <div className="flex gap-3">
                   <div className="flex-1">
-                    <Input 
-                      placeholder="Custom Features" 
+                    <Input
+                      placeholder="Custom Features"
                       value={customFeatureInput}
                       onChange={(e) => setCustomFeatureInput(e.target.value)}
                       className="bg-[#84CC16] placeholder-white/80 border-none"
                       style={{ color: 'black' }}
                     />
                   </div>
-                  <button 
+                  <button
                     type="button"
                     onClick={addCustomFeature}
                     className="px-8 py-2 bg-[#376F7E] text-white rounded-full text-sm font-medium hover:bg-[#2c5a66]"
                   >
                     Save
                   </button>
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setCustomFeatureInput('')}
                     className="px-8 py-2 bg-[#4B5563] text-white rounded-full text-sm font-medium hover:bg-[#374151]"
@@ -1409,18 +1402,18 @@ const AddProperty: React.FC = () => {
             <div className="space-y-6 mb-8">
               {formData.units.map((unit, index) => (
                 <div key={index} className="bg-white p-6 rounded-xl border border-gray-200 relative">
-                  <button 
+                  <button
                     type="button"
                     onClick={() => removeUnit(index)}
                     className="absolute top-4 right-4 text-gray-400 hover:text-red-500"
                   >
                     <Trash2 size={18} />
                   </button>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div>
                       <label className="block text-xs font-medium mb-1 ml-1">unit {index + 1}</label>
-                      <Input 
+                      <Input
                         placeholder={`unit ${index + 1}`}
                         value={unit.unitNumber}
                         onChange={(e) => {
@@ -1443,7 +1436,7 @@ const AddProperty: React.FC = () => {
                     <div>
                       <label className="block text-xs font-medium mb-1 ml-1">unit type*</label>
                       <div className="relative">
-                        <select 
+                        <select
                           className={`w-full rounded-lg border bg-white px-3 py-2 text-gray-700 outline-none appearance-none ${validationErrors[`unit_${index}_unitType`] ? 'border-red-500' : 'border-gray-200'}`}
                           value={unit.unitType}
                           onChange={(e) => {
@@ -1465,7 +1458,7 @@ const AddProperty: React.FC = () => {
                         </select>
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
                           <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M1 1L5 5L9 1" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M1 1L5 5L9 1" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                         </div>
                       </div>
@@ -1475,10 +1468,10 @@ const AddProperty: React.FC = () => {
                     </div>
                     <div>
                       <label className="block text-xs font-medium mb-1 ml-1">Size, sq.ft*</label>
-                      <Input 
+                      <Input
                         type="number"
                         step="0.01"
-                        placeholder="500.00" 
+                        placeholder="500.00"
                         value={unit.size}
                         onChange={(e) => {
                           updateUnit(index, 'size', e.target.value);
@@ -1502,10 +1495,10 @@ const AddProperty: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
                       <label className="block text-xs font-medium mb-1 ml-1">Baths*</label>
-                      <Input 
+                      <Input
                         type="number"
                         step="0.01"
-                        placeholder="0.00" 
+                        placeholder="0.00"
                         value={unit.baths}
                         onChange={(e) => {
                           updateUnit(index, 'baths', e.target.value);
@@ -1530,10 +1523,10 @@ const AddProperty: React.FC = () => {
                       </label>
                       <div className="relative">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 font-medium">{currencySymbol}</span>
-                        <Input 
+                        <Input
                           type="number"
                           step="0.01"
-                          placeholder="0.00" 
+                          placeholder="0.00"
                           value={unit.rent}
                           onChange={(e) => {
                             updateUnit(index, 'rent', e.target.value);
@@ -1559,10 +1552,10 @@ const AddProperty: React.FC = () => {
                       </label>
                       <div className="relative">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 font-medium">{currencySymbol}</span>
-                        <Input 
+                        <Input
                           type="number"
                           step="0.01"
-                          placeholder="0.00" 
+                          placeholder="0.00"
                           value={unit.deposit}
                           onChange={(e) => {
                             updateUnit(index, 'deposit', e.target.value);
@@ -1584,9 +1577,9 @@ const AddProperty: React.FC = () => {
                     </div>
                     <div>
                       <label className="block text-xs font-medium mb-1 ml-1">Beds*</label>
-                      <Input 
+                      <Input
                         type="number"
-                        placeholder="Select beds" 
+                        placeholder="Select beds"
                         value={unit.beds}
                         onChange={(e) => {
                           updateUnit(index, 'beds', e.target.value);
@@ -1609,7 +1602,7 @@ const AddProperty: React.FC = () => {
                 </div>
               ))}
 
-              <button 
+              <button
                 type="button"
                 onClick={addUnit}
                 className="flex items-center gap-2 px-6 py-2 rounded-full border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 text-sm font-medium"
@@ -1630,11 +1623,10 @@ const AddProperty: React.FC = () => {
                 key={amenity}
                 type="button"
                 onClick={() => toggleAmenity(amenity)}
-                className={`px-4 py-1.5 rounded-full text-xs font-medium border transition-colors flex items-center gap-2 ${
-                  formData.amenities.includes(amenity)
+                className={`px-4 py-1.5 rounded-full text-xs font-medium border transition-colors flex items-center gap-2 ${formData.amenities.includes(amenity)
                     ? 'bg-[#84CC16] text-white border-[#84CC16]'
                     : 'bg-[#84CC16] text-white border-[#84CC16] hover:opacity-90'
-                }`}
+                  }`}
               >
                 {amenity}
                 {formData.amenities.includes(amenity) ? <Check size={12} className="ml-1" /> : <Plus size={12} className="ml-1" />}
@@ -1661,22 +1653,22 @@ const AddProperty: React.FC = () => {
             <label className="block text-xs font-medium mb-2 ml-1">Enter Custom Amenities</label>
             <div className="flex gap-3">
               <div className="flex-1">
-                <Input 
-                  placeholder="Custom Amenities" 
+                <Input
+                  placeholder="Custom Amenities"
                   value={customAmenityInput}
                   onChange={(e) => setCustomAmenityInput(e.target.value)}
                   className="bg-[#84CC16] placeholder-black/80 border-none"
                   style={{ color: 'black' }}
                 />
               </div>
-              <button 
+              <button
                 type="button"
                 onClick={addCustomAmenity}
                 className="px-8 py-2 bg-[#376F7E] text-white rounded-full text-sm font-medium hover:bg-[#2c5a66]"
               >
                 Save
               </button>
-              <button 
+              <button
                 type="button"
                 onClick={() => setCustomAmenityInput('')}
                 className="px-8 py-2 bg-[#4B5563] text-white rounded-full text-sm font-medium hover:bg-[#374151]"
@@ -1712,21 +1704,21 @@ const AddProperty: React.FC = () => {
         {/* Property Attachments */}
         <section>
           <h2 className="text-lg font-semibold mb-3 text-gray-800">Property Attachments</h2>
-          <input 
-            type="file" 
+          <input
+            type="file"
             ref={attachmentsInputRef}
             onChange={handleAttachmentsChange}
             multiple
             accept=".pdf,.doc,.docx,.xls,.xlsx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             className="hidden"
           />
-          
+
           {attachmentErrors.length > 0 && (
             <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
               <p className="font-semibold mb-2">Invalid file types:</p>
               <ul className="list-disc list-inside text-sm">
-                {attachmentErrors.map((fileName, i) => (
-                  <li key={i}>{fileName}</li>
+                {attachmentErrors.map((error, i) => (
+                  <li key={`${error.id}-${i}`}>{error.name}</li>
                 ))}
               </ul>
               <p className="text-xs mt-2">Allowed types: PDF, Word (.doc, .docx), Excel (.xls, .xlsx)</p>
@@ -1746,8 +1738,8 @@ const AddProperty: React.FC = () => {
                       <span className="text-xs text-gray-500">{(file.size / 1024).toFixed(1)} KB</span>
                     </div>
                   </div>
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     onClick={() => removeAttachment(i)}
                     className="text-gray-400 hover:text-red-500 p-1"
                   >
@@ -1758,7 +1750,7 @@ const AddProperty: React.FC = () => {
             </div>
           )}
 
-          <div 
+          <div
             onClick={() => attachmentsInputRef.current?.click()}
             className="bg-[#F3F4F6] rounded-xl border-2 border-dashed border-gray-300 p-8 flex flex-col items-center justify-center h-48 cursor-pointer hover:bg-gray-100 transition-colors"
           >

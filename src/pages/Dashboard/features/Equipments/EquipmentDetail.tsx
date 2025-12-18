@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, Calendar, Edit, Paperclip, ChevronDown, ChevronUp, Trash2, Loader2 } from 'lucide-react';
+import { ChevronLeft, Edit, Paperclip, ChevronDown, ChevronUp, Trash2, Loader2 } from 'lucide-react';
 import CustomTextBox from '../../components/CustomTextBox';
 import { useGetEquipment } from '../../../../hooks/useEquipmentQueries';
 import type { BackendEquipment } from '../../../../services/equipment.service';

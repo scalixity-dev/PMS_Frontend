@@ -351,16 +351,16 @@ const TenantDetail = () => {
                     <TenantLeasesSection tenant={tenant} />
                 )}
                 {activeTab === 'transactions' && (
-                    <TenantTransactionsSection tenant={tenant} />
+                    <TenantTransactionsSection />
                 )}
                 {activeTab === 'insurance' && (
-                    <TenantInsuranceSection tenant={tenant} />
+                    <TenantInsuranceSection />
                 )}
                 {activeTab === 'applications' && (
-                    <TenantApplicationsSection tenant={tenant} />
+                    <TenantApplicationsSection />
                 )}
                 {activeTab === 'requests' && (
-                    <TenantRequestsSection tenant={tenant} />
+                    <TenantRequestsSection />
                 )}
             </div>
         </div>

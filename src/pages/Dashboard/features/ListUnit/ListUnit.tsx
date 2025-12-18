@@ -261,7 +261,7 @@ const ListUnit: React.FC = () => {
         setLeasingId(null);
         return;
       }
-      
+
       setLeasingId(leasing.id);
       // Load existing leasing data into form
       updateFormData('rent', leasing.monthlyRent?.toString() || '');
@@ -664,7 +664,7 @@ const ListUnit: React.FC = () => {
   };
 
   const handlePropertyCreated = (propertyData: any) => {
-    
+
     const propertyId = propertyData.id || formData.property;
     updateFormData('property', propertyId);
     setShowCreateProperty(false);
@@ -695,7 +695,7 @@ const ListUnit: React.FC = () => {
           <div className="flex flex-col items-center justify-start w-full">
             {showCreateProperty ? (
               <div className="w-full flex flex-col items-center">
-                <CreatePropertyForm 
+                <CreatePropertyForm
                   onSubmit={handlePropertyCreated}
                   propertyId={formData.property || undefined}
                 />
@@ -729,7 +729,7 @@ const ListUnit: React.FC = () => {
                           <h2 className="text-xl font-bold mb-2 text-[var(--color-heading)]">Lease details</h2>
                           <p className="text-[var(--color-subheading)]">Add main lease terms and other leasing details if necessary.</p>
                         </div>
-                        <LeasingDetails 
+                        <LeasingDetails
                           propertyId={formData.property}
                           unitId={formData.unit || undefined}
                         />
@@ -822,7 +822,7 @@ const ListUnit: React.FC = () => {
                       </>
                     ) : (
                       <>
-                        <ListingContact onSubmit={handleNext} propertyId={formData.property} />
+                        <ListingContact onSubmit={handleNext} />
                         {error && (
                           <div className="w-full max-w-md mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
                             <p className="text-red-800 text-sm">{error}</p>

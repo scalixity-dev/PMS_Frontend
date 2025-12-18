@@ -23,19 +23,19 @@ const ListingHeader: React.FC<ListingHeaderProps> = ({ onAddListing }) => {
                 </div>
             
                 <button
-                    className="px-5 py-2 text-sm font-medium text-white bg-[#548C8C] rounded-full hover:bg-[#467676] transition-colors shadow-sm"
+                    className="px-5 py-2 text-sm font-medium text-white bg-[#3A6D6C] rounded-full hover:bg-[#467676] transition-colors shadow-sm"
                 >
                     My Website
                 </button>
                 <button
                     onClick={onAddListing}
-                    className="flex items-center gap-1 px-5 py-2 text-sm font-medium text-white bg-[#548C8C] rounded-full hover:bg-[#467676] transition-colors shadow-sm"
+                    className="flex items-center gap-1 px-5 py-2 text-sm font-medium text-white bg-[#3A6D6C] rounded-full hover:bg-[#467676] transition-colors shadow-sm"
                 >
                     Add Listing
                     <Plus className="w-4 h-4" />
                 </button>
                 <button
-                    className="flex items-center gap-1 px-5 py-2 text-sm font-medium text-white bg-[#548C8C] rounded-full hover:bg-[#467676] transition-colors shadow-sm"
+                    className="flex items-center gap-1 px-5 py-2 text-sm font-medium text-white bg-[#3A6D6C] rounded-full hover:bg-[#467676] transition-colors shadow-sm"
                 >
                     Settings
                     <Settings className="w-4 h-4" />

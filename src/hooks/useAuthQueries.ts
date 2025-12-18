@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { authService, type RegisterRequest, type RegisterResponse, type UpdateProfileRequest, type CurrentUser } from '../services/auth.service';
+import { authService, type RegisterRequest, type RegisterResponse, type UpdateProfileRequest } from '../services/auth.service';
 
 // Query keys for React Query
 export const authQueryKeys = {
@@ -45,7 +45,7 @@ export const useRegister = () => {
     mutationFn: (data: RegisterRequest): Promise<RegisterResponse> => {
       return authService.register(data);
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       // Invalidate and refetch current user after successful registration
       queryClient.invalidateQueries({ queryKey: authQueryKeys.currentUser() });
     },

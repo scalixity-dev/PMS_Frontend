@@ -67,7 +67,7 @@ const AddMaintenanceRequest: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const isEditMode = location.state?.editMode;
-    const _editId = location.state?.id; // Suppress unused variable warning
+   
 
     const targetSection = location.state?.targetSection;
 
@@ -347,9 +347,74 @@ const AddMaintenanceRequest: React.FC = () => {
                                 initialData={isEditMode ? mockInitialData.advancedForm : undefined}
                             />
                         ) : (
-                            // ... basic flow (unchanged)
                             <div className="flex flex-col items-center w-full">
-                                {/* ... content */}
+                                {generalSubStep === 1 && (
+                                    <CategorySelection
+                                        selectedCategory={selectedCategory}
+                                        onSelect={(cat) => {
+                                            setSelectedCategory(cat);
+                                            handleNext();
+                                        }}
+                                    />
+                                )}
+                                {generalSubStep === 2 && (
+                                    <SubCategorySelection
+                                        category={selectedCategory || ''}
+                                        selectedSubCategory={selectedSubCategory}
+                                        onSelect={(sub) => {
+                                            setSelectedSubCategory(sub);
+                                            handleNext();
+                                        }}
+                                    />
+                                )}
+                                {generalSubStep === 3 && (
+                                    <IssueDefinition
+                                        subCategory={selectedSubCategory || ''}
+                                        selectedIssue={selectedIssue}
+                                        onSelect={(issue) => {
+                                            setSelectedIssue(issue);
+                                            handleNext();
+                                        }}
+                                    />
+                                )}
+                                {generalSubStep === 4 && (
+                                    <FinalDetails
+                                        issue={selectedIssue || ''}
+                                        selectedDetail={selectedFinalDetail}
+                                        onSelect={(detail) => {
+                                            setSelectedFinalDetail(detail);
+                                            handleNext();
+                                        }}
+                                    />
+                                )}
+                                {generalSubStep === 5 && (
+                                    <MediaUpload
+                                        onFileSelect={(file) => {
+                                            setMediaFiles([...mediaFiles, file]);
+                                            handleNext();
+                                        }}
+                                    />
+                                )}
+                                {generalSubStep === 6 && (
+                                    <IssueDescription
+                                        defaultTitle={issueTitle}
+                                        onContinue={(title, desc) => {
+                                            setIssueTitle(title);
+                                            setIssueDescription(desc);
+                                            handleNext();
+                                        }}
+                                    />
+                                )}
+
+                                {/* Skip Button for relevant sub-steps */}
+                                {[2, 3, 4, 5].includes(generalSubStep) && (
+                                    <button
+                                        onClick={handleSkip}
+                                        className="mt-8 text-gray-500 hover:text-gray-700 font-medium underline underline-offset-4"
+                                    >
+                                        Skip this step
+                                    </button>
+                                )}
                             </div>
                         )
                     )}

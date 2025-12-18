@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Trash2, BedDouble, Bath, Edit } from 'lucide-react';
+import { Trash2, BedDouble, Bath, Edit, ArrowRight } from 'lucide-react';
 import { getCurrencySymbol } from '../../../../../utils/currency.utils';
 
 interface PropertyCardProps {
@@ -30,8 +30,8 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onDelete, onBack,
       {/* Property Image */}
       <div className="relative h-48 bg-gray-200">
         {property.image ? (
-          <img 
-            src={property.image} 
+          <img
+            src={property.image}
             alt={property.name}
             className="w-full h-full object-cover"
           />
@@ -46,10 +46,10 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onDelete, onBack,
       <div className="p-6">
         {/* Property Name */}
         <h3 className="text-xl font-bold text-gray-900 mb-1">{property.name}</h3>
-        
+
         {/* Address */}
         <p className="text-sm text-gray-600 mb-4">{property.address}</p>
-        
+
         {/* Price and Amenities */}
         <div className="flex items-center justify-between mb-6">
           {/* Price */}
@@ -57,7 +57,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onDelete, onBack,
             <span className="text-2xl font-bold text-gray-900">{currencySymbol} {property.price.toLocaleString()}</span>
             <span className="text-sm text-gray-500">/month</span>
           </div>
-          
+
           {/* Amenities */}
           <div className="flex items-center gap-3">
             {/* Bathrooms */}
@@ -69,7 +69,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onDelete, onBack,
                 {property.bathrooms}
               </span>
             </div>
-            
+
             {/* Bedrooms */}
             <div className="flex items-center gap-1.5">
               <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center">
@@ -99,7 +99,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onDelete, onBack,
               Edit
             </button>
           )}
-         
+
           <button
             onClick={onDelete}
             className="flex-1 px-4 py-2.5 bg-gray-700 text-white rounded-lg font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
@@ -107,6 +107,15 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onDelete, onBack,
             <Trash2 size={18} />
             Delete
           </button>
+          {onNext && (
+            <button
+              onClick={onNext}
+              className="flex-1 px-4 py-2.5 bg-[var(--color-primary)] text-white rounded-lg font-medium hover:opacity-90 transition-colors flex items-center justify-center gap-2"
+            >
+              Next
+              <ArrowRight size={18} />
+            </button>
+          )}
         </div>
       </div>
     </div>
