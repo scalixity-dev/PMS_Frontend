@@ -1,10 +1,23 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Edit, Trash2, Check, ChevronLeft, Plus } from 'lucide-react';
-import EquipmentsStats from './components/EquipmentsStats';
+import { Edit, Trash2, Check, ChevronLeft, Plus, Loader2, AlertTriangle, X } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
+import { useGetAllEquipment, useDeleteEquipment } from '../../../../hooks/useEquipmentQueries';
+import type { BackendEquipment } from '../../../../services/equipment.service';
 
+// Map backend status to display format
+const mapStatus = (status: string): string => {
+  const statusMap: Record<string, string> = {
+    'ACTIVE': 'active',
+    'UNDER_MAINTENANCE': 'maintenance',
+    'REPLACED': 'inactive',
+    'DISPOSED': 'inactive',
+  };
+  return statusMap[status] || status.toLowerCase();
+};
+
+// Legacy mock data for reference (can be removed)
 export const MOCK_EQUIPMENTS = [
     {
         id: 96325,
@@ -82,7 +95,9 @@ const Equipments: React.FC = () => {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const [selectedItems, setSelectedItems] = useState<number[]>([]);
+    const [selectedItems, setSelectedItems] = useState<string[]>([]);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [equipmentToDelete, setEquipmentToDelete] = useState<{ id: string; name: string } | null>(null);
     const [filters, setFilters] = useState<{
         status: string[];
         category: string[];
@@ -93,8 +108,75 @@ const Equipments: React.FC = () => {
         property: []
     });
 
+    // Fetch equipment from backend
+    const { data: equipment = [], isLoading, error } = useGetAllEquipment();
+    const deleteEquipmentMutation = useDeleteEquipment();
+
+    // Transform backend equipment to display format
+    const transformedEquipment = useMemo(() => {
+        return equipment.map((eq: BackendEquipment) => {
+            // Handle category being either a string or an object { id, name, description }
+            const categoryName =
+                typeof eq.category === 'string'
+                    ? eq.category
+                    : eq.category && typeof eq.category === 'object'
+                        ? eq.category.name ?? ''
+                        : '';
+
+            // Handle subcategory being an object { id, name, description } or string (provided by backend)
+            const subcategoryName =
+                typeof eq.subcategory === 'object'
+                    ? eq.subcategory?.name || ''
+                    : (eq.subcategory || '');
+
+            return {
+                id: eq.id,
+                brand: eq.brand,
+                category: categoryName,
+                subcategory: subcategoryName, // Extracted from backend subcategory object
+                property: eq.property?.propertyName || '-',
+                status: mapStatus(eq.status),
+                occupancy: eq.unitId ? 'occupied' : 'vacant', // Simplified logic
+                propertyType: 'household', // Default value
+                description: eq.equipmentDetails || '',
+                model: eq.model,
+                serial: eq.serialNumber,
+                price: typeof eq.price === 'string' ? eq.price : `$${eq.price}`,
+                warrantyExpiration: '', // Not in backend model, can be added
+                additionalEmail: '', // Not in backend model
+                image: eq.photoUrl || '',
+            };
+        });
+    }, [equipment]);
+
+    // Get unique categories and properties for filters (based on transformed equipment)
+    const uniqueCategories = useMemo(() => {
+        const categories = new Set(
+            transformedEquipment
+                .map(item => item.category)
+                .filter((cat): cat is string => typeof cat === 'string' && cat.trim().length > 0)
+        );
+
+        return Array.from(categories).map(cat => ({
+            value: cat.toLowerCase().replace(/\s+/g, '_'),
+            label: cat,
+        }));
+    }, [transformedEquipment]);
+
+    const uniqueProperties = useMemo(() => {
+        const properties = new Set(
+            equipment
+                .map((eq: BackendEquipment) => eq.property?.propertyName)
+                .filter(Boolean)
+        );
+        return Array.from(properties).map((prop, idx) => ({
+            value: `prop${idx + 1}`,
+            label: prop as string,
+        }));
+    }, [equipment]);
+
     const filterOptions: Record<string, FilterOption[]> = {
-        property: [
+        property: uniqueProperties.length > 0 ? uniqueProperties : [
             { value: 'prop1', label: 'Property 1' },
             { value: 'prop2', label: 'Property 2' },
         ],
@@ -103,7 +185,7 @@ const Equipments: React.FC = () => {
             { value: 'inactive', label: 'Inactive' },
             { value: 'maintenance', label: 'Under Maintenance' },
         ],
-        category: [
+        category: uniqueCategories.length > 0 ? uniqueCategories : [
             { value: 'electric_meter', label: 'Electric meter' },
             { value: 'appliances', label: 'Appliances' },
         ]
@@ -121,24 +203,25 @@ const Equipments: React.FC = () => {
     }, [searchQuery, filters]);
 
     const filteredEquipments = useMemo(() => {
-        return MOCK_EQUIPMENTS.filter(equipment => {
+        return transformedEquipment.filter(item => {
             // Search filter
             const matchesSearch = searchQuery === '' ||
-                equipment.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                equipment.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                String(equipment.id).includes(searchQuery);
+                item.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                item.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                item.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                item.model.toLowerCase().includes(searchQuery.toLowerCase());
 
             // Status filter
             const matchesStatus = filters.status.length === 0 ||
-                filters.status.includes(equipment.status);
+                filters.status.includes(item.status);
 
             // Category filter
             const matchesCategory = filters.category.length === 0 ||
-                filters.category.some(cat => equipment.category.toLowerCase().includes(cat.replace('_', ' ')));
+                filters.category.some(cat => item.category.toLowerCase().includes(cat.replace('_', ' ')));
 
             return matchesSearch && matchesStatus && matchesCategory;
         });
-    }, [searchQuery, filters]);
+    }, [transformedEquipment, searchQuery, filters]);
 
     const totalPages = Math.ceil(filteredEquipments.length / ITEMS_PER_PAGE);
     const paginatedEquipments = filteredEquipments.slice(
@@ -146,7 +229,7 @@ const Equipments: React.FC = () => {
         currentPage * ITEMS_PER_PAGE
     );
 
-    const toggleSelection = (id: number) => {
+    const toggleSelection = (id: string) => {
         if (selectedItems.includes(id)) {
             setSelectedItems(selectedItems.filter(item => item !== id));
         } else {
@@ -155,11 +238,42 @@ const Equipments: React.FC = () => {
     };
 
     const toggleAll = () => {
-        if (selectedItems.length === paginatedEquipments.length) {
+        if (selectedItems.length === paginatedEquipments.length && paginatedEquipments.length > 0) {
             setSelectedItems([]);
         } else {
             setSelectedItems(paginatedEquipments.map(item => item.id));
         }
+    };
+
+    const openDeleteModal = (item: { id: string; brand: string }, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setEquipmentToDelete({
+            id: item.id,
+            name: item.brand || item.id.slice(0, 8),
+        });
+        setIsDeleteModalOpen(true);
+    };
+
+    const closeDeleteModal = () => {
+        if (deleteEquipmentMutation.isPending) return;
+        setIsDeleteModalOpen(false);
+        setEquipmentToDelete(null);
+    };
+
+    const confirmDelete = async () => {
+        if (!equipmentToDelete) return;
+        try {
+            await deleteEquipmentMutation.mutateAsync(equipmentToDelete.id);
+            closeDeleteModal();
+        } catch (error) {
+            console.error('Error deleting equipment:', error);
+            alert(error instanceof Error ? error.message : 'Failed to delete equipment');
+        }
+    };
+
+    const handleEdit = (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        navigate(`/dashboard/equipments/edit/${id}`);
     };
 
     return (
@@ -188,7 +302,6 @@ const Equipments: React.FC = () => {
                         <Plus className="w-4 h-4" />
                     </button>
                 </div>
-                <EquipmentsStats />
 
                 <DashboardFilter
                     filterOptions={filterOptions}
@@ -197,7 +310,26 @@ const Equipments: React.FC = () => {
                     onFiltersChange={(newFilters) => setFilters(newFilters as any)}
                 />
 
+                {/* Loading State */}
+                {isLoading && (
+                    <div className="flex items-center justify-center py-12 mt-8">
+                        <Loader2 className="w-8 h-8 animate-spin text-[#3A6D6C]" />
+                        <p className="ml-4 text-gray-600">Loading equipment...</p>
+                    </div>
+                )}
+
+                {/* Error State */}
+                {error && !isLoading && (
+                    <div className="bg-red-50 border border-red-200 rounded-2xl p-6 mt-8">
+                        <p className="text-red-800">
+                            {error instanceof Error ? error.message : 'Failed to load equipment'}
+                        </p>
+                    </div>
+                )}
+
                 {/* Table Section */}
+                {!isLoading && !error && (
+                <>
                 <div className="bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm mt-8">
                     {/* Table Header */}
                     <div className="text-white px-6 py-4 grid grid-cols-[40px_80px_1fr_1.5fr_1fr_120px] gap-4 items-center text-sm font-medium">
@@ -238,7 +370,7 @@ const Equipments: React.FC = () => {
                                         </div>
                                     </button>
                                 </div>
-                                <div className="font-bold text-gray-800 text-sm">{item.id}</div>
+                                <div className="font-bold text-gray-800 text-sm">{item.id.slice(0, 8)}</div>
                                 <div className="font-semibold text-gray-800 text-sm">{item.brand}</div>
                                 <div className="text-gray-800 text-sm font-semibold">
                                     {item.category} {item.subcategory ? `/ ${item.subcategory}` : ''}
@@ -246,24 +378,17 @@ const Equipments: React.FC = () => {
                                 <div className="text-[#2E6819] text-sm font-semibold">{item.property}</div>
 
                                 <div className="flex items-center justify-end gap-3">
-                                    <button className="px-4 py-1 bg-[#82D64D] text-white text-xs font-medium rounded-full hover:bg-[#72bd42] transition-colors">
-                                        Assign
-                                    </button>
+                                   
                                     <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            // Add edit logic here
-                                        }}
+                                        onClick={(e) => handleEdit(item.id, e)}
                                         className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
                                     >
                                         <Edit className="w-5 h-5" />
                                     </button>
                                     <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            // Add delete logic here
-                                        }}
-                                        className="text-red-500 hover:text-red-600 transition-colors"
+                                        onClick={(e) => openDeleteModal(item, e)}
+                                        disabled={deleteEquipmentMutation.isPending}
+                                        className="text-red-500 hover:text-red-600 transition-colors disabled:opacity-50"
                                     >
                                         <Trash2 className="w-5 h-5" />
                                     </button>
@@ -285,8 +410,73 @@ const Equipments: React.FC = () => {
                         onPageChange={setCurrentPage}
                     />
                 )}
-            </div >
-        </div >
+                </>
+                )}
+
+                {/* Delete Equipment Modal */}
+                {isDeleteModalOpen && equipmentToDelete && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                        <div className="bg-white rounded-2xl shadow-xl max-w-md w-full mx-4 animate-in fade-in zoom-in-95 duration-200">
+                            {/* Header */}
+                            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                                        <AlertTriangle className="w-5 h-5 text-red-600" />
+                                    </div>
+                                    <h3 className="text-lg font-bold text-gray-800">Delete Equipment</h3>
+                                </div>
+                                <button
+                                    onClick={closeDeleteModal}
+                                    disabled={deleteEquipmentMutation.isPending}
+                                    className="text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            {/* Content */}
+                            <div className="p-6">
+                                <p className="text-gray-700 mb-4">
+                                    Are you sure you want to delete{' '}
+                                    <span className="font-semibold text-gray-900">
+                                        "{equipmentToDelete.name}"
+                                    </span>
+                                    ?
+                                </p>
+                                <p className="text-sm text-gray-500 mb-6">
+                                    This action cannot be undone. All associated data for this equipment will be permanently deleted.
+                                </p>
+
+                                {/* Actions */}
+                                <div className="flex gap-3 justify-end">
+                                    <button
+                                        onClick={closeDeleteModal}
+                                        disabled={deleteEquipmentMutation.isPending}
+                                        className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={confirmDelete}
+                                        disabled={deleteEquipmentMutation.isPending}
+                                        className="px-6 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                    >
+                                        {deleteEquipmentMutation.isPending ? (
+                                            <>
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                Deleting...
+                                            </>
+                                        ) : (
+                                            'Delete Equipment'
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
     );
 };
 

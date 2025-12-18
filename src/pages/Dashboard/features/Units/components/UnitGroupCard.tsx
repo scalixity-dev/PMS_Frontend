@@ -11,6 +11,7 @@ export interface UnitGroup {
     status: 'Occupied' | 'Vacant' | 'Partially Occupied';
     units: Unit[];
     propertyType?: 'SINGLE' | 'MULTI';
+    country?: string;
 }
 
 interface UnitGroupCardProps {
@@ -86,7 +87,7 @@ const UnitGroupCard: React.FC<UnitGroupCardProps> = ({ group }) => {
                                     <div className="absolute -left-5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-gray-600 text-white flex items-center justify-center text-sm font-bold z-20 border-4 border-[#F0F0F6]">
                                         {globalIndex + 1}
                                     </div>
-                                    <UnitItem unit={unit} propertyId={group.id} />
+                                    <UnitItem unit={unit} propertyId={group.id} country={group.country} />
                                 </div>
                             </div>
                         );

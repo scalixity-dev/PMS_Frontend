@@ -1,24 +1,71 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, Upload, Edit, Trash2 } from 'lucide-react';
+import { ChevronLeft, Upload, Edit, Trash2, Loader2 } from 'lucide-react';
 import CustomDropdown from '../../components/CustomDropdown';
-import { keysData } from './KeysLocks';
+import { useGetKey, useCreateKey, useUpdateKey } from '../../../../hooks/useKeysQueries';
+import { useGetAllProperties } from '../../../../hooks/usePropertyQueries';
+import { API_ENDPOINTS } from '../../../../config/api.config';
+import type { KeyType } from '../../../../services/keys.service';
+
+// Map display key type to backend enum
+const mapKeyTypeToBackend = (displayType: string): KeyType => {
+  const typeMap: Record<string, KeyType> = {
+    'Main Door': 'DOOR',
+    'Mailbox': 'MAILBOX',
+    'Garage': 'GARAGE',
+    'Gate': 'GATE',
+    'Storage': 'STORAGE',
+    'Other': 'OTHER',
+  };
+  return typeMap[displayType] || 'OTHER';
+};
+
+// Map backend enum to display format
+const mapKeyTypeToDisplay = (backendType: KeyType): string => {
+  const typeMap: Record<KeyType, string> = {
+    'DOOR': 'Main Door',
+    'MAILBOX': 'Mailbox',
+    'GARAGE': 'Garage',
+    'GATE': 'Gate',
+    'STORAGE': 'Storage',
+    'OTHER': 'Other',
+  };
+  return typeMap[backendType] || 'Other';
+};
 
 const AddKey = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const isEditMode = Boolean(id);
 
-    // Find key data if in edit mode
-    const keyItem = id ? keysData.find(k => k.id === Number(id)) : null;
+    // Fetch key data if in edit mode
+    const { data: keyData, isLoading: isLoadingKey } = useGetKey(id || null, isEditMode);
+    const { data: properties = [], isLoading: isLoadingProperties } = useGetAllProperties();
+    const createKeyMutation = useCreateKey();
+    const updateKeyMutation = useUpdateKey();
 
-    const [keyName, setKeyName] = useState(keyItem?.name || '');
-    const [keyType, setKeyType] = useState(keyItem?.type || '');
-    const [property, setProperty] = useState(keyItem?.property || '');
-    const [details, setDetails] = useState(keyItem?.keyDescription || '');
+    const [keyName, setKeyName] = useState('');
+    const [keyType, setKeyType] = useState('');
+    const [propertyId, setPropertyId] = useState('');
+    const [details, setDetails] = useState('');
     const [image, setImage] = useState<string | null>(null);
+    const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const imageUrlRef = useRef<string | null>(null);
+    const uploadedFileRef = useRef<File | null>(null);
+
+    // Initialize form when key data is loaded
+    useEffect(() => {
+        if (isEditMode && keyData) {
+            setKeyName(keyData.keyName);
+            setKeyType(mapKeyTypeToDisplay(keyData.keyType));
+            setPropertyId(keyData.propertyId);
+            setDetails(keyData.description || '');
+            setImage(keyData.keyPhotoUrl || null);
+            setUploadedImageUrl(keyData.keyPhotoUrl || null);
+        }
+    }, [isEditMode, keyData]);
 
     // Cleanup blob URL on component unmount
     useEffect(() => {
@@ -29,17 +76,45 @@ const AddKey = () => {
         };
     }, []);
 
-    const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
+            // Store the file for later upload
+            uploadedFileRef.current = file;
+            
             // Revoke the previous blob URL to free up memory
             if (imageUrlRef.current) {
                 URL.revokeObjectURL(imageUrlRef.current);
             }
-            // Create and store the new blob URL
+            // Create and store the new blob URL for preview
             const imageUrl = URL.createObjectURL(file);
             imageUrlRef.current = imageUrl;
             setImage(imageUrl);
+
+            // Upload image to backend
+            setIsUploading(true);
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await fetch(API_ENDPOINTS.UPLOAD.IMAGE, {
+                    method: 'POST',
+                    credentials: 'include',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to upload image');
+                }
+
+                const data = await response.json();
+                setUploadedImageUrl(data.url || data.imageUrl || data.path);
+            } catch (error) {
+                console.error('Error uploading image:', error);
+                alert('Failed to upload image. Please try again.');
+            } finally {
+                setIsUploading(false);
+            }
         }
     };
 
@@ -51,6 +126,8 @@ const AddKey = () => {
             imageUrlRef.current = null;
         }
         setImage(null);
+        setUploadedImageUrl(null);
+        uploadedFileRef.current = null;
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
@@ -63,16 +140,55 @@ const AddKey = () => {
     const keyTypeOptions = [
         { value: 'Main Door', label: 'Main Door' },
         { value: 'Mailbox', label: 'Mailbox' },
-        { value: 'Storage', label: 'Storage' },
+        { value: 'Garage', label: 'Garage' },
         { value: 'Gate', label: 'Gate' },
+        { value: 'Storage', label: 'Storage' },
+        { value: 'Other', label: 'Other' },
     ];
 
-    const propertyOptions = [
-        { value: 'Luxury Property', label: 'Luxury Property' },
-        { value: 'Abc Property', label: 'Abc Property' },
-        { value: 'Avasa Dept.', label: 'Avasa Dept.' },
-        { value: 'C1 Apartment', label: 'C1 Apartment' },
-    ];
+    const propertyOptions = properties.map(prop => ({
+        value: prop.id,
+        label: prop.propertyName,
+    }));
+
+    const handleSubmit = async () => {
+        if (!keyName || !keyType || !propertyId) {
+            alert('Please fill in all required fields');
+            return;
+        }
+
+        try {
+            const keyData = {
+                propertyId,
+                keyName,
+                keyType: mapKeyTypeToBackend(keyType),
+                description: details || undefined,
+                keyPhotoUrl: uploadedImageUrl || undefined,
+            };
+
+            if (isEditMode && id) {
+                await updateKeyMutation.mutateAsync({
+                    keyId: id,
+                    updateData: keyData,
+                });
+            } else {
+                await createKeyMutation.mutateAsync(keyData);
+            }
+
+            navigate('/dashboard/portfolio/keys-locks');
+        } catch (error) {
+            console.error('Error saving key:', error);
+            alert(error instanceof Error ? error.message : 'Failed to save key');
+        }
+    };
+
+    if (isEditMode && isLoadingKey) {
+        return (
+            <div className="max-w-7xl mx-auto min-h-screen font-outfit flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-[#3A6D6C]" />
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit">
@@ -124,7 +240,14 @@ const AddKey = () => {
                         />
 
                         {image ? (
-                            <img src={image} alt="Key Preview" className="w-full h-full object-contain relative z-10" />
+                            <>
+                                <img src={image} alt="Key Preview" className="w-full h-full object-contain relative z-10" />
+                                {isUploading && (
+                                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
+                                        <Loader2 className="w-8 h-8 animate-spin text-white" />
+                                    </div>
+                                )}
+                            </>
                         ) : (
                             <div className="absolute inset-0 flex flex-col items-center justify-center z-10 hover:bg-black/5 transition-colors">
                                 <div className="bg-[#3A6D6C] p-2 rounded-lg mb-2">
@@ -199,31 +322,31 @@ const AddKey = () => {
                              [Property Type] (Looks like it's taking up about 50% width, aligned with Key Name column)
                          */}
                     <div className="w-[calc(50%-1.5rem)]">
-                        <CustomDropdown
-                            label="Property"
-                            value={property}
-                            onChange={setProperty}
-                            options={propertyOptions}
-                            placeholder="Select Property"
-                            buttonClassName="bg-white border-none rounded-lg py-3 px-4 h-[46px] shadow-sm"
-                            required={true}
-                            textClassName="font-medium text-sm text-gray-700"
-                        />
+                        {isLoadingProperties ? (
+                            <div className="flex items-center gap-2">
+                                <Loader2 className="w-4 h-4 animate-spin text-[#3A6D6C]" />
+                                <span className="text-sm text-gray-500">Loading properties...</span>
+                            </div>
+                        ) : (
+                            <CustomDropdown
+                                label="Property"
+                                value={propertyId}
+                                onChange={setPropertyId}
+                                options={propertyOptions}
+                                placeholder="Select Property"
+                                buttonClassName="bg-white border-none rounded-lg py-3 px-4 h-[46px] shadow-sm"
+                                required={true}
+                                textClassName="font-medium text-sm text-gray-700"
+                            />
+                        )}
                     </div>
                 </div>
 
                 {/* Details Textarea */}
                 <div className="mb-8">
                     <label className="block text-xs font-bold text-gray-600 mb-2">
-                        Property*
+                        Description
                     </label>
-                    {/* Small correction: The screenshot shows 'Property*' label above the Property dropdown. 
-                             I used CustomDropdown's internal label.
-                             For the textarea below, it just has placeholder? Or label?
-                             Screenshot shows "Type Details here.." inside the box. No external label visible in the crop?
-                             Wait, looking closer at crop. "Type Details here.." is inside.
-                             There is no external label for the large box.
-                         */}
                     <div className="bg-white rounded-3xl p-6 min-h-[200px] relative shadow-sm">
                         <textarea
                             value={details}
@@ -244,14 +367,19 @@ const AddKey = () => {
                 <div className="flex gap-4">
                     <button
                         onClick={() => navigate(-1)}
-                        className="bg-white text-black px-10 py-3 rounded-2xl font-bold text-sm shadow-sm hover:bg-gray-50 transition-colors border border-transparent"
+                        disabled={createKeyMutation.isPending || updateKeyMutation.isPending}
+                        className="bg-white text-black px-10 py-3 rounded-2xl font-bold text-sm shadow-sm hover:bg-gray-50 transition-colors border border-transparent disabled:opacity-50"
                     >
                         Cancel
                     </button>
                     <button
-                        onClick={() => navigate(-1)} // Mock continue
-                        className="bg-[#3A6D6C] text-white px-10 py-3 rounded-2xl font-bold text-sm shadow-sm hover:bg-[#2c5251] transition-colors"
+                        onClick={handleSubmit}
+                        disabled={createKeyMutation.isPending || updateKeyMutation.isPending || isUploading}
+                        className="bg-[#3A6D6C] text-white px-10 py-3 rounded-2xl font-bold text-sm shadow-sm hover:bg-[#2c5251] transition-colors disabled:opacity-50 flex items-center gap-2"
                     >
+                        {(createKeyMutation.isPending || updateKeyMutation.isPending) && (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                        )}
                         {isEditMode ? 'Update' : 'Continue'}
                     </button>
                 </div>

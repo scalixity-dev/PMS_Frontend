@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import type { UnitGroup } from './UnitGroupCard';
 import CustomTextBox from '../../../components/CustomTextBox';
 import { getStatusColor } from '../utils';
+import { getCurrencySymbol } from '../../../../../utils/currency.utils';
 
 interface SingleUnitCardProps {
     group: UnitGroup;
@@ -10,6 +11,7 @@ interface SingleUnitCardProps {
 
 const SingleUnitCard: React.FC<SingleUnitCardProps> = ({ group }) => {
     const navigate = useNavigate();
+    const currencySymbol = getCurrencySymbol(group.country);
     
     // Guard: Check if units array exists and has at least one unit
     if (!group.units || group.units.length === 0) {
@@ -73,15 +75,17 @@ const SingleUnitCard: React.FC<SingleUnitCardProps> = ({ group }) => {
                         </span>
 
                         <span className="bg-[#FFF8E7] text-gray-800 px-6 py-1.5 rounded-full text-sm font-bold">
-                            Rent - ₹{unit.rent.toLocaleString()}.00
+                            Rent - {currencySymbol}{unit.rent.toLocaleString()}.00
                         </span>
 
                         <div className="ml-auto">
-                            {isOccupied ? (
+                            {isOccupied || unit.hasActiveListing ? (
                                 <div className="flex gap-2">
-                                    <button className="bg-[#5F6D7E] text-white px-6 py-1.5 rounded-full text-sm font-medium hover:bg-[#4a5563] transition-colors border border-white/30">
-                                        Unlist
-                                    </button>
+                                    {unit.hasActiveListing && (
+                                        <button className="bg-[#5F6D7E] text-white px-6 py-1.5 rounded-full text-sm font-medium hover:bg-[#4a5563] transition-colors border border-white/30">
+                                            Unlist
+                                        </button>
+                                    )}
                                     <button 
                                         onClick={handleViewUnit}
                                         className="bg-[#3A6D6C] text-white px-6 py-1.5 rounded-md text-sm font-medium hover:bg-[#2c5251] transition-colors border border-white/30"
@@ -91,7 +95,10 @@ const SingleUnitCard: React.FC<SingleUnitCardProps> = ({ group }) => {
                                 </div>
                             ) : (
                                 <div className="flex gap-2">
-                                    <button className="bg-[#5F6D7E] text-white px-6 py-1.5 rounded-full text-sm font-medium hover:bg-[#4a5563] transition-colors border border-white/30">
+                                    <button 
+                                        onClick={() => navigate(`/dashboard/list-unit?propertyId=${group.id}${group.propertyType === 'MULTI' && unit.id !== group.id ? `&unitId=${unit.id}` : ''}`)}
+                                        className="bg-[#5F6D7E] text-white px-6 py-1.5 rounded-full text-sm font-medium hover:bg-[#4a5563] transition-colors border border-white/30"
+                                    >
                                         List
                                     </button>
                                     <button className="bg-[#5F6D7E] text-white px-6 py-1.5 rounded-full text-sm font-medium hover:bg-[#4a5563] transition-colors border border-white/30">

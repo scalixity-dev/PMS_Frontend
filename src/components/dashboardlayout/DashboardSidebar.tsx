@@ -337,7 +337,7 @@ export default function DashboardSidebar({ open, setOpen, collapsed, setCollapse
                 activeDropdown={activeDropdown}
                 setActiveDropdown={setActiveDropdown}
               >
-                <SidebarSubLink label="Applications" to="/leasing/applications" isCurrentPath={isCurrentPath} />
+                <SidebarSubLink label="Applications" to="/dashboard/leasing/applications" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Leases" to="/dashboard/leasing/leases" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Leads" to="/leasing/leads" isCurrentPath={isCurrentPath} />
 

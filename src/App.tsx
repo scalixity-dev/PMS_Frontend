@@ -42,6 +42,7 @@ import AddMaintenanceRequest from './pages/Dashboard/features/Maintenance/AddMai
 import Requests from './pages/Dashboard/features/Maintenance/MaintenanceRequests';
 import MaintenanceRequestsDetail from './pages/Dashboard/features/Maintenance/MaintenanceRequestsDetail';
 import Properties from './pages/Dashboard/features/Properties/Properties';
+import ImportProperties from './pages/Dashboard/features/Properties/ImportProperties/ImportProperties';
 import Equipments from './pages/Dashboard/features/Equipments/Equipments';
 import EquipmentDetail from './pages/Dashboard/features/Equipments/EquipmentDetail';
 import CreateEquipment from './pages/Dashboard/features/Equipments/CreateEquipment';
@@ -54,6 +55,7 @@ import ListingDetail from './pages/Dashboard/features/Listing/ListingDetail';
 import Calendar from './pages/Dashboard/features/Calendar/Calendar';
 import Tasks from './pages/Dashboard/features/Tasks/Tasks';
 import Tenants from './pages/Dashboard/features/Tenants/Tenants';
+import AddEditTenant from './pages/Dashboard/features/Tenants/AddEditTenant';
 import TenantDetail from './pages/Dashboard/features/Tenants/TenantDetail';
 import Units from './pages/Dashboard/features/Units/Units';
 import KeysLocks from './pages/Dashboard/features/KeysLocks/KeysLocks';
@@ -62,7 +64,10 @@ import Leases from './pages/Dashboard/features/Leases/Leases';
 import LeaseDetail from './pages/Dashboard/features/Leases/LeaseDetail';
 import AddKey from './pages/Dashboard/features/KeysLocks/AddKey';
 import ServicePros from './pages/Dashboard/features/ServicePros/ServicePros';
+import AddEditServicePro from './pages/Dashboard/features/ServicePros/AddEditServicePro';
 import ServiceProsDetail from './pages/Dashboard/features/ServicePros/ServiceProsDetail';
+import Application from './pages/Dashboard/features/Application/Application';
+import NewApplication from './pages/Dashboard/features/Application/NewApplication';
 // import ListUnit from './pages/Dashboard/features/ListUnit/ListUnit';
 
 // Create a QueryClient instance
@@ -117,7 +122,7 @@ const App: React.FC = () => {
                 }
               />
               <Route path="/dashboard/list-unit" element={<ListUnit />} />
-              <Route path="/dashboard/properties" element={<Properties />} />
+
               <Route path="/dashboard/portfolio/units" element={<Units />} />
               <Route path="/dashboard/portfolio/keys-locks" element={<KeysLocks />} />
               <Route path="/dashboard/portfolio/add-key" element={<AddKey />} />
@@ -137,9 +142,12 @@ const App: React.FC = () => {
               <Route path="/dashboard/tasks" element={<Tasks />} />
               <Route path="/dashboard/equipments" element={<Equipments />} />
               <Route path="/dashboard/equipments/add" element={<CreateEquipment />} />
+              <Route path="/dashboard/equipments/edit/:id" element={<CreateEquipment />} />
               <Route path="/dashboard/equipments/:id" element={<EquipmentDetail />} />
               <Route path="/dashboard/property/add" element={<AddProperty />} />
               <Route path="/dashboard/properties/edit/:id" element={<EditProperty />} />
+              <Route path="/dashboard/properties" element={<Properties />} />
+              <Route path="/dashboard/properties/import" element={<ImportProperties />} />
               <Route path="/dashboard/accounting/transactions" element={<Transactions />} />
               <Route path="/dashboard/accounting/transactions/income/add" element={<AddIncomeInvoice />} />
               <Route path="/dashboard/accounting/transactions/income-payments" element={<IncomePayments />} />
@@ -158,9 +166,15 @@ const App: React.FC = () => {
               <Route path="/dashboard/maintenance/requests/:id" element={<MaintenanceRequestsDetail />} />
               <Route path="/dashboard/movein" element={<MoveIn />} />
               <Route path="/dashboard/contacts/tenants" element={<Tenants />} />
+              <Route path="/dashboard/contacts/tenants/add" element={<AddEditTenant />} />
+              <Route path="/dashboard/contacts/tenants/edit/:id" element={<AddEditTenant />} />
               <Route path="/dashboard/contacts/tenants/:id" element={<TenantDetail />} />
               <Route path="/dashboard/contacts/service-pros" element={<ServicePros />} />
+              <Route path="/dashboard/contacts/service-pros/add" element={<AddEditServicePro />} />
+              <Route path="/dashboard/contacts/service-pros/edit/:id" element={<AddEditServicePro />} />
               <Route path="/dashboard/contacts/service-pros/:id" element={<ServiceProsDetail />} />
+              <Route path="/dashboard/leasing/applications" element={<Application />} />
+              <Route path="/dashboard/application/new" element={<NewApplication />} />
               <Route path="/dashboard/leasing/leases" element={<Leases />} />
               <Route path="/dashboard/portfolio/leases/:id" element={<LeaseDetail />} />
               <Route

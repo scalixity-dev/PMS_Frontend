@@ -8,6 +8,7 @@ interface TenantCardProps {
     name: string;
     phone: string;
     email: string;
+    propertyName?: string;
 }
 
 const TenantCard: React.FC<TenantCardProps> = ({
@@ -15,7 +16,8 @@ const TenantCard: React.FC<TenantCardProps> = ({
     image,
     name,
     phone,
-    email
+    email,
+    propertyName
 }) => {
     const navigate = useNavigate();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -38,27 +40,37 @@ const TenantCard: React.FC<TenantCardProps> = ({
     }, [isMenuOpen]);
 
     const menuItems = [
-        { label: 'Edit', action: () => { } },
+        { label: 'Edit', action: () => navigate(`/dashboard/contacts/tenants/edit/${id}`) },
         { label: 'Send connection', action: () => { } },
-        { label: 'Move in', action: () => { } },
-        { label: 'Add invoice', action: () => { } },
+        { label: 'Move in', action: () => navigate(`/dashboard/movein?tenantId=${id}`) },
+        { label: 'Add invoice', action: () => navigate(`/dashboard/accounting/transactions/income/add?tenantId=${id}`) },
         { label: 'Add insurance', action: () => { } },
         { label: 'Archive', action: () => { } },
-        { label: 'Delete', action: () => { }, isDestructive: true },
+        {
+            label: 'Delete',
+            action: () => {
+                if (window.confirm('Are you sure you want to delete this tenant?')) {
+                    console.log('Deleting tenant:', id);
+                    // API call would go here
+                }
+            },
+            isDestructive: true
+        },
     ];
 
     return (
-        <div className="bg-[#F6F6F8] rounded-[2rem] p-4 flex gap-4 relative">
-            <div className="absolute top-4 right-4" ref={menuRef}>
+        <div className="bg-[#F6F6F8] rounded-[2.5rem] p-4 flex gap-5 relative items-center">
+            {/* Context Menu */}
+            <div className="absolute top-5 right-5 z-10" ref={menuRef}>
                 <div
                     onClick={() => setIsMenuOpen(!isMenuOpen)}
-                    className="bg-[#A3A3A3] px-[6px] rounded-md bg-opacity-50 hover:bg-opacity-70 transition-all cursor-pointer"
+                    className="bg-white/30 backdrop-blur-md border border-white/40 shadow-sm w-12 h-8 rounded-full hover:bg-white/40 transition-all cursor-pointer flex items-center justify-center"
                 >
-                    <MoreHorizontal className="w-5 h-5 text-gray-700" />
+                    <MoreHorizontal className="w-6 h-6 text-gray-700" />
                 </div>
 
                 {isMenuOpen && (
-                    <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 z-10 overflow-hidden">
+                    <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 overflow-hidden">
                         {menuItems.map((item, index) => (
                             <button
                                 key={index}
@@ -80,28 +92,52 @@ const TenantCard: React.FC<TenantCardProps> = ({
             </div>
 
             {/* Image Section */}
-            <div className="w-32 h-32 flex-shrink-0">
+            <div className="w-50 h-50 flex-shrink-0">
                 <img
                     src={image}
                     alt={name}
-                    className="w-full h-full object-cover rounded-[1.5rem]"
+                    className="w-full h-full object-cover rounded-[2rem]"
                 />
             </div>
 
             {/* Content Section */}
-            <div className="flex-1 flex flex-col justify-center mr-8">
-                <div className="bg-[#3A6D6C] rounded-xl p-3 text-white mb-3 text-center">
-                    <h3 className="font-bold text-sm mb-1">{name}</h3>
-                    <p className="text-[10px] opacity-90">{phone}</p>
-                    <p className="text-[10px] opacity-90">{email}</p>
+            <div className="flex-1 flex flex-col justify-center gap-3 pr-2">
+
+                {/* Info Pill */}
+                <div className="bg-[#3A6D6C] rounded-[2rem] p-4 text-white text-center w-full shadow-sm mt-3">
+                    <h3 className="font-bold text-base mb-1">{name}</h3>
+                    <div className="flex flex-col gap-0.5">
+                        <p className="text-[11px] opacity-90">{phone}</p>
+                        <p className="text-[11px] opacity-90">{email}</p>
+                    </div>
                 </div>
 
-                <button
-                    onClick={() => navigate(`/dashboard/contacts/tenants/${id}`)}
-                    className="w-full bg-[#C8C8C8] text-gray-700 py-1.5 rounded-full text-xs font-medium hover:bg-[#b8b8b8] transition-colors shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]"
-                >
-                    View Profile
-                </button>
+                {/* Actions */}
+                <div className="flex items-center justify-center gap-3 w-full pl-2">
+                    <button
+                        onClick={() => navigate(`/dashboard/contacts/tenants/${id}`)}
+                        className="bg-[#C8C8C8] text-gray-700 px-6 py-2 rounded-full text-xs font-bold hover:bg-[#b8b8b8] transition-colors shadow-sm"
+                    >
+                        View Profile
+                    </button>
+
+                    <button
+                        className="text-[#2c3e50] hover:text-[#3A6D6C] transition-colors"
+                        title="Chat"
+                    >
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
+                        </svg>
+                    </button>
+                </div>
+
+                {propertyName && (
+                    <div className="text-center mt-1">
+                        <p className="text-[#888888] text-sm font-medium">
+                            Rented: <span className="text-gray-600">{propertyName}</span>
+                        </p>
+                    </div>
+                )}
             </div>
         </div>
     );

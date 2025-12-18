@@ -5,10 +5,9 @@ import { useListUnitStore } from '../store/listUnitStore';
 
 interface ListingContactProps {
     onSubmit: () => void;
-    propertyId?: string;
 }
 
-const ListingContact: React.FC<ListingContactProps> = ({ onSubmit, propertyId }) => {
+const ListingContact: React.FC<ListingContactProps> = ({ onSubmit }) => {
     const { formData, updateFormData } = useListUnitStore();
     return (
         <div className="w-full flex flex-col items-center">

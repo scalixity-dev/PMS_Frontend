@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getCurrencySymbol } from '../../../../../utils/currency.utils';
 
 export interface Unit {
     id: string;
@@ -11,16 +12,19 @@ export interface Unit {
     baths: number;
     sqft: number;
     image: string;
+    hasActiveListing?: boolean;
 }
 
 interface UnitItemProps {
     unit: Unit;
     propertyId: string;
+    country?: string;
 }
 
-const UnitItem: React.FC<UnitItemProps> = ({ unit, propertyId }) => {
+const UnitItem: React.FC<UnitItemProps> = ({ unit, propertyId, country }) => {
     const navigate = useNavigate();
     const isOccupied = unit.status === 'Occupied';
+    const currencySymbol = getCurrencySymbol(country);
     
     const handleViewUnit = () => {
         // Navigate to unit detail page
@@ -61,7 +65,7 @@ const UnitItem: React.FC<UnitItemProps> = ({ unit, propertyId }) => {
             {/* Column 2: Rent & Stats */}
             <div className="flex flex-col gap-3 flex-1 justify-center">
                 <div className="bg-[#4ad1a6] text-white px-4 py-1.5 rounded-full text-xs font-bold w-fit shadow-sm">
-                    Rent - {unit.rent ? `₹${unit.rent.toLocaleString()}` : '-----'}
+                    Rent - {unit.rent ? `${currencySymbol}${unit.rent.toLocaleString()}` : '-----'}
                 </div>
 
                 <div className="flex flex-col gap-2">
@@ -97,8 +101,11 @@ const UnitItem: React.FC<UnitItemProps> = ({ unit, propertyId }) => {
 
             {/* Column 3: Actions */}
             <div className="flex flex-col gap-2 justify-center w-22 mt-10">
-                {!isOccupied && (
-                    <button className="bg-[#82D64D] text-white w-full py-1.5 rounded-full text-xs font-bold hover:bg-[#72c042] transition-colors shadow-sm">
+                {!isOccupied && !unit.hasActiveListing && (
+                    <button 
+                        onClick={() => navigate(`/dashboard/list-unit?propertyId=${propertyId}${unit.id !== propertyId ? `&unitId=${unit.id}` : ''}`)}
+                        className="bg-[#82D64D] text-white w-full py-1.5 rounded-full text-xs font-bold hover:bg-[#72c042] transition-colors shadow-sm"
+                    >
                         List
                     </button>
                 )}

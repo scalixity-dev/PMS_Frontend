@@ -9,18 +9,7 @@ interface Request {
     property: string;
 }
 
-interface TenantRequestsSectionProps {
-    tenant: {
-        id: number;
-        tenantName: string;
-        tenantInitial: string;
-        status: string;
-        description: string;
-        property: string;
-    };
-}
-
-const TenantRequestsSection = ({ tenant }: TenantRequestsSectionProps) => {
+const TenantRequestsSection = () => {
     // Mock request data
     const requests: Request[] = [
         {
@@ -87,7 +76,7 @@ const TenantRequestsSection = ({ tenant }: TenantRequestsSectionProps) => {
                     {/* View Button */}
                     <button
                         className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-xs font-medium hover:bg-[#2c5251] transition-colors shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] flex items-center gap-2 flex-shrink-0"
-                        onClick={() => {}}
+                        onClick={() => { }}
                     >
                         <Eye className="w-4 h-4" />
                         View

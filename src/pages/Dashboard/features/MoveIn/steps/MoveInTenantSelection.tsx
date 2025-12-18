@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Loader2, User } from 'lucide-react';
+import { ChevronDown, User } from 'lucide-react';
 
 interface Tenant {
     id: string;

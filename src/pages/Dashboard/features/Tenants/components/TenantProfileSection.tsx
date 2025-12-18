@@ -52,14 +52,11 @@ const TenantProfileSection = ({ tenant }: TenantProfileSectionProps) => {
             <div className="bg-[#F6F6F8] rounded-[2rem] p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
                 <CustomTextBox label="First name" value={tenant.personalInfo.firstName} />
                 <CustomTextBox label="Email" value={tenant.personalInfo.email} />
-                <CustomTextBox label="Company name" value={tenant.personalInfo.companyName} />
                 <CustomTextBox label="Middle name" value={tenant.personalInfo.middleName} />
                 <CustomTextBox label="Additional email 1" value={tenant.personalInfo.additionalEmail} />
                 <CustomTextBox label="Date of birth" value={tenant.personalInfo.dateOfBirth} />
                 <CustomTextBox label="Last name" value={tenant.personalInfo.lastName} />
                 <CustomTextBox label="Phone" value={tenant.personalInfo.phone} />
-                <CustomTextBox label="Company name" value={tenant.personalInfo.companyName2} />
-                <CustomTextBox label="Additional Phone" value={tenant.personalInfo.additionalPhone} />
             </div>
         </section>
 
