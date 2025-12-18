@@ -66,6 +66,8 @@ import AddKey from './pages/Dashboard/features/KeysLocks/AddKey';
 import ServicePros from './pages/Dashboard/features/ServicePros/ServicePros';
 import AddEditServicePro from './pages/Dashboard/features/ServicePros/AddEditServicePro';
 import ServiceProsDetail from './pages/Dashboard/features/ServicePros/ServiceProsDetail';
+import Application from './pages/Dashboard/features/Application/Application';
+import NewApplication from './pages/Dashboard/features/Application/NewApplication';
 // import ListUnit from './pages/Dashboard/features/ListUnit/ListUnit';
 
 // Create a QueryClient instance
@@ -171,6 +173,8 @@ const App: React.FC = () => {
               <Route path="/dashboard/contacts/service-pros/add" element={<AddEditServicePro />} />
               <Route path="/dashboard/contacts/service-pros/edit/:id" element={<AddEditServicePro />} />
               <Route path="/dashboard/contacts/service-pros/:id" element={<ServiceProsDetail />} />
+              <Route path="/dashboard/leasing/applications" element={<Application />} />
+              <Route path="/dashboard/application/new" element={<NewApplication />} />
               <Route path="/dashboard/leasing/leases" element={<Leases />} />
               <Route path="/dashboard/portfolio/leases/:id" element={<LeaseDetail />} />
               <Route
