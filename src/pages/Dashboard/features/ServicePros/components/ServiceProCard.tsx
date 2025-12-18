@@ -42,7 +42,7 @@ const ServiceProCard: React.FC<ServiceProCardProps> = ({
     }, [isMenuOpen]);
 
     const menuItems = [
-        { label: 'Edit', action: () => { } },
+        { label: 'Edit', action: () => navigate(`/dashboard/contacts/service-pros/edit/${id}`) },
         { label: 'Send connection', action: () => { } },
         { label: 'Delete', action: () => { }, isDestructive: true },
     ];

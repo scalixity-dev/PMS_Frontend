@@ -100,7 +100,7 @@ export const useDeleteUnit = () => {
     mutationFn: (unitId: string): Promise<{ message: string; unit: { id: string; unitName: string; propertyName: string } }> => {
       return unitService.delete(unitId);
     },
-    onSuccess: (data, unitId) => {
+    onSuccess: (_data, unitId) => {
       // Remove the unit from cache
       queryClient.removeQueries({ queryKey: unitQueryKeys.detail(unitId) });
       // Invalidate units lists (will need propertyId, but we can invalidate all)

@@ -1,11 +1,4 @@
-interface TenantApplicationsSectionProps {
-    tenant: {
-        id: number;
-        name: string;
-    };
-}
-
-const TenantApplicationsSection = ({ tenant }: TenantApplicationsSectionProps) => {
+const TenantApplicationsSection = () => {
     return (
         <div>
 

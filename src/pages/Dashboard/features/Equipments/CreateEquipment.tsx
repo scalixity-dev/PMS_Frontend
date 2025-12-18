@@ -239,7 +239,7 @@ const CreateEquipment = () => {
                 });
             } else {
                 // Create new equipment
-                const createdEquipment = await createEquipmentMutation.mutateAsync(equipmentData);
+                await createEquipmentMutation.mutateAsync(equipmentData);
 
                 // Then, if there are any uploaded files, attach them to the property
                 if (uploadedFiles.length > 0 && formData.propertyId) {

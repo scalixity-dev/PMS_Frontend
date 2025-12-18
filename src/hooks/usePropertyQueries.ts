@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { propertyService, type BackendProperty, type Property } from '../services/property.service';
+import { propertyService, type BackendProperty } from '../services/property.service';
 
 // Query keys for React Query
 export const propertyQueryKeys = {

@@ -9,11 +9,11 @@ import CustomDropdown from '../../components/CustomDropdown';
 import ImageCropModal from './components/ImageCropModal';
 import { useTenantFormStore } from './store/tenantFormStore';
 import {
-  useGetTenant,
-  useCreateTenant,
-  useUpdateTenant,
-  useUploadTenantProfilePhoto,
-  useUploadTenantDocument,
+    useGetTenant,
+    useCreateTenant,
+    useUpdateTenant,
+    useUploadTenantProfilePhoto,
+    useUploadTenantDocument,
 } from '../../../../hooks/useTenantQueries';
 
 
@@ -145,7 +145,7 @@ const AddEditTenant = () => {
                             country: ''
                         };
                     }
-                    
+
                     // Simple parsing - split by comma and try to identify parts
                     const parts = addr.split(',').map(p => p.trim());
                     return {
@@ -212,7 +212,7 @@ const AddEditTenant = () => {
     // Manage blob URL cleanup for profile photo
     useEffect(() => {
         const previousBlobUrl = currentBlobUrlRef.current;
-        
+
         // If profilePhoto is a blob URL, update the ref
         if (profilePhoto && profilePhoto.startsWith('blob:')) {
             // If there's a previous blob URL that's different, revoke it
@@ -313,7 +313,7 @@ const AddEditTenant = () => {
     const handleProfilePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            
+
             // Validate file type
             const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
             if (!allowedTypes.includes(file.type)) {
@@ -559,10 +559,10 @@ const AddEditTenant = () => {
                             <>
                                 <div
                                     onClick={() => profileInputRef.current?.click()}
-                                    className={`w-32 h-32 rounded-full bg-white border-2 border-dashed ${profilePhoto ? 'border-transparent' : 'border-gray-300'} flex flex-col items-center justify-center overflow-hidden cursor-pointer hover:border-[#3A6D6C] transition-colors relative`}
+                                    className={`w-32 h-32 rounded-2xl bg-white border-2 border-dashed ${profilePhoto ? 'border-transparent' : 'border-gray-300'} flex flex-col items-center justify-center overflow-hidden cursor-pointer hover:border-[#3A6D6C] transition-colors relative`}
                                 >
                                     {profilePhoto ? (
-                                        <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
+                                        <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover rounded-2xl" />
                                     ) : (
                                         <>
                                             <div className="absolute inset-0 bg-gray-50 hover:bg-gray-100 transition-colors" />
@@ -583,7 +583,7 @@ const AddEditTenant = () => {
                                 )}
                             </>
                         ) : (
-                            <div className="w-32 h-32 rounded-full bg-white border-2 border-gray-300 overflow-hidden relative">
+                            <div className="w-32 h-32 rounded-2xl bg-white border-2 border-gray-300 overflow-hidden relative">
                                 <div className="absolute inset-0 flex items-center justify-center">
                                     <span className="text-xs text-gray-500">Crop in modal</span>
                                 </div>
@@ -600,7 +600,7 @@ const AddEditTenant = () => {
                         <InputField label="First Name" name="firstName" value={formData.personalInfo.firstName} onChange={handlePersonalInfoChange} placeholder="First Name" error={errors.firstName} />
                         <InputField label="Middle Name" name="middleName" value={formData.personalInfo.middleName} onChange={handlePersonalInfoChange} placeholder="Middle Name" />
                         <InputField label="Last Name" name="lastName" value={formData.personalInfo.lastName} onChange={handlePersonalInfoChange} placeholder="Last Name" error={errors.lastName} />
-                       
+
                         <div className="flex-1">
                             <label className="block text-xs font-bold text-gray-600 mb-2 ml-1">Date of birth</label>
                             <DatePicker
@@ -649,7 +649,7 @@ const AddEditTenant = () => {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                             <InputField label="Address" name="address" value={formData.forwardingAddress.address} onChange={handleForwardingAddressChange} placeholder="Address" />
                             <InputField label="Unit/Ap." name="unit" value={formData.forwardingAddress.unit} onChange={handleForwardingAddressChange} placeholder="Unit" />
-                            
+
                             {/* Country & State/Region */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
@@ -931,7 +931,7 @@ const AddEditTenant = () => {
                     onClose={handleCropCancel}
                     onCropComplete={handleCropComplete}
                     aspectRatio={1}
-                    circularCrop={true}
+                    circularCrop={false}
                     containerSize={280}
                 />
             )}

@@ -1,14 +1,48 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardFilter from '../../components/DashboardFilter';
-import Pagination from '../../components/Pagination'; // Uncommented
-import ServiceProCard from './components/ServiceProCard';
-// import AddServiceProModal from './components/AddServiceProModal';
+import Pagination from '../../components/Pagination';
+import ApplicationCard from './components/ApplicationCard';
 import { Plus, ChevronLeft } from 'lucide-react';
 
-const ServicePros = () => {
+// Mock Data
+const MOCK_APPLICATIONS = [
+    {
+        id: 1,
+        name: 'Anjali Vyas',
+        image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+        appliedDate: '10-nov-2025',
+        status: 'Approved' as const,
+    },
+    {
+        id: 2,
+        name: 'Gerey bose',
+        image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+        appliedDate: '10-nov-2025',
+        status: 'Approved' as const,
+    },
+    {
+        id: 3,
+        name: 'John Doe',
+        image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+        appliedDate: '12-nov-2025',
+        status: 'Pending' as const,
+    },
+    {
+        id: 4,
+        name: 'Sarah Smith',
+        image: '',
+        appliedDate: '15-nov-2025',
+        status: 'Pending' as const,
+    }
+];
+
+const Application = () => {
     const navigate = useNavigate();
     const [, setFilters] = useState<Record<string, string[]>>({});
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 6;
 
     const handleSearchChange = (_search: string) => {
         // console.log('Search:', search);
@@ -16,86 +50,49 @@ const ServicePros = () => {
 
     const handleFiltersChange = (newFilters: Record<string, string[]>) => {
         setFilters(newFilters);
+        // console.log('Filters:', newFilters);
     };
 
     const filterOptions = {
-        serviceProType: [
-            { value: 'individual', label: 'Individual' },
-            { value: 'company', label: 'Company' }
+        status: [
+            { value: 'approved', label: 'Approved' },
+            { value: 'pending', label: 'Pending' },
+            { value: 'rejected', label: 'Rejected' },
         ],
-        category: [
-            { value: 'cleaning', label: 'Cleaning' },
-            { value: 'maintenance', label: 'Maintenance' },
-            { value: 'appraisal', label: 'Appraisal' }
+        propertyUnits: [
+            { value: 'unit1', label: 'Unit 1' },
+            { value: 'unit2', label: 'Unit 2' }
         ],
-        connection: [
-            { value: 'connected', label: 'Connected' },
+        screeningStatus: [
+            { value: 'completed', label: 'Completed' },
+            { value: 'in_progress', label: 'In Progress' },
             { value: 'pending', label: 'Pending' }
+        ],
+        applicationType: [
+            { value: 'individual', label: 'Individual' },
+            { value: 'cosigner', label: 'Co-signer' }
         ]
     };
 
     const filterLabels = {
-        serviceProType: 'Service Pro type',
-        category: 'Category & Sub-category',
-        connection: 'Connection'
+        status: 'Status',
+        propertyUnits: 'Property & Units',
+        screeningStatus: 'Screening Status',
+        applicationType: 'Application Type'
     };
-
-    const servicePros = [
-        {
-            id: 1,
-            initials: 'SR',
-            name: 'sam rao',
-            phone: '+91 78965 41236',
-            category: 'Commercial Cleaning Services',
-            bgColor: 'bg-[#4ad1a6]',
-            image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200&h=200'
-        },
-        {
-            id: 2,
-            initials: 'VR',
-            name: 'vijay rfgdd',
-            phone: '+91 70326 59874',
-            category: 'Appraiser',
-            bgColor: 'bg-[#4ad1a6]',
-            image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200&h=200'
-        },
-        {
-            id: 3,
-            initials: 'AB',
-            name: 'Alex Brown',
-            phone: '+1 555 123 4567',
-            category: 'Plumbing Services',
-            bgColor: 'bg-[#4ad1a6]',
-            image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=200&h=200'
-        },
-        {
-            id: 4,
-            initials: 'JD',
-            name: 'John Doe',
-            phone: '+1 555 987 6543',
-            category: 'Electrical Services',
-            bgColor: 'bg-[#4ad1a6]',
-            image: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?auto=format&fit=crop&q=80&w=200&h=200'
-        }
-    ];
-
-    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-
-    const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 9;
 
     const handleSortToggle = () => {
         setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
     };
 
-    const sortedServicePros = [...servicePros].sort((a, b) => {
+    const sortedApplications = [...MOCK_APPLICATIONS].sort((a, b) => {
         return sortOrder === 'asc'
             ? a.name.localeCompare(b.name)
             : b.name.localeCompare(a.name);
     });
 
-    const totalPages = Math.ceil(sortedServicePros.length / itemsPerPage);
-    const currentServicePros = sortedServicePros.slice(
+    const totalPages = Math.ceil(sortedApplications.length / itemsPerPage);
+    const currentApplications = sortedApplications.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
     );
@@ -110,30 +107,27 @@ const ServicePros = () => {
             <div className="inline-flex items-center px-4 py-2 bg-[#E0E5E5] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
                 <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
                 <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">Service Pros</span>
+                <span className="text-gray-600 text-sm font-semibold">Application</span>
             </div>
 
             <div className="p-6 bg-[#E0E5E5] min-h-screen rounded-[2rem] flex flex-col">
                 {/* Header */}
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center mb-6 gap-6">
                     <div className="flex items-center gap-2">
-                        {/* Adding Back button like Tenants page */}
-                        <button onClick={() => navigate(-1)} className="p-2 hover:bg-black/5 rounded-full transition-colors text-black">
-                            <ChevronLeft className="w-6 h-6" />
+                        <button onClick={() => navigate(-1)} className="p-2 hover:bg-black/5 rounded-full transition-colors">
+                            <ChevronLeft className="w-6 h-6 text-black" />
                         </button>
-                        <h1 className="text-2xl font-bold text-black flex items-center gap-2">
-                            Service Pros
-                        </h1>
+                        <h1 className="text-2xl font-bold text-black">Application</h1>
                     </div>
                     <div className="flex gap-3">
                         <button className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors">
-                            Import
+                            Screen Tenants
                         </button>
                         <button
-                            onClick={() => navigate('/dashboard/contacts/service-pros/add')}
+                            onClick={() => navigate('/dashboard/application/new')} // Check route if needed
                             className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2"
                         >
-                            Add service pro
+                            New Application
                             <Plus className="w-4 h-4" />
                         </button>
                     </div>
@@ -145,9 +139,10 @@ const ServicePros = () => {
                     filterLabels={filterLabels}
                     onSearchChange={handleSearchChange}
                     onFiltersChange={handleFiltersChange}
+                    showMoreFilters={false}
                 />
 
-                {/* Stats/Count Section */}
+                {/* Sort and Count */}
                 <div className="flex items-center gap-4 mb-6">
                     <button
                         onClick={handleSortToggle}
@@ -165,19 +160,26 @@ const ServicePros = () => {
                             <path d="M1 1L5 5L9 1" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                     </button>
+
                     <div className="bg-[#3A6D6C] text-white px-4 py-1 rounded-full text-sm">
-                        {servicePros.length} service pros
+                        {MOCK_APPLICATIONS.length} Application
                     </div>
                 </div>
 
-                {/* Grid */}
+                {/* Applications Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                    {currentServicePros.map((pro) => (
-                        <ServiceProCard
-                            key={pro.id}
-                            {...pro}
-                        />
-                    ))}
+                    {currentApplications.length > 0 ? (
+                        currentApplications.map((app) => (
+                            <ApplicationCard
+                                key={app.id}
+                                {...app}
+                            />
+                        ))
+                    ) : (
+                        <div className="col-span-full text-center py-12">
+                            <p className="text-gray-600">No applications found</p>
+                        </div>
+                    )}
                 </div>
 
                 <div className="mt-auto">
@@ -187,18 +189,9 @@ const ServicePros = () => {
                         onPageChange={handlePageChange}
                     />
                 </div>
-
-                {/* <AddServiceProModal
-                    isOpen={isAddModalOpen}
-                    onClose={() => setIsAddModalOpen(false)}
-                    onSave={(data) => {
-                        console.log('New Service Pro:', data);
-                        // Handle save logic here
-                    }}
-                /> */}
             </div>
         </div>
     );
 };
 
-export default ServicePros;
+export default Application;
