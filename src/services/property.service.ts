@@ -501,9 +501,6 @@ class PropertyService {
   async delete(propertyId: string): Promise<{ message: string; property: BackendProperty }> {
     const response = await fetch(API_ENDPOINTS.PROPERTY.DELETE(propertyId), {
       method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       credentials: 'include', // Include cookies for JWT
     });
 
