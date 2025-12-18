@@ -61,17 +61,17 @@ const PetsStep: React.FC<PetsStepProps> = ({ onNext }) => {
             id: Math.random().toString(36).substr(2, 9),
             ...data
         };
-        const currentPets = (formData as any).pets || [];
-        updateFormData('pets' as any, [...currentPets, newPet]);
+        const currentPets = formData.pets || [];
+        updateFormData('pets', [...currentPets, newPet]);
     };
 
     const handleDeletePet = (id: string) => {
-        const currentPets = (formData as any).pets || [];
+        const currentPets = formData.pets || [];
         const updatedPets = currentPets.filter((p: any) => p.id !== id);
-        updateFormData('pets' as any, updatedPets);
+        updateFormData('pets', updatedPets);
     };
 
-    const pets = (formData as any).pets || [];
+    const pets = formData.pets || [];
 
     return (
         <div className="w-full max-w-5xl mx-auto">

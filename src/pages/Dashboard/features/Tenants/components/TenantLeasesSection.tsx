@@ -18,12 +18,15 @@ interface TenantLeasesSectionProps {
 }
 
 const TenantLeasesSection = ({ tenant }: TenantLeasesSectionProps) => {
+    // Safely compute tenant initial with fallback
+    const tenantInitial = (typeof tenant.name === 'string' && tenant.name.length > 0) ? tenant.name.charAt(0) : '?';
+    
     // Mock lease data
     const leases: Lease[] = [
         {
             id: 1,
             tenantName: tenant.name,
-            tenantInitial: tenant.name.charAt(0),
+            tenantInitial: tenantInitial,
             date: '01 Nov, 2025',
             time: '11:00 AM',
             status: 'Draft',
@@ -32,7 +35,7 @@ const TenantLeasesSection = ({ tenant }: TenantLeasesSectionProps) => {
         {
             id: 2,
             tenantName: tenant.name,
-            tenantInitial: tenant.name.charAt(0),
+            tenantInitial: tenantInitial,
             date: '01 Nov, 2025',
             time: '11:00 AM',
             status: 'Draft',
@@ -41,7 +44,7 @@ const TenantLeasesSection = ({ tenant }: TenantLeasesSectionProps) => {
         {
             id: 3,
             tenantName: tenant.name,
-            tenantInitial: tenant.name.charAt(0),
+            tenantInitial: tenantInitial,
             date: '01 Nov, 2025',
             time: '11:00 AM',
             status: 'Draft',

@@ -82,7 +82,6 @@ const ResidencesStep: React.FC<ResidencesStepProps> = ({ onNext }) => {
     const { formData, updateFormData } = useApplicationStore();
     const [isAdding, setIsAdding] = useState(false);
 
-    // @ts-ignore
     const residences = formData.residences || [];
 
     const handleSaveResidence = (data: ResidenceFormData) => {
@@ -90,13 +89,11 @@ const ResidencesStep: React.FC<ResidencesStepProps> = ({ onNext }) => {
             id: Math.random().toString(36).substr(2, 9),
             ...data
         };
-        // @ts-ignore
         updateFormData('residences', [...residences, newResidence]);
     };
 
     const handleDeleteResidence = (id: string) => {
-        const updatedResidences = residences.filter((r: any) => r.id !== id);
-        // @ts-ignore
+        const updatedResidences = residences.filter((r) => r.id !== id);
         updateFormData('residences', updatedResidences);
     };
 

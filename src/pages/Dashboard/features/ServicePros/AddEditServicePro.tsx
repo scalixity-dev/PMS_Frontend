@@ -346,7 +346,7 @@ const AddEditServicePro = () => {
 
                 {/* Error Message */}
                 {submitError && (
-                    <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg" role="alert" aria-live="assertive" aria-atomic="true">
                         <p className="text-red-600 text-sm font-medium">{submitError}</p>
                     </div>
                 )}

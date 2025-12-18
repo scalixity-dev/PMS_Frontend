@@ -40,6 +40,9 @@ const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave }) =>
         photo: null
     });
 
+    const [errors, setErrors] = useState<Record<string, string>>({});
+    const [touched, setTouched] = useState<Record<string, boolean>>({});
+
     // Prevent background scrolling when modal is open
     useEffect(() => {
         if (isOpen) {
@@ -50,6 +53,22 @@ const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave }) =>
         return () => {
             document.body.style.overflow = 'unset';
         };
+    }, [isOpen]);
+
+    // Reset form and errors when modal closes
+    useEffect(() => {
+        if (!isOpen) {
+            setFormData({
+                type: '',
+                name: '',
+                weight: '',
+                breed: '',
+                photo: null
+            });
+            setErrors({});
+            setTouched({});
+            setPreviewUrl(null);
+        }
     }, [isOpen]);
 
     // Image preview state
@@ -74,13 +93,81 @@ const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave }) =>
 
     if (!isOpen) return null;
 
+    const validateField = (key: keyof PetFormData, value: any): string => {
+        // Skip validation for optional photo field
+        if (key === 'photo') {
+            return '';
+        }
+
+        // Validate required string fields
+        if (typeof value === 'string') {
+            if (!value || value.trim() === '') {
+                const fieldName = key.charAt(0).toUpperCase() + key.slice(1);
+                return `${fieldName} is required`;
+            }
+        }
+
+        return '';
+    };
+
+    const validateAllFields = (): boolean => {
+        const newErrors: Record<string, string> = {};
+        let isValid = true;
+
+        // Validate only required fields (type, name, weight, breed)
+        const requiredFields: Array<keyof PetFormData> = ['type', 'name', 'weight', 'breed'];
+
+        requiredFields.forEach(key => {
+            const error = validateField(key, formData[key]);
+            if (error) {
+                newErrors[key] = error;
+                isValid = false;
+            }
+        });
+
+        setErrors(newErrors);
+        return isValid;
+    };
+
     const handleChange = (key: keyof PetFormData, value: any) => {
         setFormData(prev => ({ ...prev, [key]: value }));
+
+        // Clear error for this field when user starts typing/selecting
+        if (touched[key]) {
+            const error = validateField(key, value);
+            setErrors(prev => ({ ...prev, [key]: error }));
+        }
+    };
+
+    const handleBlur = (key: keyof PetFormData, currentValue?: any) => {
+        setTouched(prev => ({ ...prev, [key]: true }));
+        const value = currentValue !== undefined ? currentValue : formData[key];
+        const error = validateField(key, value);
+        setErrors(prev => ({ ...prev, [key]: error }));
     };
 
     const handleSubmit = () => {
-        onSave(formData);
-        onClose();
+        // Mark all required fields as touched
+        const requiredFields: Array<keyof PetFormData> = ['type', 'name', 'weight', 'breed'];
+        const allTouched = requiredFields.reduce((acc, key) => {
+            acc[key] = true;
+            return acc;
+        }, {} as Record<string, boolean>);
+        setTouched(allTouched);
+
+        // Validate all fields
+        if (validateAllFields()) {
+            onSave(formData);
+            onClose();
+        }
+    };
+
+    // Check if form is valid for button state
+    const isFormValid = () => {
+        const requiredFields: Array<keyof PetFormData> = ['type', 'name', 'weight', 'breed'];
+        return requiredFields.every(key => {
+            return !validateField(key, formData[key]);
+        });
     };
 
     return (
@@ -143,12 +230,21 @@ const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave }) =>
                                 <label className="block text-sm font-semibold text-[#2c3e50] mb-1 ml-1">Type *</label>
                                 <CustomDropdown
                                     value={formData.type}
-                                    onChange={(val) => handleChange('type', val)}
+                                    onChange={(val) => {
+                                        handleChange('type', val);
+                                        if (!touched.type) {
+                                            handleBlur('type', val);
+                                        }
+                                    }}
                                     options={typeOptions}
                                     placeholder="Choose Type"
-                                    buttonClassName="w-full bg-white p-3 rounded-xl border-none outline-none text-gray-700 placeholder-gray-400 shadow-sm"
+                                    buttonClassName={`w-full bg-white p-3 rounded-xl outline-none text-gray-700 placeholder-gray-400 shadow-sm ${touched.type && errors.type ? 'border-2 border-red-500' : 'border-none'
+                                        }`}
                                     dropdownClassName="max-h-60"
                                 />
+                                {touched.type && errors.type && (
+                                    <p className="text-red-500 text-xs mt-1 ml-1">{errors.type}</p>
+                                )}
                             </div>
 
                             {/* Name */}
@@ -157,10 +253,15 @@ const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave }) =>
                                 <input
                                     type="text"
                                     placeholder="Enter Name"
-                                    className="w-full bg-white p-3 rounded-xl border-none outline-none text-gray-700 placeholder-gray-400 shadow-sm"
+                                    className={`w-full bg-white p-3 rounded-xl outline-none text-gray-700 placeholder-gray-400 shadow-sm ${touched.name && errors.name ? 'border-2 border-red-500' : 'border-none'
+                                        }`}
                                     value={formData.name}
                                     onChange={(e) => handleChange('name', e.target.value)}
+                                    onBlur={() => handleBlur('name')}
                                 />
+                                {touched.name && errors.name && (
+                                    <p className="text-red-500 text-xs mt-1 ml-1">{errors.name}</p>
+                                )}
                             </div>
 
                             {/* Weight */}
@@ -168,12 +269,21 @@ const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave }) =>
                                 <label className="block text-sm font-semibold text-[#2c3e50] mb-1 ml-1">Weight *</label>
                                 <CustomDropdown
                                     value={formData.weight}
-                                    onChange={(val) => handleChange('weight', val)}
+                                    onChange={(val) => {
+                                        handleChange('weight', val);
+                                        if (!touched.weight) {
+                                            handleBlur('weight', val);
+                                        }
+                                    }}
                                     options={weightOptions}
                                     placeholder="Choose Type"
-                                    buttonClassName="w-full bg-white p-3 rounded-xl border-none outline-none text-gray-700 placeholder-gray-400 shadow-sm"
+                                    buttonClassName={`w-full bg-white p-3 rounded-xl outline-none text-gray-700 placeholder-gray-400 shadow-sm ${touched.weight && errors.weight ? 'border-2 border-red-500' : 'border-none'
+                                        }`}
                                     dropdownClassName="max-h-60"
                                 />
+                                {touched.weight && errors.weight && (
+                                    <p className="text-red-500 text-xs mt-1 ml-1">{errors.weight}</p>
+                                )}
                             </div>
 
                             {/* Breed */}
@@ -182,10 +292,15 @@ const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave }) =>
                                 <input
                                     type="text"
                                     placeholder="Enter Breed"
-                                    className="w-full bg-white p-3 rounded-xl border-none outline-none text-gray-700 placeholder-gray-400 shadow-sm"
+                                    className={`w-full bg-white p-3 rounded-xl outline-none text-gray-700 placeholder-gray-400 shadow-sm ${touched.breed && errors.breed ? 'border-2 border-red-500' : 'border-none'
+                                        }`}
                                     value={formData.breed}
                                     onChange={(e) => handleChange('breed', e.target.value)}
+                                    onBlur={() => handleBlur('breed')}
                                 />
+                                {touched.breed && errors.breed && (
+                                    <p className="text-red-500 text-xs mt-1 ml-1">{errors.breed}</p>
+                                )}
                             </div>
                         </div>
 
@@ -193,7 +308,11 @@ const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave }) =>
                         <div className="pt-4">
                             <button
                                 onClick={handleSubmit}
-                                className="bg-[#3A6D6C] text-white px-8 py-3 rounded-xl text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-md"
+                                disabled={!isFormValid()}
+                                className={`px-8 py-3 rounded-xl text-sm font-medium transition-colors shadow-md ${isFormValid()
+                                        ? 'bg-[#3A6D6C] text-white hover:bg-[#2c5251] cursor-pointer'
+                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                    }`}
                             >
                                 Add
                             </button>

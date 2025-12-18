@@ -2,23 +2,10 @@ import React, { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react'; // Added icons
 import { useApplicationStore } from '../store/applicationStore';
 import AddOccupantModal from '../components/AddOccupantModal';
+import type { OccupantFormData } from '../components/AddOccupantModal';
 
 interface OccupantsStepProps {
     onNext: () => void;
-}
-
-// Define Occupant type matching the form data
-interface Occupant {
-    id: string;
-    firstName: string;
-    middleName: string;
-    lastName: string;
-    email: string;
-    phoneNumber: string;
-    dob: Date | undefined;
-    shortBio: string;
-    moveInDate: Date | undefined;
-    relationship?: string; // New field
 }
 
 const OccupantsStep: React.FC<OccupantsStepProps> = ({ onNext }) => {
@@ -29,18 +16,10 @@ const OccupantsStep: React.FC<OccupantsStepProps> = ({ onNext }) => {
         setIsAdding(true);
     };
 
-    const handleSaveOccupant = (data: any) => {
-        const occupant: Occupant = {
+    const handleSaveOccupant = (data: OccupantFormData) => {
+        const occupant: OccupantFormData & { id: string } = {
             id: Math.random().toString(36).substr(2, 9),
-            firstName: data.firstName || '',
-            middleName: '', // Modal doesn't have middle name
-            lastName: data.lastName || '',
-            email: data.email || '',
-            phoneNumber: data.phoneNumber || '',
-            dob: data.dob,
-            shortBio: '', // Modal doesn't have bio
-            moveInDate: undefined, // Modal doesn't have moveInDate
-            relationship: data.relationship // Added relationship
+            ...data
         };
 
         const updatedOccupants = [...(formData.occupants || []), occupant];

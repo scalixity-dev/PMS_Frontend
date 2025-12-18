@@ -42,22 +42,17 @@ const VehiclesStep: React.FC<VehiclesStepProps> = ({ onNext }) => {
             id: Math.random().toString(36).substr(2, 9),
             ...data
         };
-        // @ts-ignore - 'vehicles' typings will be added
-        const currentVehicles = formData.vehicles || [];
-        // @ts-ignore
+        const currentVehicles = formData.vehicles ?? [];
         updateFormData('vehicles', [...currentVehicles, newVehicle]);
     };
 
     const handleDeleteVehicle = (id: string) => {
-        // @ts-ignore
-        const currentVehicles = formData.vehicles || [];
-        const updatedVehicles = currentVehicles.filter((v: any) => v.id !== id);
-        // @ts-ignore
+        const currentVehicles = formData.vehicles ?? [];
+        const updatedVehicles = currentVehicles.filter((v) => v.id !== id);
         updateFormData('vehicles', updatedVehicles);
     };
 
-    // @ts-ignore
-    const vehicles = formData.vehicles || [];
+    const vehicles = formData.vehicles ?? [];
 
     return (
         <div className="w-full max-w-5xl mx-auto">

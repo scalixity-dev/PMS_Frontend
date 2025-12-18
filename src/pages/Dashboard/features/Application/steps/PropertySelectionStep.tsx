@@ -242,14 +242,7 @@ const PropertySelectionStep: React.FC<PropertySelectionStepProps> = ({ onNext })
                         // Hide edit button for now as it's not part of the requirement
                         // onEdit={...} 
                         />
-                        <div className="mt-6 flex justify-center w-full">
-                            <button
-                                onClick={onNext}
-                                className="bg-[#3A6D6C] text-white px-8 py-3 rounded-md font-medium text-sm hover:bg-[#2c5251] transition-colors shadow-sm min-w-[200px]"
-                            >
-                                Next
-                            </button>
-                        </div>
+                        
                     </div>
                 ) : (
                     // Show Dropdown when no selection

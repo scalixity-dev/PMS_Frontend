@@ -1,4 +1,8 @@
 import { create } from 'zustand';
+import type { ResidenceFormData } from '../components/AddResidenceModal';
+import type { VehicleFormData } from '../components/AddVehicleModal';
+import type { OccupantFormData } from '../components/AddOccupantModal';
+import type { PetFormData } from '../components/AddPetModal';
 
 export interface ApplicationFormData {
   // Step 1: Property Selection
@@ -16,11 +20,11 @@ export interface ApplicationFormData {
   moveInDate: Date | undefined;
   
   // Step 2: Occupants
-  occupants: any[]; // Define clearer type later if needed
-  pets: any[]; // Added pets
+  occupants: Array<OccupantFormData & { id: string }>;
+  pets: Array<PetFormData & { id: string }>;
   photo: File | null; 
-  vehicles: any[]; 
-  residences: any[]; // Added residences
+  vehicles: Array<VehicleFormData & { id: string }>; 
+  residences: Array<ResidenceFormData & { id: string }>;
   additionalResidenceInfo: string;
 }
 
@@ -36,7 +40,7 @@ export interface ApplicationState {
 
   // Actions
   setFormData: (data: ApplicationFormData | ((prev: ApplicationFormData) => ApplicationFormData)) => void;
-  updateFormData: (key: keyof ApplicationFormData, value: any) => void;
+  updateFormData: <K extends keyof ApplicationFormData>(key: K, value: ApplicationFormData[K]) => void;
   setCurrentStep: (step: number) => void;
   setIsPropertySelected: (selected: boolean) => void;
   resetForm: () => void;
