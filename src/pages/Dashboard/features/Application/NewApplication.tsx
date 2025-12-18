@@ -132,6 +132,7 @@ const NewApplication: React.FC = () => {
 
     // Add local state
     const [occupantSubStep, setOccupantSubStep] = React.useState<'occupants' | 'pets' | 'vehicles'>('occupants');
+    const [lastOccupantSubStep, setLastOccupantSubStep] = React.useState<'occupants' | 'pets' | 'vehicles'>('vehicles');
     const [residenceSubStep, setResidenceSubStep] = React.useState<'history' | 'additional'>('history');
 
     const handleCancel = () => {
@@ -175,12 +176,9 @@ const NewApplication: React.FC = () => {
             if (residenceSubStep === 'additional') {
                 setResidenceSubStep('history');
             } else {
-                // Go back to Step 2 (Vehicles)
-                // We need to set occupantSubStep to 'vehicles' so user lands on last part of Step 2? 
-                // Currently defaults to 'occupants' in useState but logic inside step 2 resets it?
-                // Let's just go back to step 2 generally.
+                // Go back to Step 2 - restore last visited sub-step
                 setCurrentStep(currentStep - 1);
-                setOccupantSubStep('vehicles'); // Optional convenience
+                setOccupantSubStep(lastOccupantSubStep);
             }
         }
         else {
@@ -221,7 +219,7 @@ const NewApplication: React.FC = () => {
                     return <PetsStep onNext={() => setOccupantSubStep('vehicles')} />;
                 } else {
                     return <VehiclesStep onNext={() => {
-                        setOccupantSubStep('occupants'); // Reset logic if needed
+                        setLastOccupantSubStep(occupantSubStep); // Save last visited sub-step
                         setCurrentStep(currentStep + 1);
                     }} />;
                 }

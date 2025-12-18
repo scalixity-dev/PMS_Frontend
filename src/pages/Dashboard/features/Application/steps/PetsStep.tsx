@@ -80,7 +80,7 @@ const PetsStep: React.FC<PetsStepProps> = ({ onNext }) => {
                 Provide the information about your pets below if you have any.
             </p>
 
-            <div className="bg-[#F0F0F6] rounded-full p-8 shadow-sm flex flex-col items-center justify-center gap-6 max-w-3xl mx-auto">
+            <div className={`bg-[#F0F0F6] ${pets.length > 0 ? 'rounded-[1.5rem]' : 'rounded-full'} p-8 shadow-sm flex flex-col items-center justify-center gap-6 max-w-3xl mx-auto`}>
 
                 {/* List of Pets */}
                 {pets.length > 0 && (
