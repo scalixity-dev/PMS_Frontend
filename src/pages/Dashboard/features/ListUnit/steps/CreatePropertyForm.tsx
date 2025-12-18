@@ -110,22 +110,27 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
 
     setPropertyId(propertyData.id);
 
-    // Map backend property to form data - pre-fill ALL fields
-    // Note: propertyType in backend is 'SINGLE' | 'MULTI', but form expects 'apartment', 'house', etc.
-    // We'll leave it empty for now and let user select, or map to a default
+   
+    const formatDecimalForInput = (value: unknown): string => {
+      if (value === null || value === undefined) return '';
+      const num = Number(value);
+      if (Number.isNaN(num)) return String(value);
+      return num.toString();
+    };
+
     const mappedData: any = {
       propertyName: propertyData.propertyName || '',
-      propertyType: '', // Property type dropdown uses different values (apartment, house, etc.) - user needs to select
+      propertyType: '', 
       isManufactured: '', // Will be set by user in GeneralInfo if needed
-      marketRent: propertyData.marketRent?.toString() || '',
+      marketRent: formatDecimalForInput(propertyData.marketRent),
       address: propertyData.address?.streetAddress || '',
       city: propertyData.address?.city || '',
       stateRegion: propertyData.address?.stateRegion || '',
       country: propertyData.address?.country || '',
       zip: propertyData.address?.zipCode || '',
       beds: propertyData.singleUnitDetails?.beds?.toString() || '',
-      bathrooms: propertyData.singleUnitDetails?.baths?.toString() || '',
-      sizeSquareFt: propertyData.sizeSqft?.toString() || '',
+      bathrooms: formatDecimalForInput(propertyData.singleUnitDetails?.baths),
+      sizeSquareFt: formatDecimalForInput(propertyData.sizeSqft),
       yearBuilt: propertyData.yearBuilt?.toString() || '',
       // Keep amenities in UPPERCASE (enum values) - BasicAmenities expects uppercase
       parking: propertyData.amenities?.parking || '',
