@@ -9,7 +9,7 @@ interface ResidencesStepProps {
 }
 
 
-const ResidenceItem: React.FC<{ residence: any; onDelete: () => void }> = ({ residence, onDelete }) => {
+const ResidenceItem: React.FC<{ residence: ResidenceFormData & { id: string }; onDelete: () => void }> = ({ residence, onDelete }) => {
     // Helper to format date if it's a date object or string
     const formatDate = (dateVal: any) => {
         if (!dateVal) return '-';
@@ -115,7 +115,7 @@ const ResidencesStep: React.FC<ResidencesStepProps> = ({ onNext }) => {
             {/* List of Residences */}
             {residences.length > 0 && (
                 <div className="w-full max-w-3xl grid gap-6 mb-8">
-                    {residences.map((res: any) => (
+                    {residences.map((res: ResidenceFormData & { id: string }) => (
                         <ResidenceItem
                             key={res.id}
                             residence={res}

@@ -7,7 +7,7 @@ interface PetsStepProps {
     onNext: () => void;
 }
 
-const PetItem: React.FC<{ pet: any; onDelete: () => void }> = ({ pet, onDelete }) => {
+const PetItem: React.FC<{ pet: PetFormData & { id: string }; onDelete: () => void }> = ({ pet, onDelete }) => {
     const [imageUrl, setImageUrl] = React.useState<string | null>(null);
 
     React.useEffect(() => {
@@ -67,7 +67,7 @@ const PetsStep: React.FC<PetsStepProps> = ({ onNext }) => {
 
     const handleDeletePet = (id: string) => {
         const currentPets = formData.pets || [];
-        const updatedPets = currentPets.filter((p: any) => p.id !== id);
+        const updatedPets = currentPets.filter((p) => p.id !== id);
         updateFormData('pets', updatedPets);
     };
 
@@ -85,7 +85,7 @@ const PetsStep: React.FC<PetsStepProps> = ({ onNext }) => {
                 {/* List of Pets */}
                 {pets.length > 0 && (
                     <div className="w-full max-w-2xl grid gap-4">
-                        {pets.map((pet: any) => (
+                        {pets.map((pet: PetFormData & { id: string }) => (
                             <PetItem
                                 key={pet.id}
                                 pet={pet}

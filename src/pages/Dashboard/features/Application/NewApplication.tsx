@@ -57,19 +57,43 @@ const NewApplication: React.FC = () => {
         );
     }, [formData]);
 
+    // Helper to recursively convert date strings to Date objects
+    const walkAndConvertDates = (obj: any): any => {
+        if (obj === null || obj === undefined) return obj;
+        
+        // If it's an array, recurse into each element
+        if (Array.isArray(obj)) {
+            return obj.map(item => walkAndConvertDates(item));
+        }
+        
+        // If it's an object, recurse into each property
+        if (typeof obj === 'object') {
+            const converted: any = {};
+            for (const key in obj) {
+                if (Object.prototype.hasOwnProperty.call(obj, key)) {
+                    const value = obj[key];
+                    // Convert known date property names
+                    if ((key === 'dob' || key === 'moveInDate' || key === 'moveOutDate') && typeof value === 'string') {
+                        converted[key] = new Date(value);
+                    } else {
+                        converted[key] = walkAndConvertDates(value);
+                    }
+                }
+            }
+            return converted;
+        }
+        
+        return obj;
+    };
+
     // Restore form data from localStorage on mount
     useEffect(() => {
         const savedData = localStorage.getItem(STORAGE_KEY);
         if (savedData) {
             try {
                 const parsed = JSON.parse(savedData);
-                // Convert date strings back to Date objects
-                if (parsed.formData.dob) {
-                    parsed.formData.dob = new Date(parsed.formData.dob);
-                }
-                if (parsed.formData.moveInDate) {
-                    parsed.formData.moveInDate = new Date(parsed.formData.moveInDate);
-                }
+                // Convert all date strings to Date objects recursively
+                parsed.formData = walkAndConvertDates(parsed.formData);
                 setFormData(parsed.formData);
                 setCurrentStep(parsed.currentStep);
                 setIsPropertySelected(parsed.isPropertySelected);

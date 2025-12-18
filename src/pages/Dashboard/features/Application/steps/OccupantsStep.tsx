@@ -46,7 +46,7 @@ const OccupantsStep: React.FC<OccupantsStepProps> = ({ onNext }) => {
                 {/* List of added occupants */}
                 {formData.occupants && formData.occupants.length > 0 && (
                     <div className="w-full max-w-2xl mb-4 grid gap-4">
-                        {formData.occupants.map((occ: any, index: number) => (
+                        {formData.occupants.map((occ: OccupantFormData & { id: string }, index: number) => (
                             <div key={occ.id} className="bg-white p-4 rounded-xl flex items-center justify-between shadow-sm">
                                 <div className="flex items-center gap-4">
                                     <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold">
