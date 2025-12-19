@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { User, X, Eye, EyeOff } from "lucide-react";
 import Button from "../../../../components/common/Button";
 import { authService } from "../../../../services/auth.service";
@@ -63,6 +63,8 @@ interface ChangePasswordModalProps {
 
 function EditPersonalInfoModal(props: EditPersonalInfoModalProps) {
   const { isOpen, onClose, onSave, initialValues } = props;
+  const firstInputRef = useRef<HTMLInputElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   const [formValues, setFormValues] = useState({
     firstName: initialValues.firstName,
@@ -79,12 +81,51 @@ function EditPersonalInfoModal(props: EditPersonalInfoModalProps) {
         dateOfBirth: initialValues.dateOfBirth,
         phoneNumber: initialValues.phoneNumber,
       });
+      // Focus the first input when modal opens
+      const timer = setTimeout(() => {
+        firstInputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [initialValues, isOpen]);
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    if (isOpen) {
+      window.addEventListener("keydown", handleEscape);
+    }
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [isOpen, onClose]);
 
   if (!isOpen) {
     return null;
   }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Tab") {
+      const focusableElements = modalRef.current?.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (!focusableElements || focusableElements.length === 0) return;
+
+      const firstElement = focusableElements[0] as HTMLElement;
+      const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          lastElement.focus();
+          e.preventDefault();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          firstElement.focus();
+          e.preventDefault();
+        }
+      }
+    }
+  };
 
   const handleChange = (field: "firstName" | "lastName" | "dateOfBirth" | "phoneNumber", value: string) => {
     setFormValues((prev) => ({
@@ -99,16 +140,28 @@ function EditPersonalInfoModal(props: EditPersonalInfoModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-slide-in-from-right">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200"
+      onClick={onClose}
+    >
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="edit-personal-info-title"
+        onKeyDown={handleKeyDown}
+        className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-slide-in-from-right"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="bg-[#3D7475] p-6 flex items-center justify-between">
           <div className="bg-[#84CC16] text-white px-4 py-2 rounded-full flex items-center gap-2">
-            <span className="text-sm font-semibold">Edit personal information</span>
+            <span id="edit-personal-info-title" className="text-sm font-semibold">Edit personal information</span>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="text-white hover:bg-white/10 p-1 rounded-full transition-colors"
+            aria-label="Close"
           >
             <X size={22} />
           </button>
@@ -116,8 +169,10 @@ function EditPersonalInfoModal(props: EditPersonalInfoModalProps) {
 
         <div className="p-8 space-y-5">
           <div>
-            <label className="block text-xs font-bold text-gray-800 mb-2 ml-1">First name</label>
+            <label htmlFor="firstName" className="block text-xs font-bold text-gray-800 mb-2 ml-1">First name</label>
             <input
+              id="firstName"
+              ref={firstInputRef}
               type="text"
               value={formValues.firstName}
               onChange={(event) => handleChange("firstName", event.target.value)}
@@ -127,8 +182,9 @@ function EditPersonalInfoModal(props: EditPersonalInfoModalProps) {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-800 mb-2 ml-1">Last name</label>
+            <label htmlFor="lastName" className="block text-xs font-bold text-gray-800 mb-2 ml-1">Last name</label>
             <input
+              id="lastName"
               type="text"
               value={formValues.lastName}
               onChange={(event) => handleChange("lastName", event.target.value)}
@@ -138,8 +194,9 @@ function EditPersonalInfoModal(props: EditPersonalInfoModalProps) {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-800 mb-2 ml-1">Date of birth</label>
+            <label htmlFor="dateOfBirth" className="block text-xs font-bold text-gray-800 mb-2 ml-1">Date of birth</label>
             <input
+              id="dateOfBirth"
               type="text"
               value={formValues.dateOfBirth}
               onChange={(event) => handleChange("dateOfBirth", event.target.value)}
@@ -149,8 +206,9 @@ function EditPersonalInfoModal(props: EditPersonalInfoModalProps) {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-800 mb-2 ml-1">Phone number</label>
+            <label htmlFor="phoneNumber" className="block text-xs font-bold text-gray-800 mb-2 ml-1">Phone number</label>
             <input
+              id="phoneNumber"
               type="tel"
               value={formValues.phoneNumber}
               onChange={(event) => handleChange("phoneNumber", event.target.value)}
@@ -185,6 +243,8 @@ function EditPersonalInfoModal(props: EditPersonalInfoModalProps) {
 
 function EditAddressModal(props: EditAddressModalProps) {
   const { isOpen, onClose, onSave, initialValues } = props;
+  const firstInputRef = useRef<HTMLInputElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   const [formValues, setFormValues] = useState({
     country: initialValues.country,
@@ -199,12 +259,51 @@ function EditAddressModal(props: EditAddressModalProps) {
         city: initialValues.city,
         postalCode: initialValues.postalCode,
       });
+      // Focus the first input when modal opens
+      const timer = setTimeout(() => {
+        firstInputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [initialValues, isOpen]);
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    if (isOpen) {
+      window.addEventListener("keydown", handleEscape);
+    }
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [isOpen, onClose]);
 
   if (!isOpen) {
     return null;
   }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Tab") {
+      const focusableElements = modalRef.current?.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (!focusableElements || focusableElements.length === 0) return;
+
+      const firstElement = focusableElements[0] as HTMLElement;
+      const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          lastElement.focus();
+          e.preventDefault();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          firstElement.focus();
+          e.preventDefault();
+        }
+      }
+    }
+  };
 
   const handleChange = (field: "country" | "city" | "postalCode", value: string) => {
     setFormValues((prev) => ({
@@ -219,16 +318,28 @@ function EditAddressModal(props: EditAddressModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-slide-in-from-right">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200"
+      onClick={onClose}
+    >
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="edit-address-title"
+        onKeyDown={handleKeyDown}
+        className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-slide-in-from-right"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="bg-[#3D7475] p-6 flex items-center justify-between">
           <div className="bg-[#84CC16] text-white px-4 py-2 rounded-full flex items-center gap-2">
-            <span className="text-sm font-semibold">Edit address</span>
+            <span id="edit-address-title" className="text-sm font-semibold">Edit address</span>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="text-white hover:bg-white/10 p-1 rounded-full transition-colors"
+            aria-label="Close"
           >
             <X size={22} />
           </button>
@@ -236,8 +347,10 @@ function EditAddressModal(props: EditAddressModalProps) {
 
         <div className="p-8 space-y-5">
           <div>
-            <label className="block text-xs font-bold text-gray-800 mb-2 ml-1">Country</label>
+            <label htmlFor="country" className="block text-xs font-bold text-gray-800 mb-2 ml-1">Country</label>
             <input
+              id="country"
+              ref={firstInputRef}
               type="text"
               value={formValues.country}
               onChange={(event) => handleChange("country", event.target.value)}
@@ -247,8 +360,9 @@ function EditAddressModal(props: EditAddressModalProps) {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-800 mb-2 ml-1">City</label>
+            <label htmlFor="city" className="block text-xs font-bold text-gray-800 mb-2 ml-1">City</label>
             <input
+              id="city"
               type="text"
               value={formValues.city}
               onChange={(event) => handleChange("city", event.target.value)}
@@ -258,8 +372,9 @@ function EditAddressModal(props: EditAddressModalProps) {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-800 mb-2 ml-1">Pincode</label>
+            <label htmlFor="postalCode" className="block text-xs font-bold text-gray-800 mb-2 ml-1">Pincode</label>
             <input
+              id="postalCode"
               type="text"
               value={formValues.postalCode}
               onChange={(event) => handleChange("postalCode", event.target.value)}
@@ -296,17 +411,58 @@ function ChangeEmailModal(props: ChangeEmailModalProps) {
   const { isOpen, onClose, onSave, currentEmail } = props;
   const [newEmail, setNewEmail] = useState("");
   const [error, setError] = useState("");
+  const firstInputRef = useRef<HTMLInputElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen) {
       setNewEmail("");
       setError("");
+      // Focus the first input when modal opens
+      const timer = setTimeout(() => {
+        firstInputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    if (isOpen) {
+      window.addEventListener("keydown", handleEscape);
+    }
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [isOpen, onClose]);
 
   if (!isOpen) {
     return null;
   }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Tab") {
+      const focusableElements = modalRef.current?.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (!focusableElements || focusableElements.length === 0) return;
+
+      const firstElement = focusableElements[0] as HTMLElement;
+      const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          lastElement.focus();
+          e.preventDefault();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          firstElement.focus();
+          e.preventDefault();
+        }
+      }
+    }
+  };
 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -334,16 +490,28 @@ function ChangeEmailModal(props: ChangeEmailModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-slide-in-from-right">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200"
+      onClick={onClose}
+    >
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="change-email-title"
+        onKeyDown={handleKeyDown}
+        className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-slide-in-from-right"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="bg-[#3D7475] p-6 flex items-center justify-between">
           <div className="bg-[#84CC16] text-white px-4 py-2 rounded-full flex items-center gap-2">
-            <span className="text-sm font-semibold">Change email address</span>
+            <span id="change-email-title" className="text-sm font-semibold">Change email address</span>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="text-white hover:bg-white/10 p-1 rounded-full transition-colors"
+            aria-label="Close"
           >
             <X size={22} />
           </button>
@@ -351,8 +519,9 @@ function ChangeEmailModal(props: ChangeEmailModalProps) {
 
         <div className="p-8 space-y-5">
           <div>
-            <label className="block text-xs font-bold text-gray-800 mb-2 ml-1">Current email</label>
+            <label htmlFor="currentEmail" className="block text-xs font-bold text-gray-800 mb-2 ml-1">Current email</label>
             <input
+              id="currentEmail"
               type="email"
               disabled
               value={currentEmail}
@@ -361,8 +530,10 @@ function ChangeEmailModal(props: ChangeEmailModalProps) {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-800 mb-2 ml-1">New email address</label>
+            <label htmlFor="newEmail" className="block text-xs font-bold text-gray-800 mb-2 ml-1">New email address</label>
             <input
+              id="newEmail"
+              ref={firstInputRef}
               type="email"
               value={newEmail}
               onChange={(e) => {
@@ -408,6 +579,8 @@ function ChangePasswordModal(props: ChangePasswordModalProps) {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
+  const firstInputRef = useRef<HTMLInputElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -415,12 +588,51 @@ function ChangePasswordModal(props: ChangePasswordModalProps) {
       setNewPassword("");
       setConfirmPassword("");
       setError("");
+      // Focus the first input when modal opens
+      const timer = setTimeout(() => {
+        firstInputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    if (isOpen) {
+      window.addEventListener("keydown", handleEscape);
+    }
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [isOpen, onClose]);
 
   if (!isOpen) {
     return null;
   }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Tab") {
+      const focusableElements = modalRef.current?.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (!focusableElements || focusableElements.length === 0) return;
+
+      const firstElement = focusableElements[0] as HTMLElement;
+      const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          lastElement.focus();
+          e.preventDefault();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          firstElement.focus();
+          e.preventDefault();
+        }
+      }
+    }
+  };
 
   const validatePassword = (): boolean => {
     if (!currentPassword) {
@@ -455,16 +667,28 @@ function ChangePasswordModal(props: ChangePasswordModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-slide-in-from-right">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200"
+      onClick={onClose}
+    >
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="change-password-title"
+        onKeyDown={handleKeyDown}
+        className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-slide-in-from-right"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="bg-[#3D7475] p-6 flex items-center justify-between">
           <div className="bg-[#84CC16] text-white px-4 py-2 rounded-full flex items-center gap-2">
-            <span className="text-sm font-semibold">Change password</span>
+            <span id="change-password-title" className="text-sm font-semibold">Change password</span>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="text-white hover:bg-white/10 p-1 rounded-full transition-colors"
+            aria-label="Close"
           >
             <X size={22} />
           </button>
@@ -472,9 +696,11 @@ function ChangePasswordModal(props: ChangePasswordModalProps) {
 
         <div className="p-8 space-y-5">
           <div>
-            <label className="block text-xs font-bold text-gray-800 mb-2 ml-1">Current password</label>
+            <label htmlFor="currentPassword" className="block text-xs font-bold text-gray-800 mb-2 ml-1">Current password</label>
             <div className="relative">
               <input
+                id="currentPassword"
+                ref={firstInputRef}
                 type={showCurrentPassword ? "text" : "password"}
                 value={currentPassword}
                 onChange={(e) => {
@@ -496,9 +722,10 @@ function ChangePasswordModal(props: ChangePasswordModalProps) {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-800 mb-2 ml-1">New password</label>
+            <label htmlFor="newPassword" className="block text-xs font-bold text-gray-800 mb-2 ml-1">New password</label>
             <div className="relative">
               <input
+                id="newPassword"
                 type={showNewPassword ? "text" : "password"}
                 value={newPassword}
                 onChange={(e) => {
@@ -520,9 +747,10 @@ function ChangePasswordModal(props: ChangePasswordModalProps) {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-800 mb-2 ml-1">Confirm new password</label>
+            <label htmlFor="confirmPassword" className="block text-xs font-bold text-gray-800 mb-2 ml-1">Confirm new password</label>
             <div className="relative">
               <input
+                id="confirmPassword"
                 type={showConfirmPassword ? "text" : "password"}
                 value={confirmPassword}
                 onChange={(e) => {
