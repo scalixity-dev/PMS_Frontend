@@ -68,6 +68,7 @@ import AddEditServicePro from './pages/Dashboard/features/ServicePros/AddEditSer
 import ServiceProsDetail from './pages/Dashboard/features/ServicePros/ServiceProsDetail';
 import Application from './pages/Dashboard/features/Application/Application';
 import NewApplication from './pages/Dashboard/features/Application/NewApplication';
+import ProviderStatement from './pages/Dashboard/features/ServicePros/ProviderStatement';
 // import ListUnit from './pages/Dashboard/features/ListUnit/ListUnit';
 
 // Settings pages
@@ -198,7 +199,7 @@ const App: React.FC = () => {
               <Route path="/dashboard/application/new" element={<NewApplication />} />
               <Route path="/dashboard/leasing/leases" element={<Leases />} />
               <Route path="/dashboard/portfolio/leases/:id" element={<LeaseDetail />} />
-              
+
               {/* Settings Routes */}
               <Route
                 path="/dashboard/settings"
@@ -208,7 +209,7 @@ const App: React.FC = () => {
                   </ProtectedRoute>
                 }
               />
-              
+
               {/* Account Settings */}
               <Route
                 path="/dashboard/settings/profile"
@@ -242,7 +243,7 @@ const App: React.FC = () => {
                   </ProtectedRoute>
                 }
               />
-              
+
               {/* Subscription Settings */}
               <Route
                 path="/dashboard/settings/subscription/my-plan"
@@ -260,7 +261,7 @@ const App: React.FC = () => {
                   </ProtectedRoute>
                 }
               />
-              
+
               {/* Accounting Settings */}
               <Route
                 path="/dashboard/settings/accounting/invoice"
@@ -286,7 +287,7 @@ const App: React.FC = () => {
                   </ProtectedRoute>
                 }
               />
-              
+
               {/* Online Payments Settings */}
               <Route
                 path="/dashboard/settings/online-payments/configurations"
@@ -296,7 +297,7 @@ const App: React.FC = () => {
                   </ProtectedRoute>
                 }
               />
-              
+
               {/* Rental Application Settings */}
               <Route
                 path="/dashboard/settings/rental-application/online-application"
@@ -322,7 +323,7 @@ const App: React.FC = () => {
                   </ProtectedRoute>
                 }
               />
-              
+
               {/* Team Management Settings */}
               <Route
                 path="/dashboard/settings/team-management/roles-permissions"
@@ -340,7 +341,7 @@ const App: React.FC = () => {
                   </ProtectedRoute>
                 }
               />
-              
+
               {/* Request Settings */}
               <Route
                 path="/dashboard/settings/request-settings/request-settings"
@@ -358,7 +359,7 @@ const App: React.FC = () => {
                   </ProtectedRoute>
                 }
               />
-              
+
               {/* Reports Settings */}
               <Route
                 path="/dashboard/settings/report/general"
@@ -368,7 +369,7 @@ const App: React.FC = () => {
                   </ProtectedRoute>
                 }
               />
-              
+
               <Route
                 path="/portfolio"
                 element={
@@ -422,6 +423,14 @@ const App: React.FC = () => {
                 element={
                   <ProtectedRoute>
                     <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/reports/statement"
+                element={
+                  <ProtectedRoute>
+                    <ProviderStatement />
                   </ProtectedRoute>
                 }
               />
