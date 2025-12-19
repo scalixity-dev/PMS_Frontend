@@ -159,15 +159,14 @@ const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({ onNext }) =
 
             <div className="bg-[#F0F0F6] rounded-full p-8 shadow-sm flex flex-col items-center justify-center gap-6 max-w-3xl mx-auto w-full">
                 <div className="flex gap-10">
-                    {contacts.length === 0 && (
-                        <button
-                            onClick={handleAddClick}
-                            className="bg-[#3A6D6C] text-white border border-white/20 px-6 py-3 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2"
-                        >
-                            Add emergency Contact
-                            <Plus className="w-4 h-4 rounded-full border border-white p-0.5" />
-                        </button>
-                    )}
+                    <button
+                        onClick={handleAddClick}
+                        disabled={contacts.length >= 2}
+                        className={`bg-[#3A6D6C] text-white border border-white/20 px-6 py-3 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2 ${contacts.length >= 2 ? 'opacity-50 cursor-not-allowed bg-gray-400 border-gray-400 hover:bg-gray-400' : ''}`}
+                    >
+                        Add emergency Contact
+                        <Plus className="w-4 h-4 rounded-full border border-white p-0.5" />
+                    </button>
 
                     <button
                         onClick={onNext}
