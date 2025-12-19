@@ -60,7 +60,7 @@ const TenantRequestsSection = () => {
                     </div>
 
                     {/* Status Badge */}
-                    <div className="flex self justify-center">
+                    <div className="flex justify-center">
                         <div className={`${getStatusColor(request.status)} text-white px-4 py-2 rounded-full text-xs font-medium shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)] inline-block`}>
                             {request.status}
                         </div>

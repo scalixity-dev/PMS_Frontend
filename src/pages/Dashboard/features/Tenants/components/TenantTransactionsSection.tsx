@@ -68,6 +68,20 @@ const TenantTransactionsSection = () => {
         }
     };
 
+    const getInitials = (name: string): string => {
+        if (!name) return '?';
+
+        const parts = name.trim().split(/\s+/).filter(part => part.length > 0);
+
+        if (parts.length === 0) return '?';
+
+        if (parts.length === 1) {
+            return parts[0].substring(0, 2).toUpperCase();
+        }
+
+        return (parts[0][0] + parts[1][0]).toUpperCase();
+    };
+
     return (
         <div>
             {/* Table Header Container matching ServicePro */}
@@ -133,7 +147,7 @@ const TenantTransactionsSection = () => {
                         {/* Contact Column */}
                         <div className="flex items-center gap-2">
                             <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs text-gray-600 font-medium flex-shrink-0">
-                                {transaction.contact.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                                {getInitials(transaction.contact)}
                             </div>
                             <span className="text-sm text-gray-700 truncate">{transaction.contact}</span>
                         </div>

@@ -154,19 +154,30 @@ const ProviderStatement = () => {
         // Define headers
         const headers = ['Property', 'Unit', 'Category', 'Sub-category', 'Date due', 'Date paid', 'Amount due', 'Amount paid', 'Details'];
 
+        const escapeCsvField = (field: any): string => {
+            if (field === null || field === undefined) {
+                return '';
+            }
+            const stringValue = String(field);
+            if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+                return `"${stringValue.replace(/"/g, '""')}"`;
+            }
+            return stringValue;
+        };
+
         // Convert data to CSV format
         const csvContent = [
             headers.join(','),
-            ...statements.map(item => [
-                `"${item.property}"`,
-                `"${item.unit}"`,
-                `"${item.category}"`,
-                `"${item.subCategory}"`,
-                `"${item.dateDue}"`,
-                `"${item.datePaid}"`,
-                item.amountDue,
-                item.amountPaid,
-                `"${item.details}"`
+            ...filteredStatements.map(item => [
+                escapeCsvField(item.property),
+                escapeCsvField(item.unit),
+                escapeCsvField(item.category),
+                escapeCsvField(item.subCategory),
+                escapeCsvField(item.dateDue),
+                escapeCsvField(item.datePaid),
+                escapeCsvField(item.amountDue),
+                escapeCsvField(item.amountPaid),
+                escapeCsvField(item.details)
             ].join(','))
         ].join('\n');
 
@@ -181,6 +192,8 @@ const ProviderStatement = () => {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            // Revoke the object URL to free up memory
+            URL.revokeObjectURL(url);
         }
 
         setIsDownloading(false);
