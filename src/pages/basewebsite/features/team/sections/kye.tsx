@@ -18,15 +18,20 @@ const KyeSection: React.FC = () => {
       learnMoreLabel=""
       showStamp={false}
       showBackgroundCard={false}
-      reverseLayout
+      sectionPaddingClassName="py-0 px-4 sm:px-6 lg:px-0"
+      contentPaddingClassName="py-10 px-4 sm:px-8 lg:px-10"
+      contentClassName="gap-8 lg:gap-10 xl:gap-16"
+      reverseLayoutDesktop
       imageSrc="/Group.png"
       imageAlt="AI drafted property description preview"
       imageContain
-      imageMaxHeight="max-h-[35rem]"
+      imageMaxHeight="max-h-[18rem] sm:max-h-[26rem] lg:max-h-[32rem] xl:max-h-[38rem]"
+      imageHeightMobile={260}
+      imageHeightDesktop={440}
       imageNoTranslate
       backgroundImageSrc="/vector1.png"
-      backgroundImageTranslate="translate(0px, -40px)"
-      imageTranslate="-translate-x-6 sm:-translate-x-20 translate-y-6 sm:translate-y-10"
+      backgroundImageTranslate="translate(-10px, -10px)"
+      imageTranslate="-translate-x-4 sm:-translate-x-10 translate-y-6 sm:translate-y-10 lg:translate-y-6"
       showImageShadow={false}
       titleMarginBottom="mb-4"
       descriptionMarginBottom="mb-6"

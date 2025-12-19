@@ -5,6 +5,7 @@ export interface HeroRightImageProps {
   imageAlt: string;
   backgroundImageSrc?: string;
   backgroundImageTranslate?: string;
+  backgroundImageClassName?: string;
   showImageShadow?: boolean;
   hideBackgroundOnMobile?: boolean;
   imageWidth?: number;
@@ -23,6 +24,7 @@ const HeroRightImage: React.FC<HeroRightImageProps> = ({
   imageAlt,
   backgroundImageSrc,
   backgroundImageTranslate,
+  backgroundImageClassName,
   showImageShadow = true,
   hideBackgroundOnMobile = false,
   imageWidth,
@@ -60,6 +62,11 @@ const HeroRightImage: React.FC<HeroRightImageProps> = ({
     return () => window.removeEventListener('resize', update);
   }, []);
 
+  const hasTransformClass =
+    typeof backgroundImageClassName === 'string'
+      ? /\b(transform|translate|scale|rotate|skew)[-]/.test(backgroundImageClassName)
+      : false;
+
   return (
     <>
       {hasResponsiveHeight && (
@@ -87,12 +94,14 @@ const HeroRightImage: React.FC<HeroRightImageProps> = ({
           alt="Background"
           className={`absolute w-full max-w-full sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl ${imageFullHeight ? '' : imageMaxHeight} rotate-0 rounded-2xl ${imageContain ? 'object-contain' : 'object-cover'} ${
             hideBackgroundOnMobile ? 'hidden sm:block' : ''
-          }`}
+          } ${backgroundImageClassName ?? ''}`}
           style={{
             ...(imageWidth && { width: `${imageWidth}px` }),
             ...(hasResponsiveHeight ? {} : (imageHeight ? { height: `${imageHeight}px` } : {})),
             zIndex: 1,
-          transform: backgroundImageTranslate || 'translate(80px, 80px)',
+            ...(!hasTransformClass
+              ? { transform: backgroundImageTranslate || 'translate(80px, 80px)' }
+              : {}),
           }}
         />
       )}

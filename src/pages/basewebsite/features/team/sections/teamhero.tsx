@@ -18,16 +18,16 @@ const TeamManagementSection: React.FC = () => {
       learnMoreLabel=""
       showStamp={false}
       showBackgroundCard={false}
-      sectionPaddingClassName="py-12 px-0"
-      contentPaddingClassName="py-10"
+      sectionPaddingClassName="py-12 px-4 sm:px-6 lg:px-0"
+      contentPaddingClassName="py-0 px-2 sm:px-8 lg:px-10"
       maxWidthClassName="max-w-7xl"
-      contentClassName="gap-10 xl:gap-16"
+      contentClassName="gap-8 lg:gap-10 xl:gap-16"
       titleMarginBottom="mb-6"
       descriptionMarginBottom="mb-10"
       imageSrc="/hero-team.png"
       imageAlt="Collaborative team workspace"
       imageContain
-      imageMaxHeight="max-h-[40rem]"
+      imageMaxHeight="max-h-[18rem] sm:max-h-[26rem] lg:max-h-[34rem] xl:max-h-[40rem]"
       imageNoTranslate
       showImageShadow={false}
       rightSideLogo={<Users size={18} />}

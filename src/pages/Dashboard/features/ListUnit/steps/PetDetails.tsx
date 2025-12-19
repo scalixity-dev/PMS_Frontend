@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Undo2, Check } from 'lucide-react';
-import MultiSelectDropdown from '../../../../../../src/components/MultiSelectDropdown';
+import MultiSelectDropdown from '../../../../../components/MultiSelectDropdown';
 import { useGetProperty } from '../../../../../hooks/usePropertyQueries';
 import { getCurrencySymbol } from '../../../../../utils/currency.utils';
 import { useListUnitStore } from '../store/listUnitStore';
