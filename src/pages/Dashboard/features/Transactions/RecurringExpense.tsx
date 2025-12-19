@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -8,6 +8,9 @@ import TransactionToggle from './components/TransactionToggle';
 import AddTenantModal from '../Tenants/components/AddTenantModal';
 import CustomDropdown from '../../components/CustomDropdown';
 import { TRANSACTION_CATEGORIES } from '../../../../utils/transactionCategories';
+import { useTransactionStore } from './store/transactionStore';
+
+
 
 const RecurringExpense: React.FC = () => {
     const navigate = useNavigate();
@@ -16,9 +19,31 @@ const RecurringExpense: React.FC = () => {
     const [endDate, setEndDate] = useState<Date | undefined>(undefined);
     const [payerPayee, setPayerPayee] = useState<string>('');
     const [category, setCategory] = useState<string>('');
+    const [amount, setAmount] = useState<string>('');
+    const [details, setDetails] = useState<string>('');
     const [frequency, setFrequency] = useState<string>('');
     const [currency, setCurrency] = useState<string>('');
     const [isAddTenantModalOpen, setIsAddTenantModalOpen] = useState(false);
+
+    const { clonedTransactionData } = useTransactionStore();
+
+    useEffect(() => {
+        // Prefer store data, fallback to location state if any
+        const dataToLoad = clonedTransactionData;
+
+        if (dataToLoad) {
+            if (dataToLoad.amount) {
+                setAmount(dataToLoad.amount.replace(/[^0-9.]/g, ''));
+            }
+            if (dataToLoad.user) {
+                setPayerPayee(dataToLoad.user);
+            }
+            if (dataToLoad.details) {
+                setDetails(dataToLoad.details);
+            }
+            // Add other field mappings as needed based on dataToLoad structure
+        }
+    }, [clonedTransactionData]);
 
     return (
         <div className="p-6 max-w-6xl mx-auto font-['Urbanist']">
@@ -128,6 +153,8 @@ const RecurringExpense: React.FC = () => {
                             <input
                                 type="text"
                                 placeholder="00"
+                                value={amount}
+                                onChange={(e) => setAmount(e.target.value)}
                                 className="w-full rounded-md bg-white px-4 py-3 text-sm text-gray-700 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#7BD747]/20 transition-all shadow-sm"
                             />
                         </div>
@@ -181,6 +208,8 @@ const RecurringExpense: React.FC = () => {
                         <textarea
                             className="w-full h-40 rounded-2xl bg-[#F0F0F6] p-6 text-sm text-gray-700 outline-none resize-none shadow-inner focus:bg-white focus:ring-2 focus:ring-[#7BD747]/20 transition-all placeholder-gray-500"
                             placeholder="Write Some details"
+                            value={details}
+                            onChange={(e) => setDetails(e.target.value)}
                         ></textarea>
                     </div>
                 </div>
