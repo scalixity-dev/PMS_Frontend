@@ -27,7 +27,6 @@ export default function DashboardNavbar({ sidebarOpen, setSidebarOpen }: NavbarP
   const [userName, setUserName] = useState<string>("User");
   const [userEmail, setUserEmail] = useState<string>("");
   const [userRole, setUserRole] = useState<string>("");
-  const [newNavEnabled, setNewNavEnabled] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -233,24 +232,6 @@ export default function DashboardNavbar({ sidebarOpen, setSidebarOpen }: NavbarP
                       </button>
                     </div>
                   </div>
-                </div>
-
-                <div className="px-5 py-4 flex items-center justify-between">
-                  <p className="text-lg font-semibold text-gray-900">New Navigation</p>
-                  <button
-                    type="button"
-                    aria-pressed={newNavEnabled}
-                    onClick={() => setNewNavEnabled((prev) => !prev)}
-                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
-                      newNavEnabled ? "bg-[#7CD947]" : "bg-gray-300"
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
-                        newNavEnabled ? "translate-x-6" : "translate-x-1"
-                      }`}
-                    />
-                  </button>
                 </div>
 
                 <div className="w-full border-t border-[0.5px] border-[#201F23]/50" />

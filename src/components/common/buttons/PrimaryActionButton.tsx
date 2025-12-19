@@ -46,16 +46,23 @@ function PrimaryActionButton(props: PrimaryActionButtonProps): React.ReactElemen
   
   const content = children ?? text;
   const classes = `${baseClasses} ${className}`.trim();
+  
+  // Extract aria-label/ariaLabel from rest to handle it explicitly
+  const restWithAriaLabel = rest as Record<string, unknown>;
+  const userAriaLabel = restWithAriaLabel['aria-label'] || restWithAriaLabel['ariaLabel'];
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { 'aria-label': _, ariaLabel: __, ...restWithoutAriaLabel } = restWithAriaLabel;
+  const finalAriaLabel = userAriaLabel || (typeof content === "string" ? content : text);
 
   if (to) {
     // When to is provided, filter out button-specific props
-    const linkProps = filterButtonOnlyProps(rest as Record<string, unknown>);
+    const linkProps = filterButtonOnlyProps(restWithoutAriaLabel);
     
     return (
       <Link 
         to={to} 
         className={classes} 
-        aria-label={typeof content === "string" ? content : text}
+        aria-label={finalAriaLabel as string}
         {...(linkProps as Omit<LinkButtonProps, 'to' | 'text' | 'className' | 'children'>)}
       >
         {content}
@@ -67,8 +74,8 @@ function PrimaryActionButton(props: PrimaryActionButtonProps): React.ReactElemen
   return (
     <button 
       className={classes} 
-      aria-label={typeof content === "string" ? content : text} 
-      {...(rest as ButtonProps)}
+      aria-label={finalAriaLabel as string} 
+      {...(restWithoutAriaLabel as ButtonProps)}
     >
       {content}
     </button>

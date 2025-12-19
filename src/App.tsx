@@ -71,25 +71,25 @@ import NewApplication from './pages/Dashboard/features/Application/NewApplicatio
 // import ListUnit from './pages/Dashboard/features/ListUnit/ListUnit';
 
 // Settings pages
-import Settings from './pages/dashboard/settings/index';
-import ProfileSettings from './pages/dashboard/settings/accountsetting/ProfileSettings';
-import SecuritySettings from './pages/dashboard/settings/accountsetting/SecuritySettings';
-import IntegrationSettings from './pages/dashboard/settings/accountsetting/IntegrationSettings';
-import NotificationSettings from './pages/dashboard/settings/accountsetting/NotificationSettings';
-import MyPlanSettings from './pages/dashboard/settings/subscription/MyPlanSettings';
-import MyCardSettings from './pages/dashboard/settings/subscription/MyCardSettings';
-import InvoiceSettings from './pages/dashboard/settings/accounting/invoice';
-import QuickBookSettings from './pages/dashboard/settings/accounting/quickbook';
-import TagsSettings from './pages/dashboard/settings/accounting/tags';
-import OnlinePaymentsConfigurations from './pages/dashboard/settings/online-payments/configurations';
-import OnlineApplication from './pages/dashboard/settings/rental-application/OnlineApplication';
-import FormConfiguration from './pages/dashboard/settings/rental-application/FormConfiguration';
-import TermsSignature from './pages/dashboard/settings/rental-application/TermsSignature';
-import RolesPermissions from './pages/dashboard/settings/team-management/RolesPermissions';
-import PropertyPermissions from './pages/dashboard/settings/team-management/PropertyPermissions';
-import RequestSettings from './pages/dashboard/settings/request-settings/RequestSettings';
-import AutomationSettings from './pages/dashboard/settings/request-settings/AutomationSettings';
-import GeneralReports from './pages/dashboard/settings/report/general';
+import Settings from './pages/Dashboard/settings/index';
+import ProfileSettings from './pages/Dashboard/settings/accountsetting/ProfileSettings';
+import SecuritySettings from './pages/Dashboard/settings/accountsetting/SecuritySettings';
+import IntegrationSettings from './pages/Dashboard/settings/accountsetting/IntegrationSettings';
+import NotificationSettings from './pages/Dashboard/settings/accountsetting/NotificationSettings';
+import MyPlanSettings from './pages/Dashboard/settings/subscription/MyPlanSettings';
+import MyCardSettings from './pages/Dashboard/settings/subscription/MyCardSettings';
+import InvoiceSettings from './pages/Dashboard/settings/accounting/invoice';
+import QuickBookSettings from './pages/Dashboard/settings/accounting/quickbook';
+import TagsSettings from './pages/Dashboard/settings/accounting/tags';
+import OnlinePaymentsConfigurations from './pages/Dashboard/settings/online-payments/configurations';
+import OnlineApplication from './pages/Dashboard/settings/rental-application/OnlineApplication';
+import FormConfiguration from './pages/Dashboard/settings/rental-application/FormConfiguration';
+import TermsSignature from './pages/Dashboard/settings/rental-application/TermsSignature';
+import RolesPermissions from './pages/Dashboard/settings/team-management/RolesPermissions';
+import PropertyPermissions from './pages/Dashboard/settings/team-management/PropertyPermissions';
+import RequestSettings from './pages/Dashboard/settings/request-settings/RequestSettings';
+import AutomationSettings from './pages/Dashboard/settings/request-settings/AutomationSettings';
+import GeneralReports from './pages/Dashboard/settings/report/general';
 
 // Create a QueryClient instance
 export const queryClient = new QueryClient({

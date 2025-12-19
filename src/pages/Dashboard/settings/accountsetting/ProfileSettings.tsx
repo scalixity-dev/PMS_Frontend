@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { User, X } from "lucide-react";
+import { User, X, Eye, EyeOff } from "lucide-react";
 import Button from "../../../../components/common/Button";
 import { authService } from "../../../../services/auth.service";
 import { AccountSettingsLayout } from "../../../../components/common/AccountSettingsLayout";
@@ -46,6 +46,19 @@ interface EditAddressModalProps {
   };
   onClose: () => void;
   onSave: (values: { country: string; city: string; postalCode: string }) => void;
+}
+
+interface ChangeEmailModalProps {
+  isOpen: boolean;
+  currentEmail: string;
+  onClose: () => void;
+  onSave: (newEmail: string) => void;
+}
+
+interface ChangePasswordModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (currentPassword: string, newPassword: string, confirmPassword: string) => void;
 }
 
 function EditPersonalInfoModal(props: EditPersonalInfoModalProps) {
@@ -279,6 +292,282 @@ function EditAddressModal(props: EditAddressModalProps) {
   );
 }
 
+function ChangeEmailModal(props: ChangeEmailModalProps) {
+  const { isOpen, onClose, onSave, currentEmail } = props;
+  const [newEmail, setNewEmail] = useState("");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (isOpen) {
+      setNewEmail("");
+      setError("");
+    }
+  }, [isOpen]);
+
+  if (!isOpen) {
+    return null;
+  }
+
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email) {
+      setError("Email is required");
+      return false;
+    }
+    if (!emailRegex.test(email)) {
+      setError("Please enter a valid email address");
+      return false;
+    }
+    if (email === currentEmail) {
+      setError("New email must be different from current email");
+      return false;
+    }
+    setError("");
+    return true;
+  };
+
+  const handleSaveClick = () => {
+    if (validateEmail(newEmail)) {
+      onSave(newEmail);
+      onClose();
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200">
+      <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-slide-in-from-right">
+        <div className="bg-[#3D7475] p-6 flex items-center justify-between">
+          <div className="bg-[#84CC16] text-white px-4 py-2 rounded-full flex items-center gap-2">
+            <span className="text-sm font-semibold">Change email address</span>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-white hover:bg-white/10 p-1 rounded-full transition-colors"
+          >
+            <X size={22} />
+          </button>
+        </div>
+
+        <div className="p-8 space-y-5">
+          <div>
+            <label className="block text-xs font-bold text-gray-800 mb-2 ml-1">Current email</label>
+            <input
+              type="email"
+              disabled
+              value={currentEmail}
+              className="w-full bg-gray-100 text-gray-600 px-6 py-3 rounded-full outline-none cursor-not-allowed"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-800 mb-2 ml-1">New email address</label>
+            <input
+              type="email"
+              value={newEmail}
+              onChange={(e) => {
+                setNewEmail(e.target.value);
+                setError("");
+              }}
+              className="w-full bg-[#84CC16] text-white placeholder-white/70 px-6 py-3 rounded-full outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all"
+              placeholder="Enter new email address"
+            />
+            {error && <p className="text-xs text-red-500 mt-1 ml-1">{error}</p>}
+          </div>
+        </div>
+
+        <div className="p-6 pt-0 flex gap-4">
+          <Button
+            type="button"
+            onClick={onClose}
+            variant="secondary"
+            className="flex-1 rounded-xl shadow-lg bg-[#4B5563] hover:bg-[#374151]"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={handleSaveClick}
+            variant="primary"
+            className="flex-1 rounded-xl shadow-lg hover:bg-[#2c5556]"
+          >
+            Save changes
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ChangePasswordModal(props: ChangePasswordModalProps) {
+  const { isOpen, onClose, onSave } = props;
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setError("");
+    }
+  }, [isOpen]);
+
+  if (!isOpen) {
+    return null;
+  }
+
+  const validatePassword = (): boolean => {
+    if (!currentPassword) {
+      setError("Current password is required");
+      return false;
+    }
+    if (!newPassword) {
+      setError("New password is required");
+      return false;
+    }
+    if (newPassword.length < 6) {
+      setError("New password must be at least 6 characters");
+      return false;
+    }
+    if (newPassword === currentPassword) {
+      setError("New password must be different from current password");
+      return false;
+    }
+    if (newPassword !== confirmPassword) {
+      setError("New password and confirm password do not match");
+      return false;
+    }
+    setError("");
+    return true;
+  };
+
+  const handleSaveClick = () => {
+    if (validatePassword()) {
+      onSave(currentPassword, newPassword, confirmPassword);
+      onClose();
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200">
+      <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-slide-in-from-right">
+        <div className="bg-[#3D7475] p-6 flex items-center justify-between">
+          <div className="bg-[#84CC16] text-white px-4 py-2 rounded-full flex items-center gap-2">
+            <span className="text-sm font-semibold">Change password</span>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-white hover:bg-white/10 p-1 rounded-full transition-colors"
+          >
+            <X size={22} />
+          </button>
+        </div>
+
+        <div className="p-8 space-y-5">
+          <div>
+            <label className="block text-xs font-bold text-gray-800 mb-2 ml-1">Current password</label>
+            <div className="relative">
+              <input
+                type={showCurrentPassword ? "text" : "password"}
+                value={currentPassword}
+                onChange={(e) => {
+                  setCurrentPassword(e.target.value);
+                  setError("");
+                }}
+                className="w-full bg-[#84CC16] text-white placeholder-white/70 px-6 py-3 rounded-full outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all pr-12"
+                placeholder="Enter current password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-white/70 hover:text-white"
+                aria-label={showCurrentPassword ? "Hide password" : "Show password"}
+              >
+                {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-800 mb-2 ml-1">New password</label>
+            <div className="relative">
+              <input
+                type={showNewPassword ? "text" : "password"}
+                value={newPassword}
+                onChange={(e) => {
+                  setNewPassword(e.target.value);
+                  setError("");
+                }}
+                className="w-full bg-[#84CC16] text-white placeholder-white/70 px-6 py-3 rounded-full outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all pr-12"
+                placeholder="Enter new password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-white/70 hover:text-white"
+                aria-label={showNewPassword ? "Hide password" : "Show password"}
+              >
+                {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-800 mb-2 ml-1">Confirm new password</label>
+            <div className="relative">
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  setError("");
+                }}
+                className="w-full bg-[#84CC16] text-white placeholder-white/70 px-6 py-3 rounded-full outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all pr-12"
+                placeholder="Confirm new password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-white/70 hover:text-white"
+                aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+              >
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
+          {error && <p className="text-xs text-red-500 mt-1 ml-1">{error}</p>}
+        </div>
+
+        <div className="p-6 pt-0 flex gap-4">
+          <Button
+            type="button"
+            onClick={onClose}
+            variant="secondary"
+            className="flex-1 rounded-xl shadow-lg bg-[#4B5563] hover:bg-[#374151]"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={handleSaveClick}
+            variant="primary"
+            className="flex-1 rounded-xl shadow-lg hover:bg-[#2c5556]"
+          >
+            Save changes
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ProfileSettings() {
   const [user, setUser] = useState<ProfileUser>({
     fullName: "",
@@ -298,6 +587,8 @@ export default function ProfileSettings() {
 
   const [isPersonalModalOpen, setIsPersonalModalOpen] = useState(false);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -376,6 +667,24 @@ export default function ProfileSettings() {
       city: values.city,
       postalCode: values.postalCode,
     }));
+  };
+
+  const handleSaveEmail = (newEmail: string) => {
+    // TODO: Implement API call to update email
+    // For now, update local state
+    setUser((previous) => ({
+      ...previous,
+      email: newEmail,
+    }));
+    console.log("Email change requested:", newEmail);
+  };
+
+  const handleSavePassword = (currentPassword: string, newPassword: string, confirmPassword: string) => {
+    // TODO: Implement API call to update password
+    console.log("Password change requested");
+    console.log("Current password:", currentPassword);
+    console.log("New password:", newPassword);
+    console.log("Confirm password:", confirmPassword);
   };
 
   return (
@@ -471,7 +780,11 @@ export default function ProfileSettings() {
               Your email is <span className="font-medium text-gray-700">{user.email}</span>
             </p>
           </div>
-          <button type="button" className="text-sm font-semibold text-[#1E88E5] hover:underline">
+          <button
+            type="button"
+            onClick={() => setIsEmailModalOpen(true)}
+            className="text-sm font-semibold text-[#1E88E5] hover:underline"
+          >
             Change
           </button>
         </div>
@@ -481,7 +794,11 @@ export default function ProfileSettings() {
             <p className="text-sm font-semibold text-gray-900">Password</p>
             <p className="text-xs text-gray-500 mt-1">You haven&apos;t changed the password yet.</p>
           </div>
-          <button type="button" className="text-sm font-semibold text-[#1E88E5] hover:underline">
+          <button
+            type="button"
+            onClick={() => setIsPasswordModalOpen(true)}
+            className="text-sm font-semibold text-[#1E88E5] hover:underline"
+          >
             Change
           </button>
         </div>
@@ -560,6 +877,19 @@ export default function ProfileSettings() {
           postalCode: profileDetails.postalCode,
         }}
         onSave={handleSaveAddress}
+      />
+
+      <ChangeEmailModal
+        isOpen={isEmailModalOpen}
+        onClose={() => setIsEmailModalOpen(false)}
+        currentEmail={user.email}
+        onSave={handleSaveEmail}
+      />
+
+      <ChangePasswordModal
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+        onSave={handleSavePassword}
       />
     </AccountSettingsLayout>
   );
