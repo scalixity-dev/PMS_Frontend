@@ -3,6 +3,15 @@ import type { ResidenceFormData } from '../components/AddResidenceModal';
 import type { VehicleFormData } from '../components/AddVehicleModal';
 import type { OccupantFormData } from '../components/AddOccupantModal';
 import type { PetFormData } from '../components/AddPetModal';
+import type { IncomeFormData } from '../components/AddIncomeModal';
+
+export interface EmergencyContactFormData {
+  fullName: string;
+  relationship: string;
+  email: string;
+  phoneNumber: string;
+  details: string;
+}
 
 export interface ApplicationFormData {
   // Step 1: Property Selection
@@ -25,7 +34,10 @@ export interface ApplicationFormData {
   photo: File | null; 
   vehicles: Array<VehicleFormData & { id: string }>; 
   residences: Array<ResidenceFormData & { id: string }>;
+  incomes: Array<IncomeFormData & { id: string }>;
   additionalResidenceInfo: string;
+  additionalIncomeInfo: string;
+  emergencyContacts: Array<EmergencyContactFormData & { id: string }>;
 }
 
 export interface ApplicationState {
@@ -62,7 +74,10 @@ const initialFormData: ApplicationFormData = {
   pets: [],
   vehicles: [],
   residences: [],
-  additionalResidenceInfo: ''
+  incomes: [],
+  additionalResidenceInfo: '',
+  additionalIncomeInfo: '',
+  emergencyContacts: []
 };
 
 export const useApplicationStore = create<ApplicationState>((set) => ({
