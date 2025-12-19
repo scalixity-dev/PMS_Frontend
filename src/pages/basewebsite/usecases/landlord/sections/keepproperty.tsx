@@ -33,7 +33,6 @@ const KeepPropertySection: React.FC = () => {
       showBackgroundCard={false}
       imageSrc="/Group.png"
       backgroundImageSrc="/rental-lease.png"
-      backgroundImageTranslate="translate(-20px, 30px)"
       backgroundImageClassName="translate-x-10 sm:translate-x-20 lg:translate-x-20 2xl:translate-x-32"
       showImageShadow={false}
       imageNoTranslate
