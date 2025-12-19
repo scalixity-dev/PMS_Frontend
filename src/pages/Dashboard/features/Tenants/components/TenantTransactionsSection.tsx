@@ -1,4 +1,5 @@
-import { CheckCircle2, MoreHorizontal, Trash2, Edit } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronUp, MoreHorizontal, Trash2, Edit, Check } from 'lucide-react';
 
 interface Transaction {
     id: number;
@@ -36,81 +37,120 @@ const TenantTransactionsSection = () => {
         }
     ];
 
+    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+
+    const handleSelectAll = () => {
+        if (selectedIds.length === transactions.length) {
+            setSelectedIds([]);
+        } else {
+            setSelectedIds(transactions.map(t => t.id));
+        }
+    };
+
+    const handleSelectOne = (id: number) => {
+        if (selectedIds.includes(id)) {
+            setSelectedIds(selectedIds.filter(prevId => prevId !== id));
+        } else {
+            setSelectedIds([...selectedIds, id]);
+        }
+    };
+
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'Paid':
                 return 'text-[#7BD747]';
             case 'Void':
                 return 'text-red-500';
+            case 'Pending':
+                return 'text-orange-500';
             default:
                 return 'text-gray-500';
         }
     };
 
     return (
-        <div className="bg-white rounded-[1rem] shadow-lg overflow-hidden">
-            <table className="w-full">
-                <thead>
-                    <tr className="bg-[#3A6D6C] text-white">
-                        <th className="px-4 py-3 text-left text-xs font-semibold">
-                            <div className="flex items-center gap-2">
-                                <CheckCircle2 className="w-4 h-4" />
-                                Status
-                            </div>
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold">Due date</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold">Category</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold">Property</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold">Contact</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold">Total</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold">Balance</th>
-                        <th className="px-4 py-3 text-left text-xs font-semibold">Actions</th>
-                    </tr>
-                </thead>
-            </table>
-            <div className="p-2 space-y-3">
-                {transactions.map((transaction) => (
+        <div>
+            {/* Table Header Container matching ServicePro */}
+            <div className="bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm">
+                {/* Table Header Grid */}
+                <div className="text-white px-6 py-4 grid grid-cols-[40px_0.8fr_1fr_1fr_1fr_1fr_1fr_80px] gap-4 items-center text-sm font-medium">
+                    <div className="flex items-center justify-center">
+                        <div
+                            onClick={handleSelectAll}
+                            className={`w-5 h-5 rounded border flex items-center justify-center cursor-pointer transition-colors ${selectedIds.length === transactions.length && transactions.length > 0 ? 'bg-[#7BD747] border-[#7BD747]' : 'border-gray-300 bg-white'}`}
+                        >
+                            {selectedIds.length === transactions.length && transactions.length > 0 && <Check className="w-3.5 h-3.5 text-white" />}
+                        </div>
+                    </div>
+                    <div>Status</div>
+                    <div className="flex items-center gap-1 cursor-pointer">
+                        Due date
+                        <ChevronUp className="w-3 h-3" />
+                    </div>
+                    <div>Category</div>
+                    <div>Property</div>
+                    <div>Contact</div>
+                    <div className="flex items-center gap-1 cursor-pointer">
+                        Total & balance
+                        <ChevronUp className="w-3 h-3" />
+                    </div>
+                    <div className="text-right">Actions</div>
+                </div>
+            </div>
+
+            {/* Table Body Container matching ServicePro */}
+            <div className="flex flex-col gap-3 bg-[#F0F0F6] p-4 rounded-[2rem] rounded-t-none">
+                {transactions.map(transaction => (
                     <div
                         key={transaction.id}
-                        className="bg-white rounded-[1rem] p-2 my-2 shadow-inner border border-gray-200 transition-shadow"
+                        className="bg-white rounded-2xl px-6 py-4 grid grid-cols-[40px_0.8fr_1fr_1fr_1fr_1fr_1fr_80px] gap-4 items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer"
                     >
-                        <div className="grid grid-cols-8 gap-4 items-center">
-                            <div className="flex items-center gap-2">
-                                <CheckCircle2 className={`w-5 h-5 ${getStatusColor(transaction.status)}`} />
-                                <span className={`text-sm font-medium ${getStatusColor(transaction.status)}`}>
-                                    {transaction.status}
-                                </span>
+                        {/* Checkbox Column */}
+                        <div className="flex items-center justify-center">
+                            <div
+                                onClick={(e) => { e.stopPropagation(); handleSelectOne(transaction.id); }}
+                                className={`w-5 h-5 rounded border flex items-center justify-center cursor-pointer transition-colors ${selectedIds.includes(transaction.id) ? 'bg-[#7BD747] border-[#7BD747]' : 'border-gray-200 bg-gray-50'}`}
+                            >
+                                {selectedIds.includes(transaction.id) && <Check className="w-3.5 h-3.5 text-white" />}
                             </div>
-                            <span className="text-sm text-gray-700">{transaction.dueDate}</span>
-                            <span className="text-sm text-gray-700">{transaction.category}</span>
-                            <span className="text-sm text-gray-700">{transaction.property}</span>
-                            <span className="text-sm text-gray-700">{transaction.contact}</span>
-                            <span className="text-sm font-semibold text-[#7BD747]">
-                                +₹{transaction.total.toLocaleString()}
-                            </span>
-                            <span className="text-sm text-gray-700">
-                                ₹{transaction.balance.toLocaleString()}
-                            </span>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
-                                    onClick={() => { }}
-                                >
-                                    <Edit className="w-4 h-4 text-gray-600" />
-                                </button>
-                                <button
-                                    className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
-                                    onClick={() => { }}
-                                >
-                                    <Trash2 className="w-4 h-4 text-red-600" />
-                                </button>
-                                <button
-                                    className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
-                                    onClick={() => { }}
-                                >
-                                    <MoreHorizontal className="w-4 h-4 text-gray-600" />
-                                </button>
+                        </div>
+
+                        {/* Status Column */}
+                        <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${transaction.status === 'Paid' ? 'bg-[#7BD747]' : transaction.status === 'Pending' ? 'bg-orange-500' : 'bg-red-500'}`}></div>
+                            <span className={`text-sm font-medium ${getStatusColor(transaction.status)}`}>{transaction.status}</span>
+                        </div>
+
+                        {/* Due Date Column */}
+                        <div className="text-sm text-gray-700 font-medium">{transaction.dueDate}</div>
+
+                        {/* Category Column */}
+                        <div className="text-sm font-semibold text-gray-900">{transaction.category}</div>
+
+                        {/* Property Column */}
+                        <div className="text-sm text-gray-500">{transaction.property}</div>
+
+                        {/* Contact Column */}
+                        <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs text-gray-600 font-medium flex-shrink-0">
+                                {transaction.contact.split(' ').map(n => n[0]).join('').substring(0, 2)}
                             </div>
+                            <span className="text-sm text-gray-700 truncate">{transaction.contact}</span>
+                        </div>
+
+                        {/* Total & Balance Column */}
+                        <div className="flex flex-col">
+                            <span className="text-sm font-bold text-gray-900">₹{transaction.total.toLocaleString()}</span>
+                            {transaction.balance > 0 && (
+                                <span className="text-xs text-red-500">Bal: ₹{transaction.balance.toLocaleString()}</span>
+                            )}
+                        </div>
+
+                        {/* Actions Column */}
+                        <div className="flex items-center justify-end gap-2">
+                            <button className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"><Edit className="w-4 h-4 text-gray-400" /></button>
+                            <button className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"><Trash2 className="w-4 h-4 text-red-400" /></button>
+                            <button className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"><MoreHorizontal className="w-4 h-4 text-gray-400" /></button>
                         </div>
                     </div>
                 ))}
