@@ -7,7 +7,7 @@ const MyPlanSettings: React.FC = () => {
   const [accountMode, setAccountMode] = useState<"Landlord" | "Property Manager">("Landlord");
 
   return (
-      <SubscriptionSettingsLayout
+    <SubscriptionSettingsLayout
       activeTab="my-plan"
       headerActions={
         <>
@@ -140,8 +140,8 @@ const MyPlanSettings: React.FC = () => {
                   </td>
                   <td className="py-4 px-4 text-sm text-gray-600">{row.date}</td>
                   <td className="py-4 px-4 text-sm text-gray-900 font-medium">{row.amount}</td>
-                  <td className="py-4 px-4 text-sm text-gray-600">{row.period}</td>
                   <td className="py-4 px-4 text-sm text-gray-600">{row.plan}</td>
+                  <td className="py-4 px-4 text-sm text-gray-600">{row.period}</td>
                   <td className="py-4 px-4">
                     <button className="text-gray-900 font-bold text-sm hover:underline">View</button>
                   </td>

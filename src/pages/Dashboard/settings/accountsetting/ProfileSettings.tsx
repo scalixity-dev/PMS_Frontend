@@ -305,9 +305,22 @@ export default function ProfileSettings() {
         const currentUser = await authService.getCurrentUser();
 
         const fullName = currentUser.fullName || "";
-        const nameParts = fullName.trim().split(" ").filter((part) => part.length > 0);
-        const firstNameFromUser = nameParts[0] || "";
-        const lastNameFromUser = nameParts.slice(1).join(" ");
+        // Improved name parsing: handle single names, empty strings, and preserve full name structure
+        const trimmedName = fullName.trim();
+        let firstNameFromUser = "";
+        let lastNameFromUser = "";
+
+        if (trimmedName.length > 0) {
+          const nameParts = trimmedName.split(/\s+/).filter((part) => part.length > 0);
+          if (nameParts.length === 1) {
+            // Single name: use as first name, leave last name empty
+            firstNameFromUser = nameParts[0];
+          } else if (nameParts.length > 1) {
+            // Multiple parts: first part is first name, rest is last name
+            firstNameFromUser = nameParts[0];
+            lastNameFromUser = nameParts.slice(1).join(" ");
+          }
+        }
 
         setUser({
           fullName,
@@ -321,11 +334,15 @@ export default function ProfileSettings() {
           lastName: lastNameFromUser,
           phoneNumber: currentUser.phoneNumber || previous.phoneNumber,
           country: currentUser.country || previous.country,
-          city: currentUser.address || previous.city,
+          // Note: currentUser.address is a full address string, not just city
+          // Since CurrentUser interface doesn't have a city field, we keep the previous city value
+          city: previous.city,
           postalCode: currentUser.pincode || previous.postalCode,
         }));
-      } catch {
-        // keep defaults on error
+      } catch (error) {
+        // Log error for debugging while keeping defaults
+        console.error("Failed to fetch user profile:", error);
+        // Optionally, you could show a user-friendly error message here
       }
     };
 

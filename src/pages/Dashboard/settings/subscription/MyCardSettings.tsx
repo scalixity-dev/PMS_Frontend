@@ -21,9 +21,46 @@ const MyCardSettings: React.FC = () => {
   const [expiryMonth, setExpiryMonth] = useState("");
   const [expiryYear, setExpiryYear] = useState("");
   const [cvv, setCvv] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const validateLuhn = (number: string) => {
+    let sum = 0;
+    let shouldDouble = false;
+    for (let i = number.length - 1; i >= 0; i--) {
+      let digit = parseInt(number.charAt(i));
+      if (shouldDouble) {
+        digit *= 2;
+        if (digit > 9) digit -= 9;
+      }
+      sum += digit;
+      shouldDouble = !shouldDouble;
+    }
+    return sum % 10 === 0;
+  };
+
+  const getCardBrand = (number: string) => {
+    if (number.startsWith("4")) return "Visa";
+    if (/^5[1-5]/.test(number) || /^2[2-7]/.test(number)) return "Mastercard";
+    if (/^3[47]/.test(number)) return "Amex";
+    if (/^6(?:011|5)/.test(number)) return "Discover";
+    return "Unknown";
+  };
 
   const handleDeleteCard = (cardId: number) => {
-    setSavedCards(savedCards.filter((card) => card.id !== cardId));
+    const cardToDelete = savedCards.find((card) => card.id === cardId);
+    const remainingCards = savedCards.filter((card) => card.id !== cardId);
+    
+    // If deleting the default card and there are remaining cards, set the first one as default
+    if (cardToDelete?.isDefault && remainingCards.length > 0) {
+      setSavedCards(
+        remainingCards.map((card, index) => ({
+          ...card,
+          isDefault: index === 0,
+        }))
+      );
+    } else {
+      setSavedCards(remainingCards);
+    }
   };
 
   const handleSetDefault = (cardId: number) => {
@@ -37,23 +74,60 @@ const MyCardSettings: React.FC = () => {
 
   const handleAddCard = (e: React.FormEvent) => {
     e.preventDefault();
-    // Add card logic here
+    setErrorMsg("");
+
+    // Basic Validation
+    if (!cardNumber || !cardName || !expiryMonth || !expiryYear || !cvv) {
+      setErrorMsg("Please fill in all fields.");
+      return;
+    }
+
+    const brand = getCardBrand(cardNumber);
+
+    // Card Number Length & Luhn
+    if (cardNumber.length < 13 || cardNumber.length > 19 || !validateLuhn(cardNumber)) {
+      setErrorMsg("Invalid card number.");
+      return;
+    }
+
+    // CVV Validation
+    const expectedCvvLength = brand === "Amex" ? 4 : 3;
+    if (cvv.length !== expectedCvvLength) {
+      setErrorMsg(`Invalid CVV for ${brand}.`);
+      return;
+    }
+
+    // Expiry Date Validation
+    const month = parseInt(expiryMonth);
+    const year = parseInt(expiryYear);
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+
+    if (isNaN(month) || isNaN(year) || year < currentYear || (year === currentYear && month < currentMonth)) {
+      setErrorMsg("Card has expired.");
+      return;
+    }
+
     const newCard = {
-      id: savedCards.length + 1,
+      id: Date.now(), // Unique ID generation
       last4: cardNumber.slice(-4),
-      brand: cardNumber.startsWith("4") ? "Visa" : "Mastercard",
-      expiryMonth: parseInt(expiryMonth),
-      expiryYear: parseInt(expiryYear),
+      brand: brand === "Unknown" ? "Credit Card" : brand,
+      expiryMonth: month,
+      expiryYear: year,
       isDefault: savedCards.length === 0,
     };
+
     setSavedCards([...savedCards, newCard]);
     setShowAddCard(false);
+
     // Reset form
     setCardNumber("");
     setCardName("");
     setExpiryMonth("");
     setExpiryYear("");
     setCvv("");
+    setErrorMsg("");
   };
 
   return (
@@ -135,12 +209,21 @@ const MyCardSettings: React.FC = () => {
           <div className="flex justify-between items-center">
             <h2 className="text-lg font-semibold text-gray-900">Add New Card</h2>
             <button
-              onClick={() => setShowAddCard(false)}
+              onClick={() => {
+                setShowAddCard(false);
+                setErrorMsg("");
+              }}
               className="text-gray-500 hover:text-gray-700 text-sm"
             >
               Cancel
             </button>
           </div>
+
+          {errorMsg && (
+            <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg">
+              {errorMsg}
+            </div>
+          )}
 
           <form onSubmit={handleAddCard} className="space-y-4">
             <div>

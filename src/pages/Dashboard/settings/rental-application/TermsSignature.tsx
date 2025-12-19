@@ -74,7 +74,9 @@ export default function TermsSignature() {
             linkText: "Learn more",
             actionType: "button",
             buttonText: "Create",
-            buttonAction: () => console.log("Create clicked")
+            buttonAction: () => {
+                // TODO: Implement create action
+            }
         },
         {
             title: "Document to be filled out",
@@ -82,13 +84,17 @@ export default function TermsSignature() {
             linkText: "Learn more",
             actionType: "button",
             buttonText: "Upload",
-            buttonAction: () => console.log("Upload clicked")
+            buttonAction: () => {
+                // TODO: Implement upload action
+            }
         },
         {
             title: "Terms",
             description: "Choose the mode of your account either \"Landlord\" or \"Property Manager\". You can switch between account modes at any time.",
             linkText: "See the Terms",
-            linkAction: () => console.log("See the Terms clicked")
+            linkAction: () => {
+                // TODO: Implement terms view action
+            }
         },
         {
             title: "E-sign Application",

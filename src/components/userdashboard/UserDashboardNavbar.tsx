@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import logo from "../../assets/images/logo.png";
 import { authService } from "../../services/auth.service";
-import { propertyQueryKeys } from "../../hooks/usePropertyQueries";
 
 interface NavbarProps {
     sidebarOpen: boolean;
@@ -69,15 +68,11 @@ export default function UserDashboardNavbar({ sidebarOpen, setSidebarOpen }: Nav
     const handleLogout = async () => {
         try {
             await authService.logout();
-            queryClient.removeQueries({ queryKey: propertyQueryKeys.all });
-            queryClient.clear();
-            navigate("/login", { replace: true });
         } catch (error) {
             console.error("Logout error:", error);
-            queryClient.removeQueries({ queryKey: propertyQueryKeys.all });
+        } finally {
             queryClient.clear();
             navigate("/login", { replace: true });
-        } finally {
             setIsProfileDropdownOpen(false);
         }
     };
