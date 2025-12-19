@@ -12,6 +12,8 @@ interface HeroCardProps {
   features: readonly string[];
   // Optional content to render between the title and description
   betweenTitleAndDescription?: React.ReactNode;
+  // Optional content to render between the description and action buttons
+  betweenDescriptionAndActions?: React.ReactNode;
   learnMoreLabel?: string;
   getStartedLabel?: string;
   learnMoreHandler?: () => void;
@@ -29,6 +31,7 @@ interface HeroCardProps {
   mobileImageBetweenContent?: boolean;
   backgroundImageSrc?: string;
   backgroundImageTranslate?: string;
+  backgroundImageClassName?: string;
   showStamp?: boolean;
   showImageShadow?: boolean;
   hideBackgroundOnMobile?: boolean;
@@ -77,6 +80,7 @@ const HeroCard: React.FC<HeroCardProps> = ({
   description,
   features,
   betweenTitleAndDescription,
+  betweenDescriptionAndActions,
   learnMoreLabel = 'Learn More',
   getStartedLabel = 'Get Started',
   learnMoreHandler,
@@ -93,6 +97,7 @@ const HeroCard: React.FC<HeroCardProps> = ({
   mobileImageBetweenContent = false,
   backgroundImageSrc,
   backgroundImageTranslate,
+  backgroundImageClassName,
   showStamp = true,
   showImageShadow = true,
   hideBackgroundOnMobile = false,
@@ -152,6 +157,7 @@ const HeroCard: React.FC<HeroCardProps> = ({
     description,
     features,
     betweenTitleAndDescription,
+    betweenDescriptionAndActions,
     learnMoreLabel,
     getStartedLabel,
     learnMoreHandler,
@@ -179,6 +185,7 @@ const HeroCard: React.FC<HeroCardProps> = ({
       imageAlt={imageAlt}
       backgroundImageSrc={backgroundImageSrc}
       backgroundImageTranslate={backgroundImageTranslate}
+      backgroundImageClassName={backgroundImageClassName}
       showImageShadow={showImageShadow}
       hideBackgroundOnMobile={hideBackgroundOnMobile}
       imageWidth={imageWidth}

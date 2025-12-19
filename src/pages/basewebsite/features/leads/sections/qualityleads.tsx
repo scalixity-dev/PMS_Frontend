@@ -40,7 +40,7 @@ const QualityLeadsSection: React.FC = () => {
           imageTranslate="-translate-x-2 sm:-translate-x-6 translate-y-4 sm:translate-y-8 lg:translate-y-2"
           backgroundImageSrc="/vector5.png"
           backgroundImageTranslate="translate(10px, 60px) scale(1.2)"
-          sectionPaddingClassName="py-0 px-6"
+          sectionPaddingClassName="py-0 sm:py-10 px-6"
           contentPaddingClassName="py-0"
           maxWidthClassName="max-w-7xl"
           contentClassName="gap-0 xl:gap-16"
