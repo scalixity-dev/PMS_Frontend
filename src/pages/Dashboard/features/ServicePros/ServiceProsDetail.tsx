@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, Plus, Edit, Link2Off, Archive, Trash2 } from 'lucide-react';
+import { ChevronLeft, Plus, Edit, Link2Off, Archive, Trash2, Send, X, AlertTriangle } from 'lucide-react';
 import DetailTabs from '../../components/DetailTabs';
 import ServiceProProfileSection from './components/ServiceProProfileSection';
 import ServiceProTransactionsSection from './components/ServiceProTransactionsSection';
@@ -115,7 +115,16 @@ const ServiceProsDetail = () => {
     const { id } = useParams<{ id: string }>();
     const [activeTab, setActiveTab] = useState('profile');
     const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
+    const [isSendConnectionModalOpen, setIsSendConnectionModalOpen] = useState(false);
+    const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isConnected, setIsConnected] = useState(false);
     const actionMenuRef = useRef<HTMLDivElement>(null);
+
+    const handleSendConnection = () => {
+        setIsConnected(true);
+        setIsSendConnectionModalOpen(false);
+    };
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -194,15 +203,22 @@ const ServiceProsDetail = () => {
                                         <Edit className="w-4 h-4" />
                                         Edit
                                     </button>
-                                    <button onClick={() => setIsActionMenuOpen(false)} className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors flex items-center gap-2">
-                                        <Link2Off className="w-4 h-4" />
-                                        Remove Connection
-                                    </button>
-                                    <button onClick={() => setIsActionMenuOpen(false)} className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors flex items-center gap-2">
+                                    {isConnected ? (
+                                        <button onClick={() => { setIsConnected(false); setIsActionMenuOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors flex items-center gap-2">
+                                            <Link2Off className="w-4 h-4" />
+                                            Remove Connection
+                                        </button>
+                                    ) : (
+                                        <button onClick={() => { setIsSendConnectionModalOpen(true); setIsActionMenuOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors flex items-center gap-2">
+                                            <Send className="w-4 h-4" />
+                                            Send Connection
+                                        </button>
+                                    )}
+                                    <button onClick={() => { setIsArchiveModalOpen(true); setIsActionMenuOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors flex items-center gap-2">
                                         <Archive className="w-4 h-4" />
                                         Archive
                                     </button>
-                                    <button onClick={() => setIsActionMenuOpen(false)} className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2">
+                                    <button onClick={() => { setIsDeleteModalOpen(true); setIsActionMenuOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2">
                                         <Trash2 className="w-4 h-4" />
                                         Delete
                                     </button>
@@ -215,89 +231,65 @@ const ServiceProsDetail = () => {
                 <div className='shadow-lg rounded-[2rem] p-6 mb-8'>
                     {/* Top Card */}
                     <div className="bg-[#F6F6F8] rounded-[2rem] shadow-lg p-6 mb-8">
-                        <div className="flex flex-col lg:flex-row gap-8">
-                            {/* Service Pro Info */}
-                            <div className="flex gap-6 items-start">
-                                {/* Image or Initials */}
+                        <div className="flex flex-col lg:flex-row gap-8 items-start">
+                            {/* Left: Image */}
+                            <div className="flex-shrink-0">
                                 {servicePro.image ? (
-                                    <img src={servicePro.image} alt={servicePro.name} className="w-32 h-32 rounded-2xl object-cover" />
+                                    <img src={servicePro.image} alt={servicePro.name} className="w-[250px] h-[250px] rounded-[2rem] object-cover" />
                                 ) : (
-                                    <div className="w-32 h-32 bg-[#4ad1a6] rounded-2xl flex items-center justify-center">
-                                        <span className="text-white text-3xl font-medium">{servicePro.initials}</span>
+                                    <div className="w-[250px] h-[250px] bg-[#4ad1a6] rounded-[2rem] flex items-center justify-center">
+                                        <span className="text-white text-5xl font-medium">{servicePro.initials}</span>
                                     </div>
                                 )}
+                            </div>
 
-                                <div className="flex flex-col gap-3">
-                                    <div className="bg-[#3A6D6C] text-white p-4 rounded-xl text-center min-w-[200px]">
-                                        <h2 className="font-bold text-lg">{servicePro.name}</h2>
-                                        <p className="text-xs opacity-90">{servicePro.phone}</p>
-                                        <p className="text-xs opacity-90">{servicePro.email}</p>
+                            {/* Middle: Info + Outstanding Stack */}
+                            <div className="flex flex-col gap-2 min-w-[280px]">
+                                {/* Info Card */}
+                                <div className="bg-[#3A6D6C] text-white p-4 rounded-[2rem] text-center shadow-md">
+                                    <h2 className="font-bold text-xl mb-1 capitalize">{servicePro.name}</h2>
+                                    <p className="text-sm opacity-90 mb-0.5">{servicePro.phone}</p>
+                                    <p className="text-sm opacity-90">{servicePro.email}</p>
+                                </div>
+
+                                {/* View Profile Button */}
+                                <button className="w-full bg-[#C8C8C8] text-gray-800 py-2.5 rounded-full text-sm font-semibold hover:bg-[#b8b8b8] transition-colors shadow-inner">
+                                    View Profile
+                                </button>
+
+                                {/* Outstanding Card */}
+                                <div className="bg-[#7BD747] rounded-[2rem] px-6 py-3 flex flex-col items-center justify-center gap-2 shadow-md">
+                                    <span className="text-sm font-bold text-white">Outstanding</span>
+                                    <div className="bg-[#E8F5E9] px-6 py-2 rounded-full text-sm font-bold text-gray-700 shadow-inner w-full text-center">
+                                        ₹{servicePro.outstanding.toLocaleString()}.00
                                     </div>
-                                    <button
-                                        className="w-full bg-[#C8C8C8] text-gray-700 py-2 rounded-full text-sm font-medium hover:bg-[#b8b8b8] transition-colors shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]"
-                                    >
-                                        View Profile
-                                    </button>
                                 </div>
                             </div>
 
-                            {/* Stats & Reports */}
-                            <div className="flex-1 flex flex-col justify-between gap-4">
-                                <div className="grid grid-cols-3 gap-4">
-                                    <div className="bg-[#7BD747] rounded-full px-4 py-3 flex flex-col justify-between h-18 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">
-                                        <span className="text-xs font-semibold text-white">Outstanding</span>
-                                        <div className="flex justify-between items-center">
-                                            <div className="bg-[#E8F5E9] px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">₹{servicePro.outstanding.toLocaleString()}.00</div>
-                                            <button className="bg-[#3A6D6C] text-white px-3 py-1 rounded-full text-[10px] font-medium uppercase shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">Received</button>
-                                        </div>
-                                    </div>
-                                    {/* Placeholders to match grid structure if desired, or can be removed. Keeping placeholders for EXACT layout match minus the content values if needed. 
-                                        Let's keep them as "Deposits" and "Credits" for now unless user requested removal, 
-                                        since "exactly like Tenant Page" implies same grid.
-                                    */}
-                                    <div className="bg-[#7BD747] rounded-full px-4 py-3 flex flex-col justify-between h-18 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">
-                                        <span className="text-xs font-semibold text-white">Deposits</span>
-                                        <div className="flex justify-between items-center">
-                                            <div className="bg-[#E8F5E9] px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">₹{(servicePro.deposits || 0).toLocaleString()}.00</div>
-                                            <button className="bg-[#3A6D6C] text-white px-3 py-1 rounded-full text-[10px] font-medium uppercase shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">Action</button>
-                                        </div>
-                                    </div>
-                                    <div className="bg-[#7BD747] rounded-full px-4 py-3 flex flex-col justify-between h-18 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">
-                                        <span className="text-xs font-semibold text-white">Credits</span>
-                                        <div className="flex justify-between items-center">
-                                            <div className="bg-[#E8F5E9] px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">₹{(servicePro.credits || 0).toLocaleString()}.00</div>
-                                            <button className="bg-[#3A6D6C] text-white px-3 py-1 rounded-full text-[10px] font-medium uppercase shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">Action</button>
-                                        </div>
-                                    </div>
-                                </div>
+                            {/* Right: Reports */}
+                            <div className="flex-1 bg-[#E4E4E4] rounded-[2.5rem] p-6 shadow-lg h-full self-stretch">
+                                <h3 className="text-gray-700 font-bold mb-4 ml-1 text-lg">Reports</h3>
+                                <div className="bg-[#7BD747] rounded-[2.5rem] p-5 flex items-center justify-between gap-4 shadow-inner relative overflow-hidden h-[100px]">
+                                    {/* Green background container for the report item */}
+                                    {/* Based on screenshot, "Rentals" text is in top left, pills bottom right */}
+                                    <span className="absolute top-4 left-6 text-white font-bold text-lg">Rentals</span>
 
-                                <div className="bg-[#E4E4E4] rounded-[3.5rem] p-4 shadow-lg">
-                                    <h3 className="text-gray-700 font-bold mb-2 ml-1">Reports</h3>
-                                    <div className="flex gap-4">
-                                        <div className="flex-1 bg-[#7BD747] rounded-full px-4 py-3 flex flex-col justify-between min-h-[5rem] shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">
-                                            <div className="flex flex-col">
-                                                <span className="text-xs font-bold text-white">Financial</span>
-                                            </div>
-                                            <div className="flex justify-between items-center">
-                                                <div className="bg-[#E8F5E9] px-4 py-1 rounded-full text-xs text-gray-600 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">Provider Statement</div>
-                                                <button className="bg-[#3A6D6C] text-white px-4 py-1.5 rounded-full text-xs font-medium uppercase shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">View</button>
-                                            </div>
+                                    <div className="absolute bottom-4 left-6 right-6 flex justify-between items-center p-1 rounded-full backdrop-blur-sm">
+                                        <div className="bg-[#E8F5E9] px-4 py-1.5 rounded-full text-xs font-medium text-gray-700 shadow-sm flex-1 text-center mr-2">
+                                            Provider Statement
                                         </div>
-                                        {/* Notice button might not be needed for provider, but keeping layout consistent. Could be "Send Notice" */}
-                                        <div className="flex-1 bg-[#7BD747] rounded-full px-4 py-3 flex flex-col justify-between min-h-[5rem] shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                                            <div className="flex flex-col">
-                                                <span className="text-xs font-bold text-white">Notice</span>
-                                            </div>
-                                            <div className="flex justify-between items-center">
-                                                <div className="bg-[#E8F5E9] px-4 py-1 rounded-full text-xs text-gray-600 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">Provider Notice</div>
-                                                <button className="bg-[#3A6D6C] text-white px-4 py-1.5 rounded-full text-xs font-medium uppercase shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">Send</button>
-                                            </div>
-                                        </div>
+                                        <button
+                                            onClick={() => navigate('/dashboard/reports/statement')}
+                                            className="bg-[#3A6D6C] text-white px-5 py-1.5 rounded-full text-xs font-medium shadow-md hover:bg-[#2c5251] transition-colors"
+                                        >
+                                            View
+                                        </button>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+
 
                     {/* Tabs */}
                     <DetailTabs
@@ -309,14 +301,141 @@ const ServiceProsDetail = () => {
                 </div>
 
                 {/* Tab Content */}
-                {activeTab === 'profile' && (
-                    <ServiceProProfileSection servicePro={servicePro} />
-                )}
-                {activeTab === 'transactions' && (
-                    <ServiceProTransactionsSection servicePro={servicePro} />
-                )}
-            </div>
-        </div>
+                {
+                    activeTab === 'profile' && (
+                        <ServiceProProfileSection servicePro={servicePro} />
+                    )
+                }
+                {
+                    activeTab === 'transactions' && (
+                        <ServiceProTransactionsSection servicePro={servicePro} />
+                    )
+                }
+            </div >
+
+            {/* Send Connection Modal */}
+            {
+                isSendConnectionModalOpen && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                        <div className="bg-white rounded-lg shadow-xl w-full max-w-lg overflow-hidden">
+                            {/* Header */}
+                            <div className="bg-[#3A6D6C] px-6 py-4 flex justify-between items-center">
+                                <h3 className="text-white text-lg font-medium">Send connection</h3>
+                                <button onClick={() => setIsSendConnectionModalOpen(false)} className="text-white hover:bg-white/10 p-1 rounded-full transition-colors">
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            {/* Content */}
+                            <div className="p-6">
+                                <div className="mb-8">
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Email*</label>
+                                    <input
+                                        type="email"
+                                        placeholder="Enter email address"
+                                        className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:border-[#3A6D6C]"
+                                    />
+                                </div>
+
+                                <div className="flex gap-4">
+                                    <button
+                                        onClick={() => setIsSendConnectionModalOpen(false)}
+                                        className="flex-1 px-6 py-3 bg-[#545E6B] text-white rounded-lg font-medium hover:bg-[#464f5b] transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleSendConnection}
+                                        className="flex-1 px-6 py-3 bg-[#3A6D6C] text-white rounded-lg font-medium hover:bg-[#2c5251] transition-colors"
+                                    >
+                                        Send request
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* Archive Modal */}
+            {
+                isArchiveModalOpen && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                        <div className="bg-white rounded-lg shadow-xl w-full max-w-lg overflow-hidden">
+                            {/* Header */}
+                            <div className="bg-[#3A6D6C] px-6 py-4 flex justify-between items-center">
+                                <h3 className="text-white text-lg font-medium">You're about to archive this service pro</h3>
+                                <button onClick={() => setIsArchiveModalOpen(false)} className="text-white hover:bg-white/10 p-1 rounded-full transition-colors">
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            {/* Content */}
+                            <div className="p-6">
+                                <p className="text-gray-700 font-medium mb-8">Are you sure you want to archive the service pro?</p>
+
+                                <div className="flex gap-4">
+                                    <button
+                                        onClick={() => setIsArchiveModalOpen(false)}
+                                        className="flex-1 px-6 py-3 bg-[#545E6B] text-white rounded-lg font-medium hover:bg-[#464f5b] transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={() => setIsArchiveModalOpen(false)}
+                                        className="flex-1 px-6 py-3 bg-[#3A6D6C] text-white rounded-lg font-medium hover:bg-[#2c5251] transition-colors"
+                                    >
+                                        Yes I'm Sure
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* Delete Modal */}
+            {
+                isDeleteModalOpen && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                        <div className="bg-white rounded-lg shadow-xl w-full max-w-lg overflow-hidden">
+                            {/* Header */}
+                            <div className="bg-[#3A6D6C] px-6 py-4 flex justify-between items-center">
+                                <div className="flex items-center gap-2 text-white">
+                                    <AlertTriangle className="w-6 h-6" />
+                                    <h3 className="text-lg font-medium">Are you sure you want to delete it?</h3>
+                                </div>
+                                <button onClick={() => setIsDeleteModalOpen(false)} className="text-white hover:bg-white/10 p-1 rounded-full transition-colors">
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            {/* Content */}
+                            <div className="p-6">
+                                <p className="text-gray-700 font-medium mb-8">
+                                    Are you sure you want to delete it? Service pro will be removed from all assigned maintenance requests and all related transactions will be deleted!
+                                </p>
+
+                                <div className="flex gap-4">
+                                    <button
+                                        onClick={() => setIsDeleteModalOpen(false)}
+                                        className="flex-1 px-6 py-3 bg-[#545E6B] text-white rounded-lg font-medium hover:bg-[#464f5b] transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={() => setIsDeleteModalOpen(false)}
+                                        className="flex-1 px-6 py-3 bg-[#FF3B30] text-white rounded-lg font-medium hover:bg-[#d6332a] transition-colors"
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+        </div >
     );
 };
 

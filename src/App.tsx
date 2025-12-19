@@ -68,6 +68,7 @@ import AddEditServicePro from './pages/Dashboard/features/ServicePros/AddEditSer
 import ServiceProsDetail from './pages/Dashboard/features/ServicePros/ServiceProsDetail';
 import Application from './pages/Dashboard/features/Application/Application';
 import NewApplication from './pages/Dashboard/features/Application/NewApplication';
+import ProviderStatement from './pages/Dashboard/features/ServicePros/ProviderStatement';
 // import ListUnit from './pages/Dashboard/features/ListUnit/ListUnit';
 
 // Create a QueryClient instance
@@ -233,6 +234,7 @@ const App: React.FC = () => {
                   </ProtectedRoute>
                 }
               />
+              <Route path="/dashboard/reports/statement" element={<ProviderStatement />} />
               <Route
                 path="/downloads"
                 element={
