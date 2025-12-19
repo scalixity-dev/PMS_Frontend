@@ -2,7 +2,7 @@ import React from 'react';
 
 interface CustomTextBoxProps {
     label?: string;
-    value: string;
+    value: string | React.ReactNode;
     onChange?: (value: string) => void;
     placeholder?: string;
     disabled?: boolean;
@@ -17,7 +17,7 @@ interface CustomTextBoxProps {
  * CustomTextBox - A reusable text box component with label and value display
  * 
  * @param label - Optional label text to display on the left side. If not provided, only value is shown
- * @param value - The value text to display on the right side
+ * @param value - The value text or element to display on the right side
  * @param onChange - Optional callback for when value changes (for editable mode)
  * @param placeholder - Optional placeholder text
  * @param disabled - Whether the input is disabled
@@ -51,29 +51,29 @@ const CustomTextBox: React.FC<CustomTextBoxProps> = ({
             {readOnly ? (
                 <span
                     className={`text-xs text-gray-800 font-medium ${label ? 'w-2/3 pl-2' : 'w-full'} ${multiline ? 'whitespace-normal break-words' : 'truncate'} ${valueClassName}`}
-                    title={value}
+                    title={typeof value === 'string' ? value : undefined}
                 >
                     {value}
                 </span>
             ) : (
                 multiline ? (
                     <textarea
-                        value={value}
+                        value={value as string}
                         onChange={(e) => onChange?.(e.target.value)}
                         placeholder={placeholder}
                         disabled={disabled}
                         className={`text-xs text-gray-800 font-medium ${label ? 'w-2/3 pl-2' : 'w-full'} bg-transparent border-none outline-none focus:ring-0 resize-none h-full ${valueClassName}`}
-                        title={value}
+                        title={typeof value === 'string' ? value : undefined}
                     />
                 ) : (
                     <input
                         type="text"
-                        value={value}
+                        value={value as string}
                         onChange={(e) => onChange?.(e.target.value)}
                         placeholder={placeholder}
                         disabled={disabled}
                         className={`text-xs text-gray-800 font-medium ${label ? 'w-2/3 pl-2' : 'w-full'} bg-transparent border-none outline-none focus:ring-0 ${valueClassName}`}
-                        title={value}
+                        title={typeof value === 'string' ? value : undefined}
                     />
                 )
             )}

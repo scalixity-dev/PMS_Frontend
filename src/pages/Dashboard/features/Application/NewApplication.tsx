@@ -22,7 +22,11 @@ import VehiclesStep from './steps/VehiclesStep';
 import AdditionalResidenceInfoStep from './steps/AdditionalResidenceInfoStep';
 // ... existing imports ...
 import ResidencesStep from './steps/ResidencesStep';
+import IncomeStep from './steps/IncomeStep';
+import AdditionalIncomeStep from './steps/AdditionalIncomeStep';
+import EmergencyContactStep from './steps/EmergencyContactStep';
 import { useApplicationStore } from './store/applicationStore';
+import ApplicationSuccessModal from './components/ApplicationSuccessModal';
 
 const STORAGE_KEY = 'application_draft';
 
@@ -52,6 +56,7 @@ const NewApplication: React.FC = () => {
             formData.pets.length > 0 ||
             formData.vehicles.length > 0 ||
             formData.residences.length > 0 ||
+            formData.incomes.length > 0 ||
             formData.dob !== undefined ||
             formData.moveInDate !== undefined
         );
@@ -60,12 +65,12 @@ const NewApplication: React.FC = () => {
     // Helper to recursively convert date strings to Date objects
     const walkAndConvertDates = (obj: any): any => {
         if (obj === null || obj === undefined) return obj;
-        
+
         // If it's an array, recurse into each element
         if (Array.isArray(obj)) {
             return obj.map(item => walkAndConvertDates(item));
         }
-        
+
         // If it's an object, recurse into each property
         if (typeof obj === 'object') {
             const converted: any = {};
@@ -82,7 +87,7 @@ const NewApplication: React.FC = () => {
             }
             return converted;
         }
-        
+
         return obj;
     };
 
@@ -133,7 +138,8 @@ const NewApplication: React.FC = () => {
     // Add local state
     const [occupantSubStep, setOccupantSubStep] = React.useState<'occupants' | 'pets' | 'vehicles'>('occupants');
     const [lastOccupantSubStep, setLastOccupantSubStep] = React.useState<'occupants' | 'pets' | 'vehicles'>('vehicles');
-    const [residenceSubStep, setResidenceSubStep] = React.useState<'history' | 'additional'>('history');
+    const [residenceSubStep, setResidenceSubStep] = React.useState<'history' | 'additional' | 'income' | 'additionalIncome'>('history');
+    const [showSuccessModal, setShowSuccessModal] = React.useState(false);
 
     const handleCancel = () => {
         if (isFormDirty) {
@@ -173,7 +179,11 @@ const NewApplication: React.FC = () => {
                 setCurrentStep(currentStep - 1);
             }
         } else if (currentStep === 3) {
-            if (residenceSubStep === 'additional') {
+            if (residenceSubStep === 'additionalIncome') {
+                setResidenceSubStep('income');
+            } else if (residenceSubStep === 'income') {
+                setResidenceSubStep('additional');
+            } else if (residenceSubStep === 'additional') {
                 setResidenceSubStep('history');
             } else {
                 // Go back to Step 2 - restore last visited sub-step
@@ -194,13 +204,13 @@ const NewApplication: React.FC = () => {
      * Call this function after successful form submission to clear saved data
      * Usage: <ContactsStep onSubmit={handleSubmitSuccess} />
      */
-    /*
     const handleSubmitSuccess = () => {
+        // Here you would typically submit data to backend
+        console.log('Form Submitted:', formData);
         resetForm();
         localStorage.removeItem(STORAGE_KEY);
-        navigate('/dashboard/leasing/applications');
+        setShowSuccessModal(true);
     };
-    */
 
     const renderContent = () => {
         switch (currentStep) {
@@ -226,15 +236,19 @@ const NewApplication: React.FC = () => {
             case 3:
                 if (residenceSubStep === 'history') {
                     return <ResidencesStep onNext={() => setResidenceSubStep('additional')} />;
+                } else if (residenceSubStep === 'additional') {
+                    return <AdditionalResidenceInfoStep onNext={() => setResidenceSubStep('income')} />;
+                } else if (residenceSubStep === 'income') {
+                    return <IncomeStep onNext={() => setResidenceSubStep('additionalIncome')} />;
                 } else {
-                    return <AdditionalResidenceInfoStep onNext={() => setCurrentStep(currentStep + 1)} />;
+                    return <AdditionalIncomeStep
+                        onNext={() => setCurrentStep(currentStep + 1)}
+                    />;
                 }
             // ...
             // ...
             case 4:
-                // TODO: When implementing the final step, call handleSubmitSuccess() after successful submission
-                // Example: <ContactsStep onSubmit={handleSubmitSuccess} />
-                return <div className="text-center py-10">Contacts Step (Coming Soon)</div>;
+                return <EmergencyContactStep onNext={handleSubmitSuccess} />;
             default:
                 return null;
         }
@@ -277,6 +291,11 @@ const NewApplication: React.FC = () => {
             <div className="w-full flex-1 mt-4">
                 {renderContent()}
             </div>
+
+            <ApplicationSuccessModal
+                isOpen={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+            />
         </div>
     );
 };
