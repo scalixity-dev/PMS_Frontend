@@ -34,6 +34,12 @@ const ApplyCreditsModal: React.FC<ApplyCreditsModalProps> = ({
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [uploadError, setUploadError] = useState<string>('');
     const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const [fieldErrors, setFieldErrors] = useState<{
+        applyFrom?: string;
+        dateApplied?: string;
+        applyAmount?: string;
+        details?: string;
+    }>({});
 
     useEffect(() => {
         if (isOpen) {
@@ -66,6 +72,42 @@ const ApplyCreditsModal: React.FC<ApplyCreditsModalProps> = ({
     };
 
     const handleConfirm = () => {
+        // Reset field errors
+        const errors: typeof fieldErrors = {};
+
+        // Validate applyFrom
+        if (!applyFrom || applyFrom.trim() === '') {
+            errors.applyFrom = 'Please select where to apply from';
+        }
+
+        // Validate dateApplied
+        if (!dateApplied || !(dateApplied instanceof Date) || isNaN(dateApplied.getTime())) {
+            errors.dateApplied = 'Please select a valid date';
+        }
+
+        // Validate applyAmount
+        const amountNum = parseFloat(applyAmount);
+        if (!applyAmount || applyAmount.trim() === '') {
+            errors.applyAmount = 'Please enter an amount';
+        } else if (isNaN(amountNum) || amountNum <= 0) {
+            errors.applyAmount = 'Amount must be a positive number';
+        }
+
+        // Validate details
+        if (!details || details.trim() === '') {
+            errors.details = 'Please provide details';
+        }
+
+        // If there are errors, set them and don't proceed
+        if (Object.keys(errors).length > 0) {
+            setFieldErrors(errors);
+            return;
+        }
+
+        // Clear any previous errors
+        setFieldErrors({});
+
+        // All validation passed, proceed with confirm
         if (onConfirm) {
             onConfirm({ applyFrom, dateApplied, applyAmount, details, selectedFile });
         }
@@ -121,6 +163,9 @@ const ApplyCreditsModal: React.FC<ApplyCreditsModalProps> = ({
                             buttonClassName={inputClasses}
                             dropdownClassName="z-50"
                         />
+                        {fieldErrors.applyFrom && (
+                            <p className="text-red-600 text-xs mt-1 ml-1">{fieldErrors.applyFrom}</p>
+                        )}
                     </div>
 
                     {/* Help text */}
@@ -140,6 +185,9 @@ const ApplyCreditsModal: React.FC<ApplyCreditsModalProps> = ({
                                     className={inputClasses}
                                 />
                             </div>
+                            {fieldErrors.dateApplied && (
+                                <p className="text-red-600 text-xs mt-1 ml-1">{fieldErrors.dateApplied}</p>
+                            )}
                         </div>
 
                         {/* Apply Amount */}
@@ -152,6 +200,9 @@ const ApplyCreditsModal: React.FC<ApplyCreditsModalProps> = ({
                                 value={applyAmount}
                                 onChange={(e) => setApplyAmount(e.target.value)}
                             />
+                            {fieldErrors.applyAmount && (
+                                <p className="text-red-600 text-xs mt-1 ml-1">{fieldErrors.applyAmount}</p>
+                            )}
                         </div>
                     </div>
 
@@ -164,6 +215,9 @@ const ApplyCreditsModal: React.FC<ApplyCreditsModalProps> = ({
                             value={details}
                             onChange={(e) => setDetails(e.target.value)}
                         />
+                        {fieldErrors.details && (
+                            <p className="text-red-600 text-xs mt-1 ml-1">{fieldErrors.details}</p>
+                        )}
                     </div>
 
                     {/* File Upload Error/Success Message */}
