@@ -20,6 +20,11 @@ const RefundPaymentModal: React.FC<RefundPaymentModalProps> = ({ onConfirm }) =>
     const [method, setMethod] = useState('');
     const [details, setDetails] = useState('');
     const [isConfirmed, setIsConfirmed] = useState(false);
+    const [fieldErrors, setFieldErrors] = useState<{
+        method?: string;
+        details?: string;
+        isConfirmed?: string;
+    }>({});
 
     // Derived state from selectedPayment
     const [receiver, setReceiver] = useState('');
@@ -28,8 +33,25 @@ const RefundPaymentModal: React.FC<RefundPaymentModalProps> = ({ onConfirm }) =>
     useEffect(() => {
         if (isOpen && selectedPayment) {
             document.body.style.overflow = 'hidden';
-            setReceiver(selectedPayment.contact || '');
-            setAmount(selectedPayment.amount ? `₹${selectedPayment.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '');
+            
+            // Safe contact access with type guard
+            setReceiver(
+                typeof selectedPayment.contact === 'string' 
+                    ? selectedPayment.contact 
+                    : ''
+            );
+            
+            // Safe amount access with type guard
+            const amountValue = typeof selectedPayment.amount === 'number' 
+                ? selectedPayment.amount 
+                : Number(selectedPayment.amount);
+            
+            setAmount(
+                Number.isFinite(amountValue)
+                    ? `₹${amountValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                    : ''
+            );
+            
             setMethod('');
             setDetails('');
             setIsConfirmed(false);
@@ -46,13 +68,37 @@ const RefundPaymentModal: React.FC<RefundPaymentModalProps> = ({ onConfirm }) =>
     }, [isOpen, selectedPayment]);
 
     const handleConfirm = () => {
-        if (!isConfirmed) return;
+        // Reset field errors
+        const errors: typeof fieldErrors = {};
 
+        // Validate confirmation checkbox
+        if (!isConfirmed) {
+            errors.isConfirmed = 'Please confirm the refund to proceed';
+        }
+
+        // Validate method
+        if (!method || method.trim() === '') {
+            errors.method = 'Please select a refund method';
+        }
+
+        // Validate details
+        if (!details || details.trim() === '') {
+            errors.details = 'Please provide refund details';
+        }
+
+        // If there are errors, set them and don't proceed
+        if (Object.keys(errors).length > 0) {
+            setFieldErrors(errors);
+            return;
+        }
+
+        // Clear any previous errors
+        setFieldErrors({});
+
+        // All validation passed, proceed with confirm
         if (onConfirm) {
             onConfirm({ method, details });
         }
-        // Logic to process refund would go here
-        console.log('Refund confirmed', { receiver, amount, method, details });
         onClose();
     };
 
@@ -121,6 +167,9 @@ const RefundPaymentModal: React.FC<RefundPaymentModalProps> = ({ onConfirm }) =>
                             buttonClassName={activeInputClasses}
                             dropdownClassName="z-50"
                         />
+                        {fieldErrors.method && (
+                            <p className="text-red-600 text-xs mt-1 ml-1">{fieldErrors.method}</p>
+                        )}
                     </div>
 
                     {/* Details */}
@@ -133,6 +182,9 @@ const RefundPaymentModal: React.FC<RefundPaymentModalProps> = ({ onConfirm }) =>
                             onChange={(e) => setDetails(e.target.value)}
                             maxLength={150}
                         />
+                        {fieldErrors.details && (
+                            <p className="text-red-600 text-xs mt-1 ml-1">{fieldErrors.details}</p>
+                        )}
                         <p className="text-right text-xs text-gray-400 mt-1">
                             Character limit: {details.length} / 150
                         </p>
@@ -141,21 +193,26 @@ const RefundPaymentModal: React.FC<RefundPaymentModalProps> = ({ onConfirm }) =>
 
                 {/* Footer */}
                 <div className="bg-[#DFE5E3] p-6 flex items-center justify-between">
-                    <div className="flex items-center">
-                        <button
-                            onClick={() => setIsConfirmed(!isConfirmed)}
-                            className="flex items-center justify-center"
-                        >
-                            <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${isConfirmed ? 'bg-[#7BD747]' : 'bg-white border border-gray-300'}`}>
-                                {isConfirmed && <Check className="w-3.5 h-3.5 text-white" />}
-                            </div>
-                        </button>
-                        <label
-                            onClick={() => setIsConfirmed(!isConfirmed)}
-                            className="ml-2 text-sm font-semibold text-[#1a2b4b] cursor-pointer"
-                        >
-                            Confirm refund <span className='font-bold'>{amount}</span> to <span className='font-bold'>{receiver}</span>
-                        </label>
+                    <div className="flex flex-col">
+                        <div className="flex items-center">
+                            <button
+                                onClick={() => setIsConfirmed(!isConfirmed)}
+                                className="flex items-center justify-center"
+                            >
+                                <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${isConfirmed ? 'bg-[#7BD747]' : 'bg-white border border-gray-300'}`}>
+                                    {isConfirmed && <Check className="w-3.5 h-3.5 text-white" />}
+                                </div>
+                            </button>
+                            <label
+                                onClick={() => setIsConfirmed(!isConfirmed)}
+                                className="ml-2 text-sm font-semibold text-[#1a2b4b] cursor-pointer"
+                            >
+                                Confirm refund <span className='font-bold'>{amount}</span> to <span className='font-bold'>{receiver}</span>
+                            </label>
+                        </div>
+                        {fieldErrors.isConfirmed && (
+                            <p className="text-red-600 text-xs mt-1 ml-1">{fieldErrors.isConfirmed}</p>
+                        )}
                     </div>
 
                     <div className="flex gap-4">

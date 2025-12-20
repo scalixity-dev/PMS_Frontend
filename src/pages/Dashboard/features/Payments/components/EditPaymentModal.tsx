@@ -42,16 +42,22 @@ const EditPaymentModal: React.FC<EditPaymentModalProps> = ({ onConfirm }) => {
         if (isOpen && selectedPayment) {
             document.body.style.overflow = 'hidden';
 
-            // Parse date
+            // Parse date safely
             let parsedDate: Date | undefined = undefined;
             if (selectedPayment.datePaid) {
-                // Assuming date format "DD Mon YYYY" or ISO
-                parsedDate = new Date(selectedPayment.datePaid);
+                const tempDate = new Date(selectedPayment.datePaid);
+                if (!isNaN(tempDate.getTime())) {
+                    parsedDate = tempDate;
+                }
             }
 
-            // Pre-fill form
+            // Pre-fill form with defensive checks
             setDatePaid(parsedDate);
-            setAmount(selectedPayment.amount?.toString() || '');
+            setAmount(
+                selectedPayment.amount != null 
+                    ? String(selectedPayment.amount) 
+                    : ''
+            );
             setMethod(selectedPayment.method || 'Others');
             setDetails(selectedPayment.details || '');
             setSelectedFile(null);
