@@ -28,12 +28,26 @@ const RecurringExpense: React.FC = () => {
     const { clonedTransactionData } = useTransactionStore();
 
     useEffect(() => {
-        // Prefer store data, fallback to location state if any
         const dataToLoad = clonedTransactionData;
 
         if (dataToLoad) {
             if (dataToLoad.amount) {
-                setAmount(dataToLoad.amount.replace(/[^0-9.]/g, ''));
+                // Normalize amount: strip non-digits/non-dots, keep only first decimal point
+                let normalized = dataToLoad.amount.replace(/[^0-9.]/g, '').trim();
+                
+                // Keep only the first decimal point
+                const firstDotIndex = normalized.indexOf('.');
+                if (firstDotIndex !== -1) {
+                    normalized = normalized.substring(0, firstDotIndex + 1) + 
+                                 normalized.substring(firstDotIndex + 1).replace(/\./g, '');
+                }
+                
+                // Validate the result is a valid number
+                if (/^\d+(\.\d+)?$/.test(normalized) && isFinite(parseFloat(normalized))) {
+                    setAmount(normalized);
+                } else {
+                    setAmount('');
+                }
             }
             if (dataToLoad.user) {
                 setPayerPayee(dataToLoad.user);

@@ -1,5 +1,35 @@
 import { create } from 'zustand';
 
+/**
+ * Represents transaction data that can be cloned or used to pre-fill forms.
+ * All fields are optional since different components may provide partial data.
+ */
+export interface TransactionData {
+    // Basic transaction info
+    id?: string;
+    transactionId?: string;
+    amount?: string;
+    date?: string;
+    status?: string;
+    
+    // Parties involved
+    user?: string;
+    payer?: string;
+    payee?: string;
+    
+    // Classification
+    category?: string;
+    type?: string;
+    
+    // Related entities
+    property?: string;
+    lease?: string;
+    tags?: string;
+    
+    // Additional information
+    details?: string;
+}
+
 interface TransactionStoreState {
     // Modal Visibility States
     isEditPaymentModalOpen: boolean;
@@ -16,7 +46,8 @@ interface TransactionStoreState {
 
     // Selected Data States
     selectedPayment: { date: string; amount: string } | null;
-    clonedTransactionData: any; // Using any for now to match component usage
+    clonedTransactionData: TransactionData | null;
+    selectedTransactionId: number | string | null;
 
     // Actions
     setEditPaymentModalOpen: (isOpen: boolean) => void;
@@ -31,7 +62,8 @@ interface TransactionStoreState {
     setVoidModalOpen: (isOpen: boolean) => void;
 
     setSelectedPayment: (payment: { date: string; amount: string } | null) => void;
-    setClonedTransactionData: (data: any) => void;
+    setClonedTransactionData: (data: TransactionData | null) => void;
+    setSelectedTransactionId: (id: number | string | null) => void;
 
     // Helper to close all (optional)
     closeAllModals: () => void;
@@ -53,6 +85,7 @@ export const useTransactionStore = create<TransactionStoreState>((set) => ({
 
     selectedPayment: null,
     clonedTransactionData: null,
+    selectedTransactionId: null,
 
     // Setters
     setEditPaymentModalOpen: (isOpen) => set({ isEditPaymentModalOpen: isOpen }),
@@ -68,6 +101,7 @@ export const useTransactionStore = create<TransactionStoreState>((set) => ({
 
     setSelectedPayment: (payment) => set({ selectedPayment: payment }),
     setClonedTransactionData: (data) => set({ clonedTransactionData: data }),
+    setSelectedTransactionId: (id) => set({ selectedTransactionId: id }),
 
     closeAllModals: () => set({
         isEditPaymentModalOpen: false,

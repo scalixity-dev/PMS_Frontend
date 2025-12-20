@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { X, ChevronLeft, Check } from 'lucide-react';
-import DatePicker from '@/components/ui/DatePicker';
 import CustomDropdown from '../../../components/CustomDropdown';
 
 import { useTransactionStore } from '../store/transactionStore';
@@ -10,7 +9,7 @@ interface RefundRentModalProps {
 }
 
 interface RefundFormData {
-    receiver: Date | undefined;
+    receiver: string;
     amount: string;
     method: string;
     paymentDetails: string;
@@ -23,11 +22,14 @@ const RefundRentModal: React.FC<RefundRentModalProps> = ({ onConfirm }) => {
     const isOpen = isRefundModalOpen;
     const onClose = () => setRefundModalOpen(false);
     // Form State
-    const [receiver, setReceiver] = useState<Date | undefined>(undefined);
+    const [receiver, setReceiver] = useState('');
     const [amount, setAmount] = useState('');
     const [method, setMethod] = useState('');
     const [paymentDetails, setPaymentDetails] = useState('');
     const [confirmRefund, setConfirmRefund] = useState(false);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [uploadError, setUploadError] = useState<string>('');
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     // Prevent scrolling when modal is open
     useEffect(() => {
@@ -41,6 +43,41 @@ const RefundRentModal: React.FC<RefundRentModalProps> = ({ onConfirm }) => {
         };
     }, [isOpen]);
 
+    const handleFileClick = () => {
+        setUploadError('');
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validate file size (10MB limit)
+        const maxSize = 10 * 1024 * 1024;
+        if (file.size > maxSize) {
+            setUploadError('File size must be less than 10MB');
+            return;
+        }
+
+        // Validate file type (documents and images)
+        const allowedTypes = [
+            'application/pdf',
+            'image/jpeg',
+            'image/jpg',
+            'image/png',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        ];
+        if (!allowedTypes.includes(file.type)) {
+            setUploadError('Please upload a PDF, image, or Word document');
+            return;
+        }
+
+        setSelectedFile(file);
+        setUploadError('');
+        // TODO: Implement actual file upload to server
+    };
+
     const handleConfirm = () => {
         if (onConfirm) {
             onConfirm({
@@ -49,8 +86,10 @@ const RefundRentModal: React.FC<RefundRentModalProps> = ({ onConfirm }) => {
                 method,
                 paymentDetails,
                 confirmRefund,
+                file: selectedFile,
             });
         }
+        // TODO: Handle file upload before closing if selectedFile exists
         onClose();
     };
 
@@ -79,15 +118,20 @@ const RefundRentModal: React.FC<RefundRentModalProps> = ({ onConfirm }) => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         {/* Receiver */}
                         <div>
-                            <label className={labelClasses}>Receiver</label>
-                            <div className="relative">
-                                <DatePicker
-                                    value={receiver}
-                                    onChange={setReceiver}
-                                    placeholder="DD/MM/YYYY"
-                                    className={inputClasses}
-                                />
-                            </div>
+                            <CustomDropdown
+                                label="Receiver"
+                                value={receiver}
+                                onChange={setReceiver}
+                                placeholder="Select tenant"
+                                options={[
+                                    { value: 'tenant1', label: 'John Doe - Unit 101' },
+                                    { value: 'tenant2', label: 'Jane Smith - Unit 102' },
+                                    { value: 'tenant3', label: 'Bob Johnson - Unit 201' },
+                                    // TODO: Replace with actual tenant data from API
+                                ]}
+                                buttonClassName={inputClasses}
+                                dropdownClassName="z-50"
+                            />
                         </div>
 
                         {/* Amount */}
@@ -147,9 +191,33 @@ const RefundRentModal: React.FC<RefundRentModalProps> = ({ onConfirm }) => {
                         <span className="text-sm font-semibold text-[#2c3e50]">Confirm Refund</span>
                     </div>
 
+                    {/* File Upload Error/Success Message */}
+                    {uploadError && (
+                        <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-lg text-red-700 text-sm">
+                            {uploadError}
+                        </div>
+                    )}
+                    {selectedFile && !uploadError && (
+                        <div className="mb-4 p-3 bg-green-100 border border-green-300 rounded-lg text-green-700 text-sm">
+                            File selected: {selectedFile.name}
+                        </div>
+                    )}
+
                     {/* Footer Actions */}
                     <div className="flex items-center gap-4">
-                        <button className="flex-1 py-3 px-6 bg-[#5F6D7E] text-white rounded-lg font-medium hover:bg-[#4a5563] transition-colors shadow-lg">
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            className="hidden"
+                            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                            onChange={handleFileChange}
+                            aria-label="Upload refund receipt or document"
+                        />
+                        <button
+                            onClick={handleFileClick}
+                            className="flex-1 py-3 px-6 bg-[#5F6D7E] text-white rounded-lg font-medium hover:bg-[#4a5563] transition-colors shadow-lg"
+                            aria-label="Upload file"
+                        >
                             Upload File
                         </button>
                         <button

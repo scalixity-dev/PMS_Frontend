@@ -168,7 +168,15 @@ const TransactionDetail: React.FC = () => {
                                     <button
                                         onClick={() => {
                                             setIsActionsOpen(false);
-                                            const dataToClone = { ...selectedPayment, ...mockSummaryData };
+                                            // Fallback to first activity for data if no specific payment selected
+                                            const defaultPayment = mockActivities.length > 0 ? {
+                                                amount: mockActivities[0].amount,
+                                                user: mockActivities[0].user,
+                                                date: mockActivities[0].date
+                                            } : {};
+                                            
+                                            const base = selectedPayment ?? defaultPayment;
+                                            const dataToClone = { ...base, ...mockSummaryData };
                                             setClonedTransactionData(dataToClone);
                                             navigate('/dashboard/accounting/transactions/clone');
                                         }}

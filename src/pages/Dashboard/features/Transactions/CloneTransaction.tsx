@@ -5,17 +5,20 @@ import CustomDropdown from '../../components/CustomDropdown';
 import DatePicker from '@/components/ui/DatePicker';
 import PayerPayeeDropdown from './components/PayerPayeeDropdown';
 import AddTenantModal from '../Tenants/components/AddTenantModal';
+import { useCreateTenant } from '@/hooks/useTenantQueries';
 
 import { useTransactionStore } from './store/transactionStore';
+import type { TransactionData } from './store/transactionStore';
 
 interface CloneTransactionState {
-    transactionData?: any;
+    transactionData?: TransactionData;
 }
 
 const CloneTransaction: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { clonedTransactionData } = useTransactionStore();
+    const createTenantMutation = useCreateTenant();
 
     // Prefer store data, fallback to location state
     const transactionData = clonedTransactionData || (location.state as CloneTransactionState)?.transactionData;
@@ -102,7 +105,19 @@ const CloneTransaction: React.FC = () => {
                     <AddTenantModal
                         isOpen={isAddTenantModalOpen}
                         onClose={() => setIsAddTenantModalOpen(false)}
-                        onSave={(data) => console.log('New Tenant Data:', data)}
+                        onSave={async (data) => {
+                            try {
+                                await createTenantMutation.mutateAsync({
+                                    firstName: data.firstName,
+                                    lastName: data.lastName,
+                                    phoneNumber: data.phone,
+                                    email: data.email,
+                                });
+                                setIsAddTenantModalOpen(false);
+                            } catch (error) {
+                                // Error handling is managed by the mutation
+                            }
+                        }}
                     />
 
                     {/* Lease */}

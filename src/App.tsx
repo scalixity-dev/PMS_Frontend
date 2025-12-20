@@ -173,8 +173,8 @@ const App: React.FC = () => {
               <Route path="/dashboard/properties" element={<Properties />} />
               <Route path="/dashboard/properties/import" element={<ImportProperties />} />
               <Route path="/dashboard/accounting/transactions" element={<Transactions />} />
-              <Route path="/dashboard/accounting/transactions/:id" element={<TransactionDetail />} />
               <Route path="/dashboard/accounting/transactions/clone" element={<CloneTransaction />} />
+              <Route path="/dashboard/accounting/transactions/:id" element={<TransactionDetail />} />
               <Route path="/dashboard/accounting/transactions/income/add" element={<AddIncomeInvoice />} />
               <Route path="/dashboard/accounting/transactions/income-payments" element={<IncomePayments />} />
               <Route path="/dashboard/accounting/transactions/recurring-income/add" element={<RecurringIncome />} />

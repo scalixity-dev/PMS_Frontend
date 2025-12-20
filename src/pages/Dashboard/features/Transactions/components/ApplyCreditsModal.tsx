@@ -29,6 +29,9 @@ const ApplyCreditsModal: React.FC<ApplyCreditsModalProps> = ({
     const [dateApplied, setDateApplied] = useState<Date | undefined>(undefined);
     const [applyAmount, setApplyAmount] = useState('');
     const [details, setDetails] = useState('');
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [uploadError, setUploadError] = useState<string>('');
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (isOpen) {
@@ -41,10 +44,46 @@ const ApplyCreditsModal: React.FC<ApplyCreditsModalProps> = ({
         };
     }, [isOpen]);
 
+    const handleFileClick = () => {
+        setUploadError('');
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validate file size (10MB limit)
+        const maxSize = 10 * 1024 * 1024;
+        if (file.size > maxSize) {
+            setUploadError('File size must be less than 10MB');
+            return;
+        }
+
+        // Validate file type (documents and images)
+        const allowedTypes = [
+            'application/pdf',
+            'image/jpeg',
+            'image/jpg',
+            'image/png',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        ];
+        if (!allowedTypes.includes(file.type)) {
+            setUploadError('Please upload a PDF, image, or Word document');
+            return;
+        }
+
+        setSelectedFile(file);
+        setUploadError('');
+        // TODO: Implement actual file upload to server
+    };
+
     const handleConfirm = () => {
         if (onConfirm) {
             onConfirm({ applyFrom, dateApplied, applyAmount, details });
         }
+        // TODO: Handle file upload before closing if selectedFile exists
         onClose();
     };
 
@@ -70,10 +109,10 @@ const ApplyCreditsModal: React.FC<ApplyCreditsModalProps> = ({
 
                 {/* Body */}
                 <div className="p-8 overflow-y-auto custom-scrollbar">
-                    {/* Amount Owned Pill */}
+                    {/* Amount Owed Pill */}
                     <div className="mb-6">
                         <div className="inline-block bg-[#7BD747] rounded-full px-6 py-3 shadow-md">
-                            <span className="text-white text-sm font-bold block mb-1">Amount Owned*</span>
+                            <span className="text-white text-sm font-bold block mb-1">Amount Owed*</span>
                             <CustomTextBox
                                 value={amountOwned}
                                 className="bg-[#E3EBDE] px-1 text-center"
@@ -142,9 +181,31 @@ const ApplyCreditsModal: React.FC<ApplyCreditsModalProps> = ({
                         />
                     </div>
 
+                    {/* File Upload Error/Success Message */}
+                    {uploadError && (
+                        <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-lg text-red-700 text-sm">
+                            {uploadError}
+                        </div>
+                    )}
+                    {selectedFile && !uploadError && (
+                        <div className="mb-4 p-3 bg-green-100 border border-green-300 rounded-lg text-green-700 text-sm">
+                            File selected: {selectedFile.name}
+                        </div>
+                    )}
+
                     {/* Footer Actions */}
                     <div className="flex items-center gap-4">
-                        <button className="flex-1 py-3 px-6 bg-[#5F6D7E] text-white rounded-lg font-medium hover:bg-[#4a5563] transition-colors shadow-lg">
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            className="hidden"
+                            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                            onChange={handleFileChange}
+                        />
+                        <button
+                            onClick={handleFileClick}
+                            className="flex-1 py-3 px-6 bg-[#5F6D7E] text-white rounded-lg font-medium hover:bg-[#4a5563] transition-colors shadow-lg"
+                        >
                             Upload File
                         </button>
                         <button

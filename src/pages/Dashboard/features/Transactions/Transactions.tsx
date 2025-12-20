@@ -1,7 +1,15 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Download, Check, Edit, Trash2, MoreHorizontal, ChevronDown } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
+import { useTransactionStore } from './store/transactionStore';
+import EditInvoiceModal from './components/EditInvoiceModal';
+import DeleteTransactionModal from './components/DeleteTransactionModal';
+import ApplyDepositsModal from './components/ApplyDepositsModal';
+import ApplyCreditsModal from './components/ApplyCreditsModal';
+import AddDiscountModal from './components/AddDiscountModal';
+import MarkAsPaidModal from './components/MarkAsPaidModal';
+import VoidTransactionModal from './components/VoidTransactionModal';
 
 // Mock Data
 const MOCK_TRANSACTIONS = [
@@ -60,6 +68,31 @@ const Transactions: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'All' | 'Income' | 'Expense'>('All');
     const [selectedItems, setSelectedItems] = useState<number[]>([]);
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+    const [moreMenuOpenId, setMoreMenuOpenId] = useState<number | null>(null);
+    const moreMenuRef = useRef<HTMLDivElement>(null);
+    
+    const { 
+        setEditInvoiceOpen, 
+        setDeleteTransactionOpen, 
+        setSelectedTransactionId,
+        setClonedTransactionData,
+        setApplyDepositsOpen,
+        setApplyCreditsOpen,
+        setAddDiscountOpen,
+        setMarkAsPaidOpen,
+        setVoidModalOpen
+    } = useTransactionStore();
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
+                setMoreMenuOpenId(null);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     // Filter State
     const [searchQuery, setSearchQuery] = useState('');
@@ -175,6 +208,20 @@ const Transactions: React.FC = () => {
 
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit">
+            {/* Modals */}
+            <EditInvoiceModal />
+            <DeleteTransactionModal 
+                onConfirm={() => {
+                    setDeleteTransactionOpen(false);
+                    setSelectedTransactionId(null);
+                }}
+            />
+            <ApplyDepositsModal />
+            <ApplyCreditsModal />
+            <AddDiscountModal />
+            <MarkAsPaidModal />
+            <VoidTransactionModal />
+            
             {/* Breadcrumb */}
             <div className="inline-flex items-center px-4 py-2 bg-[#DFE5E3] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
                 <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
@@ -444,16 +491,133 @@ const Transactions: React.FC = () => {
                                         </div>
 
                                         {/* Actions */}
-                                        <div className="flex items-center justify-end gap-3">
-                                            <button className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors">
+                                        <div className="flex items-center justify-end gap-3 relative">
+                                            <button 
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setSelectedTransactionId(item.id);
+                                                    setEditInvoiceOpen(true);
+                                                }}
+                                                className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
+                                            >
                                                 <Edit className="w-5 h-5" />
                                             </button>
-                                            <button className="text-red-500 hover:text-red-600 transition-colors">
+                                            <button 
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setSelectedTransactionId(item.id);
+                                                    setDeleteTransactionOpen(true);
+                                                }}
+                                                className="text-red-500 hover:text-red-600 transition-colors"
+                                            >
                                                 <Trash2 className="w-5 h-5" />
                                             </button>
-                                            <button className="text-gray-400 hover:text-gray-600 transition-colors">
-                                                <MoreHorizontal className="w-5 h-5" />
-                                            </button>
+                                            <div className="relative" ref={moreMenuOpenId === item.id ? moreMenuRef : null}>
+                                                <button 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setMoreMenuOpenId(moreMenuOpenId === item.id ? null : item.id);
+                                                    }}
+                                                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                                                >
+                                                    <MoreHorizontal className="w-5 h-5" />
+                                                </button>
+                                                {moreMenuOpenId === item.id && (
+                                                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-100">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setMoreMenuOpenId(null);
+                                                                const dataToPass = {
+                                                                    amount: `₹${item.total.toLocaleString()}`,
+                                                                    user: item.contact,
+                                                                    date: item.dueDate,
+                                                                    category: item.category,
+                                                                    property: item.property
+                                                                };
+                                                                setClonedTransactionData(dataToPass);
+                                                                navigate('/dashboard/accounting/transactions/recurring-expense/add');
+                                                            }}
+                                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                        >
+                                                            Make recurring
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setMoreMenuOpenId(null);
+                                                                const dataToClone = {
+                                                                    amount: `₹${item.total.toLocaleString()}`,
+                                                                    user: item.contact,
+                                                                    date: item.dueDate,
+                                                                    category: item.category,
+                                                                    property: item.property
+                                                                };
+                                                                setClonedTransactionData(dataToClone);
+                                                                navigate('/dashboard/accounting/transactions/clone');
+                                                            }}
+                                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                        >
+                                                            Clone
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setMoreMenuOpenId(null);
+                                                                setSelectedTransactionId(item.id);
+                                                                setApplyDepositsOpen(true);
+                                                            }}
+                                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                        >
+                                                            Apply deposits
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setMoreMenuOpenId(null);
+                                                                setSelectedTransactionId(item.id);
+                                                                setApplyCreditsOpen(true);
+                                                            }}
+                                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                        >
+                                                            Apply credits
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setMoreMenuOpenId(null);
+                                                                setSelectedTransactionId(item.id);
+                                                                setAddDiscountOpen(true);
+                                                            }}
+                                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                        >
+                                                            Add discount
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setMoreMenuOpenId(null);
+                                                                setSelectedTransactionId(item.id);
+                                                                setMarkAsPaidOpen(true);
+                                                            }}
+                                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                        >
+                                                            Mark as paid
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setMoreMenuOpenId(null);
+                                                                setSelectedTransactionId(item.id);
+                                                                setVoidModalOpen(true);
+                                                            }}
+                                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                        >
+                                                            Void
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 ))}

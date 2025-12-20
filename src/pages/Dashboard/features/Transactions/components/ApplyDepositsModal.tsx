@@ -29,6 +29,15 @@ const ApplyDepositsModal: React.FC<ApplyDepositsModalProps> = ({
     const [dateApplied, setDateApplied] = useState<Date | undefined>(undefined);
     const [applyAmount, setApplyAmount] = useState('');
     const [details, setDetails] = useState('');
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [uploadError, setUploadError] = useState<string>('');
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const [fieldErrors, setFieldErrors] = useState<{
+        applyFrom?: string;
+        dateApplied?: string;
+        applyAmount?: string;
+        details?: string;
+    }>({});
 
     useEffect(() => {
         if (isOpen) {
@@ -41,10 +50,82 @@ const ApplyDepositsModal: React.FC<ApplyDepositsModalProps> = ({
         };
     }, [isOpen]);
 
+    const handleFileClick = () => {
+        setUploadError('');
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validate file size (10MB limit)
+        const maxSize = 10 * 1024 * 1024;
+        if (file.size > maxSize) {
+            setUploadError('File size must be less than 10MB');
+            return;
+        }
+
+        // Validate file type (documents and images)
+        const allowedTypes = [
+            'application/pdf',
+            'image/jpeg',
+            'image/jpg',
+            'image/png',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        ];
+        if (!allowedTypes.includes(file.type)) {
+            setUploadError('Please upload a PDF, image, or Word document');
+            return;
+        }
+
+        setSelectedFile(file);
+        setUploadError('');
+        // TODO: Implement actual file upload to server
+    };
+
     const handleConfirm = () => {
+        // Reset field errors
+        const errors: typeof fieldErrors = {};
+
+        // Validate applyFrom
+        if (!applyFrom || applyFrom.trim() === '') {
+            errors.applyFrom = 'Please select where to apply from';
+        }
+
+        // Validate dateApplied
+        if (!dateApplied || !(dateApplied instanceof Date) || isNaN(dateApplied.getTime())) {
+            errors.dateApplied = 'Please select a valid date';
+        }
+
+        // Validate applyAmount
+        const amountNum = parseFloat(applyAmount);
+        if (!applyAmount || applyAmount.trim() === '') {
+            errors.applyAmount = 'Please enter an amount';
+        } else if (isNaN(amountNum) || amountNum <= 0) {
+            errors.applyAmount = 'Amount must be a positive number';
+        }
+
+        // Validate details
+        if (!details || details.trim() === '') {
+            errors.details = 'Please provide details';
+        }
+
+        // If there are errors, set them and don't proceed
+        if (Object.keys(errors).length > 0) {
+            setFieldErrors(errors);
+            return;
+        }
+
+        // Clear any previous errors
+        setFieldErrors({});
+
+        // All validation passed, proceed with confirm
         if (onConfirm) {
             onConfirm({ applyFrom, dateApplied, applyAmount, details });
         }
+        // TODO: Handle file upload before closing if selectedFile exists
         onClose();
     };
 
@@ -70,10 +151,10 @@ const ApplyDepositsModal: React.FC<ApplyDepositsModalProps> = ({
 
                 {/* Body */}
                 <div className="p-8 overflow-y-auto custom-scrollbar">
-                    {/* Amount Owned Pill */}
+                    {/* Amount Owed Pill */}
                     <div className="mb-6">
                         <div className="inline-block bg-[#7BD747] rounded-full px-6 py-3 shadow-md">
-                            <span className="text-white text-sm font-bold block mb-1">Amount Owned*</span>
+                            <span className="text-white text-sm font-bold block mb-1">Amount Owed*</span>
                             <CustomTextBox
                                 value={amountOwned}
                                 className="bg-[#E3EBDE] px-1 text-center"
@@ -97,6 +178,9 @@ const ApplyDepositsModal: React.FC<ApplyDepositsModalProps> = ({
                             buttonClassName={inputClasses}
                             dropdownClassName="z-50"
                         />
+                        {fieldErrors.applyFrom && (
+                            <p className="text-red-600 text-xs mt-1 ml-1">{fieldErrors.applyFrom}</p>
+                        )}
                     </div>
 
                     {/* Help text */}
@@ -116,6 +200,9 @@ const ApplyDepositsModal: React.FC<ApplyDepositsModalProps> = ({
                                     className={inputClasses}
                                 />
                             </div>
+                            {fieldErrors.dateApplied && (
+                                <p className="text-red-600 text-xs mt-1 ml-1">{fieldErrors.dateApplied}</p>
+                            )}
                         </div>
 
                         {/* Apply Amount */}
@@ -128,6 +215,9 @@ const ApplyDepositsModal: React.FC<ApplyDepositsModalProps> = ({
                                 value={applyAmount}
                                 onChange={(e) => setApplyAmount(e.target.value)}
                             />
+                            {fieldErrors.applyAmount && (
+                                <p className="text-red-600 text-xs mt-1 ml-1">{fieldErrors.applyAmount}</p>
+                            )}
                         </div>
                     </div>
 
@@ -140,11 +230,36 @@ const ApplyDepositsModal: React.FC<ApplyDepositsModalProps> = ({
                             value={details}
                             onChange={(e) => setDetails(e.target.value)}
                         />
+                        {fieldErrors.details && (
+                            <p className="text-red-600 text-xs mt-1 ml-1">{fieldErrors.details}</p>
+                        )}
                     </div>
+
+                    {/* File Upload Error/Success Message */}
+                    {uploadError && (
+                        <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-lg text-red-700 text-sm">
+                            {uploadError}
+                        </div>
+                    )}
+                    {selectedFile && !uploadError && (
+                        <div className="mb-4 p-3 bg-green-100 border border-green-300 rounded-lg text-green-700 text-sm">
+                            File selected: {selectedFile.name}
+                        </div>
+                    )}
 
                     {/* Footer Actions */}
                     <div className="flex items-center gap-4">
-                        <button className="flex-1 py-3 px-6 bg-[#5F6D7E] text-white rounded-lg font-medium hover:bg-[#4a5563] transition-colors shadow-lg">
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            className="hidden"
+                            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                            onChange={handleFileChange}
+                        />
+                        <button
+                            onClick={handleFileClick}
+                            className="flex-1 py-3 px-6 bg-[#5F6D7E] text-white rounded-lg font-medium hover:bg-[#4a5563] transition-colors shadow-lg"
+                        >
                             Upload File
                         </button>
                         <button

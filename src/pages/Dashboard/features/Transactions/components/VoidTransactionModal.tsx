@@ -12,6 +12,8 @@ const VoidTransactionModal: React.FC<VoidTransactionModalProps> = ({ onConfirm }
     const isOpen = isVoidModalOpen;
     const onClose = () => setVoidModalOpen(false);
     const [reason, setReason] = useState('');
+    const [reasonError, setReasonError] = useState('');
+    const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
     useEffect(() => {
         if (isOpen) {
@@ -25,8 +27,19 @@ const VoidTransactionModal: React.FC<VoidTransactionModalProps> = ({ onConfirm }
     }, [isOpen]);
 
     const handleConfirm = () => {
+        // Validate reason is not empty
+        const trimmedReason = reason.trim();
+        if (!trimmedReason || trimmedReason === '') {
+            setReasonError('Please provide a reason for voiding this transaction');
+            textareaRef.current?.focus();
+            return;
+        }
+
+        // Clear any previous errors
+        setReasonError('');
+
         if (onConfirm) {
-            onConfirm(reason);
+            onConfirm(trimmedReason);
         }
         onClose();
     };
@@ -55,13 +68,20 @@ const VoidTransactionModal: React.FC<VoidTransactionModalProps> = ({ onConfirm }
                     </p>
 
                     <div className="mb-6">
-                        <label className="block text-sm font-bold text-[#2c3e50] mb-2">Reasons*</label>
+                        <label className="block text-sm font-bold text-[#2c3e50] mb-2">Reason*</label>
                         <textarea
+                            ref={textareaRef}
                             placeholder="Add some details*"
                             className="w-full bg-white p-4 rounded-lg border border-gray-300 outline-none text-gray-700 placeholder-gray-500 font-medium h-40 resize-none focus:ring-1 focus:ring-[#3A6D6C] focus:border-[#3A6D6C]"
                             value={reason}
-                            onChange={(e) => setReason(e.target.value)}
+                            onChange={(e) => {
+                                setReason(e.target.value);
+                                if (reasonError) setReasonError('');
+                            }}
                         />
+                        {reasonError && (
+                            <p className="text-red-600 text-xs mt-1 ml-1">{reasonError}</p>
+                        )}
                     </div>
 
                     <p className="text-gray-700 text-sm mb-8 leading-relaxed">
