@@ -63,11 +63,16 @@ const Recurring: React.FC = () => {
     const [selectedItems, setSelectedItems] = useState<number[]>([]);
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
     const dropdownContainerRef = useRef<HTMLDivElement>(null);
+    const [moreMenuOpenId, setMoreMenuOpenId] = useState<number | null>(null);
+    const moreMenuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (activeDropdown && dropdownContainerRef.current && !dropdownContainerRef.current.contains(event.target as Node)) {
                 setActiveDropdown(null);
+            }
+            if (moreMenuOpenId !== null && moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
+                setMoreMenuOpenId(null);
             }
         };
 
@@ -75,8 +80,7 @@ const Recurring: React.FC = () => {
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [activeDropdown]);
-    const [moreMenuOpenId, setMoreMenuOpenId] = useState<number | null>(null);
+    }, [activeDropdown, moreMenuOpenId]);
     const [isPostInvoiceModalOpen, setIsPostInvoiceModalOpen] = useState(false);
     const [selectedRecurringId, setSelectedRecurringId] = useState<number | null>(null);
 
@@ -378,7 +382,10 @@ const Recurring: React.FC = () => {
                                     <MoreHorizontal className="w-10 h-6 bg-gray-200 rounded-full p-0.5" />
                                 </button>
                                 {moreMenuOpenId === item.id && (
-                                    <div className="absolute top-full right-0 mt-2 bg-white rounded-md shadow-xl border border-gray-100 w-48 z-50 overflow-hidden">
+                                    <div
+                                        ref={moreMenuRef}
+                                        className="absolute top-full right-0 mt-2 bg-white rounded-md shadow-xl border border-gray-100 w-48 z-50 overflow-hidden"
+                                    >
                                         <button
                                             onClick={() => {
                                                 setSelectedRecurringId(item.id);
