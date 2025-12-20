@@ -152,9 +152,13 @@ const Recurring: React.FC = () => {
                     if (filter === 'today') {
                         return itemDate >= startOfDay && itemDate < endOfDay;
                     } else if (filter === 'this_week') {
-                        const firstDayOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
-                        const lastDayOfWeek = new Date(today.setDate(today.getDate() - today.getDay() + 6));
-                        return itemDate >= firstDayOfWeek && itemDate <= lastDayOfWeek;
+                        const now = new Date();
+                        const firstDayOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+                        firstDayOfWeek.setHours(0, 0, 0, 0);
+                        const endOfWeek = new Date(firstDayOfWeek);
+                        endOfWeek.setDate(firstDayOfWeek.getDate() + 6);
+                        endOfWeek.setHours(23, 59, 59, 999);
+                        return itemDate >= firstDayOfWeek && itemDate <= endOfWeek;
                     } else if (filter === 'this_month') {
                         const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
                         const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
@@ -405,7 +409,7 @@ const Recurring: React.FC = () => {
                                         </button>
                                         <button
                                             onClick={() => {
-                                                setSelectedTransactionId(item.id.toString());
+                                                setSelectedTransactionId(item.id);
                                                 setDeleteTransactionOpen(true);
                                                 setMoreMenuOpenId(null);
                                             }}
