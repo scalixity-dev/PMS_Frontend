@@ -189,8 +189,8 @@ const App: React.FC = () => {
               <Route path="/dashboard/accounting/transactions/deposit/add" element={<Deposit />} />
               <Route path="/dashboard/accounting/transactions/credits/add" element={<Credits />} />
               <Route path="/dashboard/accounting/transactions/expense-payments" element={<ExpensePayments />} />
-              <Route path="/dashboard/accounting/payments" element={<Payments />} />
-              <Route path="/dashboard/accounting/recurring" element={<Recurring />} />
+              <Route path="/dashboard/accounting/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
+              <Route path="/dashboard/accounting/recurring" element={<ProtectedRoute><Recurring /></ProtectedRoute>} />
               <Route path="/dashboard/maintenance/request" element={<AddMaintenanceRequest />} />
               <Route path="/dashboard/maintenance/requests" element={<Requests />} />
               <Route path="/dashboard/maintenance/requests/:id" element={<MaintenanceRequestsDetail />} />

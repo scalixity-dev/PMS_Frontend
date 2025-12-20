@@ -93,6 +93,7 @@ const Transactions: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'All' | 'Income' | 'Expense'>('All');
     const [selectedItems, setSelectedItems] = useState<number[]>([]);
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+    const moneyDropdownRef = useRef<HTMLDivElement>(null);
     const [moreMenuOpenId, setMoreMenuOpenId] = useState<number | null>(null);
     const moreMenuRef = useRef<HTMLDivElement>(null);
 
@@ -114,10 +115,13 @@ const Transactions: React.FC = () => {
             if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
                 setMoreMenuOpenId(null);
             }
+            if (activeDropdown && moneyDropdownRef.current && !moneyDropdownRef.current.contains(event.target as Node)) {
+                setActiveDropdown(null);
+            }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+    }, [activeDropdown, moreMenuOpenId]);
 
     // Filter State
     const [searchQuery, setSearchQuery] = useState('');
@@ -291,7 +295,7 @@ const Transactions: React.FC = () => {
                         Transactions
                     </button>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3" ref={moneyDropdownRef}>
                         {/* Money In Dropdown */}
                         <div className="relative">
                             <button
@@ -426,7 +430,7 @@ const Transactions: React.FC = () => {
 
                         {/* Paid Expense */}
                         <div className="p-4 bg-[#7BD747] rounded-full flex flex-col justify-center items-center h-24">
-                            <span className="text-white text-sm font-medium mb-2">Paid expanse</span>
+                            <span className="text-white text-sm font-medium mb-2">Paid Expense</span>
                             <div className="bg-[#E3EBDE] px-6 py-2 rounded-full w-[80%] text-center shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.15)]">
                                 <span className="text-gray-600 text-lg font-bold">₹45,000.00</span>
                             </div>

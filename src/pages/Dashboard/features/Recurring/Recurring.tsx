@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Check, MoreHorizontal, Settings, ChevronDown } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
@@ -62,6 +62,20 @@ const Recurring: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'All' | 'Income' | 'Expense'>('All');
     const [selectedItems, setSelectedItems] = useState<number[]>([]);
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+    const dropdownContainerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (activeDropdown && dropdownContainerRef.current && !dropdownContainerRef.current.contains(event.target as Node)) {
+                setActiveDropdown(null);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [activeDropdown]);
     const [moreMenuOpenId, setMoreMenuOpenId] = useState<number | null>(null);
     const [isPostInvoiceModalOpen, setIsPostInvoiceModalOpen] = useState(false);
     const [selectedRecurringId, setSelectedRecurringId] = useState<number | null>(null);
@@ -126,7 +140,31 @@ const Recurring: React.FC = () => {
             const matchesClient = filters.client.length === 0 || filters.client.some(c => item.contact.toLowerCase().includes(c.toLowerCase()));
             const matchesProperty = filters.property.length === 0 || filters.property.some(p => item.property.toLowerCase().includes(p.toLowerCase()));
 
-            return matchesSearch && matchesClient && matchesProperty;
+            // Date Filter
+            let matchesDate = true;
+            if (filters.date.length > 0) {
+                const itemDate = new Date(item.nextDate);
+                const today = new Date();
+                const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+
+                matchesDate = filters.date.some(filter => {
+                    if (filter === 'today') {
+                        return itemDate >= startOfDay && itemDate < endOfDay;
+                    } else if (filter === 'this_week') {
+                        const firstDayOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
+                        const lastDayOfWeek = new Date(today.setDate(today.getDate() - today.getDay() + 6));
+                        return itemDate >= firstDayOfWeek && itemDate <= lastDayOfWeek;
+                    } else if (filter === 'this_month') {
+                        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                        const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                        return itemDate >= startOfMonth && itemDate <= endOfMonth;
+                    }
+                    return false;
+                });
+            }
+
+            return matchesSearch && matchesClient && matchesProperty && matchesDate;
         });
     }, [activeTab, searchQuery, filters]);
 
@@ -193,7 +231,7 @@ const Recurring: React.FC = () => {
                         Recurring
                     </button>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3" ref={dropdownContainerRef}>
                         {/* Money In */}
                         <div className="relative">
                             <button
@@ -205,7 +243,12 @@ const Recurring: React.FC = () => {
                             </button>
                             {activeDropdown === 'money_in' && (
                                 <div className="absolute top-full left-0 mt-2 bg-white rounded-md shadow-xl border border-gray-100 w-48 z-50 overflow-hidden">
-                                    <button onClick={() => navigate('/dashboard/accounting/transactions/recurring-income/add')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Recurring income</button>
+                                    <button onClick={() => navigate('/dashboard/accounting/transactions/income/add')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Income invoice</button>
+                                    <button onClick={() => navigate('/dashboard/accounting/transactions/income-payments')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Income payment</button>
+                                    <button onClick={() => navigate('/dashboard/accounting/transactions/recurring-income/add')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Recurring income</button>
+                                    <button onClick={() => navigate('/dashboard/accounting/transactions/bulk-payments-income')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Bulk change</button>
+                                    <button onClick={() => navigate('/dashboard/accounting/transactions/deposit/add')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Deposit</button>
+                                    <button onClick={() => navigate('/dashboard/accounting/transactions/credits/add')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Credits</button>
                                 </div>
                             )}
                         </div>
@@ -221,7 +264,12 @@ const Recurring: React.FC = () => {
                             </button>
                             {activeDropdown === 'money_out' && (
                                 <div className="absolute top-full left-0 mt-2 bg-white rounded-md shadow-xl border border-gray-100 w-48 z-50 overflow-hidden">
-                                    <button onClick={() => navigate('/dashboard/accounting/transactions/recurring-expense/add')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Recurring expense</button>
+                                    <button onClick={() => navigate('/dashboard/accounting/transactions/expense/add')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Expense invoice</button>
+                                    <button onClick={() => navigate('/dashboard/accounting/transactions/expense-payments')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Expense payment</button>
+                                    <button onClick={() => navigate('/dashboard/accounting/transactions/recurring-expense/add')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Recurring expense</button>
+                                    <button onClick={() => navigate('/dashboard/accounting/transactions/bulk-payments-expense')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Bulk change</button>
+                                    <button onClick={() => navigate('/dashboard/accounting/transactions/return-deposit')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Return deposit</button>
+                                    <button onClick={() => navigate('/dashboard/accounting/transactions/apply-deposit')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Apply deposit</button>
                                 </div>
                             )}
                         </div>

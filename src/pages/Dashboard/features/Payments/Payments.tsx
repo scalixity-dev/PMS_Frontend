@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Download, Check, MoreHorizontal, ChevronDown } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
@@ -64,11 +64,31 @@ const Payments: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'All' | 'Income' | 'Expense' | 'Refund'>('All');
     const [selectedItems, setSelectedItems] = useState<number[]>([]);
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+    const dropdownContainerRef = useRef<HTMLDivElement>(null);
+    const [moreMenuOpenId, setMoreMenuOpenId] = useState<number | null>(null);
+    const moreMenuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (activeDropdown && dropdownContainerRef.current && !dropdownContainerRef.current.contains(event.target as Node)) {
+                setActiveDropdown(null);
+            }
+            if (moreMenuOpenId !== null && moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
+                setMoreMenuOpenId(null);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [activeDropdown, moreMenuOpenId]);
 
     // Using transaction store for shared modals state
     const {
         setDeleteTransactionOpen,
         setSelectedTransactionId,
+        setEditInvoiceOpen,
     } = useTransactionStore();
 
     // Filter State
@@ -213,7 +233,7 @@ const Payments: React.FC = () => {
                         Payments
                     </button>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3" ref={dropdownContainerRef}>
                         {/* Money In */}
                         <div className="relative">
                             <button
@@ -226,8 +246,12 @@ const Payments: React.FC = () => {
 
                             {activeDropdown === 'money_in' && (
                                 <div className="absolute top-full left-0 mt-2 bg-white rounded-md shadow-xl border border-gray-100 w-48 z-50 overflow-hidden">
-                                    <button onClick={() => navigate('/dashboard/accounting/transactions/income/add')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Income invoice</button>
-                                    <button onClick={() => navigate('/dashboard/accounting/transactions/income-payments')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Income payment</button>
+                                    <button onClick={() => navigate('/dashboard/accounting/transactions/income/add')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Income invoice</button>
+                                    <button onClick={() => navigate('/dashboard/accounting/transactions/income-payments')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Income payment</button>
+                                    <button onClick={() => navigate('/dashboard/accounting/transactions/recurring-income/add')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Recurring income</button>
+                                    <button onClick={() => navigate('/dashboard/accounting/transactions/bulk-payments-income')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Bulk change</button>
+                                    <button onClick={() => navigate('/dashboard/accounting/transactions/deposit/add')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Deposit</button>
+                                    <button onClick={() => navigate('/dashboard/accounting/transactions/credits/add')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Credits</button>
                                 </div>
                             )}
                         </div>
@@ -241,11 +265,14 @@ const Payments: React.FC = () => {
                                 Money Out
                                 <ChevronDown className="w-4 h-4" />
                             </button>
-                            {/* Add Dropdown content if needed, keeping simple for now or matching transactions logic */}
                             {activeDropdown === 'money_out' && (
                                 <div className="absolute top-full left-0 mt-2 bg-white rounded-md shadow-xl border border-gray-100 w-48 z-50 overflow-hidden">
-                                    <button onClick={() => navigate('/dashboard/accounting/transactions/expense/add')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Expense invoice</button>
-                                    <button onClick={() => navigate('/dashboard/accounting/transactions/expense-payments')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Expense payment</button>
+                                    <button onClick={() => navigate('/dashboard/accounting/transactions/expense/add')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Expense invoice</button>
+                                    <button onClick={() => navigate('/dashboard/accounting/transactions/expense-payments')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Expense payment</button>
+                                    <button onClick={() => navigate('/dashboard/accounting/transactions/recurring-expense/add')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Recurring expense</button>
+                                    <button onClick={() => navigate('/dashboard/accounting/transactions/bulk-payments-expense')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Bulk change</button>
+                                    <button onClick={() => navigate('/dashboard/accounting/transactions/return-deposit')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Return deposit</button>
+                                    <button onClick={() => navigate('/dashboard/accounting/transactions/apply-deposit')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Apply deposit</button>
                                 </div>
                             )}
                         </div>
@@ -273,7 +300,7 @@ const Payments: React.FC = () => {
 
                         {/* Paid Expense */}
                         <div className="p-4 bg-[#7BD747] rounded-full flex flex-col justify-center items-center h-24">
-                            <span className="text-white text-sm font-medium mb-2">Paid expanse</span>
+                            <span className="text-white text-sm font-medium mb-2">Paid Expense</span>
                             <div className="bg-[#E3EBDE] px-6 py-2 rounded-full w-[80%] text-center shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.15)]">
                                 <span className="text-gray-600 text-lg font-bold">₹45,000.00</span>
                             </div>
@@ -376,9 +403,64 @@ const Payments: React.FC = () => {
 
                             {/* Actions */}
                             <div className="flex justify-end relative">
-                                <button className="text-gray-600 hover:text-gray-600">
-                                    <MoreHorizontal className="w-10 h-6  bg-gray-200 rounded-full p-0.5" />
-                                </button>
+                                {/* Actions */}
+                                <div className="flex justify-end relative">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setMoreMenuOpenId(moreMenuOpenId === item.id ? null : item.id);
+                                        }}
+                                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                                        aria-label="Actions"
+                                        aria-expanded={moreMenuOpenId === item.id}
+                                    >
+                                        <MoreHorizontal className="w-5 h-5" />
+                                    </button>
+                                    {moreMenuOpenId === item.id && (
+                                        <div
+                                            ref={moreMenuRef}
+                                            className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-100 overflow-hidden"
+                                            role="menu"
+                                        >
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setEditInvoiceOpen(true);
+                                                    setSelectedTransactionId(item.id);
+                                                    setMoreMenuOpenId(null);
+                                                }}
+                                                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                                                role="menuitem"
+                                            >
+                                                Edit
+                                            </button>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    // Assuming Refund functionality uses a similar modal or logic, placeholder for now or reuse existing
+                                                    console.log('Refund clicked', item.id);
+                                                    setMoreMenuOpenId(null);
+                                                }}
+                                                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                                                role="menuitem"
+                                            >
+                                                Refund
+                                            </button>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setDeleteTransactionOpen(true);
+                                                    setSelectedTransactionId(item.id);
+                                                    setMoreMenuOpenId(null);
+                                                }}
+                                                className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                                                role="menuitem"
+                                            >
+                                                Delete
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     ))}
