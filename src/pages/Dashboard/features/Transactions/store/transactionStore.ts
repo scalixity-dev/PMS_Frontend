@@ -45,7 +45,7 @@ interface TransactionStoreState {
     isCloneTransactionOpen: boolean; // Just in case, though it's a page
 
     // Selected Data States
-    selectedPayment: { date: string; amount: string } | null;
+    selectedPayment: any | null; // Using any to accommodate varying mock data structures temporarily
     clonedTransactionData: TransactionData | null;
     selectedTransactionId: number | string | null;
 
@@ -61,7 +61,7 @@ interface TransactionStoreState {
     setEditInvoiceOpen: (isOpen: boolean) => void;
     setVoidModalOpen: (isOpen: boolean) => void;
 
-    setSelectedPayment: (payment: { date: string; amount: string } | null) => void;
+    setSelectedPayment: (payment: any | null) => void;
     setClonedTransactionData: (data: TransactionData | null) => void;
     setSelectedTransactionId: (id: number | string | null) => void;
 

@@ -13,6 +13,8 @@ import ApplyCreditsModal from '../Transactions/components/ApplyCreditsModal';
 import AddDiscountModal from '../Transactions/components/AddDiscountModal';
 import MarkAsPaidModal from '../Transactions/components/MarkAsPaidModal';
 import VoidTransactionModal from '../Transactions/components/VoidTransactionModal';
+import EditPaymentModal from './components/EditPaymentModal';
+import RefundPaymentModal from './components/RefundPaymentModal';
 import { utils, writeFile } from 'xlsx';
 
 // Mock Data
@@ -88,7 +90,9 @@ const Payments: React.FC = () => {
     const {
         setDeleteTransactionOpen,
         setSelectedTransactionId,
-        setEditInvoiceOpen,
+        setEditPaymentModalOpen,
+        setSelectedPayment,
+        setRefundModalOpen,
     } = useTransactionStore();
 
     // Filter State
@@ -217,6 +221,8 @@ const Payments: React.FC = () => {
             <AddDiscountModal />
             <MarkAsPaidModal />
             <VoidTransactionModal />
+            <EditPaymentModal />
+            <RefundPaymentModal />
 
             {/* Breadcrumb */}
             <div className="inline-flex items-center px-4 py-2 bg-[#DFE5E3] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
@@ -425,7 +431,8 @@ const Payments: React.FC = () => {
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    setEditInvoiceOpen(true);
+                                                    setEditPaymentModalOpen(true);
+                                                    setSelectedPayment(item);
                                                     setSelectedTransactionId(item.id);
                                                     setMoreMenuOpenId(null);
                                                 }}
@@ -437,8 +444,8 @@ const Payments: React.FC = () => {
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    // Assuming Refund functionality uses a similar modal or logic, placeholder for now or reuse existing
-                                                    console.log('Refund clicked', item.id);
+                                                    setSelectedPayment(item);
+                                                    setRefundModalOpen(true);
                                                     setMoreMenuOpenId(null);
                                                 }}
                                                 className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
