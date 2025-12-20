@@ -364,9 +364,9 @@ export default function DashboardSidebar({ open, setOpen, collapsed, setCollapse
                 setActiveDropdown={setActiveDropdown}
               >
                 <SidebarSubLink label="Transactions" to="/dashboard/accounting/transactions" isCurrentPath={isCurrentPath} />
-                <SidebarSubLink label="Payments" to="/accounting/payments" isCurrentPath={isCurrentPath} />
+                <SidebarSubLink label="Payments" to="/dashboard/accounting/payments" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Balances" to="/accounting/balances" isCurrentPath={isCurrentPath} />
-                <SidebarSubLink label="Recurring" to="/dashboard/accounting/transactions/recurring-expense/add" isCurrentPath={isCurrentPath} />
+                <SidebarSubLink label="Recurring" to="/dashboard/accounting/recurring" isCurrentPath={isCurrentPath} />
               </SidebarDropdownLink>
 
               {/* 6. Maintenance Dropdown */}

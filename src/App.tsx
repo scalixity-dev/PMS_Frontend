@@ -39,6 +39,8 @@ import Credits from './pages/Dashboard/features/Transactions/Credits';
 import IncomePayments from './pages/Dashboard/features/Transactions/IncomePayments';
 import ExpensePayments from './pages/Dashboard/features/Transactions/ExpensePayments';
 import AddExpenseInvoice from './pages/Dashboard/features/Transactions/AddExpenseInvoice';
+import Payments from './pages/Dashboard/features/Payments/Payments';
+import Recurring from './pages/Dashboard/features/Recurring/Recurring';
 import AddMaintenanceRequest from './pages/Dashboard/features/Maintenance/AddMaintenanceRequest';
 import Requests from './pages/Dashboard/features/Maintenance/MaintenanceRequests';
 import MaintenanceRequestsDetail from './pages/Dashboard/features/Maintenance/MaintenanceRequestsDetail';
@@ -187,6 +189,8 @@ const App: React.FC = () => {
               <Route path="/dashboard/accounting/transactions/deposit/add" element={<Deposit />} />
               <Route path="/dashboard/accounting/transactions/credits/add" element={<Credits />} />
               <Route path="/dashboard/accounting/transactions/expense-payments" element={<ExpensePayments />} />
+              <Route path="/dashboard/accounting/payments" element={<Payments />} />
+              <Route path="/dashboard/accounting/recurring" element={<Recurring />} />
               <Route path="/dashboard/maintenance/request" element={<AddMaintenanceRequest />} />
               <Route path="/dashboard/maintenance/requests" element={<Requests />} />
               <Route path="/dashboard/maintenance/requests/:id" element={<MaintenanceRequestsDetail />} />

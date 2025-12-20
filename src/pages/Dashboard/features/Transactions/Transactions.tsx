@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Download, Check, Edit, Trash2, MoreHorizontal, ChevronDown } from 'lucide-react';
+import { ChevronLeft, Download, Check, MoreHorizontal, ChevronDown } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import { useTransactionStore } from './store/transactionStore';
 import EditInvoiceModal from './components/EditInvoiceModal';
@@ -10,6 +10,7 @@ import ApplyCreditsModal from './components/ApplyCreditsModal';
 import AddDiscountModal from './components/AddDiscountModal';
 import MarkAsPaidModal from './components/MarkAsPaidModal';
 import VoidTransactionModal from './components/VoidTransactionModal';
+import { utils, writeFile } from 'xlsx';
 
 // Mock Data
 const MOCK_TRANSACTIONS = [
@@ -29,7 +30,7 @@ const MOCK_TRANSACTIONS = [
         id: 2,
         status: 'Paid',
         dueDate: '10 Nov',
-        date: '2025-12-10', // Changed date
+        date: '2025-12-10',
         category: 'Exterior / Roof & Gutters',
         property: 'Luxury',
         contact: 'Sam',
@@ -39,9 +40,21 @@ const MOCK_TRANSACTIONS = [
     },
     {
         id: 3,
+        status: 'Pending',
+        dueDate: '15 Dec',
+        date: '2025-12-15',
+        category: 'Plumbing',
+        property: 'Seaside Villa',
+        contact: 'Mike',
+        total: 1250.00,
+        balance: 1250.00,
+        type: 'expense'
+    },
+    {
+        id: 4,
         status: 'Paid',
         dueDate: '10 Nov',
-        date: '2025-11-25',
+        date: '2025-10-05',
         category: 'Exterior / Roof & Gutters',
         property: 'Luxury',
         contact: 'Sam',
@@ -50,16 +63,28 @@ const MOCK_TRANSACTIONS = [
         type: 'income'
     },
     {
-        id: 4,
-        status: 'Paid',
-        dueDate: '10 Nov',
-        date: '2025-10-05', // Changed date
-        category: 'Exterior / Roof & Gutters',
-        property: 'Luxury',
-        contact: 'Sam',
-        total: 88210.00,
-        balance: 88210.00,
-        type: 'income'
+        id: 5,
+        status: 'Pending',
+        dueDate: '20 Dec',
+        date: '2025-12-20',
+        category: 'Landscaping',
+        property: 'Green Acres',
+        contact: 'GreenThumb Landscaping',
+        total: 4500.00,
+        balance: 4500.00,
+        type: 'expense'
+    },
+    {
+        id: 6,
+        status: 'Void',
+        dueDate: '01 Nov',
+        date: '2025-11-01',
+        category: 'Maintenance',
+        property: 'Urban Loft',
+        contact: 'FixIt All',
+        total: 300.00,
+        balance: 0.00,
+        type: 'expense'
     }
 ];
 
@@ -70,10 +95,10 @@ const Transactions: React.FC = () => {
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
     const [moreMenuOpenId, setMoreMenuOpenId] = useState<number | null>(null);
     const moreMenuRef = useRef<HTMLDivElement>(null);
-    
-    const { 
-        setEditInvoiceOpen, 
-        setDeleteTransactionOpen, 
+
+    const {
+        setEditInvoiceOpen,
+        setDeleteTransactionOpen,
         setSelectedTransactionId,
         setClonedTransactionData,
         setApplyDepositsOpen,
@@ -206,11 +231,40 @@ const Transactions: React.FC = () => {
         }
     };
 
+    const handleExport = () => {
+        // Create a cleaner version of the data for export
+        const exportData = filteredTransactions.map(item => ({
+            Status: item.status,
+            'Due Date': item.dueDate,
+            Date: item.date,
+            Category: item.category,
+            Property: item.property,
+            Contact: item.contact,
+            Total: item.total,
+            Balance: item.balance,
+            Type: item.type
+        }));
+
+        // Create worksheet
+        const ws = utils.json_to_sheet(exportData);
+
+        // Create workbook
+        const wb = utils.book_new();
+        utils.book_append_sheet(wb, ws, "Transactions");
+
+        // Generate filename with current date
+        const date = new Date().toISOString().split('T')[0];
+        const fileName = `Transactions_${date}.xlsx`;
+
+        // Save file
+        writeFile(wb, fileName);
+    };
+
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit">
             {/* Modals */}
             <EditInvoiceModal />
-            <DeleteTransactionModal 
+            <DeleteTransactionModal
                 onConfirm={() => {
                     setDeleteTransactionOpen(false);
                     setSelectedTransactionId(null);
@@ -221,7 +275,7 @@ const Transactions: React.FC = () => {
             <AddDiscountModal />
             <MarkAsPaidModal />
             <VoidTransactionModal />
-            
+
             {/* Breadcrumb */}
             <div className="inline-flex items-center px-4 py-2 bg-[#DFE5E3] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
                 <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
@@ -349,36 +403,40 @@ const Transactions: React.FC = () => {
                             )}
                         </div>
 
-                        <button className="w-10 h-10 bg-[#3A6D6C] rounded-full flex items-center justify-center text-white hover:bg-[#2c5251] transition-colors shadow-sm">
+                        <button
+                            onClick={handleExport}
+                            className="w-10 h-10 bg-[#3A6D6C] rounded-full flex items-center justify-center text-white hover:bg-[#2c5251] transition-colors shadow-sm"
+                            title="Download Excel"
+                        >
                             <Download className="w-5 h-5" />
                         </button>
                     </div>
                 </div>
 
                 {/* Stats Cards */}
-                <div className="bg-[#f0f0f6] rounded-full p-2 mb-8 shadow-sm">
+                <div className="bg-[#f0f0f6] rounded-full p-4 mb-8 shadow-sm">
                     <div className="grid grid-cols-3 gap-4">
-                        {/* Outstanding */}
-                        <div className="p-4 rounded-3xl relative overflow-hidden group">
-                            <p className="text-gray-600 text-sm font-medium mb-1 ml-2">Outstanding</p>
-                            <div className="bg-[#7BD747] text-white text-xl font-bold py-3 px-6 rounded-full inline-block shadow-sm relative z-10 w-full">
-                                ₹ 50,000
+                        {/* Outstanding / Paid Income */}
+                        <div className="p-4 bg-[#7BD747] rounded-full flex flex-col justify-center items-center h-24">
+                            <span className="text-white text-sm font-medium mb-2">Paid Income</span>
+                            <div className="bg-[#E3EBDE] px-6 py-2 rounded-full w-[80%] text-center shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.15)]">
+                                <span className="text-gray-600 text-lg font-bold">₹45,000.00</span>
                             </div>
                         </div>
 
-                        {/* Paid */}
-                        <div className="p-4 rounded-3xl relative overflow-hidden group">
-                            <p className="text-gray-600 text-sm font-medium mb-1 ml-2">Paid</p>
-                            <div className="bg-[#7BD747] text-white text-xl font-bold py-3 px-6 rounded-full inline-block shadow-sm relative z-10 w-full">
-                                ₹ 80,000
+                        {/* Paid Expense */}
+                        <div className="p-4 bg-[#7BD747] rounded-full flex flex-col justify-center items-center h-24">
+                            <span className="text-white text-sm font-medium mb-2">Paid expanse</span>
+                            <div className="bg-[#E3EBDE] px-6 py-2 rounded-full w-[80%] text-center shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.15)]">
+                                <span className="text-gray-600 text-lg font-bold">₹45,000.00</span>
                             </div>
                         </div>
 
-                        {/* Overdue */}
-                        <div className="p-4 rounded-3xl relative overflow-hidden group">
-                            <p className="text-gray-600 text-sm font-medium mb-1 ml-2">Overdue</p>
-                            <div className="bg-[#7BD747] text-white text-xl font-bold py-3 px-6 rounded-full inline-block shadow-sm relative z-10 w-full">
-                                ₹ 10,000
+                        {/* Paid Refund */}
+                        <div className="p-4 bg-[#7BD747] rounded-full flex flex-col justify-center items-center h-24">
+                            <span className="text-white text-sm font-medium mb-2">Paid Refund</span>
+                            <div className="bg-[#E3EBDE] px-6 py-2 rounded-full w-[80%] text-center shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.15)]">
+                                <span className="text-gray-600 text-lg font-bold">₹ 00.00</span>
                             </div>
                         </div>
                     </div>
@@ -392,7 +450,7 @@ const Transactions: React.FC = () => {
                             onClick={() => setActiveTab(tab)}
                             className={`px-8 py-2 rounded-full text-sm font-medium transition-colors ${activeTab === tab
                                 ? 'bg-[#7BD747] text-white shadow-sm'
-                                : 'bg-gray-600 text-white hover:bg-gray-700'
+                                : 'bg-[#DDDDDD] text-black hover:bg-gray-300'
                                 }`}
                         >
                             {tab}
@@ -491,39 +549,42 @@ const Transactions: React.FC = () => {
                                         </div>
 
                                         {/* Actions */}
+                                        {/* Actions */}
                                         <div className="flex items-center justify-end gap-3 relative">
-                                            <button 
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setSelectedTransactionId(item.id);
-                                                    setEditInvoiceOpen(true);
-                                                }}
-                                                className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
-                                            >
-                                                <Edit className="w-5 h-5" />
-                                            </button>
-                                            <button 
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setSelectedTransactionId(item.id);
-                                                    setDeleteTransactionOpen(true);
-                                                }}
-                                                className="text-red-500 hover:text-red-600 transition-colors"
-                                            >
-                                                <Trash2 className="w-5 h-5" />
-                                            </button>
                                             <div className="relative" ref={moreMenuOpenId === item.id ? moreMenuRef : null}>
-                                                <button 
+                                                <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         setMoreMenuOpenId(moreMenuOpenId === item.id ? null : item.id);
                                                     }}
-                                                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                                                    className="text-gray-600 hover:text-gray-800 transition-colors"
                                                 >
-                                                    <MoreHorizontal className="w-5 h-5" />
+                                                    <MoreHorizontal className="w-10 h-6 bg-gray-200 rounded-full p-0.5" />
                                                 </button>
                                                 {moreMenuOpenId === item.id && (
-                                                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-100">
+                                                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-100 overflow-hidden">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setMoreMenuOpenId(null);
+                                                                setSelectedTransactionId(item.id);
+                                                                setEditInvoiceOpen(true);
+                                                            }}
+                                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"
+                                                        >
+                                                            Edit
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setMoreMenuOpenId(null);
+                                                                setSelectedTransactionId(item.id);
+                                                                setMarkAsPaidOpen(true);
+                                                            }}
+                                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"
+                                                        >
+                                                            Mark as paid
+                                                        </button>
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
@@ -538,7 +599,7 @@ const Transactions: React.FC = () => {
                                                                 setClonedTransactionData(dataToPass);
                                                                 navigate('/dashboard/accounting/transactions/recurring-expense/add');
                                                             }}
-                                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"
                                                         >
                                                             Make recurring
                                                         </button>
@@ -556,7 +617,7 @@ const Transactions: React.FC = () => {
                                                                 setClonedTransactionData(dataToClone);
                                                                 navigate('/dashboard/accounting/transactions/clone');
                                                             }}
-                                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"
                                                         >
                                                             Clone
                                                         </button>
@@ -567,7 +628,7 @@ const Transactions: React.FC = () => {
                                                                 setSelectedTransactionId(item.id);
                                                                 setApplyDepositsOpen(true);
                                                             }}
-                                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"
                                                         >
                                                             Apply deposits
                                                         </button>
@@ -578,7 +639,7 @@ const Transactions: React.FC = () => {
                                                                 setSelectedTransactionId(item.id);
                                                                 setApplyCreditsOpen(true);
                                                             }}
-                                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"
                                                         >
                                                             Apply credits
                                                         </button>
@@ -589,7 +650,7 @@ const Transactions: React.FC = () => {
                                                                 setSelectedTransactionId(item.id);
                                                                 setAddDiscountOpen(true);
                                                             }}
-                                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"
                                                         >
                                                             Add discount
                                                         </button>
@@ -598,22 +659,22 @@ const Transactions: React.FC = () => {
                                                                 e.stopPropagation();
                                                                 setMoreMenuOpenId(null);
                                                                 setSelectedTransactionId(item.id);
-                                                                setMarkAsPaidOpen(true);
+                                                                setVoidModalOpen(true);
                                                             }}
-                                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"
                                                         >
-                                                            Mark as paid
+                                                            Void
                                                         </button>
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 setMoreMenuOpenId(null);
                                                                 setSelectedTransactionId(item.id);
-                                                                setVoidModalOpen(true);
+                                                                setDeleteTransactionOpen(true);
                                                             }}
-                                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                            className="w-full px-4 py-2 text-left text-sm text-red-500 hover:bg-red-50 transition-colors"
                                                         >
-                                                            Void
+                                                            Delete
                                                         </button>
                                                     </div>
                                                 )}
