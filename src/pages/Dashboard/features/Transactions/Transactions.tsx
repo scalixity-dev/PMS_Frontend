@@ -1,33 +1,66 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Download, Check, Edit, Trash2, MoreHorizontal, ChevronDown } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
+import { useTransactionStore } from './store/transactionStore';
+import EditInvoiceModal from './components/EditInvoiceModal';
+import DeleteTransactionModal from './components/DeleteTransactionModal';
+import ApplyDepositsModal from './components/ApplyDepositsModal';
+import ApplyCreditsModal from './components/ApplyCreditsModal';
+import AddDiscountModal from './components/AddDiscountModal';
+import MarkAsPaidModal from './components/MarkAsPaidModal';
+import VoidTransactionModal from './components/VoidTransactionModal';
 
 // Mock Data
 const MOCK_TRANSACTIONS = [
     {
         id: 1,
         status: 'Paid',
-        dueDate: '08 Dec',
-        category: 'Deposit',
-        property: 'ABC',
-        contact: 'Atul',
-        total: 50000,
-        balance: 50000,
+        dueDate: '10 Nov',
+        date: '2025-12-25',
+        category: 'Exterior / Roof & Gutters',
+        property: 'Luxury',
+        contact: 'Sam',
+        total: 88210.00,
+        balance: 88210.00,
         type: 'income'
     },
     {
         id: 2,
-        status: 'Void',
-        dueDate: '08 Dec',
-        category: 'Deposit',
-        property: 'ABC',
-        contact: 'Atul',
-        total: 50000,
-        balance: 50000,
+        status: 'Paid',
+        dueDate: '10 Nov',
+        date: '2025-12-10', // Changed date
+        category: 'Exterior / Roof & Gutters',
+        property: 'Luxury',
+        contact: 'Sam',
+        total: 88210.00,
+        balance: 88210.00,
         type: 'income'
     },
-    // Add more mock data if needed to demonstrate scrolling/pagination
+    {
+        id: 3,
+        status: 'Paid',
+        dueDate: '10 Nov',
+        date: '2025-11-25',
+        category: 'Exterior / Roof & Gutters',
+        property: 'Luxury',
+        contact: 'Sam',
+        total: 88210.00,
+        balance: 88210.00,
+        type: 'income'
+    },
+    {
+        id: 4,
+        status: 'Paid',
+        dueDate: '10 Nov',
+        date: '2025-10-05', // Changed date
+        category: 'Exterior / Roof & Gutters',
+        property: 'Luxury',
+        contact: 'Sam',
+        total: 88210.00,
+        balance: 88210.00,
+        type: 'income'
+    }
 ];
 
 const Transactions: React.FC = () => {
@@ -35,6 +68,31 @@ const Transactions: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'All' | 'Income' | 'Expense'>('All');
     const [selectedItems, setSelectedItems] = useState<number[]>([]);
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+    const [moreMenuOpenId, setMoreMenuOpenId] = useState<number | null>(null);
+    const moreMenuRef = useRef<HTMLDivElement>(null);
+    
+    const { 
+        setEditInvoiceOpen, 
+        setDeleteTransactionOpen, 
+        setSelectedTransactionId,
+        setClonedTransactionData,
+        setApplyDepositsOpen,
+        setApplyCreditsOpen,
+        setAddDiscountOpen,
+        setMarkAsPaidOpen,
+        setVoidModalOpen
+    } = useTransactionStore();
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
+                setMoreMenuOpenId(null);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     // Filter State
     const [searchQuery, setSearchQuery] = useState('');
@@ -98,6 +156,26 @@ const Transactions: React.FC = () => {
         });
     }, [activeTab, searchQuery, filters]);
 
+    // Group items by date
+    const groupedTransactions = useMemo(() => {
+        const groups: Record<string, typeof MOCK_TRANSACTIONS> = {};
+
+        filteredTransactions.forEach(item => {
+            if (!groups[item.date]) {
+                groups[item.date] = [];
+            }
+            groups[item.date].push(item);
+        });
+
+        // Sort by date descending
+        return Object.keys(groups)
+            .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
+            .map(date => ({
+                date,
+                items: groups[date].sort((a, b) => b.id - a.id)
+            }));
+    }, [filteredTransactions]);
+
     const toggleSelection = (id: number) => {
         if (selectedItems.includes(id)) {
             setSelectedItems(selectedItems.filter(item => item !== id));
@@ -114,8 +192,36 @@ const Transactions: React.FC = () => {
         }
     };
 
+    const formatDatePill = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    };
+
+    const getStatusColor = (status: string) => {
+        switch (status.toLowerCase()) {
+            case 'paid': return 'bg-[#7BD747]';
+            case 'pending': return 'bg-orange-500';
+            case 'void': return 'bg-red-500';
+            default: return 'bg-gray-400';
+        }
+    };
+
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit">
+            {/* Modals */}
+            <EditInvoiceModal />
+            <DeleteTransactionModal 
+                onConfirm={() => {
+                    setDeleteTransactionOpen(false);
+                    setSelectedTransactionId(null);
+                }}
+            />
+            <ApplyDepositsModal />
+            <ApplyCreditsModal />
+            <AddDiscountModal />
+            <MarkAsPaidModal />
+            <VoidTransactionModal />
+            
             {/* Breadcrumb */}
             <div className="inline-flex items-center px-4 py-2 bg-[#DFE5E3] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
                 <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
@@ -325,48 +431,204 @@ const Transactions: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Table Body */}
-                <div className="flex flex-col gap-3 bg-[#F0F0F6] p-4 rounded-[2rem] rounded-t min-h-[400px]">
-                    {filteredTransactions.map((item) => (
-                        <div
-                            key={item.id}
-                            className="bg-white rounded-2xl px-6 py-4 grid grid-cols-[40px_1fr_1fr_1fr_1fr_1fr_1fr_1fr_100px] gap-4 items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                        >
-                            <div className="flex items-center justify-center">
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        toggleSelection(item.id);
-                                    }}
-                                    className="flex items-center justify-center"
-                                >
-                                    <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${selectedItems.includes(item.id) ? 'bg-[#7BD747]' : 'bg-gray-200'}`}>
-                                        {selectedItems.includes(item.id) && <Check className="w-3.5 h-3.5 text-white" />}
-                                    </div>
-                                </button>
+                {/* Table Body - Grouped by Date */}
+                <div className="flex flex-col gap-6 bg-[#F0F0F6] p-4 rounded-[2rem] rounded-t min-h-[400px]">
+                    {groupedTransactions.map((group) => (
+                        <div key={group.date}>
+                            {/* Date Pill */}
+                            <div className="mb-4">
+                                <span className="px-6 py-3 bg-gradient-to-r from-[#1bcb40] to-[#7cd947] text-white rounded-lg text-sm font-bold shadow-sm">
+                                    {formatDatePill(group.date)}
+                                </span>
                             </div>
 
+                            {/* Grouped Items */}
+                            <div className="flex flex-col gap-3">
+                                {group.items.map((item) => (
+                                    <div
+                                        key={item.id}
+                                        onClick={() => navigate(`/dashboard/accounting/transactions/${item.id}`)}
+                                        className="bg-white rounded-2xl px-6 py-4 grid grid-cols-[40px_1fr_1fr_1fr_1fr_1fr_1fr_1fr_100px] gap-4 items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                                    >
+                                        <div className="flex items-center justify-center">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    toggleSelection(item.id);
+                                                }}
+                                                className="flex items-center justify-center"
+                                            >
+                                                <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${selectedItems.includes(item.id) ? 'bg-[#7BD747]' : 'bg-gray-200'}`}>
+                                                    {selectedItems.includes(item.id) && <Check className="w-3.5 h-3.5 text-white" />}
+                                                </div>
+                                            </button>
+                                        </div>
 
-                            <div className="font-semibold text-gray-800 text-sm">{item.dueDate}</div>
-                            <div className="text-gray-800 text-sm font-semibold">{item.category}</div>
-                            <div className="text-gray-800 text-sm font-semibold">{item.property}</div>
-                            <div className="text-gray-800 text-sm font-semibold">{item.contact}</div>
-                            <div className="text-[#3A6D6C] text-sm font-bold">+{item.total.toLocaleString()}</div>
-                            <div className="text-gray-800 text-sm font-semibold">₹ {item.balance.toLocaleString()}</div>
+                                        {/* Status */}
+                                        <div className="flex items-center gap-2">
+                                            <div className={`w-2.5 h-2.5 rounded ${getStatusColor(item.status)}`}></div>
+                                            <span className="text-gray-800 text-sm font-medium">{item.status}</span>
+                                        </div>
 
-                            <div className="flex items-center justify-end gap-3">
-                                <button className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors">
-                                    <Edit className="w-5 h-5" />
-                                </button>
-                                <button className="text-red-500 hover:text-red-600 transition-colors">
-                                    <Trash2 className="w-5 h-5" />
-                                </button>
-                                <button className="text-gray-400 hover:text-gray-600 transition-colors">
-                                    <MoreHorizontal className="w-5 h-5" />
-                                </button>
+                                        {/* Due Date */}
+                                        <div className="font-semibold text-gray-800 text-sm">{item.dueDate}</div>
+
+                                        {/* Category */}
+                                        <div className="text-gray-800 text-sm font-semibold truncate" title={item.category}>{item.category}</div>
+
+                                        {/* Property */}
+                                        <div className="text-gray-800 text-sm font-semibold">{item.property}</div>
+
+                                        {/* Contact */}
+                                        <div className="text-gray-800 text-sm font-semibold">{item.contact}</div>
+
+                                        {/* Total */}
+                                        <div className="font-bold text-gray-900 text-sm">₹ {item.total.toLocaleString()}</div>
+
+                                        {/* Balance */}
+                                        <div className={`text-sm font-bold ${item.balance > 0 ? 'text-[#3A6D6C]' : 'text-gray-800'}`}>
+                                            ₹ {item.balance.toLocaleString()}
+                                        </div>
+
+                                        {/* Actions */}
+                                        <div className="flex items-center justify-end gap-3 relative">
+                                            <button 
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setSelectedTransactionId(item.id);
+                                                    setEditInvoiceOpen(true);
+                                                }}
+                                                className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
+                                            >
+                                                <Edit className="w-5 h-5" />
+                                            </button>
+                                            <button 
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setSelectedTransactionId(item.id);
+                                                    setDeleteTransactionOpen(true);
+                                                }}
+                                                className="text-red-500 hover:text-red-600 transition-colors"
+                                            >
+                                                <Trash2 className="w-5 h-5" />
+                                            </button>
+                                            <div className="relative" ref={moreMenuOpenId === item.id ? moreMenuRef : null}>
+                                                <button 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setMoreMenuOpenId(moreMenuOpenId === item.id ? null : item.id);
+                                                    }}
+                                                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                                                >
+                                                    <MoreHorizontal className="w-5 h-5" />
+                                                </button>
+                                                {moreMenuOpenId === item.id && (
+                                                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-100">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setMoreMenuOpenId(null);
+                                                                const dataToPass = {
+                                                                    amount: `₹${item.total.toLocaleString()}`,
+                                                                    user: item.contact,
+                                                                    date: item.dueDate,
+                                                                    category: item.category,
+                                                                    property: item.property
+                                                                };
+                                                                setClonedTransactionData(dataToPass);
+                                                                navigate('/dashboard/accounting/transactions/recurring-expense/add');
+                                                            }}
+                                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                        >
+                                                            Make recurring
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setMoreMenuOpenId(null);
+                                                                const dataToClone = {
+                                                                    amount: `₹${item.total.toLocaleString()}`,
+                                                                    user: item.contact,
+                                                                    date: item.dueDate,
+                                                                    category: item.category,
+                                                                    property: item.property
+                                                                };
+                                                                setClonedTransactionData(dataToClone);
+                                                                navigate('/dashboard/accounting/transactions/clone');
+                                                            }}
+                                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                        >
+                                                            Clone
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setMoreMenuOpenId(null);
+                                                                setSelectedTransactionId(item.id);
+                                                                setApplyDepositsOpen(true);
+                                                            }}
+                                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                        >
+                                                            Apply deposits
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setMoreMenuOpenId(null);
+                                                                setSelectedTransactionId(item.id);
+                                                                setApplyCreditsOpen(true);
+                                                            }}
+                                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                        >
+                                                            Apply credits
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setMoreMenuOpenId(null);
+                                                                setSelectedTransactionId(item.id);
+                                                                setAddDiscountOpen(true);
+                                                            }}
+                                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                        >
+                                                            Add discount
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setMoreMenuOpenId(null);
+                                                                setSelectedTransactionId(item.id);
+                                                                setMarkAsPaidOpen(true);
+                                                            }}
+                                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                        >
+                                                            Mark as paid
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setMoreMenuOpenId(null);
+                                                                setSelectedTransactionId(item.id);
+                                                                setVoidModalOpen(true);
+                                                            }}
+                                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                        >
+                                                            Void
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     ))}
+                    {groupedTransactions.length === 0 && (
+                        <div className="text-center py-10 text-gray-500">
+                            No transactions found.
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

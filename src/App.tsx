@@ -27,6 +27,7 @@ import AddProperty from './pages/Dashboard/features/Properties/AddProperty';
 import EditProperty from './pages/Dashboard/features/Properties/EditProperty';
 import Transactions from './pages/Dashboard/features/Transactions/Transactions';
 import AddIncomeInvoice from './pages/Dashboard/features/Transactions/AddIncomeInvoice';
+import CloneTransaction from './pages/Dashboard/features/Transactions/CloneTransaction';
 import RecurringIncome from './pages/Dashboard/features/Transactions/RecurringIncome';
 import RecurringExpense from './pages/Dashboard/features/Transactions/RecurringExpense';
 import ReturnDeposit from './pages/Dashboard/features/Transactions/ReturnDeposit';
@@ -69,6 +70,7 @@ import ServiceProsDetail from './pages/Dashboard/features/ServicePros/ServicePro
 import Application from './pages/Dashboard/features/Application/Application';
 import NewApplication from './pages/Dashboard/features/Application/NewApplication';
 import ProviderStatement from './pages/Dashboard/features/ServicePros/ProviderStatement';
+import TransactionDetail from './pages/Dashboard/features/Transactions/TransactionDetail';
 // import ListUnit from './pages/Dashboard/features/ListUnit/ListUnit';
 
 // Settings pages
@@ -171,6 +173,8 @@ const App: React.FC = () => {
               <Route path="/dashboard/properties" element={<Properties />} />
               <Route path="/dashboard/properties/import" element={<ImportProperties />} />
               <Route path="/dashboard/accounting/transactions" element={<Transactions />} />
+              <Route path="/dashboard/accounting/transactions/clone" element={<CloneTransaction />} />
+              <Route path="/dashboard/accounting/transactions/:id" element={<TransactionDetail />} />
               <Route path="/dashboard/accounting/transactions/income/add" element={<AddIncomeInvoice />} />
               <Route path="/dashboard/accounting/transactions/income-payments" element={<IncomePayments />} />
               <Route path="/dashboard/accounting/transactions/recurring-income/add" element={<RecurringIncome />} />
