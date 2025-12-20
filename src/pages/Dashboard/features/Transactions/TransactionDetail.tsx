@@ -384,7 +384,10 @@ const TransactionDetail: React.FC = () => {
                                                 <div>{activity.user}</div>
                                                 <div>
                                                     <button
-                                                        onClick={() => setRefundModalOpen(true)}
+                                                        onClick={() => {
+                                                            setSelectedPayment({ date: activity.date, amount: activity.amount });
+                                                            setRefundModalOpen(true);
+                                                        }}
                                                         className="bg-[#a8f090] text-green-800 px-4 py-1 rounded-full text-xs font-bold hover:bg-[#97e080]"
                                                     >
                                                         Refund
@@ -393,7 +396,10 @@ const TransactionDetail: React.FC = () => {
                                                 <div className="flex gap-2">
                                                     <button
                                                         className="text-[#3A6D6C] hover:text-[#2c5251]"
-                                                        onClick={() => setEditPaymentModalOpen(true)}
+                                                        onClick={() => {
+                                                            setSelectedPayment({ date: activity.date, amount: activity.amount });
+                                                            setEditPaymentModalOpen(true);
+                                                        }}
                                                     >
                                                         <Edit className="w-4 h-4" />
                                                     </button>

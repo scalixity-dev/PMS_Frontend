@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, ChevronLeft } from 'lucide-react';
 import CustomDropdown from '../../../components/CustomDropdown';
 import DatePicker from '@/components/ui/DatePicker';
+import { validateFile } from '@/utils/fileValidation';
 
 import { useTransactionStore } from '../store/transactionStore';
 
@@ -14,6 +15,7 @@ interface MarkAsPaidFormData {
     amountPaid: string;
     method: string;
     paymentDetails: string;
+    selectedFile: File | null;
 }
 
 const MarkAsPaidModal: React.FC<MarkAsPaidModalProps> = ({ onConfirm }) => {
@@ -27,6 +29,12 @@ const MarkAsPaidModal: React.FC<MarkAsPaidModalProps> = ({ onConfirm }) => {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [uploadError, setUploadError] = useState<string>('');
     const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const [fieldErrors, setFieldErrors] = useState<{
+        datePaid?: string;
+        amountPaid?: string;
+        method?: string;
+        paymentDetails?: string;
+    }>({});
 
     useEffect(() => {
         if (isOpen) {
@@ -48,37 +56,56 @@ const MarkAsPaidModal: React.FC<MarkAsPaidModalProps> = ({ onConfirm }) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Validate file size (10MB limit)
-        const maxSize = 10 * 1024 * 1024;
-        if (file.size > maxSize) {
-            setUploadError('File size must be less than 10MB');
-            return;
-        }
-
-        // Validate file type (documents and images)
-        const allowedTypes = [
-            'application/pdf',
-            'image/jpeg',
-            'image/jpg',
-            'image/png',
-            'application/msword',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        ];
-        if (!allowedTypes.includes(file.type)) {
-            setUploadError('Please upload a PDF, image, or Word document');
+        const validation = validateFile(file);
+        if (!validation.isValid) {
+            setUploadError(validation.error || 'Invalid file');
             return;
         }
 
         setSelectedFile(file);
         setUploadError('');
-        // TODO: Implement actual file upload to server
     };
 
     const handleConfirm = () => {
-        if (onConfirm) {
-            onConfirm({ datePaid, amountPaid, method, paymentDetails });
+        // Reset field errors
+        const errors: typeof fieldErrors = {};
+
+        // Validate datePaid
+        if (!datePaid || !(datePaid instanceof Date) || isNaN(datePaid.getTime())) {
+            errors.datePaid = 'Please select a valid payment date';
         }
-        // TODO: Handle file upload before closing if selectedFile exists
+
+        // Validate amountPaid
+        const amountNum = parseFloat(amountPaid);
+        if (!amountPaid || amountPaid.trim() === '') {
+            errors.amountPaid = 'Please enter the amount paid';
+        } else if (isNaN(amountNum) || amountNum <= 0) {
+            errors.amountPaid = 'Amount must be a positive number';
+        }
+
+        // Validate method
+        if (!method || method.trim() === '') {
+            errors.method = 'Please select a payment method';
+        }
+
+        // Validate paymentDetails
+        if (!paymentDetails || paymentDetails.trim() === '') {
+            errors.paymentDetails = 'Please provide payment details';
+        }
+
+        // If there are errors, set them and don't proceed
+        if (Object.keys(errors).length > 0) {
+            setFieldErrors(errors);
+            return;
+        }
+
+        // Clear any previous errors
+        setFieldErrors({});
+
+        // All validation passed, proceed with confirm
+        if (onConfirm) {
+            onConfirm({ datePaid, amountPaid, method, paymentDetails, selectedFile });
+        }
         onClose();
     };
 
@@ -114,6 +141,9 @@ const MarkAsPaidModal: React.FC<MarkAsPaidModalProps> = ({ onConfirm }) => {
                             className={inputClasses}
                             aria-label="Select payment date"
                         />
+                        {fieldErrors.datePaid && (
+                            <p className="text-red-600 text-xs mt-1 ml-1">{fieldErrors.datePaid}</p>
+                        )}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -127,6 +157,9 @@ const MarkAsPaidModal: React.FC<MarkAsPaidModalProps> = ({ onConfirm }) => {
                                 value={amountPaid}
                                 onChange={(e) => setAmountPaid(e.target.value)}
                             />
+                            {fieldErrors.amountPaid && (
+                                <p className="text-red-600 text-xs mt-1 ml-1">{fieldErrors.amountPaid}</p>
+                            )}
                         </div>
 
                         {/* Method */}
@@ -146,6 +179,9 @@ const MarkAsPaidModal: React.FC<MarkAsPaidModalProps> = ({ onConfirm }) => {
                                 buttonClassName={inputClasses}
                                 dropdownClassName="z-50"
                             />
+                            {fieldErrors.method && (
+                                <p className="text-red-600 text-xs mt-1 ml-1">{fieldErrors.method}</p>
+                            )}
                         </div>
                     </div>
 
@@ -158,6 +194,9 @@ const MarkAsPaidModal: React.FC<MarkAsPaidModalProps> = ({ onConfirm }) => {
                             value={paymentDetails}
                             onChange={(e) => setPaymentDetails(e.target.value)}
                         />
+                        {fieldErrors.paymentDetails && (
+                            <p className="text-red-600 text-xs mt-1 ml-1">{fieldErrors.paymentDetails}</p>
+                        )}
                     </div>
 
                     {/* File Upload Error/Success Message */}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, ChevronLeft } from 'lucide-react';
 import CustomDropdown from '../../../components/CustomDropdown';
 import DatePicker from '@/components/ui/DatePicker';
+import { validateFile } from '@/utils/fileValidation';
 
 import { useTransactionStore } from '../store/transactionStore';
 
@@ -15,6 +16,7 @@ interface EditInvoiceFormData {
     dueOn: Date | undefined;
     details: string;
     tags: string;
+    selectedFile: File | null;
 }
 
 const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({ onConfirm }) => {
@@ -29,6 +31,13 @@ const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({ onConfirm }) => {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [uploadError, setUploadError] = useState<string>('');
     const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const [fieldErrors, setFieldErrors] = useState<{
+        category?: string;
+        amount?: string;
+        dueOn?: string;
+        details?: string;
+        tags?: string;
+    }>({});
 
     useEffect(() => {
         if (isOpen) {
@@ -50,37 +59,61 @@ const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({ onConfirm }) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Validate file size (10MB limit)
-        const maxSize = 10 * 1024 * 1024;
-        if (file.size > maxSize) {
-            setUploadError('File size must be less than 10MB');
-            return;
-        }
-
-        // Validate file type (documents and images)
-        const allowedTypes = [
-            'application/pdf',
-            'image/jpeg',
-            'image/jpg',
-            'image/png',
-            'application/msword',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        ];
-        if (!allowedTypes.includes(file.type)) {
-            setUploadError('Please upload a PDF, image, or Word document');
+        const validation = validateFile(file);
+        if (!validation.isValid) {
+            setUploadError(validation.error || 'Invalid file');
             return;
         }
 
         setSelectedFile(file);
         setUploadError('');
-        // TODO: Implement actual file upload to server
     };
 
     const handleConfirm = () => {
-        if (onConfirm) {
-            onConfirm({ category, amount, dueOn, details, tags });
+        // Reset field errors
+        const errors: typeof fieldErrors = {};
+
+        // Validate category
+        if (!category || category.trim() === '') {
+            errors.category = 'Please select a category';
         }
-        // TODO: Handle file upload before closing if selectedFile exists
+
+        // Validate amount
+        const amountNum = parseFloat(amount);
+        if (!amount || amount.trim() === '') {
+            errors.amount = 'Please enter an amount';
+        } else if (isNaN(amountNum) || amountNum <= 0) {
+            errors.amount = 'Amount must be a positive number';
+        }
+
+        // Validate dueOn
+        if (!dueOn || !(dueOn instanceof Date) || isNaN(dueOn.getTime())) {
+            errors.dueOn = 'Please select a valid due date';
+        }
+
+        // Validate details
+        if (!details || details.trim() === '') {
+            errors.details = 'Please provide details';
+        }
+
+        // Validate tags
+        if (!tags || tags.trim() === '') {
+            errors.tags = 'Please select at least one tag';
+        }
+
+        // If there are errors, set them and don't proceed
+        if (Object.keys(errors).length > 0) {
+            setFieldErrors(errors);
+            return;
+        }
+
+        // Clear any previous errors
+        setFieldErrors({});
+
+        // All validation passed, proceed with confirm
+        if (onConfirm) {
+            onConfirm({ category, amount, dueOn, details, tags, selectedFile });
+        }
         onClose();
     };
 
@@ -122,6 +155,9 @@ const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({ onConfirm }) => {
                             buttonClassName={inputClasses}
                             dropdownClassName="z-50"
                         />
+                        {fieldErrors.category && (
+                            <p className="text-red-600 text-xs mt-1 ml-1">{fieldErrors.category}</p>
+                        )}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -135,6 +171,9 @@ const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({ onConfirm }) => {
                                 value={amount}
                                 onChange={(e) => setAmount(e.target.value)}
                             />
+                            {fieldErrors.amount && (
+                                <p className="text-red-600 text-xs mt-1 ml-1">{fieldErrors.amount}</p>
+                            )}
                         </div>
 
                         {/* Due On */}
@@ -148,6 +187,9 @@ const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({ onConfirm }) => {
                                     className={inputClasses}
                                 />
                             </div>
+                            {fieldErrors.dueOn && (
+                                <p className="text-red-600 text-xs mt-1 ml-1">{fieldErrors.dueOn}</p>
+                            )}
                         </div>
                     </div>
 
@@ -160,6 +202,9 @@ const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({ onConfirm }) => {
                             value={details}
                             onChange={(e) => setDetails(e.target.value)}
                         />
+                        {fieldErrors.details && (
+                            <p className="text-red-600 text-xs mt-1 ml-1">{fieldErrors.details}</p>
+                        )}
                     </div>
 
                     {/* Tags */}
@@ -177,6 +222,9 @@ const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({ onConfirm }) => {
                             buttonClassName={inputClasses}
                             dropdownClassName="z-50"
                         />
+                        {fieldErrors.tags && (
+                            <p className="text-red-600 text-xs mt-1 ml-1">{fieldErrors.tags}</p>
+                        )}
                     </div>
 
                     {/* File Upload Error/Success Message */}

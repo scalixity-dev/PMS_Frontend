@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, ChevronLeft, Check } from 'lucide-react';
 import CustomDropdown from '../../../components/CustomDropdown';
+import { validateFile } from '@/utils/fileValidation';
 
 import { useTransactionStore } from '../store/transactionStore';
 
@@ -52,30 +53,14 @@ const RefundRentModal: React.FC<RefundRentModalProps> = ({ onConfirm }) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Validate file size (10MB limit)
-        const maxSize = 10 * 1024 * 1024;
-        if (file.size > maxSize) {
-            setUploadError('File size must be less than 10MB');
-            return;
-        }
-
-        // Validate file type (documents and images)
-        const allowedTypes = [
-            'application/pdf',
-            'image/jpeg',
-            'image/jpg',
-            'image/png',
-            'application/msword',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        ];
-        if (!allowedTypes.includes(file.type)) {
-            setUploadError('Please upload a PDF, image, or Word document');
+        const validation = validateFile(file);
+        if (!validation.isValid) {
+            setUploadError(validation.error || 'Invalid file');
             return;
         }
 
         setSelectedFile(file);
         setUploadError('');
-        // TODO: Implement actual file upload to server
     };
 
     const handleConfirm = () => {

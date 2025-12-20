@@ -3,12 +3,13 @@ import { X, ChevronLeft } from 'lucide-react';
 import CustomDropdown from '../../../components/CustomDropdown';
 import CustomTextBox from '../../../components/CustomTextBox';
 import DatePicker from '@/components/ui/DatePicker';
+import { validateFile } from '@/utils/fileValidation';
 
 import { useTransactionStore } from '../store/transactionStore';
 
 interface ApplyCreditsModalProps {
     onConfirm?: (data: ApplyCreditsFormData) => void;
-    amountOwned?: string;
+    amountOwed?: string;
 }
 
 interface ApplyCreditsFormData {
@@ -16,11 +17,12 @@ interface ApplyCreditsFormData {
     dateApplied: Date | undefined;
     applyAmount: string;
     details: string;
+    selectedFile: File | null;
 }
 
 const ApplyCreditsModal: React.FC<ApplyCreditsModalProps> = ({
     onConfirm,
-    amountOwned = '₹45,000.00'
+    amountOwed = '₹45,000.00'
 }) => {
     const { isApplyCreditsOpen, setApplyCreditsOpen } = useTransactionStore();
     const isOpen = isApplyCreditsOpen;
@@ -53,37 +55,20 @@ const ApplyCreditsModal: React.FC<ApplyCreditsModalProps> = ({
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Validate file size (10MB limit)
-        const maxSize = 10 * 1024 * 1024;
-        if (file.size > maxSize) {
-            setUploadError('File size must be less than 10MB');
-            return;
-        }
-
-        // Validate file type (documents and images)
-        const allowedTypes = [
-            'application/pdf',
-            'image/jpeg',
-            'image/jpg',
-            'image/png',
-            'application/msword',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        ];
-        if (!allowedTypes.includes(file.type)) {
-            setUploadError('Please upload a PDF, image, or Word document');
+        const validation = validateFile(file);
+        if (!validation.isValid) {
+            setUploadError(validation.error || 'Invalid file');
             return;
         }
 
         setSelectedFile(file);
         setUploadError('');
-        // TODO: Implement actual file upload to server
     };
 
     const handleConfirm = () => {
         if (onConfirm) {
-            onConfirm({ applyFrom, dateApplied, applyAmount, details });
+            onConfirm({ applyFrom, dateApplied, applyAmount, details, selectedFile });
         }
-        // TODO: Handle file upload before closing if selectedFile exists
         onClose();
     };
 
@@ -114,7 +99,7 @@ const ApplyCreditsModal: React.FC<ApplyCreditsModalProps> = ({
                         <div className="inline-block bg-[#7BD747] rounded-full px-6 py-3 shadow-md">
                             <span className="text-white text-sm font-bold block mb-1">Amount Owed*</span>
                             <CustomTextBox
-                                value={amountOwned}
+                                value={amountOwed}
                                 className="bg-[#E3EBDE] px-1 text-center"
                                 valueClassName="text-[#2c3e50] font-bold text-sm"
                             />
