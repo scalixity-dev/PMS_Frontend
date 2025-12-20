@@ -30,6 +30,24 @@ export interface TransactionData {
     details?: string;
 }
 
+/**
+ * Represents payment data used in payment modals.
+ * All fields are optional since different contexts may provide partial data.
+ */
+export interface PaymentData {
+    id?: number | string;
+    status?: string;
+    datePaid?: string;
+    date?: string;
+    category?: string;
+    property?: string;
+    contact?: string;
+    amount?: number | string;
+    type?: string;
+    method?: string;
+    details?: string;
+}
+
 interface TransactionStoreState {
     // Modal Visibility States
     isEditPaymentModalOpen: boolean;
@@ -45,7 +63,7 @@ interface TransactionStoreState {
     isCloneTransactionOpen: boolean; // Just in case, though it's a page
 
     // Selected Data States
-    selectedPayment: { date: string; amount: string } | null;
+    selectedPayment: PaymentData | null;
     clonedTransactionData: TransactionData | null;
     selectedTransactionId: number | string | null;
 
@@ -61,7 +79,7 @@ interface TransactionStoreState {
     setEditInvoiceOpen: (isOpen: boolean) => void;
     setVoidModalOpen: (isOpen: boolean) => void;
 
-    setSelectedPayment: (payment: { date: string; amount: string } | null) => void;
+    setSelectedPayment: (payment: PaymentData | null) => void;
     setClonedTransactionData: (data: TransactionData | null) => void;
     setSelectedTransactionId: (id: number | string | null) => void;
 
