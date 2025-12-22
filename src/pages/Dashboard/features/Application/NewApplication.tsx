@@ -1,15 +1,3 @@
-/**
- * NewApplication Component
- * 
- * Form Persistence Strategy:
- * - Auto-saves form data to localStorage on every change when form is dirty
- * - Restores form data from localStorage on mount
- * - Prevents browser refresh/close with beforeunload event when form is dirty
- * - Only resets form explicitly:
- *   1. After successful submission (uncomment handleSubmitSuccess)
- *   2. When user clicks Cancel and confirms
- * - No automatic reset on unmount - protects against accidental data loss
- */
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
@@ -27,6 +15,7 @@ import AdditionalIncomeStep from './steps/AdditionalIncomeStep';
 import EmergencyContactStep from './steps/EmergencyContactStep';
 import { useApplicationStore } from './store/applicationStore';
 import ApplicationSuccessModal from './components/ApplicationSuccessModal';
+import ApplicationErrorModal from './components/ApplicationErrorModal';
 
 const STORAGE_KEY = 'application_draft';
 
@@ -139,7 +128,10 @@ const NewApplication: React.FC = () => {
     const [occupantSubStep, setOccupantSubStep] = React.useState<'occupants' | 'pets' | 'vehicles'>('occupants');
     const [lastOccupantSubStep, setLastOccupantSubStep] = React.useState<'occupants' | 'pets' | 'vehicles'>('vehicles');
     const [residenceSubStep, setResidenceSubStep] = React.useState<'history' | 'additional' | 'income' | 'additionalIncome'>('history');
+    const [lastResidenceSubStep, setLastResidenceSubStep] = React.useState<'history' | 'additional' | 'income' | 'additionalIncome'>('additionalIncome');
     const [showSuccessModal, setShowSuccessModal] = React.useState(false);
+    const [showErrorModal, setShowErrorModal] = React.useState(false);
+    const [errorMessages, setErrorMessages] = React.useState<string[]>([]);
 
     const handleCancel = () => {
         if (isFormDirty) {
@@ -190,8 +182,11 @@ const NewApplication: React.FC = () => {
                 setCurrentStep(currentStep - 1);
                 setOccupantSubStep(lastOccupantSubStep);
             }
-        }
-        else {
+        } else if (currentStep === 4) {
+            // Go back to Step 3 - restore last visited residence sub-step
+            setCurrentStep(currentStep - 1);
+            setResidenceSubStep(lastResidenceSubStep);
+        } else {
             setCurrentStep(currentStep - 1);
         }
     };
@@ -204,12 +199,47 @@ const NewApplication: React.FC = () => {
      * Call this function after successful form submission to clear saved data
      * Usage: <ContactsStep onSubmit={handleSubmitSuccess} />
      */
-    const handleSubmitSuccess = () => {
-        // Here you would typically submit data to backend
-        console.log('Form Submitted:', formData);
-        resetForm();
-        localStorage.removeItem(STORAGE_KEY);
-        setShowSuccessModal(true);
+    const handleSubmitSuccess = async () => {
+        try {
+            // Get leasingId from propertyId and unitId
+            const { leasingService } = await import('../../../../services/leasing.service');
+            const { applicationService } = await import('../../../../services/application.service');
+            
+            // First, try to get leasing by propertyId
+            let leasing = await leasingService.getByPropertyId(formData.propertyId);
+            
+            // If no leasing found and we have a unitId, we might need to check unit-level leasing
+            // For now, we'll require that a leasing exists for the property
+            if (!leasing) {
+                throw new Error('No leasing found for the selected property. Please create a leasing first.');
+            }
+
+            // Submit the application
+            await applicationService.create(formData, leasing.id);
+            
+            // Clear form and show success
+            resetForm();
+            localStorage.removeItem(STORAGE_KEY);
+            setShowSuccessModal(true);
+        } catch (error) {
+            console.error('Failed to submit application:', error);
+            let errors: string[] = [];
+            
+            if (error instanceof Error) {
+                // Check if error has messages array (from our service)
+                if ('messages' in error && Array.isArray((error as any).messages)) {
+                    errors = (error as any).messages;
+                } else {
+                    // Fallback to error message
+                    errors = [error.message];
+                }
+            } else {
+                errors = ['Failed to submit application. Please try again.'];
+            }
+            
+            setErrorMessages(errors);
+            setShowErrorModal(true);
+        }
     };
 
     const renderContent = () => {
@@ -242,7 +272,10 @@ const NewApplication: React.FC = () => {
                     return <IncomeStep onNext={() => setResidenceSubStep('additionalIncome')} />;
                 } else {
                     return <AdditionalIncomeStep
-                        onNext={() => setCurrentStep(currentStep + 1)}
+                        onNext={() => {
+                            setLastResidenceSubStep(residenceSubStep); // Save last visited sub-step
+                            setCurrentStep(currentStep + 1);
+                        }}
                     />;
                 }
             // ...
@@ -295,6 +328,12 @@ const NewApplication: React.FC = () => {
             <ApplicationSuccessModal
                 isOpen={showSuccessModal}
                 onClose={() => setShowSuccessModal(false)}
+            />
+
+            <ApplicationErrorModal
+                isOpen={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                errors={errorMessages}
             />
         </div>
     );

@@ -10,6 +10,7 @@ export interface EmergencyContactFormData {
   relationship: string;
   email: string;
   phoneNumber: string;
+  phoneCountryCode?: string;
   details: string;
 }
 

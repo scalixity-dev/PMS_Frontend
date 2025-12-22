@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { X, ChevronLeft } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { X, ChevronLeft, Search, ChevronDown } from 'lucide-react';
+import { Country } from 'country-state-city';
 import DatePicker from '@/components/ui/DatePicker';
 import CustomDropdown from '../../../components/CustomDropdown';
 
@@ -8,6 +9,7 @@ export interface OccupantFormData {
     lastName: string;
     email: string;
     phoneNumber: string;
+    phoneCountryCode?: string;
     dob: Date | undefined;
     relationship: string;
 }
@@ -33,12 +35,60 @@ const AddOccupantModal: React.FC<AddOccupantModalProps> = ({ isOpen, onClose, on
         lastName: '',
         email: '',
         phoneNumber: '',
+        phoneCountryCode: undefined,
         dob: undefined,
         relationship: ''
     });
 
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [touched, setTouched] = useState<Record<string, boolean>>({});
+    const [isPhoneCodeOpen, setIsPhoneCodeOpen] = useState(false);
+    const [phoneCodeSearch, setPhoneCodeSearch] = useState('');
+    const phoneCodeRef = useRef<HTMLDivElement>(null);
+
+    // Phone country codes
+    const phoneCountryCodes = useMemo(() => {
+        return Country.getAllCountries().map(country => ({
+            label: `${country.flag} ${country.phonecode.startsWith('+') ? '' : '+'}${country.phonecode}`,
+            value: `${country.isoCode}|${country.phonecode}`,
+            name: country.name,
+            phonecode: country.phonecode.startsWith('+') ? country.phonecode : `+${country.phonecode}`,
+            flag: country.flag,
+            isoCode: country.isoCode,
+        })).sort((a, b) => a.name.localeCompare(b.name));
+    }, []);
+
+    // Filter phone codes based on search
+    const filteredPhoneCodes = useMemo(() => {
+        if (!phoneCodeSearch) return phoneCountryCodes;
+        const searchLower = phoneCodeSearch.toLowerCase();
+        return phoneCountryCodes.filter(code => 
+            code.name.toLowerCase().includes(searchLower) ||
+            code.phonecode.includes(searchLower) ||
+            code.isoCode.toLowerCase().includes(searchLower)
+        );
+    }, [phoneCodeSearch, phoneCountryCodes]);
+
+    // Get selected phone code display
+    const selectedPhoneCode = useMemo(() => {
+        if (!formData.phoneCountryCode) return null;
+        return phoneCountryCodes.find(code => code.value === formData.phoneCountryCode);
+    }, [formData.phoneCountryCode, phoneCountryCodes]);
+
+    // Close phone code dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (phoneCodeRef.current && !phoneCodeRef.current.contains(event.target as Node)) {
+                setIsPhoneCodeOpen(false);
+                setPhoneCodeSearch('');
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
     // Prevent background scrolling when modal is open
     useEffect(() => {
@@ -60,11 +110,14 @@ const AddOccupantModal: React.FC<AddOccupantModalProps> = ({ isOpen, onClose, on
                 lastName: '',
                 email: '',
                 phoneNumber: '',
+                phoneCountryCode: undefined,
                 dob: undefined,
                 relationship: ''
             });
             setErrors({});
             setTouched({});
+            setIsPhoneCodeOpen(false);
+            setPhoneCodeSearch('');
         }
     }, [isOpen]);
 
@@ -86,7 +139,7 @@ const AddOccupantModal: React.FC<AddOccupantModalProps> = ({ isOpen, onClose, on
                 if (!value || value.trim() === '') {
                     return 'Email is required';
                 }
-                // Basic email format validation
+                // Email format validation
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 if (!emailRegex.test(value)) {
                     return 'Please enter a valid email address';
@@ -95,6 +148,24 @@ const AddOccupantModal: React.FC<AddOccupantModalProps> = ({ isOpen, onClose, on
             case 'phoneNumber':
                 if (!value || value.trim() === '') {
                     return 'Phone number is required';
+                }
+                // Phone format validation (allows various international formats)
+                const digitsOnly = value.replace(/[\s\-\+\(\)]/g, '');
+                const phoneRegex = /^[\d\s\-\+\(\)]+$/;
+                
+                // Check if it contains only valid characters
+                if (!phoneRegex.test(value)) {
+                    return 'Please enter a valid phone number';
+                }
+                
+                // Check if it has at least 4 digits (minimum for most countries)
+                // and at most 15 digits (ITU-T E.164 standard maximum)
+                if (digitsOnly.length < 4) {
+                    return 'Phone number must contain at least 4 digits';
+                }
+                
+                if (digitsOnly.length > 15) {
+                    return 'Phone number cannot exceed 15 digits';
                 }
                 break;
             case 'dob':
@@ -239,17 +310,95 @@ const AddOccupantModal: React.FC<AddOccupantModalProps> = ({ isOpen, onClose, on
                     {/* Phone Number */}
                     <div>
                         <label className="block text-xs font-semibold text-[#2c3e50] mb-1 ml-1">Phone Number*</label>
-                        <div className="relative">
+                        <div className={`flex border rounded-xl transition-all ${
+                            touched.phoneNumber && errors.phoneNumber 
+                                ? 'border-red-500 border-2' 
+                                : 'border-gray-200 focus-within:ring-2 focus-within:ring-[#3A6D6C] focus-within:border-[#3A6D6C]'
+                        }`}>
+                            {/* Phone Code Selector */}
+                            <div className="relative" ref={phoneCodeRef}>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsPhoneCodeOpen(!isPhoneCodeOpen)}
+                                    className={`flex items-center gap-1 px-3 py-2.5 border-r bg-white rounded-l-xl focus:outline-none text-sm min-w-[100px] hover:bg-gray-50 transition-colors ${
+                                        touched.phoneNumber && errors.phoneNumber 
+                                            ? 'border-red-500' 
+                                            : 'border-gray-200'
+                                    }`}
+                                >
+                                    <span className="text-sm font-medium">
+                                        {selectedPhoneCode ? (
+                                            <span className="flex items-center gap-1">
+                                                <span>{selectedPhoneCode.flag}</span>
+                                                <span className="hidden sm:inline">{selectedPhoneCode.phonecode}</span>
+                                            </span>
+                                        ) : (
+                                            <span className="text-gray-500">Code</span>
+                                        )}
+                                    </span>
+                                    <ChevronDown size={16} className={`text-gray-500 transition-transform ${isPhoneCodeOpen ? 'rotate-180' : ''}`} />
+                                </button>
+
+                                {/* Dropdown */}
+                                {isPhoneCodeOpen && (
+                                    <div className="absolute left-0 top-full mt-1 w-80 bg-white border border-gray-300 rounded-xl shadow-lg z-[100] max-h-80 overflow-hidden flex flex-col">
+                                        {/* Search Input */}
+                                        <div className="p-2 border-b border-gray-200">
+                                            <div className="relative">
+                                                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                <input
+                                                    type="text"
+                                                    placeholder="Search country or code..."
+                                                    value={phoneCodeSearch}
+                                                    onChange={(e) => setPhoneCodeSearch(e.target.value)}
+                                                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3A6D6C] text-sm"
+                                                    autoFocus
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Options List */}
+                                        <div className="overflow-y-auto max-h-64">
+                                            {filteredPhoneCodes.length > 0 ? (
+                                                filteredPhoneCodes.map((code) => (
+                                                    <button
+                                                        key={code.value}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            handleChange('phoneCountryCode', code.value);
+                                                            setIsPhoneCodeOpen(false);
+                                                            setPhoneCodeSearch('');
+                                                        }}
+                                                        className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-[#3A6D6C]/10 transition-colors text-left ${
+                                                            formData.phoneCountryCode === code.value ? 'bg-[#3A6D6C]/10' : ''
+                                                        }`}
+                                                    >
+                                                        <span className="text-xl">{code.flag}</span>
+                                                        <span className="flex-1 text-sm font-medium text-gray-900">{code.name}</span>
+                                                        <span className="text-sm text-gray-600">{code.phonecode}</span>
+                                                    </button>
+                                                ))
+                                            ) : (
+                                                <div className="px-4 py-8 text-center text-sm text-gray-500">
+                                                    No countries found
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Phone Number Input */}
                             <input
                                 type="tel"
                                 placeholder="Enter Phone Number"
-                                className={`w-full bg-white p-2.5 rounded-xl outline-none text-gray-700 placeholder-gray-400 shadow-sm appearance-none text-sm ${touched.phoneNumber && errors.phoneNumber ? 'border-2 border-red-500' : 'border-none'
-                                    }`}
+                                className={`flex-1 min-w-0 px-4 py-2.5 rounded-r-xl focus:outline-none text-sm placeholder-gray-400 bg-white border-0 ${
+                                    touched.phoneNumber && errors.phoneNumber ? 'text-red-500' : 'text-gray-700'
+                                }`}
                                 value={formData.phoneNumber}
                                 onChange={(e) => handleChange('phoneNumber', e.target.value)}
                                 onBlur={() => handleBlur('phoneNumber')}
                             />
-                            {/* Removed dropdown arrow icon */}
                         </div>
                         {touched.phoneNumber && errors.phoneNumber && (
                             <p className="text-red-500 text-xs mt-1 ml-1">{errors.phoneNumber}</p>
