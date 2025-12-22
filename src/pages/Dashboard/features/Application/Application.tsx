@@ -1,56 +1,71 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardFilter from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
 import ApplicationCard from './components/ApplicationCard';
-import { Plus, ChevronLeft } from 'lucide-react';
+import { Plus, ChevronLeft, Loader2 } from 'lucide-react';
+import { useGetAllApplications } from '../../../../hooks/useApplicationQueries';
+import type { BackendApplication } from '../../../../services/application.service';
+import InviteToApplyModal from './components/InviteToApplyModal';
 
-// Mock Data
-const MOCK_APPLICATIONS = [
-    {
-        id: 1,
-        name: 'Anjali Vyas',
-        image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-        appliedDate: '10-nov-2025',
-        status: 'Approved' as const,
-    },
-    {
-        id: 2,
-        name: 'Gerey bose',
-        image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-        appliedDate: '10-nov-2025',
-        status: 'Approved' as const,
-    },
-    {
-        id: 3,
-        name: 'John Doe',
-        image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-        appliedDate: '12-nov-2025',
-        status: 'Pending' as const,
-    },
-    {
-        id: 4,
-        name: 'Sarah Smith',
-        image: '',
-        appliedDate: '15-nov-2025',
-        status: 'Pending' as const,
-    }
-];
+// Transform backend application to card format
+const transformApplicationToCard = (app: BackendApplication) => {
+    // Get primary applicant name
+    const primaryApplicant = app.applicants.find(a => a.isPrimary) || app.applicants[0];
+    const name = primaryApplicant 
+        ? `${primaryApplicant.firstName} ${primaryApplicant.middleName || ''} ${primaryApplicant.lastName}`.trim()
+        : 'Unknown Applicant';
+
+    // Format date
+    const appliedDate = new Date(app.applicationDate).toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+    });
+
+    // Map status
+    const statusMap: Record<string, 'Approved' | 'Pending' | 'Rejected'> = {
+        'APPROVED': 'Approved',
+        'SUBMITTED': 'Pending',
+        'UNDER_REVIEW': 'Pending',
+        'DRAFT': 'Pending',
+        'REJECTED': 'Rejected',
+        'WITHDRAWN': 'Pending',
+    };
+    const status = statusMap[app.status] || 'Pending';
+
+    // Get image from application or use empty string
+    const image = app.imageUrl || '';
+
+    return {
+        id: app.id,
+        name,
+        image,
+        appliedDate,
+        status,
+    };
+};
 
 const Application = () => {
     const navigate = useNavigate();
-    const [, setFilters] = useState<Record<string, string[]>>({});
+    const [filters, setFilters] = useState<Record<string, string[]>>({});
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
     const [currentPage, setCurrentPage] = useState(1);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     const itemsPerPage = 6;
 
-    const handleSearchChange = (_search: string) => {
-        // console.log('Search:', search);
+    // Fetch applications from API
+    const { data: applications = [], isLoading, error } = useGetAllApplications();
+
+    const handleSearchChange = (search: string) => {
+        setSearchQuery(search);
+        setCurrentPage(1); // Reset to first page on search
     };
 
     const handleFiltersChange = (newFilters: Record<string, string[]>) => {
         setFilters(newFilters);
-        // console.log('Filters:', newFilters);
+        setCurrentPage(1); // Reset to first page on filter change
     };
 
     const filterOptions = {
@@ -85,11 +100,40 @@ const Application = () => {
         setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
     };
 
-    const sortedApplications = [...MOCK_APPLICATIONS].sort((a, b) => {
-        return sortOrder === 'asc'
-            ? a.name.localeCompare(b.name)
-            : b.name.localeCompare(a.name);
-    });
+    // Transform and filter applications
+    const transformedApplications = useMemo(() => {
+        let filtered = applications.map(transformApplicationToCard);
+
+        // Apply search filter
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase();
+            filtered = filtered.filter(app => 
+                app.name.toLowerCase().includes(query) ||
+                app.appliedDate.toLowerCase().includes(query)
+            );
+        }
+
+        // Apply status filter
+        if (filters.status && filters.status.length > 0) {
+            filtered = filtered.filter(app => {
+                const appStatus = app.status.toLowerCase();
+                return filters.status.some(filterStatus => 
+                    appStatus === filterStatus.toLowerCase()
+                );
+            });
+        }
+
+        return filtered;
+    }, [applications, searchQuery, filters]);
+
+    // Sort applications
+    const sortedApplications = useMemo(() => {
+        return [...transformedApplications].sort((a, b) => {
+            return sortOrder === 'asc'
+                ? a.name.localeCompare(b.name)
+                : b.name.localeCompare(a.name);
+        });
+    }, [transformedApplications, sortOrder]);
 
     const totalPages = Math.ceil(sortedApplications.length / itemsPerPage);
     const currentApplications = sortedApplications.slice(
@@ -120,8 +164,11 @@ const Application = () => {
                         <h1 className="text-2xl font-bold text-black">Application</h1>
                     </div>
                     <div className="flex gap-3">
-                        <button className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors">
-                            Screen Tenants
+                        <button 
+                            onClick={() => setIsInviteModalOpen(true)}
+                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors"
+                        >
+                            Invite to apply
                         </button>
                         <button
                             onClick={() => navigate('/dashboard/application/new')} // Check route if needed
@@ -143,44 +190,104 @@ const Application = () => {
                 />
 
                 {/* Sort and Count */}
-                <div className="flex items-center gap-4 mb-6">
-                    <button
-                        onClick={handleSortToggle}
-                        className="flex items-center gap-1 hover:bg-black/5 px-2 py-1 rounded-lg transition-colors"
-                    >
-                        <span className="text-lg font-bold text-black">Abc</span>
-                        <svg
-                            width="10"
-                            height="6"
-                            viewBox="0 0 10 6"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                            className={`transition-transform duration-200 ${sortOrder === 'desc' ? 'rotate-180' : ''}`}
-                        >
-                            <path d="M1 1L5 5L9 1" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                    </button>
+                {applications.length > 0 && (
+                    <div className="flex items-center gap-4 mb-6">
+                        {/* Property Names Display - Only show when property data exists */}
+                        {(() => {
+                            // Get unique property names from applications
+                            const propertyNames = applications
+                                .map(app => {
+                                    const property = app.leasing?.property;
+                                    const unit = app.leasing?.unit;
+                                    
+                                    if (!property || !property.propertyName) return null;
+                                    
+                                    // For MULTI properties, show property name + unit name
+                                    if (property.propertyType === 'MULTI' && unit?.unitName) {
+                                        return `${property.propertyName} - ${unit.unitName}`;
+                                    }
+                                    
+                                    // For SINGLE properties, just show property name
+                                    return property.propertyName;
+                                })
+                                .filter((name): name is string => name !== null);
+                            
+                            // Get unique property names
+                            const uniqueNames = Array.from(new Set(propertyNames));
+                            
+                            // Only show if we have property names from backend
+                            if (uniqueNames.length === 0) return null;
+                            
+                            const displayText = uniqueNames.length === 1 
+                                ? uniqueNames[0]
+                                : `${uniqueNames.length} Properties`;
+                            
+                            return (
+                                <button
+                                    onClick={handleSortToggle}
+                                    className="flex items-center gap-1 hover:bg-black/5 px-2 py-1 rounded-lg transition-colors"
+                                >
+                                    <span className="text-lg font-bold text-black">
+                                        {displayText}
+                                    </span>
+                                    <svg
+                                        width="10"
+                                        height="6"
+                                        viewBox="0 0 10 6"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className={`transition-transform duration-200 ${sortOrder === 'desc' ? 'rotate-180' : ''}`}
+                                    >
+                                        <path d="M1 1L5 5L9 1" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                </button>
+                            );
+                        })()}
 
-                    <div className="bg-[#3A6D6C] text-white px-4 py-1 rounded-full text-sm">
-                        {MOCK_APPLICATIONS.length} Application
+                        <div className="bg-[#3A6D6C] text-white px-4 py-1 rounded-full text-sm">
+                            {sortedApplications.length} Application{sortedApplications.length !== 1 ? 's' : ''}
+                        </div>
                     </div>
-                </div>
+                )}
+
+                {/* Loading State */}
+                {isLoading && (
+                    <div className="flex items-center justify-center py-12">
+                        <Loader2 className="w-8 h-8 animate-spin text-[#3A6D6C]" />
+                        <span className="ml-3 text-gray-600">Loading applications...</span>
+                    </div>
+                )}
+
+                {/* Error State */}
+                {error && !isLoading && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                        <p className="text-red-800 text-sm">
+                            {error instanceof Error ? error.message : 'Failed to load applications. Please try again.'}
+                        </p>
+                    </div>
+                )}
 
                 {/* Applications Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                    {currentApplications.length > 0 ? (
-                        currentApplications.map((app) => (
-                            <ApplicationCard
-                                key={app.id}
-                                {...app}
-                            />
-                        ))
-                    ) : (
-                        <div className="col-span-full text-center py-12">
-                            <p className="text-gray-600">No applications found</p>
-                        </div>
-                    )}
-                </div>
+                {!isLoading && !error && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                        {currentApplications.length > 0 ? (
+                            currentApplications.map((app) => (
+                                <ApplicationCard
+                                    key={app.id}
+                                    {...app}
+                                />
+                            ))
+                        ) : (
+                            <div className="col-span-full text-center py-12">
+                                <p className="text-gray-600">
+                                    {searchQuery || Object.keys(filters).length > 0
+                                        ? 'No applications match your filters'
+                                        : 'No applications found'}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 <div className="mt-auto">
                     <Pagination
@@ -190,6 +297,19 @@ const Application = () => {
                     />
                 </div>
             </div>
+
+            {/* Invite Modal */}
+            <InviteToApplyModal
+                isOpen={isInviteModalOpen}
+                onClose={() => setIsInviteModalOpen(false)}
+                onSend={(email) => {
+                    // TODO: Implement API call to send invitation
+                    console.log('Sending invitation to:', email);
+                    // You can add API call here when backend endpoint is ready
+                    alert(`Invitation will be sent to ${email}`);
+                    setIsInviteModalOpen(false);
+                }}
+            />
         </div>
     );
 };

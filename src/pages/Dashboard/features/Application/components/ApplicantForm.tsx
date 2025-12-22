@@ -1,6 +1,8 @@
-import React from 'react';
-import { Upload } from 'lucide-react';
+import React, { useMemo, useEffect } from 'react';
+import { Upload, Search, ChevronDown } from 'lucide-react';
+import { Country } from 'country-state-city';
 import DatePicker from '@/components/ui/DatePicker';
+import ImageCropModal from '../../Tenants/components/ImageCropModal';
 
 interface FormData {
     firstName: string;
@@ -8,6 +10,7 @@ interface FormData {
     lastName: string;
     email: string;
     phoneNumber: string;
+    phoneCountryCode?: string;
     dob: Date | undefined;
     shortBio: string;
     moveInDate: Date | undefined;
@@ -34,9 +37,14 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
     onCancel
 }) => {
     const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const phoneCodeRef = React.useRef<HTMLDivElement>(null);
     const [previewUrl, setPreviewUrl] = React.useState<string | null>(null);
     const [errors, setErrors] = React.useState<Record<string, string>>({});
     const [touched, setTouched] = React.useState<Record<string, boolean>>({});
+    const [isCropModalOpen, setIsCropModalOpen] = React.useState(false);
+    const [imageToCrop, setImageToCrop] = React.useState<string | null>(null);
+    const [isPhoneCodeOpen, setIsPhoneCodeOpen] = React.useState(false);
+    const [phoneCodeSearch, setPhoneCodeSearch] = React.useState('');
     
     // Refs for form fields to enable focus management
     const firstNameRef = React.useRef<HTMLInputElement>(null);
@@ -46,6 +54,50 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
     const dobRef = React.useRef<HTMLDivElement>(null);
     const bioRef = React.useRef<HTMLInputElement>(null);
     const moveInDateRef = React.useRef<HTMLDivElement>(null);
+
+    // Phone country codes
+    const phoneCountryCodes = useMemo(() => {
+        return Country.getAllCountries().map(country => ({
+            label: `${country.flag} ${country.phonecode.startsWith('+') ? '' : '+'}${country.phonecode}`,
+            value: `${country.isoCode}|${country.phonecode}`,
+            name: country.name,
+            phonecode: country.phonecode.startsWith('+') ? country.phonecode : `+${country.phonecode}`,
+            flag: country.flag,
+            isoCode: country.isoCode,
+        })).sort((a, b) => a.name.localeCompare(b.name));
+    }, []);
+
+    // Filter phone codes based on search
+    const filteredPhoneCodes = useMemo(() => {
+        if (!phoneCodeSearch) return phoneCountryCodes;
+        const searchLower = phoneCodeSearch.toLowerCase();
+        return phoneCountryCodes.filter(code => 
+            code.name.toLowerCase().includes(searchLower) ||
+            code.phonecode.includes(searchLower) ||
+            code.isoCode.toLowerCase().includes(searchLower)
+        );
+    }, [phoneCodeSearch, phoneCountryCodes]);
+
+    // Get selected phone code display
+    const selectedPhoneCode = useMemo(() => {
+        if (!data.phoneCountryCode) return null;
+        return phoneCountryCodes.find(code => code.value === data.phoneCountryCode);
+    }, [data.phoneCountryCode, phoneCountryCodes]);
+
+    // Close phone code dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (phoneCodeRef.current && !phoneCodeRef.current.contains(event.target as Node)) {
+                setIsPhoneCodeOpen(false);
+                setPhoneCodeSearch('');
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
     React.useEffect(() => {
         if (data.photo) {
@@ -59,8 +111,21 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            onChange('photo', e.target.files[0]);
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const imageUrl = event.target?.result as string;
+                setImageToCrop(imageUrl);
+                setIsCropModalOpen(true);
+            };
+            reader.readAsDataURL(file);
         }
+    };
+
+    const handleCropComplete = (croppedImageUrl: string, croppedFile: File) => {
+        onChange('photo', croppedFile);
+        setPreviewUrl(croppedImageUrl);
+        setImageToCrop(null);
     };
 
     const validateField = (key: keyof FormData, value: any): string => {
@@ -81,11 +146,25 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
             }
         }
 
-        // Phone format validation (basic)
+        // Phone format validation (basic - allows various international formats)
         if (key === 'phoneNumber' && value) {
+            // Remove spaces, dashes, parentheses, and plus signs to count actual digits
+            const digitsOnly = value.replace(/[\s\-\+\(\)]/g, '');
             const phoneRegex = /^[\d\s\-\+\(\)]+$/;
-            if (!phoneRegex.test(value) || value.trim().length < 10) {
-                return 'Please enter a valid phone number (at least 10 digits)';
+            
+            // Check if it contains only valid characters
+            if (!phoneRegex.test(value)) {
+                return 'Please enter a valid phone number';
+            }
+            
+            // Check if it has at least 4 digits (minimum for most countries)
+            // and at most 15 digits (ITU-T E.164 standard maximum)
+            if (digitsOnly.length < 4) {
+                return 'Phone number must contain at least 4 digits';
+            }
+            
+            if (digitsOnly.length > 15) {
+                return 'Phone number cannot exceed 15 digits';
             }
         }
 
@@ -326,17 +405,97 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                         </div>
                         <div className="flex flex-col gap-1">
                             <label className="text-sm font-semibold text-[#2c3e50]">Phone Number *</label>
-                            <input
-                                ref={phoneRef}
-                                type="tel"
-                                placeholder="Enter Phone Number"
-                                className={getInputClass('phoneNumber')}
-                                value={data.phoneNumber || ''}
-                                onChange={(e) => handleFieldChange('phoneNumber', e.target.value)}
-                                onBlur={() => handleBlur('phoneNumber')}
-                                aria-invalid={touched.phoneNumber && !!errors.phoneNumber}
-                                aria-describedby={touched.phoneNumber && errors.phoneNumber ? 'phoneNumber-error' : undefined}
-                            />
+                            <div className={`flex border rounded-xl transition-all ${
+                                touched.phoneNumber && errors.phoneNumber 
+                                    ? 'border-red-500 border-2' 
+                                    : 'border-gray-200 focus-within:ring-2 focus-within:ring-[#3A6D6C] focus-within:border-[#3A6D6C]'
+                            }`}>
+                                {/* Phone Code Selector */}
+                                <div className="relative" ref={phoneCodeRef}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsPhoneCodeOpen(!isPhoneCodeOpen)}
+                                        className={`flex items-center gap-1 px-3 py-3 border-r bg-white rounded-l-xl focus:outline-none text-sm min-w-[100px] hover:bg-gray-50 transition-colors ${
+                                            touched.phoneNumber && errors.phoneNumber 
+                                                ? 'border-red-500' 
+                                                : 'border-gray-200'
+                                        }`}
+                                    >
+                                        <span className="text-sm font-medium">
+                                            {selectedPhoneCode ? (
+                                                <span className="flex items-center gap-1">
+                                                    <span>{selectedPhoneCode.flag}</span>
+                                                    <span className="hidden sm:inline">{selectedPhoneCode.phonecode}</span>
+                                                </span>
+                                            ) : (
+                                                <span className="text-gray-500">Code</span>
+                                            )}
+                                        </span>
+                                        <ChevronDown size={16} className={`text-gray-500 transition-transform ${isPhoneCodeOpen ? 'rotate-180' : ''}`} />
+                                    </button>
+
+                                    {/* Dropdown */}
+                                    {isPhoneCodeOpen && (
+                                        <div className="absolute left-0 top-full mt-1 w-80 bg-white border border-gray-300 rounded-xl shadow-lg z-[100] max-h-80 overflow-hidden flex flex-col">
+                                            {/* Search Input */}
+                                            <div className="p-2 border-b border-gray-200">
+                                                <div className="relative">
+                                                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Search country or code..."
+                                                        value={phoneCodeSearch}
+                                                        onChange={(e) => setPhoneCodeSearch(e.target.value)}
+                                                        className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3A6D6C] text-sm"
+                                                        autoFocus
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Options List */}
+                                            <div className="overflow-y-auto max-h-64">
+                                                {filteredPhoneCodes.length > 0 ? (
+                                                    filteredPhoneCodes.map((code) => (
+                                                        <button
+                                                            key={code.value}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                onChange('phoneCountryCode', code.value);
+                                                                setIsPhoneCodeOpen(false);
+                                                                setPhoneCodeSearch('');
+                                                            }}
+                                                            className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-[#3A6D6C]/10 transition-colors text-left ${
+                                                                data.phoneCountryCode === code.value ? 'bg-[#3A6D6C]/10' : ''
+                                                            }`}
+                                                        >
+                                                            <span className="text-xl">{code.flag}</span>
+                                                            <span className="flex-1 text-sm font-medium text-gray-900">{code.name}</span>
+                                                            <span className="text-sm text-gray-600">{code.phonecode}</span>
+                                                        </button>
+                                                    ))
+                                                ) : (
+                                                    <div className="px-4 py-8 text-center text-sm text-gray-500">
+                                                        No countries found
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Phone Number Input */}
+                                <input
+                                    ref={phoneRef}
+                                    type="tel"
+                                    placeholder="Enter Phone Number"
+                                    className="flex-1 min-w-0 px-4 py-3 rounded-r-xl focus:outline-none text-sm placeholder-gray-400 bg-white border-0"
+                                    value={data.phoneNumber || ''}
+                                    onChange={(e) => handleFieldChange('phoneNumber', e.target.value)}
+                                    onBlur={() => handleBlur('phoneNumber')}
+                                    aria-invalid={touched.phoneNumber && !!errors.phoneNumber}
+                                    aria-describedby={touched.phoneNumber && errors.phoneNumber ? 'phoneNumber-error' : undefined}
+                                />
+                            </div>
                             {touched.phoneNumber && errors.phoneNumber && (
                                 <span id="phoneNumber-error" className="text-red-500 text-xs mt-1" role="alert">
                                     {errors.phoneNumber}
@@ -410,6 +569,24 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                     </div>
                 </div>
             </div>
+
+            {/* Image Crop Modal */}
+            {isCropModalOpen && imageToCrop && (
+                <ImageCropModal
+                    image={imageToCrop}
+                    onClose={() => {
+                        setIsCropModalOpen(false);
+                        setImageToCrop(null);
+                        if (fileInputRef.current) {
+                            fileInputRef.current.value = '';
+                        }
+                    }}
+                    onCropComplete={handleCropComplete}
+                    aspectRatio={1}
+                    circularCrop={false}
+                    containerSize={256}
+                />
+            )}
 
             <div className="flex justify-center gap-4 mt-8">
                 {onCancel && (

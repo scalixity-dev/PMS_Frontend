@@ -4,7 +4,7 @@ import CustomDropdown from '../../../components/CustomDropdown';
 
 export interface VehicleFormData {
     type: string;
-    make: string;
+    make: string; // Backend uses 'make', frontend displays as 'Company name'
     model: string;
     year: string;
     color: string;
@@ -73,9 +73,17 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSa
     const validateField = (key: keyof VehicleFormData, value: string): string => {
         // Check if required field is empty
         if (!value || value.trim() === '') {
-            const fieldName = key.charAt(0).toUpperCase() + key.slice(1);
-            // Handle camelCase field names
-            const displayName = fieldName.replace(/([A-Z])/g, ' $1').trim();
+            // Map field names to display names
+            const displayNames: Record<string, string> = {
+                type: 'Type',
+                make: 'Company name',
+                model: 'Model',
+                year: 'Year',
+                color: 'Color',
+                licensePlate: 'License Plate',
+                registeredIn: 'Registered In'
+            };
+            const displayName = displayNames[key] || key;
             return `${displayName} is required`;
         }
 
@@ -89,6 +97,13 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSa
             }
             if (yearNum < 1900 || yearNum > currentYear + 1) {
                 return `Year must be between 1900 and ${currentYear + 1}`;
+            }
+        }
+
+        // Special validation for license plate
+        if (key === 'licensePlate') {
+            if (value && value.trim().length < 2) {
+                return 'License plate must be at least 2 characters';
             }
         }
 
@@ -232,14 +247,14 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSa
                             )}
                         </div>
                         <div>
-                            <label className={labelClasses}>Make *</label>
+                            <label className={labelClasses}>Company name *</label>
                             <input
                                 type="text"
                                 placeholder="Type here"
                                 className={getInputClassWithError('make')}
                                 value={formData.make}
                                 onChange={(e) => handleChange('make', e.target.value)}
-                                onBlur={() => handleBlur('make')}
+                                onBlur={() => handleBlur('make')} 
                             />
                             {touched.make && errors.make && (
                                 <p className="text-red-500 text-xs mt-1 ml-1">{errors.make}</p>
@@ -270,7 +285,11 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSa
                                 placeholder="Type Here"
                                 className={getInputClassWithError('year')}
                                 value={formData.year}
-                                onChange={(e) => handleChange('year', e.target.value)}
+                                onChange={(e) => {
+                                    // Allow only numbers
+                                    const value = e.target.value.replace(/\D/g, '');
+                                    handleChange('year', value);
+                                }}
                                 onBlur={() => handleBlur('year')}
                             />
                             {touched.year && errors.year && (
@@ -298,8 +317,13 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSa
                                 placeholder="Type Here"
                                 className={getInputClassWithError('licensePlate')}
                                 value={formData.licensePlate}
-                                onChange={(e) => handleChange('licensePlate', e.target.value)}
+                                onChange={(e) => {
+                                    // Convert to uppercase automatically
+                                    const upperValue = e.target.value.toUpperCase();
+                                    handleChange('licensePlate', upperValue);
+                                }}
                                 onBlur={() => handleBlur('licensePlate')}
+                                style={{ textTransform: 'uppercase' }}
                             />
                             {touched.licensePlate && errors.licensePlate && (
                                 <p className="text-red-500 text-xs mt-1 ml-1">{errors.licensePlate}</p>

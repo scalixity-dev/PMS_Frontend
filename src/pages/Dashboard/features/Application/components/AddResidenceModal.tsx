@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { X, ChevronLeft } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { X, ChevronLeft, Calendar as CalendarIcon, Search, ChevronDown } from 'lucide-react';
+import { Country, State, City } from 'country-state-city';
+import type { ICountry, IState, ICity } from 'country-state-city';
 import DatePicker from '@/components/ui/DatePicker';
-// import CustomDropdown from './CustomDropdown'; // If needed for simplistic fields
+import CustomDropdown from '../../../components/CustomDropdown';
+import { cn } from '@/lib/utils';
 
 export interface ResidenceFormData {
     isCurrent: boolean;
@@ -17,6 +20,7 @@ export interface ResidenceFormData {
     // Rent specific
     landlordName?: string;
     landlordPhone?: string;
+    landlordPhoneCountryCode?: string;
     rentAmount?: string;
 }
 
@@ -27,6 +31,11 @@ interface AddResidenceModalProps {
 }
 
 const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, onSave }) => {
+    // Location data
+    const [countries, setCountries] = useState<ICountry[]>([]);
+    const [states, setStates] = useState<IState[]>([]);
+    const [cities, setCities] = useState<ICity[]>([]);
+
     const [formData, setFormData] = useState<ResidenceFormData>({
         isCurrent: true, // Default to true as per screenshot (green switch)
         address: '',
@@ -40,11 +49,133 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
         reason: '',
         landlordName: '',
         landlordPhone: '',
+        landlordPhoneCountryCode: undefined,
         rentAmount: ''
     });
 
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [touched, setTouched] = useState<Record<string, boolean>>({});
+    const [isLandlordPhoneCodeOpen, setIsLandlordPhoneCodeOpen] = useState(false);
+    const [landlordPhoneCodeSearch, setLandlordPhoneCodeSearch] = useState('');
+    const landlordPhoneCodeRef = useRef<HTMLDivElement>(null);
+
+    // Load all countries on mount
+    useEffect(() => {
+        setCountries(Country.getAllCountries());
+    }, []);
+
+    // Load states when country changes
+    useEffect(() => {
+        if (formData.country) {
+            const countryStates = State.getStatesOfCountry(formData.country);
+            setStates(countryStates);
+            // Reset state and city when country changes
+            setFormData(prev => ({
+                ...prev,
+                state: '',
+                city: ''
+            }));
+        } else {
+            setStates([]);
+        }
+    }, [formData.country]);
+
+    // Load cities when state changes
+    useEffect(() => {
+        if (formData.country && formData.state) {
+            const stateCities = City.getCitiesOfState(formData.country, formData.state);
+            setCities(stateCities);
+            // Reset city when state changes
+            setFormData(prev => ({
+                ...prev,
+                city: ''
+            }));
+        } else {
+            setCities([]);
+        }
+    }, [formData.country, formData.state]);
+
+    // Auto-fill city with state when cities are not available and state is selected
+    useEffect(() => {
+        if (formData.country && formData.state && cities.length === 0) {
+            // If no cities are available for this state, use state name as city
+            const stateObj = states.find(s => s.isoCode === formData.state);
+            if (stateObj && (!formData.city || formData.city.trim() === '')) {
+                setFormData(prev => ({
+                    ...prev,
+                    city: stateObj.name
+                }));
+            }
+        }
+    }, [formData.country, formData.state, cities.length, states]);
+
+    // Convert countries to dropdown options
+    const countryOptions = useMemo(() => {
+        return countries.map(country => ({
+            value: country.isoCode,
+            label: country.name
+        })).sort((a, b) => a.label.localeCompare(b.label));
+    }, [countries]);
+
+    // Convert states to dropdown options
+    const stateOptions = useMemo(() => {
+        return states.map(state => ({
+            value: state.isoCode,
+            label: state.name
+        })).sort((a, b) => a.label.localeCompare(b.label));
+    }, [states]);
+
+    // Convert cities to dropdown options
+    const cityOptions = useMemo(() => {
+        return cities.map(city => ({
+            value: city.name,
+            label: city.name
+        })).sort((a, b) => a.label.localeCompare(b.label));
+    }, [cities]);
+
+    // Phone country codes for landlord phone
+    const phoneCountryCodes = useMemo(() => {
+        return Country.getAllCountries().map(country => ({
+            label: `${country.flag} ${country.phonecode.startsWith('+') ? '' : '+'}${country.phonecode}`,
+            value: `${country.isoCode}|${country.phonecode}`,
+            name: country.name,
+            phonecode: country.phonecode.startsWith('+') ? country.phonecode : `+${country.phonecode}`,
+            flag: country.flag,
+            isoCode: country.isoCode,
+        })).sort((a, b) => a.name.localeCompare(b.name));
+    }, []);
+
+    // Filter phone codes based on search
+    const filteredLandlordPhoneCodes = useMemo(() => {
+        if (!landlordPhoneCodeSearch) return phoneCountryCodes;
+        const searchLower = landlordPhoneCodeSearch.toLowerCase();
+        return phoneCountryCodes.filter(code => 
+            code.name.toLowerCase().includes(searchLower) ||
+            code.phonecode.includes(searchLower) ||
+            code.isoCode.toLowerCase().includes(searchLower)
+        );
+    }, [landlordPhoneCodeSearch, phoneCountryCodes]);
+
+    // Get selected phone code display
+    const selectedLandlordPhoneCode = useMemo(() => {
+        if (!formData.landlordPhoneCountryCode) return null;
+        return phoneCountryCodes.find(code => code.value === formData.landlordPhoneCountryCode);
+    }, [formData.landlordPhoneCountryCode, phoneCountryCodes]);
+
+    // Close phone code dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (landlordPhoneCodeRef.current && !landlordPhoneCodeRef.current.contains(event.target as Node)) {
+                setIsLandlordPhoneCodeOpen(false);
+                setLandlordPhoneCodeSearch('');
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
     // Prevent background scrolling
     useEffect(() => {
@@ -74,18 +205,21 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
                 reason: '',
                 landlordName: '',
                 landlordPhone: '',
+                landlordPhoneCountryCode: undefined,
                 rentAmount: ''
             });
             setErrors({});
             setTouched({});
+            setIsLandlordPhoneCodeOpen(false);
+            setLandlordPhoneCodeSearch('');
         }
     }, [isOpen]);
 
     if (!isOpen) return null;
 
     const validateField = (key: string, value: any): string => {
-        // Always required fields
-        if (['address', 'city', 'state', 'zip', 'country', 'reason'].includes(key)) {
+        // Always required fields (city and reason are optional)
+        if (['address', 'state', 'zip', 'country'].includes(key)) {
             if (!value || (typeof value === 'string' && value.trim() === '')) {
                 const fieldName = key.charAt(0).toUpperCase() + key.slice(1);
                 return `${fieldName} is required`;
@@ -97,9 +231,9 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
             return 'Move in date is required';
         }
 
-        // moveOutDate is required when not current residence
-        if (key === 'moveOutDate' && !formData.isCurrent && !value) {
-            return 'Move out date is required for past residences';
+        // moveOutDate is required when residency type is Rent
+        if (key === 'moveOutDate' && formData.residencyType === 'Rent' && !value) {
+            return 'Move out date is required for rented properties';
         }
 
         // Conditional fields for Rent
@@ -119,8 +253,8 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
         const newErrors: Record<string, string> = {};
         let isValid = true;
 
-        // Always required fields
-        const requiredFields = ['address', 'city', 'state', 'zip', 'country', 'moveInDate', 'reason'];
+        // Always required fields (city and reason are optional)
+        const requiredFields = ['address', 'state', 'zip', 'country', 'moveInDate'];
 
         requiredFields.forEach(field => {
             const error = validateField(field, (formData as any)[field]);
@@ -130,8 +264,8 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
             }
         });
 
-        // Conditional: moveOutDate when not current
-        if (!formData.isCurrent) {
+        // Conditional: moveOutDate when Rent
+        if (formData.residencyType === 'Rent') {
             const error = validateField('moveOutDate', formData.moveOutDate);
             if (error) {
                 newErrors.moveOutDate = error;
@@ -163,38 +297,25 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
             setErrors(prev => ({ ...prev, [key]: error }));
         }
 
-        // Special case: when isCurrent changes, revalidate moveOutDate
-        if (key === 'isCurrent') {
-            setErrors(prev => {
-                const newErrors = { ...prev };
-                if (value) {
-                    // If setting to current, clear moveOutDate error
-                    delete newErrors.moveOutDate;
-                } else {
-                    // If setting to not current, validate moveOutDate
-                    const error = validateField('moveOutDate', formData.moveOutDate);
-                    if (error) {
-                        newErrors.moveOutDate = error;
-                    }
-                }
-                return newErrors;
-            });
-        }
-
         // Special case: when residencyType changes, revalidate conditional fields
         if (key === 'residencyType') {
             setErrors(prev => {
                 const newErrors = { ...prev };
                 if (value === 'Rent') {
-                    // Validate landlord fields
+                    // Validate moveOutDate and landlord fields for Rent
+                    const moveOutDateError = validateField('moveOutDate', formData.moveOutDate);
                     const landlordNameError = validateField('landlordName', formData.landlordName);
                     const landlordPhoneError = validateField('landlordPhone', formData.landlordPhone);
+                    if (moveOutDateError) newErrors.moveOutDate = moveOutDateError;
                     if (landlordNameError) newErrors.landlordName = landlordNameError;
                     if (landlordPhoneError) newErrors.landlordPhone = landlordPhoneError;
                 } else {
-                    // Clear landlord field errors when switching to Own
+                    // Clear moveOutDate and landlord field errors when switching to Own
+                    delete newErrors.moveOutDate;
                     delete newErrors.landlordName;
                     delete newErrors.landlordPhone;
+                    // Clear moveOutDate value when switching to Own
+                    setFormData(prev => ({ ...prev, moveOutDate: undefined }));
                 }
                 return newErrors;
             });
@@ -212,19 +333,14 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
         // Mark all relevant fields as touched
         const allTouched: Record<string, boolean> = {
             address: true,
-            city: true,
             state: true,
             zip: true,
             country: true,
-            moveInDate: true,
-            reason: true
+            moveInDate: true
         };
 
-        if (!formData.isCurrent) {
-            allTouched.moveOutDate = true;
-        }
-
         if (formData.residencyType === 'Rent') {
+            allTouched.moveOutDate = true;
             allTouched.landlordName = true;
             allTouched.landlordPhone = true;
         }
@@ -258,20 +374,20 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
 
     // Check if form is valid for button state
     const isFormValid = () => {
-        const requiredFields = ['address', 'city', 'state', 'zip', 'country', 'moveInDate', 'reason'];
+        const requiredFields = ['address', 'state', 'zip', 'country', 'moveInDate'];
 
         // Check always required fields
         const baseValid = requiredFields.every(field => {
             return !validateField(field, (formData as any)[field]);
         });
 
-        // Check conditional moveOutDate
-        if (!formData.isCurrent) {
+        // Check conditional moveOutDate when Rent
+        if (formData.residencyType === 'Rent') {
             const moveOutValid = !validateField('moveOutDate', formData.moveOutDate);
             if (!moveOutValid) return false;
         }
 
-        // Check conditional landlord fields
+        // Check conditional landlord fields when Rent
         if (formData.residencyType === 'Rent') {
             const landlordValid = ['landlordName', 'landlordPhone'].every(field => {
                 return !validateField(field, (formData as any)[field]);
@@ -290,10 +406,10 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200 p-4">
-            <div className="bg-[#EAEAEA] rounded-[2rem] w-full max-w-4xl shadow-2xl animate-slide-in-from-right relative overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="bg-[#EAEAEA] rounded-[2rem] w-full max-w-4xl shadow-2xl animate-slide-in-from-right relative flex flex-col max-h-[90vh] overflow-hidden">
 
                 {/* Header */}
-                <div className="bg-[#3A6D6C] p-6 flex items-center justify-between text-white">
+                <div className="bg-[#3A6D6C] p-6 flex items-center justify-between text-white rounded-t-[2rem]">
                     <button onClick={onClose} className="hover:bg-white/10 p-2 rounded-full transition-colors">
                         <ChevronLeft size={28} />
                     </button>
@@ -304,7 +420,7 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
                 </div>
 
                 {/* Scrollable Body */}
-                <div className="p-8 overflow-y-auto custom-scrollbar">
+                <div className="p-8 overflow-y-auto custom-scrollbar relative">
 
                     {/* Current Residence Switch */}
                     <div className="flex items-center gap-4 mb-8">
@@ -318,55 +434,89 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
                     </div>
 
                     <div className="space-y-6">
-                        {/* Row 1: Address & City */}
+                        {/* Row 1: Address */}
+                        <div>
+                            <label className={labelClasses}>Address*</label>
+                            <input
+                                type="text"
+                                placeholder="Enter address"
+                                className={getInputClassWithError('address')}
+                                value={formData.address}
+                                onChange={(e) => handleChange('address', e.target.value)}
+                                onBlur={() => handleBlur('address')}
+                            />
+                            {touched.address && errors.address && (
+                                <p className="text-red-500 text-xs mt-1 ml-1">{errors.address}</p>
+                            )}
+                        </div>
+
+                        {/* Row 2: Country, State */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label className={labelClasses}>Address*</label>
-                                {/* Using a simple input for now */}
-                                <div className="relative">
-                                    <input
-                                        type="text"
-                                        placeholder="Enter address"
-                                        className={getInputClassWithError('address')}
-                                        value={formData.address}
-                                        onChange={(e) => handleChange('address', e.target.value)}
-                                        onBlur={() => handleBlur('address')}
-                                    />
-                                </div>
-                                {touched.address && errors.address && (
-                                    <p className="text-red-500 text-xs mt-1 ml-1">{errors.address}</p>
+                                <CustomDropdown
+                                    label="Country"
+                                    value={formData.country}
+                                    onChange={(value) => {
+                                        handleChange('country', value);
+                                        if (!touched.country) {
+                                            handleBlur('country', value);
+                                        }
+                                    }}
+                                    options={countryOptions}
+                                    placeholder="Select country"
+                                    required
+                                    disabled={countryOptions.length === 0}
+                                    searchable={true}
+                                    buttonClassName={getInputClassWithError('country')}
+                                />
+                                {touched.country && errors.country && (
+                                    <p className="text-red-500 text-xs mt-1 ml-1">{errors.country}</p>
                                 )}
                             </div>
                             <div>
-                                <label className={labelClasses}>City *</label>
-                                <input
-                                    type="text"
-                                    placeholder="Enter city"
-                                    className={getInputClassWithError('city')}
-                                    value={formData.city}
-                                    onChange={(e) => handleChange('city', e.target.value)}
-                                    onBlur={() => handleBlur('city')}
+                                <CustomDropdown
+                                    label="State"
+                                    value={formData.state}
+                                    onChange={(value) => {
+                                        handleChange('state', value);
+                                        if (!touched.state) {
+                                            handleBlur('state', value);
+                                        }
+                                    }}
+                                    options={stateOptions}
+                                    placeholder={formData.country ? "Select state" : "Select country first"}
+                                    required
+                                    disabled={!formData.country || stateOptions.length === 0}
+                                    searchable={true}
+                                    buttonClassName={getInputClassWithError('state')}
                                 />
-                                {touched.city && errors.city && (
-                                    <p className="text-red-500 text-xs mt-1 ml-1">{errors.city}</p>
+                                {touched.state && errors.state && (
+                                    <p className="text-red-500 text-xs mt-1 ml-1">{errors.state}</p>
                                 )}
                             </div>
                         </div>
 
-                        {/* Row 2: State, Zip, Country */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* Row 3: City, Zip */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label className={labelClasses}>State *</label>
-                                <input
-                                    type="text"
-                                    placeholder="Enter state"
-                                    className={getInputClassWithError('state')}
-                                    value={formData.state}
-                                    onChange={(e) => handleChange('state', e.target.value)}
-                                    onBlur={() => handleBlur('state')}
+                                <CustomDropdown
+                                    label="City"
+                                    value={formData.city}
+                                    onChange={(value) => {
+                                        handleChange('city', value);
+                                        if (!touched.city) {
+                                            handleBlur('city', value);
+                                        }
+                                    }}
+                                    options={cityOptions}
+                                    placeholder={formData.state ? (cityOptions.length > 0 ? "Select city" : "No cities available") : formData.country ? "Select state first" : "Select country first"}
+                                    required={false}
+                                    disabled={!formData.state || cityOptions.length === 0}
+                                    searchable={true}
+                                    buttonClassName={getInputClassWithError('city')}
                                 />
-                                {touched.state && errors.state && (
-                                    <p className="text-red-500 text-xs mt-1 ml-1">{errors.state}</p>
+                                {touched.city && errors.city && (
+                                    <p className="text-red-500 text-xs mt-1 ml-1">{errors.city}</p>
                                 )}
                             </div>
                             <div>
@@ -381,22 +531,6 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
                                 />
                                 {touched.zip && errors.zip && (
                                     <p className="text-red-500 text-xs mt-1 ml-1">{errors.zip}</p>
-                                )}
-                            </div>
-                            <div>
-                                <label className={labelClasses}>Country*</label>
-                                <div className="relative">
-                                    <input
-                                        type="text"
-                                        placeholder="Enter country"
-                                        className={getInputClassWithError('country')}
-                                        value={formData.country}
-                                        onChange={(e) => handleChange('country', e.target.value)}
-                                        onBlur={() => handleBlur('country')}
-                                    />
-                                </div>
-                                {touched.country && errors.country && (
-                                    <p className="text-red-500 text-xs mt-1 ml-1">{errors.country}</p>
                                 )}
                             </div>
                         </div>
@@ -446,6 +580,7 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
                                         }}
                                         placeholder="DD/MM/YYYY"
                                         className={getInputClassWithError('moveInDate')}
+                                        popoverClassName="z-[60]"
                                     />
                                 </div>
                                 {touched.moveInDate && errors.moveInDate && (
@@ -453,20 +588,28 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
                                 )}
                             </div>
                             <div>
-                                <label className={labelClasses}>Move Out Date *</label>
+                                <label className={labelClasses}>Move Out Date {formData.residencyType === 'Rent' && '*'}</label>
                                 <div className="relative">
-                                    <DatePicker
-                                        value={formData.moveOutDate}
-                                        onChange={(date: Date | undefined) => {
-                                            handleChange('moveOutDate', date);
-                                            if (!touched.moveOutDate) {
-                                                handleBlur('moveOutDate', date);
-                                            }
-                                        }}
-                                        placeholder="DD/MM/YYYY"
-                                        className={getInputClassWithError('moveOutDate')}
-                                        disabled={formData.isCurrent}
-                                    />
+                                    {formData.residencyType === 'Rent' ? (
+                                        <DatePicker
+                                            value={formData.moveOutDate}
+                                            onChange={(date: Date | undefined) => {
+                                                handleChange('moveOutDate', date);
+                                                if (!touched.moveOutDate) {
+                                                    handleBlur('moveOutDate', date);
+                                                }
+                                            }}
+                                            placeholder="DD/MM/YYYY"
+                                            className={getInputClassWithError('moveOutDate')}
+                                            popoverClassName="z-[60]"
+                                            disabled={false}
+                                        />
+                                    ) : (
+                                        <div className={cn("w-full text-left rounded-md bg-gray-100 px-4 py-3 text-sm text-gray-400 outline-none shadow-sm flex items-center justify-between cursor-not-allowed", getInputClassWithError('moveOutDate'))}>
+                                            <span>DD/MM/YYYY</span>
+                                            <CalendarIcon className="w-4 h-4 text-gray-400 ml-2" />
+                                        </div>
+                                    )}
                                 </div>
                                 {touched.moveOutDate && errors.moveOutDate && (
                                     <p className="text-red-500 text-xs mt-1 ml-1">{errors.moveOutDate}</p>
@@ -493,14 +636,96 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
                                 </div>
                                 <div>
                                     <label className={labelClasses}>Landlord Phone *</label>
-                                    <input
-                                        type="text"
-                                        placeholder="Enter phone"
-                                        className={getInputClassWithError('landlordPhone')}
-                                        value={formData.landlordPhone}
-                                        onChange={(e) => handleChange('landlordPhone', e.target.value)}
-                                        onBlur={() => handleBlur('landlordPhone')}
-                                    />
+                                    <div className={`flex border rounded-xl transition-all ${
+                                        touched.landlordPhone && errors.landlordPhone 
+                                            ? 'border-red-500 border-2' 
+                                            : 'border-gray-200 focus-within:ring-2 focus-within:ring-[#3A6D6C] focus-within:border-[#3A6D6C]'
+                                    }`}>
+                                        {/* Phone Code Selector */}
+                                        <div className="relative" ref={landlordPhoneCodeRef}>
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsLandlordPhoneCodeOpen(!isLandlordPhoneCodeOpen)}
+                                                className={`flex items-center gap-1 px-3 py-2.5 border-r bg-white rounded-l-xl focus:outline-none text-sm min-w-[100px] hover:bg-gray-50 transition-colors ${
+                                                    touched.landlordPhone && errors.landlordPhone 
+                                                        ? 'border-red-500' 
+                                                        : 'border-gray-200'
+                                                }`}
+                                            >
+                                                <span className="text-sm font-medium">
+                                                    {selectedLandlordPhoneCode ? (
+                                                        <span className="flex items-center gap-1">
+                                                            <span>{selectedLandlordPhoneCode.flag}</span>
+                                                            <span className="hidden sm:inline">{selectedLandlordPhoneCode.phonecode}</span>
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-gray-500">Code</span>
+                                                    )}
+                                                </span>
+                                                <ChevronDown size={16} className={`text-gray-500 transition-transform ${isLandlordPhoneCodeOpen ? 'rotate-180' : ''}`} />
+                                            </button>
+
+                                            {/* Dropdown */}
+                                            {isLandlordPhoneCodeOpen && (
+                                                <div className="absolute left-0 top-full mt-1 w-80 bg-white border border-gray-300 rounded-xl shadow-lg z-[100] max-h-80 overflow-hidden flex flex-col">
+                                                    {/* Search Input */}
+                                                    <div className="p-2 border-b border-gray-200">
+                                                        <div className="relative">
+                                                            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                            <input
+                                                                type="text"
+                                                                placeholder="Search country or code..."
+                                                                value={landlordPhoneCodeSearch}
+                                                                onChange={(e) => setLandlordPhoneCodeSearch(e.target.value)}
+                                                                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3A6D6C] text-sm"
+                                                                autoFocus
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Options List */}
+                                                    <div className="overflow-y-auto max-h-64">
+                                                        {filteredLandlordPhoneCodes.length > 0 ? (
+                                                            filteredLandlordPhoneCodes.map((code) => (
+                                                                <button
+                                                                    key={code.value}
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        handleChange('landlordPhoneCountryCode', code.value);
+                                                                        setIsLandlordPhoneCodeOpen(false);
+                                                                        setLandlordPhoneCodeSearch('');
+                                                                    }}
+                                                                    className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-[#3A6D6C]/10 transition-colors text-left ${
+                                                                        formData.landlordPhoneCountryCode === code.value ? 'bg-[#3A6D6C]/10' : ''
+                                                                    }`}
+                                                                >
+                                                                    <span className="text-xl">{code.flag}</span>
+                                                                    <span className="flex-1 text-sm font-medium text-gray-900">{code.name}</span>
+                                                                    <span className="text-sm text-gray-600">{code.phonecode}</span>
+                                                                </button>
+                                                            ))
+                                                        ) : (
+                                                            <div className="px-4 py-8 text-center text-sm text-gray-500">
+                                                                No countries found
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Phone Number Input */}
+                                        <input
+                                            type="tel"
+                                            placeholder="Enter phone number"
+                                            className={`flex-1 min-w-0 px-4 py-2.5 rounded-r-xl focus:outline-none text-sm placeholder-gray-400 bg-white border-0 ${
+                                                touched.landlordPhone && errors.landlordPhone ? 'text-red-500' : 'text-gray-700'
+                                            }`}
+                                            value={formData.landlordPhone}
+                                            onChange={(e) => handleChange('landlordPhone', e.target.value)}
+                                            onBlur={() => handleBlur('landlordPhone')}
+                                        />
+                                    </div>
                                     {touched.landlordPhone && errors.landlordPhone && (
                                         <p className="text-red-500 text-xs mt-1 ml-1">{errors.landlordPhone}</p>
                                     )}
@@ -515,7 +740,7 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
 
                         {/* Please Explain */}
                         <div>
-                            <label className={labelClasses}>Please Explain*</label>
+                            <label className={labelClasses}>Please Explain</label>
                             <textarea
                                 placeholder="Enter additional details"
                                 className={`${getInputClassWithError('reason')} h-32 resize-none pt-4`}

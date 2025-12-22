@@ -3,9 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Download, Check, MoreHorizontal, ChevronDown } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import { useTransactionStore } from '../Transactions/store/transactionStore';
-
-// Reuse modals from Transactions or creating new ones?
-// For now, I'll import the same modals as they are likely shared or similar types of actions
 import EditInvoiceModal from '../Transactions/components/EditInvoiceModal';
 import DeleteTransactionModal from '../Transactions/components/DeleteTransactionModal';
 import ApplyDepositsModal from '../Transactions/components/ApplyDepositsModal';

@@ -85,5 +85,13 @@ export const API_ENDPOINTS = {
     GET_DOCUMENTS: (id: string) => `${API_BASE_URL}/tenant/${id}/documents`,
     DELETE_DOCUMENT: (documentId: string) => `${API_BASE_URL}/tenant/documents/${documentId}`,
   },
+  APPLICATION: {
+    GET_ALL: `${API_BASE_URL}/application`,
+    GET_ONE: (id: string) => `${API_BASE_URL}/application/${id}`,
+    GET_BY_LEASING: (leasingId: string) => `${API_BASE_URL}/application/leasing/${leasingId}`,
+    CREATE: `${API_BASE_URL}/application`,
+    UPDATE: (id: string) => `${API_BASE_URL}/application/${id}`,
+    DELETE: (id: string) => `${API_BASE_URL}/application/${id}`,
+  },
 };
 

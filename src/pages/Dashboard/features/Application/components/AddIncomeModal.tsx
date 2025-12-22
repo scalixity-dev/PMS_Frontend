@@ -1,12 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { X, ChevronLeft } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { X, ChevronLeft, Search, ChevronDown } from 'lucide-react';
 import CustomDropdown from '../../../components/CustomDropdown';
 import DatePicker from '@/components/ui/DatePicker';
-
-
-// Checking if we have a Switch component. I will use a simple HTML checkbox styled as switch if not found? 
-// The prompt implies utilizing existing components if possible. I'll look for a Switch or implement a custom toggle.
-// For now, I'll stick to a custom toggle implementation inside the file if I can't find one, to be safe.
 
 export interface IncomeFormData {
     currentEmployment: boolean;
@@ -16,6 +11,7 @@ export interface IncomeFormData {
     company: string;
     position: string;
     monthlyAmount: string; // "Monthly Income" in UI
+    currency?: string; // Currency code (e.g., 'USD', 'EUR', 'INR')
     address: string;
     office: string;
     companyPhone: string;
@@ -39,6 +35,37 @@ const incomeTypeOptions = [
     { value: 'Other', label: 'Other' }
 ];
 
+// Common currencies with symbols
+const currencyOptions = [
+    { code: 'USD', symbol: '$', name: 'US Dollar' },
+    { code: 'EUR', symbol: '€', name: 'Euro' },
+    { code: 'GBP', symbol: '£', name: 'British Pound' },
+    { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
+    { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
+    { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
+    { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
+    { code: 'CHF', symbol: 'CHF', name: 'Swiss Franc' },
+    { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
+    { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar' },
+    { code: 'HKD', symbol: 'HK$', name: 'Hong Kong Dollar' },
+    { code: 'NZD', symbol: 'NZ$', name: 'New Zealand Dollar' },
+    { code: 'ZAR', symbol: 'R', name: 'South African Rand' },
+    { code: 'BRL', symbol: 'R$', name: 'Brazilian Real' },
+    { code: 'MXN', symbol: '$', name: 'Mexican Peso' },
+    { code: 'KRW', symbol: '₩', name: 'South Korean Won' },
+    { code: 'THB', symbol: '฿', name: 'Thai Baht' },
+    { code: 'MYR', symbol: 'RM', name: 'Malaysian Ringgit' },
+    { code: 'PHP', symbol: '₱', name: 'Philippine Peso' },
+    { code: 'IDR', symbol: 'Rp', name: 'Indonesian Rupiah' },
+    { code: 'AED', symbol: 'د.إ', name: 'UAE Dirham' },
+    { code: 'SAR', symbol: '﷼', name: 'Saudi Riyal' },
+    { code: 'PKR', symbol: '₨', name: 'Pakistani Rupee' },
+    { code: 'BDT', symbol: '৳', name: 'Bangladeshi Taka' },
+    { code: 'NGN', symbol: '₦', name: 'Nigerian Naira' },
+    { code: 'EGP', symbol: 'E£', name: 'Egyptian Pound' },
+    { code: 'KES', symbol: 'KSh', name: 'Kenyan Shilling' },
+].sort((a, b) => a.name.localeCompare(b.name));
+
 const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
     const [formData, setFormData] = useState<IncomeFormData>({
         currentEmployment: true,
@@ -48,6 +75,7 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
         company: '',
         position: '',
         monthlyAmount: '',
+        currency: 'USD', // Default currency
         address: '',
         office: '',
         companyPhone: '',
@@ -58,6 +86,9 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
 
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [touched, setTouched] = useState<Record<string, boolean>>({});
+    const [isCurrencyOpen, setIsCurrencyOpen] = useState(false);
+    const [currencySearch, setCurrencySearch] = useState('');
+    const currencyRef = useRef<HTMLDivElement>(null);
 
     // Prevent background scrolling when modal is open
     // Prevent background scrolling when modal is open
@@ -75,6 +106,7 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
                     company: '',
                     position: '',
                     monthlyAmount: '',
+                    currency: 'USD',
                     address: '',
                     office: '',
                     companyPhone: '',
@@ -94,6 +126,38 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
             document.body.style.overflow = 'unset';
         };
     }, [isOpen, initialData]);
+
+    // Filter currencies based on search
+    const filteredCurrencies = useMemo(() => {
+        if (!currencySearch) return currencyOptions;
+        const searchLower = currencySearch.toLowerCase();
+        return currencyOptions.filter(currency => 
+            currency.name.toLowerCase().includes(searchLower) ||
+            currency.code.toLowerCase().includes(searchLower) ||
+            currency.symbol.toLowerCase().includes(searchLower)
+        );
+    }, [currencySearch]);
+
+    // Get selected currency display
+    const selectedCurrency = useMemo(() => {
+        if (!formData.currency) return currencyOptions[0]; // Default to USD
+        return currencyOptions.find(c => c.code === formData.currency) || currencyOptions[0];
+    }, [formData.currency]);
+
+    // Close currency dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (currencyRef.current && !currencyRef.current.contains(event.target as Node)) {
+                setIsCurrencyOpen(false);
+                setCurrencySearch('');
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
 
     if (!isOpen) return null;
@@ -318,14 +382,100 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
                         {/* Monthly Income */}
                         <div className="md:col-span-1.5">
                             <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Monthly Income*</label>
-                            <input
-                                type="text"
-                                placeholder="Add Money"
-                                className={`w-full bg-white p-3 rounded-xl outline-none text-gray-700 placeholder-gray-400 shadow-sm text-sm ${touched.monthlyAmount && errors.monthlyAmount ? 'border-2 border-red-500' : ''}`}
-                                value={formData.monthlyAmount}
-                                onChange={(e) => handleChange('monthlyAmount', e.target.value)}
-                                onBlur={() => handleBlur('monthlyAmount')}
-                            />
+                            <div className={`flex border rounded-xl transition-all ${
+                                touched.monthlyAmount && errors.monthlyAmount 
+                                    ? 'border-red-500 border-2' 
+                                    : 'border-gray-200 focus-within:ring-2 focus-within:ring-[#3A6D6C] focus-within:border-[#3A6D6C]'
+                            }`}>
+                                {/* Currency Selector */}
+                                <div className="relative" ref={currencyRef}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsCurrencyOpen(!isCurrencyOpen)}
+                                        className={`flex items-center gap-1 px-3 py-3 border-r bg-white rounded-l-xl focus:outline-none text-sm min-w-[80px] hover:bg-gray-50 transition-colors ${
+                                            touched.monthlyAmount && errors.monthlyAmount 
+                                                ? 'border-red-500' 
+                                                : 'border-gray-200'
+                                        }`}
+                                    >
+                                        <span className="text-sm font-medium">
+                                            {selectedCurrency ? (
+                                                <span className="flex items-center gap-1">
+                                                    <span>{selectedCurrency.symbol}</span>
+                                                    <span className="hidden sm:inline text-xs">{selectedCurrency.code}</span>
+                                                </span>
+                                            ) : (
+                                                <span className="text-gray-500">$</span>
+                                            )}
+                                        </span>
+                                        <ChevronDown size={16} className={`text-gray-500 transition-transform ${isCurrencyOpen ? 'rotate-180' : ''}`} />
+                                    </button>
+
+                                    {/* Dropdown */}
+                                    {isCurrencyOpen && (
+                                        <div className="absolute left-0 top-full mt-1 w-72 bg-white border border-gray-300 rounded-xl shadow-lg z-[100] max-h-80 overflow-hidden flex flex-col">
+                                            {/* Search Input */}
+                                            <div className="p-2 border-b border-gray-200">
+                                                <div className="relative">
+                                                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Search currency..."
+                                                        value={currencySearch}
+                                                        onChange={(e) => setCurrencySearch(e.target.value)}
+                                                        className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3A6D6C] text-sm"
+                                                        autoFocus
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Options List */}
+                                            <div className="overflow-y-auto max-h-64">
+                                                {filteredCurrencies.length > 0 ? (
+                                                    filteredCurrencies.map((currency) => (
+                                                        <button
+                                                            key={currency.code}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                handleChange('currency', currency.code);
+                                                                setIsCurrencyOpen(false);
+                                                                setCurrencySearch('');
+                                                            }}
+                                                            className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-[#3A6D6C]/10 transition-colors text-left ${
+                                                                formData.currency === currency.code ? 'bg-[#3A6D6C]/10' : ''
+                                                            }`}
+                                                        >
+                                                            <span className="text-lg font-semibold w-12">{currency.symbol}</span>
+                                                            <span className="flex-1 text-sm font-medium text-gray-900">{currency.name}</span>
+                                                            <span className="text-xs text-gray-600">{currency.code}</span>
+                                                        </button>
+                                                    ))
+                                                ) : (
+                                                    <div className="px-4 py-8 text-center text-sm text-gray-500">
+                                                        No currencies found
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Amount Input */}
+                                <input
+                                    type="text"
+                                    placeholder="Add Money"
+                                    className={`flex-1 min-w-0 px-4 py-3 rounded-r-xl focus:outline-none text-sm placeholder-gray-400 bg-white border-0 ${
+                                        touched.monthlyAmount && errors.monthlyAmount ? 'text-red-500' : 'text-gray-700'
+                                    }`}
+                                    value={formData.monthlyAmount}
+                                    onChange={(e) => {
+                                        // Allow only numbers and decimal point
+                                        const value = e.target.value.replace(/[^\d.]/g, '');
+                                        handleChange('monthlyAmount', value);
+                                    }}
+                                    onBlur={() => handleBlur('monthlyAmount')}
+                                />
+                            </div>
                             {touched.monthlyAmount && errors.monthlyAmount && <p className="text-red-500 text-xs mt-1">{errors.monthlyAmount}</p>}
                         </div>
 
