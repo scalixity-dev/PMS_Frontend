@@ -297,16 +297,15 @@ const Application = () => {
                     />
                 </div>
             </div>
-
             {/* Invite Modal */}
             <InviteToApplyModal
                 isOpen={isInviteModalOpen}
                 onClose={() => setIsInviteModalOpen(false)}
-                onSend={(email) => {
+                onSend={async (email) => {
                     // TODO: Implement API call to send invitation
                     console.log('Sending invitation to:', email);
-                    // You can add API call here when backend endpoint is ready
-                    alert(`Invitation will be sent to ${email}`);
+                    // Replace with actual API call when ready
+                    // await invitationService.sendInvitation(email);
                     setIsInviteModalOpen(false);
                 }}
             />

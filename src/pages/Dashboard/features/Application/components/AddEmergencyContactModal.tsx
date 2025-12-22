@@ -137,10 +137,12 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
                 break;
             case 'phoneNumber':
                 if (!value || value.trim() === '') return 'Phone Number is required';
-                // Count only digits for validation (allow formatting characters)
-                const digitsOnly = value.replace(/\D/g, '');
-                if (digitsOnly.length < 4 || digitsOnly.length > 15) {
-                    return 'Phone number must be between 4 and 15 digits';
+                {
+                    // Count only digits for validation (allow formatting characters)
+                    const digitsOnly = value.replace(/\D/g, '');
+                    if (digitsOnly.length < 4 || digitsOnly.length > 15) {
+                        return 'Phone number must be between 4 and 15 digits';
+                    }
                 }
                 break;
             case 'details':
