@@ -34,6 +34,15 @@ const AddRecurringRequestModal: React.FC<AddRecurringRequestModalProps> = ({
         description: '',
     });
 
+    const [fieldErrors, setFieldErrors] = useState<{
+        category?: string;
+        subCategory?: string;
+        property?: string;
+        startDate?: string;
+        frequency?: string;
+        description?: string;
+    }>({});
+
     // Disable body scroll when modal is open
     useEffect(() => {
         if (isOpen) {
@@ -48,8 +57,39 @@ const AddRecurringRequestModal: React.FC<AddRecurringRequestModalProps> = ({
     }, [isOpen]);
 
     const handleSubmit = () => {
+        const errors: typeof fieldErrors = {};
+
+        // Validate required fields
+        if (!formData.category || formData.category.trim() === '') {
+            errors.category = 'Please select a category';
+        }
+        if (!formData.subCategory || formData.subCategory.trim() === '') {
+            errors.subCategory = 'Please select a sub-category';
+        }
+        if (!formData.property || formData.property.trim() === '') {
+            errors.property = 'Please select a property';
+        }
+        if (!formData.startDate) {
+            errors.startDate = 'Please select a start date';
+        }
+        if (!formData.frequency || formData.frequency.trim() === '') {
+            errors.frequency = 'Please select a frequency';
+        }
+        if (!formData.description || formData.description.trim() === '') {
+            errors.description = 'Please provide a description';
+        }
+
+        // If there are errors, set them and prevent submission
+        if (Object.keys(errors).length > 0) {
+            setFieldErrors(errors);
+            return;
+        }
+
+        // Clear errors and submit
+        setFieldErrors({});
         onSubmit(formData);
-        // Reset form
+        
+        // Reset form after successful submit
         setFormData({
             category: '',
             subCategory: '',
@@ -63,7 +103,7 @@ const AddRecurringRequestModal: React.FC<AddRecurringRequestModalProps> = ({
 
     const handleClose = () => {
         onClose();
-        // Reset form on close
+        // Reset form and errors on close
         setFormData({
             category: '',
             subCategory: '',
@@ -73,6 +113,7 @@ const AddRecurringRequestModal: React.FC<AddRecurringRequestModalProps> = ({
             frequency: '',
             description: '',
         });
+        setFieldErrors({});
     };
 
     if (!isOpen) return null;
@@ -103,52 +144,67 @@ const AddRecurringRequestModal: React.FC<AddRecurringRequestModalProps> = ({
                 <div className="p-8 space-y-6">
                     {/* Category and Sub-Category */}
                     <div className="grid grid-cols-2 gap-6">
-                        <CustomDropdown
-                            label="Category*"
-                            value={formData.category}
-                            onChange={(value) => setFormData({ ...formData, category: value })}
-                            options={[
-                                { value: 'interior', label: 'Interior' },
-                                { value: 'exterior', label: 'Exterior' },
-                                { value: 'hvac', label: 'HVAC' },
-                                { value: 'plumbing', label: 'Plumbing' },
-                                { value: 'electrical', label: 'Electrical' }
-                            ]}
-                            placeholder="Select Category"
-                            required
-                            buttonClassName="!bg-white !border-none !rounded-lg !py-3 !px-6"
-                        />
-                        <CustomDropdown
-                            label="Sub-Category*"
-                            value={formData.subCategory}
-                            onChange={(value) => setFormData({ ...formData, subCategory: value })}
-                            options={[
-                                { value: 'lights', label: 'Lights/Beaping' },
-                                { value: 'roof', label: 'Roof & Gutters' },
-                                { value: 'filter', label: 'Filter Replacement' },
-                                { value: 'pipes', label: 'Pipes & Fixtures' }
-                            ]}
-                            placeholder="Select Sub-Category"
-                            required
-                            buttonClassName="!bg-white !border-none !rounded-lg !py-3 !px-6"
-                        />
+                        <div>
+                            <CustomDropdown
+                                label="Category*"
+                                value={formData.category}
+                                onChange={(value) => setFormData({ ...formData, category: value })}
+                                options={[
+                                    { value: 'interior', label: 'Interior' },
+                                    { value: 'exterior', label: 'Exterior' },
+                                    { value: 'hvac', label: 'HVAC' },
+                                    { value: 'plumbing', label: 'Plumbing' },
+                                    { value: 'electrical', label: 'Electrical' }
+                                ]}
+                                placeholder="Select Category"
+                                required
+                                buttonClassName="!bg-white !border-none !rounded-lg !py-3 !px-6"
+                            />
+                            {fieldErrors.category && (
+                                <p className="text-red-600 text-xs mt-1 ml-1">{fieldErrors.category}</p>
+                            )}
+                        </div>
+                        <div>
+                            <CustomDropdown
+                                label="Sub-Category*"
+                                value={formData.subCategory}
+                                onChange={(value) => setFormData({ ...formData, subCategory: value })}
+                                options={[
+                                    { value: 'lights', label: 'Lights/Beaping' },
+                                    { value: 'roof', label: 'Roof & Gutters' },
+                                    { value: 'filter', label: 'Filter Replacement' },
+                                    { value: 'pipes', label: 'Pipes & Fixtures' }
+                                ]}
+                                placeholder="Select Sub-Category"
+                                required
+                                buttonClassName="!bg-white !border-none !rounded-lg !py-3 !px-6"
+                            />
+                            {fieldErrors.subCategory && (
+                                <p className="text-red-600 text-xs mt-1 ml-1">{fieldErrors.subCategory}</p>
+                            )}
+                        </div>
                     </div>
 
                     {/* Property */}
-                    <CustomDropdown
-                        label="Property*"
-                        value={formData.property}
-                        onChange={(value) => setFormData({ ...formData, property: value })}
-                        options={[
-                            { value: 'luxury_property', label: 'Luxury Property' },
-                            { value: 'sunset_villa', label: 'Sunset Villa' },
-                            { value: 'ocean_view', label: 'Ocean View Apartments' },
-                            { value: 'garden_heights', label: 'Garden Heights' }
-                        ]}
-                        placeholder="Select Property"
-                        required
-                        buttonClassName="!bg-white !border-none !rounded-lg !py-3 !px-6"
-                    />
+                    <div>
+                        <CustomDropdown
+                            label="Property*"
+                            value={formData.property}
+                            onChange={(value) => setFormData({ ...formData, property: value })}
+                            options={[
+                                { value: 'luxury_property', label: 'Luxury Property' },
+                                { value: 'sunset_villa', label: 'Sunset Villa' },
+                                { value: 'ocean_view', label: 'Ocean View Apartments' },
+                                { value: 'garden_heights', label: 'Garden Heights' }
+                            ]}
+                            placeholder="Select Property"
+                            required
+                            buttonClassName="!bg-white !border-none !rounded-lg !py-3 !px-6"
+                        />
+                        {fieldErrors.property && (
+                            <p className="text-red-600 text-xs mt-1 ml-1">{fieldErrors.property}</p>
+                        )}
+                    </div>
 
                     {/* Start Date and End Date */}
                     <div className="grid grid-cols-2 gap-6">
@@ -160,6 +216,9 @@ const AddRecurringRequestModal: React.FC<AddRecurringRequestModalProps> = ({
                                 placeholder="dd/mm/yyyy"
                                 className="!rounded-lg"
                             />
+                            {fieldErrors.startDate && (
+                                <p className="text-red-600 text-xs mt-1 ml-1">{fieldErrors.startDate}</p>
+                            )}
                         </div>
                         <div>
                             <label className="block text-sm font-bold text-gray-700 mb-2">End Date*</label>
@@ -190,11 +249,14 @@ const AddRecurringRequestModal: React.FC<AddRecurringRequestModalProps> = ({
                             required
                             buttonClassName="!bg-white !border-none !rounded-lg !py-3 !px-6"
                         />
+                        {fieldErrors.frequency && (
+                            <p className="text-red-600 text-xs mt-1 ml-1">{fieldErrors.frequency}</p>
+                        )}
                     </div>
 
                     {/* Description */}
                     <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Description</label>
+                        <label className="block text-sm font-bold text-gray-700 mb-2">Description*</label>
                         <textarea
                             value={formData.description}
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -202,6 +264,9 @@ const AddRecurringRequestModal: React.FC<AddRecurringRequestModalProps> = ({
                             rows={3}
                             className="w-full rounded-lg border-none px-6 py-3 text-sm bg-white text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3D7475]/20 resize-none"
                         />
+                        {fieldErrors.description && (
+                            <p className="text-red-600 text-xs mt-1 ml-1">{fieldErrors.description}</p>
+                        )}
                     </div>
 
                     {/* Action Buttons */}

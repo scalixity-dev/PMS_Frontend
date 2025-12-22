@@ -210,7 +210,7 @@ const Requests: React.FC = () => {
     };
 
     const handleEdit = (id: string) => {
-        navigate(`/dashboard/maintenance/request/${id}/edit`);
+        navigate('/dashboard/maintenance/request', { state: { editMode: true, id } });
     };
 
     const handleMakeRecurring = (id: string) => {
@@ -246,8 +246,8 @@ const Requests: React.FC = () => {
     };
 
     const filterLabels: Record<string, string> = {
-        status: 'Date',
-        assignee: 'Clients',
+        status: 'Status',
+        assignee: 'Assignee',
         property: 'Property & Units',
     };
 
@@ -379,7 +379,7 @@ const Requests: React.FC = () => {
                                         </button>
                                     </div>
                                     <div>Status</div>
-                                    <div>ID</div>
+                                    <div>Date</div>
                                     <div>Category & property</div>
                                     <div>Priority</div>
                                     <div>Assignee</div>

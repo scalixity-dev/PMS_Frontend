@@ -52,6 +52,8 @@ const MaintenanceRecurring: React.FC = () => {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [requestToDelete, setRequestToDelete] = useState<string | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [recurringRequests, setRecurringRequests] = useState(MOCK_RECURRING_REQUESTS);
     const [filters, setFilters] = useState<{
         display: string[];
         category: string[];
@@ -69,10 +71,43 @@ const MaintenanceRecurring: React.FC = () => {
         setIsDeleteModalOpen(true);
     };
 
-    const confirmDelete = () => {
-        console.log('Deleting recurring request:', requestToDelete);
-        setIsDeleteModalOpen(false);
-        setRequestToDelete(null);
+    const confirmDelete = async () => {
+        if (!requestToDelete) return;
+
+        setIsDeleting(true);
+        
+        // Optimistically remove from UI
+        const previousRequests = recurringRequests;
+        setRecurringRequests(prev => prev.filter(req => req.id !== requestToDelete));
+        
+        try {
+            // TODO: Replace with actual API call when backend is ready
+            // await deleteRecurringRequest(requestToDelete);
+            
+            // Simulate API call
+            await new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    // Simulate success (you can test error by calling reject())
+                    resolve(true);
+                }, 500);
+            });
+            
+            console.log('Successfully deleted recurring request:', requestToDelete);
+            
+            // Also remove from selected items if it was selected
+            setSelectedItems(prev => prev.filter(id => id !== requestToDelete));
+        } catch (error) {
+            // Revert optimistic update on error
+            console.error('Failed to delete recurring request:', error);
+            setRecurringRequests(previousRequests);
+            
+            // TODO: Show error toast/notification to user
+            alert('Failed to delete recurring request. Please try again.');
+        } finally {
+            setIsDeleting(false);
+            setIsDeleteModalOpen(false);
+            setRequestToDelete(null);
+        }
     };
 
     const handleCreateRecurring = (data: any) => {
@@ -112,7 +147,7 @@ const MaintenanceRecurring: React.FC = () => {
 
     // Filter Logic
     const filteredRequests = useMemo(() => {
-        return MOCK_RECURRING_REQUESTS.filter(item => {
+        return recurringRequests.filter(item => {
             const matchesSearch = searchQuery === '' ||
                 item.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 item.subCategory.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -123,7 +158,7 @@ const MaintenanceRecurring: React.FC = () => {
 
             return matchesSearch && matchesCategory;
         });
-    }, [searchQuery, filters]);
+    }, [searchQuery, filters, recurringRequests]);
 
     const toggleSelection = (id: string) => {
         if (selectedItems.includes(id)) {
@@ -289,6 +324,7 @@ const MaintenanceRecurring: React.FC = () => {
                 message="Are you sure you want to delete this recurring maintenance request? This action cannot be undone."
                 confirmLabel="Delete"
                 cancelLabel="Cancel"
+                isLoading={isDeleting}
             />
         </div>
     );

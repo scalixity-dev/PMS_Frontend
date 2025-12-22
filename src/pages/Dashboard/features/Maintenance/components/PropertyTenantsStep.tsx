@@ -17,7 +17,7 @@ interface Equipment {
     category: string;
 }
 
-interface Tenant {
+interface TenantListItem {
     id: number;
     name: string;
     status: string;
@@ -42,7 +42,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
     const [showExitConfirmation, setShowExitConfirmation] = useState(false);
     const [tenantAuthorization, setTenantAuthorization] = useState(initialData?.tenantAuthorization || false);
     const [dateOptions, setDateOptions] = useState<DateOption[]>(initialData?.dateOptions || []);
-    const [tenantList, setTenantList] = useState<Tenant[]>(initialData?.tenantList || [
+    const [tenantList, setTenantList] = useState<TenantListItem[]>(initialData?.tenantList || [
         { id: 1, name: 'Atul', status: 'Pending', share: false, selected: false },
         { id: 2, name: 'Ajay', status: 'Pending', share: false, selected: false },
     ]);
@@ -89,7 +89,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
     }));
 
     const toggleTenantSelection = (id: number) => {
-        setTenantList(prev => prev.map((tenant: Tenant) =>
+        setTenantList(prev => prev.map((tenant: TenantListItem) =>
             tenant.id === id ? { ...tenant, selected: !tenant.selected, share: !tenant.selected } : tenant
         ));
     };
@@ -444,7 +444,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                                             : [...prev, pet]
                                     );
                                 }}
-                                className={`w-5 h-5 rounded-sm flex items-center justify-center transition-colors ${selectedPets.includes(pet) ? 'bg-[#7BD747]' : 'bg-[#7BD747]'
+                                className={`w-5 h-5 rounded-sm flex items-center justify-center transition-colors ${selectedPets.includes(pet) ? 'bg-[#7BD747]' : 'bg-white border border-gray-300'
                                     }`}
                             >
                                 {selectedPets.includes(pet) && (
