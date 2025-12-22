@@ -365,7 +365,7 @@ export default function DashboardSidebar({ open, setOpen, collapsed, setCollapse
               >
                 <SidebarSubLink label="Transactions" to="/dashboard/accounting/transactions" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Payments" to="/dashboard/accounting/payments" isCurrentPath={isCurrentPath} />
-                <SidebarSubLink label="Balances" to="/accounting/balances" isCurrentPath={isCurrentPath} />
+                {/* <SidebarSubLink label="Balances" to="/accounting/balances" isCurrentPath={isCurrentPath} /> */}
                 <SidebarSubLink label="Recurring" to="/dashboard/accounting/recurring" isCurrentPath={isCurrentPath} />
               </SidebarDropdownLink>
 
@@ -378,8 +378,8 @@ export default function DashboardSidebar({ open, setOpen, collapsed, setCollapse
                 setActiveDropdown={setActiveDropdown}
               >
                 <SidebarSubLink label="Requests" to="/dashboard/maintenance/requests" isCurrentPath={isCurrentPath} />
-                <SidebarSubLink label="Requests Board" to="/maintenance/board" isCurrentPath={isCurrentPath} />
-                <SidebarSubLink label="Recurring" to="/maintenance/recurring" isCurrentPath={isCurrentPath} />
+                {/* <SidebarSubLink label="Requests Board" to="/maintenance/board" isCurrentPath={isCurrentPath} /> */}
+                <SidebarSubLink label="Recurring" to="/dashboard/maintenance/recurring" isCurrentPath={isCurrentPath} />
               </SidebarDropdownLink>
 
               {/* 7. Documents Dropdown */}

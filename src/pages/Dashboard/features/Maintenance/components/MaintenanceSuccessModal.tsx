@@ -116,14 +116,15 @@ const MaintenanceSuccessModal: React.FC<MaintenanceSuccessModalProps> = ({
                                         {/* Success Icon */}
                                         <div className="mb-2 relative flex items-center justify-center">
                                             <div className="w-40 h-40 pointer-events-none">
-                                                {animationData && (
-                                                    <DotLottieReact
-                                                        src={animationData as any}
-                                                        loop
-                                                        autoplay
-                                                        style={{ width: '100%', height: '100%' }}
-                                                    />
-                                                )}
+                                                <DotLottieReact
+                                                    {...(animationData instanceof ArrayBuffer
+                                                        ? { data: animationData }
+                                                        : { src: typeof animationData === 'string' ? animationData : successAnimationUrl }
+                                                    )}
+                                                    loop
+                                                    autoplay
+                                                    style={{ width: '100%', height: '100%' }}
+                                                />
                                             </div>
                                         </div>
 

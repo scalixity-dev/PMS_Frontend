@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, ChevronDown, ChevronRight, Edit, Trash2, Plus, Repeat } from 'lucide-react';
+import { ChevronLeft, ChevronDown, ChevronRight, Edit, Trash2, Plus, Repeat, Printer } from 'lucide-react';
 import ConfirmationModal from '../KeysLocks/ConfirmationModal';
 import ChangeStatusModal from './components/ChangeStatusModal';
 import AssigneeModal from './components/AssigneeModal';
@@ -137,6 +137,19 @@ const MaintenanceRequestsDetail: React.FC = () => {
                                             <Repeat size={16} />
                                         </div>
                                         <span className="font-medium">Make Recurring</span>
+                                    </button>
+                                    <button
+                                        className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3 border-b border-gray-50"
+                                        onClick={() => {
+                                            setIsActionDropdownOpen(false);
+                                            console.log('Printing request:', id);
+                                            window.print();
+                                        }}
+                                    >
+                                        <div className="p-1.5 bg-[#E8F0F0] rounded-md text-[#3A6D6C]">
+                                            <Printer size={16} />
+                                        </div>
+                                        <span className="font-medium">Print</span>
                                     </button>
                                     <button
                                         className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-3"
@@ -344,10 +357,9 @@ const MaintenanceRequestsDetail: React.FC = () => {
                             {materials.map((m) => (
                                 <div key={m.id} className="grid grid-cols-[1fr_1fr_100px] items-center py-3 border-b border-gray-50 last:border-0">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-4 h-4 rounded bg-[#7BD747]"></div>
                                         <span className="text-sm font-semibold text-gray-800">{m.item}</span>
                                     </div>
-                                    <div className="text-sm font-semibold text-[#7BD747] pl-1">{m.quantity}</div>
+                                    <div className="text-sm font-medium text-black pl-1">{m.quantity}</div>
                                     <div className="flex justify-end gap-3">
                                         <button
                                             className="text-[#3A6D6C] hover:text-[#2c5251]"
