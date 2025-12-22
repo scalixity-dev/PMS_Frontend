@@ -52,7 +52,7 @@ const UseCasesPage: React.FC = () => {
         heading="Save hours of research"
         description="Save up to 20 hours a week with online applications, background checks, and credit reports, helping you choose PMS with confidence."
         buttonText="Get Started"
-        buttonLink="#"
+        buttonLink="/login"
         imageSrc="https://res.cloudinary.com/dxwspucxw/image/upload/v1762589128/Screenshot_2025-11-08_133508_alspra.png"
         features={[
           {
@@ -102,7 +102,7 @@ const UseCasesPage: React.FC = () => {
         heading="legal form, confidently"
         description="We've got you covered—everything from move-in day paperwork to legal forms and tenant notices, at your fingertips."
         buttonText="Get Started"
-        buttonLink="#"
+        buttonLink="/login"
         imageSrc="https://res.cloudinary.com/dxwspucxw/image/upload/v1762587822/9a212322aec3cb78c17930176bcb8e7673408294_dhlqwr.png"
         featuresInSingleRow={true}
         features={[
@@ -131,7 +131,7 @@ const UseCasesPage: React.FC = () => {
         heading="Track all your maintenance needs, online"
         description="Create your own request or receive one from a Pms. Conveniently attach pictures, videos, descriptions, and other files."
         buttonText="Get Started"
-        buttonLink="#"
+        buttonLink="/login"
         imageSrc="https://res.cloudinary.com/dxwspucxw/image/upload/v1762589453/Screenshot_2025-11-08_134030_sny2dm.png"
         features={[
           {

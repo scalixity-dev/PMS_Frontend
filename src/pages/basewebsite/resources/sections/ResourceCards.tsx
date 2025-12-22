@@ -96,7 +96,7 @@ export const LearnMoreCard: React.FC<LearnMoreCardProps> = ({
   imageUrl,
   imageAlt,
   backgroundColorClass,
-  href = '#',
+  href = '/signup',
 }) => {
   return (
     <div className="flex flex-col h-full max-w-md">
