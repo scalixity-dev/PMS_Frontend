@@ -64,6 +64,13 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
         };
     }, [showCreateEquipmentModal]);
 
+    // Clear selected pets when petsInResidence becomes 'no'
+    useEffect(() => {
+        if (petsInResidence === 'no') {
+            setSelectedPets([]);
+        }
+    }, [petsInResidence]);
+
     // Create Equipment Form State
     const [newEquipment, setNewEquipment] = useState({
         category: '',
@@ -433,30 +440,32 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                 </div>
 
                 {/* Pet Type Checkboxes */}
-                <div className="flex items-center gap-8">
-                    {['Cat', 'Dog', 'Others'].map((pet) => (
-                        <label key={pet} className="flex items-center gap-2 cursor-pointer">
-                            <div
-                                onClick={() => {
-                                    setSelectedPets(prev =>
-                                        prev.includes(pet)
-                                            ? prev.filter(p => p !== pet)
-                                            : [...prev, pet]
-                                    );
-                                }}
-                                className={`w-5 h-5 rounded-sm flex items-center justify-center transition-colors ${selectedPets.includes(pet) ? 'bg-[#7BD747]' : 'bg-white border border-gray-300'
-                                    }`}
-                            >
-                                {selectedPets.includes(pet) && (
-                                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                    </svg>
-                                )}
-                            </div>
-                            <span className="text-gray-700 font-medium">{pet}</span>
-                        </label>
-                    ))}
-                </div>
+                {petsInResidence === 'yes' && (
+                    <div className="flex items-center gap-8">
+                        {['Cat', 'Dog', 'Others'].map((pet) => (
+                            <label key={pet} className="flex items-center gap-2 cursor-pointer">
+                                <div
+                                    onClick={() => {
+                                        setSelectedPets(prev =>
+                                            prev.includes(pet)
+                                                ? prev.filter(p => p !== pet)
+                                                : [...prev, pet]
+                                        );
+                                    }}
+                                    className={`w-5 h-5 rounded-sm flex items-center justify-center transition-colors ${selectedPets.includes(pet) ? 'bg-[#7BD747]' : 'bg-white border border-gray-300'
+                                        }`}
+                                >
+                                    {selectedPets.includes(pet) && (
+                                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    )}
+                                </div>
+                                <span className="text-gray-700 font-medium">{pet}</span>
+                            </label>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {/* Footer Buttons */}
