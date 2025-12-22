@@ -279,7 +279,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                         <div>Share</div>
                     </div>
                     <div className="bg-white rounded-b-xl overflow-hidden">
-                        {tenantList.map((tenant: any, index: number) => (
+                        {tenantList.map((tenant: TenantListItem, index: number) => (
                             <div key={tenant.id} className={`grid grid-cols-3 px-8 py-4 items-center ${index !== tenantList.length - 1 ? 'border-b border-gray-100' : ''}`}>
                                 <div className="flex items-center gap-4">
                                     <button
