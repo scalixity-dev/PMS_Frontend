@@ -11,7 +11,7 @@ interface AddEmergencyContactModalProps {
 }
 
 const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
-    const [formData, setFormData] = useState<EmergencyContactFormData & { phoneCountryCode?: string }>({
+    const [formData, setFormData] = useState<EmergencyContactFormData>({
         fullName: '',
         relationship: '',
         email: '',
