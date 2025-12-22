@@ -27,6 +27,7 @@ import AddProperty from './pages/Dashboard/features/Properties/AddProperty';
 import EditProperty from './pages/Dashboard/features/Properties/EditProperty';
 import Transactions from './pages/Dashboard/features/Transactions/Transactions';
 import AddIncomeInvoice from './pages/Dashboard/features/Transactions/AddIncomeInvoice';
+import CloneTransaction from './pages/Dashboard/features/Transactions/CloneTransaction';
 import RecurringIncome from './pages/Dashboard/features/Transactions/RecurringIncome';
 import RecurringExpense from './pages/Dashboard/features/Transactions/RecurringExpense';
 import ReturnDeposit from './pages/Dashboard/features/Transactions/ReturnDeposit';
@@ -38,6 +39,8 @@ import Credits from './pages/Dashboard/features/Transactions/Credits';
 import IncomePayments from './pages/Dashboard/features/Transactions/IncomePayments';
 import ExpensePayments from './pages/Dashboard/features/Transactions/ExpensePayments';
 import AddExpenseInvoice from './pages/Dashboard/features/Transactions/AddExpenseInvoice';
+import Payments from './pages/Dashboard/features/Payments/Payments';
+import Recurring from './pages/Dashboard/features/Recurring/Recurring';
 import AddMaintenanceRequest from './pages/Dashboard/features/Maintenance/AddMaintenanceRequest';
 import Requests from './pages/Dashboard/features/Maintenance/MaintenanceRequests';
 import MaintenanceRequestsDetail from './pages/Dashboard/features/Maintenance/MaintenanceRequestsDetail';
@@ -68,7 +71,30 @@ import AddEditServicePro from './pages/Dashboard/features/ServicePros/AddEditSer
 import ServiceProsDetail from './pages/Dashboard/features/ServicePros/ServiceProsDetail';
 import Application from './pages/Dashboard/features/Application/Application';
 import NewApplication from './pages/Dashboard/features/Application/NewApplication';
+import ProviderStatement from './pages/Dashboard/features/ServicePros/ProviderStatement';
+import TransactionDetail from './pages/Dashboard/features/Transactions/TransactionDetail';
 // import ListUnit from './pages/Dashboard/features/ListUnit/ListUnit';
+
+// Settings pages
+import Settings from './pages/Dashboard/settings/index';
+import ProfileSettings from './pages/Dashboard/settings/accountsetting/ProfileSettings';
+import SecuritySettings from './pages/Dashboard/settings/accountsetting/SecuritySettings';
+import IntegrationSettings from './pages/Dashboard/settings/accountsetting/IntegrationSettings';
+import NotificationSettings from './pages/Dashboard/settings/accountsetting/NotificationSettings';
+import MyPlanSettings from './pages/Dashboard/settings/subscription/MyPlanSettings';
+import MyCardSettings from './pages/Dashboard/settings/subscription/MyCardSettings';
+import InvoiceSettings from './pages/Dashboard/settings/accounting/invoice';
+import QuickBookSettings from './pages/Dashboard/settings/accounting/quickbook';
+import TagsSettings from './pages/Dashboard/settings/accounting/tags';
+import OnlinePaymentsConfigurations from './pages/Dashboard/settings/online-payments/configurations';
+import OnlineApplication from './pages/Dashboard/settings/rental-application/OnlineApplication';
+import FormConfiguration from './pages/Dashboard/settings/rental-application/FormConfiguration';
+import TermsSignature from './pages/Dashboard/settings/rental-application/TermsSignature';
+import RolesPermissions from './pages/Dashboard/settings/team-management/RolesPermissions';
+import PropertyPermissions from './pages/Dashboard/settings/team-management/PropertyPermissions';
+import RequestSettings from './pages/Dashboard/settings/request-settings/RequestSettings';
+import AutomationSettings from './pages/Dashboard/settings/request-settings/AutomationSettings';
+import GeneralReports from './pages/Dashboard/settings/report/general';
 
 // Create a QueryClient instance
 export const queryClient = new QueryClient({
@@ -149,6 +175,8 @@ const App: React.FC = () => {
               <Route path="/dashboard/properties" element={<Properties />} />
               <Route path="/dashboard/properties/import" element={<ImportProperties />} />
               <Route path="/dashboard/accounting/transactions" element={<Transactions />} />
+              <Route path="/dashboard/accounting/transactions/clone" element={<CloneTransaction />} />
+              <Route path="/dashboard/accounting/transactions/:id" element={<TransactionDetail />} />
               <Route path="/dashboard/accounting/transactions/income/add" element={<AddIncomeInvoice />} />
               <Route path="/dashboard/accounting/transactions/income-payments" element={<IncomePayments />} />
               <Route path="/dashboard/accounting/transactions/recurring-income/add" element={<RecurringIncome />} />
@@ -161,6 +189,8 @@ const App: React.FC = () => {
               <Route path="/dashboard/accounting/transactions/deposit/add" element={<Deposit />} />
               <Route path="/dashboard/accounting/transactions/credits/add" element={<Credits />} />
               <Route path="/dashboard/accounting/transactions/expense-payments" element={<ExpensePayments />} />
+              <Route path="/dashboard/accounting/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
+              <Route path="/dashboard/accounting/recurring" element={<ProtectedRoute><Recurring /></ProtectedRoute>} />
               <Route path="/dashboard/maintenance/request" element={<AddMaintenanceRequest />} />
               <Route path="/dashboard/maintenance/requests" element={<Requests />} />
               <Route path="/dashboard/maintenance/requests/:id" element={<MaintenanceRequestsDetail />} />
@@ -177,6 +207,177 @@ const App: React.FC = () => {
               <Route path="/dashboard/application/new" element={<NewApplication />} />
               <Route path="/dashboard/leasing/leases" element={<Leases />} />
               <Route path="/dashboard/portfolio/leases/:id" element={<LeaseDetail />} />
+
+              {/* Settings Routes */}
+              <Route
+                path="/dashboard/settings"
+                element={
+                  <ProtectedRoute>
+                    <Settings />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Account Settings */}
+              <Route
+                path="/dashboard/settings/profile"
+                element={
+                  <ProtectedRoute>
+                    <ProfileSettings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/settings/security"
+                element={
+                  <ProtectedRoute>
+                    <SecuritySettings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/settings/integrations"
+                element={
+                  <ProtectedRoute>
+                    <IntegrationSettings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/settings/notifications"
+                element={
+                  <ProtectedRoute>
+                    <NotificationSettings />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Subscription Settings */}
+              <Route
+                path="/dashboard/settings/subscription/my-plan"
+                element={
+                  <ProtectedRoute>
+                    <MyPlanSettings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/settings/subscription/my-card"
+                element={
+                  <ProtectedRoute>
+                    <MyCardSettings />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Accounting Settings */}
+              <Route
+                path="/dashboard/settings/accounting/invoice"
+                element={
+                  <ProtectedRoute>
+                    <InvoiceSettings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/settings/accounting/quickbook"
+                element={
+                  <ProtectedRoute>
+                    <QuickBookSettings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/settings/accounting/tags"
+                element={
+                  <ProtectedRoute>
+                    <TagsSettings />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Online Payments Settings */}
+              <Route
+                path="/dashboard/settings/online-payments/configurations"
+                element={
+                  <ProtectedRoute>
+                    <OnlinePaymentsConfigurations />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Rental Application Settings */}
+              <Route
+                path="/dashboard/settings/rental-application/online-application"
+                element={
+                  <ProtectedRoute>
+                    <OnlineApplication />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/settings/rental-application/form-configuration"
+                element={
+                  <ProtectedRoute>
+                    <FormConfiguration />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/settings/rental-application/terms-signature"
+                element={
+                  <ProtectedRoute>
+                    <TermsSignature />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Team Management Settings */}
+              <Route
+                path="/dashboard/settings/team-management/roles-permissions"
+                element={
+                  <ProtectedRoute>
+                    <RolesPermissions />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/settings/team-management/property-permissions"
+                element={
+                  <ProtectedRoute>
+                    <PropertyPermissions />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Request Settings */}
+              <Route
+                path="/dashboard/settings/request-settings/request-settings"
+                element={
+                  <ProtectedRoute>
+                    <RequestSettings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/settings/request-settings/automation-settings"
+                element={
+                  <ProtectedRoute>
+                    <AutomationSettings />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Reports Settings */}
+              <Route
+                path="/dashboard/settings/report/general"
+                element={
+                  <ProtectedRoute>
+                    <GeneralReports />
+                  </ProtectedRoute>
+                }
+              />
+
               <Route
                 path="/portfolio"
                 element={
@@ -230,6 +431,14 @@ const App: React.FC = () => {
                 element={
                   <ProtectedRoute>
                     <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/reports/statement"
+                element={
+                  <ProtectedRoute>
+                    <ProviderStatement />
                   </ProtectedRoute>
                 }
               />
