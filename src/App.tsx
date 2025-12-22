@@ -44,6 +44,8 @@ import Recurring from './pages/Dashboard/features/Recurring/Recurring';
 import AddMaintenanceRequest from './pages/Dashboard/features/Maintenance/AddMaintenanceRequest';
 import Requests from './pages/Dashboard/features/Maintenance/MaintenanceRequests';
 import MaintenanceRequestsDetail from './pages/Dashboard/features/Maintenance/MaintenanceRequestsDetail';
+import MaintenanceRecurring from './pages/Dashboard/features/Maintenance/MaintenanceRecurring';
+import MaintenanceRecurringDetail from './pages/Dashboard/features/Maintenance/MaintenanceRecurringDetail';
 import Properties from './pages/Dashboard/features/Properties/Properties';
 import ImportProperties from './pages/Dashboard/features/Properties/ImportProperties/ImportProperties';
 import Equipments from './pages/Dashboard/features/Equipments/Equipments';
@@ -194,6 +196,8 @@ const App: React.FC = () => {
               <Route path="/dashboard/maintenance/request" element={<AddMaintenanceRequest />} />
               <Route path="/dashboard/maintenance/requests" element={<Requests />} />
               <Route path="/dashboard/maintenance/requests/:id" element={<MaintenanceRequestsDetail />} />
+              <Route path="/dashboard/maintenance/recurring" element={<MaintenanceRecurring />} />
+              <Route path="/dashboard/maintenance/recurring/:id" element={<MaintenanceRecurringDetail />} />
               <Route path="/dashboard/movein" element={<MoveIn />} />
               <Route path="/dashboard/contacts/tenants" element={<Tenants />} />
               <Route path="/dashboard/contacts/tenants/add" element={<AddEditTenant />} />

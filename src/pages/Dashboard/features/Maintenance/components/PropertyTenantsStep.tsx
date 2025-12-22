@@ -1,9 +1,9 @@
 // Fixed implicit any
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CustomDropdown from '../../../components/CustomDropdown';
 import DatePicker from '../../../../../components/ui/DatePicker';
 import Toggle from '../../../../../components/Toggle';
-import { Plus, Trash2, X, AlertTriangle } from 'lucide-react';
+import { Plus, Trash2, X, AlertTriangle, ChevronLeft } from 'lucide-react';
 
 interface DateOption {
     id: string;
@@ -17,11 +17,12 @@ interface Equipment {
     category: string;
 }
 
-interface Pms {
+interface Tenant {
     id: number;
     name: string;
     status: string;
     share: boolean;
+    selected: boolean;
 }
 
 interface PropertyTenantsStepProps {
@@ -41,10 +42,27 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
     const [showExitConfirmation, setShowExitConfirmation] = useState(false);
     const [tenantAuthorization, setTenantAuthorization] = useState(initialData?.tenantAuthorization || false);
     const [dateOptions, setDateOptions] = useState<DateOption[]>(initialData?.dateOptions || []);
-    const [pmsList, setPmsList] = useState<Pms[]>(initialData?.pmsList || [
-        { id: 1, name: 'Atul', status: 'Pending', share: true },
-        { id: 2, name: 'Ajay', status: 'Pending', share: true },
+    const [tenantList, setTenantList] = useState<Tenant[]>(initialData?.tenantList || [
+        { id: 1, name: 'Atul', status: 'Pending', share: false, selected: false },
+        { id: 2, name: 'Ajay', status: 'Pending', share: false, selected: false },
     ]);
+    const [accessCode, setAccessCode] = useState(initialData?.accessCode || '');
+    const [petsInResidence, setPetsInResidence] = useState(initialData?.petsInResidence || '');
+    const [selectedPets, setSelectedPets] = useState<string[]>(initialData?.selectedPets || []);
+
+    // Disable body scroll when modal is open
+    useEffect(() => {
+        if (showCreateEquipmentModal) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+
+        // Cleanup on unmount
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [showCreateEquipmentModal]);
 
     // Create Equipment Form State
     const [newEquipment, setNewEquipment] = useState({
@@ -70,9 +88,9 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
         label: p.name
     }));
 
-    const togglePmsShare = (id: number) => {
-        setPmsList(prev => prev.map((pms: Pms) =>
-            pms.id === id ? { ...pms, share: !pms.share } : pms
+    const toggleTenantSelection = (id: number) => {
+        setTenantList(prev => prev.map((tenant: Tenant) =>
+            tenant.id === id ? { ...tenant, selected: !tenant.selected, share: !tenant.selected } : tenant
         ));
     };
 
@@ -156,7 +174,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                     You can link property/unit equipment to this maintenance request and keep track of its maintenance history. You can add/select up to 5 equipment. (This information is visible to you only and not shared to Pms or assigned Service Pros).
                 </p>
 
-                <div className="mb-4">
+                <div className="mb-4 p-4 px-8 bg-[var(--color-primary)] rounded-[3rem] w-fit">
                     <Toggle
                         checked={linkEquipment}
                         onChange={(checked) => {
@@ -166,6 +184,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                             }
                         }}
                         label="Link equipment"
+                        labelClassName="font-medium text-white"
                     />
                 </div>
 
@@ -246,11 +265,11 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                 )}
             </div>
 
-            {/* PMS Information */}
+            {/* Tenant Information */}
             <div className="mb-12">
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">Pms Information</h2>
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">Tenant Information</h2>
                 <p className="text-gray-500 text-sm mb-6">
-                    Pick the Pms from the table below. If your Pms is connected with you, the request will be automatically shared with them and posted on their Pms Portal.
+                    Pick the tenant from the table below. If your tenant is connected with you, the request will be automatically shared with them and posted on their Pms Portal.
                 </p>
 
                 <div className="bg-[#F0F2F5] rounded-[3rem] p-6">
@@ -260,21 +279,30 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                         <div>Share</div>
                     </div>
                     <div className="bg-white rounded-b-xl overflow-hidden">
-                        {pmsList.map((pms: any, index: number) => (
-                            <div key={pms.id} className={`grid grid-cols-3 px-8 py-4 items-center ${index !== pmsList.length - 1 ? 'border-b border-gray-100' : ''}`}>
+                        {tenantList.map((tenant: any, index: number) => (
+                            <div key={tenant.id} className={`grid grid-cols-3 px-8 py-4 items-center ${index !== tenantList.length - 1 ? 'border-b border-gray-100' : ''}`}>
                                 <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 rounded-full bg-[#E0E7FF] flex items-center justify-center border border-gray-200">
-                                        {/* Placeholder Checkbox style */}
-                                        <div className="w-5 h-5 border-2 border-gray-400 rounded-sm"></div>
-                                    </div>
-                                    <span className="font-medium text-gray-700">{pms.name}</span>
+                                    <button
+                                        onClick={() => toggleTenantSelection(tenant.id)}
+                                        className="flex items-center justify-center border border-gray-200 transition-colors cursor-pointer"
+                                    >
+                                        <div className={`w-5 h-5 border-2 rounded-sm flex items-center justify-center transition-colors ${tenant.selected ? 'bg-[#7BD747] border-[#7BD747]' : 'border-gray-400 bg-white'}`}>
+                                            {tenant.selected && (
+                                                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            )}
+                                        </div>
+                                    </button>
+                                    <span className="font-medium text-gray-700">{tenant.name}</span>
                                 </div>
-                                <div className="text-[#2E6819] font-bold">{pms.status}</div>
+                                <div className="text-[#2E6819] font-bold">{tenant.status}</div>
                                 <div>
                                     <Toggle
-                                        checked={pms.share}
-                                        onChange={() => togglePmsShare(pms.id)}
+                                        checked={tenant.share}
+                                        onChange={() => { }}
                                         size="small"
+                                        disabled={true}
                                     />
                                 </div>
                             </div>
@@ -283,15 +311,35 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                 </div>
             </div>
 
-            {/* Available Date & Time */}
+            {/*      Date & Time */}
             <div className="mb-12">
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">Available date & time</h2>
                 <p className="text-gray-500 text-sm mb-6">
                     If the property is rented, please provide the date and time to arrange the maintenance.
                 </p>
 
+                {/* Add Date Button and Authorization Toggle Row */}
+                <div className="flex items-center gap-4 mb-8">
+                    <button
+                        onClick={handleAddDate}
+                        className="flex items-center gap-2 px-6 py-3 rounded-full bg-[#3D7475] text-white font-bold hover:opacity-90 transition-opacity"
+                    >
+                        Add Date
+                        <Plus size={18} className="bg-white text-[#3D7475] rounded-full p-0.5" />
+                    </button>
+
+                    <div className="flex items-center gap-3 px-6 py-2 bg-[#3D7475] rounded-full">
+                        <Toggle
+                            checked={tenantAuthorization}
+                            onChange={setTenantAuthorization}
+                            labelClassName="font-medium text-white"
+                        />
+                        <span className="text-white font-medium">Authorization to enter their tenant space</span>
+                    </div>
+                </div>
+
                 {/* Date Options List */}
-                <div className="space-y-4 mb-4">
+                <div className="space-y-4 mb-8 w-1/2">
                     {dateOptions.map((option, index) => (
                         <div key={option.id} className="bg-white rounded-lg border border-gray-200 p-4">
                             <div className="flex items-center justify-between mb-3">
@@ -351,22 +399,64 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                     ))}
                 </div>
 
-                <button
-                    onClick={handleAddDate}
-                    className="flex items-center gap-2 px-6 py-2 rounded-full border-2 border-[#7BD747] text-black font-bold bg-white hover:bg-gray-50 transition-colors"
-                >
-                    Add Date
-                    <Plus size={18} />
-                </button>
-            </div>
+                {/* Code Dropdown */}
+                <div className="mb-6 w-1/2">
+                    <CustomDropdown
+                        label="Code*"
+                        value={accessCode}
+                        onChange={setAccessCode}
+                        options={[
+                            { value: 'code1', label: '**********' },
+                            { value: 'code2', label: '**********' },
+                            { value: 'code3', label: '**********' }
+                        ]}
+                        placeholder="**********"
+                        required
+                        buttonClassName="!bg-white !border-none !rounded-md !py-3"
+                    />
+                </div>
 
-            {/* Tenant Authorization Toggle */}
-            <div className="mb-8">
-                <Toggle
-                    checked={tenantAuthorization}
-                    onChange={setTenantAuthorization}
-                    label="Authorization to enter in tenant's absence"
-                />
+                {/* Pets in Residence Dropdown */}
+                <div className="mb-6 w-1/2">
+                    <CustomDropdown
+                        label="Pets in residence*"
+                        value={petsInResidence}
+                        onChange={setPetsInResidence}
+                        options={[
+                            { value: 'yes', label: 'Yes' },
+                            { value: 'no', label: 'No' }
+                        ]}
+                        placeholder="Yes/No"
+                        required
+                        buttonClassName="!bg-white !border-none !rounded-md !py-3"
+                    />
+                </div>
+
+                {/* Pet Type Checkboxes */}
+                <div className="flex items-center gap-8">
+                    {['Cat', 'Dog', 'Others'].map((pet) => (
+                        <label key={pet} className="flex items-center gap-2 cursor-pointer">
+                            <div
+                                onClick={() => {
+                                    setSelectedPets(prev =>
+                                        prev.includes(pet)
+                                            ? prev.filter(p => p !== pet)
+                                            : [...prev, pet]
+                                    );
+                                }}
+                                className={`w-5 h-5 rounded-sm flex items-center justify-center transition-colors ${selectedPets.includes(pet) ? 'bg-[#7BD747]' : 'bg-[#7BD747]'
+                                    }`}
+                            >
+                                {selectedPets.includes(pet) && (
+                                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                )}
+                            </div>
+                            <span className="text-gray-700 font-medium">{pet}</span>
+                        </label>
+                    ))}
+                </div>
             </div>
 
             {/* Footer Buttons */}
@@ -388,25 +478,31 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
             {/* Create Equipment Modal */}
             {showCreateEquipmentModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4">
+                    <div className="bg-[#D9E0E0] rounded-2xl shadow-xl w-full max-w-xl mx-4 overflow-hidden">
                         {/* Modal Header */}
-                        <div className="flex items-center justify-between p-6 bg-[#3D7475] rounded-t-lg">
-                            <div className="bg-[#7BD747] px-6 py-2 rounded-full">
-                                <h3 className="text-lg font-bold text-white">Create equipment</h3>
+                        <div className="flex items-center justify-between px-6 py-4 bg-[#3D7475]">
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={() => setShowExitConfirmation(true)}
+                                    className="text-white hover:text-gray-200 transition-colors"
+                                >
+                                    <ChevronLeft size={28} />
+                                </button>
+                                <h3 className="text-xl font-bold text-white">Create equipment</h3>
                             </div>
                             <button
                                 onClick={() => setShowExitConfirmation(true)}
                                 className="text-white hover:text-gray-200 transition-colors"
                             >
-                                <X size={24} />
+                                <X size={28} />
                             </button>
                         </div>
 
                         {/* Modal Body */}
-                        <div className="p-6 space-y-4">
+                        <div className="p-8 space-y-6">
                             {/* Category Dropdown */}
                             <CustomDropdown
-                                label="Category"
+                                label="Category*"
                                 value={newEquipment.category}
                                 onChange={(value) => setNewEquipment({ ...newEquipment, category: value })}
                                 options={[
@@ -415,62 +511,58 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                                     { value: 'electrical', label: 'Electrical' },
                                     { value: 'appliances', label: 'Appliances' }
                                 ]}
-                                placeholder="Select main category"
+                                placeholder="Choose Type"
                                 required
-                                buttonClassName="!bg-[#7BD747] !border-none !rounded-full !py-3 !text-white !px-6"
+                                buttonClassName="!bg-white !border-none !rounded-full !py-3 !px-6"
                             />
 
-                            {/* Equipment Brand */}
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-2">Equipment brand *</label>
+                            {/* Equipment Brand and Model */}
+                            <div className="grid grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Equipment Brand *</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Type here"
+                                        value={newEquipment.brand}
+                                        onChange={(e) => setNewEquipment({ ...newEquipment, brand: e.target.value })}
+                                        className="w-full rounded-full border-none px-6 py-3 text-sm bg-white text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3D7475]/20"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Model *</label>
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            placeholder="Type here"
+                                            value={newEquipment.model}
+                                            onChange={(e) => setNewEquipment({ ...newEquipment, model: e.target.value })}
+                                            className="w-full rounded-full border-none px-6 py-3 text-sm bg-white text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3D7475]/20"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Serial */}
+                            <div className="w-1/2">
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Serial*</label>
                                 <input
                                     type="text"
-                                    placeholder="Type in a brand name"
-                                    value={newEquipment.brand}
-                                    onChange={(e) => setNewEquipment({ ...newEquipment, brand: e.target.value })}
-                                    className="w-full rounded-full border-none px-6 py-3 text-sm bg-[#7BD747] text-white placeholder-white/80 focus:outline-none focus:ring-2 focus:ring-[#3D7475]"
+                                    placeholder="Type here"
+                                    value={newEquipment.serial}
+                                    onChange={(e) => setNewEquipment({ ...newEquipment, serial: e.target.value })}
+                                    className="w-full rounded-full border-none px-6 py-3 text-sm bg-white text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3D7475]/20"
                                 />
                             </div>
 
-                            {/* Model # and Serial # */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-2">Model #</label>
-                                    <input
-                                        type="text"
-                                        placeholder="Type in a number"
-                                        value={newEquipment.model}
-                                        onChange={(e) => setNewEquipment({ ...newEquipment, model: e.target.value })}
-                                        className="w-full rounded-full border-none px-6 py-3 text-sm bg-[#7BD747] text-white placeholder-white/80 focus:outline-none focus:ring-2 focus:ring-[#3D7475]"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-2">Serial #</label>
-                                    <input
-                                        type="text"
-                                        placeholder="Type in a number"
-                                        value={newEquipment.serial}
-                                        onChange={(e) => setNewEquipment({ ...newEquipment, serial: e.target.value })}
-                                        className="w-full rounded-full border-none px-6 py-3 text-sm bg-[#7BD747] text-white placeholder-white/80 focus:outline-none focus:ring-2 focus:ring-[#3D7475]"
-                                    />
-                                </div>
+                            {/* Create Button */}
+                            <div>
+                                <button
+                                    onClick={handleCreateEquipment}
+                                    className="px-12 py-3 rounded-full bg-[#3D7475] text-white font-bold hover:opacity-90 transition-opacity"
+                                >
+                                    Create
+                                </button>
                             </div>
-                        </div>
-
-                        {/* Modal Footer */}
-                        <div className="flex gap-3 p-6 justify-center">
-                            <button
-                                onClick={() => setShowExitConfirmation(true)}
-                                className="w-40 py-3 rounded-lg bg-[#556370] text-white font-bold hover:opacity-90 transition-opacity"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleCreateEquipment}
-                                className="w-40 py-3 rounded-lg bg-[#3D7475] text-white font-bold hover:opacity-90 transition-opacity"
-                            >
-                                Create
-                            </button>
                         </div>
                     </div>
 

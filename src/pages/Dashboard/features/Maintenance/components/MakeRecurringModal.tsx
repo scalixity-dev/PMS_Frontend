@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, ChevronLeft, ChevronDown, Check } from 'lucide-react';
+import DatePicker from '../../../../../components/ui/DatePicker';
 
 interface CustomDropdownProps {
     label: string;
@@ -92,8 +93,8 @@ const MakeRecurringModal: React.FC<MakeRecurringModalProps> = ({
     requestDetails,
     onSave,
 }) => {
-    const [startDate, setStartDate] = useState('');
-    const [endDate, setEndDate] = useState('');
+    const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+    const [endDate, setEndDate] = useState<Date | undefined>(undefined);
     const [frequency, setFrequency] = useState('');
     const [postInAdvance, setPostInAdvance] = useState('');
 
@@ -156,11 +157,11 @@ const MakeRecurringModal: React.FC<MakeRecurringModalProps> = ({
 
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-2">Start Date*</label>
-                                <input
-                                    type="date"
+                                <DatePicker
                                     value={startDate}
-                                    onChange={(e) => setStartDate(e.target.value)}
-                                    className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#3A6D6C] text-gray-700"
+                                    onChange={(date) => setStartDate(date)}
+                                    placeholder="Select start date"
+                                    className="!rounded-lg"
                                 />
                             </div>
                         </div>
@@ -171,11 +172,11 @@ const MakeRecurringModal: React.FC<MakeRecurringModalProps> = ({
 
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-2">End Date*</label>
-                                <input
-                                    type="date"
+                                <DatePicker
                                     value={endDate}
-                                    onChange={(e) => setEndDate(e.target.value)}
-                                    className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#3A6D6C] text-gray-700"
+                                    onChange={(date) => setEndDate(date)}
+                                    placeholder="Select end date"
+                                    className="!rounded-lg"
                                 />
                             </div>
                         </div>
