@@ -154,9 +154,10 @@ const TransactionDetail: React.FC = () => {
                                             } : {};
 
                                             const dataToPass = {
-                                                ...defaultPayment,
-                                                ...selectedPayment,
-                                                ...mockSummaryData
+                                                ...mockSummaryData,
+                                                date: selectedPayment?.date ?? defaultPayment.date,
+                                                user: defaultPayment.user,
+                                                amount: String(selectedPayment?.amount ?? defaultPayment.amount ?? ''),
                                             };
                                             setClonedTransactionData(dataToPass);
                                             navigate('/dashboard/accounting/transactions/recurring-expense/add');
@@ -174,9 +175,13 @@ const TransactionDetail: React.FC = () => {
                                                 user: mockActivities[0].user,
                                                 date: mockActivities[0].date
                                             } : {};
-                                            
-                                            const base = selectedPayment ?? defaultPayment;
-                                            const dataToClone = { ...base, ...mockSummaryData };
+
+                                            const dataToClone = {
+                                                ...mockSummaryData,
+                                                date: selectedPayment?.date ?? defaultPayment.date,
+                                                user: defaultPayment.user,
+                                                amount: String(selectedPayment?.amount ?? defaultPayment.amount ?? ''),
+                                            };
                                             setClonedTransactionData(dataToClone);
                                             navigate('/dashboard/accounting/transactions/clone');
                                         }}
