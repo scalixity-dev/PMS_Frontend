@@ -25,6 +25,7 @@ export interface ApplicationFormData {
   lastName: string;
   email: string;
   phoneNumber: string;  
+  phoneCountryCode?: string;
   dob: Date | undefined;
   shortBio: string;
   moveInDate: Date | undefined;
