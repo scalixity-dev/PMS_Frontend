@@ -1,27 +1,67 @@
 import React, { useState, useMemo } from 'react';
-import { MoreHorizontal, ChevronDown, Check, Plus } from 'lucide-react';
+import { Check, Plus, Pencil, Trash2 } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import AddTaskModal from './components/AddTaskModal';
+import TaskDetailSideModal from './components/TaskDetailSideModal';
+import DeleteConfirmationModal from './components/DeleteConfirmationModal';
 
 // Mock Data
 const MOCK_TASKS = [
     {
         id: 1,
+        title: 'Check HVAC System',
+        description: 'Perform routine maintenance check on the main HVAC unit in Building A. Inspect filters, check refrigerant levels, and clean coils.',
         name: 'Anii',
         avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-        date: '01 Nov, 2025 11:00 AM',
+        date: '01 Nov, 2025',
+        time: '11:00 AM',
         status: 'Resolved',
         property: 'prop1',
-        frequency: 'daily'
+        frequency: 'daily',
+        isRecurring: true,
+        endDate: '31 Dec, 2025'
     },
     {
         id: 2,
+        title: 'Inspect Roof Leak',
+        description: 'Investigate reported leak in unit 4B. Check ceiling damage and inspect roof area above the unit for potential entry points.',
         name: 'Anuu',
         avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-        date: '01 Nov, 2025 11:00 AM',
+        date: '01 Nov, 2025',
+        time: '11:00 AM',
         status: 'Resolved',
         property: 'prop2',
-        frequency: 'weekly'
+        frequency: 'weekly',
+        isRecurring: true,
+        endDate: '30 Nov, 2025'
+    },
+    {
+        id: 3,
+        title: 'Garden Maintenance',
+        description: 'Weekly landscaping service including lawn mowing, trimming hedges, and clearing debris from walkways.',
+        name: 'John Doe',
+        avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+        date: '02 Nov, 2025',
+        time: '09:00 AM',
+        status: 'Active',
+        property: 'prop1',
+        frequency: 'weekly',
+        isRecurring: true,
+        endDate: '01 Mar, 2026'
+    },
+    {
+        id: 4,
+        title: 'Pool Cleaning',
+        description: 'Standard pool cleaning service: skim surface, vacuum bottom, and test/balance chemical levels.',
+        name: 'Sarah Smith',
+        avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+        date: '03 Nov, 2025',
+        time: '02:00 PM',
+        status: 'Active',
+        property: 'prop2',
+        frequency: 'daily',
+        isRecurring: true,
+        endDate: 'Indefinite'
     }
 ];
 
@@ -30,11 +70,49 @@ const Tasks: React.FC = () => {
     const [filters, setFilters] = useState<Record<string, string[]>>({});
     const [selectedTaskIds, setSelectedTaskIds] = useState<number[]>([]);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [selectedTask, setSelectedTask] = useState<any>(null);
+    const [editingTask, setEditingTask] = useState<any>(null);
+    const [taskToDelete, setTaskToDelete] = useState<any>(null);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
     const handleSaveTask = (taskData: any) => {
-        // TODO: Implement task save logic
-        console.log('Saving task:', taskData);
+        if (editingTask) {
+            console.log('Updating task:', { ...editingTask, ...taskData });
+            // Here you would update the task in the list/backend
+        } else {
+            console.log('Creating new task:', taskData);
+            // Here you would add the new task
+        }
         setIsAddModalOpen(false);
+        setEditingTask(null);
+    };
+
+    const handleEditTask = (task: any) => {
+        setEditingTask(task);
+        setIsAddModalOpen(true);
+        if (selectedTask) setSelectedTask(null); // Close detail modal if open
+    };
+
+    const handleCloseModal = () => {
+        setIsAddModalOpen(false);
+        setEditingTask(null);
+    };
+
+    const handleDeleteClick = (task: any) => {
+        setTaskToDelete(task);
+        setIsDeleteModalOpen(true);
+    };
+
+    const confirmDeleteTask = () => {
+        console.log('Deleting task:', taskToDelete?.id);
+        // Implement actual delete logic here
+
+        // Cleanup
+        if (selectedTask?.id === taskToDelete?.id) {
+            setSelectedTask(null);
+        }
+        setIsDeleteModalOpen(false);
+        setTaskToDelete(null);
     };
 
     const filterOptions: Record<string, FilterOption[]> = {
@@ -67,7 +145,8 @@ const Tasks: React.FC = () => {
         return MOCK_TASKS.filter(task => {
             // Search filter
             const matchesSearch = searchQuery === '' ||
-                task.name.toLowerCase().includes(searchQuery.toLowerCase());
+                task.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                task.title.toLowerCase().includes(searchQuery.toLowerCase());
 
             // Status filter
             const matchesStatus = !filters.status || filters.status.length === 0 ||
@@ -82,7 +161,7 @@ const Tasks: React.FC = () => {
                 filters.date.some(dateFilter => {
                     const taskDate = new Date(task.date);
                     const today = new Date();
-                    
+
                     if (dateFilter === 'today') {
                         return taskDate.toDateString() === today.toDateString();
                     } else if (dateFilter === 'week') {
@@ -189,114 +268,127 @@ const Tasks: React.FC = () => {
                     showClearAll={false}
                 />
 
-                {/* Input Fields Section */}
-                <div className="mb-8">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Category & subcategory*</label>
-                            <input
-                                type="text"
-                                placeholder="General Income"
-                                className="w-full px-4 py-3 rounded-xl border-none focus:ring-2 focus:ring-[#7BD747] bg-white text-sm"
-                            />
+                {/* Table Section */}
+                <div className="bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm mt-8">
+                    {/* Table Header */}
+                    <div className="text-white px-6 py-4 grid grid-cols-[40px_1.5fr_1.5fr_1fr_1.5fr_1fr_120px_80px] gap-4 items-center text-sm font-medium">
+                        <div className="flex items-center justify-center ml-2">
+                            <button onClick={handleSelectAll} className="flex items-center justify-center">
+                                <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${isAllSelected ? 'bg-[#7BD747]' : 'bg-white/20 border border-white/50'}`}>
+                                    {isAllSelected && <Check className="w-3.5 h-3.5 text-white" />}
+                                </div>
+                            </button>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Due on*</label>
-                            <input
-                                type="text"
-                                placeholder="0,00"
-                                className="w-full px-4 py-3 rounded-xl border-none focus:ring-2 focus:ring-[#7BD747] bg-white text-sm"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Amount*</label>
-                            <div className="relative">
-                                <select className="w-full px-4 py-3 rounded-xl border-none focus:ring-2 focus:ring-[#7BD747] bg-white text-sm appearance-none text-gray-500">
-                                    <option>Search</option>
-                                </select>
-                                <ChevronDown className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Payer /Payee *</label>
-                        <div className="relative">
-                            <select className="w-full px-4 py-3 rounded-xl border-none focus:ring-2 focus:ring-[#7BD747] bg-white text-sm appearance-none text-gray-500">
-                                <option>Paye</option>
-                            </select>
-                            <ChevronDown className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-                        </div>
-                    </div>
-
-                    <div className="mb-8">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Tags *</label>
-                        <div className="relative">
-                            <select className="w-full px-4 py-3 rounded-xl border-none focus:ring-2 focus:ring-[#7BD747] bg-white text-sm appearance-none text-gray-500">
-                                <option>Tags</option>
-                            </select>
-                            <ChevronDown className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
-                        </div>
+                        <div>Task Title</div>
+                        <div>Assigned To</div>
+                        <div>Property</div>
+                        <div>Date</div>
+                        <div>Frequency</div>
+                        <div>Status</div>
+                        <div>Actions</div>
                     </div>
                 </div>
 
-                {/* Task List Header */}
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-4 cursor-pointer" onClick={handleSelectAll}>
-                        <div className="w-12 h-12 rounded-full bg-[#7BD747]/20 flex items-center justify-center">
-                            <div className={`w-6 h-6 rounded-sm flex items-center justify-center transition-colors ${isAllSelected ? 'bg-[#7BD747]' : 'bg-white border-2 border-gray-300'}`}>
-                                <Check className={`w-5 h-5 ${isAllSelected ? 'text-white' : 'text-transparent'}`} strokeWidth={3} />
-                            </div>
-                        </div>
-                        <span className="text-gray-600 text-xl font-medium">Select All</span>
-                    </div>
-                    <button className="bg-[#7BD747] text-white px-6 py-2 rounded-full text-sm font-medium flex items-center gap-2 hover:bg-[#6ac13c] transition-colors">
-                        Action
-                        <ChevronDown className="w-4 h-4" />
-                    </button>
-                </div>
-
-                {/* Task List */}
-                <div className="space-y-4">
-                    {filteredTasks.map((task) => {
-                        const isSelected = selectedTaskIds.includes(task.id);
-                        return (
-                            <div key={task.id} className="bg-[#F0F0F6] p-4 rounded-[2rem] flex items-center justify-between">
-                                <div className="flex items-center gap-4">
-                                    <div
-                                        className={`w-6 h-6 rounded flex items-center justify-center cursor-pointer transition-colors ${isSelected ? 'bg-[#7BD747]' : 'bg-white border border-gray-300'}`}
-                                        onClick={() => handleSelectTask(task.id)}
-                                    >
-                                        <Check className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-transparent'}`} />
+                {/* Table Body */}
+                <div className="flex flex-col gap-3 bg-[#F0F0F6] p-4 rounded-[2rem] rounded-t">
+                    {filteredTasks.length > 0 ? (
+                        filteredTasks.map((task) => {
+                            const isSelected = selectedTaskIds.includes(task.id);
+                            return (
+                                <div
+                                    key={task.id}
+                                    onClick={() => setSelectedTask(task)}
+                                    className="bg-white rounded-2xl px-6 py-4 grid grid-cols-[40px_1.5fr_1.5fr_1fr_1.5fr_1fr_120px_80px] gap-4 items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                                >
+                                    <div className="flex items-center justify-center">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleSelectTask(task.id);
+                                            }}
+                                            className="flex items-center justify-center"
+                                        >
+                                            <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${isSelected ? 'bg-[#7BD747]' : 'bg-gray-200'}`}>
+                                                {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+                                            </div>
+                                        </button>
                                     </div>
+
+                                    <div className="font-semibold text-gray-800 text-sm truncate">{task.title}</div>
+
                                     <div className="flex items-center gap-3">
-                                        <span className="text-gray-700 font-medium">{task.name}</span>
                                         <img src={task.avatar} alt={task.name} className="w-8 h-8 rounded-full object-cover" />
+                                        <span className="font-semibold text-gray-800 text-sm">{task.name}</span>
+                                    </div>
+
+                                    <div className="text-[#2E6819] text-sm font-semibold">{task.property}</div>
+
+                                    <div className="text-gray-600 text-sm font-medium">{task.date}</div>
+
+                                    <div className="text-gray-600 text-sm font-medium capitalize">{task.frequency}</div>
+
+                                    <div>
+                                        <span className={`px-4 py-1.5 rounded-full text-xs font-medium ${task.status === 'Resolved'
+                                            ? 'bg-[#E8F8F0] text-[#2E6819]'
+                                            : 'bg-yellow-100 text-yellow-700'
+                                            }`}>
+                                            {task.status}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex items-center justify-end gap-2">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleEditTask(task);
+                                            }}
+                                            className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-gray-700"
+                                        >
+                                            <Pencil className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDeleteClick(task);
+                                            }}
+                                            className="p-2 hover:bg-red-50 rounded-full transition-colors text-red-500 hover:text-red-700"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
                                     </div>
                                 </div>
-
-                                <div className="text-gray-600 font-medium">
-                                    {task.date}
-                                </div>
-
-                                <div className="flex items-center gap-4">
-                                    <span className="bg-[#7BD747] text-white px-6 py-2 rounded-full text-sm font-medium">
-                                        {task.status}
-                                    </span>
-                                    <button className="p-2 hover:bg-gray-200 rounded-full transition-colors">
-                                        <MoreHorizontal className="w-5 h-5 text-gray-600" />
-                                    </button>
-                                    <button className="p-2 hover:bg-gray-200 rounded-full transition-colors">
-                                        <ChevronDown className="w-5 h-5 text-gray-600" />
-                                    </button>
-                                </div>
-                            </div>
-                        );
-                    })}
+                            );
+                        })
+                    ) : (
+                        <div className="text-center py-12 bg-white rounded-2xl">
+                            <p className="text-gray-500 text-lg">No tasks found matching your filters</p>
+                        </div>
+                    )}
                 </div>
             </div>
 
-            <AddTaskModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onSave={handleSaveTask} />
+            <AddTaskModal
+                isOpen={isAddModalOpen}
+                onClose={handleCloseModal}
+                onSave={handleSaveTask}
+                taskToEdit={editingTask}
+            />
+            <TaskDetailSideModal
+                isOpen={!!selectedTask}
+                onClose={() => setSelectedTask(null)}
+                task={selectedTask}
+                onEdit={() => handleEditTask(selectedTask)}
+                onDelete={() => handleDeleteClick(selectedTask)}
+            />
+            <DeleteConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => {
+                    setIsDeleteModalOpen(false);
+                    setTaskToDelete(null);
+                }}
+                onConfirm={confirmDeleteTask}
+                taskTitle={taskToDelete?.title}
+            />
         </div>
     );
 };

@@ -21,9 +21,10 @@ interface AddTaskModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSave: (taskData: TaskFormData) => void;
+    taskToEdit?: any;
 }
 
-const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave }) => {
+const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, taskToEdit }) => {
     const initialFormData = {
         title: '',
         description: '',
@@ -47,6 +48,31 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave }) 
     const [endDate, setEndDate] = useState<Date | undefined>(initialFormData.endDate);
     const [showExitConfirmation, setShowExitConfirmation] = useState(false);
     const [formErrors, setFormErrors] = useState({ title: false, date: false, time: false });
+
+    useEffect(() => {
+        if (isOpen && taskToEdit) {
+            setTitle(taskToEdit.title || '');
+            setDescription(taskToEdit.description || '');
+            setDate(taskToEdit.date ? new Date(taskToEdit.date) : undefined);
+            setTime(taskToEdit.time || '');
+            setAssignee(taskToEdit.name ? 'user1' : ''); // Mock logic for assignee mapping
+            setProperty(taskToEdit.property || '');
+            setIsRecurring(taskToEdit.isRecurring || false);
+            setFrequency(taskToEdit.frequency || '');
+            setEndDate(taskToEdit.endDate && taskToEdit.endDate !== 'Indefinite' ? new Date(taskToEdit.endDate) : undefined);
+        } else if (isOpen && !taskToEdit) {
+            // Reset form if opening in add mode
+            setTitle(initialFormData.title);
+            setDescription(initialFormData.description);
+            setDate(initialFormData.date);
+            setTime(initialFormData.time);
+            setAssignee(initialFormData.assignee);
+            setProperty(initialFormData.property);
+            setIsRecurring(initialFormData.isRecurring);
+            setFrequency(initialFormData.frequency);
+            setEndDate(initialFormData.endDate);
+        }
+    }, [isOpen, taskToEdit]);
 
     useEffect(() => {
         if (isOpen) {
@@ -111,7 +137,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave }) 
 
     const handleCloseAttempt = () => {
         // Check if any field differs from initial value (form is dirty)
-        const isDirty = 
+        const isDirty =
             title !== initialFormData.title ||
             description !== initialFormData.description ||
             date !== initialFormData.date ||
@@ -137,9 +163,8 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave }) 
     return createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 animate-in fade-in duration-200 font-['Urbanist']">
             <div className="bg-[#E8ECEB] rounded-3xl w-full max-w-[400px] shadow-2xl animate-slide-in-from-right relative">
-                {/* Header */}
                 <div className="bg-[#3D7475] p-3 flex items-center justify-between rounded-t-3xl">
-                    <h2 className="text-base font-medium text-white">Add Task</h2>
+                    <h2 className="text-base font-medium text-white">{taskToEdit ? 'Edit Task' : 'Add Task'}</h2>
                     <button onClick={handleCloseAttempt} className="text-white hover:bg-white/10 p-1 rounded-full transition-colors">
                         <X size={20} />
                     </button>
@@ -155,9 +180,8 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave }) 
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             placeholder="Enter Title"
-                            className={`w-full bg-white text-gray-800 placeholder-gray-400 px-3 py-2 rounded-md outline-none focus:ring-2 transition-all shadow-sm text-sm ${
-                                formErrors.title ? 'ring-2 ring-red-500 focus:ring-red-500' : 'focus:ring-[#3D7475]/20'
-                            }`}
+                            className={`w-full bg-white text-gray-800 placeholder-gray-400 px-3 py-2 rounded-md outline-none focus:ring-2 transition-all shadow-sm text-sm ${formErrors.title ? 'ring-2 ring-red-500 focus:ring-red-500' : 'focus:ring-[#3D7475]/20'
+                                }`}
                         />
                         {formErrors.title && <p className="text-red-500 text-xs mt-1">Title is required</p>}
                     </div>
@@ -273,7 +297,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave }) 
                         onClick={handleSubmit}
                         className="flex-1 bg-[#3D7475] text-white py-2 rounded-md font-bold hover:bg-[#2c5556] transition-colors shadow-md text-sm"
                     >
-                        Create
+                        {taskToEdit ? 'Save Changes' : 'Create'}
                     </button>
                 </div>
 
