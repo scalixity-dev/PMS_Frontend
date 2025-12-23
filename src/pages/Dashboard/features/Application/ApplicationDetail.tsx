@@ -5,7 +5,9 @@ import {
     ChevronDown,
     Loader2,
     PlusCircle,
-    Upload
+    Upload,
+    FileText,
+    Trash2
 } from 'lucide-react';
 import { useGetApplication } from '../../../../hooks/useApplicationQueries';
 import AddOccupantModal from './components/AddOccupantModal';
@@ -13,7 +15,6 @@ import AddPetModal from './components/AddPetModal';
 import AddVehicleModal from './components/AddVehicleModal';
 import AddReferenceModal from './components/AddReferenceModal';
 import AddResidenceModal from './components/AddResidenceModal';
-import { FileText, Trash2 } from 'lucide-react';
 import AddIncomeModal from './components/AddIncomeModal';
 import AddEmergencyContactModal from './components/AddEmergencyContactModal';
 import AddResidenceInfoModal from './components/AddResidenceInfoModal';
