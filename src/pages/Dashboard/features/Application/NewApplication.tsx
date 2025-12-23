@@ -13,6 +13,7 @@ import ResidencesStep from './steps/ResidencesStep';
 import IncomeStep from './steps/IncomeStep';
 import AdditionalIncomeStep from './steps/AdditionalIncomeStep';
 import EmergencyContactStep from './steps/EmergencyContactStep';
+import DocumentsStep from './steps/DocumentsStep';
 import { useApplicationStore } from './store/applicationStore';
 import ApplicationSuccessModal from './components/ApplicationSuccessModal';
 import ApplicationErrorModal from './components/ApplicationErrorModal';
@@ -151,17 +152,14 @@ const NewApplication: React.FC = () => {
     const handleBack = () => {
         if (currentStep === 1) {
             // ... existing logic ...
-            if (isPropertySelected) {
-                // Go back to property selection
-                setIsPropertySelected(false);
-            } else {
-                // Exit with confirmation if form is dirty
-                if (isFormDirty) {
-                    handleCancel();
-                } else {
-                    navigate('/dashboard/leasing/applications');
-                }
-            }
+            // Clear form data and storage to prevent dirty state blocking
+            resetForm();
+            localStorage.removeItem(STORAGE_KEY);
+
+            // Force navigation to applications page
+            setTimeout(() => {
+                navigate('/dashboard/leasing/applications');
+            }, 0);
         } else if (currentStep === 2) {
             if (occupantSubStep === 'pets') {
                 setOccupantSubStep('occupants');
@@ -186,6 +184,8 @@ const NewApplication: React.FC = () => {
             // Go back to Step 3 - restore last visited residence sub-step
             setCurrentStep(currentStep - 1);
             setResidenceSubStep(lastResidenceSubStep);
+        } else if (currentStep === 5) {
+            setCurrentStep(currentStep - 1);
         } else {
             setCurrentStep(currentStep - 1);
         }
@@ -204,10 +204,10 @@ const NewApplication: React.FC = () => {
             // Get leasingId from propertyId and unitId
             const { leasingService } = await import('../../../../services/leasing.service');
             const { applicationService } = await import('../../../../services/application.service');
-            
+
             // First, try to get leasing by propertyId
             let leasing = await leasingService.getByPropertyId(formData.propertyId);
-            
+
             // If no leasing found and we have a unitId, we might need to check unit-level leasing
             // For now, we'll require that a leasing exists for the property
             if (!leasing) {
@@ -216,7 +216,7 @@ const NewApplication: React.FC = () => {
 
             // Submit the application
             await applicationService.create(formData, leasing.id);
-            
+
             // Clear form and show success
             resetForm();
             localStorage.removeItem(STORAGE_KEY);
@@ -224,7 +224,7 @@ const NewApplication: React.FC = () => {
         } catch (error) {
             console.error('Failed to submit application:', error);
             let errors: string[] = [];
-            
+
             if (error instanceof Error) {
                 // Check if error has messages array (from our service)
                 if ('messages' in error && Array.isArray((error as any).messages)) {
@@ -236,7 +236,7 @@ const NewApplication: React.FC = () => {
             } else {
                 errors = ['Failed to submit application. Please try again.'];
             }
-            
+
             setErrorMessages(errors);
             setShowErrorModal(true);
         }
@@ -281,7 +281,9 @@ const NewApplication: React.FC = () => {
             // ...
             // ...
             case 4:
-                return <EmergencyContactStep onNext={handleSubmitSuccess} />;
+                return <EmergencyContactStep onNext={() => setCurrentStep(currentStep + 1)} />;
+            case 5:
+                return <DocumentsStep onNext={handleSubmitSuccess} />;
             default:
                 return null;
         }

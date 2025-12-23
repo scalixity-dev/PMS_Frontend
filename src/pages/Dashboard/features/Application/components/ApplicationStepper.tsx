@@ -10,6 +10,7 @@ const steps = [
     { id: 2, label: 'Occupants' },
     { id: 3, label: 'Residences & income' },
     { id: 4, label: 'Contacts' },
+    { id: 5, label: 'Documents' },
 ];
 
 const ApplicationStepper: React.FC<ApplicationStepperProps> = ({ currentStep }) => {
@@ -21,7 +22,7 @@ const ApplicationStepper: React.FC<ApplicationStepperProps> = ({ currentStep }) 
                     <div
                         className="h-full bg-[#7BD747] transition-all duration-300"
                         style={{
-                            width: `${((Math.min(currentStep, 4) - 1) / (steps.length - 1)) * 100}%`
+                            width: `${((Math.min(currentStep, 5) - 1) / (steps.length - 1)) * 100}%`
                         }}
                     />
                 </div>

@@ -39,6 +39,7 @@ export interface ApplicationFormData {
   additionalResidenceInfo: string;
   additionalIncomeInfo: string;
   emergencyContacts: Array<EmergencyContactFormData & { id: string }>;
+  documents: File[];
 }
 
 export interface ApplicationState {
@@ -78,7 +79,8 @@ const initialFormData: ApplicationFormData = {
   incomes: [],
   additionalResidenceInfo: '',
   additionalIncomeInfo: '',
-  emergencyContacts: []
+  emergencyContacts: [],
+  documents: []
 };
 
 export const useApplicationStore = create<ApplicationState>((set) => ({
