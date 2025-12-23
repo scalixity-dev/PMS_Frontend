@@ -1,113 +1,73 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, Plus, Edit, Link2Off, Archive, Trash2, Send, X, AlertTriangle } from 'lucide-react';
+import { ChevronLeft, Plus, Edit, Link2Off, Archive, Trash2, Send, X, AlertTriangle, Loader2 } from 'lucide-react';
 import DetailTabs from '../../components/DetailTabs';
 import ServiceProProfileSection from './components/ServiceProProfileSection';
 import ServiceProTransactionsSection from './components/ServiceProTransactionsSection';
+import { serviceProviderService, type BackendServiceProvider } from '../../../../services/service-provider.service';
 
-// Mock Data - keyed by Service Pro ID
-// Mock Data - keyed by Service Pro ID
-const SERVICE_PRO_DETAILS: Record<number, any> = {
-    1: {
-        id: 1,
-        initials: 'SR',
-        name: 'sam rao',
-        phone: '+91 78965 41236',
-        email: 'xyz1234@gmail.com',
-        outstanding: 0,
-        deposits: 0,
-        credits: 0,
-        image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200&h=200',
-        personalInfo: {
-            firstName: 'sam',
-            middleName: '-',
-            lastName: 'rao',
-            email: 'xyz1234@gmail.com',
-            additionalEmail: '-',
-            phone: '+91 78965 41236',
-            additionalPhone: '-',
-            companyName: '-',
-            companyWebsite: '-',
-            fax: '-',
-            category: 'Cleaning / Commercial Cleaning Services'
-        },
-        forwardingAddress: 'Silicon City Main Rd, Indore Division, MP 452012'
-    },
-    2: {
-        id: 2,
-        initials: 'VR',
-        name: 'vijay rfgdd',
-        phone: '+91 70326 59874',
-        email: 'vijay.r@example.com',
-        outstanding: 5000,
-        deposits: 2000,
-        credits: 0,
-        image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200&h=200',
-        personalInfo: {
-            firstName: 'vijay',
-            middleName: '-',
-            lastName: 'rfgdd',
-            email: 'vijay.r@example.com',
-            additionalEmail: '-',
-            phone: '+91 70326 59874',
-            additionalPhone: '-',
-            companyName: 'Vijay Appraisals',
-            companyWebsite: 'www.vijayappraisals.com',
-            fax: '-',
-            category: 'Appraisal'
-        },
-        forwardingAddress: '456 Market St, Mumbai, MH 400001'
-    },
-    3: {
-        id: 3,
-        initials: 'AB',
-        name: 'Alex Brown',
-        phone: '+1 555 123 4567',
-        email: 'alex.brown@example.com',
-        outstanding: 1200,
-        deposits: 0,
-        credits: 500,
-        image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=200&h=200',
-        personalInfo: {
-            firstName: 'Alex',
-            middleName: '-',
-            lastName: 'Brown',
-            email: 'alex.brown@example.com',
-            additionalEmail: '-',
-            phone: '+1 555 123 4567',
-            additionalPhone: '-',
-            companyName: 'Brown Plumbing',
-            companyWebsite: 'www.brownplumbing.com',
-            fax: '+1 555 123 4568',
-            category: 'Plumbing Services'
-        },
-        forwardingAddress: '789 Pipe Lane, New York, NY 10001'
-    },
-    4: {
-        id: 4,
-        initials: 'JD',
-        name: 'John Doe',
-        phone: '+1 555 987 6543',
-        email: 'john.doe@example.com',
-        outstanding: 0,
-        deposits: 1000,
-        credits: 0,
-        image: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?auto=format&fit=crop&q=80&w=200&h=200',
-        personalInfo: {
-            firstName: 'John',
-            middleName: '-',
-            lastName: 'Doe',
-            email: 'john.doe@example.com',
-            additionalEmail: '-',
-            phone: '+1 555 987 6543',
-            additionalPhone: '-',
-            companyName: 'Doe Electricals',
-            companyWebsite: 'www.doeelectricals.com',
-            fax: '-',
-            category: 'Electrical Services'
-        },
-        forwardingAddress: '101 Wire St, San Francisco, CA 94105'
+// Helper function to generate initials from name
+const getInitials = (firstName: string, lastName: string): string => {
+    const first = firstName?.charAt(0)?.toUpperCase() || '';
+    const last = lastName?.charAt(0)?.toUpperCase() || '';
+    return `${first}${last}`;
+};
+
+// Helper function to format phone number with country code
+const formatPhoneNumber = (phoneNumber: string, phoneCountryCode?: string | null): string => {
+    if (phoneCountryCode) {
+        return `${phoneCountryCode} ${phoneNumber}`;
     }
+    return phoneNumber;
+};
+
+// Helper function to format category with subcategory
+const formatCategory = (category: string, subcategory?: string | null): string => {
+    if (subcategory) {
+        return `${category} / ${subcategory}`;
+    }
+    return category;
+};
+
+// Helper function to format address
+const formatAddress = (address: string, city?: string | null, state?: string, zipCode?: string, country?: string): string => {
+    const parts = [address];
+    if (city) parts.push(city);
+    if (state) parts.push(state);
+    if (zipCode) parts.push(zipCode);
+    if (country) parts.push(country);
+    return parts.join(', ');
+};
+
+// Transform backend data to component format
+const transformServiceProvider = (data: BackendServiceProvider) => {
+    const fullName = `${data.firstName}${data.middleName ? ` ${data.middleName}` : ''} ${data.lastName}`.trim();
+    
+    return {
+        id: data.id,
+        initials: getInitials(data.firstName, data.lastName),
+        name: fullName,
+        phone: formatPhoneNumber(data.phoneNumber, data.phoneCountryCode),
+        email: data.email,
+        outstanding: 0, // TODO: Calculate from transactions
+        deposits: 0, // TODO: Calculate from transactions
+        credits: 0, // TODO: Calculate from transactions
+        image: data.photoUrl || undefined,
+        personalInfo: {
+            firstName: data.firstName,
+            middleName: data.middleName || '-',
+            lastName: data.lastName,
+            email: data.email,
+            additionalEmail: '-', // TODO: Add support for additional emails
+            phone: formatPhoneNumber(data.phoneNumber, data.phoneCountryCode),
+            additionalPhone: '-', // TODO: Add support for additional phones
+            companyName: data.companyName || '-',
+            companyWebsite: data.companyWebsite || '-',
+            fax: data.faxNumber || '-',
+            category: formatCategory(data.category, data.subcategory)
+        },
+        forwardingAddress: formatAddress(data.address, data.city, data.state, data.zipCode, data.country)
+    };
 };
 
 const ServiceProsDetail = () => {
@@ -119,11 +79,89 @@ const ServiceProsDetail = () => {
     const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isConnected, setIsConnected] = useState(false);
+    const [servicePro, setServicePro] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [isArchiving, setIsArchiving] = useState(false);
+    const [documents, setDocuments] = useState<any[]>([]);
+    const [isLoadingDocuments, setIsLoadingDocuments] = useState(false);
     const actionMenuRef = useRef<HTMLDivElement>(null);
+
+    // Fetch service provider data
+    useEffect(() => {
+        const fetchServiceProvider = async () => {
+            if (!id) {
+                setError('Service provider ID is required');
+                setIsLoading(false);
+                return;
+            }
+
+            setIsLoading(true);
+            setError(null);
+            try {
+                const data = await serviceProviderService.getOne(id);
+                setServicePro(transformServiceProvider(data));
+                
+                // Fetch documents
+                setIsLoadingDocuments(true);
+                try {
+                    const docs = await serviceProviderService.getDocuments(id);
+                    setDocuments(docs);
+                } catch (docError) {
+                    console.error('Error fetching documents:', docError);
+                    // Don't fail the whole page if documents fail to load
+                    setDocuments([]);
+                } finally {
+                    setIsLoadingDocuments(false);
+                }
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Failed to load service provider');
+                console.error('Error fetching service provider:', err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchServiceProvider();
+    }, [id]);
 
     const handleSendConnection = () => {
         setIsConnected(true);
         setIsSendConnectionModalOpen(false);
+    };
+
+    const handleDelete = async () => {
+        if (!id) return;
+        
+        setIsDeleting(true);
+        try {
+            await serviceProviderService.delete(id);
+            navigate('/dashboard/contacts/service-pros');
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to delete service provider');
+            console.error('Error deleting service provider:', err);
+            setIsDeleteModalOpen(false);
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
+    const handleArchive = async () => {
+        if (!id || !servicePro) return;
+        
+        setIsArchiving(true);
+        try {
+            await serviceProviderService.update(id, { isActive: false });
+            setServicePro({ ...servicePro, isActive: false });
+            setIsArchiveModalOpen(false);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to archive service provider');
+            console.error('Error archiving service provider:', err);
+            setIsArchiveModalOpen(false);
+        } finally {
+            setIsArchiving(false);
+        }
     };
 
     useEffect(() => {
@@ -142,13 +180,38 @@ const ServiceProsDetail = () => {
         };
     }, [isActionMenuOpen]);
 
-    // Get service pro by ID from route param, fallback to id 1
-    const servicePro = SERVICE_PRO_DETAILS[Number(id)] || SERVICE_PRO_DETAILS[1];
-
     const tabs = [
         { id: 'profile', label: 'Profile' },
         { id: 'transactions', label: 'Transactions' }
     ];
+
+    if (isLoading) {
+        return (
+            <div className="max-w-6xl mx-auto min-h-screen font-outfit pb-10 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="w-8 h-8 animate-spin text-[#3A6D6C]" />
+                    <p className="text-gray-600">Loading service provider...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error || !servicePro) {
+        return (
+            <div className="max-w-6xl mx-auto min-h-screen font-outfit pb-10 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <AlertTriangle className="w-8 h-8 text-red-500" />
+                    <p className="text-gray-600">{error || 'Service provider not found'}</p>
+                    <button
+                        onClick={() => navigate('/dashboard/contacts/service-pros')}
+                        className="px-6 py-2 bg-[#3A6D6C] text-white rounded-lg hover:bg-[#2c5251] transition-colors"
+                    >
+                        Back to Service Pros
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-6xl mx-auto min-h-screen font-outfit pb-10">
@@ -214,11 +277,19 @@ const ServiceProsDetail = () => {
                                             Send Connection
                                         </button>
                                     )}
-                                    <button onClick={() => { setIsArchiveModalOpen(true); setIsActionMenuOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors flex items-center gap-2">
+                                    <button 
+                                        onClick={() => { setIsArchiveModalOpen(true); setIsActionMenuOpen(false); }} 
+                                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors flex items-center gap-2"
+                                        disabled={isArchiving}
+                                    >
                                         <Archive className="w-4 h-4" />
-                                        Archive
+                                        {isArchiving ? 'Archiving...' : 'Archive'}
                                     </button>
-                                    <button onClick={() => { setIsDeleteModalOpen(true); setIsActionMenuOpen(false); }} className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2">
+                                    <button 
+                                        onClick={() => { setIsDeleteModalOpen(true); setIsActionMenuOpen(false); }} 
+                                        className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
+                                        disabled={isDeleting}
+                                    >
                                         <Trash2 className="w-4 h-4" />
                                         Delete
                                     </button>
@@ -303,7 +374,7 @@ const ServiceProsDetail = () => {
                 {/* Tab Content */}
                 {
                     activeTab === 'profile' && (
-                        <ServiceProProfileSection servicePro={servicePro} />
+                        <ServiceProProfileSection servicePro={servicePro} documents={documents} isLoadingDocuments={isLoadingDocuments} />
                     )
                 }
                 {
@@ -377,14 +448,17 @@ const ServiceProsDetail = () => {
                                 <div className="flex gap-4">
                                     <button
                                         onClick={() => setIsArchiveModalOpen(false)}
-                                        className="flex-1 px-6 py-3 bg-[#545E6B] text-white rounded-lg font-medium hover:bg-[#464f5b] transition-colors"
+                                        className="flex-1 px-6 py-3 bg-[#545E6B] text-white rounded-lg font-medium hover:bg-[#464f5b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        disabled={isArchiving}
                                     >
                                         Cancel
                                     </button>
                                     <button
-                                        onClick={() => setIsArchiveModalOpen(false)}
-                                        className="flex-1 px-6 py-3 bg-[#3A6D6C] text-white rounded-lg font-medium hover:bg-[#2c5251] transition-colors"
+                                        onClick={handleArchive}
+                                        className="flex-1 px-6 py-3 bg-[#3A6D6C] text-white rounded-lg font-medium hover:bg-[#2c5251] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                        disabled={isArchiving}
                                     >
+                                        {isArchiving && <Loader2 className="w-4 h-4 animate-spin" />}
                                         Yes I'm Sure
                                     </button>
                                 </div>
@@ -419,14 +493,17 @@ const ServiceProsDetail = () => {
                                 <div className="flex gap-4">
                                     <button
                                         onClick={() => setIsDeleteModalOpen(false)}
-                                        className="flex-1 px-6 py-3 bg-[#545E6B] text-white rounded-lg font-medium hover:bg-[#464f5b] transition-colors"
+                                        className="flex-1 px-6 py-3 bg-[#545E6B] text-white rounded-lg font-medium hover:bg-[#464f5b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        disabled={isDeleting}
                                     >
                                         Cancel
                                     </button>
                                     <button
-                                        onClick={() => setIsDeleteModalOpen(false)}
-                                        className="flex-1 px-6 py-3 bg-[#FF3B30] text-white rounded-lg font-medium hover:bg-[#d6332a] transition-colors"
+                                        onClick={handleDelete}
+                                        className="flex-1 px-6 py-3 bg-[#FF3B30] text-white rounded-lg font-medium hover:bg-[#d6332a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                        disabled={isDeleting}
                                     >
+                                        {isDeleting && <Loader2 className="w-4 h-4 animate-spin" />}
                                         Delete
                                     </button>
                                 </div>
