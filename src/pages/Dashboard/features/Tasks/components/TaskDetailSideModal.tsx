@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Calendar, User, Home, RotateCw, Pencil, Trash2 } from 'lucide-react';
-import { Task } from '../Tasks';
+import type { Task } from '../Tasks';
 
 interface TaskDetailSideModalProps {
     isOpen: boolean;

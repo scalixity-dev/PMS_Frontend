@@ -7,7 +7,7 @@ interface DocumentsStepProps {
 }
 
 const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext }) => {
-    const { formData, updateFormData, setFormData } = useApplicationStore();
+    const { formData, setFormData } = useApplicationStore();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {

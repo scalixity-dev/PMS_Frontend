@@ -4,7 +4,7 @@ import { X, AlertTriangle } from 'lucide-react';
 import CustomDropdown from '../../../components/CustomDropdown';
 import DatePicker from '../../../../../components/ui/DatePicker';
 import TimePicker from '../../../../../components/ui/TimePicker';
-import { Task } from '../Tasks';
+import type { Task } from '../Tasks';
 
 export interface TaskFormData {
     title: string;

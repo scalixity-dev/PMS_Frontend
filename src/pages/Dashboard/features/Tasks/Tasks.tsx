@@ -393,8 +393,8 @@ const Tasks: React.FC = () => {
                 isOpen={!!selectedTask}
                 onClose={() => setSelectedTask(null)}
                 task={selectedTask}
-                onEdit={() => handleEditTask(selectedTask)}
-                onDelete={() => handleDeleteClick(selectedTask)}
+                onEdit={() => selectedTask && handleEditTask(selectedTask)}
+                onDelete={() => selectedTask && handleDeleteClick(selectedTask)}
             />
             <DeleteConfirmationModal
                 isOpen={isDeleteModalOpen}
