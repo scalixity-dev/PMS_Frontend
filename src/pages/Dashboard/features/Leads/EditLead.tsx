@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 
@@ -7,12 +7,38 @@ const EditLead = () => {
     const { id } = useParams();
     const [leadType, setLeadType] = useState<'Hot' | 'Cold'>('Hot');
 
-    // Mock pre-filled data
+    // Pre-filled data (loaded from storage when available)
     const [formData, setFormData] = useState({
         fullName: 'Sam',
         phone: '+91 7049770293',
         email: 'abc@gmail.com'
     });
+
+    useEffect(() => {
+        const stored = localStorage.getItem(`lead_${id || 1}`);
+        if (stored) {
+            try {
+                const parsed = JSON.parse(stored) as {
+                    fullName?: string;
+                    phone?: string;
+                    email?: string;
+                    leadType?: 'Hot' | 'Cold';
+                };
+
+                setFormData({
+                    fullName: parsed.fullName ?? 'Sam',
+                    phone: parsed.phone ?? '+91 7049770293',
+                    email: parsed.email ?? 'abc@gmail.com'
+                });
+
+                if (parsed.leadType === 'Hot' || parsed.leadType === 'Cold') {
+                    setLeadType(parsed.leadType);
+                }
+            } catch {
+                // Ignore parse errors and keep defaults
+            }
+        }
+    }, [id]);
 
     const handleSave = () => {
         // For demo purposes, save to localStorage

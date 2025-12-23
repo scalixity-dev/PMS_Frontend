@@ -224,10 +224,38 @@ const App: React.FC = () => {
               <Route path="/dashboard/application/new" element={<NewApplication />} />
               <Route path="/dashboard/application/:id" element={<ApplicationDetail />} />
               <Route path="/dashboard/leasing/leases" element={<Leases />} />
-              <Route path="/dashboard/leasing/leads" element={<Leads />} />
-              <Route path="/dashboard/leasing/leads/add" element={<AddLead />} />
-              <Route path="/dashboard/leasing/leads/:id" element={<LeadDetail />} />
-              <Route path="/dashboard/leasing/leads/edit/:id" element={<EditLead />} />
+              <Route
+                path="/dashboard/leasing/leads"
+                element={
+                  <ProtectedRoute>
+                    <Leads />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/leasing/leads/add"
+                element={
+                  <ProtectedRoute>
+                    <AddLead />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/leasing/leads/:id"
+                element={
+                  <ProtectedRoute>
+                    <LeadDetail />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/leasing/leads/edit/:id"
+                element={
+                  <ProtectedRoute>
+                    <EditLead />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="/dashboard/portfolio/leases/:id" element={<LeaseDetail />} />
 
               <Route

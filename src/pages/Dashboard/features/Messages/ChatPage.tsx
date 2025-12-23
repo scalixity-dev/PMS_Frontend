@@ -139,7 +139,7 @@ const ChatPage: React.FC = () => {
     window.print();
   }, []);
 
-  const togglePinChat = useCallback((e: React.MouseEvent, chatId: string) => {
+  const togglePinChat = useCallback((e: React.SyntheticEvent, chatId: string) => {
     e.stopPropagation();
     setChats(prevChats => prevChats.map(chat =>
       chat.id === chatId ? { ...chat, isPinned: !chat.isPinned } : chat

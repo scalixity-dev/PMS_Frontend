@@ -27,12 +27,7 @@ const Leads = () => {
     const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
     const [selectedStatus, setSelectedStatus] = useState('New');
     const [searchQuery, setSearchQuery] = useState('');
-    const [filters, setFilters] = useState<{
-        status: string[];
-        listing: string[];
-        sources: string[];
-        type: string[];
-    }>({
+    const [filters, setFilters] = useState<Record<string, string[]>>({
         status: [],
         listing: [],
         sources: [],
@@ -104,11 +99,25 @@ const Leads = () => {
         });
     }, [leads, searchQuery, filters]);
 
+    const allFilteredSelected =
+        filteredLeads.length > 0 &&
+        filteredLeads.every((lead) => selectedLeads.includes(lead.id));
+
     const toggleSelectAll = () => {
-        if (selectedLeads.length === leads.length) {
-            setSelectedLeads([]);
+        const filteredIds = filteredLeads.map((lead) => lead.id);
+
+        const areAllFilteredSelected = filteredIds.every((id) =>
+            selectedLeads.includes(id)
+        );
+
+        if (areAllFilteredSelected) {
+            // Unselect only the currently filtered leads
+            setSelectedLeads(selectedLeads.filter((id) => !filteredIds.includes(id)));
         } else {
-            setSelectedLeads(leads.map(lead => lead.id));
+            // Select all filtered leads in addition to any already selected ones
+            setSelectedLeads([
+                ...new Set<number>([...selectedLeads, ...filteredIds]),
+            ]);
         }
     };
 
@@ -198,7 +207,7 @@ const Leads = () => {
                     filterOptions={filterOptions}
                     filterLabels={filterLabels}
                     onSearchChange={setSearchQuery}
-                    onFiltersChange={(newFilters) => setFilters(newFilters as any)}
+                    onFiltersChange={setFilters}
                     showMoreFilters={false}
                     showClearAll={true}
                 />
@@ -210,9 +219,11 @@ const Leads = () => {
                         <div className="flex justify-start pl-1">
                             <div
                                 onClick={toggleSelectAll}
-                                className={`w-5 h-5 rounded flex items-center justify-center cursor-pointer transition-all ${selectedLeads.length === MOCK_LEADS.length ? 'bg-[#1BCB40]' : 'bg-white/20 border-2 border-white/40'}`}
+                                className={`w-5 h-5 rounded flex items-center justify-center cursor-pointer transition-all ${allFilteredSelected ? 'bg-[#1BCB40]' : 'bg-white/20 border-2 border-white/40'}`}
                             >
-                                {selectedLeads.length === MOCK_LEADS.length && <Check className="w-3 h-3 text-white stroke-[4]" />}
+                                {allFilteredSelected && (
+                                    <Check className="w-3 h-3 text-white stroke-[4]" />
+                                )}
                             </div>
                         </div>
                         <div className="text-left">Status</div>

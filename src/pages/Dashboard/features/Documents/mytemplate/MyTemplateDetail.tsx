@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronDown, ChevronLeft, Plus, X, UploadCloud } from 'lucide-react';
 
@@ -24,7 +24,7 @@ const MyTemplateDetail: React.FC = () => {
         fileInputRef.current?.click();
     };
 
-    const [template, setTemplate] = useState<{ id: number, title: string, subtitle: string, content?: string } | null>(null);
+    const [template, setTemplate] = useState<{ id: number; title: string; subtitle: string; content?: string } | null>(null);
 
     useEffect(() => {
         if (!id) {
@@ -61,6 +61,49 @@ const MyTemplateDetail: React.FC = () => {
             { id: 3, title: 'Title', subtitle: 'Tenants Agreements' },
         ];
     })();
+
+    const sanitizeHtml = (html: string): string => {
+        if (typeof window === 'undefined' || typeof document === 'undefined') {
+            return html;
+        }
+
+        const container = document.createElement('div');
+        container.innerHTML = html;
+
+        // Remove potentially dangerous elements
+        const blockedSelectors = ['script', 'iframe', 'object', 'embed', 'link[rel="import"]'];
+        container.querySelectorAll(blockedSelectors.join(',')).forEach((el) => el.remove());
+
+        // Remove inline event handlers and javascript: URLs
+        const walker = document.createTreeWalker(container, NodeFilter.SHOW_ELEMENT);
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+        let current = walker.currentNode as HTMLElement | null;
+        while (current) {
+            const attributes = Array.from(current.attributes);
+            attributes.forEach((attr) => {
+                const name = attr.name.toLowerCase();
+                const value = attr.value.trim().toLowerCase();
+
+                if (name.startsWith('on')) {
+                    current?.removeAttribute(attr.name);
+                }
+
+                if ((name === 'href' || name === 'src') && value.startsWith('javascript:')) {
+                    current?.removeAttribute(attr.name);
+                }
+            });
+
+            const next = walker.nextNode();
+            current = next as HTMLElement | null;
+        }
+
+        return container.innerHTML;
+    };
+
+    const sanitizedContent = useMemo(
+        () => (template?.content ? sanitizeHtml(template.content) : ''),
+        [template?.content]
+    );
 
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-10">
@@ -135,8 +178,8 @@ const MyTemplateDetail: React.FC = () => {
 
                     {/* Content Placeholder */}
                     <div className="px-12 py-8 min-h-[300px]">
-                        {template?.content ? (
-                            <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: template.content }} />
+                        {sanitizedContent ? (
+                            <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: sanitizedContent }} />
                         ) : (
                             <p className="text-gray-400 text-sm">| Type here</p>
                         )}

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import type { EditorView } from '@tiptap/pm/view';
 import PrimaryActionButton from '../../../../../components/common/buttons/PrimaryActionButton';
 import TiptapEditor from '../../../../../components/common/Editor/TiptapEditor';
 
@@ -49,22 +50,27 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
         e.dataTransfer.dropEffect = 'copy';
     };
 
-    const handleEditorDrop = (view: any, event: any) => {
+    const handleEditorDrop = (view: EditorView, event: DragEvent) => {
         event.preventDefault();
+
+        const dataTransfer = event.dataTransfer;
+        if (!dataTransfer) {
+            return false;
+        }
 
         let dragData;
         try {
-            const rawData = event.dataTransfer.getData('application/x-pms-autofill');
+            const rawData = dataTransfer.getData('application/x-pms-autofill');
             if (rawData) {
                 dragData = JSON.parse(rawData);
             } else {
                 // Fallback for fields
-                const label = event.dataTransfer.getData('label') || event.dataTransfer.getData('text/plain');
+                const label = dataTransfer.getData('label') || dataTransfer.getData('text/plain');
                 if (label) {
                     dragData = { label, isAutoFill: false };
                 }
             }
-        } catch (e) {
+        } catch {
             return false;
         }
 
@@ -81,7 +87,12 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                 const node = schema.nodes.autoFill.create({ label: displayContent });
 
                 // If document is empty, wrap in a paragraph
-                if (view.state.doc.content.size === 0 || (view.state.doc.childCount === 1 && view.state.doc.firstChild.content.size === 0)) {
+                const isEmptyDoc = view.state.doc.content.size === 0;
+                const isSingleEmptyChild =
+                    view.state.doc.childCount === 1 &&
+                    (view.state.doc.firstChild?.content.size ?? 0) === 0;
+
+                if (isEmptyDoc || isSingleEmptyChild) {
                     const paragraph = schema.nodes.paragraph.create(null, node);
                     view.dispatch(tr.replaceWith(0, view.state.doc.content.size, paragraph));
                 } else {

@@ -7,7 +7,7 @@ interface ChatSidebarProps {
     chats: Chat[];
     activeChatId: string;
     onSelectChat: (id: string) => void;
-    onTogglePin: (e: React.MouseEvent, id: string) => void;
+    onTogglePin: (e: React.SyntheticEvent, id: string) => void;
     searchQuery: string;
     onSearchChange: (query: string) => void;
 }
@@ -42,10 +42,18 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                 <div className="px-3 space-y-1 pb-4">
                     {chats.length > 0 ? (
                         chats.map((chat) => (
-                            <button
+                            <div
                                 key={chat.id}
+                                role="button"
+                                tabIndex={0}
                                 onClick={() => onSelectChat(chat.id)}
-                                className={`w-full flex items-center gap-3 px-3 py-3 rounded-2xl transition-all duration-300 relative group ${activeChatId === chat.id
+                                onKeyDown={(event) => {
+                                    if (event.key === 'Enter' || event.key === ' ') {
+                                        event.preventDefault();
+                                        onSelectChat(chat.id);
+                                    }
+                                }}
+                                className={`w-full flex items-center gap-3 px-3 py-3 rounded-2xl transition-all duration-300 relative group cursor-pointer ${activeChatId === chat.id
                                     ? 'bg-[#E6F3EF] border border-[#A7D8C9] shadow-sm'
                                     : 'hover:bg-gray-50'
                                     } active:scale-[0.98]`}
@@ -75,14 +83,22 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                 </div>
 
                                 {/* Pin/Unpin Action Button on Hover */}
-                                <button
-                                    onClick={(e) => onTogglePin(e, chat.id)}
+                                <div
+                                    role="button"
+                                    tabIndex={0}
+                                    onClick={(event) => onTogglePin(event, chat.id)}
+                                    onKeyDown={(event) => {
+                                        if (event.key === 'Enter' || event.key === ' ') {
+                                            event.preventDefault();
+                                            onTogglePin(event, chat.id);
+                                        }
+                                    }}
                                     className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-sm p-1.5 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-all hover:text-[#3D7068] hover:scale-110 active:scale-95 border border-gray-100"
                                     title={chat.isPinned ? "Unpin Chat" : "Pin Chat"}
                                 >
                                     <Pin className={`w-3.5 h-3.5 ${chat.isPinned ? 'fill-[#3D7068] text-[#3D7068]' : 'text-gray-400'}`} />
-                                </button>
-                            </button>
+                                </div>
+                            </div>
                         ))
                     ) : (
                         <div className="px-6 py-10 text-sm text-gray-400 text-center italic">

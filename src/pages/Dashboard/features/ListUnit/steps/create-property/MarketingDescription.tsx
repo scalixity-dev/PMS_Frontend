@@ -7,7 +7,7 @@ const MarketingDescription: React.FC = () => {
   const { formData: data, updateFormData } = useCreatePropertyStore();
 
   const updateData = (value: string) => {
-    updateFormData('marketingDescription' as any, value);
+    updateFormData('marketingDescription', value);
   };
 
   return (

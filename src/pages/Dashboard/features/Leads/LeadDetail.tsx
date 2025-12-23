@@ -387,7 +387,7 @@ const LeadDetail = () => {
                                 />
                                 <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-[1.5rem] shadow-2xl border border-gray-100 py-3 z-[60] overflow-hidden animate-in fade-in zoom-in-95 duration-200 font-outfit">
                                     <button
-                                        onClick={() => navigate('/dashboard/leasing/leads/edit/1')}
+                                        onClick={() => navigate(`/dashboard/leasing/leads/edit/${id || 1}`)}
                                         className="w-full text-left px-6 py-2.5 hover:bg-gray-50 text-gray-700 font-bold flex items-center gap-3 transition-colors text-sm"
                                     >
                                         <Edit2 className="w-4 h-4" /> Edit Lead
