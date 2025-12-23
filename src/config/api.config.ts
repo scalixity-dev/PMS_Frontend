@@ -93,5 +93,16 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `${API_BASE_URL}/application/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/application/${id}`,
   },
+  SERVICE_PROVIDER: {
+    GET_ALL: `${API_BASE_URL}/service-provider`,
+    GET_ONE: (id: string) => `${API_BASE_URL}/service-provider/${id}`,
+    GET_BY_CATEGORY: (category: string) => `${API_BASE_URL}/service-provider/category/${category}`,
+    CREATE: `${API_BASE_URL}/service-provider`,
+    UPDATE: (id: string) => `${API_BASE_URL}/service-provider/${id}`,
+    DELETE: (id: string) => `${API_BASE_URL}/service-provider/${id}`,
+    UPLOAD_DOCUMENT: (id: string) => `${API_BASE_URL}/service-provider/${id}/documents`,
+    GET_DOCUMENTS: (id: string) => `${API_BASE_URL}/service-provider/${id}/documents`,
+    DELETE_DOCUMENT: (documentId: string) => `${API_BASE_URL}/service-provider/documents/${documentId}`,
+  },
 };
 

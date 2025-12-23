@@ -18,11 +18,13 @@ export default function ScalableSolutionSection() {
           image="https://res.cloudinary.com/dxwspucxw/image/upload/v1761905088/LandLords_bucwby.png"
           title="Landlords"
           description="Protect your property and find Pms you trust."
+          buttonHref = "/usecases/landlords"
         />
         <ScalableCard
           image="https://res.cloudinary.com/dxwspucxw/image/upload/v1761905089/propertymanager_pqausl.png"
           title="Property Manager"
           description="Stay organized and connected with your team."
+          buttonHref = "/signup"
         />
         <ScalableCard
           image="https://res.cloudinary.com/dxwspucxw/image/upload/v1761905090/servicepro_y7ry43.png"
@@ -32,11 +34,13 @@ export default function ScalableSolutionSection() {
             <br />
             <span>stress-free.</span>
           </>}
+          buttonHref = "/usecases/servicepros"
         />
         <ScalableCard
           image="https://res.cloudinary.com/dxwspucxw/image/upload/v1761905089/owner_ipyjef.png"
           title="Owners"
           description="Protect your property and find Pms you trust."
+          buttonHref = "/signup"
         />
       </div>
     </section>
