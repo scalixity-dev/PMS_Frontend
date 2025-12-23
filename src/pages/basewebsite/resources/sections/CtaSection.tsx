@@ -13,7 +13,7 @@ const defaultProps: Required<CtaSectionProps> = {
   titleSize: 'lg',
   description: 'Protect your business with state-specific, legally compliant landlord forms—comprehensive, customizable, and lawyer-approved.',
   buttonText: 'Start Trial',
-  buttonHref: '#',
+  buttonHref: '/signup',
 };
 
 const CtaSection: React.FC<CtaSectionProps> = (props) => {

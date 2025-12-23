@@ -13,7 +13,7 @@ const HelpAndSupportSection: React.FC = () => {
           title="Help Center"
           description="Search our knowledge base, read articles, and quick start guides to help your business grow."
           ctaText="Visit Help Center"
-          ctaHref="#"
+          ctaHref="#contact-section"
         />
 
         {/* Card 2: Priority Support */}
@@ -22,7 +22,7 @@ const HelpAndSupportSection: React.FC = () => {
           title="Priority Support"
           description="PmsCloud business clients have access to immediate telephone support from 9 AM to 5 PM CST and are first in line for ticket responses."
           ctaText="Upgrade"
-          ctaHref="#"
+          ctaHref="#contact-section"
         />
 
       </div>
