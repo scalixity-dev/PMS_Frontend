@@ -4,6 +4,7 @@ import { X, AlertTriangle } from 'lucide-react';
 import CustomDropdown from '../../../components/CustomDropdown';
 import DatePicker from '../../../../../components/ui/DatePicker';
 import TimePicker from '../../../../../components/ui/TimePicker';
+import { Task } from '../Tasks';
 
 export interface TaskFormData {
     title: string;
@@ -21,7 +22,7 @@ interface AddTaskModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSave: (taskData: TaskFormData) => void;
-    taskToEdit?: any;
+    taskToEdit?: Task | null;
 }
 
 const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, taskToEdit }) => {
@@ -48,18 +49,41 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
     const [endDate, setEndDate] = useState<Date | undefined>(initialFormData.endDate);
     const [showExitConfirmation, setShowExitConfirmation] = useState(false);
     const [formErrors, setFormErrors] = useState({ title: false, date: false, time: false });
+    const [initialSnapshot, setInitialSnapshot] = useState<TaskFormData>(initialFormData);
 
     useEffect(() => {
         if (isOpen && taskToEdit) {
+            // Populate form from taskToEdit
+            const editDate = taskToEdit.date ? new Date(taskToEdit.date) : undefined;
+            const editTime = taskToEdit.time || '';
+            const editAssignee = taskToEdit.name ? 'user1' : ''; // Mock logic for assignee mapping
+            const editProperty = taskToEdit.property || '';
+            const editIsRecurring = taskToEdit.isRecurring || false;
+            const editFrequency = taskToEdit.frequency || '';
+            const editEndDate = taskToEdit.endDate && taskToEdit.endDate !== 'Indefinite' ? new Date(taskToEdit.endDate) : undefined;
+            
             setTitle(taskToEdit.title || '');
             setDescription(taskToEdit.description || '');
-            setDate(taskToEdit.date ? new Date(taskToEdit.date) : undefined);
-            setTime(taskToEdit.time || '');
-            setAssignee(taskToEdit.name ? 'user1' : ''); // Mock logic for assignee mapping
-            setProperty(taskToEdit.property || '');
-            setIsRecurring(taskToEdit.isRecurring || false);
-            setFrequency(taskToEdit.frequency || '');
-            setEndDate(taskToEdit.endDate && taskToEdit.endDate !== 'Indefinite' ? new Date(taskToEdit.endDate) : undefined);
+            setDate(editDate);
+            setTime(editTime);
+            setAssignee(editAssignee);
+            setProperty(editProperty);
+            setIsRecurring(editIsRecurring);
+            setFrequency(editFrequency);
+            setEndDate(editEndDate);
+            
+            // Capture initial snapshot for isDirty comparison
+            setInitialSnapshot({
+                title: taskToEdit.title || '',
+                description: taskToEdit.description || '',
+                date: editDate,
+                time: editTime,
+                assignee: editAssignee,
+                property: editProperty,
+                isRecurring: editIsRecurring,
+                frequency: editFrequency,
+                endDate: editEndDate
+            });
         } else if (isOpen && !taskToEdit) {
             // Reset form if opening in add mode
             setTitle(initialFormData.title);
@@ -71,6 +95,9 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
             setIsRecurring(initialFormData.isRecurring);
             setFrequency(initialFormData.frequency);
             setEndDate(initialFormData.endDate);
+            
+            // Capture initial snapshot for isDirty comparison
+            setInitialSnapshot(initialFormData);
         }
     }, [isOpen, taskToEdit]);
 
@@ -136,17 +163,17 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
     };
 
     const handleCloseAttempt = () => {
-        // Check if any field differs from initial value (form is dirty)
+        // Check if any field differs from initial snapshot (form is dirty)
         const isDirty =
-            title !== initialFormData.title ||
-            description !== initialFormData.description ||
-            date !== initialFormData.date ||
-            time !== initialFormData.time ||
-            assignee !== initialFormData.assignee ||
-            property !== initialFormData.property ||
-            isRecurring !== initialFormData.isRecurring ||
-            frequency !== initialFormData.frequency ||
-            endDate !== initialFormData.endDate;
+            title !== initialSnapshot.title ||
+            description !== initialSnapshot.description ||
+            date !== initialSnapshot.date ||
+            time !== initialSnapshot.time ||
+            assignee !== initialSnapshot.assignee ||
+            property !== initialSnapshot.property ||
+            isRecurring !== initialSnapshot.isRecurring ||
+            frequency !== initialSnapshot.frequency ||
+            endDate !== initialSnapshot.endDate;
 
         if (isDirty) {
             setShowExitConfirmation(true);

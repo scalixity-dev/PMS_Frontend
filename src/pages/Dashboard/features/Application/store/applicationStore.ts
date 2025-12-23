@@ -5,6 +5,14 @@ import type { OccupantFormData } from '../components/AddOccupantModal';
 import type { PetFormData } from '../components/AddPetModal';
 import type { IncomeFormData } from '../components/AddIncomeModal';
 
+// Serializable file metadata for localStorage persistence
+export interface FileMetadata {
+  name: string;
+  size: number;
+  type: string;
+  lastModified: number;
+}
+
 export interface EmergencyContactFormData {
   fullName: string;
   relationship: string;
@@ -40,7 +48,10 @@ export interface ApplicationFormData {
   additionalResidenceInfo: string;
   additionalIncomeInfo: string;
   emergencyContacts: Array<EmergencyContactFormData & { id: string }>;
-  documents: File[];
+  documents: FileMetadata[];
+  // Runtime-only: actual File objects (not persisted to localStorage)
+  documentFiles?: File[];
+  photoFile?: File | null;
 }
 
 export interface ApplicationState {

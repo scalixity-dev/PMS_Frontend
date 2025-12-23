@@ -11,6 +11,7 @@ interface InviteToApplyModalProps {
 const InviteToApplyModal: React.FC<InviteToApplyModalProps> = ({ isOpen, onClose, onSend }) => {
     const [selectedPropertyId, setSelectedPropertyId] = useState('');
     const [email, setEmail] = useState('');
+    const [emailError, setEmailError] = useState('');
     const [isPropertyDropdownOpen, setIsPropertyDropdownOpen] = useState(false);
 
     // Fetch properties
@@ -22,14 +23,40 @@ const InviteToApplyModal: React.FC<InviteToApplyModalProps> = ({ isOpen, onClose
 
     const selectedProperty = activeProperties.find(p => p.id === selectedPropertyId);
 
+    // Email validation regex (RFC 5322 simplified)
+    const validateEmail = (email: string): boolean => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    };
+
     const handleSend = () => {
-        if (selectedPropertyId && email) {
-            onSend(email, selectedPropertyId);
-            // Reset form
-            setEmail('');
-            setSelectedPropertyId('');
-            onClose();
+        // Clear previous errors
+        setEmailError('');
+
+        // Validate required fields
+        if (!selectedPropertyId) {
+            return;
         }
+
+        if (!email.trim()) {
+            setEmailError('Email address is required');
+            return;
+        }
+
+        // Validate email format
+        if (!validateEmail(email.trim())) {
+            setEmailError('Please enter a valid email address');
+            return;
+        }
+
+        // All validation passed, send invitation
+        onSend(email.trim(), selectedPropertyId);
+        
+        // Reset form only after successful validation
+        setEmail('');
+        setEmailError('');
+        setSelectedPropertyId('');
+        onClose();
     };
 
     if (!isOpen) return null;
@@ -96,10 +123,20 @@ const InviteToApplyModal: React.FC<InviteToApplyModalProps> = ({ isOpen, onClose
                         <input
                             type="email"
                             value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            onChange={(e) => {
+                                setEmail(e.target.value);
+                                if (emailError) setEmailError(''); // Clear error on change
+                            }}
                             placeholder="Enter applicant's emails"
-                            className="w-full px-4 py-3 bg-[#7BD747] text-white placeholder:text-white/80 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7BD747]/50 transition-all font-medium"
+                            className={`w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 transition-all font-medium ${
+                                emailError
+                                    ? 'bg-red-50 text-red-900 placeholder:text-red-400 border-2 border-red-500 focus:ring-red-500/50'
+                                    : 'bg-[#7BD747] text-white placeholder:text-white/80 focus:ring-[#7BD747]/50'
+                            }`}
                         />
+                        {emailError && (
+                            <p className="text-sm text-red-600 font-medium">{emailError}</p>
+                        )}
                     </div>
                 </div>
 

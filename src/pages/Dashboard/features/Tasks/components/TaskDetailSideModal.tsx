@@ -1,11 +1,12 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Calendar, User, Home, RotateCw, Pencil, Trash2 } from 'lucide-react';
+import { Task } from '../Tasks';
 
 interface TaskDetailSideModalProps {
     isOpen: boolean;
     onClose: () => void;
-    task: any;
+    task: Task | null;
     onEdit?: () => void;
     onDelete?: () => void;
 }

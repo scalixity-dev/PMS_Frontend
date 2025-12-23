@@ -169,7 +169,21 @@ const RequestApplicationFeeModal: React.FC<RequestApplicationFeeModalProps> = ({
                                 placeholder="0.00"
                                 value={amount}
                                 onChange={(e) => {
-                                    const val = e.target.value.replace(/[^\d.]/g, '');
+                                    // Remove all non-digit/dot characters
+                                    let val = e.target.value.replace(/[^\d.]/g, '');
+                                    
+                                    // Split on '.' to handle multiple decimal points
+                                    const parts = val.split('.');
+                                    
+                                    // Keep only the first decimal point
+                                    if (parts.length > 1) {
+                                        // Join: integer part + '.' + all fractional parts concatenated
+                                        val = parts[0] + '.' + parts.slice(1).join('');
+                                    }
+                                    
+                                    // Limit fractional digits to 2 places
+                                    val = val.replace(/^(\d+\.\d{2})\d*$/, '$1');
+                                    
                                     setAmount(val);
                                 }}
                                 className="flex-1 min-w-0 px-4 py-3 rounded-r-xl focus:outline-none text-sm font-medium text-gray-900 placeholder-gray-400 bg-transparent"

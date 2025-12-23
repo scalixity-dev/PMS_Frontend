@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { useApplicationStore } from '../store/applicationStore';
+import { useApplicationStore, type FileMetadata } from '../store/applicationStore';
 import { Upload, FileText, Trash2 } from 'lucide-react';
 
 interface DocumentsStepProps {
@@ -7,15 +7,29 @@ interface DocumentsStepProps {
 }
 
 const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext }) => {
-    const { formData, updateFormData } = useApplicationStore();
+    const { formData, updateFormData, setFormData } = useApplicationStore();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const files = event.target.files;
         if (files && files.length > 0) {
             const newFiles = Array.from(files);
-            // Append new files to existing ones
-            updateFormData('documents', [...formData.documents, ...newFiles]);
+            
+            // Convert Files to FileMetadata for serialization
+            const newMetadata: FileMetadata[] = newFiles.map(file => ({
+                name: file.name,
+                size: file.size,
+                type: file.type,
+                lastModified: file.lastModified
+            }));
+            
+            // Update both metadata and runtime File objects
+            const existingFiles = formData.documentFiles || [];
+            setFormData({
+                ...formData,
+                documents: [...formData.documents, ...newMetadata],
+                documentFiles: [...existingFiles, ...newFiles]
+            });
         }
         // Reset input
         if (event.target) {
@@ -25,7 +39,12 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext }) => {
 
     const removeDocument = (index: number) => {
         const updatedDocs = formData.documents.filter((_, i) => i !== index);
-        updateFormData('documents', updatedDocs);
+        const updatedFiles = (formData.documentFiles || []).filter((_, i) => i !== index);
+        setFormData({
+            ...formData,
+            documents: updatedDocs,
+            documentFiles: updatedFiles
+        });
     };
 
     return (

@@ -5,6 +5,22 @@ import AddTaskModal from './components/AddTaskModal';
 import TaskDetailSideModal from './components/TaskDetailSideModal';
 import DeleteConfirmationModal from './components/DeleteConfirmationModal';
 
+// Task Interface
+export interface Task {
+    id: number;
+    title: string;
+    description: string;
+    name: string;
+    avatar: string;
+    date: string;
+    time?: string;
+    status: string;
+    property: string;
+    frequency: string;
+    isRecurring: boolean;
+    endDate?: string;
+}
+
 // Mock Data
 const MOCK_TASKS = [
     {
@@ -70,9 +86,9 @@ const Tasks: React.FC = () => {
     const [filters, setFilters] = useState<Record<string, string[]>>({});
     const [selectedTaskIds, setSelectedTaskIds] = useState<number[]>([]);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [selectedTask, setSelectedTask] = useState<any>(null);
-    const [editingTask, setEditingTask] = useState<any>(null);
-    const [taskToDelete, setTaskToDelete] = useState<any>(null);
+    const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+    const [editingTask, setEditingTask] = useState<Task | null>(null);
+    const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
     const handleSaveTask = (taskData: any) => {
@@ -87,7 +103,7 @@ const Tasks: React.FC = () => {
         setEditingTask(null);
     };
 
-    const handleEditTask = (task: any) => {
+    const handleEditTask = (task: Task) => {
         setEditingTask(task);
         setIsAddModalOpen(true);
         if (selectedTask) setSelectedTask(null); // Close detail modal if open
@@ -98,7 +114,7 @@ const Tasks: React.FC = () => {
         setEditingTask(null);
     };
 
-    const handleDeleteClick = (task: any) => {
+    const handleDeleteClick = (task: Task) => {
         setTaskToDelete(task);
         setIsDeleteModalOpen(true);
     };

@@ -89,6 +89,19 @@ const NewApplication: React.FC = () => {
                 const parsed = JSON.parse(savedData);
                 // Convert all date strings to Date objects recursively
                 parsed.formData = walkAndConvertDates(parsed.formData);
+                
+                // Check if documents were saved but files are lost
+                if (parsed.formData.documents && parsed.formData.documents.length > 0) {
+                    setDocumentsNeedReupload(true);
+                    // Clear documentFiles since they can't be restored
+                    parsed.formData.documentFiles = [];
+                }
+                
+                // Clear photoFile as it can't be restored from localStorage
+                if (parsed.formData.photo) {
+                    parsed.formData.photoFile = null;
+                }
+                
                 setFormData(parsed.formData);
                 setCurrentStep(parsed.currentStep);
                 setIsPropertySelected(parsed.isPropertySelected);
@@ -102,13 +115,21 @@ const NewApplication: React.FC = () => {
     // Persist form data to localStorage on changes
     useEffect(() => {
         if (isFormDirty) {
+            // Exclude non-serializable File objects from localStorage
+            const { documentFiles, photoFile, ...serializableFormData } = formData;
+            
             const dataToSave = {
-                formData,
+                formData: serializableFormData,
                 currentStep,
                 isPropertySelected,
                 timestamp: new Date().toISOString()
             };
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+            
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+            } catch (error) {
+                console.error('Failed to save form data to localStorage:', error);
+            }
         }
     }, [formData, currentStep, isPropertySelected, isFormDirty]);
 
@@ -133,6 +154,7 @@ const NewApplication: React.FC = () => {
     const [showSuccessModal, setShowSuccessModal] = React.useState(false);
     const [showErrorModal, setShowErrorModal] = React.useState(false);
     const [errorMessages, setErrorMessages] = React.useState<string[]>([]);
+    const [documentsNeedReupload, setDocumentsNeedReupload] = React.useState(false);
 
     const handleCancel = () => {
         if (isFormDirty) {
@@ -319,6 +341,34 @@ const NewApplication: React.FC = () => {
                     <span className="text-xs text-gray-500 italic">
                         ✓ Progress automatically saved
                     </span>
+                </div>
+            )}
+
+            {/* Document re-upload warning */}
+            {documentsNeedReupload && currentStep === 5 && (
+                <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
+                    <div className="flex items-start gap-3">
+                        <svg className="w-5 h-5 text-yellow-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <div className="flex-1">
+                            <h3 className="text-sm font-bold text-yellow-800 mb-1">Document Files Need Re-upload</h3>
+                            <p className="text-xs text-yellow-700">
+                                Your document information was saved, but the actual files cannot be restored after a page refresh. 
+                                Please re-upload your documents ({formData.documents.length} file{formData.documents.length !== 1 ? 's' : ''} previously attached).
+                            </p>
+                            <button
+                                onClick={() => {
+                                    setDocumentsNeedReupload(false);
+                                    // Clear the document metadata since files can't be restored
+                                    setFormData({ ...formData, documents: [], documentFiles: [] });
+                                }}
+                                className="mt-2 text-xs text-yellow-800 underline hover:text-yellow-900"
+                            >
+                                Clear saved document information
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
 
