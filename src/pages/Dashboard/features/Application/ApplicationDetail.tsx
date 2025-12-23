@@ -344,7 +344,9 @@ const ApplicationDetail = () => {
                                     <div className="flex-1 flex flex-col justify-center space-y-4">
                                         <CustomTextBox
                                             label="Date of birth"
-                                            value={new Date(primaryApplicant?.dateOfBirth).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                            value={primaryApplicant?.dateOfBirth 
+                                                ? new Date(primaryApplicant.dateOfBirth).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                                                : '--'}
                                             className="w-full max-w-sm"
                                         />
                                         <CustomTextBox
