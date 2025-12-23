@@ -73,7 +73,7 @@ const LeaseDetail: React.FC = () => {
                 {/* Header */}
                 <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-2">
-                        <button onClick={() => navigate(-1)} className="p-2 hover:bg-black/5 rounded-full transition-colors">
+                        <button onClick={() => navigate(-1)} className="p-2 hover:text-gray-600 transition-colors">
                             <ChevronLeft className="w-6 h-6 text-gray-800" />
                         </button>
                         <h1 className="text-2xl font-bold text-gray-800">{id}</h1>

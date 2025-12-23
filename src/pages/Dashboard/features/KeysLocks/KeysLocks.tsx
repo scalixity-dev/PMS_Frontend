@@ -7,15 +7,15 @@ import type { BackendKey } from '../../../../services/keys.service';
 
 // Map backend key type to display format
 const mapKeyType = (keyType: string): string => {
-  const typeMap: Record<string, string> = {
-    'DOOR': 'Main Door',
-    'MAILBOX': 'Mailbox',
-    'GARAGE': 'Garage',
-    'GATE': 'Gate',
-    'STORAGE': 'Storage',
-    'OTHER': 'Other',
-  };
-  return typeMap[keyType] || keyType;
+    const typeMap: Record<string, string> = {
+        'DOOR': 'Main Door',
+        'MAILBOX': 'Mailbox',
+        'GARAGE': 'Garage',
+        'GATE': 'Gate',
+        'STORAGE': 'Storage',
+        'OTHER': 'Other',
+    };
+    return typeMap[keyType] || keyType;
 };
 
 const KeysLocks = () => {
@@ -23,7 +23,7 @@ const KeysLocks = () => {
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [filters, setFilters] = useState<Record<string, string[]>>({});
-    
+
     // Fetch keys from backend
     const { data: keys = [], isLoading, error } = useGetAllKeys();
     const deleteKeyMutation = useDeleteKey();
@@ -39,10 +39,10 @@ const KeysLocks = () => {
             assignee: key.issuedTo || 'Unassigned',
             status: key.status,
             keyDescription: key.description || '',
-            propertyDescription: key.property?.address 
+            propertyDescription: key.property?.address
                 ? `${key.property.address.streetAddress}, ${key.property.address.city}, ${key.property.address.stateRegion} ${key.property.address.zipCode}, ${key.property.address.country}`
                 : '',
-            propertyAddress: key.property?.address 
+            propertyAddress: key.property?.address
                 ? `${key.property.address.streetAddress}, ${key.property.address.city}, ${key.property.address.stateRegion} ${key.property.address.zipCode}, ${key.property.address.country}`
                 : 'Address not available',
             keyPhotoUrl: key.keyPhotoUrl,
@@ -52,16 +52,16 @@ const KeysLocks = () => {
     // Filter keys based on search and filters
     const filteredKeys = useMemo(() => {
         return transformedKeys.filter(key => {
-            const matchesSearch = !searchQuery || 
+            const matchesSearch = !searchQuery ||
                 key.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 key.property.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 key.type.toLowerCase().includes(searchQuery.toLowerCase());
-            
-            const matchesStatus = !filters.keyStatus?.length || 
+
+            const matchesStatus = !filters.keyStatus?.length ||
                 filters.keyStatus.includes('all') ||
                 (filters.keyStatus.includes('active') && (key.status === 'AVAILABLE' || key.status === 'ISSUED')) ||
                 (filters.keyStatus.includes('inactive') && (key.status === 'INACTIVE' || key.status === 'LOST' || key.status === 'DAMAGED'));
-            
+
             return matchesSearch && matchesStatus;
         });
     }, [transformedKeys, searchQuery, filters]);

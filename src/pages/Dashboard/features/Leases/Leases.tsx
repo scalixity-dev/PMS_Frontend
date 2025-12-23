@@ -136,12 +136,14 @@ const Leases: React.FC = () => {
 
             <div className="p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem] overflow-visible">
                 {/* Header */}
-                <div className="flex items-center gap-4 mb-6">
-                    <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-xl font-bold text-gray-800 hover:text-gray-600 transition-colors">
-                        <ChevronLeft className="w-6 h-6" />
-                        Leases
-                    </button>
-                    <div className="flex gap-3 ml-4">
+                <div className="flex items-center mb-6">
+                    <div className="flex items-center gap-2">
+                        <button onClick={() => navigate(-1)} className="p-2 hover:text-gray-600 transition-colors">
+                            <ChevronLeft className="w-6 h-6 text-gray-800" />
+                        </button>
+                        <h1 className="text-2xl font-bold text-gray-800">Leases</h1>
+                    </div>
+                    <div className="flex gap-3 ml-8">
                         <button
                             onClick={() => navigate('/dashboard/movein')}
                             className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm"
