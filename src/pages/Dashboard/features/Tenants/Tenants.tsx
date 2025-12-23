@@ -137,7 +137,7 @@ const Tenants = () => {
                         onClick={handleSortToggle}
                         className="flex items-center gap-1 hover:bg-black/5 px-2 py-1 rounded-lg transition-colors"
                     >
-                        
+
                     </button>
 
                     <div className="bg-[#3A6D6C] text-white px-4 py-1 rounded-full text-sm">
