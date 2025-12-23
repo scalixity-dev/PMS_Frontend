@@ -73,6 +73,7 @@ import AddEditServicePro from './pages/Dashboard/features/ServicePros/AddEditSer
 import ServiceProsDetail from './pages/Dashboard/features/ServicePros/ServiceProsDetail';
 import Application from './pages/Dashboard/features/Application/Application';
 import NewApplication from './pages/Dashboard/features/Application/NewApplication';
+import ApplicationDetail from './pages/Dashboard/features/Application/ApplicationDetail';
 import ProviderStatement from './pages/Dashboard/features/ServicePros/ProviderStatement';
 import TransactionDetail from './pages/Dashboard/features/Transactions/TransactionDetail';
 // import ListUnit from './pages/Dashboard/features/ListUnit/ListUnit';
@@ -209,6 +210,7 @@ const App: React.FC = () => {
               <Route path="/dashboard/contacts/service-pros/:id" element={<ServiceProsDetail />} />
               <Route path="/dashboard/leasing/applications" element={<Application />} />
               <Route path="/dashboard/application/new" element={<NewApplication />} />
+              <Route path="/dashboard/application/:id" element={<ApplicationDetail />} />
               <Route path="/dashboard/leasing/leases" element={<Leases />} />
               <Route path="/dashboard/portfolio/leases/:id" element={<LeaseDetail />} />
 

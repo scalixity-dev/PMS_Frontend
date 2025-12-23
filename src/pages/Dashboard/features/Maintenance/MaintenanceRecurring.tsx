@@ -75,32 +75,32 @@ const MaintenanceRecurring: React.FC = () => {
         if (!requestToDelete) return;
 
         setIsDeleting(true);
-        
+
         // Optimistically remove from UI
         const previousRequests = recurringRequests;
         setRecurringRequests(prev => prev.filter(req => req.id !== requestToDelete));
-        
+
         try {
             // TODO: Replace with actual API call when backend is ready
             // await deleteRecurringRequest(requestToDelete);
-            
+
             // Simulate API call
-            await new Promise((resolve, reject) => {
+            await new Promise((resolve) => {
                 setTimeout(() => {
                     // Simulate success (you can test error by calling reject())
                     resolve(true);
                 }, 500);
             });
-            
+
             console.log('Successfully deleted recurring request:', requestToDelete);
-            
+
             // Also remove from selected items if it was selected
             setSelectedItems(prev => prev.filter(id => id !== requestToDelete));
         } catch (error) {
             // Revert optimistic update on error
             console.error('Failed to delete recurring request:', error);
             setRecurringRequests(previousRequests);
-            
+
             // TODO: Show error toast/notification to user
             alert('Failed to delete recurring request. Please try again.');
         } finally {

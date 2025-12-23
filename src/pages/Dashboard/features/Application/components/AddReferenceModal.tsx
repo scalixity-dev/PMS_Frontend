@@ -1,23 +1,31 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { X, ChevronLeft, Search, ChevronDown } from 'lucide-react';
 import { Country } from 'country-state-city';
-import type { EmergencyContactFormData } from '../store/applicationStore';
 
-interface AddEmergencyContactModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    onSave: (data: EmergencyContactFormData) => void;
-    initialData?: EmergencyContactFormData;
+export interface ReferenceFormData {
+    contactName: string;
+    contactEmail: string;
+    contactNumber: string;
+    phoneCountryCode?: string;
+    relationship: string;
+    yearsKnown: string;
 }
 
-const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
-    const [formData, setFormData] = useState<EmergencyContactFormData>({
-        fullName: '',
-        relationship: '',
-        email: '',
-        phoneNumber: '',
+interface AddReferenceModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onSave: (data: ReferenceFormData) => void;
+    initialData?: ReferenceFormData;
+}
+
+const AddReferenceModal: React.FC<AddReferenceModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
+    const [formData, setFormData] = useState<ReferenceFormData>({
+        contactName: '',
+        contactEmail: '',
+        contactNumber: '',
         phoneCountryCode: undefined,
-        details: ''
+        relationship: '',
+        yearsKnown: ''
     });
 
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -25,21 +33,6 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
     const [isPhoneCodeOpen, setIsPhoneCodeOpen] = useState(false);
     const [phoneCodeSearch, setPhoneCodeSearch] = useState('');
     const phoneCodeRef = useRef<HTMLDivElement>(null);
-    const [isRelationshipOpen, setIsRelationshipOpen] = useState(false);
-    const relationshipRef = useRef<HTMLDivElement>(null);
-
-    // Relationship options
-    const relationshipOptions = [
-        'Spouse',
-        'Parent',
-        'Sibling',
-        'Child',
-        'Friend',
-        'Colleague',
-        'Relative',
-        'Neighbor',
-        'Other'
-    ];
 
     // Phone country codes
     const phoneCountryCodes = useMemo(() => {
@@ -77,9 +70,6 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
                 setIsPhoneCodeOpen(false);
                 setPhoneCodeSearch('');
             }
-            if (relationshipRef.current && !relationshipRef.current.contains(event.target as Node)) {
-                setIsRelationshipOpen(false);
-            }
         };
 
         document.addEventListener("mousedown", handleClickOutside);
@@ -93,18 +83,15 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
         if (isOpen) {
             document.body.style.overflow = 'hidden';
             if (initialData) {
-                setFormData({
-                    ...initialData,
-                    phoneCountryCode: (initialData as any).phoneCountryCode || undefined
-                });
+                setFormData(initialData);
             } else {
                 setFormData({
-                    fullName: '',
-                    relationship: '',
-                    email: '',
-                    phoneNumber: '',
+                    contactName: '',
+                    contactEmail: '',
+                    contactNumber: '',
                     phoneCountryCode: undefined,
-                    details: ''
+                    relationship: '',
+                    yearsKnown: ''
                 });
             }
         } else {
@@ -113,7 +100,6 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
             setTouched({});
             setIsPhoneCodeOpen(false);
             setPhoneCodeSearch('');
-            setIsRelationshipOpen(false);
         }
         return () => {
             document.body.style.overflow = 'unset';
@@ -123,30 +109,29 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
 
     if (!isOpen) return null;
 
-    const validateField = (key: keyof EmergencyContactFormData, value: any): string => {
+    const validateField = (key: keyof ReferenceFormData, value: any): string => {
         switch (key) {
-            case 'fullName':
-                if (!value || value.trim() === '') return 'Full Name is required';
+            case 'contactName':
+                if (!value || value.trim() === '') return 'Contact Name is required';
                 break;
-            case 'relationship':
-                if (!value || value.trim() === '') return 'Relationship is required';
-                break;
-            case 'email':
-                if (!value || value.trim() === '') return 'Email is required';
+            case 'contactEmail':
+                if (!value || value.trim() === '') return 'Contact Email is required';
                 if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Invalid email';
                 break;
-            case 'phoneNumber':
-                if (!value || value.trim() === '') return 'Phone Number is required';
+            case 'contactNumber':
+                if (!value || value.trim() === '') return 'Contact Number is required';
                 {
-                    // Count only digits for validation (allow formatting characters)
                     const digitsOnly = value.replace(/\D/g, '');
                     if (digitsOnly.length < 4 || digitsOnly.length > 15) {
                         return 'Phone number must be between 4 and 15 digits';
                     }
                 }
                 break;
-            case 'details':
-                if (!value || value.trim() === '') return 'Details are required';
+            case 'relationship':
+                if (!value || value.trim() === '') return 'Relationship is required';
+                break;
+            case 'yearsKnown':
+                if (!value || value.trim() === '') return 'Years Known is required';
                 break;
         }
         return '';
@@ -156,7 +141,7 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
         const newErrors: Record<string, string> = {};
         let isValid = true;
 
-        (Object.keys(formData) as Array<keyof EmergencyContactFormData>).forEach(key => {
+        (Object.keys(formData) as Array<keyof ReferenceFormData>).forEach(key => {
             const error = validateField(key, formData[key]);
             if (error) {
                 newErrors[key] = error;
@@ -168,23 +153,23 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
         return isValid;
     };
 
-    const handleChange = (key: keyof EmergencyContactFormData | 'phoneCountryCode', value: any) => {
+    const handleChange = (key: keyof ReferenceFormData | 'phoneCountryCode', value: any) => {
         setFormData(prev => ({ ...prev, [key]: value }));
 
         if (key !== 'phoneCountryCode' && touched[key]) {
-            const error = validateField(key as keyof EmergencyContactFormData, value);
+            const error = validateField(key as keyof ReferenceFormData, value);
             setErrors(prev => ({ ...prev, [key]: error }));
         }
     };
 
-    const handleBlur = (key: keyof EmergencyContactFormData) => {
+    const handleBlur = (key: keyof ReferenceFormData) => {
         setTouched(prev => ({ ...prev, [key]: true }));
         const error = validateField(key, formData[key]);
         setErrors(prev => ({ ...prev, [key]: error }));
     };
 
     const handleSubmit = () => {
-        const allTouched = (Object.keys(formData) as Array<keyof EmergencyContactFormData>).reduce((acc, key) => {
+        const allTouched = (Object.keys(formData) as Array<keyof ReferenceFormData>).reduce((acc, key) => {
             acc[key] = true;
             return acc;
         }, {} as Record<string, boolean>);
@@ -206,7 +191,7 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
                         <button onClick={onClose} className="hover:bg-white/10 p-1 rounded-full transition-colors">
                             <ChevronLeft size={20} />
                         </button>
-                        <h2 className="text-lg font-medium">{initialData ? 'Edit emergency contact' : 'Add emergency contact'}</h2>
+                        <h2 className="text-lg font-medium">Add a new reference</h2>
                     </div>
                     <button onClick={onClose} className="hover:bg-white/10 p-1 rounded-full transition-colors">
                         <X size={20} />
@@ -221,38 +206,38 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
 
                         {/* Row 1: Name, Email, Phone */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            {/* Full Name */}
+                            {/* Contact Name */}
                             <div>
                                 <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Contact Name*</label>
                                 <input
                                     type="text"
                                     placeholder="Type here"
-                                    className={`w-full bg-white p-3 rounded-xl outline-none text-gray-700 placeholder-gray-500 shadow-sm text-sm ${touched.fullName && errors.fullName ? 'border-2 border-red-500' : ''}`}
-                                    value={formData.fullName}
-                                    onChange={(e) => handleChange('fullName', e.target.value)}
-                                    onBlur={() => handleBlur('fullName')}
+                                    className={`w-full bg-white p-3 rounded-xl outline-none text-gray-700 placeholder-gray-500 shadow-sm text-sm ${touched.contactName && errors.contactName ? 'border-2 border-red-500' : ''}`}
+                                    value={formData.contactName}
+                                    onChange={(e) => handleChange('contactName', e.target.value)}
+                                    onBlur={() => handleBlur('contactName')}
                                 />
-                                {touched.fullName && errors.fullName && <p className="text-red-500 text-xs mt-1">{errors.fullName}</p>}
+                                {touched.contactName && errors.contactName && <p className="text-red-500 text-xs mt-1">{errors.contactName}</p>}
                             </div>
 
-                            {/* Email */}
+                            {/* Contact Email */}
                             <div>
                                 <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Contact Email *</label>
                                 <input
                                     type="email"
                                     placeholder="Type here"
-                                    className={`w-full bg-white p-3 rounded-xl outline-none text-gray-700 placeholder-gray-500 shadow-sm text-sm ${touched.email && errors.email ? 'border-2 border-red-500' : ''}`}
-                                    value={formData.email}
-                                    onChange={(e) => handleChange('email', e.target.value)}
-                                    onBlur={() => handleBlur('email')}
+                                    className={`w-full bg-white p-3 rounded-xl outline-none text-gray-700 placeholder-gray-500 shadow-sm text-sm ${touched.contactEmail && errors.contactEmail ? 'border-2 border-red-500' : ''}`}
+                                    value={formData.contactEmail}
+                                    onChange={(e) => handleChange('contactEmail', e.target.value)}
+                                    onBlur={() => handleBlur('contactEmail')}
                                 />
-                                {touched.email && errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                                {touched.contactEmail && errors.contactEmail && <p className="text-red-500 text-xs mt-1">{errors.contactEmail}</p>}
                             </div>
 
-                            {/* Phone Number */}
+                            {/* Contact Number */}
                             <div>
                                 <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Contact Number *</label>
-                                <div className={`flex border rounded-xl transition-all ${touched.phoneNumber && errors.phoneNumber
+                                <div className={`flex border rounded-xl transition-all ${touched.contactNumber && errors.contactNumber
                                         ? 'border-red-500 border-2'
                                         : 'border-gray-200 focus-within:ring-2 focus-within:ring-[#3A6D6C] focus-within:border-[#3A6D6C]'
                                     }`}>
@@ -261,7 +246,7 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
                                         <button
                                             type="button"
                                             onClick={() => setIsPhoneCodeOpen(!isPhoneCodeOpen)}
-                                            className={`flex items-center gap-1 px-3 py-2.5 border-r bg-white rounded-l-xl focus:outline-none text-sm min-w-[100px] hover:bg-gray-50 transition-colors ${touched.phoneNumber && errors.phoneNumber
+                                            className={`flex items-center gap-1 px-3 py-2.5 border-r bg-white rounded-l-xl focus:outline-none text-sm min-w-[100px] hover:bg-gray-50 transition-colors ${touched.contactNumber && errors.contactNumber
                                                     ? 'border-red-500'
                                                     : 'border-gray-200'
                                                 }`}
@@ -282,7 +267,6 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
                                         {/* Dropdown */}
                                         {isPhoneCodeOpen && (
                                             <div className="absolute left-0 top-full mt-1 w-80 bg-white border border-gray-300 rounded-xl shadow-lg z-[100] max-h-80 overflow-hidden flex flex-col">
-                                                {/* Search Input */}
                                                 <div className="p-2 border-b border-gray-200">
                                                     <div className="relative">
                                                         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -297,7 +281,6 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
                                                     </div>
                                                 </div>
 
-                                                {/* Options List */}
                                                 <div className="overflow-y-auto max-h-64">
                                                     {filteredPhoneCodes.length > 0 ? (
                                                         filteredPhoneCodes.map((code) => (
@@ -330,68 +313,44 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
                                     {/* Phone Number Input */}
                                     <input
                                         type="tel"
-                                        placeholder="Enter phone number"
-                                        className={`flex-1 min-w-0 px-4 py-2.5 rounded-r-xl focus:outline-none text-sm placeholder-gray-400 bg-white border-0 ${touched.phoneNumber && errors.phoneNumber ? 'text-red-500' : 'text-gray-700'
+                                        placeholder="Type here"
+                                        className={`flex-1 min-w-0 px-4 py-2.5 rounded-r-xl focus:outline-none text-sm placeholder-gray-400 bg-white border-0 ${touched.contactNumber && errors.contactNumber ? 'text-red-500' : 'text-gray-700'
                                             }`}
-                                        value={formData.phoneNumber}
-                                        onChange={(e) => handleChange('phoneNumber', e.target.value)}
-                                        onBlur={() => handleBlur('phoneNumber')}
+                                        value={formData.contactNumber}
+                                        onChange={(e) => handleChange('contactNumber', e.target.value)}
+                                        onBlur={() => handleBlur('contactNumber')}
                                     />
                                 </div>
-                                {touched.phoneNumber && errors.phoneNumber && <p className="text-red-500 text-xs mt-1">{errors.phoneNumber}</p>}
+                                {touched.contactNumber && errors.contactNumber && <p className="text-red-500 text-xs mt-1">{errors.contactNumber}</p>}
                             </div>
                         </div>
 
                         {/* Row 2: Relationship */}
                         <div>
                             <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Relationship to applicant *</label>
-                            <div className="relative" ref={relationshipRef}>
-                                <button
-                                    type="button"
-                                    onClick={() => setIsRelationshipOpen(!isRelationshipOpen)}
-                                    className={`w-full bg-white p-3 rounded-xl outline-none text-left flex items-center justify-between text-sm ${touched.relationship && errors.relationship
-                                            ? 'border-2 border-red-500'
-                                            : 'border border-gray-200 focus-within:ring-2 focus-within:ring-[#3A6D6C] focus-within:border-[#3A6D6C]'
-                                        } ${formData.relationship ? 'text-gray-700' : 'text-gray-500'}`}
-                                >
-                                    <span>{formData.relationship || 'Select relationship'}</span>
-                                    <ChevronDown size={16} className={`text-gray-500 transition-transform ${isRelationshipOpen ? 'rotate-180' : ''}`} />
-                                </button>
-
-                                {/* Dropdown */}
-                                {isRelationshipOpen && (
-                                    <div className="absolute left-0 top-full mt-1 w-full bg-white border border-gray-300 rounded-xl shadow-lg z-50 max-h-60 overflow-y-auto">
-                                        {relationshipOptions.map((option) => (
-                                            <button
-                                                key={option}
-                                                type="button"
-                                                onClick={() => {
-                                                    handleChange('relationship', option);
-                                                    setIsRelationshipOpen(false);
-                                                }}
-                                                className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#3A6D6C]/10 transition-colors text-left text-sm ${formData.relationship === option ? 'bg-[#3A6D6C]/10 font-medium' : 'text-gray-700'
-                                                    }`}
-                                            >
-                                                <span>{option}</span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
+                            <input
+                                type="text"
+                                placeholder="Type Here"
+                                className={`w-full md:w-2/3 bg-white p-3 rounded-xl outline-none text-gray-700 placeholder-gray-500 shadow-sm text-sm ${touched.relationship && errors.relationship ? 'border-2 border-red-500' : ''}`}
+                                value={formData.relationship}
+                                onChange={(e) => handleChange('relationship', e.target.value)}
+                                onBlur={() => handleBlur('relationship')}
+                            />
                             {touched.relationship && errors.relationship && <p className="text-red-500 text-xs mt-1">{errors.relationship}</p>}
                         </div>
 
-                        {/* Row 3: Details */}
+                        {/* Row 3: Years Known */}
                         <div>
-                            <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Details *</label>
-                            <textarea
+                            <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Years Known *</label>
+                            <input
+                                type="text"
                                 placeholder="Type Here"
-                                className={`w-full bg-white p-4 rounded-xl outline-none text-gray-700 placeholder-gray-500 shadow-sm text-sm min-h-[150px] resize-none ${touched.details && errors.details ? 'border-2 border-red-500' : ''}`}
-                                value={formData.details}
-                                onChange={(e) => handleChange('details', e.target.value)}
-                                onBlur={() => handleBlur('details')}
+                                className={`w-full md:w-2/3 bg-white p-3 rounded-xl outline-none text-gray-700 placeholder-gray-500 shadow-sm text-sm ${touched.yearsKnown && errors.yearsKnown ? 'border-2 border-red-500' : ''}`}
+                                value={formData.yearsKnown}
+                                onChange={(e) => handleChange('yearsKnown', e.target.value)}
+                                onBlur={() => handleBlur('yearsKnown')}
                             />
-                            {touched.details && errors.details && <p className="text-red-500 text-xs mt-1">{errors.details}</p>}
+                            {touched.yearsKnown && errors.yearsKnown && <p className="text-red-500 text-xs mt-1">{errors.yearsKnown}</p>}
                         </div>
 
                     </div>
@@ -412,4 +371,4 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
     );
 };
 
-export default AddEmergencyContactModal;
+export default AddReferenceModal;
