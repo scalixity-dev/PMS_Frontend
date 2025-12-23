@@ -554,6 +554,8 @@ const AddEditServicePro = () => {
             };
 
             let serviceProviderId: string;
+            let isNewProvider = false;
+            
             if (isEditMode && id) {
                 // Update existing service provider
                 const updated = await serviceProviderService.update(id, apiData);
@@ -562,6 +564,7 @@ const AddEditServicePro = () => {
                 // Create new service provider
                 const created = await serviceProviderService.create(apiData);
                 serviceProviderId = created.id;
+                isNewProvider = true;
             }
 
             // Upload documents if any
@@ -571,7 +574,38 @@ const AddEditServicePro = () => {
                         await uploadDocument(serviceProviderId, doc, 'General');
                     }
                 } catch (uploadError) {
-                    setSubmitError(uploadError instanceof Error ? uploadError.message : 'Failed to upload some documents');
+                    const errorMessage = uploadError instanceof Error ? uploadError.message : 'Failed to upload some documents';
+                    
+                    // If this is a new provider (not edit mode), attempt rollback by deleting it
+                    if (isNewProvider && serviceProviderId) {
+                        try {
+                            await serviceProviderService.delete(serviceProviderId);
+                            console.log('Successfully rolled back service provider creation after document upload failure');
+                        } catch (rollbackError) {
+                            // Log rollback error but don't crash the UI
+                            console.error('Failed to rollback service provider creation:', rollbackError);
+                            const rollbackMessage = rollbackError instanceof Error ? rollbackError.message : 'Failed to cleanup';
+                            
+                            // Notify user about the cleanup failure
+                            setSubmitError(
+                                `${errorMessage}. Additionally, the service provider was created but document upload failed. ` +
+                                `Automatic cleanup failed (${rollbackMessage}). Please contact support or manually delete the service provider (ID: ${serviceProviderId}).`
+                            );
+                            setIsLoading(false);
+                            return;
+                        }
+                    }
+                    
+                    // Set error message (rollback succeeded or not applicable)
+                    if (isNewProvider) {
+                        setSubmitError(
+                            `${errorMessage}. The service provider creation has been rolled back. Please try again.`
+                        );
+                    } else {
+                        setSubmitError(
+                            `${errorMessage}. The service provider was updated but documents could not be uploaded. Please try uploading documents again.`
+                        );
+                    }
                     setIsLoading(false);
                     return;
                 }
