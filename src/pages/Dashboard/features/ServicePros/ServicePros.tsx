@@ -1,21 +1,89 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardFilter from '../../components/DashboardFilter';
-import Pagination from '../../components/Pagination'; // Uncommented
+import Pagination from '../../components/Pagination';
 import ServiceProCard from './components/ServiceProCard';
-// import AddServiceProModal from './components/AddServiceProModal';
-import { Plus, ChevronLeft } from 'lucide-react';
+import { Plus, ChevronLeft, Loader2, AlertCircle } from 'lucide-react';
+import { serviceProviderService, type BackendServiceProvider } from '../../../../services/service-provider.service';
+
+interface ServiceProCardData {
+    id: string;
+    initials: string;
+    name: string;
+    phone: string;
+    category: string;
+    bgColor?: string;
+    image?: string;
+}
 
 const ServicePros = () => {
     const navigate = useNavigate();
     const [, setFilters] = useState<Record<string, string[]>>({});
+    const [servicePros, setServicePros] = useState<ServiceProCardData[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    // Helper function to generate initials from name
+    const getInitials = (firstName: string, lastName: string): string => {
+        const first = firstName?.charAt(0)?.toUpperCase() || '';
+        const last = lastName?.charAt(0)?.toUpperCase() || '';
+        return `${first}${last}`;
+    };
+
+    // Helper function to format phone number with country code
+    const formatPhoneNumber = (phoneNumber: string, phoneCountryCode?: string | null): string => {
+        if (phoneCountryCode) {
+            return `${phoneCountryCode} ${phoneNumber}`;
+        }
+        return phoneNumber;
+    };
+
+    // Helper function to format category with subcategory
+    const formatCategory = (category: string, subcategory?: string | null): string => {
+        if (subcategory) {
+            return `${category} - ${subcategory}`;
+        }
+        return category;
+    };
+
+    // Fetch service providers from API
+    useEffect(() => {
+        const fetchServiceProviders = async () => {
+            setIsLoading(true);
+            setError(null);
+            try {
+                const data = await serviceProviderService.getAll(true); // Only fetch active service providers
+                
+                // Transform backend data to card format
+                const transformedData: ServiceProCardData[] = data.map((provider: BackendServiceProvider) => ({
+                    id: provider.id,
+                    initials: getInitials(provider.firstName, provider.lastName),
+                    name: `${provider.firstName}${provider.middleName ? ` ${provider.middleName}` : ''} ${provider.lastName}`.trim(),
+                    phone: formatPhoneNumber(provider.phoneNumber, provider.phoneCountryCode),
+                    category: formatCategory(provider.category, provider.subcategory),
+                    bgColor: 'bg-[#4ad1a6]',
+                    image: provider.photoUrl || undefined,
+                }));
+                
+                setServicePros(transformedData);
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Failed to load service providers');
+                console.error('Error fetching service providers:', err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchServiceProviders();
+    }, []);
 
     const handleSearchChange = (_search: string) => {
-        // console.log('Search:', search);
+        // TODO: Implement search functionality
     };
 
     const handleFiltersChange = (newFilters: Record<string, string[]>) => {
         setFilters(newFilters);
+        // TODO: Implement filter functionality
     };
 
     const filterOptions = {
@@ -40,44 +108,6 @@ const ServicePros = () => {
         connection: 'Connection'
     };
 
-    const servicePros = [
-        {
-            id: 1,
-            initials: 'SR',
-            name: 'sam rao',
-            phone: '+91 78965 41236',
-            category: 'Commercial Cleaning Services',
-            bgColor: 'bg-[#4ad1a6]',
-            image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200&h=200'
-        },
-        {
-            id: 2,
-            initials: 'VR',
-            name: 'vijay rfgdd',
-            phone: '+91 70326 59874',
-            category: 'Appraiser',
-            bgColor: 'bg-[#4ad1a6]',
-            image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200&h=200'
-        },
-        {
-            id: 3,
-            initials: 'AB',
-            name: 'Alex Brown',
-            phone: '+1 555 123 4567',
-            category: 'Plumbing Services',
-            bgColor: 'bg-[#4ad1a6]',
-            image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=200&h=200'
-        },
-        {
-            id: 4,
-            initials: 'JD',
-            name: 'John Doe',
-            phone: '+1 555 987 6543',
-            category: 'Electrical Services',
-            bgColor: 'bg-[#4ad1a6]',
-            image: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?auto=format&fit=crop&q=80&w=200&h=200'
-        }
-    ];
 
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
@@ -153,32 +183,69 @@ const ServicePros = () => {
                         onClick={handleSortToggle}
                         className="flex items-center gap-1 hover:bg-black/5 px-2 py-1 rounded-lg transition-colors"
                     >
-                        <span className="text-lg font-bold text-black">Abc</span>
-                        <svg
-                            width="10"
-                            height="6"
-                            viewBox="0 0 10 6"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                            className={`transition-transform duration-200 ${sortOrder === 'desc' ? 'rotate-180' : ''}`}
-                        >
-                            <path d="M1 1L5 5L9 1" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
+                     
                     </button>
                     <div className="bg-[#3A6D6C] text-white px-4 py-1 rounded-full text-sm">
-                        {servicePros.length} service pros
+                        {isLoading ? 'Loading...' : `${servicePros.length} service pros`}
                     </div>
                 </div>
 
+                {/* Loading State */}
+                {isLoading && (
+                    <div className="flex items-center justify-center py-20">
+                        <Loader2 className="w-8 h-8 animate-spin text-[#3A6D6C]" />
+                        <span className="ml-3 text-gray-600">Loading service providers...</span>
+                    </div>
+                )}
+
+                {/* Error State */}
+                {error && !isLoading && (
+                    <div className="flex items-center justify-center py-20">
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
+                            <div className="flex items-center gap-3 mb-2">
+                                <AlertCircle className="w-6 h-6 text-red-600" />
+                                <h3 className="text-red-800 font-semibold">Error Loading Service Providers</h3>
+                            </div>
+                            <p className="text-red-700 text-sm">{error}</p>
+                            <button
+                                onClick={() => window.location.reload()}
+                                className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors"
+                            >
+                                Retry
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {/* Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                    {currentServicePros.map((pro) => (
-                        <ServiceProCard
-                            key={pro.id}
-                            {...pro}
-                        />
-                    ))}
-                </div>
+                {!isLoading && !error && (
+                    <>
+                        {currentServicePros.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                                {currentServicePros.map((pro) => (
+                                    <ServiceProCard
+                                        key={pro.id}
+                                        {...pro}
+                                    />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-center py-20">
+                                <div className="text-center">
+                                    <p className="text-gray-600 text-lg mb-2">No service providers found</p>
+                                    <p className="text-gray-500 text-sm">Get started by adding your first service provider</p>
+                                    <button
+                                        onClick={() => navigate('/dashboard/contacts/service-pros/add')}
+                                        className="mt-4 px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2 mx-auto"
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                        Add service pro
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </>
+                )}
 
                 <div className="mt-auto">
                     <Pagination
