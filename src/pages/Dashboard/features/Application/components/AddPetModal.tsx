@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, ChevronLeft, Upload } from 'lucide-react';
+import { X, ChevronLeft, Upload, Edit2 } from 'lucide-react';
 import CustomDropdown from '../../../components/CustomDropdown';
 
 export interface PetFormData {
@@ -8,6 +8,7 @@ export interface PetFormData {
     weight: string;
     breed: string;
     photo?: File | null;
+    existingPhotoUrl?: string | null;
 }
 
 interface AddPetModalProps {
@@ -63,17 +64,8 @@ const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave, init
             if (initialData.photo) {
                 const url = URL.createObjectURL(initialData.photo);
                 setPreviewUrl(url);
-                // Note: we can't easily clean up this URL if it comes from props, 
-                // but if it's a File object we created, we should. 
-                // However, for simplicity in this edit, assuming file handling logic stays local.
-                // If initialData.photo is a string (url), we might need to handle it differently, 
-                // but PetFormData defines it as File | null. 
-                // If it's coming from an existing record (URL), we might need to adjust PetFormData or handling.
-                // For now assuming we are passing File objects or emulating it, or just not handling image preview perfectly for existing non-File urls without more changes.
-                // Re-reading ApplicationDetail logic, we might not have File objects for existing pets, but URLs.
-                // Let's assume for now we might reset or handle it. 
-                // Actually, PetFormData in this file says `photo?: File | null`. 
-                // If we edit, we might just keep existing photo if unchanged.
+            } else if (initialData.existingPhotoUrl) {
+                setPreviewUrl(initialData.existingPhotoUrl);
             }
         } else if (!isOpen) {
             setFormData({
@@ -81,7 +73,8 @@ const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave, init
                 name: '',
                 weight: '',
                 breed: '',
-                photo: null
+                photo: null,
+                existingPhotoUrl: null
             });
             setErrors({});
             setTouched({});
@@ -230,7 +223,12 @@ const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave, init
                             }}
                         >
                             {previewUrl ? (
-                                <img src={previewUrl} alt="Preview" className="absolute inset-0 w-full h-full object-cover z-20 rounded-3xl" />
+                                <>
+                                    <img src={previewUrl} alt="Preview" className="absolute inset-0 w-full h-full object-cover z-20 rounded-3xl" />
+                                    <div className="absolute top-2 right-2 z-30 bg-white/90 p-1.5 rounded-full shadow-sm text-gray-700">
+                                        <Edit2 size={14} />
+                                    </div>
+                                </>
                             ) : (
                                 <>
                                     <Upload size={40} className="mb-2 relative z-10" />

@@ -10,7 +10,8 @@ import {
     Trash2,
     ExternalLink,
     Edit2,
-    Camera
+    Camera,
+    Dog
 } from 'lucide-react';
 import { useGetApplication, useUpdateApplication } from '../../../../hooks/useApplicationQueries';
 import { API_ENDPOINTS } from '../../../../config/api.config';
@@ -18,6 +19,7 @@ import AddOccupantModal from './components/AddOccupantModal';
 import AddPetModal from './components/AddPetModal';
 import AddVehicleModal from './components/AddVehicleModal';
 import AddReferenceModal from './components/AddReferenceModal';
+import DeleteConfirmationModal from './components/DeleteConfirmationModal';
 import AddResidenceModal from './components/AddResidenceModal';
 import AddIncomeModal from './components/AddIncomeModal';
 import AddEmergencyContactModal from './components/AddEmergencyContactModal';
@@ -124,6 +126,13 @@ const ApplicationDetail = () => {
     const [editingOccupant, setEditingOccupant] = useState<any>(null);
     const [editingPet, setEditingPet] = useState<any>(null);
     const [editingVehicle, setEditingVehicle] = useState<any>(null);
+    const [deleteConfirmation, setDeleteConfirmation] = useState<{
+        isOpen: boolean;
+        type: 'occupant' | 'pet' | 'vehicle' | 'residence' | 'income' | 'emergencyContact' | 'reference' | 'attachment';
+        id: string | number;
+        title: string;
+        itemName?: string;
+    } | null>(null);
 
 
 
@@ -427,6 +436,54 @@ const ApplicationDetail = () => {
         setAttachments(prev => prev.filter((_, i) => i !== index));
     };
 
+    const handleConfirmDelete = async () => {
+        if (!deleteConfirmation) return;
+        const { type, id } = deleteConfirmation;
+
+        try {
+            switch (type) {
+                case 'occupant':
+                    await handleDeleteOccupant(id as string);
+                    break;
+                case 'pet':
+                    await handleDeletePet(id as string);
+                    break;
+                case 'vehicle':
+                    await handleDeleteVehicle(id as string);
+                    break;
+                case 'residence':
+                    await handleDeleteResidence(id as string);
+                    break;
+                case 'income':
+                    await handleDeleteIncome(id as string);
+                    break;
+                case 'emergencyContact':
+                    await handleDeleteEmergencyContact(id as string);
+                    break;
+                case 'reference':
+                    // Need to implement/expose reference deletion if not available or just call it
+                    // I see handleAddReference but not handleDeleteReference in the snippet earlier, 
+                    // I will double check later if I missed it or if I need to implement it.
+                    // Actually I didn't see handleDeleteReference, I will add it if missing or just wrap it.
+                    // For now, I will assume it exists or I will add it.
+                    // Wait, I didn't see handleDeleteReference in the previous view. 
+                    // Let me quickly check if I can just inline the logic here or calls it.
+                    // Just in case, I will handle it here if function exists.
+                    // If not found, I'll need to add it.
+                    await handleDeleteReference(id as string); // Assuming I'll add this function or it exists
+                    break;
+                case 'attachment':
+                    removeAttachment(id as number);
+                    break;
+            }
+        } catch (error) {
+            console.error('Error deleting item:', error);
+            // Optionally show error toast
+        } finally {
+            setDeleteConfirmation(null);
+        }
+    };
+
 
 
     const { data: application, isLoading, error } = useGetApplication(id);
@@ -563,12 +620,44 @@ const ApplicationDetail = () => {
     const handleSavePet = async (data: any) => {
         if (!application) return;
 
+        let photoUrl = editingPet?.photoUrl || null;
+
+        if (data.photo instanceof File) {
+            try {
+                const formData = new FormData();
+                formData.append('file', data.photo);
+                formData.append('category', 'IMAGE');
+
+                const response = await fetch(API_ENDPOINTS.UPLOAD.FILE, {
+                    method: 'POST',
+                    credentials: 'include',
+                    body: formData,
+                });
+
+                if (!response.ok) throw new Error('Failed to upload pet image');
+                const resData = await response.json();
+                photoUrl = resData.url;
+            } catch (error) {
+                console.error('Error uploading pet image:', error);
+                alert('Failed to upload pet image. Please try again.');
+                return;
+            }
+        }
+
         const newPet = {
             type: data.type,
             name: data.name,
-            weight: data.weight ? parseFloat(data.weight.replace(/[^0-9.-]/g, '')) : undefined,
+            weight: (() => {
+                const w = data.weight;
+                if (!w) return undefined;
+                if (w === '< 5kg') return 4;
+                if (w === '5-10kg') return 7.5;
+                if (w === '10-20kg') return 15;
+                if (w === '> 20kg') return 25;
+                return parseFloat(w.replace(/[^0-9.-]/g, ''));
+            })(),
             breed: data.breed,
-            photoUrl: null, // TODO: Handle photo upload if needed, usually managed separately or via upload
+            photoUrl: photoUrl,
         };
 
         const existingPets = application.pets.map(pet => ({
@@ -975,6 +1064,18 @@ const ApplicationDetail = () => {
         });
     };
 
+    const handleDeleteReference = async (referenceId: string) => {
+        if (!application) return;
+        const newReferences = (application.referenceContacts || []).filter((ref: any) => ref.id !== referenceId);
+
+        await updateApplication.mutateAsync({
+            id: application.id,
+            updateData: {
+                referenceContacts: newReferences,
+            },
+        });
+    };
+
     return (
         <div className="max-w-6xl mx-auto min-h-screen font-outfit pb-20">
             {/* Breadcrumb - Matches design style */}
@@ -1263,7 +1364,13 @@ const ApplicationDetail = () => {
                                             <Edit2 size={16} />
                                         </button>
                                         <button
-                                            onClick={() => handleDeleteOccupant(occ.id)}
+                                            onClick={() => setDeleteConfirmation({
+                                                isOpen: true,
+                                                type: 'occupant',
+                                                id: occ.id,
+                                                title: 'Delete Occupant',
+                                                itemName: `${occ.firstName} ${occ.lastName}`
+                                            })}
                                             className="p-2 bg-white rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 shadow-md"
                                             title="Delete occupant"
                                         >
@@ -1325,34 +1432,57 @@ const ApplicationDetail = () => {
                                             <Edit2 size={16} />
                                         </button>
                                         <button
-                                            onClick={() => handleDeletePet(pet.id)}
+                                            onClick={() => setDeleteConfirmation({
+                                                isOpen: true,
+                                                type: 'pet',
+                                                id: pet.id,
+                                                title: 'Delete Pet',
+                                                itemName: pet.name
+                                            })}
                                             className="p-2 bg-white rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 shadow-md"
                                             title="Delete pet"
                                         >
                                             <Trash2 size={16} />
                                         </button>
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <CustomTextBox
-                                            label="Pet name"
-                                            value={pet.name}
-                                            className="w-full"
-                                        />
-                                        <CustomTextBox
-                                            label="Type"
-                                            value={pet.type}
-                                            className="w-full"
-                                        />
-                                        <CustomTextBox
-                                            label="Breed"
-                                            value={pet.breed}
-                                            className="w-full"
-                                        />
-                                        <CustomTextBox
-                                            label="Weight"
-                                            value={pet.weight ? `${pet.weight} Kg` : ''}
-                                            className="w-full"
-                                        />
+                                    <div className="flex gap-4">
+                                        <div className="w-24 h-24 rounded-2xl bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200">
+                                            {pet.photoUrl ? (
+                                                <img src={pet.photoUrl} alt={pet.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-gray-300">
+                                                    <Dog size={32} />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
+                                            <CustomTextBox
+                                                label="Pet name"
+                                                value={pet.name}
+                                                className="w-full"
+                                            />
+                                            <CustomTextBox
+                                                label="Type"
+                                                value={pet.type}
+                                                className="w-full"
+                                            />
+                                            <CustomTextBox
+                                                label="Breed"
+                                                value={pet.breed}
+                                                className="w-full"
+                                            />
+                                            <CustomTextBox
+                                                label="Weight"
+                                                value={pet.weight ? (() => {
+                                                    const w = typeof pet.weight === 'string' ? parseFloat(pet.weight) : pet.weight;
+                                                    if (w < 5) return '< 5kg';
+                                                    if (w >= 5 && w < 10) return '5-10kg';
+                                                    if (w >= 10 && w <= 20) return '10-20kg';
+                                                    return '> 20kg';
+                                                })() : ''}
+                                                className="w-full"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -1382,7 +1512,13 @@ const ApplicationDetail = () => {
                                             <Edit2 size={16} />
                                         </button>
                                         <button
-                                            onClick={() => handleDeleteVehicle(v.id)}
+                                            onClick={() => setDeleteConfirmation({
+                                                isOpen: true,
+                                                type: 'vehicle',
+                                                id: v.id,
+                                                title: 'Delete Vehicle',
+                                                itemName: `${v.color} ${v.make} ${v.model}`
+                                            })}
                                             className="p-2 bg-white rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 shadow-md"
                                             title="Delete vehicle"
                                         >
@@ -1464,7 +1600,13 @@ const ApplicationDetail = () => {
                                         </button>
                                         <div className="relative group/tooltip">
                                             <button
-                                                onClick={() => handleDeleteResidence(res.id)}
+                                                onClick={() => setDeleteConfirmation({
+                                                    isOpen: true,
+                                                    type: 'residence',
+                                                    id: res.id,
+                                                    title: 'Delete Residence',
+                                                    itemName: res.address
+                                                })}
                                                 disabled={application.residenceHistory.length <= 1}
                                                 className={`p-2 bg-white rounded-full shadow-md transition-all ${application.residenceHistory.length <= 1
                                                     ? 'text-gray-300 cursor-not-allowed opacity-50'
@@ -1561,13 +1703,7 @@ const ApplicationDetail = () => {
                                         >
                                             <Edit2 size={16} />
                                         </button>
-                                        <button
-                                            onClick={() => handleDeleteIncome(inc.id)}
-                                            className="p-2 bg-white rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 shadow-md"
-                                            title="Delete income"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
+
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <CustomTextBox
@@ -1640,7 +1776,13 @@ const ApplicationDetail = () => {
                                         </button>
                                         <div className="relative group/tooltip">
                                             <button
-                                                onClick={() => handleDeleteEmergencyContact(contact.id)}
+                                                onClick={() => setDeleteConfirmation({
+                                                    isOpen: true,
+                                                    type: 'emergencyContact',
+                                                    id: contact.id,
+                                                    title: 'Delete Contact',
+                                                    itemName: contact.contactName
+                                                })}
                                                 disabled={application.emergencyContacts.length <= 1}
                                                 className={`p-2 bg-white rounded-full shadow-md transition-all ${application.emergencyContacts.length <= 1
                                                     ? 'text-gray-300 cursor-not-allowed opacity-50'
@@ -1832,7 +1974,13 @@ const ApplicationDetail = () => {
                                             </a>
                                         )}
                                         <button
-                                            onClick={() => removeAttachment(index)}
+                                            onClick={() => setDeleteConfirmation({
+                                                isOpen: true,
+                                                type: 'attachment',
+                                                id: index,
+                                                title: 'Delete Attachment',
+                                                itemName: attachment.file.name
+                                            })}
                                             className="p-2 hover:bg-white rounded-full transition-colors text-gray-400 hover:text-red-500"
                                             title="Remove attachment"
                                         >
@@ -1881,9 +2029,24 @@ const ApplicationDetail = () => {
                 initialData={editingPet ? {
                     type: editingPet.type,
                     name: editingPet.name,
-                    weight: editingPet.weight?.toString() || '',
+                    weight: editingPet.weight ? (() => {
+                        const w = editingPet.weight;
+                        if (w < 5) return '< 5kg';
+                        if (w >= 5 && w < 10) return '5-10kg';
+                        if (w >= 10 && w <= 20) return '10-20kg';
+                        return '> 20kg';
+                    })() : '',
                     breed: editingPet.breed,
+                    photo: null,
+                    existingPhotoUrl: editingPet.photoUrl
                 } : undefined}
+            />
+            < DeleteConfirmationModal
+                isOpen={!!deleteConfirmation}
+                onClose={() => setDeleteConfirmation(null)}
+                onConfirm={handleConfirmDelete}
+                title={deleteConfirmation?.title}
+                itemName={deleteConfirmation?.itemName}
             />
             < AddVehicleModal
                 isOpen={isVehicleModalOpen}
