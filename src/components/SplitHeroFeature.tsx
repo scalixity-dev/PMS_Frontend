@@ -8,7 +8,7 @@ const GetStartedButton: React.FC<{
   text?: string;
 }> = ({ text = "Get Started", className, widthClass, to }) => (
   <a
-    href={to || "#"}
+    href={to || "/login"}
     className={`inline-block px-5 py-2.5 font-semibold text-white bg-[#3D7475] rounded-lg border border-white shadow-md hover:bg-[#2c5858] transition-colors ${
       widthClass || ""
     } ${className || ""}`}

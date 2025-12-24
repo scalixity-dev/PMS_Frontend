@@ -13,6 +13,7 @@ import ResidencesStep from './steps/ResidencesStep';
 import IncomeStep from './steps/IncomeStep';
 import AdditionalIncomeStep from './steps/AdditionalIncomeStep';
 import EmergencyContactStep from './steps/EmergencyContactStep';
+import DocumentsStep from './steps/DocumentsStep';
 import { useApplicationStore } from './store/applicationStore';
 import ApplicationSuccessModal from './components/ApplicationSuccessModal';
 import ApplicationErrorModal from './components/ApplicationErrorModal';
@@ -88,6 +89,19 @@ const NewApplication: React.FC = () => {
                 const parsed = JSON.parse(savedData);
                 // Convert all date strings to Date objects recursively
                 parsed.formData = walkAndConvertDates(parsed.formData);
+                
+                // Check if documents were saved but files are lost
+                if (parsed.formData.documents && parsed.formData.documents.length > 0) {
+                    setDocumentsNeedReupload(true);
+                    // Clear documentFiles since they can't be restored
+                    parsed.formData.documentFiles = [];
+                }
+                
+                // Clear photoFile as it can't be restored from localStorage
+                if (parsed.formData.photo) {
+                    parsed.formData.photoFile = null;
+                }
+                
                 setFormData(parsed.formData);
                 setCurrentStep(parsed.currentStep);
                 setIsPropertySelected(parsed.isPropertySelected);
@@ -101,13 +115,21 @@ const NewApplication: React.FC = () => {
     // Persist form data to localStorage on changes
     useEffect(() => {
         if (isFormDirty) {
+            // Exclude non-serializable File objects from localStorage
+            const { documentFiles, photoFile, ...serializableFormData } = formData;
+            
             const dataToSave = {
-                formData,
+                formData: serializableFormData,
                 currentStep,
                 isPropertySelected,
                 timestamp: new Date().toISOString()
             };
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+            
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+            } catch (error) {
+                console.error('Failed to save form data to localStorage:', error);
+            }
         }
     }, [formData, currentStep, isPropertySelected, isFormDirty]);
 
@@ -132,6 +154,7 @@ const NewApplication: React.FC = () => {
     const [showSuccessModal, setShowSuccessModal] = React.useState(false);
     const [showErrorModal, setShowErrorModal] = React.useState(false);
     const [errorMessages, setErrorMessages] = React.useState<string[]>([]);
+    const [documentsNeedReupload, setDocumentsNeedReupload] = React.useState(false);
 
     const handleCancel = () => {
         if (isFormDirty) {
@@ -151,17 +174,14 @@ const NewApplication: React.FC = () => {
     const handleBack = () => {
         if (currentStep === 1) {
             // ... existing logic ...
-            if (isPropertySelected) {
-                // Go back to property selection
-                setIsPropertySelected(false);
-            } else {
-                // Exit with confirmation if form is dirty
-                if (isFormDirty) {
-                    handleCancel();
-                } else {
-                    navigate('/dashboard/leasing/applications');
-                }
-            }
+            // Clear form data and storage to prevent dirty state blocking
+            resetForm();
+            localStorage.removeItem(STORAGE_KEY);
+
+            // Force navigation to applications page
+            setTimeout(() => {
+                navigate('/dashboard/leasing/applications');
+            }, 0);
         } else if (currentStep === 2) {
             if (occupantSubStep === 'pets') {
                 setOccupantSubStep('occupants');
@@ -186,6 +206,8 @@ const NewApplication: React.FC = () => {
             // Go back to Step 3 - restore last visited residence sub-step
             setCurrentStep(currentStep - 1);
             setResidenceSubStep(lastResidenceSubStep);
+        } else if (currentStep === 5) {
+            setCurrentStep(currentStep - 1);
         } else {
             setCurrentStep(currentStep - 1);
         }
@@ -204,10 +226,10 @@ const NewApplication: React.FC = () => {
             // Get leasingId from propertyId and unitId
             const { leasingService } = await import('../../../../services/leasing.service');
             const { applicationService } = await import('../../../../services/application.service');
-            
+
             // First, try to get leasing by propertyId
             let leasing = await leasingService.getByPropertyId(formData.propertyId);
-            
+
             // If no leasing found and we have a unitId, we might need to check unit-level leasing
             // For now, we'll require that a leasing exists for the property
             if (!leasing) {
@@ -216,7 +238,7 @@ const NewApplication: React.FC = () => {
 
             // Submit the application
             await applicationService.create(formData, leasing.id);
-            
+
             // Clear form and show success
             resetForm();
             localStorage.removeItem(STORAGE_KEY);
@@ -224,7 +246,7 @@ const NewApplication: React.FC = () => {
         } catch (error) {
             console.error('Failed to submit application:', error);
             let errors: string[] = [];
-            
+
             if (error instanceof Error) {
                 // Check if error has messages array (from our service)
                 if ('messages' in error && Array.isArray((error as any).messages)) {
@@ -236,7 +258,7 @@ const NewApplication: React.FC = () => {
             } else {
                 errors = ['Failed to submit application. Please try again.'];
             }
-            
+
             setErrorMessages(errors);
             setShowErrorModal(true);
         }
@@ -281,7 +303,9 @@ const NewApplication: React.FC = () => {
             // ...
             // ...
             case 4:
-                return <EmergencyContactStep onNext={handleSubmitSuccess} />;
+                return <EmergencyContactStep onNext={() => setCurrentStep(currentStep + 1)} />;
+            case 5:
+                return <DocumentsStep onNext={handleSubmitSuccess} />;
             default:
                 return null;
         }
@@ -317,6 +341,34 @@ const NewApplication: React.FC = () => {
                     <span className="text-xs text-gray-500 italic">
                         ✓ Progress automatically saved
                     </span>
+                </div>
+            )}
+
+            {/* Document re-upload warning */}
+            {documentsNeedReupload && currentStep === 5 && (
+                <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
+                    <div className="flex items-start gap-3">
+                        <svg className="w-5 h-5 text-yellow-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <div className="flex-1">
+                            <h3 className="text-sm font-bold text-yellow-800 mb-1">Document Files Need Re-upload</h3>
+                            <p className="text-xs text-yellow-700">
+                                Your document information was saved, but the actual files cannot be restored after a page refresh. 
+                                Please re-upload your documents ({formData.documents.length} file{formData.documents.length !== 1 ? 's' : ''} previously attached).
+                            </p>
+                            <button
+                                onClick={() => {
+                                    setDocumentsNeedReupload(false);
+                                    // Clear the document metadata since files can't be restored
+                                    setFormData({ ...formData, documents: [], documentFiles: [] });
+                                }}
+                                className="mt-2 text-xs text-yellow-800 underline hover:text-yellow-900"
+                            >
+                                Clear saved document information
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
 

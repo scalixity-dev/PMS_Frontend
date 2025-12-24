@@ -57,7 +57,7 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
     const filteredPhoneCodes = useMemo(() => {
         if (!phoneCodeSearch) return phoneCountryCodes;
         const searchLower = phoneCodeSearch.toLowerCase();
-        return phoneCountryCodes.filter(code => 
+        return phoneCountryCodes.filter(code =>
             code.name.toLowerCase().includes(searchLower) ||
             code.phonecode.includes(searchLower) ||
             code.isoCode.toLowerCase().includes(searchLower)
@@ -198,10 +198,10 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200">
-            <div className="bg-[#EAEAEA] rounded-xl w-full max-w-4xl shadow-2xl animate-slide-in-from-right relative max-h-[90vh] flex flex-col font-sans">
+            <div className="bg-[#EAEAEA] rounded-[2rem] overflow-hidden w-full max-w-4xl shadow-2xl animate-slide-in-from-right relative max-h-[90vh] flex flex-col font-sans">
 
                 {/* Header */}
-                <div className="bg-[#3A6D6C] p-4 flex items-center justify-between text-white rounded-t-xl shrink-0">
+                <div className="bg-[#3A6D6C] p-4 flex items-center justify-between text-white rounded-t-[2rem] shrink-0">
                     <div className="flex items-center gap-2">
                         <button onClick={onClose} className="hover:bg-white/10 p-1 rounded-full transition-colors">
                             <ChevronLeft size={20} />
@@ -252,21 +252,19 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
                             {/* Phone Number */}
                             <div>
                                 <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Contact Number *</label>
-                                <div className={`flex border rounded-xl transition-all ${
-                                    touched.phoneNumber && errors.phoneNumber 
-                                        ? 'border-red-500 border-2' 
+                                <div className={`flex border rounded-xl transition-all ${touched.phoneNumber && errors.phoneNumber
+                                        ? 'border-red-500 border-2'
                                         : 'border-gray-200 focus-within:ring-2 focus-within:ring-[#3A6D6C] focus-within:border-[#3A6D6C]'
-                                }`}>
+                                    }`}>
                                     {/* Phone Code Selector */}
                                     <div className="relative" ref={phoneCodeRef}>
                                         <button
                                             type="button"
                                             onClick={() => setIsPhoneCodeOpen(!isPhoneCodeOpen)}
-                                            className={`flex items-center gap-1 px-3 py-2.5 border-r bg-white rounded-l-xl focus:outline-none text-sm min-w-[100px] hover:bg-gray-50 transition-colors ${
-                                                touched.phoneNumber && errors.phoneNumber 
-                                                    ? 'border-red-500' 
+                                            className={`flex items-center gap-1 px-3 py-2.5 border-r bg-white rounded-l-xl focus:outline-none text-sm min-w-[100px] hover:bg-gray-50 transition-colors ${touched.phoneNumber && errors.phoneNumber
+                                                    ? 'border-red-500'
                                                     : 'border-gray-200'
-                                            }`}
+                                                }`}
                                         >
                                             <span className="text-sm font-medium">
                                                 {selectedPhoneCode ? (
@@ -311,9 +309,8 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
                                                                     setIsPhoneCodeOpen(false);
                                                                     setPhoneCodeSearch('');
                                                                 }}
-                                                                className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-[#3A6D6C]/10 transition-colors text-left ${
-                                                                    formData.phoneCountryCode === code.value ? 'bg-[#3A6D6C]/10' : ''
-                                                                }`}
+                                                                className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-[#3A6D6C]/10 transition-colors text-left ${formData.phoneCountryCode === code.value ? 'bg-[#3A6D6C]/10' : ''
+                                                                    }`}
                                                             >
                                                                 <span className="text-xl">{code.flag}</span>
                                                                 <span className="flex-1 text-sm font-medium text-gray-900">{code.name}</span>
@@ -334,9 +331,8 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
                                     <input
                                         type="tel"
                                         placeholder="Enter phone number"
-                                        className={`flex-1 min-w-0 px-4 py-2.5 rounded-r-xl focus:outline-none text-sm placeholder-gray-400 bg-white border-0 ${
-                                            touched.phoneNumber && errors.phoneNumber ? 'text-red-500' : 'text-gray-700'
-                                        }`}
+                                        className={`flex-1 min-w-0 px-4 py-2.5 rounded-r-xl focus:outline-none text-sm placeholder-gray-400 bg-white border-0 ${touched.phoneNumber && errors.phoneNumber ? 'text-red-500' : 'text-gray-700'
+                                            }`}
                                         value={formData.phoneNumber}
                                         onChange={(e) => handleChange('phoneNumber', e.target.value)}
                                         onBlur={() => handleBlur('phoneNumber')}
@@ -353,11 +349,10 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
                                 <button
                                     type="button"
                                     onClick={() => setIsRelationshipOpen(!isRelationshipOpen)}
-                                    className={`w-full bg-white p-3 rounded-xl outline-none text-left flex items-center justify-between text-sm ${
-                                        touched.relationship && errors.relationship 
-                                            ? 'border-2 border-red-500' 
+                                    className={`w-full bg-white p-3 rounded-xl outline-none text-left flex items-center justify-between text-sm ${touched.relationship && errors.relationship
+                                            ? 'border-2 border-red-500'
                                             : 'border border-gray-200 focus-within:ring-2 focus-within:ring-[#3A6D6C] focus-within:border-[#3A6D6C]'
-                                    } ${formData.relationship ? 'text-gray-700' : 'text-gray-500'}`}
+                                        } ${formData.relationship ? 'text-gray-700' : 'text-gray-500'}`}
                                 >
                                     <span>{formData.relationship || 'Select relationship'}</span>
                                     <ChevronDown size={16} className={`text-gray-500 transition-transform ${isRelationshipOpen ? 'rotate-180' : ''}`} />
@@ -374,9 +369,8 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
                                                     handleChange('relationship', option);
                                                     setIsRelationshipOpen(false);
                                                 }}
-                                                className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#3A6D6C]/10 transition-colors text-left text-sm ${
-                                                    formData.relationship === option ? 'bg-[#3A6D6C]/10 font-medium' : 'text-gray-700'
-                                                }`}
+                                                className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#3A6D6C]/10 transition-colors text-left text-sm ${formData.relationship === option ? 'bg-[#3A6D6C]/10 font-medium' : 'text-gray-700'
+                                                    }`}
                                             >
                                                 <span>{option}</span>
                                             </button>

@@ -178,6 +178,7 @@ export default function DashboardNavbar({ sidebarOpen, setSidebarOpen }: NavbarP
           <button
             aria-label="Messages"
             className="w-8 h-8 rounded-full bg-white flex items-center justify-center hover:bg-gray-100 shadow-[0_3px_0_rgba(93,111,108)]"
+            onClick={() => navigate('/dashboard/messages')}
           >
             <MessageSquare size={18} className="text-gray-800" />
           </button>

@@ -44,6 +44,8 @@ import Recurring from './pages/Dashboard/features/Recurring/Recurring';
 import AddMaintenanceRequest from './pages/Dashboard/features/Maintenance/AddMaintenanceRequest';
 import Requests from './pages/Dashboard/features/Maintenance/MaintenanceRequests';
 import MaintenanceRequestsDetail from './pages/Dashboard/features/Maintenance/MaintenanceRequestsDetail';
+import MaintenanceRecurring from './pages/Dashboard/features/Maintenance/MaintenanceRecurring';
+import MaintenanceRecurringDetail from './pages/Dashboard/features/Maintenance/MaintenanceRecurringDetail';
 import Properties from './pages/Dashboard/features/Properties/Properties';
 import ImportProperties from './pages/Dashboard/features/Properties/ImportProperties/ImportProperties';
 import Equipments from './pages/Dashboard/features/Equipments/Equipments';
@@ -71,9 +73,22 @@ import AddEditServicePro from './pages/Dashboard/features/ServicePros/AddEditSer
 import ServiceProsDetail from './pages/Dashboard/features/ServicePros/ServiceProsDetail';
 import Application from './pages/Dashboard/features/Application/Application';
 import NewApplication from './pages/Dashboard/features/Application/NewApplication';
+import ApplicationDetail from './pages/Dashboard/features/Application/ApplicationDetail';
 import ProviderStatement from './pages/Dashboard/features/ServicePros/ProviderStatement';
 import TransactionDetail from './pages/Dashboard/features/Transactions/TransactionDetail';
-// import ListUnit from './pages/Dashboard/features/ListUnit/ListUnit';
+import ChatPage from './pages/Dashboard/features/Messages/ChatPage';
+// Documents pages
+import LandlordForms from './pages/Dashboard/features/Documents/landlordforms/LandlordForms';
+import TemplateView from './pages/Dashboard/features/Documents/landlordforms/TemplateView';
+import UseTemplateWizard from './pages/Dashboard/features/Documents/landlordforms/UseTemplateWizard';
+import MyTemplates from './pages/Dashboard/features/Documents/mytemplate/MyTemplates';
+import MyTemplateDetail from './pages/Dashboard/features/Documents/mytemplate/MyTemplateDetail';
+import EditTemplate from './pages/Dashboard/features/Documents/mytemplate/EditTemplate';
+import CreateTemplateWizard from './pages/Dashboard/features/Documents/mytemplate/CreateTemplateWizard';
+import Leads from './pages/Dashboard/features/Leads/leads';
+import AddLead from './pages/Dashboard/features/Leads/AddLead';
+import LeadDetail from './pages/Dashboard/features/Leads/LeadDetail';
+import EditLead from './pages/Dashboard/features/Leads/EditLead';
 
 // Settings pages
 import Settings from './pages/Dashboard/settings/index';
@@ -97,7 +112,7 @@ import AutomationSettings from './pages/Dashboard/settings/request-settings/Auto
 import GeneralReports from './pages/Dashboard/settings/report/general';
 
 // Create a QueryClient instance
-export const queryClient = new QueryClient({
+const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000, // 5 minutes
@@ -194,6 +209,8 @@ const App: React.FC = () => {
               <Route path="/dashboard/maintenance/request" element={<AddMaintenanceRequest />} />
               <Route path="/dashboard/maintenance/requests" element={<Requests />} />
               <Route path="/dashboard/maintenance/requests/:id" element={<MaintenanceRequestsDetail />} />
+              <Route path="/dashboard/maintenance/recurring" element={<MaintenanceRecurring />} />
+              <Route path="/dashboard/maintenance/recurring/:id" element={<MaintenanceRecurringDetail />} />
               <Route path="/dashboard/movein" element={<MoveIn />} />
               <Route path="/dashboard/contacts/tenants" element={<Tenants />} />
               <Route path="/dashboard/contacts/tenants/add" element={<AddEditTenant />} />
@@ -205,8 +222,50 @@ const App: React.FC = () => {
               <Route path="/dashboard/contacts/service-pros/:id" element={<ServiceProsDetail />} />
               <Route path="/dashboard/leasing/applications" element={<Application />} />
               <Route path="/dashboard/application/new" element={<NewApplication />} />
+              <Route path="/dashboard/application/:id" element={<ApplicationDetail />} />
               <Route path="/dashboard/leasing/leases" element={<Leases />} />
+              <Route
+                path="/dashboard/leasing/leads"
+                element={
+                  <ProtectedRoute>
+                    <Leads />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/leasing/leads/add"
+                element={
+                  <ProtectedRoute>
+                    <AddLead />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/leasing/leads/:id"
+                element={
+                  <ProtectedRoute>
+                    <LeadDetail />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/leasing/leads/edit/:id"
+                element={
+                  <ProtectedRoute>
+                    <EditLead />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="/dashboard/portfolio/leases/:id" element={<LeaseDetail />} />
+
+              <Route
+                path="/dashboard/messages"
+                element={
+                  <ProtectedRoute>
+                    <ChatPage />
+                  </ProtectedRoute>
+                }
+              />
 
               {/* Settings Routes */}
               <Route
@@ -415,6 +474,63 @@ const App: React.FC = () => {
                 element={
                   <ProtectedRoute>
                     <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              {/* Documents Routes */}
+              <Route
+                path="/documents/landlord-forms"
+                element={
+                  <ProtectedRoute>
+                    <LandlordForms />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/documents/landlord-forms/template/:templateName"
+                element={
+                  <ProtectedRoute>
+                    <TemplateView />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/documents/landlord-forms/use-template/:templateName"
+                element={
+                  <ProtectedRoute>
+                    <UseTemplateWizard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/documents/my-templates"
+                element={
+                  <ProtectedRoute>
+                    <MyTemplates />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/documents/my-templates/create-wizard"
+                element={
+                  <ProtectedRoute>
+                    <CreateTemplateWizard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/documents/my-templates/:id"
+                element={
+                  <ProtectedRoute>
+                    <MyTemplateDetail />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/documents/my-templates/:id/edit"
+                element={
+                  <ProtectedRoute>
+                    <EditTemplate />
                   </ProtectedRoute>
                 }
               />

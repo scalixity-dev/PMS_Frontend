@@ -9,6 +9,7 @@ import {
 } from "react-icons/pi";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import artworkImage from "../../assets/images/Artwork.png";
+import InviteToApplyModal from '../../pages/Dashboard/features/Application/components/InviteToApplyModal';
 
 const SidebarContext = React.createContext<{ collapsed: boolean }>({ collapsed: false });
 
@@ -169,6 +170,7 @@ export default function DashboardSidebar({ open, setOpen, collapsed, setCollapse
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [isCreateNewOpen, setIsCreateNewOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const createNewRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -275,6 +277,7 @@ export default function DashboardSidebar({ open, setOpen, collapsed, setCollapse
                   style={{ top: menuPosition.top, left: menuPosition.left }}
                 >
                   <div className="flex flex-col py-1">
+                    {/* List a unit */}
                     <button
                       onClick={() => {
                         navigate("/dashboard/list-unit");
@@ -284,7 +287,63 @@ export default function DashboardSidebar({ open, setOpen, collapsed, setCollapse
                     >
                       List a unit
                     </button>
-                    {/* ... other items (commented out in original) ... */}
+
+                    {/* Invite to Apply */}
+                    <button
+                      onClick={() => {
+                        setIsInviteModalOpen(true);
+                        setIsCreateNewOpen(false);
+                      }}
+                      className="px-4 py-2.5 text-sm font-medium text-[#1BCB40] hover:bg-green-50 border-b border-gray-100 transition-colors text-left"
+                    >
+                      Invite to Apply
+                    </button>
+
+                    {/* Create New Property */}
+                    <button
+                      onClick={() => {
+                        navigate("/dashboard/property/add");
+                        setIsCreateNewOpen(false);
+                      }}
+                      className="px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-green-600 border-b border-gray-100 transition-colors text-left"
+                    >
+                      Create New Property
+                    </button>
+
+                    {/* Create New Lease */}
+                    <button
+                      onClick={() => {
+                        navigate("/dashboard/leasing/leases");
+                        setIsCreateNewOpen(false);
+                      }}
+                      className="px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-green-600 border-b border-gray-100 transition-colors text-left"
+                    >
+                      Create New Lease
+                    </button>
+
+                    {/* Record an Income */}
+                    <button
+                      onClick={() => {
+                        navigate("/dashboard/accounting/transactions/income/add");
+                        setIsCreateNewOpen(false);
+                      }}
+                      className="px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-green-600 border-b border-gray-100 transition-colors text-left"
+                    >
+                      Record an Income
+                    </button>
+
+
+
+                    {/* Record a Request */}
+                    <button
+                      onClick={() => {
+                        navigate("/dashboard/maintenance/request");
+                        setIsCreateNewOpen(false);
+                      }}
+                      className="px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-green-600 transition-colors text-left"
+                    >
+                      Record a Request
+                    </button>
                   </div>
                 </div>,
                 document.body
@@ -339,7 +398,7 @@ export default function DashboardSidebar({ open, setOpen, collapsed, setCollapse
               >
                 <SidebarSubLink label="Applications" to="/dashboard/leasing/applications" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Leases" to="/dashboard/leasing/leases" isCurrentPath={isCurrentPath} />
-                <SidebarSubLink label="Leads" to="/leasing/leads" isCurrentPath={isCurrentPath} />
+                <SidebarSubLink label="Leads" to="/dashboard/leasing/leads" isCurrentPath={isCurrentPath} />
 
               </SidebarDropdownLink>
 
@@ -365,7 +424,7 @@ export default function DashboardSidebar({ open, setOpen, collapsed, setCollapse
               >
                 <SidebarSubLink label="Transactions" to="/dashboard/accounting/transactions" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Payments" to="/dashboard/accounting/payments" isCurrentPath={isCurrentPath} />
-                <SidebarSubLink label="Balances" to="/accounting/balances" isCurrentPath={isCurrentPath} />
+                {/* <SidebarSubLink label="Balances" to="/accounting/balances" isCurrentPath={isCurrentPath} /> */}
                 <SidebarSubLink label="Recurring" to="/dashboard/accounting/recurring" isCurrentPath={isCurrentPath} />
               </SidebarDropdownLink>
 
@@ -378,8 +437,8 @@ export default function DashboardSidebar({ open, setOpen, collapsed, setCollapse
                 setActiveDropdown={setActiveDropdown}
               >
                 <SidebarSubLink label="Requests" to="/dashboard/maintenance/requests" isCurrentPath={isCurrentPath} />
-                <SidebarSubLink label="Requests Board" to="/maintenance/board" isCurrentPath={isCurrentPath} />
-                <SidebarSubLink label="Recurring" to="/maintenance/recurring" isCurrentPath={isCurrentPath} />
+                {/* <SidebarSubLink label="Requests Board" to="/maintenance/board" isCurrentPath={isCurrentPath} /> */}
+                <SidebarSubLink label="Recurring" to="/dashboard/maintenance/recurring" isCurrentPath={isCurrentPath} />
               </SidebarDropdownLink>
 
               {/* 7. Documents Dropdown */}
@@ -409,8 +468,18 @@ export default function DashboardSidebar({ open, setOpen, collapsed, setCollapse
           </div>
 
 
+
         </div>
       </aside >
-    </SidebarContext.Provider>
+      <InviteToApplyModal
+        isOpen={isInviteModalOpen}
+        onClose={() => setIsInviteModalOpen(false)}
+        onSend={(email, propertyId) => {
+          console.log('Sending invitation:', { email, propertyId });
+          // TODO: Implement actual invite logic
+          // alert(`Invitation sent to ${email}`);
+        }}
+      />
+    </SidebarContext.Provider >
   );
 }

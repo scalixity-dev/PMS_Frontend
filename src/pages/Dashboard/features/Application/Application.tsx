@@ -12,7 +12,7 @@ import InviteToApplyModal from './components/InviteToApplyModal';
 const transformApplicationToCard = (app: BackendApplication) => {
     // Get primary applicant name
     const primaryApplicant = app.applicants.find(a => a.isPrimary) || app.applicants[0];
-    const name = primaryApplicant 
+    const name = primaryApplicant
         ? `${primaryApplicant.firstName} ${primaryApplicant.middleName || ''} ${primaryApplicant.lastName}`.trim()
         : 'Unknown Applicant';
 
@@ -107,7 +107,7 @@ const Application = () => {
         // Apply search filter
         if (searchQuery.trim()) {
             const query = searchQuery.toLowerCase();
-            filtered = filtered.filter(app => 
+            filtered = filtered.filter(app =>
                 app.name.toLowerCase().includes(query) ||
                 app.appliedDate.toLowerCase().includes(query)
             );
@@ -117,7 +117,7 @@ const Application = () => {
         if (filters.status && filters.status.length > 0) {
             filtered = filtered.filter(app => {
                 const appStatus = app.status.toLowerCase();
-                return filters.status.some(filterStatus => 
+                return filters.status.some(filterStatus =>
                     appStatus === filterStatus.toLowerCase()
                 );
             });
@@ -164,7 +164,7 @@ const Application = () => {
                         <h1 className="text-2xl font-bold text-black">Application</h1>
                     </div>
                     <div className="flex gap-3">
-                        <button 
+                        <button
                             onClick={() => setIsInviteModalOpen(true)}
                             className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors"
                         >
@@ -199,29 +199,29 @@ const Application = () => {
                                 .map(app => {
                                     const property = app.leasing?.property;
                                     const unit = app.leasing?.unit;
-                                    
+
                                     if (!property || !property.propertyName) return null;
-                                    
+
                                     // For MULTI properties, show property name + unit name
                                     if (property.propertyType === 'MULTI' && unit?.unitName) {
                                         return `${property.propertyName} - ${unit.unitName}`;
                                     }
-                                    
+
                                     // For SINGLE properties, just show property name
                                     return property.propertyName;
                                 })
                                 .filter((name): name is string => name !== null);
-                            
+
                             // Get unique property names
                             const uniqueNames = Array.from(new Set(propertyNames));
-                            
+
                             // Only show if we have property names from backend
                             if (uniqueNames.length === 0) return null;
-                            
-                            const displayText = uniqueNames.length === 1 
+
+                            const displayText = uniqueNames.length === 1
                                 ? uniqueNames[0]
                                 : `${uniqueNames.length} Properties`;
-                            
+
                             return (
                                 <button
                                     onClick={handleSortToggle}

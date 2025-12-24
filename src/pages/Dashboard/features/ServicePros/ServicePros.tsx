@@ -53,7 +53,7 @@ const ServicePros = () => {
             setError(null);
             try {
                 const data = await serviceProviderService.getAll(true); // Only fetch active service providers
-                
+
                 // Transform backend data to card format
                 const transformedData: ServiceProCardData[] = data.map((provider: BackendServiceProvider) => ({
                     id: provider.id,
@@ -64,7 +64,7 @@ const ServicePros = () => {
                     bgColor: 'bg-[#4ad1a6]',
                     image: provider.photoUrl || undefined,
                 }));
-                
+
                 setServicePros(transformedData);
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'Failed to load service providers');
@@ -183,7 +183,7 @@ const ServicePros = () => {
                         onClick={handleSortToggle}
                         className="flex items-center gap-1 hover:bg-black/5 px-2 py-1 rounded-lg transition-colors"
                     >
-                     
+
                     </button>
                     <div className="bg-[#3A6D6C] text-white px-4 py-1 rounded-full text-sm">
                         {isLoading ? 'Loading...' : `${servicePros.length} service pros`}
