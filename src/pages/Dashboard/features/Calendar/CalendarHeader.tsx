@@ -74,20 +74,6 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
                 </button>
             </div>
 
-            <div className="flex items-center gap-3">
-                <button className="flex items-center gap-2 px-4 py-2.5 border border-dashed border-green-500 text-gray-700 text-sm font-medium rounded-full hover:bg-gray-50 transition-colors">
-                    Property & Units
-                    <Plus size={16} />
-                </button>
-                <button className="flex items-center gap-2 px-4 py-2.5 border border-dashed border-green-500 text-gray-700 text-sm font-medium rounded-full hover:bg-gray-50 transition-colors">
-                    Events Type
-                    <Plus size={16} />
-                </button>
-                <button className="flex items-center gap-2 px-4 py-2.5 border border-dashed border-green-500 text-gray-700 text-sm font-medium rounded-full hover:bg-gray-50 transition-colors">
-                    Frequency
-                    <Plus size={16} />
-                </button>
-            </div>
         </div>
     );
 };

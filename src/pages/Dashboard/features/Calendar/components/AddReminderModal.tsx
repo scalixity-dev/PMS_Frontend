@@ -1,76 +1,99 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { X, AlertTriangle } from 'lucide-react';
+import { X, AlertTriangle, Loader2 } from 'lucide-react';
 import DatePicker from '../../../../../components/ui/DatePicker';
 import TimePicker from '../../../../../components/ui/TimePicker';
 import CustomDropdown from '../../../components/CustomDropdown';
+import { useReminderStore } from '../store/reminderStore';
+import { useCreateReminder } from '../../../../../hooks/useReminderQueries';
+import { useGetAllProperties } from '../../../../../hooks/usePropertyQueries';
 
 interface AddReminderModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (data: any) => void;
+    onSave?: (data: any) => void; // Optional now since we handle API calls internally
 }
 
 const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, onSave }) => {
-    const initialFormData = {
-        title: '',
-        details: '',
-        date: undefined as Date | undefined,
-        time: '',
-        assignee: '',
-        property: '',
-        isRecurring: false
-    };
+    const { formData, setFormData, updateFormData, resetForm } = useReminderStore();
+    const createReminderMutation = useCreateReminder();
+    
+    // Fetch properties for dropdown
+    const { data: properties = [], isLoading: isLoadingProperties } = useGetAllProperties();
+    
+    const [showExitConfirmation, setShowExitConfirmation] = React.useState(false);
+    const [formErrors, setFormErrors] = React.useState({ title: false, date: false, time: false });
+    const [initialSnapshot, setInitialSnapshot] = React.useState(formData);
+    const prevIsOpenRef = React.useRef(isOpen);
 
-    const [formData, setFormData] = useState(initialFormData);
-    const [formErrors, setFormErrors] = useState({ title: false, date: false, time: false });
-    const [showExitConfirmation, setShowExitConfirmation] = useState(false);
+    useEffect(() => {
+        // Only run when modal opens
+        const isOpening = !prevIsOpenRef.current && isOpen;
+        
+        if (isOpen && isOpening) {
+            // Reset form when opening in add mode
+            const emptyFormData = {
+                title: '',
+                details: '',
+                date: undefined,
+                time: '',
+                assignee: '',
+                property: '',
+                isRecurring: false,
+                frequency: '',
+                endDate: undefined,
+                type: 'reminder' as const,
+                color: undefined,
+            };
+            setFormData(emptyFormData);
+            setInitialSnapshot(emptyFormData);
+        }
 
-    const assigneeOptions = [
-        { value: 'user1', label: 'User 1' },
-        { value: 'user2', label: 'User 2' },
-        { value: 'user3', label: 'User 3' },
+        // Update ref
+        prevIsOpenRef.current = isOpen;
+    }, [isOpen, setFormData]);
+
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [isOpen]);
+
+    // Property options from API
+    const propertyOptions = useMemo(() => {
+        return properties.map(p => ({
+            value: p.id,
+            label: p.propertyName
+        }));
+    }, [properties]);
+
+    const typeOptions = [
+        { value: 'reminder', label: 'Reminder' },
+        { value: 'viewing', label: 'Viewing' },
+        { value: 'meeting', label: 'Meeting' },
+        { value: 'other', label: 'Other' },
     ];
 
-    const propertyOptions = [
-        { value: 'prop1', label: 'Property 1' },
-        { value: 'prop2', label: 'Property 2' },
-        { value: 'prop3', label: 'Property 3' },
+    const frequencyOptions = [
+        { value: 'DAILY', label: 'Daily' },
+        { value: 'WEEKLY', label: 'Weekly' },
+        { value: 'MONTHLY', label: 'Monthly' },
+        { value: 'QUARTERLY', label: 'Quarterly' },
+        { value: 'YEARLY', label: 'Yearly' },
+        { value: 'ONCE', label: 'Once' },
     ];
 
-    if (!isOpen) return null;
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleDateChange = (date?: Date) => {
-        setFormData(prev => ({ ...prev, date }));
-    };
-
-    const handleTimeChange = (time: string) => {
-        setFormData(prev => ({ ...prev, time }));
-    };
-
-    const handleAssigneeChange = (value: string) => {
-        setFormData(prev => ({ ...prev, assignee: value }));
-    };
-
-    const handlePropertyChange = (value: string) => {
-        setFormData(prev => ({ ...prev, property: value }));
-    };
-
-    const handleToggle = () => {
-        setFormData(prev => ({ ...prev, isRecurring: !prev.isRecurring }));
-    };
-
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         // Validate required fields
         const errors = {
-            title: !formData.title,
+            title: !formData.title.trim(),
             date: !formData.date,
-            time: !formData.time
+            time: !formData.time.trim()
         };
 
         setFormErrors(errors);
@@ -80,20 +103,52 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
             return;
         }
 
-        onSave(formData);
-        onClose();
+        try {
+            // Transform form data to API format
+            const reminderDto = {
+                title: formData.title,
+                description: formData.details || undefined,
+                date: formData.date ? formData.date.toISOString() : '',
+                time: formData.time,
+                type: formData.type,
+                assignee: formData.assignee || undefined,
+                propertyId: formData.property || undefined,
+                recurring: formData.isRecurring,
+                frequency: formData.frequency ? (formData.frequency.toUpperCase() as 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY' | 'ONCE') : undefined,
+                endDate: formData.endDate ? formData.endDate.toISOString() : undefined,
+                color: formData.color || undefined,
+            };
+
+            // Create new reminder
+            await createReminderMutation.mutateAsync(reminderDto);
+
+            // Call optional onSave callback if provided
+            if (onSave) {
+                onSave(formData);
+            }
+
+            // Reset form and close modal
+            resetForm();
+            onClose();
+        } catch (error) {
+            console.error('Failed to create reminder:', error);
+            // Error handling could show a toast notification here
+        }
     };
 
     const handleCloseAttempt = () => {
-        // Check if any field differs from initial value (form is dirty)
-        const isDirty = 
-            formData.title !== initialFormData.title ||
-            formData.details !== initialFormData.details ||
-            formData.date !== initialFormData.date ||
-            formData.time !== initialFormData.time ||
-            formData.assignee !== initialFormData.assignee ||
-            formData.property !== initialFormData.property ||
-            formData.isRecurring !== initialFormData.isRecurring;
+        // Check if any field differs from initial snapshot (form is dirty)
+        const isDirty =
+            formData.title !== initialSnapshot.title ||
+            formData.details !== initialSnapshot.details ||
+            formData.date !== initialSnapshot.date ||
+            formData.time !== initialSnapshot.time ||
+            formData.assignee !== initialSnapshot.assignee ||
+            formData.property !== initialSnapshot.property ||
+            formData.isRecurring !== initialSnapshot.isRecurring ||
+            formData.frequency !== initialSnapshot.frequency ||
+            formData.endDate !== initialSnapshot.endDate ||
+            formData.type !== initialSnapshot.type;
 
         if (isDirty) {
             setShowExitConfirmation(true);
@@ -102,13 +157,17 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
         }
     };
 
+    const isLoading = createReminderMutation.isPending;
+
+    if (!isOpen) return null;
+
     const handleConfirmExit = () => {
         setShowExitConfirmation(false);
         onClose();
     };
 
     return createPortal(
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 animate-in fade-in duration-200 font-['Urbanist']">
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/50 animate-in fade-in duration-200 font-['Urbanist']">
             <div className="bg-[#E8ECEB] rounded-3xl w-full max-w-sm shadow-2xl animate-slide-in-from-right relative">
                 {/* Header */}
                 <div className="bg-[#3D7475] p-4 flex items-center justify-between rounded-t-3xl">
@@ -126,13 +185,13 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
                         <label className="block text-xs font-bold text-gray-700 mb-1">Title *</label>
                         <input
                             type="text"
-                            name="title"
                             value={formData.title}
-                            onChange={handleChange}
+                            onChange={(e) => updateFormData('title', e.target.value)}
                             placeholder="Enter Title"
+                            disabled={isLoading}
                             className={`w-full bg-white text-gray-800 placeholder-gray-400 px-3 py-2.5 rounded-md outline-none focus:ring-2 transition-all shadow-sm text-sm ${
                                 formErrors.title ? 'ring-2 ring-red-500 focus:ring-red-500' : 'focus:ring-[#3D7475]/20'
-                            }`}
+                            } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                         />
                         {formErrors.title && <p className="text-red-500 text-xs mt-1">Title is required</p>}
                     </div>
@@ -141,12 +200,12 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
                     <div>
                         <label className="block text-xs font-bold text-gray-700 mb-1">Details</label>
                         <textarea
-                            name="details"
                             value={formData.details}
-                            onChange={handleChange}
+                            onChange={(e) => updateFormData('details', e.target.value)}
                             placeholder="Enter Details"
                             rows={2}
-                            className="w-full bg-[#F0F2F5] text-gray-800 placeholder-gray-400 px-3 py-2.5 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all resize-none shadow-sm text-sm"
+                            disabled={isLoading}
+                            className={`w-full bg-[#F0F2F5] text-gray-800 placeholder-gray-400 px-3 py-2.5 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all resize-none shadow-sm text-sm ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                         />
                     </div>
 
@@ -157,18 +216,22 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
                             <div className="w-2/3">
                                 <DatePicker
                                     value={formData.date}
-                                    onChange={handleDateChange}
+                                    onChange={(date) => updateFormData('date', date)}
                                     placeholder="Select Date"
+                                    disabled={isLoading}
                                     className={formErrors.date ? 'ring-2 ring-red-500' : ''}
                                 />
                             </div>
                             <div className="w-1/3">
-                                <TimePicker
-                                    value={formData.time}
-                                    onChange={handleTimeChange}
-                                    placeholder="Time"
-                                    className={formErrors.time ? 'ring-2 ring-red-500' : ''}
-                                />
+                                <div className={isLoading ? 'opacity-50 pointer-events-none' : ''}>
+                                    <TimePicker
+                                        value={formData.time}
+                                        onChange={(time) => updateFormData('time', time)}
+                                        placeholder="Time"
+                                        disabled={!formData.date || isLoading}
+                                        className={formErrors.time ? 'ring-2 ring-red-500' : ''}
+                                    />
+                                </div>
                             </div>
                         </div>
                         {(formErrors.date || formErrors.time) && (
@@ -178,55 +241,114 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
                         )}
                     </div>
 
+                    {/* Type */}
+                    <div>
+                        <label className="block text-xs font-bold text-gray-700 mb-1">Type *</label>
+                        <CustomDropdown
+                            value={formData.type}
+                            onChange={(value) => updateFormData('type', value as 'reminder' | 'viewing' | 'meeting' | 'other')}
+                            options={typeOptions}
+                            placeholder="Select Type"
+                            disabled={isLoading}
+                            buttonClassName={`w-full bg-white text-gray-800 px-3 py-2.5 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all shadow-sm text-sm border-none ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        />
+                    </div>
+
                     {/* Assignee */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-700 mb-1">Assignee*</label>
-                        <CustomDropdown
+                        <label className="block text-xs font-bold text-gray-700 mb-1">Assignee</label>
+                        <input
+                            type="text"
                             value={formData.assignee}
-                            onChange={handleAssigneeChange}
-                            options={assigneeOptions}
-                            placeholder="Select Assignee"
-                            buttonClassName="w-full bg-white text-gray-800 px-3 py-2.5 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all shadow-sm text-sm border-none"
+                            onChange={(e) => updateFormData('assignee', e.target.value)}
+                            placeholder="Enter assignee name"
+                            disabled={isLoading}
+                            className={`w-full bg-white text-gray-800 placeholder-gray-400 px-3 py-2.5 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all shadow-sm text-sm ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                         />
                     </div>
 
                     {/* Property */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-700 mb-1">Property*</label>
-                        <CustomDropdown
-                            value={formData.property}
-                            onChange={handlePropertyChange}
-                            options={propertyOptions}
-                            placeholder="Select Property"
-                            buttonClassName="w-full bg-white text-gray-800 px-3 py-2.5 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all shadow-sm text-sm border-none"
-                        />
+                        <label className="block text-xs font-bold text-gray-700 mb-1">Property</label>
+                        {isLoadingProperties ? (
+                            <div className="w-full bg-white px-3 py-2.5 rounded-md flex items-center justify-center">
+                                <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                            </div>
+                        ) : (
+                            <CustomDropdown
+                                value={formData.property}
+                                onChange={(value) => updateFormData('property', value)}
+                                options={propertyOptions}
+                                placeholder="Select Property"
+                                disabled={isLoading}
+                                buttonClassName={`w-full bg-white text-gray-800 px-3 py-2.5 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all shadow-sm text-sm border-none ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            />
+                        )}
                     </div>
 
                     {/* Recurring Toggle */}
                     <div className="flex items-center gap-2">
                         <button
-                            onClick={handleToggle}
-                            className={`w-10 h-5 rounded-full p-0.5 transition-colors duration-200 ease-in-out ${formData.isRecurring ? 'bg-[#84CC16]' : 'bg-gray-300'}`}
+                            onClick={() => updateFormData('isRecurring', !formData.isRecurring)}
+                            disabled={isLoading}
+                            className={`w-10 h-5 rounded-full p-0.5 transition-colors duration-200 ease-in-out ${formData.isRecurring ? 'bg-[#84CC16]' : 'bg-gray-300'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                             <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${formData.isRecurring ? 'translate-x-5' : 'translate-x-0'}`} />
                         </button>
                         <span className="text-xs font-medium text-gray-700">Recurring</span>
                     </div>
+
+                    {/* Frequency */}
+                    {formData.isRecurring && (
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-1">Frequency</label>
+                            <CustomDropdown
+                                value={formData.frequency}
+                                onChange={(value) => updateFormData('frequency', value)}
+                                options={frequencyOptions}
+                                placeholder="Select Frequency"
+                                disabled={isLoading}
+                                buttonClassName={`w-full bg-white text-gray-800 px-3 py-2.5 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all shadow-sm text-sm border-none ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            />
+                        </div>
+                    )}
+
+                    {/* End Date */}
+                    {formData.isRecurring && (
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-1">End Date</label>
+                            <DatePicker
+                                value={formData.endDate}
+                                onChange={(date) => updateFormData('endDate', date)}
+                                placeholder="Select End Date"
+                                disabled={isLoading}
+                            />
+                        </div>
+                    )}
                 </div>
 
                 {/* Footer */}
                 <div className="p-5 pt-2 flex gap-3">
                     <button
                         onClick={handleCloseAttempt}
-                        className="flex-1 bg-white text-gray-800 py-2.5 rounded-md font-bold hover:bg-gray-50 transition-colors shadow-md border border-gray-100 text-sm"
+                        disabled={isLoading}
+                        className={`flex-1 bg-white text-gray-800 py-2.5 rounded-md font-bold hover:bg-gray-50 transition-colors shadow-md border border-gray-100 text-sm ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                         Cancel
                     </button>
                     <button
                         onClick={handleSubmit}
-                        className="flex-1 bg-[#3D7475] text-white py-2.5 rounded-md font-bold hover:bg-[#2c5556] transition-colors shadow-md text-sm"
+                        disabled={isLoading}
+                        className={`flex-1 bg-[#3D7475] text-white py-2.5 rounded-md font-bold hover:bg-[#2c5556] transition-colors shadow-md text-sm flex items-center justify-center gap-2 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
-                        Create
+                        {isLoading ? (
+                            <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                Creating...
+                            </>
+                        ) : (
+                            'Create'
+                        )}
                     </button>
                 </div>
 
