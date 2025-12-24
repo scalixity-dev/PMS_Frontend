@@ -1,20 +1,31 @@
 import React from 'react';
-import { X, AlertTriangle } from 'lucide-react';
+import { X, AlertTriangle, Loader2 } from 'lucide-react';
 
 interface DeleteConfirmationModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onConfirm: () => void;
+    onConfirm: () => void | Promise<void>;
     taskTitle?: string;
+    isLoading?: boolean;
 }
 
 const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
     isOpen,
     onClose,
     onConfirm,
-    taskTitle
+    taskTitle,
+    isLoading = false
 }) => {
     if (!isOpen) return null;
+
+    const handleConfirm = async () => {
+        try {
+            await onConfirm();
+        } catch (error) {
+            // Error is handled by the parent component
+            console.error('Delete confirmation error:', error);
+        }
+    };
 
     return (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 font-['Urbanist'] animate-in fade-in duration-200">
@@ -41,15 +52,24 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
                     <div className="flex gap-4">
                         <button
                             onClick={onClose}
-                            className="flex-1 bg-gray-100 text-gray-700 px-4 py-2.5 rounded-xl font-bold hover:bg-gray-200 transition-colors"
+                            disabled={isLoading}
+                            className={`flex-1 bg-gray-100 text-gray-700 px-4 py-2.5 rounded-xl font-bold hover:bg-gray-200 transition-colors ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                             Cancel
                         </button>
                         <button
-                            onClick={onConfirm}
-                            className="flex-1 bg-[#D32F2F] text-white px-4 py-2.5 rounded-xl font-bold hover:bg-[#b71c1c] transition-colors shadow-sm"
+                            onClick={handleConfirm}
+                            disabled={isLoading}
+                            className={`flex-1 bg-[#D32F2F] text-white px-4 py-2.5 rounded-xl font-bold hover:bg-[#b71c1c] transition-colors shadow-sm flex items-center justify-center gap-2 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
-                            Delete
+                            {isLoading ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    Deleting...
+                                </>
+                            ) : (
+                                'Delete'
+                            )}
                         </button>
                     </div>
                 </div>

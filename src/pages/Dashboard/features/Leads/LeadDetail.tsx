@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, MoreHorizontal, Clock, Plus, Edit2, Trash2, User, FileText, CheckSquare, LogIn } from 'lucide-react';
 import AddNoteModal from './components/AddNoteModal';
-import AddTaskModal from './components/AddTaskModal';
+import AddTaskModal from './components/AddleadsTaskModal';
 import AddLogModal from './components/AddLogModal';
 import AddMeetingModal from './components/AddMeetingModal';
 import MessageModal from './components/MessageModal';
