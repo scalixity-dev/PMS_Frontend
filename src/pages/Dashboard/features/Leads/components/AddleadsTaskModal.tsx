@@ -77,14 +77,12 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onCreate, 
 
         window.addEventListener('keydown', handleKeyDown);
 
-        // Cleanup: only restore focus when modal actually closes
+        // Cleanup: restore focus when modal closes
         return () => {
             clearTimeout(focusTimeout);
             window.removeEventListener('keydown', handleKeyDown);
-            // Only restore focus if modal is closing (isOpen will be false on next render)
-            if (!isOpen) {
-                returnFocusRef.current?.focus();
-            }
+            // Restore focus to the element that had focus before modal opened
+            returnFocusRef.current?.focus();
         };
     }, [isOpen, onClose]); // onClose is stable, won't cause unnecessary re-runs
 
