@@ -7,9 +7,11 @@ import {
     PlusCircle,
     Upload,
     FileText,
-    Trash2
+    Trash2,
+    ExternalLink
 } from 'lucide-react';
-import { useGetApplication } from '../../../../hooks/useApplicationQueries';
+import { useGetApplication, useUpdateApplication } from '../../../../hooks/useApplicationQueries';
+import { API_ENDPOINTS } from '../../../../config/api.config';
 import AddOccupantModal from './components/AddOccupantModal';
 import AddPetModal from './components/AddPetModal';
 import AddVehicleModal from './components/AddVehicleModal';
@@ -18,7 +20,6 @@ import AddResidenceModal from './components/AddResidenceModal';
 import AddIncomeModal from './components/AddIncomeModal';
 import AddEmergencyContactModal from './components/AddEmergencyContactModal';
 import AddResidenceInfoModal from './components/AddResidenceInfoModal';
-import RequestVerificationModal from './components/RequestVerificationModal';
 import RequestApplicationFeeModal from './components/RequestApplicationFeeModal';
 import DeleteApplicationModal from './components/DeleteApplicationModal';
 import DetailTabs from '../../components/DetailTabs';
@@ -118,11 +119,10 @@ const ApplicationDetail = () => {
     const [isContactModalOpen, setIsContactModalOpen] = useState(false);
     const [isReferenceModalOpen, setIsReferenceModalOpen] = useState(false);
     const [isResidenceInfoModalOpen, setIsResidenceInfoModalOpen] = useState(false);
-    const [isRequestVerificationModalOpen, setIsRequestVerificationModalOpen] = useState(false);
     const [isRequestFeeModalOpen, setIsRequestFeeModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('application');
-    const [attachments, setAttachments] = useState<File[]>([]);
+    const [attachments, setAttachments] = useState<Array<{ file: File; url?: string; uploading: boolean; error?: string }>>([]);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const [isActionDropdownOpen, setIsActionDropdownOpen] = useState(false);
     const actionDropdownRef = React.useRef<HTMLDivElement>(null);
@@ -140,10 +140,130 @@ const ApplicationDetail = () => {
         };
     }, []);
 
-    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    // Helper function to determine file category based on MIME type
+    const getFileCategory = (file: File): 'IMAGE' | 'DOCUMENT' => {
+        const mimeType = file.type.toLowerCase();
+        
+        // Check if it's an image
+        if (mimeType.startsWith('image/')) {
+            return 'IMAGE';
+        }
+        
+        // Check if it's a document (PDF, Word, Excel, etc.)
+        const documentMimeTypes = [
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
+            'text/plain',
+            'text/csv',
+        ];
+        
+        if (documentMimeTypes.includes(mimeType)) {
+            return 'DOCUMENT';
+        }
+        
+        // Check by file extension as fallback
+        const fileName = file.name.toLowerCase();
+        const extension = fileName.split('.').pop();
+        
+        const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'];
+        const documentExtensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'csv', 'rtf'];
+        
+        if (extension && imageExtensions.includes(extension)) {
+            return 'IMAGE';
+        }
+        
+        if (extension && documentExtensions.includes(extension)) {
+            return 'DOCUMENT';
+        }
+        
+        // Default to DOCUMENT for unknown types
+        return 'DOCUMENT';
+    };
+
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files[0]) {
             const file = event.target.files[0];
-            setAttachments(prev => [...prev, file]);
+            
+            // Validate file type - reject video and audio files
+            const mimeType = file.type.toLowerCase();
+            const fileName = file.name.toLowerCase();
+            const extension = fileName.split('.').pop();
+            
+            // Block video and audio files
+            if (mimeType.startsWith('video/') || mimeType.startsWith('audio/')) {
+                alert('Video and audio files are not allowed. Please upload images or documents only.');
+                event.target.value = ''; // Reset input
+                return;
+            }
+            
+            // Block video/audio extensions
+            const blockedExtensions = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv', 'mp3', 'wav', 'ogg', 'aac', 'm4a', 'wma'];
+            if (extension && blockedExtensions.includes(extension)) {
+                alert('Video and audio files are not allowed. Please upload images or documents only.');
+                event.target.value = ''; // Reset input
+                return;
+            }
+            
+            // Determine category based on file type
+            const category = getFileCategory(file);
+            
+            // Additional validation: ensure file is either image or document
+            if (category !== 'IMAGE' && category !== 'DOCUMENT') {
+                alert('Unsupported file type. Please upload images (jpg, png, gif, etc.) or documents (pdf, doc, docx, xls, xlsx, etc.) only.');
+                event.target.value = ''; // Reset input
+                return;
+            }
+            
+            // Add file to attachments with uploading state
+            const newAttachment = { file, uploading: true, error: undefined };
+            setAttachments(prev => [...prev, newAttachment]);
+            
+            try {
+                // Upload file immediately
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('category', category);
+                
+                const response = await fetch(API_ENDPOINTS.UPLOAD.FILE, {
+                    method: 'POST',
+                    credentials: 'include',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ message: 'Failed to upload file' }));
+                    throw new Error(errorData.message || 'Failed to upload file');
+                }
+
+                const data = await response.json();
+                const fileUrl = data.url;
+
+                // Update attachment with URL and remove uploading state
+                setAttachments(prev => 
+                    prev.map((att, idx) => 
+                        idx === prev.length - 1 
+                            ? { ...att, url: fileUrl, uploading: false }
+                            : att
+                    )
+                );
+
+                // Optionally save the URL to the application if there's a documents field
+                // For now, we'll just store it in local state
+            } catch (error) {
+                // Update attachment with error
+                setAttachments(prev => 
+                    prev.map((att, idx) => 
+                        idx === prev.length - 1 
+                            ? { ...att, uploading: false, error: error instanceof Error ? error.message : 'Upload failed' }
+                            : att
+                    )
+                );
+                console.error('Error uploading file:', error);
+            }
         }
     };
 
@@ -152,11 +272,11 @@ const ApplicationDetail = () => {
     };
 
     const tabs = [
-        { id: 'application', label: 'Application' },
-        { id: 'income', label: 'Income Verification' }
+        { id: 'application', label: 'Application' }
     ];
 
     const { data: application, isLoading, error } = useGetApplication(id);
+    const updateApplication = useUpdateApplication();
 
     if (isLoading) {
         return (
@@ -184,6 +304,274 @@ const ApplicationDetail = () => {
     const applicantName = primaryApplicant
         ? `${primaryApplicant.firstName} ${primaryApplicant.middleName || ''} ${primaryApplicant.lastName}`.trim()
         : 'Unknown Applicant';
+
+    // Get property and leasing data
+    const property = application.leasing?.property;
+    const unit = application.leasing?.unit;
+    const monthlyRent = application.leasing?.monthlyRent 
+        ? (typeof application.leasing.monthlyRent === 'string' 
+            ? parseFloat(application.leasing.monthlyRent) 
+            : application.leasing.monthlyRent)
+        : 0;
+    
+    // Calculate total household income from income details
+    const totalHouseholdIncome = application.incomeDetails.reduce((sum, income) => {
+        return sum + (parseFloat(income.monthlyIncome) || 0);
+    }, 0);
+    
+    // Calculate rent-income percentage
+    const rentIncomePercentage = monthlyRent > 0 && totalHouseholdIncome > 0 
+        ? parseFloat(((monthlyRent / totalHouseholdIncome) * 100).toFixed(1))
+        : 0;
+    
+    // Format status for display
+    const getStatusDisplay = (status: string) => {
+        const statusMap: Record<string, string> = {
+            'DRAFT': 'Draft',
+            'SUBMITTED': 'Submitted',
+            'REVIEWING': 'In Review',
+            'UNDER_REVIEW': 'In Review',
+            'APPROVED': 'Approved',
+            'REJECTED': 'Rejected',
+            'CANCELLED': 'Cancelled',
+            'WITHDRAWN': 'Withdrawn'
+        };
+        return statusMap[status] || status;
+    };
+    
+    const statusDisplay = getStatusDisplay(application.status);
+
+    // Handler functions for adding items
+    const handleAddOccupant = async (data: any) => {
+        if (!application) return;
+        
+        const newOccupant = {
+            firstName: data.firstName,
+            lastName: data.lastName,
+            email: data.email || null,
+            phoneNumber: data.phoneNumber,
+            dateOfBirth: data.dob instanceof Date ? data.dob.toISOString() : data.dob,
+            relationship: data.relationship,
+        };
+
+        const existingOccupants = application.occupants.map(occ => ({
+            firstName: occ.firstName || '',
+            lastName: occ.lastName || '',
+            email: occ.email || null,
+            phoneNumber: occ.phoneNumber || '',
+            dateOfBirth: occ.dateOfBirth,
+            relationship: occ.relationship,
+        }));
+
+        await updateApplication.mutateAsync({
+            id: application.id,
+            updateData: {
+                occupants: [...existingOccupants, newOccupant],
+            },
+        });
+    };
+
+    const handleAddPet = async (data: any) => {
+        if (!application) return;
+        
+        const newPet = {
+            type: data.type,
+            name: data.name,
+            weight: data.weight ? parseFloat(data.weight.replace(/[^0-9.-]/g, '')) : undefined,
+            breed: data.breed,
+            photoUrl: null, // TODO: Handle photo upload
+        };
+
+        const existingPets = application.pets.map(pet => ({
+            type: pet.type,
+            name: pet.name,
+            weight: pet.weight ? parseFloat(pet.weight) : undefined,
+            breed: pet.breed,
+            photoUrl: pet.photoUrl || null,
+        }));
+
+        await updateApplication.mutateAsync({
+            id: application.id,
+            updateData: {
+                pets: [...existingPets, newPet],
+            },
+        });
+    };
+
+    const handleAddVehicle = async (data: any) => {
+        if (!application) return;
+        
+        const newVehicle = {
+            type: data.type,
+            make: data.make,
+            model: data.model,
+            year: parseInt(data.year, 10),
+            color: data.color,
+            licensePlate: data.licensePlate,
+            registeredIn: data.registeredIn,
+        };
+
+        const existingVehicles = application.vehicles.map(v => ({
+            type: v.type,
+            make: v.make,
+            model: v.model,
+            year: v.year,
+            color: v.color,
+            licensePlate: v.licensePlate,
+            registeredIn: v.registeredIn,
+        }));
+
+        await updateApplication.mutateAsync({
+            id: application.id,
+            updateData: {
+                vehicles: [...existingVehicles, newVehicle],
+            },
+        });
+    };
+
+    const handleAddResidence = async (data: any) => {
+        if (!application) return;
+        
+        const newResidence = {
+            residenceType: data.residencyType === 'Rent' ? 'RENTED' : 'OWNED',
+            monthlyRent: data.rentAmount ? parseFloat(data.rentAmount) : undefined,
+            moveInDate: data.moveInDate instanceof Date ? data.moveInDate.toISOString() : data.moveInDate,
+            moveOutDate: data.moveOutDate ? (data.moveOutDate instanceof Date ? data.moveOutDate.toISOString() : data.moveOutDate) : null,
+            isCurrent: data.isCurrent ?? true,
+            landlordName: data.landlordName || 'N/A',
+            landlordEmail: null,
+            landlordPhone: data.landlordPhone || '',
+            address: data.address,
+            city: data.city || data.state,
+            state: data.state,
+            zipCode: data.zip,
+            country: data.country,
+            additionalInfo: data.reason || null,
+        };
+
+        const existingResidences = application.residenceHistory.map(res => ({
+            residenceType: res.residenceType,
+            monthlyRent: res.monthlyRent ? parseFloat(res.monthlyRent) : undefined,
+            moveInDate: res.moveInDate,
+            moveOutDate: res.moveOutDate || null,
+            isCurrent: res.isCurrent,
+            landlordName: res.landlordName,
+            landlordEmail: res.landlordEmail || null,
+            landlordPhone: res.landlordPhone,
+            address: res.address,
+            city: res.city,
+            state: res.state,
+            zipCode: res.zipCode,
+            country: res.country,
+            additionalInfo: res.additionalInfo || null,
+        }));
+
+        await updateApplication.mutateAsync({
+            id: application.id,
+            updateData: {
+                residenceHistory: [...existingResidences, newResidence],
+            },
+        });
+    };
+
+    const handleAddIncome = async (data: any) => {
+        if (!application) return;
+        
+        const newIncome = {
+            incomeType: data.incomeType,
+            companyName: data.company,
+            positionTitle: data.position,
+            startDate: data.startDate instanceof Date ? data.startDate.toISOString() : data.startDate,
+            endDate: data.endDate ? (data.endDate instanceof Date ? data.endDate.toISOString() : data.endDate) : null,
+            currentEmployment: data.currentEmployment ?? false,
+            monthlyIncome: parseFloat(data.monthlyAmount) || 0,
+            officeAddress: data.address,
+            office: data.office || null,
+            companyPhone: data.companyPhone || null,
+            supervisorName: data.supervisorName,
+            supervisorPhone: data.supervisorPhone,
+            supervisorEmail: data.supervisorEmail || null,
+            additionalInfo: null,
+        };
+
+        const existingIncomes = application.incomeDetails.map(inc => ({
+            incomeType: inc.incomeType,
+            companyName: inc.companyName,
+            positionTitle: inc.positionTitle,
+            startDate: inc.startDate,
+            endDate: inc.endDate || null,
+            currentEmployment: inc.currentEmployment,
+            monthlyIncome: parseFloat(inc.monthlyIncome) || 0,
+            officeAddress: inc.officeAddress,
+            office: inc.office || null,
+            companyPhone: inc.companyPhone || null,
+            supervisorName: inc.supervisorName,
+            supervisorPhone: inc.supervisorPhone,
+            supervisorEmail: inc.supervisorEmail || null,
+            additionalInfo: inc.additionalInfo || null,
+        }));
+
+        await updateApplication.mutateAsync({
+            id: application.id,
+            updateData: {
+                incomeDetails: [...existingIncomes, newIncome],
+            },
+        });
+    };
+
+    const handleAddEmergencyContact = async (data: any) => {
+        if (!application) return;
+        
+        const newContact = {
+            contactName: data.fullName,
+            phoneNumber: data.phoneNumber,
+            email: data.email,
+            relationship: data.relationship,
+            details: data.details || null,
+        };
+
+        const existingContacts = application.emergencyContacts.map(contact => ({
+            contactName: contact.contactName,
+            phoneNumber: contact.phoneNumber,
+            email: contact.email,
+            relationship: contact.relationship,
+            details: contact.details || null,
+        }));
+
+        await updateApplication.mutateAsync({
+            id: application.id,
+            updateData: {
+                emergencyContacts: [...existingContacts, newContact],
+            },
+        });
+    };
+
+    const handleAddReference = async (data: any) => {
+        if (!application) return;
+        
+        const newReference = {
+            contactName: data.contactName,
+            phoneNumber: data.contactNumber,
+            email: data.contactEmail,
+            relationship: data.relationship,
+            yearsKnown: parseInt(data.yearsKnown, 10) || 0,
+        };
+
+        const existingReferences = (application.referenceContacts || []).map((ref: any) => ({
+            contactName: ref.contactName,
+            phoneNumber: ref.phoneNumber,
+            email: ref.email,
+            relationship: ref.relationship,
+            yearsKnown: ref.yearsKnown || 0,
+        }));
+
+        await updateApplication.mutateAsync({
+            id: application.id,
+            updateData: {
+                referenceContacts: [...existingReferences, newReference],
+            },
+        });
+    };
 
     return (
         <div className="max-w-6xl mx-auto min-h-screen font-outfit pb-20">
@@ -236,7 +624,7 @@ const ApplicationDetail = () => {
                                     <p className="text-xs opacity-90 truncate max-w-[180px] mx-auto">{primaryApplicant?.email}</p>
                                 </div>
                                 <div className="w-full bg-[#C8C8C8] text-gray-700 py-2 rounded-full text-sm font-bold text-center shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                                    Approved
+                                    {statusDisplay}
                                 </div>
                             </div>
                         </div>
@@ -249,10 +637,10 @@ const ApplicationDetail = () => {
                                     <span className="text-xs font-semibold text-white mb-2 ml-1">Property</span>
                                     <div className="flex justify-between items-center gap-2">
                                         <div className="bg-[#E8F5E9] px-4 py-1.5 rounded-full text-sm font-bold text-gray-700 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)] flex-1 truncate">
-                                            Grand Vie
+                                            {property?.propertyName || 'N/A'}
                                         </div>
                                         <div className="bg-[#3A6D6C] text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">
-                                            101
+                                            {unit?.unitName || 'N/A'}
                                         </div>
                                     </div>
                                 </div>
@@ -262,7 +650,7 @@ const ApplicationDetail = () => {
                                     <span className="text-xs font-semibold text-white mb-2 ml-1">Listing content</span>
                                     <div className="flex justify-between items-center bg-[#E8F5E9] rounded-full p-1 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">
                                         <div className="px-4 py-0.5 text-sm font-bold text-gray-700">
-                                            Yes
+                                            {application.leasing?.onlineRentalApplication ? 'Yes' : 'No'}
                                         </div>
                                     </div>
                                 </div>
@@ -356,7 +744,7 @@ const ApplicationDetail = () => {
                                         />
                                         <CustomTextBox
                                             label="Short bio"
-                                            value="--"
+                                            value={application.bio || '--'}
                                             className="w-full max-w-sm"
                                         />
                                     </div>
@@ -365,8 +753,18 @@ const ApplicationDetail = () => {
                                     <div className="bg-[#3A6D6C] rounded-2xl p-6 text-white min-w-[300px] flex flex-col justify-center shadow-lg">
                                         <h3 className="font-bold text-xl mb-4">Rent-Income Percentage</h3>
                                         <div className="space-y-2">
-                                            <div className="text-sm opacity-90 font-medium">£50,000.00 Rent/mo</div>
-                                            <div className="text-sm opacity-90 font-medium bg-white/10 px-2 py-1 -mx-2 rounded">£80,000.00 <span className="block text-[10px] opacity-75">Household income</span></div>
+                                            <div className="text-sm opacity-90 font-medium">
+                                                {monthlyRent && monthlyRent > 0 ? `£${monthlyRent.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Rent/mo` : 'N/A'}
+                                            </div>
+                                            <div className="text-sm opacity-90 font-medium bg-white/10 px-2 py-1 -mx-2 rounded">
+                                                {totalHouseholdIncome > 0 ? `£${totalHouseholdIncome.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'N/A'} 
+                                                <span className="block text-[10px] opacity-75">Household income</span>
+                                            </div>
+                                            {rentIncomePercentage > 0 && (
+                                                <div className="text-xs opacity-75 mt-2 pt-2 border-t border-white/20">
+                                                    {rentIncomePercentage}% of income
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -535,23 +933,33 @@ const ApplicationDetail = () => {
                                     <div key={inc.id} className="bg-[#F6F6F8] rounded-[2rem] p-6 border border-gray-100/50">
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <CustomTextBox
-                                                label="Rent or own"
-                                                value="Own"
+                                                label="Income type"
+                                                value={inc.incomeType || '--'}
                                                 className="w-full"
                                             />
                                             <CustomTextBox
-                                                label="Move in date"
+                                                label="Company name"
+                                                value={inc.companyName || '--'}
+                                                className="w-full"
+                                            />
+                                            <CustomTextBox
+                                                label="Position"
+                                                value={inc.positionTitle || '--'}
+                                                className="w-full"
+                                            />
+                                            <CustomTextBox
+                                                label="Start date"
                                                 value={new Date(inc.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                                                 className="w-full"
                                             />
                                             <CustomTextBox
-                                                label="Rent"
-                                                value={inc.monthlyIncome}
+                                                label="Monthly income"
+                                                value={inc.monthlyIncome ? `£${parseFloat(inc.monthlyIncome).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '--'}
                                                 className="w-full"
                                             />
                                             <CustomTextBox
-                                                label="Landlord"
-                                                value="-"
+                                                label="Current employment"
+                                                value={inc.currentEmployment ? 'Yes' : 'No'}
                                                 className="w-full"
                                             />
                                         </div>
@@ -602,24 +1010,81 @@ const ApplicationDetail = () => {
                         {/* 8. Additional Questions */}
                         <Section title="Additional questions">
                             <div className="space-y-3 bg-[#F6F6F8] rounded-[1.5rem] p-4 justify-between items-center border border-gray-100/50">
-                                <CustomTextBox
-                                    label="Do you or any occupants smoke?"
-                                    value={
-                                        <span className="bg-[#8FE165] text-white px-6 py-1 rounded-full !text-sm font-bold">No</span>
-                                    }
-                                    className="w-full"
-                                    labelClassName="w-2/3 whitespace-normal !text-sm font-bold"
-                                    valueClassName="w-1/3 flex justify-end"
-                                />
-                                <CustomTextBox
-                                    label="Do you or any occupants smoke?"
-                                    value={
-                                        <span className="bg-[#8FE165] text-white px-6 py-1 rounded-full !text-sm font-bold">No</span>
-                                    }
-                                    className="w-full"
-                                    labelClassName="w-2/3 whitespace-normal !text-sm font-bold"
-                                    valueClassName="w-1/3 flex justify-end"
-                                />
+                                {application.backgroundQuestions && (
+                                    <>
+                                        <CustomTextBox
+                                            label="Do you or any occupants smoke?"
+                                            value={
+                                                <span className={`${application.backgroundQuestions.smoke ? 'bg-red-500' : 'bg-[#8FE165]'} text-white px-6 py-1 rounded-full !text-sm font-bold`}>
+                                                    {application.backgroundQuestions.smoke ? 'Yes' : 'No'}
+                                                </span>
+                                            }
+                                            className="w-full"
+                                            labelClassName="w-2/3 whitespace-normal !text-sm font-bold"
+                                            valueClassName="w-1/3 flex justify-end"
+                                        />
+                                        <CustomTextBox
+                                            label="Are you a military member?"
+                                            value={
+                                                <span className={`${application.backgroundQuestions.militaryMember ? 'bg-[#8FE165]' : 'bg-gray-400'} text-white px-6 py-1 rounded-full !text-sm font-bold`}>
+                                                    {application.backgroundQuestions.militaryMember ? 'Yes' : 'No'}
+                                                </span>
+                                            }
+                                            className="w-full"
+                                            labelClassName="w-2/3 whitespace-normal !text-sm font-bold"
+                                            valueClassName="w-1/3 flex justify-end"
+                                        />
+                                        <CustomTextBox
+                                            label="Do you have a criminal record?"
+                                            value={
+                                                <span className={`${application.backgroundQuestions.criminalRecord ? 'bg-red-500' : 'bg-[#8FE165]'} text-white px-6 py-1 rounded-full !text-sm font-bold`}>
+                                                    {application.backgroundQuestions.criminalRecord ? 'Yes' : 'No'}
+                                                </span>
+                                            }
+                                            className="w-full"
+                                            labelClassName="w-2/3 whitespace-normal !text-sm font-bold"
+                                            valueClassName="w-1/3 flex justify-end"
+                                        />
+                                        <CustomTextBox
+                                            label="Have you filed for bankruptcy?"
+                                            value={
+                                                <span className={`${application.backgroundQuestions.bankruptcy ? 'bg-red-500' : 'bg-[#8FE165]'} text-white px-6 py-1 rounded-full !text-sm font-bold`}>
+                                                    {application.backgroundQuestions.bankruptcy ? 'Yes' : 'No'}
+                                                </span>
+                                            }
+                                            className="w-full"
+                                            labelClassName="w-2/3 whitespace-normal !text-sm font-bold"
+                                            valueClassName="w-1/3 flex justify-end"
+                                        />
+                                        <CustomTextBox
+                                            label="Have you ever been refused rent?"
+                                            value={
+                                                <span className={`${application.backgroundQuestions.refusedRent ? 'bg-red-500' : 'bg-[#8FE165]'} text-white px-6 py-1 rounded-full !text-sm font-bold`}>
+                                                    {application.backgroundQuestions.refusedRent ? 'Yes' : 'No'}
+                                                </span>
+                                            }
+                                            className="w-full"
+                                            labelClassName="w-2/3 whitespace-normal !text-sm font-bold"
+                                            valueClassName="w-1/3 flex justify-end"
+                                        />
+                                        <CustomTextBox
+                                            label="Have you ever been evicted?"
+                                            value={
+                                                <span className={`${application.backgroundQuestions.evicted ? 'bg-red-500' : 'bg-[#8FE165]'} text-white px-6 py-1 rounded-full !text-sm font-bold`}>
+                                                    {application.backgroundQuestions.evicted ? 'Yes' : 'No'}
+                                                </span>
+                                            }
+                                            className="w-full"
+                                            labelClassName="w-2/3 whitespace-normal !text-sm font-bold"
+                                            valueClassName="w-1/3 flex justify-end"
+                                        />
+                                    </>
+                                )}
+                                {!application.backgroundQuestions && (
+                                    <div className="text-center text-gray-500 text-sm py-4">
+                                        No background questions answered
+                                    </div>
+                                )}
                             </div>
                         </Section>
 
@@ -634,7 +1099,7 @@ const ApplicationDetail = () => {
                                         type="file"
                                         ref={fileInputRef}
                                         className="hidden"
-                                        accept=".pdf,.doc,.docx,image/*"
+                                        accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,image/*"
                                         onChange={handleFileUpload}
                                     />
                                     <button
@@ -648,23 +1113,70 @@ const ApplicationDetail = () => {
                             }
                         >
                             <div className="space-y-3">
-                                {attachments.map((file, index) => (
+                                {attachments.map((attachment, index) => (
                                     <div key={index} className="flex items-center justify-between bg-[#F6F6F8] p-4 rounded-xl border border-gray-100/50">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center border border-gray-100">
-                                                <FileText className="text-[#3A6D6C]" size={20} />
+                                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                                            <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center border border-gray-100 flex-shrink-0">
+                                                {attachment.uploading ? (
+                                                    <Loader2 className="text-[#3A6D6C] animate-spin" size={20} />
+                                                ) : attachment.error ? (
+                                                    <FileText className="text-red-500" size={20} />
+                                                ) : (
+                                                    <FileText className="text-[#3A6D6C]" size={20} />
+                                                )}
                                             </div>
-                                            <div>
-                                                <p className="text-sm font-bold text-gray-800">{file.name}</p>
-                                                <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(1)} KB</p>
+                                            <div className="flex-1 min-w-0">
+                                                {attachment.url && !attachment.uploading && !attachment.error ? (
+                                                    <a
+                                                        href={attachment.url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-sm font-bold text-[#3A6D6C] hover:text-[#2c5251] hover:underline truncate block"
+                                                        title="Click to open file"
+                                                    >
+                                                        {attachment.file.name}
+                                                    </a>
+                                                ) : (
+                                                    <p className="text-sm font-bold text-gray-800 truncate">
+                                                        {attachment.file.name}
+                                                    </p>
+                                                )}
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-xs text-gray-500">
+                                                        {(attachment.file.size / 1024).toFixed(1)} KB
+                                                    </p>
+                                                    {attachment.uploading && (
+                                                        <span className="text-xs text-blue-600 font-medium">Uploading...</span>
+                                                    )}
+                                                    {attachment.error && (
+                                                        <span className="text-xs text-red-600 font-medium">{attachment.error}</span>
+                                                    )}
+                                                    {attachment.url && !attachment.uploading && !attachment.error && (
+                                                        <span className="text-xs text-green-600 font-medium">Uploaded</span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
-                                        <button
-                                            onClick={() => removeAttachment(index)}
-                                            className="p-2 hover:bg-white rounded-full transition-colors text-gray-400 hover:text-red-500"
-                                        >
-                                            <Trash2 size={18} />
-                                        </button>
+                                        <div className="flex items-center gap-2">
+                                            {attachment.url && !attachment.uploading && !attachment.error && (
+                                                <a
+                                                    href={attachment.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="p-2 hover:bg-white rounded-full transition-colors text-[#3A6D6C] hover:text-[#2c5251]"
+                                                    title="Open file in new tab"
+                                                >
+                                                    <ExternalLink size={18} />
+                                                </a>
+                                            )}
+                                            <button
+                                                onClick={() => removeAttachment(index)}
+                                                className="p-2 hover:bg-white rounded-full transition-colors text-gray-400 hover:text-red-500"
+                                                title="Remove attachment"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -678,102 +1190,57 @@ const ApplicationDetail = () => {
                         </div>
                     </div>
                 )}
-
-                {/* Income Tab */}
-                {activeTab === 'income' && (
-                    <div className="mt-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                        {/* Section Header */}
-                        <div className="flex items-center gap-4 mb-8">
-                            <div className="bg-[#7CD947] text-white pl-6 pr-2 py-2 rounded-full shadow-sm flex items-center gap-4">
-                                <h2 className="text-lg font-bold">Verification Details</h2>
-                                <button
-                                    onClick={() => setIsRequestVerificationModalOpen(true)}
-                                    className="bg-[#3A6D6C] text-white px-6 py-1.5 rounded-full text-xs font-bold hover:bg-[#2c5251] transition-colors shadow-sm"
-                                >
-                                    Request Verification
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Content Card */}
-                        <div className="bg-[#F0F0F6] rounded-[2rem] p-8 flex flex-col md:flex-row items-center justify-between gap-6 border border-gray-100/50">
-                            <p className="text-gray-700 text-sm font-medium leading-relaxed max-w-3xl">
-                                Comprehensive income & employment verification solution using advanced technology to quickly and accurately verify income and detect fraudulent activity, helping you make informed decisions about potential renters.
-                            </p>
-                            <span className="text-[#84D34C] text-xl font-bold">
-                                $12.00
-                            </span>
-                        </div>
-                    </div>
-                )}
             </div>
 
             {/* Modals */}
             <AddOccupantModal
                 isOpen={isOccupantModalOpen}
                 onClose={() => setIsOccupantModalOpen(false)}
-                onSave={(data) => {
-                    console.log('Occupant data:', data);
-                    // Implement save logic here
-                }}
+                onSave={handleAddOccupant}
             />
             <AddPetModal
                 isOpen={isPetModalOpen}
                 onClose={() => setIsPetModalOpen(false)}
-                onSave={(data) => {
-                    console.log('Pet data:', data);
-                }}
+                onSave={handleAddPet}
             />
             <AddVehicleModal
                 isOpen={isVehicleModalOpen}
                 onClose={() => setIsVehicleModalOpen(false)}
-                onSave={(data) => {
-                    console.log('Vehicle data:', data);
-                }}
+                onSave={handleAddVehicle}
             />
             <AddResidenceModal
                 isOpen={isResidenceModalOpen}
                 onClose={() => setIsResidenceModalOpen(false)}
-                onSave={(data) => {
-                    console.log('Residence data:', data);
-                }}
+                onSave={handleAddResidence}
             />
             <AddIncomeModal
                 isOpen={isIncomeModalOpen}
                 onClose={() => setIsIncomeModalOpen(false)}
-                onSave={(data) => {
-                    console.log('Income data:', data);
-                }}
+                onSave={handleAddIncome}
             />
             <AddEmergencyContactModal
                 isOpen={isContactModalOpen}
                 onClose={() => setIsContactModalOpen(false)}
-                onSave={(data) => {
-                    console.log('Contact data:', data);
-                }}
+                onSave={handleAddEmergencyContact}
             />
             <AddResidenceInfoModal
                 isOpen={isResidenceInfoModalOpen}
                 onClose={() => setIsResidenceInfoModalOpen(false)}
-                onSave={(info) => {
-                    console.log('Additional Residence Info:', info);
+                onSave={async (info) => {
+                    if (!application) return;
+                    await updateApplication.mutateAsync({
+                        id: application.id,
+                        updateData: {
+                            additionalResidenceInfo: info,
+                        },
+                    });
                 }}
                 initialValue={(application as any).additionalResidenceInfo}
             />
             <AddReferenceModal
                 isOpen={isReferenceModalOpen}
                 onClose={() => setIsReferenceModalOpen(false)}
-                onSave={(data) => {
-                    console.log('Reference data:', data);
-                }}
-            />
-            <RequestVerificationModal
-                isOpen={isRequestVerificationModalOpen}
-                onClose={() => setIsRequestVerificationModalOpen(false)}
-                onSave={(payer) => {
-                    console.log('Verification request payer:', payer);
-                    // Add logic to save request
-                }}
+                onSave={handleAddReference}
             />
             <RequestApplicationFeeModal
                 isOpen={isRequestFeeModalOpen}

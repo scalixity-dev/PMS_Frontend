@@ -22,12 +22,19 @@ export interface BackendApplication {
   residenceHistory: BackendResidenceHistory[];
   incomeDetails: BackendIncomeDetail[];
   emergencyContacts: BackendEmergencyContact[];
+  referenceContacts?: BackendReferenceContact[];
   leasing?: {
     id: string;
+    monthlyRent?: string | number;
+    onlineRentalApplication?: boolean;
     property?: {
       id: string;
       propertyName?: string;
       propertyType?: 'SINGLE' | 'MULTI';
+      listingContactName?: string | null;
+      listingEmail?: string | null;
+      listingPhoneCountryCode?: string | null;
+      listingPhoneNumber?: string | null;
       address?: {
         streetAddress?: string;
         city?: string;
@@ -44,6 +51,14 @@ export interface BackendApplication {
       id: string;
     };
   };
+  backgroundQuestions?: {
+    smoke: boolean;
+    militaryMember: boolean;
+    criminalRecord: boolean;
+    bankruptcy: boolean;
+    refusedRent: boolean;
+    evicted: boolean;
+  } | null;
 }
 
 export interface BackendApplicant {
@@ -140,6 +155,16 @@ export interface BackendEmergencyContact {
   details?: string | null;
 }
 
+export interface BackendReferenceContact {
+  id: string;
+  applicationId: string;
+  contactName: string;
+  phoneNumber: string;
+  email: string;
+  relationship: string;
+  yearsKnown: number;
+}
+
 // DTOs for creating/updating
 export interface CreateApplicationDto {
   leasingId: string;
@@ -222,6 +247,13 @@ export interface CreateApplicationDto {
     email: string;
     relationship: string;
     details?: string;
+  }[];
+  referenceContacts?: {
+    contactName: string;
+    phoneNumber: string;
+    email: string;
+    relationship: string;
+    yearsKnown: number;
   }[];
 }
 
@@ -498,6 +530,39 @@ class ApplicationService {
         }
       } catch (parseError) {
         errorMessage = `Failed to fetch applications: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Update an application
+   */
+  async update(id: string, updateData: Partial<CreateApplicationDto>): Promise<BackendApplication> {
+    const response = await fetch(API_ENDPOINTS.APPLICATION.UPDATE(id), {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(updateData),
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to update application';
+      try {
+        const errorData = await response.json();
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join('. ');
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+      } catch (parseError) {
+        errorMessage = `Failed to update application: ${response.statusText}`;
       }
       throw new Error(errorMessage);
     }
