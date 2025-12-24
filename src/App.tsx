@@ -90,6 +90,8 @@ import AddLead from './pages/Dashboard/features/Leads/AddLead';
 import LeadDetail from './pages/Dashboard/features/Leads/LeadDetail';
 import EditLead from './pages/Dashboard/features/Leads/EditLead';
 
+import FileManager from './pages/Dashboard/features/FileManager/FileManager';
+
 // Settings pages
 import Settings from './pages/Dashboard/settings/index';
 import ProfileSettings from './pages/Dashboard/settings/accountsetting/ProfileSettings';
@@ -531,6 +533,14 @@ const App: React.FC = () => {
                 element={
                   <ProtectedRoute>
                     <EditTemplate />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/documents/file-manager"
+                element={
+                  <ProtectedRoute>
+                    <FileManager />
                   </ProtectedRoute>
                 }
               />
