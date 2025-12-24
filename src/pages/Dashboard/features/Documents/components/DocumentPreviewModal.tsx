@@ -39,7 +39,7 @@ const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
         if (htmlContent) {
             return <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(htmlContent) }} />;
         } else if (contentRef?.current) {
-            return <div dangerouslySetInnerHTML={{ __html: contentRef.current.innerHTML }} />;
+            return <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(contentRef.current.innerHTML) }} />;
         }
         return <p className="text-gray-400">No content available</p>;
     };

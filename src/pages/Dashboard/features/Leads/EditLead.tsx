@@ -14,6 +14,7 @@ const EditLead = () => {
         phone: '+91 7049770293',
         email: 'abc@gmail.com'
     });
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
     useEffect(() => {
         const stored = localStorage.getItem(`lead_${id || 1}`);
@@ -41,16 +42,49 @@ const EditLead = () => {
         }
     }, [id]);
 
-    const handleSave = () => {
-        // For demo purposes, save to localStorage
-        const leadData = {
-            ...formData,
-            leadType
-        };
-        localStorage.setItem(`lead_${id || 1}`, JSON.stringify(leadData));
+    const validateForm = () => {
+        const newErrors: Record<string, string> = {};
+        if (!formData.fullName.trim()) newErrors.fullName = 'Full Name is required';
 
-        // Return to detail page
-        navigate(`/dashboard/leasing/leads/${id || 1}`);
+        // Enhanced phone validation
+        if (!formData.phone.trim()) {
+            newErrors.phone = 'Phone Number is required';
+        } else {
+            // Remove all non-digit characters to count actual digits
+            const digitsOnly = formData.phone.replace(/\D/g, '');
+            // Check if phone contains only valid characters (digits, spaces, dashes, parentheses, plus)
+            const phoneRegex = /^[\d\s\-()+]+$/;
+
+            if (!phoneRegex.test(formData.phone)) {
+                newErrors.phone = 'Phone number can only contain digits, spaces, dashes, parentheses, and plus sign';
+            } else if (digitsOnly.length < 10) {
+                newErrors.phone = 'Phone number must contain at least 10 digits';
+            } else if (digitsOnly.length > 15) {
+                newErrors.phone = 'Phone number cannot exceed 15 digits';
+            }
+        }
+
+        if (!formData.email.trim()) {
+            newErrors.email = 'Email is required';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+            newErrors.email = 'Invalid email format';
+        }
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const handleSave = () => {
+        if (validateForm()) {
+            // For demo purposes, save to localStorage
+            const leadData = {
+                ...formData,
+                leadType
+            };
+            localStorage.setItem(`lead_${id || 1}`, JSON.stringify(leadData));
+
+            // Return to detail page
+            navigate(`/dashboard/leasing/leads/${id || 1}`);
+        }
     };
 
     return (
@@ -91,8 +125,9 @@ const EditLead = () => {
                                     value={formData.fullName}
                                     onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                                     placeholder="Full Name"
-                                    className="w-full bg-white border border-gray-100 rounded-xl py-3 px-4 text-sm focus:outline-none shadow-sm placeholder:text-gray-400 font-medium"
+                                    className={`w-full bg-white border ${errors.fullName ? 'border-red-500' : 'border-gray-100'} rounded-xl py-3 px-4 text-sm focus:outline-none shadow-sm placeholder:text-gray-400 font-medium`}
                                 />
+                                {errors.fullName && <p className="text-red-500 text-xs mt-1 ml-1 font-medium">{errors.fullName}</p>}
                             </div>
 
                             {/* Phone Number */}
@@ -103,8 +138,9 @@ const EditLead = () => {
                                     value={formData.phone}
                                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                     placeholder="Phone Number"
-                                    className="w-full bg-white border border-gray-100 rounded-xl py-3 px-4 text-sm focus:outline-none shadow-sm placeholder:text-gray-400 font-medium"
+                                    className={`w-full bg-white border ${errors.phone ? 'border-red-500' : 'border-gray-100'} rounded-xl py-3 px-4 text-sm focus:outline-none shadow-sm placeholder:text-gray-400 font-medium`}
                                 />
+                                {errors.phone && <p className="text-red-500 text-xs mt-1 ml-1 font-medium">{errors.phone}</p>}
                             </div>
 
                             {/* Email */}
@@ -115,8 +151,9 @@ const EditLead = () => {
                                     value={formData.email}
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                     placeholder="Enter Email"
-                                    className="w-full bg-white border border-gray-100 rounded-xl py-3 px-4 text-sm focus:outline-none shadow-sm placeholder:text-gray-400 font-medium"
+                                    className={`w-full bg-white border ${errors.email ? 'border-red-500' : 'border-gray-100'} rounded-xl py-3 px-4 text-sm focus:outline-none shadow-sm placeholder:text-gray-400 font-medium`}
                                 />
+                                {errors.email && <p className="text-red-500 text-xs mt-1 ml-1 font-medium">{errors.email}</p>}
                             </div>
 
                             {/* Lead Type Selection */}

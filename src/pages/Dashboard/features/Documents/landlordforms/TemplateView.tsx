@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ChevronDown, ChevronLeft, X, FileText } from 'lucide-react';
+import DOMPurify from 'dompurify';
 import ReviewSuccessModal from './components/ReviewSuccessModal';
 import { getTemplateHTML } from './utils/templateUtils';
 import DocumentPreviewModal from '../components/DocumentPreviewModal';
@@ -181,7 +182,7 @@ const TemplateView: React.FC = () => {
                         <div
                             ref={documentContentRef}
                             className="max-w-4xl mx-auto space-y-6 text-gray-700"
-                            dangerouslySetInnerHTML={{ __html: getTemplateHTML(decodedTemplateName) }}
+                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(getTemplateHTML(decodedTemplateName)) }}
                         />
                     </div>
                 </div>

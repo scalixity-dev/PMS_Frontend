@@ -20,40 +20,9 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onCreate, 
     const textareaRef = React.useRef<HTMLTextAreaElement>(null);
     const returnFocusRef = React.useRef<HTMLElement | null>(null);
 
+    // Effect 1: Initialize form data when modal opens
     React.useEffect(() => {
         if (isOpen) {
-            returnFocusRef.current = document.activeElement as HTMLElement;
-            // Short delay to ensure modal is rendered and animations are starting
-            setTimeout(() => textareaRef.current?.focus(), 100);
-
-            const handleKeyDown = (e: KeyboardEvent) => {
-                if (e.key === 'Escape') {
-                    onClose();
-                }
-
-                if (e.key === 'Tab' && modalRef.current) {
-                    const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
-                        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-                    );
-                    const firstElement = focusableElements[0];
-                    const lastElement = focusableElements[focusableElements.length - 1];
-
-                    if (e.shiftKey) {
-                        if (document.activeElement === firstElement) {
-                            lastElement.focus();
-                            e.preventDefault();
-                        }
-                    } else {
-                        if (document.activeElement === lastElement) {
-                            firstElement.focus();
-                            e.preventDefault();
-                        }
-                    }
-                }
-            };
-
-            window.addEventListener('keydown', handleKeyDown);
-
             if (initialData) {
                 setDetails(initialData.details);
                 setDate(initialData.date);
@@ -67,13 +36,57 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onCreate, 
                 setExistingFileUrl(null);
                 setSelectedFile(null);
             }
-
-            return () => {
-                window.removeEventListener('keydown', handleKeyDown);
-                returnFocusRef.current?.focus();
-            };
         }
-    }, [isOpen, initialData, onClose]);
+    }, [isOpen]); // Only run when modal opens/closes, not when initialData changes
+
+    // Effect 2: Handle keyboard events and focus management
+    React.useEffect(() => {
+        if (!isOpen) return;
+
+        // Save the element that had focus before modal opened
+        returnFocusRef.current = document.activeElement as HTMLElement;
+
+        // Focus the textarea after a short delay
+        const focusTimeout = setTimeout(() => textareaRef.current?.focus(), 100);
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                onClose();
+            }
+
+            if (e.key === 'Tab' && modalRef.current) {
+                const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
+                    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+                );
+                const firstElement = focusableElements[0];
+                const lastElement = focusableElements[focusableElements.length - 1];
+
+                if (e.shiftKey) {
+                    if (document.activeElement === firstElement) {
+                        lastElement.focus();
+                        e.preventDefault();
+                    }
+                } else {
+                    if (document.activeElement === lastElement) {
+                        firstElement.focus();
+                        e.preventDefault();
+                    }
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+
+        // Cleanup: only restore focus when modal actually closes
+        return () => {
+            clearTimeout(focusTimeout);
+            window.removeEventListener('keydown', handleKeyDown);
+            // Only restore focus if modal is closing (isOpen will be false on next render)
+            if (!isOpen) {
+                returnFocusRef.current?.focus();
+            }
+        };
+    }, [isOpen, onClose]); // onClose is stable, won't cause unnecessary re-runs
 
     if (!isOpen) return null;
 

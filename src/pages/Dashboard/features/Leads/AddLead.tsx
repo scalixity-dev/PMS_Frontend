@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import PrimaryActionButton from '../../../../components/common/buttons/PrimaryActionButton';
+import { saveLead } from './utils/leadsStorage';
 
 const AddLead = () => {
     const navigate = useNavigate();
@@ -16,7 +17,25 @@ const AddLead = () => {
     const validateForm = () => {
         const newErrors: Record<string, string> = {};
         if (!formData.fullName.trim()) newErrors.fullName = 'Full Name is required';
-        if (!formData.phone.trim()) newErrors.phone = 'Phone Number is required';
+
+        // Enhanced phone validation
+        if (!formData.phone.trim()) {
+            newErrors.phone = 'Phone Number is required';
+        } else {
+            // Remove all non-digit characters to count actual digits
+            const digitsOnly = formData.phone.replace(/\D/g, '');
+            // Check if phone contains only valid characters (digits, spaces, dashes, parentheses, plus)
+            const phoneRegex = /^[\d\s\-()+]+$/;
+
+            if (!phoneRegex.test(formData.phone)) {
+                newErrors.phone = 'Phone number can only contain digits, spaces, dashes, parentheses, and plus sign';
+            } else if (digitsOnly.length < 10) {
+                newErrors.phone = 'Phone number must contain at least 10 digits';
+            } else if (digitsOnly.length > 15) {
+                newErrors.phone = 'Phone number cannot exceed 15 digits';
+            }
+        }
+
         if (!formData.email.trim()) {
             newErrors.email = 'Email is required';
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
@@ -28,15 +47,23 @@ const AddLead = () => {
 
     const handleCreate = () => {
         if (validateForm()) {
-            // For demo purposes, save to localStorage
-            const leadData = {
-                ...formData,
-                leadType
-            };
-            localStorage.setItem('lead_1', JSON.stringify(leadData));
+            try {
+                // Use the utility function to save the lead
+                const newLead = saveLead({
+                    fullName: formData.fullName,
+                    phone: formData.phone,
+                    email: formData.email,
+                    leadType
+                });
 
-            console.log('Creating lead:', leadData);
-            navigate('/dashboard/leasing/leads/1');
+                console.log('Lead created successfully:', newLead);
+
+                // Navigate to the newly created lead's detail page
+                navigate(`/dashboard/leasing/leads/${newLead.id}`);
+            } catch (error) {
+                console.error('Failed to create lead:', error);
+                // TODO: Show error message to user
+            }
         }
     };
 
