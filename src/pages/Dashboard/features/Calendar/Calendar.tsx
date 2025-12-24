@@ -93,38 +93,99 @@ const Calendar: React.FC = () => {
         return parsedDate;
     };
 
-    // Transform calendar events to Reminder format for MonthGrid
+   
     const reminders = useMemo<Reminder[]>(() => {
+        // Valid reminder types
+        const validReminderTypes: Array<'maintenance' | 'viewing' | 'meeting' | 'other'> = [
+            'maintenance',
+            'viewing',
+            'meeting',
+            'other',
+        ];
+
+        // Keyword patterns with word boundaries for stricter matching
+        const keywordPatterns = {
+            maintenance: /\b(maintenance|repair|fix|check|inspection|service|upkeep)\b/i,
+            viewing: /\b(viewing|show|tour|open\s+house|property\s+view)\b/i,
+            meeting: /\b(meeting|appointment|conference|consultation|discussion)\b/i,
+        };
+
         return calendarEvents.map((event) => {
-            // Map event type to Reminder type
             let reminderType: 'maintenance' | 'viewing' | 'meeting' | 'other' = 'other';
-            
-            if (event.type === 'reminder') {
-                // For reminders, use the type from metadata if available
-                const reminderTypeFromMeta = event.metadata?.reminderType;
-                if (reminderTypeFromMeta === 'viewing' || reminderTypeFromMeta === 'meeting' || reminderTypeFromMeta === 'other') {
-                    reminderType = reminderTypeFromMeta;
-                } else if (reminderTypeFromMeta === 'reminder') {
-                    // Check if title suggests maintenance
-                    const titleLower = event.title.toLowerCase();
-                    if (titleLower.includes('maintenance') || titleLower.includes('repair') || titleLower.includes('check')) {
-                        reminderType = 'maintenance';
-                    } else {
-                        reminderType = 'other';
+            let inferenceSource: 'metadata' | 'keywords' | 'default' = 'default';
+            let inferenceIssues: string[] = [];
+
+            // Strategy 1: Prefer explicit type from metadata (normalize and validate)
+            if (event.metadata?.reminderType) {
+                const metaType = String(event.metadata.reminderType).toLowerCase().trim();
+                
+                // Normalize common variations
+                const normalizedType = metaType === 'reminder' ? 'other' : metaType;
+                
+                // Validate against allowed values
+                if (validReminderTypes.includes(normalizedType as typeof reminderType)) {
+                    reminderType = normalizedType as typeof reminderType;
+                    inferenceSource = 'metadata';
+                } else {
+                    // Invalid metadata type - log warning
+                    inferenceIssues.push(`Invalid metadata.reminderType: "${metaType}" (normalized: "${normalizedType}")`);
+                    console.warn(
+                        `[Calendar] Invalid reminder type in metadata for event "${event.id}":`,
+                        metaType,
+                        'Expected one of:',
+                        validReminderTypes.join(', ')
+                    );
+                }
+            }
+
+            // Strategy 2: Fall back to keyword matching with word boundaries if metadata didn't provide valid type
+            if (inferenceSource === 'default' && event.title) {
+                const titleLower = event.title.toLowerCase();
+                const matches: Array<{ type: typeof reminderType; count: number }> = [];
+
+                // Check each keyword pattern
+                for (const [type, pattern] of Object.entries(keywordPatterns)) {
+                    const matchCount = (titleLower.match(pattern) || []).length;
+                    if (matchCount > 0) {
+                        matches.push({
+                            type: type as typeof reminderType,
+                            count: matchCount,
+                        });
                     }
                 }
-            } else if (event.type === 'task') {
-                // For tasks, infer type from title or default to 'other'
-                const titleLower = event.title.toLowerCase();
-                if (titleLower.includes('maintenance') || titleLower.includes('repair') || titleLower.includes('check')) {
-                    reminderType = 'maintenance';
-                } else if (titleLower.includes('viewing') || titleLower.includes('show')) {
-                    reminderType = 'viewing';
-                } else if (titleLower.includes('meeting') || titleLower.includes('appointment')) {
-                    reminderType = 'meeting';
-                } else {
-                    reminderType = 'other';
+
+                if (matches.length > 0) {
+                    // If multiple matches, prefer the one with most occurrences
+                    // If tie, prefer maintenance > viewing > meeting > other
+                    matches.sort((a, b) => {
+                        if (b.count !== a.count) return b.count - a.count;
+                        const priority = { maintenance: 0, viewing: 1, meeting: 2, other: 3 };
+                        return priority[a.type] - priority[b.type];
+                    });
+
+                    reminderType = matches[0].type;
+                    inferenceSource = 'keywords';
+
+                    // Log if ambiguous (multiple matches with same count)
+                    if (matches.length > 1 && matches[0].count === matches[1].count) {
+                        inferenceIssues.push(
+                            `Ambiguous keyword match: ${matches.map(m => `${m.type} (${m.count})`).join(', ')}`
+                        );
+                        console.debug(
+                            `[Calendar] Ambiguous keyword inference for event "${event.id}" (title: "${event.title}"):`,
+                            matches.map(m => `${m.type} (${m.count} matches)`).join(', ')
+                        );
+                    }
                 }
+            }
+
+            // Strategy 3: Default to 'other' (already set, but log if we had issues)
+            if (inferenceIssues.length > 0 && inferenceSource !== 'metadata') {
+                console.debug(
+                    `[Calendar] Reminder type inference for event "${event.id}" (title: "${event.title}"):`,
+                    inferenceIssues.join('; '),
+                    `-> Using: ${reminderType} (source: ${inferenceSource})`
+                );
             }
 
             return {

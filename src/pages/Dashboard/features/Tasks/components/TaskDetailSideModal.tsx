@@ -17,10 +17,67 @@ const TaskDetailSideModal: React.FC<TaskDetailSideModalProps> = ({ isOpen, onClo
     const updateTaskMutation = useUpdateTask();
 
     // Map frontend status to backend status
-    const mapStatusToBackend = (frontendStatus: string): 'OPEN' | 'IN_PROGRESS' | 'ON_HOLD' | 'RESOLVED' | 'COMPLETED' | 'CANCELLED' => {
-        if (frontendStatus === 'Resolved') {
+    // Accepts optional currentBackendStatus to preserve granular status when toggling between Active/Resolved
+    const mapStatusToBackend = (
+        frontendStatus: string,
+        currentBackendStatus?: string
+    ): 'OPEN' | 'IN_PROGRESS' | 'ON_HOLD' | 'RESOLVED' | 'COMPLETED' | 'CANCELLED' => {
+        // Normalize frontend status (case-insensitive, trimmed)
+        const normalizedStatus = frontendStatus.trim();
+        
+        // Active status group: OPEN, IN_PROGRESS, ON_HOLD
+        if (normalizedStatus === 'Active' || normalizedStatus === 'Open' || normalizedStatus === 'In Progress' || normalizedStatus === 'On Hold') {
+            // If we have current backend status and it's already in the Active group, preserve it
+            if (currentBackendStatus) {
+                const current = currentBackendStatus.toUpperCase();
+                if (current === 'IN_PROGRESS' || current === 'ON_HOLD') {
+                    return current as 'IN_PROGRESS' | 'ON_HOLD';
+                }
+            }
+            // Map specific frontend values to their backend equivalents
+            if (normalizedStatus === 'In Progress') {
+                return 'IN_PROGRESS';
+            }
+            if (normalizedStatus === 'On Hold') {
+                return 'ON_HOLD';
+            }
+            if (normalizedStatus === 'Open') {
+                return 'OPEN';
+            }
+            // Default 'Active' -> 'OPEN'
+            return 'OPEN';
+        }
+        
+        // Resolved status group: RESOLVED, COMPLETED, CANCELLED
+        if (normalizedStatus === 'Resolved' || normalizedStatus === 'Completed' || normalizedStatus === 'Cancelled') {
+            // If we have current backend status and it's already in the Resolved group, preserve it
+            if (currentBackendStatus) {
+                const current = currentBackendStatus.toUpperCase();
+                if (current === 'COMPLETED' || current === 'CANCELLED') {
+                    return current as 'COMPLETED' | 'CANCELLED';
+                }
+            }
+            // Map specific frontend values to their backend equivalents
+            if (normalizedStatus === 'Completed') {
+                return 'COMPLETED';
+            }
+            if (normalizedStatus === 'Cancelled') {
+                return 'CANCELLED';
+            }
+            // Default 'Resolved' -> 'RESOLVED'
             return 'RESOLVED';
         }
+        
+        // Fallback: if status doesn't match known values, try to preserve current or default to OPEN
+        if (currentBackendStatus) {
+            const current = currentBackendStatus.toUpperCase();
+            if (['OPEN', 'IN_PROGRESS', 'ON_HOLD', 'RESOLVED', 'COMPLETED', 'CANCELLED'].includes(current)) {
+                return current as 'OPEN' | 'IN_PROGRESS' | 'ON_HOLD' | 'RESOLVED' | 'COMPLETED' | 'CANCELLED';
+            }
+        }
+        
+        // Ultimate fallback
+        console.warn(`[TaskDetailSideModal] Unknown frontend status "${frontendStatus}", defaulting to OPEN`);
         return 'OPEN';
     };
 
