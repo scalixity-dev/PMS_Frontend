@@ -69,3 +69,21 @@ export const useCreateApplication = () => {
   });
 };
 
+/**
+ * Hook to update an application
+ */
+export const useUpdateApplication = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, updateData }: { id: string; updateData: Partial<any> }) =>
+      applicationService.update(id, updateData),
+    onSuccess: (data, variables) => {
+      // Invalidate the specific application detail
+      queryClient.invalidateQueries({ queryKey: applicationQueryKeys.detail(variables.id) });
+      // Also invalidate the list to ensure consistency
+      queryClient.invalidateQueries({ queryKey: applicationQueryKeys.lists() });
+    },
+  });
+};
+
