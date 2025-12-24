@@ -3,11 +3,19 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ChevronDown, ChevronLeft, X, FileText } from 'lucide-react';
 import ReviewSuccessModal from './components/ReviewSuccessModal';
 import { getTemplateHTML } from './utils/templateUtils';
+import DocumentPreviewModal from '../components/DocumentPreviewModal';
+import { handleDocumentPrint } from '../utils/printPreviewUtils';
 
 // Mock data for properties and tenants
 const MOCK_PROPERTIES = ['Luxury Property', 'Downtown Apartment', 'Beach House', 'Mountain Villa'];
 const MOCK_TENANTS = ['Luxury Property', 'John Doe', 'Jane Smith', 'Bob Johnson'];
 const MOCK_LEASES = ['Lease 1', 'Lease 2', 'Lease 3', 'Lease 4'];
+
+interface TemplateLocationState {
+    showSuccessPopup?: boolean;
+    leaseName?: string;
+    propertyName?: string;
+}
 
 const TemplateView: React.FC = () => {
     const navigate = useNavigate();
@@ -29,20 +37,21 @@ const TemplateView: React.FC = () => {
     const documentContentRef = useRef<HTMLDivElement>(null);
 
     const location = useLocation();
+    const state = location.state as TemplateLocationState;
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
     const [successData, setSuccessData] = useState({ leaseName: '', propertyName: '' });
 
     useEffect(() => {
-        if (location.state?.showSuccessPopup) {
+        if (state?.showSuccessPopup) {
             setIsSuccessModalOpen(true);
             setSuccessData({
-                leaseName: location.state.leaseName || 'Lease 9',
-                propertyName: location.state.propertyName || 'abc'
+                leaseName: state.leaseName || 'Lease 9',
+                propertyName: state.propertyName || 'abc'
             });
             // Clear location state to prevent modal from showing again on refresh
             window.history.replaceState({}, document.title);
         }
-    }, [location.state]);
+    }, [state]);
 
     // Decode template name from URL
     const decodedTemplateName = templateName ? decodeURIComponent(templateName) : '24-Hour Notice to Enter';
@@ -82,12 +91,8 @@ const TemplateView: React.FC = () => {
 
     const handlePrint = () => {
         setIsActionsDropdownOpen(false);
-        // Close preview modal if open
         setIsPreviewModalOpen(false);
-        // Trigger browser print dialog directly
-        setTimeout(() => {
-            window.print();
-        }, 100);
+        handleDocumentPrint(documentContentRef, { title: decodedTemplateName });
     };
 
     const handlePreview = () => {
@@ -340,47 +345,13 @@ const TemplateView: React.FC = () => {
             )}
 
             {/* Preview Modal */}
-            {isPreviewModalOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/40 animate-in fade-in duration-200 print:hidden">
-                    <div className="bg-white rounded-2xl w-full max-w-5xl h-[90vh] shadow-2xl mx-4 flex flex-col animate-in zoom-in-95 duration-200">
-                        {/* Preview Header */}
-                        <div className="bg-[#3A6D6C] px-6 py-4 flex items-center justify-between rounded-t-2xl flex-shrink-0">
-                            <h2 className="text-white text-lg font-semibold">Document Preview - {decodedTemplateName}</h2>
-                            <button
-                                onClick={() => setIsPreviewModalOpen(false)}
-                                className="hover:bg-white/10 p-2 rounded-full transition-colors"
-                            >
-                                <X size={24} className="text-white" />
-                            </button>
-                        </div>
-
-                        {/* Preview Content - Scrollable */}
-                        <div className="flex-1 overflow-y-auto p-8 bg-gray-50">
-                            <div className="max-w-4xl mx-auto bg-white p-12 rounded-lg shadow-sm">
-                                {documentContentRef.current && (
-                                    <div dangerouslySetInnerHTML={{ __html: documentContentRef.current.innerHTML }} />
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Preview Footer */}
-                        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3 rounded-b-2xl flex-shrink-0">
-                            <button
-                                onClick={() => setIsPreviewModalOpen(false)}
-                                className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium"
-                            >
-                                Close
-                            </button>
-                            <button
-                                onClick={handlePrint}
-                                className="px-6 py-2.5 bg-[#3A6D6C] text-white rounded-lg hover:bg-[#2d5650] transition-colors font-medium"
-                            >
-                                Print Document
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <DocumentPreviewModal
+                isOpen={isPreviewModalOpen}
+                onClose={() => setIsPreviewModalOpen(false)}
+                title={decodedTemplateName}
+                contentRef={documentContentRef}
+                customPrintHandler={handlePrint}
+            />
 
             <ReviewSuccessModal
                 isOpen={isSuccessModalOpen}

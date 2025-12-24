@@ -1,12 +1,22 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ChevronDown, ChevronLeft, Plus, X, UploadCloud } from 'lucide-react';
+import DOMPurify from 'dompurify';
 import ReviewSuccessModal from '../landlordforms/components/ReviewSuccessModal';
+import DocumentPreviewModal from '../components/DocumentPreviewModal';
+import { handleDocumentPrint } from '../utils/printPreviewUtils';
+
+interface MyLocationState {
+    showSuccessPopup?: boolean;
+    leaseName?: string;
+    propertyName?: string;
+}
 
 const MyTemplateDetail: React.FC = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
-    const location = useLocation() as any;
+    const location = useLocation();
+    const state = location.state as MyLocationState;
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isAttachmentModalOpen, setIsAttachmentModalOpen] = useState(false);
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -60,11 +70,11 @@ const MyTemplateDetail: React.FC = () => {
     const [template, setTemplate] = useState<{ id: number; title: string; subtitle: string; content?: string } | null>(null);
 
     useEffect(() => {
-        if (location.state?.showSuccessPopup) {
+        if (state?.showSuccessPopup) {
             setIsSuccessModalOpen(true);
             setSuccessData({
-                leaseName: location.state.leaseName || 'Lease 9',
-                propertyName: location.state.propertyName || 'abc'
+                leaseName: state.leaseName || 'Lease 9',
+                propertyName: state.propertyName || 'abc'
             });
             // Clear location state to prevent modal from showing again on refresh
             window.history.replaceState({}, document.title);
@@ -145,46 +155,8 @@ const MyTemplateDetail: React.FC = () => {
         ];
     })();
 
-    const sanitizeHtml = (html: string): string => {
-        if (typeof window === 'undefined' || typeof document === 'undefined') {
-            return html;
-        }
-
-        const container = document.createElement('div');
-        container.innerHTML = html;
-
-        // Remove potentially dangerous elements
-        const blockedSelectors = ['script', 'iframe', 'object', 'embed', 'link[rel="import"]'];
-        container.querySelectorAll(blockedSelectors.join(',')).forEach((el) => el.remove());
-
-        // Remove inline event handlers and javascript: URLs
-        const walker = document.createTreeWalker(container, NodeFilter.SHOW_ELEMENT);
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-        let current = walker.currentNode as HTMLElement | null;
-        while (current) {
-            const attributes = Array.from(current.attributes);
-            attributes.forEach((attr) => {
-                const name = attr.name.toLowerCase();
-                const value = attr.value.trim().toLowerCase();
-
-                if (name.startsWith('on')) {
-                    current?.removeAttribute(attr.name);
-                }
-
-                if ((name === 'href' || name === 'src') && value.startsWith('javascript:')) {
-                    current?.removeAttribute(attr.name);
-                }
-            });
-
-            const next = walker.nextNode();
-            current = next as HTMLElement | null;
-        }
-
-        return container.innerHTML;
-    };
-
-    const sanitizedContent = useMemo(
-        () => (template?.content ? sanitizeHtml(template.content) : ''),
+    const sanitizedHtml = useMemo(
+        () => (template?.content ? DOMPurify.sanitize(template.content) : ''),
         [template?.content]
     );
 
@@ -195,9 +167,7 @@ const MyTemplateDetail: React.FC = () => {
     const handlePrint = () => {
         setIsActionsDropdownOpen(false);
         setIsPreviewModalOpen(false);
-        setTimeout(() => {
-            window.print();
-        }, 100);
+        handleDocumentPrint(documentContentRef, { title: templateName });
     };
 
     const handlePreview = () => {
@@ -326,8 +296,8 @@ const MyTemplateDetail: React.FC = () => {
 
                     {/* Content Placeholder */}
                     <div className="px-12 py-8 min-h-[300px]" ref={documentContentRef}>
-                        {sanitizedContent ? (
-                            <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: sanitizedContent }} />
+                        {sanitizedHtml ? (
+                            <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />
                         ) : (
                             <p className="text-gray-400 text-sm">| Type here</p>
                         )}
@@ -664,47 +634,13 @@ const MyTemplateDetail: React.FC = () => {
             />
 
             {/* Document Preview Modal */}
-            {isPreviewModalOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/40 animate-in fade-in duration-200 print:hidden">
-                    <div className="bg-white rounded-2xl w-full max-w-5xl h-[90vh] shadow-2xl mx-4 flex flex-col animate-in zoom-in-95 duration-200 overflow-hidden">
-                        {/* Preview Header */}
-                        <div className="bg-[#3A6D6C] px-6 py-4 flex items-center justify-between rounded-t-2xl flex-shrink-0">
-                            <h2 className="text-white text-lg font-semibold">Document Preview - {templateName}</h2>
-                            <button
-                                onClick={() => setIsPreviewModalOpen(false)}
-                                className="hover:bg-white/10 p-2 rounded-full transition-colors"
-                            >
-                                <X size={24} className="text-white" />
-                            </button>
-                        </div>
-
-                        {/* Preview Content - Scrollable */}
-                        <div className="flex-1 overflow-y-auto p-8 bg-gray-50">
-                            <div className="max-w-4xl mx-auto bg-white p-12 rounded-lg shadow-sm font-outfit">
-                                {documentContentRef.current && (
-                                    <div dangerouslySetInnerHTML={{ __html: documentContentRef.current.innerHTML }} />
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Preview Footer */}
-                        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3 rounded-b-2xl flex-shrink-0">
-                            <button
-                                onClick={() => setIsPreviewModalOpen(false)}
-                                className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium text-sm"
-                            >
-                                Close
-                            </button>
-                            <button
-                                onClick={handlePrint}
-                                className="px-6 py-2.5 bg-[#3A6D6C] text-white rounded-lg hover:bg-[#2d5650] transition-colors font-medium text-sm"
-                            >
-                                Print Document
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <DocumentPreviewModal
+                isOpen={isPreviewModalOpen}
+                onClose={() => setIsPreviewModalOpen(false)}
+                title={templateName}
+                contentRef={documentContentRef}
+                customPrintHandler={handlePrint}
+            />
         </div>
     );
 };

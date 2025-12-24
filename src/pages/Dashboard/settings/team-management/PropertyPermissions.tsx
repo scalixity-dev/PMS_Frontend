@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { TeamManagementSettingsLayout } from "../../../../components/common/TeamManagementSettingsLayout";
 import Pagination from "../../components/Pagination";
+import propertyPlaceholder from "../../../../assets/images/property_placeholder.png";
 
 interface Property {
     id: string;
@@ -15,25 +16,25 @@ const ALL_PROPERTIES: Property[] = [
         id: "1",
         name: "abc",
         address: "78 Scheme No 78 - II, Indore, MP, 452010, IN",
-        image: "/src/assets/images/property_placeholder.png",
+        image: propertyPlaceholder,
     },
     {
         id: "2",
         name: "abc",
         address: "78 Scheme No 78 - II, Indore, MP, 452010, IN",
-        image: "/src/assets/images/property_placeholder.png",
+        image: propertyPlaceholder,
     },
     {
         id: "3",
         name: "abc",
         address: "78 Scheme No 78 - II, Indore, MP, 452010, IN",
-        image: "/src/assets/images/property_placeholder.png",
+        image: propertyPlaceholder,
     },
     {
         id: "4",
         name: "abc",
         address: "78 Scheme No 78 - II, Indore, MP, 452010, IN",
-        image: "/src/assets/images/property_placeholder.png",
+        image: propertyPlaceholder,
     },
 ];
 

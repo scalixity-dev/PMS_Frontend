@@ -1,10 +1,18 @@
+const escapeHtml = (unsafe: string) => {
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+};
 
 export const getTemplateHTML = (templateName: string) => {
-    const uppercaseTitle = templateName.toUpperCase();
+    const sanitizedTitle = escapeHtml(templateName).toUpperCase();
     return `
         <div class="mock-document-content">
             <div style="text-align: center; margin-bottom: 32px;">
-                <h1 style="font-size: 24px; font-weight: bold; color: #111827; margin-bottom: 8px;">${uppercaseTitle}</h1>
+                <h1 style="font-size: 24px; font-weight: bold; color: #111827; margin-bottom: 8px;">${sanitizedTitle}</h1>
                 <p style="font-size: 14px; color: #6B7280;">Template Document</p>
             </div>
 

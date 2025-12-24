@@ -98,11 +98,17 @@ const WizardDropdown: React.FC<WizardDropdownProps> = ({
     </div>
 );
 
+interface LocationState {
+    returnPath?: string;
+    selectedProperty?: string;
+}
+
 // --- Main Component ---
 
 const UseTemplateWizard: React.FC = () => {
     const navigate = useNavigate();
-    const location = useLocation() as any;
+    const location = useLocation();
+    const state = location.state as LocationState;
     const { templateName } = useParams<{ templateName: string }>();
 
     const [currentStep, setCurrentStep] = useState<StepNumber>(1);
@@ -166,7 +172,7 @@ const UseTemplateWizard: React.FC = () => {
     };
 
     const handleSendToReview = () => {
-        const returnPath = location.state?.returnPath || `/documents/landlord-forms/template/${templateName}`;
+        const returnPath = state?.returnPath || `/documents/landlord-forms/template/${templateName}`;
         navigate(returnPath, {
             state: {
                 showSuccessPopup: true,
@@ -289,7 +295,7 @@ const UseTemplateWizard: React.FC = () => {
     return (
         <div className="flex flex-col h-full w-full bg-[var(--color-background)] px-6 overflow-y-auto">
             <div className="flex-1 flex items-start justify-center pt-8 pb-10">
-                <div className={`bg-[#DFE5E3] rounded-3xl shadow-lg w-full ${currentStep >= 3 ? 'max-w-7xl' : 'max-w-2xl'} min-h-[500px] p-12 transition-all duration-300`}>
+                <div className={`bg-[#DFE5E3] rounded-3xl shadow-lg w-full ${currentStep >= 3 ? 'max-w-5xl' : 'max-w-2xl'} min-h-[500px] p-12 transition-all duration-300`}>
 
                     {/* Back Button */}
                     <button

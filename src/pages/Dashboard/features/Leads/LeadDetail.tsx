@@ -7,6 +7,7 @@ import AddLogModal from './components/AddLogModal';
 import AddMeetingModal from './components/AddMeetingModal';
 import MessageModal from './components/MessageModal';
 import InviteToApplyModal from './components/InviteToApplyModal';
+import { useGetAllListings } from '../../../../hooks/useListingQueries';
 
 interface ActivityItem {
     id: number;
@@ -43,6 +44,12 @@ const LeadDetail = () => {
         phone: '+91 98563 25832',
         email: 'gurjaratul0723@gmail.com'
     });
+
+    const { data: listingsData } = useGetAllListings();
+    const listings = listingsData?.map(l => ({
+        id: l.id,
+        title: l.title || l.property?.propertyName || 'Untitled Listing'
+    })) || [];
 
     useEffect(() => {
         const savedData = localStorage.getItem(`lead_${id || 1}`);
@@ -321,6 +328,51 @@ const LeadDetail = () => {
         });
     };
 
+    const handleInviteSend = (email: string, listing: string) => {
+        const now = new Date();
+        const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }).toLowerCase();
+        const date = now.toLocaleDateString([], { day: 'numeric', month: 'short' });
+
+        // 1. Update status to Working if it's New
+        if (status === 'New') {
+            setStatus('Working');
+        }
+
+        // 2. Add Activity to timeline
+        const newActivity = {
+            id: Date.now(),
+            user: 'Sam James',
+            time: time,
+            type: 'Activity',
+            text: `Sent invitation to ${email} for listing: ${listing}`,
+        };
+
+        setActivities(prev => {
+            const todayIndex = prev.findIndex(day => day.date === date);
+            if (todayIndex !== -1) {
+                const newActivities = [...prev];
+                newActivities[todayIndex] = {
+                    ...newActivities[todayIndex],
+                    items: [newActivity, ...newActivities[todayIndex].items]
+                };
+                return newActivities;
+            } else {
+                return [
+                    {
+                        id: Date.now(),
+                        date: date,
+                        items: [newActivity]
+                    },
+                    ...prev
+                ];
+            }
+        });
+
+        // 3. Show success (In a real app, we'd use a toast library here)
+        console.log(`Successfully invited ${email} to ${listing}`);
+        setIsInviteModalOpen(false);
+    };
+
     const handleDeleteActivity = (dayId: number, itemId: number) => {
         setActivities(prev => prev.map(day => {
             if (day.id === dayId) {
@@ -503,7 +555,7 @@ const LeadDetail = () => {
                                                             setIsLogModalOpen(true);
                                                             setShowLogOptions(false);
                                                         }}
-                                                        className="w-full text-left px-5 py-2.5 hover:bg-[#F0F4F8] text-[#3E706F] font-bold transition-colors text-xs border-b border-gray-300 last:border-0"
+                                                        className="w-full text-center px-5 py-2.5 hover:bg-[#F0F4F8] text-[#3E706F] font-bold transition-colors text-xs border-b border-gray-300 last:border-0"
                                                     >
                                                         Log a call
                                                     </button>
@@ -512,7 +564,7 @@ const LeadDetail = () => {
                                                             setIsMeetingModalOpen(true);
                                                             setShowLogOptions(false);
                                                         }}
-                                                        className="w-full text-left px-5 py-2.5 hover:bg-[#F0F4F8] text-[#3E706F] font-bold transition-colors text-xs"
+                                                        className="w-full text-center px-5 py-2.5 hover:bg-[#F0F4F8] text-[#3E706F] font-bold transition-colors text-xs"
                                                     >
                                                         Log a meeting
                                                     </button>
@@ -708,11 +760,9 @@ const LeadDetail = () => {
             <InviteToApplyModal
                 isOpen={isInviteModalOpen}
                 onClose={() => setIsInviteModalOpen(false)}
-                onSend={(email, listing) => {
-                    console.log('Sending invitation to:', email, 'for listing:', listing);
-                    setIsInviteModalOpen(false);
-                }}
+                onSend={handleInviteSend}
                 initialEmail={leadInfo.email}
+                listings={listings}
             />
         </div >
     );

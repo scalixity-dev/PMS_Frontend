@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { X, Printer } from 'lucide-react';
+import React, { useState, useRef } from 'react';
 import type { EditorView } from '@tiptap/pm/view';
 import PrimaryActionButton from '../../../../../components/common/buttons/PrimaryActionButton';
 import TiptapEditor from '../../../../../components/common/Editor/TiptapEditor';
+import DocumentPreviewModal from './DocumentPreviewModal';
+import { handleDocumentPrint } from '../utils/printPreviewUtils';
 
 interface TemplateEditorProps {
     initialEditorContent?: string;
@@ -37,73 +38,27 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
     const [isDefaultSignature, setIsDefaultSignature] = useState(true);
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
     const [, setEditor] = useState(null);
+    const previewContentRef = useRef<HTMLDivElement | null>(null);
 
     const handlePrint = () => {
-        const printContent = document.getElementById('preview-content-area');
-        if (!printContent) return;
-
-        // Create a hidden iframe
-        const iframe = document.createElement('iframe');
-        iframe.style.position = 'fixed';
-        iframe.style.right = '0';
-        iframe.style.bottom = '0';
-        iframe.style.width = '0';
-        iframe.style.height = '0';
-        iframe.style.border = '0';
-        document.body.appendChild(iframe);
-
-        const doc = iframe.contentWindow?.document;
-        if (!doc) return;
-
-        doc.write(`
-            <html>
-                <head>
-                    <title>Document Preview</title>
-                    <style>
-                        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
-                        body { 
-                            font-family: 'Outfit', sans-serif; 
-                            padding: 40px; 
-                            color: #374151;
-                        }
-                        .preview-content { 
-                            max-width: 800px; 
-                            margin: 0 auto; 
-                            line-height: 1.6; 
-                        }
-                        .auto-fill-pill {
-                            background-color: #88D94C;
-                            border-radius: 9999px;
-                            padding: 4px 14px;
-                            margin: 0 4px;
-                            font-weight: 700;
-                            color: white;
-                            display: inline-flex;
-                            vertical-align: middle;
-                            -webkit-print-color-adjust: exact;
-                        }
-                        h1, h2, h3 { color: #111827; }
-                        p { margin-bottom: 1em; }
-                    </style>
-                </head>
-                <body>
-                    <div class="preview-content">
-                        ${printContent.innerHTML}
-                    </div>
-                </body>
-            </html>
-        `);
-        doc.close();
-
-        // Wait for styles and fonts to load before printing
-        setTimeout(() => {
-            iframe.contentWindow?.focus();
-            iframe.contentWindow?.print();
-            // Cleanup: remove the iframe after a short delay
-            setTimeout(() => {
-                document.body.removeChild(iframe);
-            }, 1000);
-        }, 500);
+        if (previewContentRef.current) {
+            handleDocumentPrint(previewContentRef, {
+                title: 'Document Preview',
+                customStyles: `
+                    .auto-fill-pill {
+                        background-color: #88D94C;
+                        border-radius: 9999px;
+                        padding: 4px 14px;
+                        margin: 0 4px;
+                        font-weight: 700;
+                        color: white;
+                        display: inline-flex;
+                        vertical-align: middle;
+                        -webkit-print-color-adjust: exact;
+                    }
+                `
+            });
+        }
     };
 
     const handleEditorChange = (content: string) => {
@@ -301,48 +256,13 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
             </div>
 
             {/* Preview Modal */}
-            {isPreviewModalOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/40 animate-in fade-in duration-200 print:hidden">
-                    <div className="bg-white rounded-2xl w-full max-w-5xl h-[90vh] shadow-2xl mx-4 flex flex-col animate-in zoom-in-95 duration-200">
-                        {/* Preview Header */}
-                        <div className="bg-[#3A6D6C] px-6 py-4 flex items-center justify-between rounded-t-2xl flex-shrink-0">
-                            <h2 className="text-white text-lg font-semibold">Document Preview</h2>
-                            <button
-                                onClick={() => setIsPreviewModalOpen(false)}
-                                className="hover:bg-white/10 p-2 rounded-full transition-colors"
-                            >
-                                <X size={24} className="text-white" />
-                            </button>
-                        </div>
-
-                        {/* Preview Content - Scrollable */}
-                        <div className="flex-1 overflow-y-auto p-8 bg-gray-50">
-                            <div
-                                id="preview-content-area"
-                                className="max-w-4xl mx-auto bg-white p-12 rounded-lg shadow-sm prose prose-sm sm:prose lg:prose-lg xl:prose-2xl focus:outline-none"
-                                dangerouslySetInnerHTML={{ __html: editorContent }}
-                            />
-                        </div>
-
-                        {/* Preview Footer */}
-                        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3 rounded-b-2xl flex-shrink-0">
-                            <button
-                                onClick={() => setIsPreviewModalOpen(false)}
-                                className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium"
-                            >
-                                Close
-                            </button>
-                            <button
-                                onClick={handlePrint}
-                                className="px-6 py-2.5 bg-[#3A6D6C] text-white rounded-lg hover:bg-[#2d5650] transition-colors font-medium flex items-center gap-2"
-                            >
-                                <Printer size={18} />
-                                Print Document
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <DocumentPreviewModal
+                isOpen={isPreviewModalOpen}
+                onClose={() => setIsPreviewModalOpen(false)}
+                title="Document Preview"
+                htmlContent={editorContent}
+                customPrintHandler={handlePrint}
+            />
 
             {/* Define Signature Section */}
             {

@@ -6,6 +6,39 @@ import PrimaryActionButton from '../../../../components/common/buttons/PrimaryAc
 const AddLead = () => {
     const navigate = useNavigate();
     const [leadType, setLeadType] = useState<'Hot' | 'Cold'>('Hot');
+    const [formData, setFormData] = useState({
+        fullName: '',
+        phone: '',
+        email: ''
+    });
+    const [errors, setErrors] = useState<Record<string, string>>({});
+
+    const validateForm = () => {
+        const newErrors: Record<string, string> = {};
+        if (!formData.fullName.trim()) newErrors.fullName = 'Full Name is required';
+        if (!formData.phone.trim()) newErrors.phone = 'Phone Number is required';
+        if (!formData.email.trim()) {
+            newErrors.email = 'Email is required';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+            newErrors.email = 'Invalid email format';
+        }
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const handleCreate = () => {
+        if (validateForm()) {
+            // For demo purposes, save to localStorage
+            const leadData = {
+                ...formData,
+                leadType
+            };
+            localStorage.setItem('lead_1', JSON.stringify(leadData));
+
+            console.log('Creating lead:', leadData);
+            navigate('/dashboard/leasing/leads/1');
+        }
+    };
 
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-10">
@@ -42,9 +75,12 @@ const AddLead = () => {
                                 <label className="block text-sm font-bold text-gray-800 ml-1">Full Name*</label>
                                 <input
                                     type="text"
+                                    value={formData.fullName}
+                                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                                     placeholder="Full Name"
-                                    className="w-full bg-white border border-gray-100 rounded-lg py-3 px-4 text-sm focus:outline-none shadow-sm placeholder:text-gray-400 font-medium"
+                                    className={`w-full bg-white border ${errors.fullName ? 'border-red-500' : 'border-gray-100'} rounded-lg py-3 px-4 text-sm focus:outline-none shadow-sm placeholder:text-gray-400 font-medium`}
                                 />
+                                {errors.fullName && <p className="text-red-500 text-xs mt-1 ml-1 font-medium">{errors.fullName}</p>}
                             </div>
 
                             {/* Phone Number */}
@@ -52,9 +88,12 @@ const AddLead = () => {
                                 <label className="block text-sm font-bold text-gray-800 ml-1">Phone Number*</label>
                                 <input
                                     type="text"
+                                    value={formData.phone}
+                                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                     placeholder="Phone Number"
-                                    className="w-full bg-white border border-gray-100 rounded-lg py-3 px-4 text-sm focus:outline-none shadow-sm placeholder:text-gray-400 font-medium"
+                                    className={`w-full bg-white border ${errors.phone ? 'border-red-500' : 'border-gray-100'} rounded-lg py-3 px-4 text-sm focus:outline-none shadow-sm placeholder:text-gray-400 font-medium`}
                                 />
+                                {errors.phone && <p className="text-red-500 text-xs mt-1 ml-1 font-medium">{errors.phone}</p>}
                             </div>
 
                             {/* Email */}
@@ -62,9 +101,12 @@ const AddLead = () => {
                                 <label className="block text-sm font-bold text-gray-800 ml-1">Email *</label>
                                 <input
                                     type="email"
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                     placeholder="Enter Email"
-                                    className="w-full bg-white border border-gray-100 rounded-lg py-3 px-4 text-sm focus:outline-none shadow-sm placeholder:text-gray-400 font-medium"
+                                    className={`w-full bg-white border ${errors.email ? 'border-red-500' : 'border-gray-100'} rounded-lg py-3 px-4 text-sm focus:outline-none shadow-sm placeholder:text-gray-400 font-medium`}
                                 />
+                                {errors.email && <p className="text-red-500 text-xs mt-1 ml-1 font-medium">{errors.email}</p>}
                             </div>
 
                             {/* Lead Type Selection */}
@@ -95,7 +137,7 @@ const AddLead = () => {
 
                         <div className="mt-8">
                             <PrimaryActionButton
-                                onClick={() => navigate('/dashboard/leasing/leads/1')}
+                                onClick={handleCreate}
                                 text="Create"
                                 className="px-8 py-2.5 rounded-lg font-bold text-base shadow-lg"
                             />

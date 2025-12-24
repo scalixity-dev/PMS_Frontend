@@ -12,13 +12,51 @@ const MessageModal: React.FC<MessageModalProps> = ({ isOpen, onClose, onConfirm 
     const [message, setMessage] = useState('');
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const modalRef = React.useRef<HTMLDivElement>(null);
+    const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+    const returnFocusRef = React.useRef<HTMLElement | null>(null);
 
     React.useEffect(() => {
         if (isOpen) {
             setMessage('');
             setSelectedFile(null);
+            returnFocusRef.current = document.activeElement as HTMLElement;
+            // Short delay to ensure modal is rendered and animations are starting
+            setTimeout(() => textareaRef.current?.focus(), 100);
+
+            const handleKeyDown = (e: KeyboardEvent) => {
+                if (e.key === 'Escape') {
+                    onClose();
+                }
+
+                if (e.key === 'Tab' && modalRef.current) {
+                    const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
+                        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+                    );
+                    const firstElement = focusableElements[0];
+                    const lastElement = focusableElements[focusableElements.length - 1];
+
+                    if (e.shiftKey) {
+                        if (document.activeElement === firstElement) {
+                            lastElement.focus();
+                            e.preventDefault();
+                        }
+                    } else {
+                        if (document.activeElement === lastElement) {
+                            firstElement.focus();
+                            e.preventDefault();
+                        }
+                    }
+                }
+            };
+
+            window.addEventListener('keydown', handleKeyDown);
+            return () => {
+                window.removeEventListener('keydown', handleKeyDown);
+                returnFocusRef.current?.focus();
+            };
         }
-    }, [isOpen]);
+    }, [isOpen, onClose]);
 
     if (!isOpen) return null;
 
@@ -29,17 +67,34 @@ const MessageModal: React.FC<MessageModalProps> = ({ isOpen, onClose, onConfirm 
     };
 
     return createPortal(
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40  animate-in fade-in duration-300">
-            <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-300 overflow-hidden mx-4">
+        <div
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 animate-in fade-in duration-300"
+            onClick={(e) => {
+                if (e.target === e.currentTarget) onClose();
+            }}
+        >
+            <div
+                ref={modalRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="message-modal-title"
+                className="bg-white rounded-3xl w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-300 overflow-hidden mx-4"
+            >
                 {/* Header */}
-                <div className="bg-[#3E706F] px-5 py-3 flex items-center justify-between text-white">
-                    <div className="flex items-center gap-2">
-                        <button onClick={onClose} className="hover:bg-white/10 p-1 rounded-full transition-colors">
-                            <ChevronLeft size={20} />
-                        </button>
-                        <span className="text-lg font-bold font-outfit">Send a Text Message</span>
-                    </div>
-                    <button onClick={onClose} className="hover:bg-white/10 p-1 rounded-full transition-colors">
+                <div className="bg-[#3E706F] px-5 py-3 flex items-center justify-between text-white relative">
+                    <button
+                        onClick={onClose}
+                        aria-label="Back"
+                        className="hover:bg-white/10 p-1 rounded-full transition-colors z-10"
+                    >
+                        <ChevronLeft size={20} />
+                    </button>
+                    <span id="message-modal-title" className="absolute left-1/2 -translate-x-1/2 text-lg font-bold font-outfit text-center px-8">Send a Text Message</span>
+                    <button
+                        onClick={onClose}
+                        aria-label="Close"
+                        className="hover:bg-white/10 p-1 rounded-full transition-colors z-10"
+                    >
                         <X size={20} />
                     </button>
                 </div>
@@ -48,6 +103,7 @@ const MessageModal: React.FC<MessageModalProps> = ({ isOpen, onClose, onConfirm 
                 <div className="p-6 bg-[#F8FAFC]">
                     <div className="bg-white rounded-2xl border border-gray-200 p-3 shadow-[inset_0_4px_4px_0_rgba(0,0,0,0.25)] min-h-[150px] flex flex-col">
                         <textarea
+                            ref={textareaRef}
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
                             placeholder="Type your message here..."
@@ -62,6 +118,7 @@ const MessageModal: React.FC<MessageModalProps> = ({ isOpen, onClose, onConfirm 
                                 <span className="truncate max-w-[150px]">{selectedFile.name}</span>
                                 <button
                                     onClick={() => setSelectedFile(null)}
+                                    aria-label="Remove file"
                                     className="ml-2 hover:text-red-500"
                                 >
                                     <X size={12} />
