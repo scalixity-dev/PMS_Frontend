@@ -6,7 +6,7 @@ export interface Reminder {
   description?: string;
   date: string;
   time?: string;
-  type: 'reminder' | 'viewing' | 'meeting' | 'other';
+  type: 'maintenance' | 'viewing' | 'meeting' | 'other';
   property?: string;
   assignee?: string;
   recurring: boolean;
