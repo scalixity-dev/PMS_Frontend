@@ -170,20 +170,19 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
 
     const handleCloseAttempt = () => {
         // Check if any field differs from initial snapshot (form is dirty)
-        const isDirty =
-    const datesEqual = (a?: Date, b?: Date) => 
-        (!a && !b) || (a && b && a.getTime() === b.getTime());
+        const datesEqual = (a?: Date, b?: Date) => 
+            (!a && !b) || (a && b && a.getTime() === b.getTime());
 
-    const isDirty =
-        formData.title !== initialSnapshot.title ||
-        formData.description !== initialSnapshot.description ||
-        !datesEqual(formData.date, initialSnapshot.date) ||
-        formData.time !== initialSnapshot.time ||
-        formData.assignee !== initialSnapshot.assignee ||
-        formData.property !== initialSnapshot.property ||
-        formData.isRecurring !== initialSnapshot.isRecurring ||
-        formData.frequency !== initialSnapshot.frequency ||
-        !datesEqual(formData.endDate, initialSnapshot.endDate);
+        const isDirty =
+            formData.title !== initialSnapshot.title ||
+            formData.description !== initialSnapshot.description ||
+            !datesEqual(formData.date, initialSnapshot.date) ||
+            formData.time !== initialSnapshot.time ||
+            formData.assignee !== initialSnapshot.assignee ||
+            formData.property !== initialSnapshot.property ||
+            formData.isRecurring !== initialSnapshot.isRecurring ||
+            formData.frequency !== initialSnapshot.frequency ||
+            !datesEqual(formData.endDate, initialSnapshot.endDate);
 
         if (isDirty) {
             setShowExitConfirmation(true);
