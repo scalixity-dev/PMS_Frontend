@@ -104,5 +104,22 @@ export const API_ENDPOINTS = {
     GET_DOCUMENTS: (id: string) => `${API_BASE_URL}/service-provider/${id}/documents`,
     DELETE_DOCUMENT: (documentId: string) => `${API_BASE_URL}/service-provider/documents/${documentId}`,
   },
+  TASK: {
+    GET_ALL: `${API_BASE_URL}/task`,
+    GET_ONE: (id: string) => `${API_BASE_URL}/task/${id}`,
+    CREATE: `${API_BASE_URL}/task`,
+    UPDATE: (id: string) => `${API_BASE_URL}/task/${id}`,
+    DELETE: (id: string) => `${API_BASE_URL}/task/${id}`,
+  },
+  REMINDER: {
+    GET_ALL: `${API_BASE_URL}/reminder`,
+    GET_ONE: (id: string) => `${API_BASE_URL}/reminder/${id}`,
+    CREATE: `${API_BASE_URL}/reminder`,
+    UPDATE: (id: string) => `${API_BASE_URL}/reminder/${id}`,
+    DELETE: (id: string) => `${API_BASE_URL}/reminder/${id}`,
+  },
+  CALENDAR: {
+    GET_EVENTS: `${API_BASE_URL}/calendar/events`,
+  },
 };
 

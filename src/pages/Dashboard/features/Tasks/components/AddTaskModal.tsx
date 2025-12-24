@@ -1,79 +1,53 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { X, AlertTriangle } from 'lucide-react';
+import { X, AlertTriangle, Loader2 } from 'lucide-react';
 import CustomDropdown from '../../../components/CustomDropdown';
 import DatePicker from '../../../../../components/ui/DatePicker';
 import TimePicker from '../../../../../components/ui/TimePicker';
 import type { Task } from '../Tasks';
-
-export interface TaskFormData {
-    title: string;
-    description: string;
-    date: Date | undefined;
-    time: string;
-    assignee: string;
-    property: string;
-    isRecurring: boolean;
-    frequency: string;
-    endDate: Date | undefined;
-}
+import { useTaskStore } from '../store/taskStore';
+import { useCreateTask, useUpdateTask } from '../../../../../hooks/useTaskQueries';
+import { useGetAllProperties } from '../../../../../hooks/usePropertyQueries';
 
 interface AddTaskModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (taskData: TaskFormData) => void;
+    onSave?: (taskData: any) => void; // Optional now since we handle API calls internally
     taskToEdit?: Task | null;
 }
 
 const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, taskToEdit }) => {
-    const initialFormData = {
-        title: '',
-        description: '',
-        date: undefined as Date | undefined,
-        time: '',
-        assignee: '',
-        property: '',
-        isRecurring: false,
-        frequency: '',
-        endDate: undefined as Date | undefined
-    };
-
-    const [title, setTitle] = useState(initialFormData.title);
-    const [description, setDescription] = useState(initialFormData.description);
-    const [date, setDate] = useState<Date | undefined>(initialFormData.date);
-    const [time, setTime] = useState(initialFormData.time);
-    const [assignee, setAssignee] = useState(initialFormData.assignee);
-    const [property, setProperty] = useState(initialFormData.property);
-    const [isRecurring, setIsRecurring] = useState(initialFormData.isRecurring);
-    const [frequency, setFrequency] = useState(initialFormData.frequency);
-    const [endDate, setEndDate] = useState<Date | undefined>(initialFormData.endDate);
-    const [showExitConfirmation, setShowExitConfirmation] = useState(false);
-    const [formErrors, setFormErrors] = useState({ title: false, date: false, time: false });
-    const [initialSnapshot, setInitialSnapshot] = useState<TaskFormData>(initialFormData);
+    const { formData, setFormData, updateFormData, resetForm } = useTaskStore();
+    const createTaskMutation = useCreateTask();
+    const updateTaskMutation = useUpdateTask();
+    
+    // Fetch properties for dropdown
+    const { data: properties = [], isLoading: isLoadingProperties } = useGetAllProperties();
+    
+    const [showExitConfirmation, setShowExitConfirmation] = React.useState(false);
+    const [formErrors, setFormErrors] = React.useState({ title: false, date: false, time: false });
+    const [initialSnapshot, setInitialSnapshot] = React.useState(formData);
+    const prevIsOpenRef = React.useRef(isOpen);
+    const prevTaskToEditRef = React.useRef(taskToEdit);
 
     useEffect(() => {
-        if (isOpen && taskToEdit) {
+        // Only run when modal opens or taskToEdit changes
+        const isOpening = !prevIsOpenRef.current && isOpen;
+        const taskChanged = prevTaskToEditRef.current?.id !== taskToEdit?.id;
+        
+        if (isOpen && taskToEdit && (isOpening || taskChanged)) {
             // Populate form from taskToEdit
             const editDate = taskToEdit.date ? new Date(taskToEdit.date) : undefined;
             const editTime = taskToEdit.time || '';
-            const editAssignee = taskToEdit.name ? 'user1' : ''; // Mock logic for assignee mapping
-            const editProperty = taskToEdit.property || '';
+            const editAssignee = taskToEdit.name || '';
+            // Find property ID from property name
+            const propertyObj = properties.find(p => p.propertyName === taskToEdit.property);
+            const editProperty = propertyObj?.id || '';
             const editIsRecurring = taskToEdit.isRecurring || false;
             const editFrequency = taskToEdit.frequency || '';
             const editEndDate = taskToEdit.endDate && taskToEdit.endDate !== 'Indefinite' ? new Date(taskToEdit.endDate) : undefined;
             
-            setTitle(taskToEdit.title || '');
-            setDescription(taskToEdit.description || '');
-            setDate(editDate);
-            setTime(editTime);
-            setAssignee(editAssignee);
-            setProperty(editProperty);
-            setIsRecurring(editIsRecurring);
-            setFrequency(editFrequency);
-            setEndDate(editEndDate);
-            
-            // Capture initial snapshot for isDirty comparison
-            setInitialSnapshot({
+            const editFormData = {
                 title: taskToEdit.title || '',
                 description: taskToEdit.description || '',
                 date: editDate,
@@ -83,23 +57,31 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
                 isRecurring: editIsRecurring,
                 frequency: editFrequency,
                 endDate: editEndDate
-            });
-        } else if (isOpen && !taskToEdit) {
-            // Reset form if opening in add mode
-            setTitle(initialFormData.title);
-            setDescription(initialFormData.description);
-            setDate(initialFormData.date);
-            setTime(initialFormData.time);
-            setAssignee(initialFormData.assignee);
-            setProperty(initialFormData.property);
-            setIsRecurring(initialFormData.isRecurring);
-            setFrequency(initialFormData.frequency);
-            setEndDate(initialFormData.endDate);
+            };
             
-            // Capture initial snapshot for isDirty comparison
-            setInitialSnapshot(initialFormData);
+            setFormData(editFormData);
+            setInitialSnapshot(editFormData);
+        } else if (isOpen && !taskToEdit && isOpening) {
+            // Reset form only when opening in add mode (not on every render)
+            const emptyFormData = {
+                title: '',
+                description: '',
+                date: undefined,
+                time: '',
+                assignee: '',
+                property: '',
+                isRecurring: false,
+                frequency: '',
+                endDate: undefined
+            };
+            setFormData(emptyFormData);
+            setInitialSnapshot(emptyFormData);
         }
-    }, [isOpen, taskToEdit]);
+
+        // Update refs
+        prevIsOpenRef.current = isOpen;
+        prevTaskToEditRef.current = taskToEdit;
+    }, [isOpen, taskToEdit, properties, setFormData]);
 
     useEffect(() => {
         if (isOpen) {
@@ -112,30 +94,32 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
         };
     }, [isOpen]);
 
-    if (!isOpen) return null;
-
-    const assigneeOptions = [
-        { value: 'user1', label: 'User 1' },
-        { value: 'user2', label: 'User 2' },
-    ];
-
-    const propertyOptions = [
-        { value: 'prop1', label: 'Property 1' },
-        { value: 'prop2', label: 'Property 2' },
-    ];
+    // Property options from API
+    const propertyOptions = useMemo(() => {
+        return properties.map(p => ({
+            value: p.id,
+            label: p.propertyName
+        }));
+    }, [properties]);
 
     const frequencyOptions = [
-        { value: 'daily', label: 'Daily' },
-        { value: 'weekly', label: 'Weekly' },
-        { value: 'monthly', label: 'Monthly' },
+        { value: 'DAILY', label: 'Daily' },
+        { value: 'WEEKLY', label: 'Weekly' },
+        { value: 'MONTHLY', label: 'Monthly' },
+        { value: 'QUARTERLY', label: 'Quarterly' },
+        { value: 'YEARLY', label: 'Yearly' },
+        { value: 'ONCE', label: 'Once' },
     ];
 
-    const handleSubmit = () => {
+    // For assignee, we use a text input field
+    // TODO: In a real app, you'd fetch users/contacts from API for a dropdown
+
+    const handleSubmit = async () => {
         // Validate required fields
         const errors = {
-            title: !title.trim(),
-            date: !date,
-            time: !time.trim()
+            title: !formData.title.trim(),
+            date: !formData.date,
+            time: !formData.time.trim()
         };
 
         setFormErrors(errors);
@@ -145,35 +129,57 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
             return;
         }
 
-        // Call onSave with form data
-        const taskData: TaskFormData = {
-            title,
-            description,
-            date,
-            time,
-            assignee,
-            property,
-            isRecurring,
-            frequency,
-            endDate
-        };
+        try {
+            // Transform form data to API format
+            const taskDto = {
+                title: formData.title,
+                description: formData.description || undefined,
+                date: formData.date ? formData.date.toISOString() : '',
+                time: formData.time,
+                assignee: formData.assignee || undefined,
+                propertyId: formData.property || undefined,
+                isRecurring: formData.isRecurring,
+                frequency: formData.frequency ? (formData.frequency.toUpperCase() as 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY' | 'ONCE') : undefined,
+                endDate: formData.endDate ? formData.endDate.toISOString() : undefined,
+            };
 
-        onSave(taskData);
-        onClose();
+            if (taskToEdit) {
+                // Update existing task
+                await updateTaskMutation.mutateAsync({
+                    id: typeof taskToEdit.id === 'number' ? taskToEdit.id.toString() : taskToEdit.id,
+                    updateData: taskDto,
+                });
+            } else {
+                // Create new task
+                await createTaskMutation.mutateAsync(taskDto);
+            }
+
+            // Call optional onSave callback if provided
+            if (onSave) {
+                onSave(formData);
+            }
+
+            // Reset form and close modal
+            resetForm();
+            onClose();
+        } catch (error) {
+            console.error('Failed to save task:', error);
+            // Error handling could show a toast notification here
+        }
     };
 
     const handleCloseAttempt = () => {
         // Check if any field differs from initial snapshot (form is dirty)
         const isDirty =
-            title !== initialSnapshot.title ||
-            description !== initialSnapshot.description ||
-            date !== initialSnapshot.date ||
-            time !== initialSnapshot.time ||
-            assignee !== initialSnapshot.assignee ||
-            property !== initialSnapshot.property ||
-            isRecurring !== initialSnapshot.isRecurring ||
-            frequency !== initialSnapshot.frequency ||
-            endDate !== initialSnapshot.endDate;
+            formData.title !== initialSnapshot.title ||
+            formData.description !== initialSnapshot.description ||
+            formData.date !== initialSnapshot.date ||
+            formData.time !== initialSnapshot.time ||
+            formData.assignee !== initialSnapshot.assignee ||
+            formData.property !== initialSnapshot.property ||
+            formData.isRecurring !== initialSnapshot.isRecurring ||
+            formData.frequency !== initialSnapshot.frequency ||
+            formData.endDate !== initialSnapshot.endDate;
 
         if (isDirty) {
             setShowExitConfirmation(true);
@@ -181,6 +187,10 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
             onClose();
         }
     };
+
+    const isLoading = createTaskMutation.isPending || updateTaskMutation.isPending;
+
+    if (!isOpen) return null;
 
     const handleConfirmExit = () => {
         setShowExitConfirmation(false);
@@ -204,11 +214,12 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
                         <label className="block text-xs font-bold text-gray-700 mb-1">Title *</label>
                         <input
                             type="text"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
+                            value={formData.title}
+                            onChange={(e) => updateFormData('title', e.target.value)}
                             placeholder="Enter Title"
+                            disabled={isLoading}
                             className={`w-full bg-white text-gray-800 placeholder-gray-400 px-3 py-2 rounded-md outline-none focus:ring-2 transition-all shadow-sm text-sm ${formErrors.title ? 'ring-2 ring-red-500 focus:ring-red-500' : 'focus:ring-[#3D7475]/20'
-                                }`}
+                                } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                         />
                         {formErrors.title && <p className="text-red-500 text-xs mt-1">Title is required</p>}
                     </div>
@@ -217,11 +228,12 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
                     <div>
                         <label className="block text-xs font-bold text-gray-700 mb-1">Description</label>
                         <textarea
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
+                            value={formData.description}
+                            onChange={(e) => updateFormData('description', e.target.value)}
                             placeholder="Enter Details"
                             rows={2}
-                            className="w-full bg-[#F0F2F5] text-gray-800 placeholder-gray-400 px-3 py-2 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all resize-none shadow-sm text-sm"
+                            disabled={isLoading}
+                            className={`w-full bg-[#F0F2F5] text-gray-800 placeholder-gray-400 px-3 py-2 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all resize-none shadow-sm text-sm ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                         />
                     </div>
 
@@ -231,19 +243,22 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
                         <div className="flex gap-2">
                             <div className="w-2/3">
                                 <DatePicker
-                                    value={date}
-                                    onChange={setDate}
+                                    value={formData.date}
+                                    onChange={(date) => updateFormData('date', date)}
                                     placeholder="Select Date"
+                                    disabled={isLoading}
                                     className={formErrors.date ? 'ring-2 ring-red-500' : ''}
                                 />
                             </div>
                             <div className="w-1/3">
-                                <TimePicker
-                                    value={time}
-                                    onChange={setTime}
-                                    placeholder="Time"
-                                    className={formErrors.time ? 'ring-2 ring-red-500' : ''}
-                                />
+                                <div className={isLoading ? 'opacity-50 pointer-events-none' : ''}>
+                                    <TimePicker
+                                        value={formData.time}
+                                        onChange={(time) => updateFormData('time', time)}
+                                        placeholder="Time"
+                                        className={formErrors.time ? 'ring-2 ring-red-500' : ''}
+                                    />
+                                </div>
                             </div>
                         </div>
                         {(formErrors.date || formErrors.time) && (
@@ -255,35 +270,44 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
 
                     {/* Assignee */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-700 mb-1">Assignee*</label>
-                        <CustomDropdown
-                            value={assignee}
-                            onChange={setAssignee}
-                            options={assigneeOptions}
-                            placeholder="Select Assignee"
-                            buttonClassName="w-full bg-white text-gray-800 px-3 py-2.5 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all shadow-sm text-sm border-none"
+                        <label className="block text-xs font-bold text-gray-700 mb-1">Assignee</label>
+                        <input
+                            type="text"
+                            value={formData.assignee}
+                            onChange={(e) => updateFormData('assignee', e.target.value)}
+                            placeholder="Enter assignee name or ID"
+                            disabled={isLoading}
+                            className={`w-full bg-white text-gray-800 placeholder-gray-400 px-3 py-2 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all shadow-sm text-sm ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                         />
                     </div>
 
                     {/* Property */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-700 mb-1">Property*</label>
-                        <CustomDropdown
-                            value={property}
-                            onChange={setProperty}
-                            options={propertyOptions}
-                            placeholder="Select Property"
-                            buttonClassName="w-full bg-white text-gray-800 px-3 py-2.5 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all shadow-sm text-sm border-none"
-                        />
+                        <label className="block text-xs font-bold text-gray-700 mb-1">Property</label>
+                        {isLoadingProperties ? (
+                            <div className="w-full bg-white px-3 py-2.5 rounded-md flex items-center justify-center">
+                                <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                            </div>
+                        ) : (
+                            <CustomDropdown
+                                value={formData.property}
+                                onChange={(value) => updateFormData('property', value)}
+                                options={propertyOptions}
+                                placeholder="Select Property"
+                                disabled={isLoading}
+                                buttonClassName={`w-full bg-white text-gray-800 px-3 py-2.5 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all shadow-sm text-sm border-none ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            />
+                        )}
                     </div>
 
                     {/* Recurring Toggle */}
                     <div className="flex items-center gap-2">
                         <button
-                            onClick={() => setIsRecurring(!isRecurring)}
-                            className={`w-10 h-5 rounded-full p-0.5 transition-colors duration-200 ease-in-out ${isRecurring ? 'bg-[#84CC16]' : 'bg-gray-300'}`}
+                            onClick={() => updateFormData('isRecurring', !formData.isRecurring)}
+                            disabled={isLoading}
+                            className={`w-10 h-5 rounded-full p-0.5 transition-colors duration-200 ease-in-out ${formData.isRecurring ? 'bg-[#84CC16]' : 'bg-gray-300'} ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
-                            <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${isRecurring ? 'translate-x-5' : 'translate-x-0'}`} />
+                            <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${formData.isRecurring ? 'translate-x-5' : 'translate-x-0'}`} />
                         </button>
                         <span className="text-xs font-medium text-gray-700">Recurring</span>
                     </div>
@@ -292,11 +316,12 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
                     <div>
                         <label className="block text-xs font-bold text-gray-700 mb-1">Frequency</label>
                         <CustomDropdown
-                            value={frequency}
-                            onChange={setFrequency}
+                            value={formData.frequency}
+                            onChange={(value) => updateFormData('frequency', value)}
                             options={frequencyOptions}
                             placeholder="Select Frequency"
-                            buttonClassName="w-full bg-white text-gray-800 px-3 py-2.5 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all shadow-sm text-sm border-none"
+                            disabled={isLoading}
+                            buttonClassName={`w-full bg-white text-gray-800 px-3 py-2.5 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all shadow-sm text-sm border-none ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                         />
                     </div>
 
@@ -304,9 +329,10 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
                     <div>
                         <label className="block text-xs font-bold text-gray-700 mb-1">End Date</label>
                         <DatePicker
-                            value={endDate}
-                            onChange={setEndDate}
+                            value={formData.endDate}
+                            onChange={(date) => updateFormData('endDate', date)}
                             placeholder="Select End Date"
+                            disabled={isLoading}
                         />
                     </div>
 
@@ -316,15 +342,24 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
                 <div className="p-4 pt-2 flex gap-3">
                     <button
                         onClick={handleCloseAttempt}
-                        className="flex-1 bg-white text-gray-800 py-2 rounded-md font-bold hover:bg-gray-50 transition-colors shadow-md border border-gray-100 text-sm"
+                        disabled={isLoading}
+                        className={`flex-1 bg-white text-gray-800 py-2 rounded-md font-bold hover:bg-gray-50 transition-colors shadow-md border border-gray-100 text-sm ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                         Cancel
                     </button>
                     <button
                         onClick={handleSubmit}
-                        className="flex-1 bg-[#3D7475] text-white py-2 rounded-md font-bold hover:bg-[#2c5556] transition-colors shadow-md text-sm"
+                        disabled={isLoading}
+                        className={`flex-1 bg-[#3D7475] text-white py-2 rounded-md font-bold hover:bg-[#2c5556] transition-colors shadow-md text-sm flex items-center justify-center gap-2 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
-                        {taskToEdit ? 'Save Changes' : 'Create'}
+                        {isLoading ? (
+                            <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                {taskToEdit ? 'Saving...' : 'Creating...'}
+                            </>
+                        ) : (
+                            taskToEdit ? 'Save Changes' : 'Create'
+                        )}
                     </button>
                 </div>
 
