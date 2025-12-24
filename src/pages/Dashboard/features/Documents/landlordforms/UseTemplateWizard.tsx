@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronDown, ChevronLeft, Plus } from 'lucide-react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { ChevronDown, ChevronLeft, Plus, X } from 'lucide-react';
 import PrimaryActionButton from '../../../../../components/common/buttons/PrimaryActionButton';
 import TemplateEditor from '../components/TemplateEditor';
+import { getTemplateHTML } from './utils/templateUtils';
 
 // --- Constants & Types ---
 
@@ -12,8 +13,7 @@ const MOCK_LEASES = ['Lease Agreement 001', 'Lease Agreement 002', 'Lease Agreem
 const STEPS = [
     { num: 1, label: 'Lease' },
     { num: 2, label: 'Tenants' },
-    { num: 3, label: 'Templates & Signature' },
-    { num: 4, label: 'Send to review' }
+    { num: 3, label: 'Templates & Signature' }
 ] as const;
 
 type StepNumber = typeof STEPS[number]['num'];
@@ -102,14 +102,20 @@ const WizardDropdown: React.FC<WizardDropdownProps> = ({
 
 const UseTemplateWizard: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation() as any;
     const { templateName } = useParams<{ templateName: string }>();
 
     const [currentStep, setCurrentStep] = useState<StepNumber>(1);
     const [selectedLease, setSelectedLease] = useState('');
     const [selectedTenants, setSelectedTenants] = useState('');
+    const [templates, setTemplates] = useState(['Template 1', 'Template 2', 'Template 3']);
+    const [activeTemplateIndex, setActiveTemplateIndex] = useState(0);
+    const [templateContents, setTemplateContents] = useState<string[]>(() => {
+        const initialContent = templateName ? getTemplateHTML(decodeURIComponent(templateName)) : '';
+        return [initialContent, '', ''];
+    });
     const [isLeaseDropdownOpen, setIsLeaseDropdownOpen] = useState(false);
     const [isTenantsDropdownOpen, setIsTenantsDropdownOpen] = useState(false);
-    const [editorContent, setEditorContent] = useState('');
 
     const leaseDropdownRef = useRef<HTMLDivElement>(null);
     const tenantsDropdownRef = useRef<HTMLDivElement>(null);
@@ -137,8 +143,31 @@ const UseTemplateWizard: React.FC = () => {
         }
     };
 
+    const handleAddTemplate = () => {
+        const nextNum = templates.length + 1;
+        const newTemplateName = `Template ${nextNum}`;
+        setTemplates(prev => [...prev, newTemplateName]);
+        setTemplateContents(prev => [...prev, '']);
+        setActiveTemplateIndex(templates.length);
+    };
+
+    const handleDeleteTemplate = (index: number, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (templates.length <= 1) return;
+
+        setTemplates(prev => prev.filter((_, i) => i !== index));
+        setTemplateContents(prev => prev.filter((_, i) => i !== index));
+
+        if (activeTemplateIndex >= index && activeTemplateIndex > 0) {
+            setActiveTemplateIndex(prev => prev - 1);
+        } else if (activeTemplateIndex >= templates.length - 1) {
+            setActiveTemplateIndex(Math.max(0, templates.length - 2));
+        }
+    };
+
     const handleSendToReview = () => {
-        navigate(`/documents/landlord-forms/template/${templateName}`, {
+        const returnPath = location.state?.returnPath || `/documents/landlord-forms/template/${templateName}`;
+        navigate(returnPath, {
             state: {
                 showSuccessPopup: true,
                 leaseName: selectedLease,
@@ -185,50 +214,53 @@ const UseTemplateWizard: React.FC = () => {
                 );
             case 3:
                 return (
-                    <div className="w-full flex flex-col items-center">
-                        <StepHeader title="Templates & Signature" description="Configure templates and signature settings" />
-                        <div className="w-full mb-8">
-                            <TemplateEditor onEditorContentChange={setEditorContent} />
-                        </div>
-                        <div className="w-full flex justify-end">
-                            <PrimaryActionButton
-                                onClick={() => setCurrentStep(4)}
-                                text="Next"
-                                className="!bg-[#3D7475]"
-                            />
-                        </div>
-                    </div>
-                );
-            case 4:
-                return (
                     <div className="w-full">
-                        <div className="mb-6">
-                            <h1 className="text-2xl font-bold text-gray-800 mb-6">{templateName ? decodeURIComponent(templateName) : 'Notices Templates'}</h1>
+                        <div className="mb-6 text-left">
+                            <h1 className="text-2xl font-bold text-gray-800 mb-6">{templates[activeTemplateIndex]}</h1>
 
                             {/* Dark Teal Header Bar */}
                             <div className="bg-[#3A6D6C] rounded-full px-6 py-3 flex items-center justify-between mb-8">
-                                <div className="flex items-center gap-4">
-                                    <PrimaryActionButton
-                                        text="Notices Templates"
-                                        className="!bg-[#82D64D] !text-white !px-5 !py-2 !rounded-full !font-bold !shadow-none !border-none"
+                                <div className="flex items-center gap-6">
+                                    {templates.map((template, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => setActiveTemplateIndex(index)}
+                                            className={`flex items-center gap-2 font-bold transition-all ${activeTemplateIndex === index
+                                                ? 'bg-[#82D64D] text-white px-5 py-2 rounded-full shadow-sm'
+                                                : 'text-[#CCE0DF] hover:text-white px-2'
+                                                }`}
+                                        >
+                                            {activeTemplateIndex === index ? template : index + 1}
+                                            {activeTemplateIndex === index && (
+                                                <X
+                                                    size={16}
+                                                    className="hover:bg-black/20 rounded-full p-0.5 transition-colors"
+                                                    onClick={(e) => handleDeleteTemplate(index, e)}
+                                                />
+                                            )}
+                                        </button>
+                                    ))}
+                                    <button
+                                        onClick={handleAddTemplate}
+                                        className="text-[#CCE0DF] hover:text-white font-bold flex items-center gap-2 px-2 transition-all"
                                     >
-                                        Notices Templates
-                                        <ChevronDown size={18} />
-                                    </PrimaryActionButton>
-                                    <PrimaryActionButton
-                                        onClick={() => { }}
-                                        className="!bg-[#528A89] !text-white !px-5 !py-2 !rounded-full !font-bold !shadow-none !border-none"
-                                    >
+                                        <Plus size={18} className="border-2 border-[#CCE0DF] rounded-full p-0.5" />
                                         Add
-                                        <Plus size={18} className="border-2 border-white rounded-full p-0.5 ml-2" />
-                                    </PrimaryActionButton>
+                                    </button>
                                 </div>
                             </div>
 
-                            {/* Reusing TemplateEditor for Step 4 */}
+                            {/* Reusing TemplateEditor */}
                             <TemplateEditor
-                                initialEditorContent={editorContent}
-                                onEditorContentChange={setEditorContent}
+                                key={activeTemplateIndex}
+                                initialEditorContent={templateContents[activeTemplateIndex]}
+                                onEditorContentChange={(content) => {
+                                    setTemplateContents(prev => {
+                                        const next = [...prev];
+                                        next[activeTemplateIndex] = content;
+                                        return next;
+                                    });
+                                }}
                                 showPreviewButton={true}
                                 showSignatureSection={true}
                             />
@@ -272,7 +304,7 @@ const UseTemplateWizard: React.FC = () => {
                     <div className="w-full max-w-3xl mx-auto mb-12">
                         <div className="relative">
                             {/* Connecting Line */}
-                            <div className="absolute top-4 left-[12.5%] right-[12.5%] h-[3px] bg-gray-200 -translate-y-1/2 z-0">
+                            <div className="absolute top-4 left-[16.66%] right-[16.66%] h-[3px] bg-gray-200 -translate-y-1/2 z-0">
                                 <div
                                     className="h-full bg-[#20CC95] transition-all duration-300 ease-in-out"
                                     style={{ width: `${((currentStep - 1) / (STEPS.length - 1)) * 100}%` }}
@@ -280,7 +312,7 @@ const UseTemplateWizard: React.FC = () => {
                             </div>
 
                             {/* Steps */}
-                            <div className="grid grid-cols-4 relative z-10">
+                            <div className="grid grid-cols-3 relative z-10">
                                 {STEPS.map((step) => (
                                     <div key={step.num} className="flex flex-col items-center gap-3">
                                         <div

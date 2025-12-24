@@ -122,19 +122,16 @@ export default function DashboardNavbar({ sidebarOpen, setSidebarOpen }: NavbarP
         >
           <div className="relative w-5 h-5">
             <span
-              className={`absolute left-0 top-1/2 block w-5 h-0.5 bg-white transform transition-all duration-300 ease-in-out ${
-                sidebarOpen ? "rotate-45" : "-translate-y-2"
-              }`}
+              className={`absolute left-0 top-1/2 block w-5 h-0.5 bg-white transform transition-all duration-300 ease-in-out ${sidebarOpen ? "rotate-45" : "-translate-y-2"
+                }`}
             />
             <span
-              className={`absolute left-0 top-1/2 block w-5 h-0.5 bg-white transform transition-all duration-300 ease-in-out ${
-                sidebarOpen ? "opacity-0" : "opacity-100"
-              }`}
+              className={`absolute left-0 top-1/2 block w-5 h-0.5 bg-white transform transition-all duration-300 ease-in-out ${sidebarOpen ? "opacity-0" : "opacity-100"
+                }`}
             />
             <span
-              className={`absolute left-0 top-1/2 block w-5 h-0.5 bg-white transform transition-all duration-300 ease-in-out ${
-                sidebarOpen ? "-rotate-45" : "translate-y-2"
-              }`}
+              className={`absolute left-0 top-1/2 block w-5 h-0.5 bg-white transform transition-all duration-300 ease-in-out ${sidebarOpen ? "-rotate-45" : "translate-y-2"
+                }`}
             />
           </div>
         </button>
@@ -240,18 +237,18 @@ export default function DashboardNavbar({ sidebarOpen, setSidebarOpen }: NavbarP
                 <div className="flex flex-col">
                   <button
                     onClick={handleAddAnotherAccount}
-                    className="w-full flex items-center gap-3 px-5 py-4 text-lg text-gray-900 hover:bg-gray-50 transition-colors"
+                    className="w-full flex items-center gap-3 px-5 py-3 text-lg text-gray-900 hover:bg-gray-50 transition-colors"
                   >
                     <UserCog size={22} className="text-gray-700" />
-                    <span className="font-semibold">Add another account</span>
+                    <span className="font-medium">Add another account</span>
                   </button>
                   <div className="w-full border-t border-[0.5px] border-[#201F23]/50" />
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-5 py-4 text-lg text-gray-900 hover:bg-gray-50 transition-colors"
+                    className="w-full flex items-center gap-3 px-5 py-3 text-lg text-gray-900 hover:bg-gray-50 transition-colors"
                   >
                     <LogOut size={22} className="text-gray-700" />
-                    <span className="font-semibold">Log out</span>
+                    <span className="font-medium">Log out</span>
                   </button>
                 </div>
               </div>

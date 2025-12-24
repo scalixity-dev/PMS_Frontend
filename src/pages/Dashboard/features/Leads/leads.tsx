@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, ChevronLeft, Download, MoreHorizontal, Edit2, Trash2, Check, ChevronDown, X } from 'lucide-react';
+import { Plus, ChevronLeft, Download, MoreHorizontal, Edit2, Trash2, Check, X } from 'lucide-react';
 import { utils, writeFile } from 'xlsx';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
+import SearchableDropdown from '../../../../components/ui/SearchableDropdown';
 
 // Mock Data for Leads
 const MOCK_LEADS = [
@@ -14,6 +15,15 @@ const MOCK_LEADS = [
         email: 'abc@gmail.com',
         source: 'Created manually',
         lastUpdate: '₹ 50,000',
+    },
+    {
+        id: 2,
+        status: 'Working',
+        name: 'John Doe',
+        phone: '+91 9876543210',
+        email: 'john.doe@example.com',
+        source: 'Website',
+        lastUpdate: '₹ 45,000',
     }
 ];
 
@@ -24,7 +34,6 @@ const Leads = () => {
     const [openMenuId, setOpenMenuId] = useState<number | null>(null);
     const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
     const [currentLeadId, setCurrentLeadId] = useState<number | null>(null);
-    const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
     const [selectedStatus, setSelectedStatus] = useState('New');
     const [searchQuery, setSearchQuery] = useState('');
     const [filters, setFilters] = useState<Record<string, string[]>>({
@@ -68,7 +77,7 @@ const Leads = () => {
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     const [selectedListing, setSelectedListing] = useState('Grand Villa');
     const [applicantEmail, setApplicantEmail] = useState('');
-    const [isInviteDropdownOpen, setIsInviteDropdownOpen] = useState(false);
+
 
     // Filtering logic
     const filteredLeads = useMemo(() => {
@@ -175,7 +184,7 @@ const Leads = () => {
                 <span className="text-gray-600 text-sm font-semibold">Leads</span>
             </div>
 
-            <div className="p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem]">
+            <div className="p-6 bg-[#E0E8E7]  rounded-[2rem]">
                 {/* Header - Matching LeaseDetail structure */}
                 <div className="flex items-center gap-6 mb-6">
                     <div className="flex items-center gap-2">
@@ -215,7 +224,7 @@ const Leads = () => {
                 {/* Table Section Header */}
                 <div className="bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm">
                     {/* Table Header */}
-                    <div className="text-white px-10 py-4 grid grid-cols-[80px_1fr_1.2fr_1.2fr_1.5fr_1.2fr_1.8fr] gap-4 items-center text-sm font-medium">
+                    <div className="text-white px-6 py-4 grid grid-cols-[80px_1fr_1.2fr_1.2fr_1.5fr_1.2fr_1.8fr] gap-4 items-center text-sm font-medium">
                         <div className="flex justify-start pl-1">
                             <div
                                 onClick={toggleSelectAll}
@@ -236,7 +245,7 @@ const Leads = () => {
                 </div>
 
                 {/* Table Body */}
-                <div className="flex flex-col gap-3 bg-[#F0F0F6] p-4 rounded-[2rem] rounded-t-none min-h-[400px]">
+                <div className="flex flex-col gap-3 bg-[#F0F0F6] p-4 rounded-[2rem] rounded-t">
                     {filteredLeads.map((lead) => (
                         <div key={lead.id} className="bg-white rounded-2xl px-6 py-4 grid grid-cols-[80px_1fr_1.2fr_1.2fr_1.5fr_1.2fr_1.8fr] gap-4 items-center shadow-sm hover:shadow-md transition-shadow">
                             <div className="flex justify-start pl-1">
@@ -250,16 +259,16 @@ const Leads = () => {
                             <div className="text-[#20CC95] font-bold text-sm text-left">{lead.status}</div>
                             <div
                                 onClick={() => navigate(`/dashboard/leasing/leads/${lead.id}`)}
-                                className="text-[#000000] font-semibold text-sm text-left cursor-pointer hover:text-[#3A6D6C] transition-colors"
+                                className="text-[#000000] font-medium text-sm text-left cursor-pointer hover:text-[#3A6D6C] transition-colors"
                             >
                                 {lead.name}
                             </div>
-                            <div className="text-[#2E6819] font-semibold text-sm text-center">{lead.phone}</div>
+                            <div className="text-[#2E6819] font-medium text-sm text-center">{lead.phone}</div>
                             <div className="text-gray-600 font-medium text-sm text-left truncate">{lead.email}</div>
                             <div className="text-gray-600 font-medium text-sm text-left">{lead.source}</div>
                             <div className="flex items-center justify-start gap-10">
-                                <span className="text-black font-semibold text-sm whitespace-nowrap">{lead.lastUpdate}</span>
-                                <div className="flex items-center gap-3  px-4 py-2">
+                                <span className="text-black font-normal text-sm whitespace-nowrap">{lead.lastUpdate}</span>
+                                <div className="flex items-center gap-3">
                                     <button
                                         onClick={() => navigate(`/dashboard/leasing/leads/edit/${lead.id}`)}
                                         className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
@@ -278,7 +287,7 @@ const Leads = () => {
                                         </button>
 
                                         {openMenuId === lead.id && (
-                                            <div className="absolute right-0 top-full mt-3 w-52 bg-white rounded-3xl shadow-2xl border border-gray-100 z-[60] overflow-hidden transform origin-top-right transition-all">
+                                            <div className="absolute right-0 top-full mt-3 w-48 bg-white rounded-3xl shadow-2xl border border-gray-100 z-[60] overflow-hidden transform origin-top-right transition-all">
                                                 <button
                                                     onClick={() => {
                                                         setIsStatusModalOpen(true);
@@ -286,7 +295,7 @@ const Leads = () => {
                                                         setSelectedStatus(lead.status);
                                                         setOpenMenuId(null);
                                                     }}
-                                                    className="w-full text-center py-4 text-sm font-normal text-gray-800 hover:bg-gray-50 border-b border-gray-50 transition-colors"
+                                                    className="w-full text-center py-3 text-sm font-normal text-gray-800 hover:bg-gray-50 border-b border-gray-300 transition-colors"
                                                 >
                                                     Change Status
                                                 </button>
@@ -296,7 +305,7 @@ const Leads = () => {
                                                         setApplicantEmail(lead.email);
                                                         setOpenMenuId(null);
                                                     }}
-                                                    className="w-full text-center py-4 text-sm font-normal text-gray-800 hover:bg-gray-50 transition-colors"
+                                                    className="w-full text-center py-3 text-sm font-normal text-gray-800 hover:bg-gray-50 transition-colors"
                                                 >
                                                     Invite to Apply
                                                 </button>
@@ -313,17 +322,17 @@ const Leads = () => {
             {/* Status Change Modal */}
             {isStatusModalOpen && (
                 <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
-                    <div className="bg-[#E0E8E7] w-full max-w-xl rounded-[2.5rem] overflow-hidden shadow-2xl">
+                    <div className="bg-[#E0E8E7] w-full max-w-xl rounded-[2.5rem] shadow-2xl">
                         {/* Modal Header */}
-                        <div className="bg-[#3A6D6C] px-8 py-6 flex justify-between items-center text-white">
+                        <div className="bg-[#3A6D6C] rounded-t-[2.5rem] px-6 py-5 flex justify-between items-center text-white">
                             <div className="flex items-center gap-4">
                                 <button onClick={() => setIsStatusModalOpen(false)}>
                                     <ChevronLeft className="w-6 h-6" />
                                 </button>
-                                <h2 className="text-xl font-semibold">Select lead status</h2>
+                                <h2 className="text-lg font-semibold">Select lead status</h2>
                             </div>
                             <button onClick={() => setIsStatusModalOpen(false)}>
-                                <X className="w-6 h-6 border-2 border-white/20 rounded-full" />
+                                <X className="w-6 h-6  rounded-full" />
                             </button>
                         </div>
 
@@ -331,57 +340,14 @@ const Leads = () => {
                         <div className="p-8 space-y-6">
                             <div className="space-y-3">
                                 <label className="text-gray-900 font-bold ml-1">Lead Status*</label>
-                                <div className="relative">
-                                    <button
-                                        onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
-                                        className="w-full bg-white rounded-2xl p-4 flex justify-between items-center border border-gray-200"
-                                    >
-                                        <span className="text-gray-600 font-medium">{selectedStatus || 'Choose Type'}</span>
-                                        <ChevronDown className="w-5 h-5 text-gray-400" />
-                                    </button>
-
-                                    {isStatusDropdownOpen && (
-                                        <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 z-10 overflow-hidden">
-                                            {['New', 'Working', 'Closed'].map((status) => (
-                                                <button
-                                                    key={status}
-                                                    onClick={() => {
-                                                        setSelectedStatus(status);
-                                                        setIsStatusDropdownOpen(false);
-                                                    }}
-                                                    className="w-full text-left px-6 py-4 hover:bg-gray-50 text-gray-700 font-medium border-b border-gray-50 last:border-0"
-                                                >
-                                                    {status}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="bg-white rounded-[2rem] overflow-hidden border border-gray-100 shadow-sm">
-                                <div className="p-0 border-b border-gray-100">
-                                    <input
-                                        type="text"
-                                        placeholder="Search"
-                                        className="w-full p-5 bg-transparent border-none focus:outline-none text-gray-700 placeholder:text-gray-400 font-medium"
-                                    />
-                                </div>
-                                <div className="p-2">
-                                    {['New', 'Working', 'Closed'].map((status) => (
-                                        <button
-                                            key={status}
-                                            onClick={() => setSelectedStatus(status)}
-                                            className={`w-full text-left px-6 py-3.5 rounded-xl transition-colors ${selectedStatus === status
-                                                ? 'text-[#20CC95] font-bold'
-                                                : 'text-gray-700 font-semibold'
-                                                } hover:bg-gray-50`}
-                                        >
-                                            {status}
-                                        </button>
-                                    ))}
-                                    <div className="pb-4" />
-                                </div>
+                                <SearchableDropdown
+                                    value={selectedStatus}
+                                    onChange={setSelectedStatus}
+                                    options={['New', 'Working', 'Closed']}
+                                    placeholder="Search status..."
+                                    className="w-full"
+                                    buttonClassName="w-full bg-white rounded-2xl p-4 flex justify-between items-center border border-gray-200 text-gray-600 font-medium"
+                                />
                             </div>
 
                             <div className="pt-2">
@@ -399,9 +365,9 @@ const Leads = () => {
             {/* Invite to Apply Modal */}
             {isInviteModalOpen && (
                 <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
-                    <div className="bg-[#E0E8E7] w-full max-w-xl rounded-[2.5rem] overflow-hidden shadow-2xl">
+                    <div className="bg-[#E0E8E7] w-full max-w-xl rounded-[2.5rem] shadow-2xl">
                         {/* Modal Header */}
-                        <div className="bg-[#3A6D6C] px-8 py-6 flex justify-between items-center text-white">
+                        <div className="bg-[#3A6D6C] rounded-t-[2.5rem] px-6 py-5 flex justify-between items-center text-white">
                             <div className="flex items-center gap-4">
                                 <button onClick={() => setIsInviteModalOpen(false)}>
                                     <ChevronLeft className="w-6 h-6" />
@@ -409,7 +375,7 @@ const Leads = () => {
                                 <h2 className="text-xl font-semibold">Invite applicants to apply online</h2>
                             </div>
                             <button onClick={() => setIsInviteModalOpen(false)}>
-                                <X className="w-6 h-6 border-2 border-white/20 rounded-full" />
+                                <X className="w-6 h-6 rounded-full" />
                             </button>
                         </div>
 
@@ -417,57 +383,14 @@ const Leads = () => {
                         <div className="p-8 space-y-6">
                             <div className="space-y-3">
                                 <label className="text-gray-900 font-bold ml-1">Select listing *</label>
-                                <div className="relative">
-                                    <button
-                                        onClick={() => setIsInviteDropdownOpen(!isInviteDropdownOpen)}
-                                        className="w-full bg-white rounded-2xl p-4 flex justify-between items-center border border-gray-200"
-                                    >
-                                        <span className="text-gray-600 font-medium">{selectedListing || 'Choose Type'}</span>
-                                        <ChevronDown className="w-5 h-5 text-gray-400" />
-                                    </button>
-
-                                    {isInviteDropdownOpen && (
-                                        <div className="absolute top-full left-0 w-full mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 z-10 overflow-hidden">
-                                            {['Grand Villa', 'A2 Apartment', 'B4 duplex'].map((listing) => (
-                                                <button
-                                                    key={listing}
-                                                    onClick={() => {
-                                                        setSelectedListing(listing);
-                                                        setIsInviteDropdownOpen(false);
-                                                    }}
-                                                    className="w-full text-left px-6 py-4 hover:bg-gray-50 text-gray-700 font-medium border-b border-gray-50 last:border-0"
-                                                >
-                                                    {listing}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="bg-white rounded-[2rem] overflow-hidden border border-gray-100 shadow-sm">
-                                <div className="p-0 border-b border-gray-100">
-                                    <input
-                                        type="text"
-                                        placeholder="Search"
-                                        className="w-full p-5 bg-transparent border-none focus:outline-none text-gray-700 placeholder:text-gray-400 font-medium"
-                                    />
-                                </div>
-                                <div className="p-2">
-                                    {['Grand Villa', 'A2 Apartment', 'B4 duplex'].map((listing) => (
-                                        <button
-                                            key={listing}
-                                            onClick={() => setSelectedListing(listing)}
-                                            className={`w-full text-left px-6 py-3.5 rounded-xl transition-colors ${selectedListing === listing
-                                                ? 'text-[#20CC95] font-bold'
-                                                : 'text-gray-700 font-semibold text-lg'
-                                                } hover:bg-gray-50`}
-                                        >
-                                            {listing}
-                                        </button>
-                                    ))}
-                                    <div className="pb-4" />
-                                </div>
+                                <SearchableDropdown
+                                    value={selectedListing}
+                                    onChange={setSelectedListing}
+                                    options={['Grand Villa', 'A2 Apartment', 'B4 duplex']}
+                                    placeholder="Search listing..."
+                                    className="w-full"
+                                    buttonClassName="w-full bg-white rounded-2xl p-4 flex justify-between items-center border border-gray-200 text-gray-600 font-medium"
+                                />
                             </div>
 
                             <div className="space-y-3">

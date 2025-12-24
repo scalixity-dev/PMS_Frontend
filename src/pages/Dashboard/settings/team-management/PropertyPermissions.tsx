@@ -6,31 +6,36 @@ interface Property {
     id: string;
     name: string;
     address: string;
+    image: string;
 }
 
 // Mock data - replace with actual data from API
 const ALL_PROPERTIES: Property[] = [
-        {
-            id: "1",
-            name: "abc",
-            address: "78 Scheme No 78 - II, Indore, MP, 452010, IN",
-        },
-        {
-            id: "2",
-            name: "abc",
-            address: "78 Scheme No 78 - II, Indore, MP, 452010, IN",
-        },
-        {
-            id: "3",
-            name: "abc",
-            address: "78 Scheme No 78 - II, Indore, MP, 452010, IN",
-        },
-        {
-            id: "4",
-            name: "abc",
-            address: "78 Scheme No 78 - II, Indore, MP, 452010, IN",
-        },
-    ];
+    {
+        id: "1",
+        name: "abc",
+        address: "78 Scheme No 78 - II, Indore, MP, 452010, IN",
+        image: "/src/assets/images/property_placeholder.png",
+    },
+    {
+        id: "2",
+        name: "abc",
+        address: "78 Scheme No 78 - II, Indore, MP, 452010, IN",
+        image: "/src/assets/images/property_placeholder.png",
+    },
+    {
+        id: "3",
+        name: "abc",
+        address: "78 Scheme No 78 - II, Indore, MP, 452010, IN",
+        image: "/src/assets/images/property_placeholder.png",
+    },
+    {
+        id: "4",
+        name: "abc",
+        address: "78 Scheme No 78 - II, Indore, MP, 452010, IN",
+        image: "/src/assets/images/property_placeholder.png",
+    },
+];
 
 export default function PropertyPermissions() {
     const [currentPage, setCurrentPage] = useState(1);
@@ -72,9 +77,15 @@ export default function PropertyPermissions() {
                             key={property.id}
                             className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
                         >
-                            <div className="flex gap-6 p-6">
-                                {/* Property Image Placeholder */}
-                                <div className="w-36 h-32 bg-[#D9D9D9] rounded-lg shrink-0" />
+                            <div className="flex gap-6 p-6 ">
+                                {/* Property Image */}
+                                <div className="w-36 h-32 rounded-lg shrink-0 overflow-hidden">
+                                    <img
+                                        src={property.image}
+                                        alt={property.name}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
 
                                 {/* Property Details */}
                                 <div className="flex-1 flex flex-col justify-between">

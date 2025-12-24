@@ -100,7 +100,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
     }, [inputText]);
 
     return (
-        <div className="px-8 pb-8 pt-2 relative print:hidden">
+        <div className="px-6 pb-6 pt-2 relative print:hidden">
             {pendingFile && (
                 <div className="absolute bottom-24 left-8 bg-[#EDF2F1] border border-[#A7D8C9] rounded-xl px-4 py-2 flex items-center gap-3 shadow-sm animate-in fade-in slide-in-from-bottom-2">
                     <Paperclip className="w-4 h-4 text-[#3D7068]" />
@@ -134,9 +134,9 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
                 </div>
             )}
 
-            <div className="flex items-center gap-4 bg-white border border-gray-200 rounded-2xl px-6 py-2.5 shadow-[0_4px_12px_rgba(0,0,0,0.05)] focus-within:shadow-[0_4px_20px_rgba(0,0,0,0.08)] focus-within:border-gray-300 transition-all duration-300">
+            <div className="flex items-center gap-3 bg-white border border-gray-200 rounded-2xl px-4 py-2 shadow-[0_4px_12px_rgba(0,0,0,0.05)] focus-within:shadow-[0_4px_20px_rgba(0,0,0,0.08)] focus-within:border-gray-300 transition-all duration-300">
                 <button className="text-gray-400 hover:text-[#3D7068] hover:scale-110 active:scale-95 transition-all duration-200">
-                    <Mic className="w-5 h-5" />
+                    <Mic className="w-4 h-4" />
                 </button>
 
                 <textarea
@@ -146,10 +146,10 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
                     onChange={(e) => setInputText(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="Write messages..."
-                    className="flex-1 bg-transparent border-none focus:outline-none text-sm text-gray-800 placeholder-gray-400 py-2.5 resize-none max-h-[120px] custom-scrollbar"
+                    className="flex-1 bg-transparent border-none focus:outline-none text-xs text-gray-800 placeholder-gray-400 py-2 resize-none max-h-[120px] custom-scrollbar"
                 />
 
-                <div className="flex items-center gap-3 md:gap-4 text-gray-400">
+                <div className="flex items-center gap-2 md:gap-3 text-gray-400">
                     <input
                         type="file"
                         ref={fileInputRef}
@@ -162,21 +162,21 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
                         className="hover:text-[#3D7068] hover:scale-110 active:scale-95 transition-all duration-200"
                         title="Attach File"
                     >
-                        <Paperclip className="w-5 h-5" />
+                        <Paperclip className="w-4 h-4" />
                     </button>
                     <button
                         onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                         className={`transition-all duration-200 hover:scale-110 active:scale-95 ${showEmojiPicker ? 'text-[#3D7068]' : 'hover:text-[#3D7068]'}`}
                         title="Add Emoji"
                     >
-                        <Smile className="w-5 h-5" />
+                        <Smile className="w-4 h-4" />
                     </button>
                     <button
                         onClick={handleSendMessage}
                         disabled={!inputText.trim() && !pendingFile}
-                        className="bg-[#3D7068] text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-[#2F5952] hover:scale-105 active:scale-90 transition-all duration-200 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="bg-[#3D7068] text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-[#2F5952] hover:scale-105 active:scale-90 transition-all duration-200 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        <Send className="w-[22px] h-[22px]" />
+                        <Send className="w-[14px] h-[14px]" />
                     </button>
                 </div>
             </div>
