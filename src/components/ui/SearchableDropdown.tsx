@@ -8,6 +8,7 @@ interface SearchableDropdownProps {
     onChange: (value: string) => void;
     placeholder?: string;
     className?: string;
+    buttonClassName?: string;
 }
 
 const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
@@ -16,7 +17,8 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
     options,
     onChange,
     placeholder = "Search",
-    className
+    className,
+    buttonClassName
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -45,10 +47,10 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
             <div className="relative">
                 <button
                     onClick={() => setIsOpen(!isOpen)}
-                    className="w-full flex items-center justify-between text-white bg-[#7BD747] px-4 py-3 rounded-xl font-medium shadow-sm hover:opacity-90 transition-opacity"
+                    className={`w-full flex items-center justify-between px-4 py-3 font-medium shadow-sm hover:opacity-90 transition-opacity ${buttonClassName || 'text-white bg-[#7BD747] rounded-xl'}`}
                 >
-                    <span className="text-white">{value || 'Select'}</span>
-                    <ChevronDown size={20} className={`text-white transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                    <span className="truncate">{value || 'Select'}</span>
+                    <ChevronDown size={20} className={`transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''} ${buttonClassName?.includes('text-white') ? 'text-white' : 'text-gray-500'}`} />
                 </button>
 
                 {isOpen && (
