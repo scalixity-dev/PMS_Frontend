@@ -103,17 +103,15 @@ const Tasks: React.FC = () => {
         today.setHours(0, 0, 0, 0);
         const todayTasks = tasks.filter(t => {
             if (!t.date) return false;
-            // Parse date format "DD MMM, YYYY"
-            const dateParts = t.date.split(' ');
-            if (dateParts.length < 3) return false;
-            const day = parseInt(dateParts[0]);
-            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-            const month = monthNames.indexOf(dateParts[1]);
-            const year = parseInt(dateParts[2]);
-            if (month === -1) return false;
-            const taskDate = new Date(year, month, day);
-            taskDate.setHours(0, 0, 0, 0);
-            return taskDate.getTime() === today.getTime();
+            try {
+                // Parse date - try native Date parsing first
+                const taskDate = new Date(t.date);
+                if (isNaN(taskDate.getTime())) return false;
+                taskDate.setHours(0, 0, 0, 0);
+                return taskDate.getTime() === today.getTime();
+            } catch {
+                return false;
+            }
         }).length;
 
         const recurringTasks = tasks.filter(t => t.isRecurring).length;
