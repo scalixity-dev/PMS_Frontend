@@ -299,12 +299,13 @@ const VacantRentals: React.FC = () => {
                                             className="px-6 py-4 grid gap-4 items-center bg-gray-50"
                                             style={{ gridTemplateColumns }}
                                         >
-                                            <div className="text-gray-800 font-bold">Total</div>
-                                            {activeColumns.slice(1, -2).map(col => (
-                                                <div key={col.id}></div>
+                                            {activeColumns.map((col, index) => (
+                                                <div key={col.id} className={col.id === 'marketRent' || index === 0 ? "text-gray-800 font-bold" : ""}>
+                                                    {index === 0 ? 'Total' : 
+                                                     col.id === 'marketRent' ? formatCurrency(total) : 
+                                                     null}
+                                                </div>
                                             ))}
-                                            <div className="text-gray-800 font-bold">{formatCurrency(total)}</div>
-                                            <div></div>
                                         </div>
                                     </div>
                                 </>
