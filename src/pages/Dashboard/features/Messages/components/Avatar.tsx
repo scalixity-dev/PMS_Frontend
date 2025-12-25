@@ -37,9 +37,9 @@ const Avatar: React.FC<AvatarProps> = ({ name, className = '', size = 'md' }) =>
     };
 
     const sizeClasses = {
-        sm: 'w-10 h-10 text-sm',
-        md: 'w-12 h-12 text-base',
-        lg: 'w-14 h-14 text-lg',
+        sm: 'w-7 h-7 text-[10px]',
+        md: 'w-9 h-9 text-xs',
+        lg: 'w-11 h-11 text-sm',
     };
 
     return (

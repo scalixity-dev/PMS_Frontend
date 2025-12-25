@@ -81,6 +81,7 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
@@ -96,13 +97,15 @@ body {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #cbd5e1; /* slate-300 */
+  background-color: #cbd5e1;
+  /* slate-300 */
   border-radius: 9999px;
   transition: background-color 0.2s;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: #94a3b8; /* slate-400 */
+  background-color: #94a3b8;
+  /* slate-400 */
 }
 
 /* 🧭 Buttons */
@@ -122,6 +125,7 @@ body {
   border: var(--btn-primary-border);
   color: var(--btn-text-color);
 }
+
 .btn-primary:hover {
   opacity: 0.9;
 }
@@ -132,6 +136,7 @@ body {
   border: var(--btn-secondary-border);
   color: var(--btn-text-color);
 }
+
 .btn-secondary:hover {
   opacity: 0.9;
 }
@@ -144,6 +149,7 @@ body {
   border-radius: 9999px;
   font-weight: 600;
 }
+
 .btn-active:hover {
   background-color: #17a878;
   opacity: 0.9;
@@ -157,6 +163,7 @@ body {
   border-radius: 9999px;
   font-weight: 500;
 }
+
 .btn-nonactive:hover {
   opacity: 0.85;
 }
@@ -172,11 +179,13 @@ input[type="submit"],
 
 /* 📐 Max Width Utilities */
 .max-w-8xl {
-  max-width: 90rem; /* 1440px */
+  max-width: 90rem;
+  /* 1440px */
 }
 
 .max-w-9xl {
-  max-width: 96rem; /* 1536px */
+  max-width: 96rem;
+  /* 1536px */
 }
 
 /* -------------------------- */
@@ -189,18 +198,27 @@ input[type="submit"],
   backface-visibility: hidden;
   will-change: box-shadow, background-color, opacity;
 }
+
 .lease-card::before {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
   /* soft radial glow from top-center */
-  background: radial-gradient(600px 240px at 50% 6%, rgba(32,204,149,0.14), rgba(32,204,149,0.07) 20%, transparent 45%);
+  background: radial-gradient(600px 240px at 50% 6%, rgba(32, 204, 149, 0.14), rgba(32, 204, 149, 0.07) 20%, transparent 45%);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 260ms cubic-bezier(.2,.9,.2,1);
+  transition: opacity 260ms cubic-bezier(.2, .9, .2, 1);
 }
+
 .lease-card:hover::before,
 .lease-card:focus-within::before {
   opacity: 1;
+}
+
+@media print {
+  body {
+    background-color: white !important;
+    background-image: none !important;
+  }
 }
