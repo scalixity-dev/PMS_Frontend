@@ -26,7 +26,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
     const btnClass = (active: boolean) => `p-2 rounded hover:bg-gray-100 transition-colors ${active ? 'bg-gray-200 text-[#3A6D6C]' : 'text-gray-600'}`;
 
     return (
-        <div className="flex flex-wrap gap-1 p-2 bg-white border-b border-gray-100 rounded-t-xl sticky top-0 z-10 transition-all">
+        <div className="flex flex-wrap gap-1 p-6 bg-white border-b border-gray-100 rounded-t-xl sticky top-0 z-10 transition-all">
             <button
                 type="button"
                 onClick={() => editor.chain().focus().toggleBold().run()}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Plus } from 'lucide-react';
 import DashboardFilter from '../../../components/DashboardFilter';
+import { handleDocumentPrint } from '../utils/printPreviewUtils';
 
 interface Template {
     id: number;
@@ -53,15 +54,26 @@ const MyTemplates: React.FC = () => {
         setActiveDropdownId(null);
     };
 
-    const handlePrint = (e: React.MouseEvent) => {
+    const handlePrint = (e: React.MouseEvent, templateId: number) => {
         e.stopPropagation();
-        console.log('Print');
+        // Find the template to get its details
+        const template = templates.find(t => t.id === templateId);
+        if (template) {
+            // Create a temporary div with template content for printing
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = `
+                <h1>${template.title}</h1>
+                <p>${template.subtitle}</p>
+            `;
+            handleDocumentPrint(tempDiv, { title: template.title });
+        }
         setActiveDropdownId(null);
     };
 
-    const handlePreview = (e: React.MouseEvent) => {
+    const handlePreview = (e: React.MouseEvent, templateId: number) => {
         e.stopPropagation();
-        console.log('Preview');
+        // Navigate to template detail page for preview
+        navigate(`/documents/my-templates/${templateId}`);
         setActiveDropdownId(null);
     };
 
@@ -142,13 +154,13 @@ const MyTemplates: React.FC = () => {
                                             onClick={(e) => e.stopPropagation()}
                                         >
                                             <button
-                                                onClick={handlePrint}
+                                                onClick={(e) => handlePrint(e, template.id)}
                                                 className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                                             >
                                                 Print
                                             </button>
                                             <button
-                                                onClick={handlePreview}
+                                                onClick={(e) => handlePreview(e, template.id)}
                                                 className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-50"
                                             >
                                                 Preview

@@ -47,10 +47,11 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
             <div className="relative">
                 <button
                     onClick={() => setIsOpen(!isOpen)}
+                    className={buttonClassName || "w-full flex items-center justify-between text-white bg-[#7BD747] px-4 py-3 rounded-xl font-medium shadow-sm hover:opacity-90 transition-opacity"}
                     className={`w-full flex items-center justify-between px-4 py-3 font-medium shadow-sm hover:opacity-90 transition-opacity ${buttonClassName || 'text-white bg-[#7BD747] rounded-xl'}`}
                 >
-                    <span className="truncate">{value || 'Select'}</span>
-                    <ChevronDown size={20} className={`transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''} ${buttonClassName?.includes('text-white') ? 'text-white' : 'text-gray-500'}`} />
+                    <span className={buttonClassName ? "" : "text-white"}>{value || 'Select'}</span>
+                    <ChevronDown size={20} className={`${buttonClassName ? "" : "text-white"} transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {isOpen && (

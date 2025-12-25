@@ -92,6 +92,18 @@ import EditLead from './pages/Dashboard/features/Leads/EditLead';
 
 import FileManager from './pages/Dashboard/features/FileManager/FileManager';
 
+// User Dashboard pages
+import UserDashboardLayout from './components/userdashboard/UserDashboardLayout';
+import UserDashboard from './pages/userdashboard/UserDashboard';
+import Rent from './pages/userdashboard/Rent';
+import RequestsUser from './pages/userdashboard/Requests';
+import UtilityProviders from './pages/userdashboard/UtilityProviders';
+import PropertiesUser from './pages/userdashboard/Properties';
+import ApplicationsUser from './pages/userdashboard/Applications';
+import FileManager from './pages/userdashboard/FileManager';
+import Downloads from './pages/userdashboard/Downloads';
+import NewRequest from './pages/userdashboard/NewRequest';
+
 // Settings pages
 import Settings from './pages/Dashboard/settings/index';
 import ProfileSettings from './pages/Dashboard/settings/accountsetting/ProfileSettings';
@@ -165,7 +177,6 @@ const App: React.FC = () => {
               <Route path="/features/team" element={<TeamPage />} />
               <Route path="/resources" element={<ResourcePage />} />
               <Route path="/pricing" element={<PricingPage />} />
-              <Route path="*" element={<HomePage />} />
             </Route>
             <Route element={<DashboardLayout />}>
               <Route
@@ -685,6 +696,22 @@ const App: React.FC = () => {
                 }
               />
             </Route>
+
+            {/* User Dashboard Routes */}
+            <Route element={<UserDashboardLayout />}>
+              <Route path="/userdashboard" element={<UserDashboard />} />
+              <Route path="/userdashboard/rent" element={<Rent />} />
+              <Route path="/userdashboard/requests" element={<RequestsUser />} />
+              <Route path="/userdashboard/utility-providers" element={<UtilityProviders />} />
+              <Route path="/userdashboard/properties" element={<PropertiesUser />} />
+              <Route path="/userdashboard/applications" element={<ApplicationsUser />} />
+              <Route path="/userdashboard/file-manager" element={<FileManager />} />
+              <Route path="/userdashboard/downloads" element={<Downloads />} />
+              <Route path="/userdashboard/new-request" element={<NewRequest />} />
+            </Route>
+
+            {/* Catch-all route */}
+            <Route path="*" element={<HomePage />} />
           </Routes>
         </BrowserRouter>
         <TanStackDevtools />

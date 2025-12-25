@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import type { EditorView } from '@tiptap/pm/view';
 import PrimaryActionButton from '../../../../../components/common/buttons/PrimaryActionButton';
 import TiptapEditor from '../../../../../components/common/Editor/TiptapEditor';
+import DocumentPreviewModal from './DocumentPreviewModal';
+import { handleDocumentPrint } from '../utils/printPreviewUtils';
 
 interface TemplateEditorProps {
     initialEditorContent?: string;
@@ -11,18 +13,18 @@ interface TemplateEditorProps {
 }
 
 const AUTO_FILL_MAPPINGS: Record<string, string> = {
-    'Emergency Contact Email': 'Emergency Contact Email: __________',
-    'Daily Rent Late Fees': 'Daily Rent Late Fees: ₹_____ per day',
-    'Electricity Provider': 'Electricity Provider: __________',
-    'Gas Provider': 'Gas Provider: __________',
-    'Holding Deposit': 'Holding Deposit: ₹__________',
-    'Internet Provider': 'Internet Provider: __________',
-    'Landlord Utilities': 'Landlord Utilities: __________',
-    'Lease Number': 'Lease No: __________',
-    'Lease Start Date': 'Lease Start Date: __ / __ / ____',
-    'List of Equipment': 'List of Equipment: __________',
-    'Number of Baths': 'Number of Baths: __________',
-    'Pet Charge': 'Pet Charge: ₹__________',
+    'Emergency Contact Email': 'Emergency Contact Email',
+    'Daily Rent Late Fees': 'Daily Rent Late Fees',
+    'Electricity Provider': 'Electricity Provider',
+    'Gas Provider': 'Gas Provider',
+    'Holding Deposit': 'Holding Deposit',
+    'Internet Provider': 'Internet Provider',
+    'Landlord Utilities': 'Landlord Utilities',
+    'Lease Number': 'Lease No',
+    'Lease Start Date': 'Lease Start Date',
+    'List of Equipment': 'List of Equipment',
+    'Number of Baths': 'Number of Baths',
+    'Pet Charge': 'Pet Charge',
 };
 
 const TemplateEditor: React.FC<TemplateEditorProps> = ({
@@ -34,7 +36,30 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
     const [activeTab, setActiveTab] = useState<'fields' | 'autoFill'>('fields');
     const [editorContent, setEditorContent] = useState(initialEditorContent);
     const [isDefaultSignature, setIsDefaultSignature] = useState(true);
+    const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
     const [, setEditor] = useState(null);
+    const previewContentRef = useRef<HTMLDivElement | null>(null);
+
+    const handlePrint = () => {
+        if (previewContentRef.current) {
+            handleDocumentPrint(previewContentRef, {
+                title: 'Document Preview',
+                customStyles: `
+                    .auto-fill-pill {
+                        background-color: #88D94C;
+                        border-radius: 9999px;
+                        padding: 4px 14px;
+                        margin: 0 4px;
+                        font-weight: 700;
+                        color: white;
+                        display: inline-flex;
+                        vertical-align: middle;
+                        -webkit-print-color-adjust: exact;
+                    }
+                `
+            });
+        }
+    };
 
     const handleEditorChange = (content: string) => {
         setEditorContent(content);
@@ -83,11 +108,19 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
             const { schema, tr } = view.state;
 
             if (isAutoFill) {
+                // Determine the correct node type name (fallback to 'autoFill' if 'autoFillNode' is missing)
+                const nodeType = schema.nodes.autoFillNode || schema.nodes.autoFill;
+
+                if (!nodeType) {
+                    console.error('Tiptap Error: autoFillNode not found in schema');
+                    return false;
+                }
+
                 // Create the autoFill node
-                const node = schema.nodes.autoFill.create({ label: displayContent });
+                const node = nodeType.create({ label: displayContent });
 
                 // If document is empty, wrap in a paragraph
-                const isEmptyDoc = view.state.doc.content.size === 0;
+                const isEmptyDoc = view.state.doc.content.size <= 2; // ProseMirror empty doc size is usually 2 (empty paragraph)
                 const isSingleEmptyChild =
                     view.state.doc.childCount === 1 &&
                     (view.state.doc.firstChild?.content.size ?? 0) === 0;
@@ -96,12 +129,13 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                     const paragraph = schema.nodes.paragraph.create(null, node);
                     view.dispatch(tr.replaceWith(0, view.state.doc.content.size, paragraph));
                 } else {
-                    // Check if we are at a valid position for an inline node (inside a block)
+                    // Check if we can insert at the resolved position
                     const $pos = view.state.doc.resolve(pos);
-                    if ($pos.parent.type.name === 'paragraph' || $pos.parent.type.isBlock) {
+                    // If we are inside a paragraph or similar block, insert directly
+                    if ($pos.parent.type.name === 'paragraph' || $pos.parent.type.inlineContent) {
                         view.dispatch(tr.insert(pos, node));
                     } else {
-                        // Fallback: create a paragraph if needed
+                        // Otherwise, create a paragraph to hold the inline node
                         const paragraph = schema.nodes.paragraph.create(null, node);
                         view.dispatch(tr.insert(pos, paragraph));
                     }
@@ -130,7 +164,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
             </div>
 
             {/* Fields Section Card */}
-            <div className="bg-white rounded-[1rem] shadow-[0_4px_20px_rgba(0,0,0,0.05)] p-0 overflow-hidden mb-12">
+            <div className="bg-white  rounded-[1rem] shadow-[0_4px_20px_rgba(0,0,0,0.05)] p-0 overflow-hidden mb-12">
                 {/* Tabs */}
                 <div className="flex items-center gap-2 px-10 pt-5" style={{ borderBottom: '0.5px solid #201F23' }}>
                     <button
@@ -213,12 +247,22 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                         <div className="flex justify-end">
                             <PrimaryActionButton
                                 text="Preview"
+                                onClick={() => setIsPreviewModalOpen(true)}
                                 className="px-8 py-2.5 rounded-lg text-sm font-bold shadow-md transform-none"
                             />
                         </div>
                     )}
                 </div>
             </div>
+
+            {/* Preview Modal */}
+            <DocumentPreviewModal
+                isOpen={isPreviewModalOpen}
+                onClose={() => setIsPreviewModalOpen(false)}
+                title="Document Preview"
+                htmlContent={editorContent}
+                customPrintHandler={handlePrint}
+            />
 
             {/* Define Signature Section */}
             {

@@ -19,7 +19,7 @@ const ReviewSuccessModal: React.FC<ReviewSuccessModalProps> = ({
 }) => {
     return (
         <Transition appear show={isOpen} as={Fragment}>
-            <Dialog as="div" className="relative z-[1000]" onClose={onClose}>
+            <Dialog as="div" className="relative z-[1000] print:hidden" onClose={onClose}>
                 <Transition.Child
                     as={Fragment}
                     enter="ease-out duration-300"
@@ -29,10 +29,10 @@ const ReviewSuccessModal: React.FC<ReviewSuccessModalProps> = ({
                     leaveFrom="opacity-100"
                     leaveTo="opacity-0"
                 >
-                    <div className="fixed inset-0 bg-[#00000080]  " />
+                    <div className="fixed inset-0 bg-[#00000080] print:hidden" />
                 </Transition.Child>
 
-                <div className="fixed inset-0 overflow-y-auto">
+                <div className="fixed inset-0 overflow-y-auto print:hidden">
                     <div className="flex min-h-full items-center justify-center p-4 text-center">
                         <Transition.Child
                             as={Fragment}

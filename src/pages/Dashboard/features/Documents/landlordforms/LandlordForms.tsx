@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Printer } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../../components/DashboardFilter';
+import { handleDocumentPrint } from '../utils/printPreviewUtils';
 
 // Mock data for forms
 const MOCK_FORMS = [
@@ -99,8 +100,18 @@ const LandlordForms: React.FC = () => {
     };
 
     const handlePrint = (id: number) => {
-        // Handle print action
-        console.log('Print form:', id);
+        // Find the form by id and print it
+        const form = MOCK_FORMS.find(f => f.id === id);
+        if (form) {
+            // Create a temporary div with form content for printing
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = `
+                <h1>${form.template}</h1>
+                <p><strong>Type:</strong> ${form.type}</p>
+                <p><strong>State:</strong> ${form.state}</p>
+            `;
+            handleDocumentPrint(tempDiv, { title: form.template });
+        }
     };
 
     return (

@@ -1,14 +1,53 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ChevronDown, ChevronLeft, Plus, X, UploadCloud } from 'lucide-react';
+import DOMPurify from 'dompurify';
+import ReviewSuccessModal from '../landlordforms/components/ReviewSuccessModal';
+import DocumentPreviewModal from '../components/DocumentPreviewModal';
+import { handleDocumentPrint } from '../utils/printPreviewUtils';
+
+interface MyLocationState {
+    showSuccessPopup?: boolean;
+    leaseName?: string;
+    propertyName?: string;
+}
 
 const MyTemplateDetail: React.FC = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
+    const location = useLocation();
+    const state = location.state as MyLocationState;
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isAttachmentModalOpen, setIsAttachmentModalOpen] = useState(false);
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+    const [attachments, setAttachments] = useState<{ name: string; size: number; type: string }[]>([]);
+    const [tempAttachments, setTempAttachments] = useState<{ name: string; size: number; type: string }[]>([]);
+
+    const [isUseTemplateModalOpen, setIsUseTemplateModalOpen] = useState(false);
+    const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+    const [isActionsDropdownOpen, setIsActionsDropdownOpen] = useState(false);
+    const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+    const [successData, setSuccessData] = useState({ leaseName: '', propertyName: '' });
+
+    const [selectedProperty, setSelectedProperty] = useState('Luxury Property');
+    const [selectedLease, setSelectedLease] = useState('Lease 1');
+    const [selectedTenants, setSelectedTenants] = useState('Luxury Property');
+
+    const [isPropertyDropdownOpen, setIsPropertyDropdownOpen] = useState(false);
+    const [isLeaseDropdownOpen, setIsLeaseDropdownOpen] = useState(false);
+    const [isTenantsDropdownOpen, setIsTenantsDropdownOpen] = useState(false);
+
+    const propertyDropdownRef = useRef<HTMLDivElement>(null);
+    const leaseDropdownRef = useRef<HTMLDivElement>(null);
+    const tenantsDropdownRef = useRef<HTMLDivElement>(null);
+    const actionsDropdownRef = useRef<HTMLDivElement>(null);
+    const documentContentRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Mock constants for the modal
+    const MOCK_PROPERTIES = ['Luxury Property', 'Downtown Apartment', 'Beach House', 'Mountain Villa'];
+    const MOCK_TENANTS = ['Luxury Property', 'John Doe', 'Jane Smith', 'Bob Johnson'];
+    const MOCK_LEASES = ['Lease 1', 'Lease 2', 'Lease 3', 'Lease 4'];
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -20,6 +59,10 @@ const MyTemplateDetail: React.FC = () => {
         setSelectedFiles(selectedFiles.filter((_, i) => i !== index));
     };
 
+    const removeTempAttachment = (index: number) => {
+        setTempAttachments(tempAttachments.filter((_, i) => i !== index));
+    };
+
     const handleUploadClick = () => {
         fileInputRef.current?.click();
     };
@@ -27,10 +70,46 @@ const MyTemplateDetail: React.FC = () => {
     const [template, setTemplate] = useState<{ id: number; title: string; subtitle: string; content?: string } | null>(null);
 
     useEffect(() => {
+        if (state?.showSuccessPopup) {
+            setIsSuccessModalOpen(true);
+            setSuccessData({
+                leaseName: state.leaseName || 'Lease 9',
+                propertyName: state.propertyName || 'abc'
+            });
+            // Clear location state to prevent modal from showing again on refresh
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (propertyDropdownRef.current && !propertyDropdownRef.current.contains(event.target as Node)) {
+                setIsPropertyDropdownOpen(false);
+            }
+            if (leaseDropdownRef.current && !leaseDropdownRef.current.contains(event.target as Node)) {
+                setIsLeaseDropdownOpen(false);
+            }
+            if (tenantsDropdownRef.current && !tenantsDropdownRef.current.contains(event.target as Node)) {
+                setIsTenantsDropdownOpen(false);
+            }
+            if (actionsDropdownRef.current && !actionsDropdownRef.current.contains(event.target as Node)) {
+                setIsActionsDropdownOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
+    useEffect(() => {
         if (!id) {
             setTemplate(null);
+            setAttachments([]);
             return;
         }
+
         const saved = localStorage.getItem('myTemplates');
         let found = null;
         if (saved) {
@@ -44,6 +123,20 @@ const MyTemplateDetail: React.FC = () => {
         }
 
         setTemplate(found || null);
+
+        // Load saved attachments metadata
+        const attachmentKey = `template_attachments_${id}`;
+        const savedAttachments = localStorage.getItem(attachmentKey);
+        if (savedAttachments) {
+            try {
+                const parsed = JSON.parse(savedAttachments) as { name: string; size: number; type: string }[];
+                setAttachments(parsed);
+            } catch {
+                setAttachments([]);
+            }
+        } else {
+            setAttachments([]);
+        }
     }, [id]);
 
     const templateName = template?.title || "Template Detail";
@@ -62,48 +155,44 @@ const MyTemplateDetail: React.FC = () => {
         ];
     })();
 
-    const sanitizeHtml = (html: string): string => {
-        if (typeof window === 'undefined' || typeof document === 'undefined') {
-            return html;
-        }
-
-        const container = document.createElement('div');
-        container.innerHTML = html;
-
-        // Remove potentially dangerous elements
-        const blockedSelectors = ['script', 'iframe', 'object', 'embed', 'link[rel="import"]'];
-        container.querySelectorAll(blockedSelectors.join(',')).forEach((el) => el.remove());
-
-        // Remove inline event handlers and javascript: URLs
-        const walker = document.createTreeWalker(container, NodeFilter.SHOW_ELEMENT);
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-        let current = walker.currentNode as HTMLElement | null;
-        while (current) {
-            const attributes = Array.from(current.attributes);
-            attributes.forEach((attr) => {
-                const name = attr.name.toLowerCase();
-                const value = attr.value.trim().toLowerCase();
-
-                if (name.startsWith('on')) {
-                    current?.removeAttribute(attr.name);
-                }
-
-                if ((name === 'href' || name === 'src') && value.startsWith('javascript:')) {
-                    current?.removeAttribute(attr.name);
-                }
-            });
-
-            const next = walker.nextNode();
-            current = next as HTMLElement | null;
-        }
-
-        return container.innerHTML;
-    };
-
-    const sanitizedContent = useMemo(
-        () => (template?.content ? sanitizeHtml(template.content) : ''),
+    const sanitizedHtml = useMemo(
+        () => (template?.content ? DOMPurify.sanitize(template.content) : ''),
         [template?.content]
     );
+
+    const formatFileSize = (size: number): string => {
+        return `${(size / 1024 / 1024).toFixed(2)} MB`;
+    };
+
+    const handlePrint = () => {
+        setIsActionsDropdownOpen(false);
+        setIsPreviewModalOpen(false);
+        handleDocumentPrint(documentContentRef, { title: templateName });
+    };
+
+    const handlePreview = () => {
+        setIsActionsDropdownOpen(false);
+        setIsPreviewModalOpen(true);
+    };
+
+    const handleAttachmentsUpdate = () => {
+        if (!id) {
+            setIsAttachmentModalOpen(false);
+            return;
+        }
+
+        const attachmentKey = `template_attachments_${id}`;
+        const newMapped = selectedFiles.map((file) => ({
+            name: file.name,
+            size: file.size,
+            type: file.type,
+        }));
+
+        const finalAttachments = [...tempAttachments, ...newMapped];
+        setAttachments(finalAttachments);
+        localStorage.setItem(attachmentKey, JSON.stringify(finalAttachments));
+        setIsAttachmentModalOpen(false);
+    };
 
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-10">
@@ -128,13 +217,42 @@ const MyTemplateDetail: React.FC = () => {
                         <p className="text-gray-500 font-medium text-sm mt-1">{templateSubtitle}</p>
                     </div>
                     <div className="flex items-center gap-3">
-                        <button className="flex items-center gap-2 bg-[#3A6D6C] text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-[#2d5650] transition-colors shadow-sm">
+                        <button
+                            onClick={() => setIsUseTemplateModalOpen(true)}
+                            className="flex items-center gap-2 bg-[#3A6D6C] text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-[#2d5650] transition-colors shadow-sm"
+                        >
                             Use Template
                             <Plus size={16} className="bg-white/20 rounded-full p-0.5" />
                         </button>
-                        <button className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2d5650] transition-colors shadow-sm">
-                            Actions
-                        </button>
+                        <div className="relative" ref={actionsDropdownRef}>
+                            <button
+                                onClick={() => setIsActionsDropdownOpen(!isActionsDropdownOpen)}
+                                className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2d5650] transition-colors shadow-sm flex items-center gap-2"
+                            >
+                                Actions
+                                <ChevronDown
+                                    size={16}
+                                    className={`text-white transition-transform ${isActionsDropdownOpen ? 'rotate-180' : ''}`}
+                                />
+                            </button>
+                            {isActionsDropdownOpen && (
+                                <div className="absolute left-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden">
+                                    <button
+                                        onClick={handlePrint}
+                                        className="w-full text-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                    >
+                                        Print
+                                    </button>
+                                    <div className="border-t border-gray-200"></div>
+                                    <button
+                                        onClick={handlePreview}
+                                        className="w-full text-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                    >
+                                        Preview
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -177,9 +295,9 @@ const MyTemplateDetail: React.FC = () => {
                     </div>
 
                     {/* Content Placeholder */}
-                    <div className="px-12 py-8 min-h-[300px]">
-                        {sanitizedContent ? (
-                            <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: sanitizedContent }} />
+                    <div className="px-12 py-8 min-h-[300px]" ref={documentContentRef}>
+                        {sanitizedHtml ? (
+                            <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />
                         ) : (
                             <p className="text-gray-400 text-sm">| Type here</p>
                         )}
@@ -195,15 +313,46 @@ const MyTemplateDetail: React.FC = () => {
                         </div>
 
                         <button
-                            onClick={() => setIsAttachmentModalOpen(true)}
+                            onClick={() => {
+                                setTempAttachments([...attachments]);
+                                setSelectedFiles([]);
+                                setIsAttachmentModalOpen(true);
+                            }}
                             className="bg-[#4CD9A4] text-white px-6 py-1.5 rounded-full text-sm font-medium hover:bg-[#42bd93] transition-colors shadow-sm"
                         >
                             Edit
                         </button>
                     </div>
 
-                    <div className="bg-white rounded-[2rem] p-12 flex items-center justify-center border border-gray-100 shadow-inner h-40">
-                        <p className="text-gray-500 font-medium text-sm">No attachments yet</p>
+                    <div className="bg-white rounded-[2rem] p-12 border border-gray-100 shadow-inner min-h-[160px]">
+                        {attachments.length === 0 ? (
+                            <div className="h-full flex items-center justify-center">
+                                <p className="text-gray-500 font-medium text-sm">No attachments yet</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+                                {attachments.map((file) => (
+                                    <div
+                                        key={`${file.name}-${file.size}`}
+                                        className="flex items-center justify-between bg-white/50 px-4 py-2 rounded-xl border border-gray-100"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-1.5 bg-[#3A6D6C]/10 rounded-lg">
+                                                <UploadCloud size={16} className="text-[#3A6D6C]" />
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-semibold text-gray-700 truncate max-w-[300px]">
+                                                    {file.name}
+                                                </span>
+                                                <span className="text-[10px] text-gray-400">
+                                                    {formatFileSize(file.size)}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -255,18 +404,40 @@ const MyTemplateDetail: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Selected Files Preview */}
-                            {selectedFiles.length > 0 && (
+                            {/* Attachments Preview (Existing + New) */}
+                            {(tempAttachments.length > 0 || selectedFiles.length > 0) && (
                                 <div className="w-full mb-8 space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
-                                    {selectedFiles.map((file, index) => (
-                                        <div key={index} className="flex items-center justify-between bg-white/50 px-4 py-2 rounded-xl border border-gray-100">
+                                    {/* Existing Attachments */}
+                                    {tempAttachments.map((file, index) => (
+                                        <div key={`existing-${index}`} className="flex items-center justify-between bg-white/50 px-4 py-2 rounded-xl border border-gray-100">
                                             <div className="flex items-center gap-3">
                                                 <div className="p-1.5 bg-[#3A6D6C]/10 rounded-lg">
                                                     <UploadCloud size={16} className="text-[#3A6D6C]" />
                                                 </div>
                                                 <div className="flex flex-col">
                                                     <span className="text-sm font-semibold text-gray-700 truncate max-w-[300px]">{file.name}</span>
-                                                    <span className="text-[10px] text-gray-400">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                                                    <span className="text-[10px] text-gray-400">{formatFileSize(file.size)}</span>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); removeTempAttachment(index); }}
+                                                className="p-1 hover:text-red-500 transition-colors"
+                                            >
+                                                <X size={16} />
+                                            </button>
+                                        </div>
+                                    ))}
+
+                                    {/* New Selected Files */}
+                                    {selectedFiles.map((file, index) => (
+                                        <div key={`new-${index}`} className="flex items-center justify-between bg-white/50 px-4 py-2 rounded-xl border border-gray-100">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-1.5 bg-[#3A6D6C]/10 rounded-lg">
+                                                    <UploadCloud size={16} className="text-[#3A6D6C]" />
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-semibold text-gray-700 truncate max-w-[300px]">{file.name}</span>
+                                                    <span className="text-[10px] text-gray-400">{formatFileSize(file.size)}</span>
                                                 </div>
                                             </div>
                                             <button
@@ -283,7 +454,7 @@ const MyTemplateDetail: React.FC = () => {
                             {/* Footer/Action */}
                             <div className="w-full flex justify-start">
                                 <button
-                                    onClick={() => setIsAttachmentModalOpen(false)}
+                                    onClick={handleAttachmentsUpdate}
                                     className="bg-[#3A6D6C] text-white px-12 py-3.5 rounded-2xl font-bold text-lg hover:bg-[#2d5650] transition-all shadow-[0_4px_12px_rgba(58,109,108,0.4)]"
                                 >
                                     Update
@@ -293,6 +464,183 @@ const MyTemplateDetail: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            {/* Use Template Modal */}
+            {isUseTemplateModalOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-800/50  animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl overflow-visible mx-4 animate-in zoom-in-95 duration-200">
+                        {/* Header - Dark Teal */}
+                        <div className="bg-[#3A6D6C] px-6 py-4 flex items-center justify-between rounded-t-2xl text-white">
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={() => setIsUseTemplateModalOpen(false)}
+                                    className="hover:bg-white/10 p-1 rounded-full transition-colors"
+                                >
+                                    <ChevronLeft size={24} />
+                                </button>
+                                <span className="text-base font-medium">
+                                    Add Select a property and lease to proceed with this template
+                                </span>
+                            </div>
+                            <button
+                                onClick={() => setIsUseTemplateModalOpen(false)}
+                                className="hover:bg-white/10 p-1 rounded-full transition-colors"
+                            >
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        {/* Content Area - White */}
+                        <div className="p-8 overflow-visible">
+                            <p className="text-gray-700 text-sm mb-6">
+                                Select a property and a lease below and proceed to creating a lease agreement and requesting signature
+                            </p>
+
+                            {/* Row 1: Property and Lease */}
+                            <div className="grid grid-cols-2 gap-4 mb-6">
+                                {/* Property Dropdown */}
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        Property<span className="text-red-500">*</span>
+                                    </label>
+                                    <div className="relative" ref={propertyDropdownRef}>
+                                        <button
+                                            onClick={() => setIsPropertyDropdownOpen(!isPropertyDropdownOpen)}
+                                            className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-700 hover:border-[#3A6D6C] transition-colors"
+                                        >
+                                            <span>{selectedProperty}</span>
+                                            <ChevronDown
+                                                size={18}
+                                                className={`text-gray-500 transition-transform ${isPropertyDropdownOpen ? 'rotate-180' : ''}`}
+                                            />
+                                        </button>
+                                        {isPropertyDropdownOpen && (
+                                            <div className="absolute z-[200] w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                                {MOCK_PROPERTIES.map((property) => (
+                                                    <button
+                                                        key={property}
+                                                        onClick={() => {
+                                                            setSelectedProperty(property);
+                                                            setIsPropertyDropdownOpen(false);
+                                                        }}
+                                                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                    >
+                                                        {property}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Lease Dropdown */}
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        Lease<span className="text-red-500">*</span>
+                                    </label>
+                                    <div className="relative" ref={leaseDropdownRef}>
+                                        <button
+                                            onClick={() => setIsLeaseDropdownOpen(!isLeaseDropdownOpen)}
+                                            className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-700 hover:border-[#3A6D6C] transition-colors"
+                                        >
+                                            <span>{selectedLease}</span>
+                                            <ChevronDown
+                                                size={18}
+                                                className={`text-gray-500 transition-transform ${isLeaseDropdownOpen ? 'rotate-180' : ''}`}
+                                            />
+                                        </button>
+                                        {isLeaseDropdownOpen && (
+                                            <div className="absolute z-[200] w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                                {MOCK_LEASES.map((lease) => (
+                                                    <button
+                                                        key={lease}
+                                                        onClick={() => {
+                                                            setSelectedLease(lease);
+                                                            setIsLeaseDropdownOpen(false);
+                                                        }}
+                                                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                    >
+                                                        {lease}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Row 2: Tenants Dropdown */}
+                            <div className="mb-8">
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Tenants<span className="text-red-500">*</span>
+                                </label>
+                                <div className="relative" ref={tenantsDropdownRef}>
+                                    <button
+                                        onClick={() => setIsTenantsDropdownOpen(!isTenantsDropdownOpen)}
+                                        className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-700 hover:border-[#3A6D6C] transition-colors"
+                                    >
+                                        <span>{selectedTenants}</span>
+                                        <ChevronDown
+                                            size={18}
+                                            className={`text-gray-500 transition-transform ${isTenantsDropdownOpen ? 'rotate-180' : ''}`}
+                                        />
+                                    </button>
+                                    {isTenantsDropdownOpen && (
+                                        <div className="absolute z-[200] w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                            {MOCK_TENANTS.map((tenant) => (
+                                                <button
+                                                    key={tenant}
+                                                    onClick={() => {
+                                                        setSelectedTenants(tenant);
+                                                        setIsTenantsDropdownOpen(false);
+                                                    }}
+                                                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                >
+                                                    {tenant}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Use Template Button */}
+                            <div className="flex justify-center">
+                                <button
+                                    onClick={() => {
+                                        setIsUseTemplateModalOpen(false);
+                                        navigate(`/documents/landlord-forms/use-template/${encodeURIComponent(templateName)}`, {
+                                            state: {
+                                                returnPath: `/documents/my-templates/${id}`,
+                                                selectedProperty
+                                            }
+                                        });
+                                    }}
+                                    className="bg-[#3A6D6C] text-white px-8 py-3 rounded-lg text-sm font-medium hover:bg-[#2d5650] transition-colors"
+                                >
+                                    Use Template
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <ReviewSuccessModal
+                isOpen={isSuccessModalOpen}
+                onClose={() => setIsSuccessModalOpen(false)}
+                leaseName={successData.leaseName}
+                propertyName={successData.propertyName}
+            />
+
+            {/* Document Preview Modal */}
+            <DocumentPreviewModal
+                isOpen={isPreviewModalOpen}
+                onClose={() => setIsPreviewModalOpen(false)}
+                title={templateName}
+                contentRef={documentContentRef}
+                customPrintHandler={handlePrint}
+            />
         </div>
     );
 };

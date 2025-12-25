@@ -21,8 +21,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, activeChatName }
                         className="cursor-pointer hover:opacity-80 transition-opacity"
                     />
                     <div className="flex flex-col gap-1.5 max-w-[70%]">
-                        <span className="text-[11px] text-gray-400 font-medium">{message.time}</span>
-                        <div className="bg-[#EDF2F1] rounded-2xl rounded-tl-none px-4 py-3 text-sm text-gray-800 leading-relaxed shadow-sm hover:shadow-md transition-shadow cursor-default whitespace-pre-wrap">
+                        <span className="text-[10px] text-gray-400 font-medium">{message.time}</span>
+                        <div className="bg-[#EDF2F1] rounded-2xl rounded-tl-none px-3 py-2 text-xs text-gray-800 leading-relaxed shadow-sm hover:shadow-md transition-shadow cursor-default whitespace-pre-wrap">
                             {message.text}
                         </div>
                     </div>
@@ -33,13 +33,13 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, activeChatName }
                 <>
                     <div className="flex items-center gap-2">
                         <div className="flex">
-                            <Check className="w-4 h-4 text-[#41C1A6]" />
-                            <Check className="w-4 h-4 text-[#41C1A6] -ml-2.5" />
+                            <Check className="w-3.5 h-3.5 text-[#41C1A6]" />
+                            <Check className="w-3.5 h-3.5 text-[#41C1A6] -ml-2.5" />
                         </div>
-                        <span className="text-[11px] text-gray-400 font-medium">{message.time}</span>
-                        <span className="text-[12px] font-bold text-gray-900">{message.senderName}</span>
+                        <span className="text-[10px] text-gray-400 font-medium">{message.time}</span>
+                        <span className="text-[11px] font-bold text-gray-900">{message.senderName}</span>
                     </div>
-                    <div className="bg-[#3D7068] text-white rounded-2xl rounded-tr-none px-4 py-3 text-sm leading-relaxed max-w-[70%] shadow-sm hover:shadow-md transition-shadow cursor-default whitespace-pre-wrap">
+                    <div className="bg-[#3D7068] text-white rounded-2xl rounded-tr-none px-3 py-2 text-xs leading-relaxed max-w-[70%] shadow-sm hover:shadow-md transition-shadow cursor-default whitespace-pre-wrap">
                         {message.text}
                         {message.reactions && message.reactions.length > 0 && (
                             <div className="mt-2 flex justify-end gap-1">
