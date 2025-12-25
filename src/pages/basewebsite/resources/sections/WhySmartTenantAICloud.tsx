@@ -1,7 +1,7 @@
 import React from 'react';
 import HeroCard from '../../../../components/common/cards/HeroCard';
 
-const WhyPmsCloud: React.FC = () => {
+const WhySmartTenantAICloud: React.FC = () => {
   const features = [
     'Free 14 day trial',
     'Credit card required',
@@ -11,16 +11,16 @@ const WhyPmsCloud: React.FC = () => {
   return (
     <>
       <HeroCard
-        badge="Why PMSCloud"
+        badge="Why SmartTenantAI"
         title="The All-in-One Property Management Solution."
-        description="Trusted by thousands of landlords and property managers, PmsCloud simplifies rental management with powerful, easy-to-use tools designed to save you time, reduce stress, and maximize your rental income."
+        description="Trusted by thousands of landlords and property managers, SmartTenantAI simplifies rental management with powerful, easy-to-use tools designed to save you time, reduce stress, and maximize your rental income."
         features={features}
         learnMoreLabel=""
         showStamp={false}
         showBackgroundCard={false}
-        imageSrc="/whyPmsCloudDashboard.png"
-        imageWidth = {450}
-        imageHeight = {500}
+        imageSrc="/whySmartTenantAICloudDashboard.png"
+        imageWidth={450}
+        imageHeight={500}
         backgroundImageSrc="/bg_vector.png"
         backgroundImageTranslate="translate(100px, 0px)"
         showImageShadow={false}
@@ -34,6 +34,6 @@ const WhyPmsCloud: React.FC = () => {
   );
 };
 
-export default WhyPmsCloud;
+export default WhySmartTenantAICloud;
 
 

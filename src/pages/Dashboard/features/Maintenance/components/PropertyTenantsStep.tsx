@@ -178,7 +178,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
             <div className="mb-12">
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">Equipment</h2>
                 <p className="text-gray-500 text-sm mb-6">
-                    You can link property/unit equipment to this maintenance request and keep track of its maintenance history. You can add/select up to 5 equipment. (This information is visible to you only and not shared to Pms or assigned Service Pros).
+                    You can link property/unit equipment to this maintenance request and keep track of its maintenance history. You can add/select up to 5 equipment. (This information is visible to you only and not shared to tenants or assigned Service Pros).
                 </p>
 
                 <div className="mb-4 p-4 px-8 bg-[var(--color-primary)] rounded-[3rem] w-fit">
@@ -276,7 +276,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
             <div className="mb-12">
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">Tenant Information</h2>
                 <p className="text-gray-500 text-sm mb-6">
-                    Pick the tenant from the table below. If your tenant is connected with you, the request will be automatically shared with them and posted on their PMS Portal.
+                    Pick the tenant from the table below. If your tenant is connected with you, the request will be automatically shared with them and posted on their SmartTenantAI Portal.
                 </p>
 
                 <div className="bg-[#F0F2F5] rounded-[3rem] p-6">

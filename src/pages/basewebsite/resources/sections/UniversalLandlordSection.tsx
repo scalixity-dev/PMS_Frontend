@@ -6,7 +6,7 @@ const UniversalLandlordForms: React.FC = () => {
   return (
     <section className="py-16 px-4 bg-white">
       <div className="max-w-7xl mx-auto">
-        
+
         {/* Section Title */}
         <h1 className="text-center text-5xl font-bold text-slate-900 mb-16">
           Universal Landlord Forms
@@ -14,7 +14,7 @@ const UniversalLandlordForms: React.FC = () => {
 
         {/* Forms Grid */}
         <div className="flex flex-wrap justify-center gap-y-8 gap-x-5">
-          
+
           {/* Lease Agreements */}
           <InfoCard
             title="Lease Agreements"
@@ -27,7 +27,7 @@ const UniversalLandlordForms: React.FC = () => {
           <InfoCard
             title="Welcome Letter"
             icon={<Leasing />}
-            subtitle="Give a long-lasting positive impression on Pms."
+            subtitle="Give a long-lasting positive impression on SmartTenantAI."
             iconColorClass="text-emerald-500"
             variant='primary2'
             iconBgColorClass='#DDDDDD'
@@ -36,7 +36,7 @@ const UniversalLandlordForms: React.FC = () => {
           {/* Rules Addendum */}
           <InfoCard
             title="Rules Addendum"
-            icon={<Portfolio />} 
+            icon={<Portfolio />}
             subtitle="Amend the original lease and include rental guidelines."
             iconColorClass="text-emerald-500"
             variant='light2'
@@ -45,8 +45,8 @@ const UniversalLandlordForms: React.FC = () => {
           {/* Smoke Free Addendum */}
           <InfoCard
             title="Smoke Free Addendum"
-            icon={<GetPaid />} 
-            subtitle="Ensure that Pms are not allowed to smoke indoors on your property."
+            icon={<GetPaid />}
+            subtitle="Ensure that SmartTenantAI are not allowed to smoke indoors on your property."
             iconColorClass="text-emerald-500"
             variant='primary2'
           />
@@ -64,7 +64,7 @@ const UniversalLandlordForms: React.FC = () => {
           <InfoCard
             title="Notice of Rent Increase"
             icon={<Leasing />}
-            subtitle="Properly inform Pms about rent rises."
+            subtitle="Properly inform SmartTenantAI about rent rises."
             iconColorClass="text-emerald-500"
             variant='light2'
           />

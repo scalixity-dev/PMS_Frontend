@@ -20,12 +20,12 @@ const LeadsPage: React.FC = () => {
   return (
     <section className="w-full ">
       <LeadsHeroSection />
-      <LeadFeaturesGrid/>
+      <LeadFeaturesGrid />
       <CatchLeadsSection />
       <KeepApplicationTrack />
       <SplitHeroFeatureReverse
         title="Get leads from your website"
-        description="A moving PMS  has enough on their mind. With PMSCloud, you can document everything in minutes, store photos and notes, and keep things stress-free for everyone."
+        description="A moving tenant has enough on their mind. With SmartTenantAI, you can document everything in minutes, store photos and notes, and keep things stress-free for everyone."
         imageSrc="https://res.cloudinary.com/dxwspucxw/image/upload/v1762494948/dee565d69987479109ffe7012bccf951b7f2a1d5_dtl9ch.png"
       />
       {/* <PremiumLeadsSection /> */}
@@ -33,10 +33,10 @@ const LeadsPage: React.FC = () => {
       <GoogleCalendarSection />
       <SplitHeroFeature
         badgeText="Automatic Listing Syndication"
-        
+
         title="Advertise Your Rental Property Faster"
         description={
-          "List a rental and showcase it on multiple sites at once, gaining more exposure in less time. Landlords who list on PMSCloud receive nearly 4 applications per listing."
+          "List a rental and showcase it on multiple sites at once, gaining more exposure in less time. Landlords who list on SmartTenantAI receive nearly 4 applications per listing."
         }
         imageSrc={"/advertise-rental.png"}
         icon={<MailCheck className="w-10 h-10 text-white" />}
@@ -55,7 +55,7 @@ const LeadsPage: React.FC = () => {
           },
           {
             icon: <ShieldCheck size={24} />,
-            text: "Receive rental applications right on PMSCloud"
+            text: "Receive rental applications right on SmartTenantAI"
           },
           {
             icon: <Star size={24} />,
@@ -66,8 +66,8 @@ const LeadsPage: React.FC = () => {
       <ListYourRentalSection />
       <LeasingSection />
       <QualityLeadsSection />
-      <ExplorePropertiesBanner/>
-      
+      <ExplorePropertiesBanner />
+
     </section>
   );
 };

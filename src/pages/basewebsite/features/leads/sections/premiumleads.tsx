@@ -17,12 +17,12 @@ const PremiumLeadsSection: React.FC = () => {
       }
       betweenTitleAndDescription={
         <p className="font-heading font-light lg:text-sm xl:text-base leading-[150%] tracking-normal text-subheading mb-4">
-          Find new renters easily by inviting PMS to apply to your vacant rentals.
+          Find new renters easily by inviting tenants to apply to your vacant rentals.
         </p>
       }
       description={
         <>
-         With Premium Leads, the system analyzes your vacancies and 
+          With Premium Leads, the system analyzes your vacancies and
           <br />
           recommends the best applicants that match your listing.
         </>

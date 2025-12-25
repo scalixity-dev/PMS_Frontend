@@ -102,14 +102,14 @@ export default function DashboardNavbar({ sidebarOpen, setSidebarOpen }: NavbarP
       <div className="flex items-center">
         {/* Desktop Logo */}
         <div className="hidden lg:flex items-center justify-center w-64 gap-2 text-white">
-          <img src={logo} alt="PMS" className="w-6 h-6" style={{ filter: "invert(1) brightness(2)" }} />
-          <span className="text-lg font-bold">PMS</span>
+          <img src={logo} alt="SmartTenantAI" className="w-6 h-6" style={{ filter: "invert(1) brightness(2)" }} />
+          <span className="text-lg font-bold">SmartTenantAI</span>
         </div>
 
         {/* Mobile/Tablet Logo */}
         <div className="flex lg:hidden items-center gap-2 text-white">
-          <img src={logo} alt="PMS" className="w-6 h-6" style={{ filter: "invert(1) brightness(2)" }} />
-          <span className="text-lg font-bold">PMS</span>
+          <img src={logo} alt="SmartTenantAI" className="w-6 h-6" style={{ filter: "invert(1) brightness(2)" }} />
+          <span className="text-lg font-bold">SmartTenantAI</span>
         </div>
       </div>
 

@@ -18,7 +18,7 @@ const AllInOneUseCaseSection: React.FC = () => {
 
           <p className="mt-5 text-base leading-relaxed text-[#54606F] sm:text-lg">
             Fill vacancies, collect rent, and manage your entire workflow from one easy dashboard.
-            Property managers save up to 9 hours a week on average with PMSCloud&apos;s Team Management
+            Property managers save up to 9 hours a week on average with SmartTenantAI&apos;s Team Management
             tools.
           </p>
         </div>

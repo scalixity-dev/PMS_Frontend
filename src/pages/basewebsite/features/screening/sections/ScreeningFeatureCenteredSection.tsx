@@ -33,7 +33,7 @@ const EveryFeatureCenteredSection: React.FC = () => {
         Every feature you’ll ever need, and more
       </h2>
       <p className="text-gray-600 mb-10 px-4 sm:px-0 max-w-3xl mx-auto">
-        From listing and leasing to rent collection and maintenance — everything is built right in. Manage Pms, track finances, and automate daily tasks effortlessly.
+        From listing and leasing to rent collection and maintenance — everything is built right in. Manage SmartTenantAI, track finances, and automate daily tasks effortlessly.
       </p>
 
       <div className="max-w-5xl mx-auto px-4">

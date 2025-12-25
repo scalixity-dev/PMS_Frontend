@@ -5,10 +5,10 @@ const ListYourRentalSection: React.FC = () => {
   return (
     <HeroCard
       title="List your rental on top partner sites—free"
-      description="With PMSCloud, you can market your property in minutes. Just fill out your listing details, upload your best photos, and highlight your amenities. Once you're ready, you can publish and syndicate your listing to top rental sites at no extra cost."
+      description="With SmartTenantAI, you can market your property in minutes. Just fill out your listing details, upload your best photos, and highlight your amenities. Once you're ready, you can publish and syndicate your listing to top rental sites at no extra cost."
       features={[]}
       learnMoreLabel=""
-      
+
       showStamp={false}
       showBackgroundCard={false}
       showImageShadow={false}
@@ -22,7 +22,7 @@ const ListYourRentalSection: React.FC = () => {
       backgroundImageTranslate="translate(10px, -10px) lg:translate(10px, -10px) scale(1.2)"
       imageTranslate="-translate-x-2 sm:-translate-x-6 translate-y-4 sm:translate-y-8 lg:translate-y-12"
       sectionPaddingClassName="py-12 px-0"
-      
+
       maxWidthClassName="max-w-7xl"
       contentClassName="gap-0 xl:gap-16"
       titleMarginBottom="mb-4"

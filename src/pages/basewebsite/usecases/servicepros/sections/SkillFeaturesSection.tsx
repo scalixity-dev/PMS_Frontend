@@ -13,7 +13,7 @@ const SkillFeaturesSection: React.FC = () => {
       icon: <img src="https://res.cloudinary.com/dxwspucxw/image/upload/v1762944368/042-viral_marketing_s6lwys.png" alt="Marketing icon" className="w-10 h-10 object-contain" />,
       title: "Get paid quickly and securely",
       description:
-        "Accept online payments directly through PMScloud via debit, credit, or ACH—no matter how many jobs.",
+        "Accept online payments directly through SmartTenantAI via debit, credit, or ACH—no matter how many jobs.",
     },
     {
       icon: <img src="https://res.cloudinary.com/dxwspucxw/image/upload/v1762862465/037-writing_hisdhh.png" alt="Monitor icon" className="w-10 h-10 object-contain" />,
@@ -26,7 +26,7 @@ const SkillFeaturesSection: React.FC = () => {
   return (
     <section className="w-full max-w-8xl mx-auto pb-10 flex flex-col items-center text-center bg-white px-6 md:px-12">
       <h2 className="text-3xl md:text-5xl font-semibold text-[#0D1B2A] mb-10">
-        Turn your skills into steady work with PMS
+        Turn your skills into steady work with SmartTenantAI
       </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">

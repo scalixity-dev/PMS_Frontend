@@ -7,7 +7,7 @@ const GoogleCalendarSection: React.FC = () => {
       title="Sync with Google Calendar"
       betweenTitleAndDescription={
         <p className="font-heading font-light lg:text-sm xl:text-base leading-[150%] tracking-normal text-subheading mb-3">
-          Your calendar at Pms Cloud will keep you up to date on all of your rentals events such as warranties, recurring maintenance, insurance, lease expiration information, etc.
+          Your calendar at SmartTenantAI Cloud will keep you up to date on all of your rentals events such as warranties, recurring maintenance, insurance, lease expiration information, etc.
         </p>
       }
       description="Plus, you can synchronize your calendar with Google and never miss a thing!"
