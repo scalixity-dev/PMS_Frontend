@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronUp, Plus, X, Check, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronUp, X, Check, Loader2 } from 'lucide-react';
+import DashboardFilter from '../../components/DashboardFilter';
+import type { FilterOption } from '../../components/DashboardFilter';
 
 interface StatementItem {
     id: number;
@@ -37,14 +39,13 @@ const ProviderStatement = () => {
     const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
 
-    // Filter State
-    const [openFilter, setOpenFilter] = useState<string | null>(null);
-    const [activeFilters, setActiveFilters] = useState({
-        date: { start: '', end: '' },
-        categories: null as string | null,
-        subCategories: null as string | null,
-        servicePros: [] as string[],
-        groups: [] as string[]
+    // Filter State for DashboardFilter
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedFilters, setSelectedFilters] = useState<Record<string, string[]>>({
+        category: [],
+        subCategory: [],
+        servicePro: [],
+        group: []
     });
 
     // Mock Data
@@ -93,52 +94,51 @@ const ProviderStatement = () => {
         }
     ];
 
-    // Derived Data for Filters
-    const uniqueCategories = Array.from(new Set(statements.map(s => s.category)));
-    const uniqueSubCategories = Array.from(new Set(
-        statements
-            .filter(s => activeFilters.categories === null || s.category === activeFilters.categories)
-            .map(s => s.subCategory)
-    ));
-    const uniqueServicePros = Array.from(new Set(statements.map(s => s.servicePro)));
-    const uniqueGroups = Array.from(new Set(statements.map(s => s.group)));
-
-    // Filter Logic
-    const parseDate = (dateStr: string) => {
-        if (!dateStr || dateStr === '-') return null;
-        return new Date(dateStr);
+    // Filter Options for DashboardFilter
+    const filterOptions: Record<string, FilterOption[]> = {
+        category: Array.from(new Set(statements.map(s => s.category))).map(cat => ({ value: cat, label: cat })),
+        subCategory: Array.from(new Set(statements.map(s => s.subCategory))).map(sub => ({ value: sub, label: sub })),
+        servicePro: Array.from(new Set(statements.map(s => s.servicePro))).map(pro => ({ value: pro, label: pro })),
+        group: Array.from(new Set(statements.map(s => s.group))).map(grp => ({ value: grp, label: grp }))
     };
 
+    const filterLabels: Record<string, string> = {
+        category: 'Category',
+        subCategory: 'Sub-category',
+        servicePro: 'Service Pro',
+        group: 'Group'
+    };
+
+    // Filter Logic
     const filteredStatements = statements.filter(item => {
-        // Date Filter
-        if (activeFilters.date.start) {
-            const itemDate = parseDate(item.dateDue);
-            const startDate = new Date(activeFilters.date.start);
-            if (!itemDate || itemDate < startDate) return false;
-        }
-        if (activeFilters.date.end) {
-            const itemDate = parseDate(item.dateDue);
-            const endDate = new Date(activeFilters.date.end);
-            if (!itemDate || itemDate > endDate) return false;
+        // Search Filter
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase();
+            const matchesSearch =
+                item.property.toLowerCase().includes(query) ||
+                item.unit.toLowerCase().includes(query) ||
+                item.details.toLowerCase().includes(query) ||
+                item.servicePro.toLowerCase().includes(query);
+            if (!matchesSearch) return false;
         }
 
         // Category Filter
-        if (activeFilters.categories && item.category !== activeFilters.categories) {
+        if (selectedFilters.category.length > 0 && !selectedFilters.category.includes(item.category)) {
             return false;
         }
 
         // Sub-category Filter
-        if (activeFilters.subCategories && item.subCategory !== activeFilters.subCategories) {
+        if (selectedFilters.subCategory.length > 0 && !selectedFilters.subCategory.includes(item.subCategory)) {
             return false;
         }
 
         // Service Pro Filter
-        if (activeFilters.servicePros.length > 0 && !activeFilters.servicePros.includes(item.servicePro)) {
+        if (selectedFilters.servicePro.length > 0 && !selectedFilters.servicePro.includes(item.servicePro)) {
             return false;
         }
 
         // Group Filter
-        if (activeFilters.groups.length > 0 && !activeFilters.groups.includes(item.group)) {
+        if (selectedFilters.group.length > 0 && !selectedFilters.group.includes(item.group)) {
             return false;
         }
 
@@ -211,26 +211,7 @@ const ProviderStatement = () => {
         });
     };
 
-    const toggleFilter = (type: 'categories' | 'subCategories' | 'servicePros' | 'groups', value: string) => {
-        setActiveFilters(prev => {
-            if (type === 'categories') {
-                // If same category clicked, clear it and subcategory. Else set new category and clear subcategory
-                const newValue = prev.categories === value ? null : value;
-                return { ...prev, categories: newValue, subCategories: null };
-            }
-            if (type === 'subCategories') {
-                const newValue = prev.subCategories === value ? null : value;
-                return { ...prev, subCategories: newValue };
-            }
 
-            // For other array-based filters (servicePros, groups)
-            const current = prev[type as 'servicePros' | 'groups'];
-            const next = current.includes(value)
-                ? current.filter(item => item !== value)
-                : [...current, value];
-            return { ...prev, [type]: next };
-        });
-    };
 
     const activeColumns = ALL_COLUMNS.filter(col => visibleColumns.includes(col.id));
     const gridTemplateColumns = activeColumns.map(col => col.width).join(' ');
@@ -307,175 +288,15 @@ const ProviderStatement = () => {
                 </div>
 
                 {/* Filters */}
-                <div className="bg-[#3A6D6C] p-4 rounded-[2rem] flex flex-wrap items-center gap-4 mb-8 shadow-md">
-                    {/* Date Filter */}
-                    <div className="relative">
-                        <div
-                            onClick={() => setOpenFilter(openFilter === 'date' ? null : 'date')}
-                            className={`px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium cursor-pointer ${openFilter === 'date' ? 'bg-gray-100 text-gray-900' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
-                        >
-                            Date <Plus className={`w-4 h-4 transition-transform ${openFilter === 'date' ? 'rotate-45' : ''}`} />
-                        </div>
-                        {openFilter === 'date' && (
-                            <div className="absolute top-full mt-2 left-0 bg-white p-4 rounded-xl shadow-xl z-20 w-72 border border-gray-100">
-                                <div className="flex flex-col gap-3">
-                                    <div>
-                                        <label className="text-xs font-semibold text-gray-500 mb-1 block">Start Date</label>
-                                        <input
-                                            type="date"
-                                            value={activeFilters.date.start}
-                                            onChange={(e) => setActiveFilters(prev => ({ ...prev, date: { ...prev.date, start: e.target.value } }))}
-                                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3A6D6C]"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-semibold text-gray-500 mb-1 block">End Date</label>
-                                        <input
-                                            type="date"
-                                            value={activeFilters.date.end}
-                                            onChange={(e) => setActiveFilters(prev => ({ ...prev, date: { ...prev.date, end: e.target.value } }))}
-                                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3A6D6C]"
-                                        />
-                                    </div>
-                                    <button
-                                        onClick={() => setOpenFilter(null)}
-                                        className="w-full bg-[#3A6D6C] text-white py-2 rounded-lg text-sm font-medium mt-2"
-                                    >
-                                        Apply
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Category Filter */}
-                    <div className="relative">
-                        <div
-                            onClick={() => setOpenFilter(openFilter === 'category' ? null : 'category')}
-                            className={`px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium cursor-pointer ${openFilter === 'category' ? 'bg-gray-100 text-gray-900' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
-                        >
-                            Category <Plus className={`w-4 h-4 transition-transform ${openFilter === 'category' ? 'rotate-45' : ''}`} />
-                        </div>
-                        {openFilter === 'category' && (
-                            <div className="absolute top-full mt-2 left-0 bg-white p-2 rounded-xl shadow-xl z-20 w-64 border border-gray-100 max-h-60 overflow-y-auto">
-                                {uniqueCategories.map(cat => (
-                                    <label key={cat} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${activeFilters.categories === cat ? 'border-[#3A6D6C]' : 'border-gray-300'}`}>
-                                            {activeFilters.categories === cat && <div className="w-2 h-2 rounded-full bg-[#3A6D6C]" />}
-                                        </div>
-                                        <span className="text-sm text-gray-700">{cat}</span>
-                                        <input
-                                            type="radio"
-                                            name="category_filter"
-                                            className="hidden"
-                                            checked={activeFilters.categories === cat}
-                                            onChange={() => toggleFilter('categories', cat)}
-                                        />
-                                    </label>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Sub-category Filter */}
-                    <div className="relative">
-                        <div
-                            onClick={() => setOpenFilter(openFilter === 'subCategory' ? null : 'subCategory')}
-                            className={`px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium cursor-pointer ${openFilter === 'subCategory' ? 'bg-gray-100 text-gray-900' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
-                        >
-                            Sub-category <Plus className={`w-4 h-4 transition-transform ${openFilter === 'subCategory' ? 'rotate-45' : ''}`} />
-                        </div>
-                        {openFilter === 'subCategory' && (
-                            <div className="absolute top-full mt-2 left-0 bg-white p-2 rounded-xl shadow-xl z-20 w-64 border border-gray-100 max-h-60 overflow-y-auto">
-                                {uniqueSubCategories.length > 0 ? (
-                                    uniqueSubCategories.map(sub => (
-                                        <label key={sub} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${activeFilters.subCategories === sub ? 'border-[#3A6D6C]' : 'border-gray-300'}`}>
-                                                {activeFilters.subCategories === sub && <div className="w-2 h-2 rounded-full bg-[#3A6D6C]" />}
-                                            </div>
-                                            <span className="text-sm text-gray-700">{sub}</span>
-                                            <input
-                                                type="radio"
-                                                name="subcategory_filter"
-                                                className="hidden"
-                                                checked={activeFilters.subCategories === sub}
-                                                onChange={() => toggleFilter('subCategories', sub)}
-                                            />
-                                        </label>
-                                    ))
-                                ) : (
-                                    <div className="p-2 text-sm text-gray-500 text-center">Select a category first</div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Service Pro Filter */}
-                    <div className="relative">
-                        <div
-                            onClick={() => setOpenFilter(openFilter === 'servicePro' ? null : 'servicePro')}
-                            className={`px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium cursor-pointer ${openFilter === 'servicePro' ? 'bg-gray-100 text-gray-900' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
-                        >
-                            Service Pro <Plus className={`w-4 h-4 transition-transform ${openFilter === 'servicePro' ? 'rotate-45' : ''}`} />
-                        </div>
-                        {openFilter === 'servicePro' && (
-                            <div className="absolute top-full mt-2 left-0 bg-white p-2 rounded-xl shadow-xl z-20 w-64 border border-gray-100 max-h-60 overflow-y-auto">
-                                {uniqueServicePros.map(pro => (
-                                    <label key={pro} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${activeFilters.servicePros.includes(pro) ? 'bg-[#3A6D6C] border-[#3A6D6C]' : 'border-gray-300'}`}>
-                                            {activeFilters.servicePros.includes(pro) && <Check className="w-3 h-3 text-white" />}
-                                        </div>
-                                        <span className="text-sm text-gray-700">{pro}</span>
-                                        <input
-                                            type="checkbox"
-                                            className="hidden"
-                                            checked={activeFilters.servicePros.includes(pro)}
-                                            onChange={() => toggleFilter('servicePros', pro)}
-                                        />
-                                    </label>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Group Filter */}
-                    <div className="relative">
-                        <div
-                            onClick={() => setOpenFilter(openFilter === 'group' ? null : 'group')}
-                            className={`px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium cursor-pointer ${openFilter === 'group' ? 'bg-gray-100 text-gray-900' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
-                        >
-                            Group <Plus className={`w-4 h-4 transition-transform ${openFilter === 'group' ? 'rotate-45' : ''}`} />
-                        </div>
-                        {openFilter === 'group' && (
-                            <div className="absolute top-full mt-2 left-0 bg-white p-2 rounded-xl shadow-xl z-20 w-64 border border-gray-100 max-h-60 overflow-y-auto">
-                                {uniqueGroups.map(grp => (
-                                    <label key={grp} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${activeFilters.groups.includes(grp) ? 'bg-[#3A6D6C] border-[#3A6D6C]' : 'border-gray-300'}`}>
-                                            {activeFilters.groups.includes(grp) && <Check className="w-3 h-3 text-white" />}
-                                        </div>
-                                        <span className="text-sm text-gray-700">{grp}</span>
-                                        <input
-                                            type="checkbox"
-                                            className="hidden"
-                                            checked={activeFilters.groups.includes(grp)}
-                                            onChange={() => toggleFilter('groups', grp)}
-                                        />
-                                    </label>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="bg-white px-4 py-2 rounded-full text-sm font-medium text-gray-700 cursor-pointer hover:bg-gray-50">
-                        Save Filters
-                    </div>
-                    <div
-                        onClick={() => setActiveFilters({ date: { start: '', end: '' }, categories: null, subCategories: null, servicePros: [], groups: [] })}
-                        className="bg-white px-4 py-2 rounded-full text-sm font-medium text-gray-700 cursor-pointer hover:bg-gray-50"
-                    >
-                        Clear All
-                    </div>
-                </div>
+                <DashboardFilter
+                    filterOptions={filterOptions}
+                    filterLabels={filterLabels}
+                    onSearchChange={setSearchQuery}
+                    onFiltersChange={setSelectedFilters}
+                    showMoreFilters={false}
+                    showClearAll={true}
+                    initialFilters={selectedFilters}
+                />
 
                 {/* Table Container */}
                 <div>

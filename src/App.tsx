@@ -112,6 +112,18 @@ import PropertyPermissions from './pages/Dashboard/settings/team-management/Prop
 import RequestSettings from './pages/Dashboard/settings/request-settings/RequestSettings';
 import AutomationSettings from './pages/Dashboard/settings/request-settings/AutomationSettings';
 import GeneralReports from './pages/Dashboard/settings/report/general';
+import Reports from './pages/Dashboard/features/Reports/Reports';
+import Rentability from './pages/Dashboard/features/Reports/Rentability';
+import Contacts from './pages/Dashboard/features/Reports/Contacts';
+import MaintenanceRequestsReport from './pages/Dashboard/features/Reports/MaintenanceRequestsReport';
+import RentRoll from './pages/Dashboard/features/Reports/RentRoll';
+import RentersInsurance from './pages/Dashboard/features/Reports/RentersInsurance';
+import TenantStatement from './pages/Dashboard/features/Reports/TenantStatement';
+import VacantRentals from './pages/Dashboard/features/Reports/VacantRentals';
+import GeneralExpenses from './pages/Dashboard/features/Reports/GeneralExpenses';
+import GeneralIncome from './pages/Dashboard/features/Reports/GeneralIncome';
+import PropertyExpenses from './pages/Dashboard/features/Reports/PropertyExpenses';
+import PropertyStatement from './pages/Dashboard/features/Reports/PropertyStatement';
 
 // Create a QueryClient instance
 const queryClient = new QueryClient({
@@ -561,10 +573,106 @@ const App: React.FC = () => {
                 }
               />
               <Route
+                path="/dashboard/reports"
+                element={
+                  <ProtectedRoute>
+                    <Reports />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/reports/rentability"
+                element={
+                  <ProtectedRoute>
+                    <Rentability />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/dashboard/reports/statement"
                 element={
                   <ProtectedRoute>
                     <ProviderStatement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/reports/contacts"
+                element={
+                  <ProtectedRoute>
+                    <Contacts />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/reports/maintenance-requests"
+                element={
+                  <ProtectedRoute>
+                    <MaintenanceRequestsReport />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/reports/rent-roll"
+                element={
+                  <ProtectedRoute>
+                    <RentRoll />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/reports/renters-insurance"
+                element={
+                  <ProtectedRoute>
+                    <RentersInsurance />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/reports/tenant-statement"
+                element={
+                  <ProtectedRoute>
+                    <TenantStatement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/reports/vacant-rentals"
+                element={
+                  <ProtectedRoute>
+                    <VacantRentals />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/reports/general-expenses"
+                element={
+                  <ProtectedRoute>
+                    <GeneralExpenses />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/reports/general-income"
+                element={
+                  <ProtectedRoute>
+                    <GeneralIncome />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/reports/property-expenses"
+                element={
+                  <ProtectedRoute>
+                    <PropertyExpenses />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/reports/property-statement"
+                element={
+                  <ProtectedRoute>
+                    <PropertyStatement />
                   </ProtectedRoute>
                 }
               />
