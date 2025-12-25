@@ -18,7 +18,7 @@ export default function UserDashboardLayout({ children }: UserDashboardLayoutPro
                 <UserDashboardNavbar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
             </div>
 
-            <div className="flex flex-1 pt-20">
+            <div className="flex flex-1 pt-16">
                 <div className={`fixed left-0 top-16 bottom-0 z-40 h-[calc(100vh-32px)] transition-all duration-300 ${sidebarCollapsed ? 'w-20' : 'w-55'}`}>
                     <UserDashboardSidebar
                         open={sidebarOpen}
@@ -28,7 +28,7 @@ export default function UserDashboardLayout({ children }: UserDashboardLayoutPro
                     />
                 </div>
 
-                <main className={`p-4 md:p-6 flex-1 ml-0 transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-55'} overflow-y-auto`}>
+                <main className={`flex-1 ml-0 transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-55'} overflow-y-auto`}>
                     {children || <Outlet />}
                 </main>
             </div>
