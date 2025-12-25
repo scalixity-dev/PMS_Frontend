@@ -167,6 +167,21 @@ const MOCK_FILES: FileData[] = [
 
 const ITEMS_PER_PAGE = 10;
 
+// Custom error class for distinguishing terminal errors from network/CORS errors
+class DownloadError extends Error {
+    isTerminal: boolean;
+    constructor(message: string, isTerminal: boolean = false) {
+        super(message);
+        this.name = 'DownloadError';
+        this.isTerminal = isTerminal;
+    }
+}
+
+// Types for filter state - extends Record for DashboardFilter compatibility
+type FileFilters = Record<string, string[]> & {
+    type: string[];
+};
+
 const FileManager: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
@@ -175,6 +190,8 @@ const FileManager: React.FC = () => {
     const [editingFile, setEditingFile] = useState<FileData | null>(null);
     const [deletingFile, setDeletingFile] = useState<FileData | null>(null);
     const [activeActionMenu, setActiveActionMenu] = useState<number | null>(null);
+    const [files, setFiles] = useState<FileData[]>(MOCK_FILES);
+    const [downloadError, setDownloadError] = useState<string | null>(null);
 
     // Close menu when clicking outside
     React.useEffect(() => {
@@ -183,10 +200,16 @@ const FileManager: React.FC = () => {
         return () => document.removeEventListener('click', handleClickOutside);
     }, []);
 
+    // Auto-dismiss download error after 5 seconds
+    React.useEffect(() => {
+        if (downloadError) {
+            const timer = setTimeout(() => setDownloadError(null), 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [downloadError]);
+
     // This state would likely come from a backend in real app
-    const [filters, setFilters] = useState<{
-        type: string[];
-    }>({
+    const [filters, setFilters] = useState<FileFilters>({
         type: []
     });
 
@@ -204,7 +227,7 @@ const FileManager: React.FC = () => {
     };
 
     const filteredFiles = useMemo(() => {
-        return MOCK_FILES.filter(file => {
+        return files.filter(file => {
             const matchesSearch = searchQuery === '' ||
                 file.name.toLowerCase().includes(searchQuery.toLowerCase());
 
@@ -212,7 +235,7 @@ const FileManager: React.FC = () => {
 
             return matchesSearch && matchesType;
         });
-    }, [searchQuery, filters]);
+    }, [searchQuery, filters, files]);
 
     const totalPages = Math.ceil(filteredFiles.length / ITEMS_PER_PAGE);
     const paginatedFiles = useMemo(() => {
@@ -263,10 +286,13 @@ const FileManager: React.FC = () => {
         let blobUrl: string | null = null;
         let link: HTMLAnchorElement | null = null;
 
+        // Clear any previous download errors
+        setDownloadError(null);
+
         try {
             // Validate the URL before attempting download
             if (!isValidPreviewUrl(file.preview)) {
-                throw new Error('Download blocked: URL is not from an approved domain');
+                throw new DownloadError('Download blocked: URL is not from an approved domain', true);
             }
 
             const response = await fetch(file.preview);
@@ -274,8 +300,9 @@ const FileManager: React.FC = () => {
             // Check if the response is successful (status 200-299)
             if (!response.ok) {
                 const errorText = await response.text().catch(() => 'Unknown error');
-                throw new Error(
-                    `Download failed: Server returned ${response.status} ${response.statusText}. ${errorText}`
+                throw new DownloadError(
+                    `Download failed: Server returned ${response.status} ${response.statusText}. ${errorText}`,
+                    true
                 );
             }
 
@@ -287,13 +314,14 @@ const FileManager: React.FC = () => {
             document.body.appendChild(link);
             link.click();
         } catch (error) {
+            const isTerminalError = error instanceof DownloadError && error.isTerminal;
             const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-            console.error('Download failed:', errorMessage);
 
-            // Only attempt fallback for CORS errors, not for validation/HTTP errors
-            if (errorMessage.includes('CORS') || errorMessage.includes('Failed to fetch')) {
-                // Fallback for when CORS blocks blob fetch - try direct link
-                console.warn('Attempting fallback download via direct link');
+            if (isTerminalError) {
+                // Terminal errors (validation failures, HTTP errors) - show to user
+                setDownloadError(errorMessage);
+            } else {
+                // Network/CORS errors - attempt fallback direct download
                 const fallbackLink = document.createElement('a');
                 fallbackLink.href = file.preview;
                 fallbackLink.download = `${file.name}.${file.type}`;
@@ -301,9 +329,6 @@ const FileManager: React.FC = () => {
                 document.body.appendChild(fallbackLink);
                 fallbackLink.click();
                 document.body.removeChild(fallbackLink);
-            } else {
-                // Surface error to user for non-CORS failures
-                alert(`Download failed: ${errorMessage}`);
             }
         } finally {
             // Cleanup: always revoke blob URL and remove link element
@@ -357,8 +382,24 @@ const FileManager: React.FC = () => {
                     filterOptions={filterOptions}
                     filterLabels={filterLabels}
                     onSearchChange={setSearchQuery}
-                    onFiltersChange={(newFilters) => setFilters(newFilters as any)}
+                    onFiltersChange={(newFilters) => setFilters(newFilters as FileFilters)}
                 />
+
+                {/* Download Error Toast */}
+                {downloadError && (
+                    <div className="fixed bottom-6 right-6 bg-red-500 text-white px-6 py-4 rounded-xl shadow-lg z-50 max-w-md animate-in slide-in-from-bottom duration-200">
+                        <div className="flex items-center gap-3">
+                            <span className="text-sm font-medium">{downloadError}</span>
+                            <button
+                                onClick={() => setDownloadError(null)}
+                                className="hover:bg-white/20 p-1 rounded-full transition-colors"
+                                aria-label="Dismiss error"
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 {/* Groups */}
                 {propertyNames.length > 0 ? (
@@ -543,8 +584,16 @@ const FileManager: React.FC = () => {
                 currentName={editingFile?.name || ''}
                 onClose={() => setEditingFile(null)}
                 onSave={(newName) => {
-                    console.log('Renaming file', editingFile?.id, 'to', newName);
-                    // Implement actual rename logic here (e.g., API call, state update)
+                    // TODO: Replace with actual API call when backend is ready
+                    // Example: await fileService.renameFile(editingFile?.id, newName);
+                    if (editingFile) {
+                        // Optimistic UI update
+                        setFiles(prevFiles =>
+                            prevFiles.map(f =>
+                                f.id === editingFile.id ? { ...f, name: newName } : f
+                            )
+                        );
+                    }
                     setEditingFile(null);
                 }}
             />
@@ -554,8 +603,18 @@ const FileManager: React.FC = () => {
                 fileName={deletingFile?.name}
                 onClose={() => setDeletingFile(null)}
                 onConfirm={() => {
-                    console.log('Deleting file', deletingFile?.id);
-                    // Implement actual delete logic here
+                    // TODO: Replace with actual API call when backend is ready
+                    // Example: await fileService.deleteFile(deletingFile?.id);
+                    if (deletingFile) {
+                        // Optimistic UI update
+                        setFiles(prevFiles =>
+                            prevFiles.filter(f => f.id !== deletingFile.id)
+                        );
+                        // Also remove from selection if selected
+                        setSelectedFiles(prev =>
+                            prev.filter(id => id !== deletingFile.id)
+                        );
+                    }
                     setDeletingFile(null);
                 }}
             />

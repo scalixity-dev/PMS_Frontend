@@ -184,9 +184,12 @@ const PropertyStatement: React.FC = () => {
         return groups;
     }, [filteredItems]);
 
-    // Calculate Grand Total
-    const grandTotal = useMemo(() => {
-        return filteredItems.reduce((acc, item) => acc + item.moneyIn - item.moneyOut, 0);
+    // Calculate Grand Totals (separate for moneyIn and moneyOut)
+    const grandTotals = useMemo(() => {
+        return filteredItems.reduce((acc, item) => ({
+            moneyIn: acc.moneyIn + item.moneyIn,
+            moneyOut: acc.moneyOut + item.moneyOut
+        }), { moneyIn: 0, moneyOut: 0 });
     }, [filteredItems]);
 
     const activeColumns = ALL_COLUMNS.filter(col => visibleColumns.includes(col.id));
@@ -355,7 +358,9 @@ const PropertyStatement: React.FC = () => {
                                 {index === 0 ? (
                                     <span>Grand total</span>
                                 ) : col.id === 'moneyIn' ? (
-                                    <span>{formatCurrency(grandTotal)}</span>
+                                    <span>{formatCurrency(grandTotals.moneyIn)}</span>
+                                ) : col.id === 'moneyOut' ? (
+                                    <span>{formatCurrency(grandTotals.moneyOut)}</span>
                                 ) : null}
                             </div>
                         ))}

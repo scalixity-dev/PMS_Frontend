@@ -135,6 +135,49 @@ const PropertyExpenses: React.FC = () => {
         });
     };
 
+    // Helper function to parse date strings like "22 Nov, 2025"
+    const parseDisplayDate = (dateStr: string): Date | null => {
+        if (!dateStr || dateStr === '---') return null;
+        try {
+            // Parse format: "22 Nov, 2025"
+            const [day, monthYear] = dateStr.split(' ');
+            const [month, year] = monthYear.split(', ');
+            const monthMap: Record<string, number> = {
+                'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
+                'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+            };
+            return new Date(parseInt(year), monthMap[month], parseInt(day));
+        } catch {
+            return null;
+        }
+    };
+
+    // Helper function to check if a date falls within a filter range
+    const isDateInRange = (date: Date, filterValue: string): boolean => {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+        switch (filterValue) {
+            case 'today':
+                return date.toDateString() === today.toDateString();
+            case 'this_week': {
+                const weekStart = new Date(today);
+                weekStart.setDate(today.getDate() - today.getDay());
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekStart.getDate() + 6);
+                return date >= weekStart && date <= weekEnd;
+            }
+            case 'this_month':
+                return date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
+            case 'last_month': {
+                const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                return date.getMonth() === lastMonth.getMonth() && date.getFullYear() === lastMonth.getFullYear();
+            }
+            default:
+                return true;
+        }
+    };
+
     // Filter Logic
     const filteredItems = useMemo(() => {
         return MOCK_EXPENSES.filter(item => {
@@ -150,10 +193,34 @@ const PropertyExpenses: React.FC = () => {
                 if (!matchesSearch) return false;
             }
 
+            // Date filter
+            if (selectedFilters.date.length > 0) {
+                const itemDate = parseDisplayDate(item.datePaid);
+                if (itemDate) {
+                    const matchesDate = selectedFilters.date.some(dateFilter =>
+                        isDateInRange(itemDate, dateFilter)
+                    );
+                    if (!matchesDate) return false;
+                }
+            }
+
+            // TODO: Implement accountingType filter when data model is extended
+            // Currently PropertyExpenseItem doesn't have an accountingType field
+            // if (selectedFilters.accountingType.length > 0 && !selectedFilters.accountingType.includes(item.accountingType)) {
+            //     return false;
+            // }
+
             // Category filter
             if (selectedFilters.categorySubCategory.length > 0 && !selectedFilters.categorySubCategory.includes(item.category)) {
                 return false;
             }
+
+            // TODO: Implement group filter when data model is extended
+            // The 'group' filter options (by_property, by_category, by_unit) typically affect grouping/display
+            // rather than filtering, but if item.group exists:
+            // if (selectedFilters.group.length > 0 && !selectedFilters.group.includes(item.group)) {
+            //     return false;
+            // }
 
             return true;
         });
