@@ -48,7 +48,7 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
                     isRecurring: false,
                     frequency: '',
                     endDate: undefined,
-                    type: (editReminder.type as 'reminder' | 'viewing' | 'meeting' | 'other') || 'reminder',
+                    type: editReminder.type === 'maintenance' ? 'reminder' : (editReminder.type || 'reminder'),
                     color: undefined,
                 };
                 setFormData(editFormData);
