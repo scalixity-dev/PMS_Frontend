@@ -7,7 +7,7 @@ const SupportSection: React.FC = () => {
     <section className="py-16 px-4 bg-white">
       {/* Grid container to lay out the cards */}
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 justify-items-center">
-        
+
         {/* Card 1: Technical Support */}
         <SupportCard
           icon={<SupportIcon />}
@@ -33,13 +33,13 @@ const SupportSection: React.FC = () => {
           description={
             <>
               Have a question or want to send feedback? Email us at{' '}
-              <a href="mailto:support@pmscloud.com" className="text-emerald-600 font-medium hover:underline">
-                support@pmscloud.com
+              <a href="mailto:support@SmartTenantAIcloud.com" className="text-emerald-600 font-medium hover:underline">
+                support@SmartTenantAIcloud.com
               </a>
             </>
           }
           ctaText="Send Email"
-          ctaHref="mailto:support@pmscloud.com"
+          ctaHref="mailto:support@SmartTenantAIcloud.com"
         />
 
         {/* Card 4: Sales Inquiries */}
@@ -49,13 +49,13 @@ const SupportSection: React.FC = () => {
           description={
             <>
               Have a question to our sales team? Email us at{' '}
-              <a href="mailto:sales@pmscloud.com" className="text-emerald-600 font-medium hover:underline">
-                sales@pmscloud.com
+              <a href="mailto:sales@SmartTenantAIcloud.com" className="text-emerald-600 font-medium hover:underline">
+                sales@SmartTenantAIcloud.com
               </a>
             </>
           }
           ctaText="Send Email"
-          ctaHref="mailto:sales@pmscloud.com"
+          ctaHref="mailto:sales@SmartTenantAIcloud.com"
         />
 
       </div>

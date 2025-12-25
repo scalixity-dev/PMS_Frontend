@@ -4,10 +4,10 @@ export default function DualImageFeatureSection() {
   return (
     <div className="w-screen relative mt-5 left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
       {/* Teal background - only half height */}
-  <div className="absolute inset-0 h-1/2 bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary)] overflow-hidden">
+      <div className="absolute inset-0 h-1/2 bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary)] overflow-hidden">
         {/* Decorative pattern in background - left 40% */}
         <div className="absolute left-0 top-0 w-[40%] h-full opacity-100">
-          <img 
+          <img
             src="https://res.cloudinary.com/dxwspucxw/image/upload/v1762762638/Layer_1_f8ryou.png"
             alt="Decorative pattern"
             className="w-full h-full object-cover"
@@ -18,7 +18,7 @@ export default function DualImageFeatureSection() {
       <div className="relative py-16 max-w-7xl mx-auto">
         {/* Header */}
         <h1 className="text-4xl md:text-5xl font-light text-white text-center mb-16">
-          Reach your PMS more<br />ways than ever
+          Reach your tenants more<br />ways than ever
         </h1>
 
         {/* Dashboard Images */}
@@ -56,7 +56,7 @@ export default function DualImageFeatureSection() {
                 Messenger & Property Board
               </h3>
               <p className="text-sm text-gray-600 mb-2">
-                Message Pms separately, share important forms, and notify all Pms at once in the communication portal.{' '}
+                Message tenants separately, share important forms, and notify all tenants at once in the communication portal.{' '}
                 <a href="#" className="text-[var(--color-primary)] underline">Learn more</a>
               </p>
             </div>

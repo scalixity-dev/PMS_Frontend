@@ -22,7 +22,7 @@ const EveryFeatureCenteredSection: React.FC = () => {
     },
     {
       icon: <MessageCircle />,
-      title: "Message Pms and vendors right from a request",
+      title: "Message SmartTenantAI and vendors right from a request",
       description: "",
     },
   ];
@@ -33,7 +33,7 @@ const EveryFeatureCenteredSection: React.FC = () => {
       <h2 className="text-3xl sm:text-4xl font-semibold text-[var(--color-primary)] mb-8">
         Every feature you’ll ever need, and more
       </h2>
-      
+
 
       <div className="max-w-5xl mx-auto px-4">
         <div className="border border-8 rounded-xl border-[var(--color-primary)]">

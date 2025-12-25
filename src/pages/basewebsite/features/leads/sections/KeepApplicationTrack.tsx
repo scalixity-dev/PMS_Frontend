@@ -6,7 +6,7 @@ export default function KeepApplicationTrack() {
   const cards = [
     {
       icon: <UserCheck className="w-6 h-6 md:w-8 md:h-8 lg:w-8 lg:h-8" />,
-      title: "Change lead status and convert leads into Pms.",
+      title: "Change lead status and convert leads into SmartTenantAI.",
       bgColor: "bg-white hover:bg-[#8FB299]",
       textColor: "text-[var(--color-primary)] group-hover:text-white"
     },
@@ -42,7 +42,7 @@ export default function KeepApplicationTrack() {
               Keep track of every application with powerful tools
             </h2>
             <p className="text-gray-700 text-base max-w-sm mb-4">
-              After a potential Pms  is added to the CRM, you can easily follow their journey:
+              After a potential SmartTenantAI  is added to the CRM, you can easily follow their journey:
             </p>
             <div className="mt-4">
               <ViewMoreButton to="/features/screening" />

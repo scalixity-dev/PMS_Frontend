@@ -275,7 +275,7 @@ const TransactionDetail: React.FC = () => {
 
                     {/* Tags Row - Outside the white card */}
                     <div className="flex gap-4 flex-wrap px-2">
-                        {['Equipment', 'Recurring Requests', 'Pms', 'Maintenance'].map((tag, idx) => (
+                        {['Equipment', 'Recurring Requests', 'SmartTenantAI', 'Maintenance'].map((tag, idx) => (
                             <div key={idx} className="flex items-center gap-2 px-4 py-2 rounded-full border-[1.5px] border-[#7BD747] text-xs font-bold text-gray-700 bg-white shadow-sm">
                                 <div className="w-5 h-5 rounded-full bg-[#7BD747] text-white flex items-center justify-center text-[10px] font-bold">2</div>
                                 {tag}

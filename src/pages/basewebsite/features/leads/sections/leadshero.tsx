@@ -18,7 +18,7 @@ const LeadsHeroSection: React.FC = () => {
         badge="Leads Tracking"
         badgeClassName="inline-flex items-center justify-center w-[120px] sm:w-[132px] h-[36px] sm:h-[40px] px-[8px] sm:px-[10px] rounded-[10px] sm:rounded-[12px] bg-[#B4FFD3] opacity-100 font-heading text-sm sm:text-base text-[#0B696B] font-medium leading-none tracking-normal whitespace-nowrap"
         title="Lead Tracking Tool"
-        description="Receive and manage leads right in your PMSCloud account."
+        description="Receive and manage leads right in your SmartTenantAI account."
         features={[]}
         learnMoreLabel=""
         showStamp={false}

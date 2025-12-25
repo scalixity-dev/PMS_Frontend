@@ -13,19 +13,19 @@ const UseCasesHeroSection: React.FC = () => {
   return (
     <div className="w-full relative">
       {/* background circles */}
-      
-      
+
+
       {/* small decorative circles */}
-      <div 
+      <div
         className="hidden md:block absolute rounded-full w-[24px] h-[24px] md:w-[28px] md:h-[28px] lg:w-[34px] lg:h-[34px] top-[45px] md:top-[50px] lg:top-[55px] right-[20%] md:right-[28%] lg:right-[34%] xl:right-[30%] 2xl:right-[20%] bg-[#4ADDAE] border-2 border-[#FFFEFE] shadow-[0px_3.09px_3.09px_0px_rgba(0,0,0,0.25)]"
       />
-      <div 
+      <div
         className="hidden md:block absolute rounded-full w-[16px] h-[16px] md:w-[18px] md:h-[18px] lg:w-[20px] lg:h-[20px] top-[100px] md:top-[115px] lg:top-[127px] right-[10%] md:right-[11%] lg:right-[13%] xl:right-[10%] 2xl:right-[8%] bg-[#FFE232] border-2 border-[#FFFEFE] shadow-[0px_3.09px_3.09px_0px_rgba(0,0,0,0.25)]"
       />
-      <div 
+      <div
         className="hidden md:block absolute rounded-full w-[24px] h-[24px] md:w-[28px] md:h-[28px] lg:w-[34px] lg:h-[34px] top-[200px] md:top-[240px] lg:top-[275px] left-[20px] md:left-[50px] lg:left-[80px] xl:left-[103px] bg-[#819A78] border-2 border-[#FFFEFE] shadow-[0px_3.09px_3.09px_0px_rgba(0,0,0,0.25)]"
       />
-      
+
       <HeroCard
         badge="Landlord"
         badgeClassName="inline-flex items-center gap-2 sm:gap-2.5 md:gap-3 px-3 sm:px-3.5 md:px-4 py-1.5 sm:py-2 md:py-2 rounded-lg sm:rounded-xl font-heading text-base sm:text-lg md:text-xl lg:text-2xl text-[#0B696B] font-medium leading-[150%] tracking-normal bg-white [border-width:1.65px] border-[#0B696B]"
@@ -34,7 +34,7 @@ const UseCasesHeroSection: React.FC = () => {
         badgeLogoWrapperClassName="inline-flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 lg:w-10 lg:h-10 rounded-full shrink-0 text-primary"
         rightSideLogo={<Users className="h-4 w-4 sm:h-5 sm:w-5 md:h-5 md:w-5 lg:h-6 lg:w-6 text-[#0B696B]" strokeWidth={2.2} />}
         title="The all-in-one platform that helps you manage your portfolio with ease"
-        description="Handle your rentals without the stress. PMSCloud brings listings, leases, payments, and maintenance in one place—saving you up to 20 hours a week."
+        description="Handle your rentals without the stress. SmartTenantAI brings listings, leases, payments, and maintenance in one place—saving you up to 20 hours a week."
         features={features}
         learnMoreLabel=""
         isCentered

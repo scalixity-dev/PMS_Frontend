@@ -13,7 +13,7 @@ const KyeSection: React.FC = () => {
     <HeroCard
       badge="Kye"
       title="Meet kye.ai: Your AI-Powered Listing Assistant"
-      description="Say hello to kye, your smart, snappy, and helpful new AI assistant in PMSCloud. Whether you’ve got one listing or ten, Kye helps you write polished, professional property descriptions in seconds."
+      description="Say hello to kye, your smart, snappy, and helpful new AI assistant in SmartTenantAI. Whether you've got one listing or ten, Kye helps you write polished, professional property descriptions in seconds."
       features={features}
       learnMoreLabel=""
       showStamp={false}

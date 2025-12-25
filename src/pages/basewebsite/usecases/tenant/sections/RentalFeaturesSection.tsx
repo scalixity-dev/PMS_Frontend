@@ -8,19 +8,19 @@ const RentalFeaturesSection: React.FC = () => {
       icon: <Monitor size={40} />,
       title: "Secure Your Home with Renters Insurance",
       description:
-        "Purchase renters insurance directly from your PmsCloud account—fast, simple, and the easiest way to protect your belongings and peace of mind.",
+        "Purchase renters insurance directly from your SmartTenantAI account—fast, simple, and the easiest way to protect your belongings and peace of mind.",
     },
     {
       icon: <CreditCard size={40} />,
       title: "Build Credit by Reporting Your Rent",
       description:
-        "Purchase renters insurance directly from your PmsCloud account—fast, simple, and the easiest way to protect your belongings and peace of mind.",
+        "Purchase renters insurance directly from your SmartTenantAI account—fast, simple, and the easiest way to protect your belongings and peace of mind.",
     },
     {
       icon: <Undo2 size={40} />,
       title: "Support at Your Fingertips",
       description:
-        "PMS support is here to help whenever you need it. From account setup to troubleshooting, our team makes sure you get answers quickly so you can keep managing your rental with ease.",
+        "SmartTenantAI support is here to help whenever you need it. From account setup to troubleshooting, our team makes sure you get answers quickly so you can keep managing your rental with ease.",
     },
   ];
 

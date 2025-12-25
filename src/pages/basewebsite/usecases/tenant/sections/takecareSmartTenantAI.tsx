@@ -2,7 +2,7 @@ import React from "react";
 import { MessageCircle, Receipt, ShieldCheck } from "lucide-react";
 import HeroCard from "../../../../../components/common/cards/HeroCard";
 
-const TakeCarePmsSection: React.FC = () => {
+const TakeCareSmartTenantAISection: React.FC = () => {
   const features = [] as const;
   const cards = [
     {
@@ -27,8 +27,8 @@ const TakeCarePmsSection: React.FC = () => {
 
   return (
     <HeroCard
-      title="Take care of PMS to-do’s"
-      description="Everything you need to stay on top of your rental is right in your pocket. Handle day-to-day tasks, protect your home, and stay connected with your landlord, all on PMS."
+      title="Take care of rental to-do's"
+      description="Everything you need to stay on top of your rental is right in your pocket. Handle day-to-day tasks, protect your home, and stay connected with your landlord, all on SmartTenantAI."
       features={features}
       learnMoreLabel=""
       showStamp={false}
@@ -68,5 +68,4 @@ const TakeCarePmsSection: React.FC = () => {
   );
 };
 
-export default TakeCarePmsSection;
-
+export default TakeCareSmartTenantAISection;

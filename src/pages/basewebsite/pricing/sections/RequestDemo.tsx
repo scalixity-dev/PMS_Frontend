@@ -2,14 +2,14 @@ import React from 'react';
 
 const RequestDemoCard: React.FC = () => {
   return (
-  <div className="max-w-7xl mb-8 mx-auto px-4 sm:px-6 bg-[#819A78]/20 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between">
-      
+    <div className="max-w-7xl mb-8 mx-auto px-4 sm:px-6 bg-[#819A78]/20 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between">
+
       <div className="flex-1 text-center md:text-left md:pr-8 mb-8 md:mb-0">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">
           Request a demo
         </h2>
         <p className="text-lg text-gray-600 mb-6">
-          We're happy to answer any questions you have <br className="hidden md:inline"/> about PmsCloud.
+          We're happy to answer any questions you have <br className="hidden md:inline" /> about SmartTenantAICloud.
         </p>
 
         <button className="bg-gradient-to-r from-[#3A4E33] to-[#85B474]  hover:from-[#3A4E33] hover:to-[#3A4E33] text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-300 flex items-center justify-center mx-auto md:mx-0">

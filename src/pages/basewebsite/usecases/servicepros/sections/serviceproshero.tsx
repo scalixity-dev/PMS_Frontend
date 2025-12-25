@@ -10,7 +10,7 @@ const ServiceProsHero: React.FC = () => {
       badgeVariant="elevated"
       innerSpacingClassName="py-28 px-6 md:px-12 lg:px-20"
       title="Get hired by landlords near you"
-      description="Contractor, plumber, or HVAC? PMS Cloud connects service professionals with property owners who need reliable help. Build your profile, showcase your skills, and start getting new jobs without the hassle of chasing leads."
+      description="Contractor, plumber, or HVAC? SmartTenantAI connects service professionals with property owners who need reliable help. Build your profile, showcase your skills, and start getting new jobs without the hassle of chasing leads."
       imageSrc="/servicepro-hero.png"
       imageWrapperClassName="md:translate-x-6 lg:translate-x-32 translate-y-6 lg:-translate-y-4"
       allowContentOverflow

@@ -13,7 +13,7 @@ const TeamManagementSection: React.FC = () => {
     <HeroCard
       badge="Team Management"
       title="Work smarter with built-in team management"
-      description="Make it a team effort with PmsCloud’s cutting-edge workflow tools. Landlords who use Team Management save up to 9 hours per week on tasks."
+      description="Make it a team effort with SmartTenantAICloud’s cutting-edge workflow tools. Landlords who use Team Management save up to 9 hours per week on tasks."
       features={features}
       learnMoreLabel=""
       showStamp={false}

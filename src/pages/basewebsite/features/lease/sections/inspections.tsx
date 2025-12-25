@@ -7,7 +7,7 @@ const InspectionsSection: React.FC = () => {
     <HeroCard
       badge="Inspections"
       title="Simplify your next property inspection"
-      description="Got a PMS moving in (or out)? Jot down every last detail of your rental’s condition with our digital Move-In Move-Out Inspection Tool—assisted by AI to detect, record, and organize property details effortlessly."
+      description="Got a tenant moving in (or out)? Jot down every last detail of your rental's condition with our digital Move-In Move-Out Inspection Tool - assisted by AI to detect, record, and organize property details effortlessly."
       features={features}
       learnMoreLabel=""
       showStamp={false}
@@ -29,5 +29,3 @@ const InspectionsSection: React.FC = () => {
 };
 
 export default InspectionsSection;
-
-
