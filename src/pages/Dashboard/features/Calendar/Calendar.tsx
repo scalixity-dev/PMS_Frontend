@@ -16,6 +16,10 @@ export interface Reminder {
     propertyId?: string;
     details?: string;
     assigneeName?: string;
+    recurring?: boolean;
+    frequency?: string;
+    endDate?: string;
+    color?: string;
 }
 
 const Calendar: React.FC = () => {
@@ -202,6 +206,10 @@ const Calendar: React.FC = () => {
                 propertyId: event.propertyId,
                 details: event.description,
                 assigneeName: event.assignee,
+                recurring: event.metadata?.recurring ?? false,
+                frequency: event.metadata?.frequency || '',
+                endDate: event.metadata?.endDate || '',
+                color: event.color,
             };
         });
     }, [calendarEvents]);
