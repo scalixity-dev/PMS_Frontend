@@ -14,7 +14,10 @@ import {
 import { type Reminder } from './Calendar';
 import ReminderDetailModal from './components/ReminderDetailModal';
 import DayDetailModal from './components/DayDetailModal';
+import AddReminderModal from './components/AddReminderModal';
 import { getReminderColor } from './calendarUtils';
+import { useDeleteReminder } from '../../../../hooks/useReminderQueries';
+import { X, AlertTriangle, Loader2 } from 'lucide-react';
 
 interface MonthGridProps {
     month: Date;
@@ -35,10 +38,48 @@ const MonthGrid: React.FC<MonthGridProps> = ({ month, reminders }) => {
     const [dayReminders, setDayReminders] = useState<Reminder[]>([]);
     const [isDayDetailModalOpen, setIsDayDetailModalOpen] = useState(false);
 
+    // State for Edit Modal
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [reminderToEdit, setReminderToEdit] = useState<Reminder | null>(null);
+
+    // State for Delete Confirmation
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [reminderToDelete, setReminderToDelete] = useState<Reminder | null>(null);
+
+    // Delete mutation
+    const deleteReminderMutation = useDeleteReminder();
+
     const dayList = eachDayOfInterval({
         start: startDate,
         end: endDate,
     });
+
+    // Handle Edit
+    const handleEdit = (reminder: Reminder) => {
+        setReminderToEdit(reminder);
+        setIsDetailModalOpen(false);
+        setIsEditModalOpen(true);
+    };
+
+    // Handle Delete
+    const handleDelete = (reminder: Reminder) => {
+        setReminderToDelete(reminder);
+        setIsDeleteModalOpen(true);
+    };
+
+    // Confirm Delete
+    const confirmDelete = async () => {
+        if (reminderToDelete) {
+            try {
+                await deleteReminderMutation.mutateAsync(reminderToDelete.id);
+                setIsDeleteModalOpen(false);
+                setIsDetailModalOpen(false);
+                setReminderToDelete(null);
+            } catch (error) {
+                console.error('Failed to delete reminder:', error);
+            }
+        }
+    };
 
     return (
         <div className="w-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-4">
@@ -117,6 +158,8 @@ const MonthGrid: React.FC<MonthGridProps> = ({ month, reminders }) => {
                 isOpen={isDetailModalOpen}
                 onClose={() => setIsDetailModalOpen(false)}
                 reminder={selectedReminder}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
             />
 
             {/* Day Detail Modal (for overflow) */}
@@ -133,8 +176,79 @@ const MonthGrid: React.FC<MonthGridProps> = ({ month, reminders }) => {
                     }}
                 />
             )}
+
+            {/* Edit Reminder Modal */}
+            <AddReminderModal
+                isOpen={isEditModalOpen}
+                onClose={() => {
+                    setIsEditModalOpen(false);
+                    setReminderToEdit(null);
+                }}
+                editReminder={reminderToEdit}
+                mode="edit"
+            />
+
+            {/* Delete Confirmation Modal */}
+            {isDeleteModalOpen && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="bg-red-500 p-4 flex items-center justify-between text-white">
+                            <div className="flex items-center gap-2">
+                                <AlertTriangle size={20} className="stroke-2" />
+                                <span className="font-semibold">Delete Reminder?</span>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setIsDeleteModalOpen(false);
+                                    setReminderToDelete(null);
+                                }}
+                                className="hover:bg-white/10 p-1 rounded-full transition-colors"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="p-6 text-center">
+                            <p className="text-gray-700 mb-2">
+                                Are you sure you want to delete this reminder?
+                            </p>
+                            {reminderToDelete && (
+                                <p className="text-gray-900 font-semibold mb-6">
+                                    "{reminderToDelete.title}"
+                                </p>
+                            )}
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={() => {
+                                        setIsDeleteModalOpen(false);
+                                        setReminderToDelete(null);
+                                    }}
+                                    disabled={deleteReminderMutation.isPending}
+                                    className="flex-1 bg-gray-200 text-gray-800 py-2.5 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={confirmDelete}
+                                    disabled={deleteReminderMutation.isPending}
+                                    className="flex-1 bg-red-500 text-white py-2.5 rounded-lg font-semibold hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    {deleteReminderMutation.isPending ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                            Deleting...
+                                        </>
+                                    ) : (
+                                        'Delete'
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
 
 export default MonthGrid;
+

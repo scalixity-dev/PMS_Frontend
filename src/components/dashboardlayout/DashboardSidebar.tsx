@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { SquarePen, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   PiChartLineUpFill, PiChartPieSliceFill, PiBuildingsFill, PiUsersFill,
-  PiCurrencyDollarFill, PiWrenchFill, PiFileTextFill, PiChartBarFill
+  PiCurrencyDollarFill, PiWrenchFill, PiFileTextFill
 } from "react-icons/pi";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import artworkImage from "../../assets/images/Artwork.png";
@@ -423,7 +423,7 @@ export default function DashboardSidebar({ open, setOpen, collapsed, setCollapse
             {/* Navigation */}
             < nav className="px-1 py-2 space-y-1" >
 
-              {/* 1. Dashboard Dropdown */}
+              { /* 1. Dashboard Dropdown */}
               < SidebarDropdownLink
                 label="Dashboard"
                 icon={< PiChartLineUpFill size={24} />}
@@ -432,7 +432,6 @@ export default function DashboardSidebar({ open, setOpen, collapsed, setCollapse
                 setActiveDropdown={setActiveDropdown}
               >
                 <SidebarSubLink label="Overview" to="/dashboard" isCurrentPath={isCurrentPath} />
-                <SidebarSubLink label="Calendar" to="/dashboard/calendar" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="Tasks" to="/dashboard/tasks" isCurrentPath={isCurrentPath} />
               </SidebarDropdownLink>
 
@@ -518,13 +517,6 @@ export default function DashboardSidebar({ open, setOpen, collapsed, setCollapse
                 <SidebarSubLink label="File manager" to="/documents/file-manager" isCurrentPath={isCurrentPath} />
               </SidebarDropdownLink>
 
-              {/* 8. Reports Link */}
-              <SidebarLink
-                label="Reports"
-                icon={<PiChartBarFill size={24} />}
-                to="/dashboard/reports"
-                isCurrentPath={isCurrentPath}
-              />
 
 
             </nav>

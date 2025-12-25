@@ -80,8 +80,12 @@ const DayDetailModal: React.FC<DayDetailModalProps> = ({ isOpen, onClose, date, 
                                             </p>
                                             <div className="flex items-center gap-2 text-xs font-medium opacity-75">
                                                 <span>{reminder.time || 'All day'}</span>
-                                                <span>•</span>
-                                                <span className="capitalize">{reminder.type}</span>
+                                                {reminder.property && (
+                                                    <>
+                                                        <span>•</span>
+                                                        <span className="truncate">{reminder.property}</span>
+                                                    </>
+                                                )}
                                             </div>
                                         </div>
                                     </div>

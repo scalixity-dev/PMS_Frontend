@@ -1,15 +1,17 @@
 import React, { useRef, useEffect, useCallback } from 'react';
-import { X, Calendar, Clock, Tag } from 'lucide-react';
+import { X, Calendar, Clock, Building2, FileText, User, Edit, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { type Reminder } from '../Calendar';
 
 interface ReminderDetailModalProps {
     isOpen: boolean;
     onClose: () => void;
+    onEdit?: (reminder: Reminder) => void;
+    onDelete?: (reminder: Reminder) => void;
     reminder: Reminder | null;
 }
 
-const ReminderDetailModal: React.FC<ReminderDetailModalProps> = ({ isOpen, onClose, reminder }) => {
+const ReminderDetailModal: React.FC<ReminderDetailModalProps> = ({ isOpen, onClose, onEdit, onDelete, reminder }) => {
     const modalRef = useRef<HTMLDivElement>(null);
     const previousActiveElement = useRef<HTMLElement | null>(null);
 
@@ -103,7 +105,7 @@ const ReminderDetailModal: React.FC<ReminderDetailModalProps> = ({ isOpen, onClo
         >
             <div
                 ref={modalRef}
-                className="bg-white rounded-[2rem] w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 relative overflow-hidden"
+                className="bg-white rounded-[2rem] w-full max-w-xl shadow-2xl animate-in zoom-in-95 duration-200 relative overflow-hidden"
             >
                 {/* Header */}
                 <div className="bg-[#3A6D6C] p-6 flex items-center justify-between text-white">
@@ -139,7 +141,7 @@ const ReminderDetailModal: React.FC<ReminderDetailModalProps> = ({ isOpen, onClo
                             </div>
                         </div>
 
-                        {/* Time & Type Grid */}
+                        {/* Time & Assignee Grid */}
                         <div className="grid grid-cols-2 gap-4">
                             <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
                                 <div className="p-2 bg-white rounded-lg shadow-sm text-[#3A6D6C]">
@@ -153,27 +155,66 @@ const ReminderDetailModal: React.FC<ReminderDetailModalProps> = ({ isOpen, onClo
 
                             <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
                                 <div className="p-2 bg-white rounded-lg shadow-sm text-[#3A6D6C]">
-                                    <Tag size={20} aria-hidden="true" />
+                                    <User size={20} aria-hidden="true" />
                                 </div>
                                 <div>
-                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Type</label>
-                                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-bold mt-1 uppercase
-                                        ${reminder.type === 'maintenance' ? 'bg-red-100 text-red-700' :
-                                            reminder.type === 'viewing' ? 'bg-blue-100 text-blue-700' :
-                                                reminder.type === 'meeting' ? 'bg-purple-100 text-purple-700' :
-                                                    'bg-gray-200 text-gray-700'
-                                        }`}>
-                                        {reminder.type}
-                                    </span>
+                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Assignee</label>
+                                    <p className="font-semibold text-gray-700">{reminder.assigneeName || 'N/A'}</p>
                                 </div>
+                            </div>
+                        </div>
+
+                        {/* Property */}
+                        <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                            <div className="p-2 bg-white rounded-lg shadow-sm text-[#3A6D6C]">
+                                <Building2 size={20} aria-hidden="true" />
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Property</label>
+                                <p className="font-semibold text-gray-700">{reminder.property || 'N/A'}</p>
+                            </div>
+                        </div>
+
+                        {/* Details */}
+                        <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                            <div className="p-2 bg-white rounded-lg shadow-sm text-[#3A6D6C]">
+                                <FileText size={20} aria-hidden="true" />
+                            </div>
+                            <div className="flex-1">
+                                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Details</label>
+                                <p className="font-semibold text-gray-700 whitespace-pre-wrap">{reminder.details || 'No details provided'}</p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="pt-2">
+                    <div className="pt-2 flex gap-3">
+                        <button
+                            onClick={() => {
+                                if (onEdit && reminder) {
+                                    onEdit(reminder);
+                                }
+                            }}
+                            className="flex-1 bg-blue-500 text-white py-3 rounded-xl font-bold text-sm hover:bg-blue-600 transition-colors shadow-lg flex items-center justify-center gap-2"
+                            aria-label="Edit reminder"
+                        >
+                            <Edit size={16} />
+                            Edit
+                        </button>
+                        <button
+                            onClick={() => {
+                                if (onDelete && reminder) {
+                                    onDelete(reminder);
+                                }
+                            }}
+                            className="flex-1 bg-red-500 text-white py-3 rounded-xl font-bold text-sm hover:bg-red-600 transition-colors shadow-lg flex items-center justify-center gap-2"
+                            aria-label="Delete reminder"
+                        >
+                            <Trash2 size={16} />
+                            Delete
+                        </button>
                         <button
                             onClick={onClose}
-                            className="w-full bg-[#3A6D6C] text-white py-3 rounded-xl font-bold text-sm hover:bg-[#2c5251] transition-colors shadow-lg"
+                            className="flex-1 bg-[#3A6D6C] text-white py-3 rounded-xl font-bold text-sm hover:bg-[#2c5251] transition-colors shadow-lg"
                             aria-label="Close reminder details"
                         >
                             Close
