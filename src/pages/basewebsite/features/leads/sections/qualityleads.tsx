@@ -21,7 +21,7 @@ const QualityLeadsSection: React.FC = () => {
           title="Find Quality Leads in Less Time"
           betweenTitleAndDescription={
             <p className="font-heading font-light lg:text-sm xl:text-base leading-[150%] tracking-normal text-subheading mb-4">
-              Save time by only working with eligible applicants. SmartTenantAI Turner makes it easy to pre-qualify SmartTenantAI before they can schedule a tour. (And with an approval rate of 68%, that's a lot of time saved.)
+              Save time by only working with eligible applicants. SmartTenantAI Turner makes it easy to pre-qualify tenants before they can schedule a tour. (And with an approval rate of 68%, that's a lot of time saved.)
             </p>
           }
           description='"Our no-show percentage was about 90% and I spent most of my day going and waiting on somebody to show up. SmartTenantAI Turner changed my day completely- it cut my time spent on leasing in half." —'

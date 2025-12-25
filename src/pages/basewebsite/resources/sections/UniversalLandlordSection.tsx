@@ -64,7 +64,7 @@ const UniversalLandlordForms: React.FC = () => {
           <InfoCard
             title="Notice of Rent Increase"
             icon={<Leasing />}
-            subtitle="Properly inform SmartTenantAI about rent rises."
+            subtitle="Properly inform tenants about rent rises."
             iconColorClass="text-emerald-500"
             variant='light2'
           />

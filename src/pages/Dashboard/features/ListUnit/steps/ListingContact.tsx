@@ -16,7 +16,7 @@ const ListingContact: React.FC<ListingContactProps> = ({ onSubmit }) => {
                     Listing contact
                 </h2>
                 <p className="text-[var(--color-subheading)] text-gray-500">
-                    This contact information will be displayed for your potential SmartTenantAI publicly.
+                    This contact information will be displayed for your potential tenants publicly.
                 </p>
             </div>
 
