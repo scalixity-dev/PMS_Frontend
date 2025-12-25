@@ -90,7 +90,7 @@ import AddLead from './pages/Dashboard/features/Leads/AddLead';
 import LeadDetail from './pages/Dashboard/features/Leads/LeadDetail';
 import EditLead from './pages/Dashboard/features/Leads/EditLead';
 
-import FileManager from './pages/Dashboard/features/FileManager/FileManager';
+
 
 // User Dashboard pages
 import UserDashboardLayout from './components/userdashboard/UserDashboardLayout';
