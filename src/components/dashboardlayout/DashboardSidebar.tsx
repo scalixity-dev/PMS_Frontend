@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { SquarePen, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   PiChartLineUpFill, PiChartPieSliceFill, PiBuildingsFill, PiUsersFill,
-  PiCurrencyDollarFill, PiWrenchFill, PiFileTextFill
+  PiCurrencyDollarFill, PiWrenchFill, PiFileTextFill, PiChartBarFill
 } from "react-icons/pi";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import artworkImage from "../../assets/images/Artwork.png";
@@ -28,6 +28,13 @@ interface SidebarDropdownLinkProps {
   isCurrentPath: (path: string) => boolean;
   activeDropdown: string | null;
   setActiveDropdown: (label: string | null) => void;
+}
+
+interface SidebarLinkProps {
+  label: string;
+  to: string;
+  icon: React.ReactNode;
+  isCurrentPath: (path: string) => boolean;
 }
 
 // --- Component Implementations (Sub-links and Link components) ---
@@ -154,6 +161,63 @@ function SidebarDropdownLink({ label, icon, children, activeDropdown, setActiveD
           <div className="p-1 space-y-0.5">
             {children}
           </div>
+        </div>,
+        document.body
+      )}
+    </>
+  );
+}
+
+function SidebarLink({ label, to, icon, isCurrentPath }: SidebarLinkProps) {
+  const { collapsed } = React.useContext(SidebarContext);
+  const [isHovered, setIsHovered] = useState(false);
+  const linkRef = useRef<HTMLAnchorElement>(null);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+  const isActive = isCurrentPath(to);
+
+  const handleMouseEnter = () => {
+    if (collapsed && linkRef.current) {
+      const rect = linkRef.current.getBoundingClientRect();
+      setMenuPosition({ top: rect.top, left: rect.right + 10 });
+      setIsHovered(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+  };
+
+  return (
+    <>
+      <Link
+        to={to}
+        ref={linkRef}
+        className={`flex items-center px-3 py-2.5 rounded-md transition-colors cursor-pointer 
+                  ${isActive ? "bg-gray-100 font-semibold text-black" : "text-gray-700 hover:bg-gray-100 group"}
+                  ${collapsed ? "justify-center" : "justify-between"}`}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        <div className={`flex items-center gap-3 ${collapsed ? 'justify-center w-full' : ''}`}>
+          <span className={`${isActive ? "text-green-600" : "text-black group-hover:text-black"}`}>
+            {icon}
+          </span>
+          {!collapsed && (
+            <span className={`${isActive ? "text-green-600" : "text-black group-hover:text-black"} text-sm font-medium`}>
+              {label}
+            </span>
+          )}
+        </div>
+      </Link>
+
+      {collapsed && isHovered && createPortal(
+        <div
+          className="fixed bg-white rounded-lg shadow-xl border border-gray-100 z-[9999] py-2 px-3 animate-in fade-in zoom-in-95 duration-100"
+          style={{ top: menuPosition.top, left: menuPosition.left }}
+        >
+          <span className="font-semibold text-gray-900 text-sm">
+            {label}
+          </span>
         </div>,
         document.body
       )}
@@ -453,6 +517,14 @@ export default function DashboardSidebar({ open, setOpen, collapsed, setCollapse
                 <SidebarSubLink label="My templates" to="/documents/my-templates" isCurrentPath={isCurrentPath} />
                 <SidebarSubLink label="File manager" to="/documents/file-manager" isCurrentPath={isCurrentPath} />
               </SidebarDropdownLink>
+
+              {/* 8. Reports Link */}
+              <SidebarLink
+                label="Reports"
+                icon={<PiChartBarFill size={24} />}
+                to="/dashboard/reports"
+                isCurrentPath={isCurrentPath}
+              />
 
 
             </nav>

@@ -18,6 +18,7 @@ interface AddOccupantModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSave: (data: OccupantFormData) => void;
+    initialData?: OccupantFormData;
 }
 
 const relationshipOptions = [
@@ -29,7 +30,7 @@ const relationshipOptions = [
     { value: 'Other', label: 'Other' }
 ];
 
-const AddOccupantModal: React.FC<AddOccupantModalProps> = ({ isOpen, onClose, onSave }) => {
+const AddOccupantModal: React.FC<AddOccupantModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
     const [formData, setFormData] = useState<OccupantFormData>({
         firstName: '',
         lastName: '',
@@ -62,7 +63,7 @@ const AddOccupantModal: React.FC<AddOccupantModalProps> = ({ isOpen, onClose, on
     const filteredPhoneCodes = useMemo(() => {
         if (!phoneCodeSearch) return phoneCountryCodes;
         const searchLower = phoneCodeSearch.toLowerCase();
-        return phoneCountryCodes.filter(code => 
+        return phoneCountryCodes.filter(code =>
             code.name.toLowerCase().includes(searchLower) ||
             code.phonecode.includes(searchLower) ||
             code.isoCode.toLowerCase().includes(searchLower)
@@ -104,7 +105,9 @@ const AddOccupantModal: React.FC<AddOccupantModalProps> = ({ isOpen, onClose, on
 
     // Reset form and errors when modal closes
     useEffect(() => {
-        if (!isOpen) {
+        if (isOpen && initialData) {
+            setFormData(initialData);
+        } else if (!isOpen) {
             setFormData({
                 firstName: '',
                 lastName: '',
@@ -119,7 +122,7 @@ const AddOccupantModal: React.FC<AddOccupantModalProps> = ({ isOpen, onClose, on
             setIsPhoneCodeOpen(false);
             setPhoneCodeSearch('');
         }
-    }, [isOpen]);
+    }, [isOpen, initialData]);
 
     if (!isOpen) return null;
 
@@ -152,18 +155,18 @@ const AddOccupantModal: React.FC<AddOccupantModalProps> = ({ isOpen, onClose, on
                 // Phone format validation (allows various international formats)
                 const digitsOnly = value.replace(/[\s\-\+\(\)]/g, '');
                 const phoneRegex = /^[\d\s\-\+\(\)]+$/;
-                
+
                 // Check if it contains only valid characters
                 if (!phoneRegex.test(value)) {
                     return 'Please enter a valid phone number';
                 }
-                
+
                 // Check if it has at least 4 digits (minimum for most countries)
                 // and at most 15 digits (ITU-T E.164 standard maximum)
                 if (digitsOnly.length < 4) {
                     return 'Phone number must contain at least 4 digits';
                 }
-                
+
                 if (digitsOnly.length > 15) {
                     return 'Phone number cannot exceed 15 digits';
                 }
@@ -247,7 +250,7 @@ const AddOccupantModal: React.FC<AddOccupantModalProps> = ({ isOpen, onClose, on
                     <button onClick={onClose} className="hover:bg-white/10 p-1 rounded-full transition-colors">
                         <ChevronLeft size={20} />
                     </button>
-                    <h2 className="text-lg font-medium">Add a new co-occupant</h2>
+                    <h2 className="text-lg font-medium">{initialData ? 'Edit co-occupant' : 'Add a new co-occupant'}</h2>
                     <button onClick={onClose} className="hover:bg-white/10 p-1 rounded-full transition-colors">
                         <X size={20} />
                     </button>
@@ -310,21 +313,19 @@ const AddOccupantModal: React.FC<AddOccupantModalProps> = ({ isOpen, onClose, on
                     {/* Phone Number */}
                     <div>
                         <label className="block text-xs font-semibold text-[#2c3e50] mb-1 ml-1">Phone Number*</label>
-                        <div className={`flex border rounded-xl transition-all ${
-                            touched.phoneNumber && errors.phoneNumber 
-                                ? 'border-red-500 border-2' 
+                        <div className={`flex border rounded-xl transition-all ${touched.phoneNumber && errors.phoneNumber
+                                ? 'border-red-500 border-2'
                                 : 'border-gray-200 focus-within:ring-2 focus-within:ring-[#3A6D6C] focus-within:border-[#3A6D6C]'
-                        }`}>
+                            }`}>
                             {/* Phone Code Selector */}
                             <div className="relative" ref={phoneCodeRef}>
                                 <button
                                     type="button"
                                     onClick={() => setIsPhoneCodeOpen(!isPhoneCodeOpen)}
-                                    className={`flex items-center gap-1 px-3 py-2.5 border-r bg-white rounded-l-xl focus:outline-none text-sm min-w-[100px] hover:bg-gray-50 transition-colors ${
-                                        touched.phoneNumber && errors.phoneNumber 
-                                            ? 'border-red-500' 
+                                    className={`flex items-center gap-1 px-3 py-2.5 border-r bg-white rounded-l-xl focus:outline-none text-sm min-w-[100px] hover:bg-gray-50 transition-colors ${touched.phoneNumber && errors.phoneNumber
+                                            ? 'border-red-500'
                                             : 'border-gray-200'
-                                    }`}
+                                        }`}
                                 >
                                     <span className="text-sm font-medium">
                                         {selectedPhoneCode ? (
@@ -369,9 +370,8 @@ const AddOccupantModal: React.FC<AddOccupantModalProps> = ({ isOpen, onClose, on
                                                             setIsPhoneCodeOpen(false);
                                                             setPhoneCodeSearch('');
                                                         }}
-                                                        className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-[#3A6D6C]/10 transition-colors text-left ${
-                                                            formData.phoneCountryCode === code.value ? 'bg-[#3A6D6C]/10' : ''
-                                                        }`}
+                                                        className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-[#3A6D6C]/10 transition-colors text-left ${formData.phoneCountryCode === code.value ? 'bg-[#3A6D6C]/10' : ''
+                                                            }`}
                                                     >
                                                         <span className="text-xl">{code.flag}</span>
                                                         <span className="flex-1 text-sm font-medium text-gray-900">{code.name}</span>
@@ -392,9 +392,8 @@ const AddOccupantModal: React.FC<AddOccupantModalProps> = ({ isOpen, onClose, on
                             <input
                                 type="tel"
                                 placeholder="Enter Phone Number"
-                                className={`flex-1 min-w-0 px-4 py-2.5 rounded-r-xl focus:outline-none text-sm placeholder-gray-400 bg-white border-0 ${
-                                    touched.phoneNumber && errors.phoneNumber ? 'text-red-500' : 'text-gray-700'
-                                }`}
+                                className={`flex-1 min-w-0 px-4 py-2.5 rounded-r-xl focus:outline-none text-sm placeholder-gray-400 bg-white border-0 ${touched.phoneNumber && errors.phoneNumber ? 'text-red-500' : 'text-gray-700'
+                                    }`}
                                 value={formData.phoneNumber}
                                 onChange={(e) => handleChange('phoneNumber', e.target.value)}
                                 onBlur={() => handleBlur('phoneNumber')}
@@ -458,11 +457,11 @@ const AddOccupantModal: React.FC<AddOccupantModalProps> = ({ isOpen, onClose, on
                             onClick={handleSubmit}
                             disabled={!isFormValid()}
                             className={`px-8 py-2.5 rounded-xl text-sm font-medium transition-colors shadow-md ${isFormValid()
-                                    ? 'bg-[#3A6D6C] text-white hover:bg-[#2c5251] cursor-pointer'
-                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                ? 'bg-[#3A6D6C] text-white hover:bg-[#2c5251] cursor-pointer'
+                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                 }`}
                         >
-                            Add
+                            {initialData ? 'Save' : 'Add'}
                         </button>
                     </div>
 

@@ -28,9 +28,10 @@ interface AddResidenceModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSave: (data: ResidenceFormData) => void;
+    initialData?: ResidenceFormData;
 }
 
-const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, onSave }) => {
+const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
     // Location data
     const [countries, setCountries] = useState<ICountry[]>([]);
     const [states, setStates] = useState<IState[]>([]);
@@ -149,7 +150,7 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
     const filteredLandlordPhoneCodes = useMemo(() => {
         if (!landlordPhoneCodeSearch) return phoneCountryCodes;
         const searchLower = landlordPhoneCodeSearch.toLowerCase();
-        return phoneCountryCodes.filter(code => 
+        return phoneCountryCodes.filter(code =>
             code.name.toLowerCase().includes(searchLower) ||
             code.phonecode.includes(searchLower) ||
             code.isoCode.toLowerCase().includes(searchLower)
@@ -212,8 +213,10 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
             setTouched({});
             setIsLandlordPhoneCodeOpen(false);
             setLandlordPhoneCodeSearch('');
+        } else if (initialData) {
+            setFormData(initialData);
         }
-    }, [isOpen]);
+    }, [isOpen, initialData]);
 
     if (!isOpen) return null;
 
@@ -413,7 +416,7 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
                     <button onClick={onClose} className="hover:bg-white/10 p-2 rounded-full transition-colors">
                         <ChevronLeft size={28} />
                     </button>
-                    <h2 className="text-2xl font-medium">Add a new residence</h2>
+                    <h2 className="text-2xl font-medium">{initialData ? 'Edit residence' : 'Add a new residence'}</h2>
                     <button onClick={onClose} className="hover:bg-white/10 p-2 rounded-full transition-colors">
                         <X size={28} />
                     </button>
@@ -636,21 +639,19 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
                                 </div>
                                 <div>
                                     <label className={labelClasses}>Landlord Phone *</label>
-                                    <div className={`flex border rounded-xl transition-all ${
-                                        touched.landlordPhone && errors.landlordPhone 
-                                            ? 'border-red-500 border-2' 
-                                            : 'border-gray-200 focus-within:ring-2 focus-within:ring-[#3A6D6C] focus-within:border-[#3A6D6C]'
-                                    }`}>
+                                    <div className={`flex bg-white rounded-lg transition-all ${touched.landlordPhone && errors.landlordPhone
+                                        ? 'border-red-500 border-2'
+                                        : 'focus-within:ring-2 focus-within:ring-[#3A6D6C] focus-within:border-[#3A6D6C]'
+                                        }`}>
                                         {/* Phone Code Selector */}
                                         <div className="relative" ref={landlordPhoneCodeRef}>
                                             <button
                                                 type="button"
                                                 onClick={() => setIsLandlordPhoneCodeOpen(!isLandlordPhoneCodeOpen)}
-                                                className={`flex items-center gap-1 px-3 py-2.5 border-r bg-white rounded-l-xl focus:outline-none text-sm min-w-[100px] hover:bg-gray-50 transition-colors ${
-                                                    touched.landlordPhone && errors.landlordPhone 
-                                                        ? 'border-red-500' 
-                                                        : 'border-gray-200'
-                                                }`}
+                                                className={`flex items-center gap-1 p-4 border-r rounded-l-lg focus:outline-none text-sm min-w-[100px] hover:bg-gray-50 transition-colors ${touched.landlordPhone && errors.landlordPhone
+                                                    ? 'border-red-500'
+                                                    : 'border-gray-200'
+                                                    }`}
                                             >
                                                 <span className="text-sm font-medium">
                                                     {selectedLandlordPhoneCode ? (
@@ -667,7 +668,7 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
 
                                             {/* Dropdown */}
                                             {isLandlordPhoneCodeOpen && (
-                                                <div className="absolute left-0 top-full mt-1 w-80 bg-white border border-gray-300 rounded-xl shadow-lg z-[100] max-h-80 overflow-hidden flex flex-col">
+                                                <div className="absolute left-0 top-full mt-1 w-80 bg-white border border-gray-300 rounded-lg shadow-lg z-[100] max-h-80 overflow-hidden flex flex-col">
                                                     {/* Search Input */}
                                                     <div className="p-2 border-b border-gray-200">
                                                         <div className="relative">
@@ -695,9 +696,8 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
                                                                         setIsLandlordPhoneCodeOpen(false);
                                                                         setLandlordPhoneCodeSearch('');
                                                                     }}
-                                                                    className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-[#3A6D6C]/10 transition-colors text-left ${
-                                                                        formData.landlordPhoneCountryCode === code.value ? 'bg-[#3A6D6C]/10' : ''
-                                                                    }`}
+                                                                    className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-[#3A6D6C]/10 transition-colors text-left ${formData.landlordPhoneCountryCode === code.value ? 'bg-[#3A6D6C]/10' : ''
+                                                                        }`}
                                                                 >
                                                                     <span className="text-xl">{code.flag}</span>
                                                                     <span className="flex-1 text-sm font-medium text-gray-900">{code.name}</span>
@@ -718,9 +718,8 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
                                         <input
                                             type="tel"
                                             placeholder="Enter phone number"
-                                            className={`flex-1 min-w-0 px-4 py-2.5 rounded-r-xl focus:outline-none text-sm placeholder-gray-400 bg-white border-0 ${
-                                                touched.landlordPhone && errors.landlordPhone ? 'text-red-500' : 'text-gray-700'
-                                            }`}
+                                            className={`flex-1 min-w-0 p-4 rounded-r-lg focus:outline-none text-sm placeholder-gray-400 bg-white border-0 ${touched.landlordPhone && errors.landlordPhone ? 'text-red-500' : 'text-gray-700'
+                                                }`}
                                             value={formData.landlordPhone}
                                             onChange={(e) => handleChange('landlordPhone', e.target.value)}
                                             onBlur={() => handleBlur('landlordPhone')}
@@ -759,11 +758,11 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
                                 onClick={handleSubmit}
                                 disabled={!isFormValid()}
                                 className={`px-10 py-3 rounded-xl font-medium transition-colors shadow-lg ${isFormValid()
-                                        ? 'bg-[#3A6D6C] text-white hover:bg-[#2c5251] cursor-pointer'
-                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                    ? 'bg-[#3A6D6C] text-white hover:bg-[#2c5251] cursor-pointer'
+                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                     }`}
                             >
-                                Add
+                                {initialData ? 'Save' : 'Add'}
                             </button>
                         </div>
                     </div>
