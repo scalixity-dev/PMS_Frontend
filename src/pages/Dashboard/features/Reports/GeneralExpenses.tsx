@@ -235,11 +235,15 @@ const GeneralExpenses: React.FC = () => {
                             className="px-6 py-4 grid gap-4 items-center bg-gray-50"
                             style={{ gridTemplateColumns }}
                         >
-                            <div className="text-gray-800 font-bold">Total</div>
-                            {activeColumns.slice(1, -1).map(col => (
-                                <div key={col.id}></div>
+                            {activeColumns.map((col, index) => (
+                                <div key={col.id} className="text-sm">
+                                    {index === 0 ? (
+                                        <span className="text-gray-800 font-bold">Total</span>
+                                    ) : col.id === 'amountPaid' ? (
+                                        <span className="text-gray-800 font-bold">{formatCurrency(totalAmount)}</span>
+                                    ) : null}
+                                </div>
                             ))}
-                            <div className="text-gray-800 font-bold">{formatCurrency(totalAmount)}</div>
                         </div>
 
                         {filteredItems.length === 0 && (

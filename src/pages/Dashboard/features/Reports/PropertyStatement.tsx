@@ -325,16 +325,17 @@ const PropertyStatement: React.FC = () => {
                                             className="bg-[#E8F5E8] rounded-2xl px-6 py-4 grid gap-4 items-center"
                                             style={{ gridTemplateColumns }}
                                         >
-                                            <div className="text-gray-800 font-bold">Total</div>
-                                            {activeColumns.slice(1, 4).map(col => (
-                                                <div key={col.id}></div>
+                                            {activeColumns.map((col, index) => (
+                                                <div key={col.id} className="text-sm">
+                                                    {index === 0 ? (
+                                                        <span className="text-gray-800 font-bold">Total</span>
+                                                    ) : col.id === 'moneyIn' ? (
+                                                        <span className="text-gray-800 font-bold">{formatCurrency(totals.moneyIn)}</span>
+                                                    ) : col.id === 'moneyOut' ? (
+                                                        <span className="text-gray-600 font-bold">{formatCurrency(totals.moneyOut)}</span>
+                                                    ) : null}
+                                                </div>
                                             ))}
-                                            {visibleColumns.includes('moneyIn') && (
-                                                <div className="text-gray-800 font-bold">{formatCurrency(totals.moneyIn)}</div>
-                                            )}
-                                            {visibleColumns.includes('moneyOut') && (
-                                                <div className="text-gray-600 font-bold">{formatCurrency(totals.moneyOut)}</div>
-                                            )}
                                         </div>
                                     </div>
                                 </>
@@ -349,12 +350,15 @@ const PropertyStatement: React.FC = () => {
                         className="bg-[#7CD947] rounded-2xl px-6 py-4 grid gap-4 items-center text-white font-bold"
                         style={{ gridTemplateColumns }}
                     >
-                        <div>Grand total</div>
-                        {activeColumns.slice(1, 4).map(col => (
-                            <div key={col.id}></div>
+                        {activeColumns.map((col, index) => (
+                            <div key={col.id} className="text-sm">
+                                {index === 0 ? (
+                                    <span>Grand total</span>
+                                ) : col.id === 'moneyIn' ? (
+                                    <span>{formatCurrency(grandTotal)}</span>
+                                ) : null}
+                            </div>
                         ))}
-                        <div>{formatCurrency(grandTotal)}</div>
-                        <div></div>
                     </div>
                 )}
 

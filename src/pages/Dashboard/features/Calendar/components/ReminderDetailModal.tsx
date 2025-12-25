@@ -10,8 +10,6 @@ interface ReminderDetailModalProps {
 }
 
 const ReminderDetailModal: React.FC<ReminderDetailModalProps> = ({ isOpen, onClose, reminder }) => {
-    if (!isOpen || !reminder) return null;
-
     // Prevent background scrolling
     React.useEffect(() => {
         if (isOpen) {
@@ -23,6 +21,8 @@ const ReminderDetailModal: React.FC<ReminderDetailModalProps> = ({ isOpen, onClo
             document.body.style.overflow = 'unset';
         };
     }, [isOpen]);
+
+    if (!isOpen || !reminder) return null;
 
     return (
         <div

@@ -282,21 +282,19 @@ const GeneralIncome: React.FC = () => {
                                 className="px-6 py-4 grid gap-4 items-center bg-gray-50"
                                 style={{ gridTemplateColumns }}
                             >
-                                <div className="text-gray-800 font-bold">Total</div>
-                                <div></div>
-                                <div></div>
-                                <div></div>
-                                {visibleColumns.includes('amountDue') && (
-                                    <div className="text-gray-800 font-bold">{formatCurrency(totals.amountDue)}</div>
-                                )}
-                                {visibleColumns.includes('amountPaid') && (
-                                    <div className="text-gray-800 font-bold">{formatCurrency(totals.amountPaid)}</div>
-                                )}
-                                {visibleColumns.includes('discount') && (
-                                    <div className="text-gray-600">{formatCurrency(totals.discount)}</div>
-                                )}
-                                <div></div>
-                                <div></div>
+                                {activeColumns.map((col, index) => (
+                                    <div key={col.id} className="text-sm">
+                                        {index === 0 ? (
+                                            <span className="text-gray-800 font-bold">Total</span>
+                                        ) : col.id === 'amountDue' ? (
+                                            <span className="text-gray-800 font-bold">{formatCurrency(totals.amountDue)}</span>
+                                        ) : col.id === 'amountPaid' ? (
+                                            <span className="text-gray-800 font-bold">{formatCurrency(totals.amountPaid)}</span>
+                                        ) : col.id === 'discount' ? (
+                                            <span className="text-gray-600">{formatCurrency(totals.discount)}</span>
+                                        ) : null}
+                                    </div>
+                                ))}
                             </div>
                         )}
 

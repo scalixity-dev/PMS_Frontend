@@ -15,28 +15,104 @@ interface FileData {
     property: string;
 }
 
+// Allowed hosts whitelist for external URLs
+const ALLOWED_HOSTS = [
+    'images.unsplash.com',
+    'pdfobject.com',
+    'localhost',
+    '127.0.0.1',
+];
+
+/**
+ * Validates a URL for safe rendering in iframes/images.
+ * Returns true if URL is:
+ * - A valid absolute HTTPS URL (or HTTP for localhost development)
+ * - From an allowed host whitelist
+ */
+const isValidPreviewUrl = (url: string): boolean => {
+    if (!url || typeof url !== 'string') return false;
+
+    try {
+        const parsedUrl = new URL(url);
+
+        // Allow only https (and http for localhost/127.0.0.1 during development)
+        const isLocalhost = parsedUrl.hostname === 'localhost' || parsedUrl.hostname === '127.0.0.1';
+        const isSecureProtocol = parsedUrl.protocol === 'https:' || (isLocalhost && parsedUrl.protocol === 'http:');
+
+        if (!isSecureProtocol) return false;
+
+        // Check against allowed hosts whitelist
+        const isAllowedHost = ALLOWED_HOSTS.some(host =>
+            parsedUrl.hostname === host || parsedUrl.hostname.endsWith(`.${host}`)
+        );
+
+        return isAllowedHost;
+    } catch {
+        // Invalid URL format
+        return false;
+    }
+};
+
 const FilePreviewModal = ({ isOpen, file, onClose }: { isOpen: boolean; file: FileData | null; onClose: () => void }) => {
     if (!isOpen || !file) return null;
 
     const isPdf = file.type === 'pdf';
+    const isUrlValid = isValidPreviewUrl(file.preview);
+
+    // Fallback component for blocked/invalid URLs
+    const BlockedPreviewFallback = () => (
+        <div className="w-full bg-white rounded-lg h-[85vh] relative flex flex-col items-center justify-center">
+            <button
+                onClick={onClose}
+                className="absolute -top-4 -right-4 bg-white rounded-full p-2 text-gray-800 shadow-lg hover:bg-gray-100 transition-colors z-50"
+            >
+                <X size={20} />
+            </button>
+            <div className="text-center p-8">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
+                    <X size={32} className="text-red-500" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">Preview Blocked</h3>
+                <p className="text-gray-600 max-w-md">
+                    This file cannot be previewed because the source URL is not from an approved domain
+                    or does not meet security requirements.
+                </p>
+            </div>
+        </div>
+    );
 
     return (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-4" onClick={onClose}>
             <div className="relative w-full max-w-4xl max-h-[90vh] flex items-center justify-center" onClick={e => e.stopPropagation()}>
 
                 {isPdf ? (
-                    <div className="w-full bg-white rounded-lg h-[85vh] relative flex flex-col">
-                        <button
-                            onClick={onClose}
-                            className="absolute -top-4 -right-4 bg-white rounded-full p-2 text-gray-800 shadow-lg hover:bg-gray-100 transition-colors z-50"
-                        >
-                            <X size={20} />
-                        </button>
-                        <iframe src={file.preview} className="w-full h-full rounded-lg" title="PDF Preview"></iframe>
-                    </div>
-                ) : (
+                    isUrlValid ? (
+                        <div className="w-full bg-white rounded-lg h-[85vh] relative flex flex-col">
+                            <button
+                                onClick={onClose}
+                                className="absolute -top-4 -right-4 bg-white rounded-full p-2 text-gray-800 shadow-lg hover:bg-gray-100 transition-colors z-50"
+                            >
+                                <X size={20} />
+                            </button>
+                            <iframe
+                                src={file.preview}
+                                className="w-full h-full rounded-lg"
+                                title="PDF Preview"
+                                sandbox="allow-scripts allow-popups"
+                                referrerPolicy="no-referrer"
+                            />
+                        </div>
+                    ) : (
+                        <BlockedPreviewFallback />
+                    )
+                ) : isUrlValid ? (
                     <div className="relative">
-                        <img src={file.preview} alt="Full preview" className="max-w-full max-h-[90vh] rounded-lg shadow-2xl object-contain" />
+                        <img
+                            src={file.preview}
+                            alt="Full preview"
+                            className="max-w-full max-h-[90vh] rounded-lg shadow-2xl object-contain"
+                            referrerPolicy="no-referrer"
+                        />
                         <button
                             onClick={onClose}
                             className="absolute -top-4 -right-4 bg-white rounded-full p-2 text-gray-800 shadow-lg hover:bg-gray-100 transition-colors"
@@ -44,6 +120,8 @@ const FilePreviewModal = ({ isOpen, file, onClose }: { isOpen: boolean; file: Fi
                             <X size={20} />
                         </button>
                     </div>
+                ) : (
+                    <BlockedPreviewFallback />
                 )}
             </div>
         </div>
@@ -182,27 +260,59 @@ const FileManager: React.FC = () => {
     };
 
     const handleDownload = async (file: FileData) => {
+        let blobUrl: string | null = null;
+        let link: HTMLAnchorElement | null = null;
+
         try {
+            // Validate the URL before attempting download
+            if (!isValidPreviewUrl(file.preview)) {
+                throw new Error('Download blocked: URL is not from an approved domain');
+            }
+
             const response = await fetch(file.preview);
+
+            // Check if the response is successful (status 200-299)
+            if (!response.ok) {
+                const errorText = await response.text().catch(() => 'Unknown error');
+                throw new Error(
+                    `Download failed: Server returned ${response.status} ${response.statusText}. ${errorText}`
+                );
+            }
+
             const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
+            blobUrl = window.URL.createObjectURL(blob);
+            link = document.createElement('a');
+            link.href = blobUrl;
             link.download = `${file.name}.${file.type}`;
             document.body.appendChild(link);
             link.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(link);
         } catch (error) {
-            console.error('Download failed:', error);
-            // Fallback for when CORS blocks blob fetch
-            const link = document.createElement('a');
-            link.href = file.preview;
-            link.download = `${file.name}.${file.type}`;
-            link.target = '_blank';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+            console.error('Download failed:', errorMessage);
+
+            // Only attempt fallback for CORS errors, not for validation/HTTP errors
+            if (errorMessage.includes('CORS') || errorMessage.includes('Failed to fetch')) {
+                // Fallback for when CORS blocks blob fetch - try direct link
+                console.warn('Attempting fallback download via direct link');
+                const fallbackLink = document.createElement('a');
+                fallbackLink.href = file.preview;
+                fallbackLink.download = `${file.name}.${file.type}`;
+                fallbackLink.target = '_blank';
+                document.body.appendChild(fallbackLink);
+                fallbackLink.click();
+                document.body.removeChild(fallbackLink);
+            } else {
+                // Surface error to user for non-CORS failures
+                alert(`Download failed: ${errorMessage}`);
+            }
+        } finally {
+            // Cleanup: always revoke blob URL and remove link element
+            if (blobUrl) {
+                window.URL.revokeObjectURL(blobUrl);
+            }
+            if (link && document.body.contains(link)) {
+                document.body.removeChild(link);
+            }
         }
     };
 
