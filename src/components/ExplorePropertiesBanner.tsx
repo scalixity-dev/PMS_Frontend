@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 
 const ExplorePropertiesBanner = () => {
   return (
-  <section className="relative left-1/2 w-screen -translate-x-1/2 overflow-hidden bg-white py-10 sm:py-16 lg:py-20">
+    <section className="relative left-1/2 w-screen -translate-x-1/2 overflow-hidden bg-white py-10 sm:py-16 lg:py-20">
       {/* Left abstract image - positioned at bottom, responsive sizing */}
       <div className="absolute left-0 bottom-0 w-1/4 sm:w-1/3 h-[50%] sm:h-[60%] lg:h-[70%]">
         <img
@@ -36,7 +36,7 @@ const ExplorePropertiesBanner = () => {
               Manage every aspect of your properties from one powerful platform — list,
               screen, and lease with ease. Handle rent collection and maintenance
               seamlessly while saving time through automation. Built for modern
-              investors and managers, PMS simplifies every task. Grow your portfolio
+              investors and managers, SmartTenantAI simplifies every task. Grow your portfolio
               effortlessly while staying in complete control.
             </p>
           </div>

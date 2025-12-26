@@ -19,7 +19,7 @@ const items: FaqItem[] = [
     id: 3,
     question: 'Who can use rental property management software?',
     answer:
-      'Independent landlords, property managers, and institutional operators can all use PMS to run portfolios of any size—from a few units to thousands.',
+      'Independent landlords, property managers, and institutional operators can all use SmartTenantAI to run portfolios of any size—from a few units to thousands.',
   },
   {
     id: 4,

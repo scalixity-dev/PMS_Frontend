@@ -1,6 +1,6 @@
 import React from 'react';
 import ExplorePropertiesBanner from '../../../../components/ExplorePropertiesBanner';
-import TeamToolsSection from './sections/TeamToolsSection'; 
+import TeamToolsSection from './sections/TeamToolsSection';
 import ContentShowcaseSection from './sections/ContentShowcaseSection';
 import DualImageFeatureSection from './sections/DualImageFeatureSection';
 import HeroSection from './sections/landlordhero';
@@ -16,13 +16,13 @@ const usecaseFeatures = [
     icon: <DollarSign size={28} />,
     title: "Collect Rent On Time",
     description:
-      "Still chasing after rent? Landlords who enable auto pay on PMS Cloud experience 90% fewer late payments.",
+      "Still chasing after rent? Landlords who enable auto pay on SmartTenantAI experience 90% fewer late payments.",
   },
   {
     icon: <TrendingUp size={28} />,
     title: "Grow Your Portfolio",
     description:
-      "From one property to 500. With 21+ built-in features and 10+ integrations, PMS Cloud grows with you no matter how big your portfolio gets.",
+      "From one property to 500. With 21+ built-in features and 10+ integrations, SmartTenantAI grows with you no matter how big your portfolio gets.",
   },
   {
     icon: <Handshake size={28} />,
@@ -46,11 +46,11 @@ const UseCasesPage: React.FC = () => {
         textColor="#07351E"
         buttonText="Read More"
       />
-        <ContentShowcaseSection
+      <ContentShowcaseSection
         reverse={true}
-        tag="Find the right PMS, faster"
+        tag="Find the right tenants, faster"
         heading="Save hours of research"
-        description="Save up to 20 hours a week with online applications, background checks, and credit reports, helping you choose PMS with confidence."
+        description="Save up to 20 hours a week with online applications, background checks, and credit reports, helping you choose tenants with confidence."
         buttonText="Get Started"
         buttonLink="/login"
         imageSrc="https://res.cloudinary.com/dxwspucxw/image/upload/v1762589128/Screenshot_2025-11-08_133508_alspra.png"
@@ -69,15 +69,15 @@ const UseCasesPage: React.FC = () => {
           },
           {
             icon: <Monitor size={32} />,
-            title: "Screen PMS",
+            title: "Screen Tenants",
             description:
               "Make informed decisions with a 99.9% accurate background check, ran right from their application.",
           },
         ]}
       />
       <SplitHeroFeature
-        title="Find the right PMS, faster"
-        description="Save up to 20 hours a week with online applications, background checks, and credit reports, helping you choose pms  with confidence."
+        title="Find the right tenants, faster"
+        description="Save up to 20 hours a week with online applications, background checks, and credit reports, helping you choose tenants with confidence."
         imageSrc="/lease-invoice.png"
         backgroundClassName="bg-[#88AF95]"
         secondaryImageBackgroundClassName="bg-[#88AF95]"
@@ -120,7 +120,7 @@ const UseCasesPage: React.FC = () => {
           },
           {
             icon: <FileText size={32} />,
-            title: "Notices to PMS",
+            title: "Notices to Tenants",
             description:
               "Send and track important notices and communications with tenants directly through the platform.",
           },
@@ -129,7 +129,7 @@ const UseCasesPage: React.FC = () => {
       <ContentShowcaseSection
         reverse={true}
         heading="Track all your maintenance needs, online"
-        description="Create your own request or receive one from a Pms. Conveniently attach pictures, videos, descriptions, and other files."
+        description="Create your own request or receive one from a tenant. Conveniently attach pictures, videos, descriptions, and other files."
         buttonText="Get Started"
         buttonLink="/login"
         imageSrc="https://res.cloudinary.com/dxwspucxw/image/upload/v1762589453/Screenshot_2025-11-08_134030_sny2dm.png"
@@ -155,11 +155,11 @@ const UseCasesPage: React.FC = () => {
         ]}
       />
       <DualImageFeatureSection />
-      
+
       <AllInOneUseCaseSection />
-      <TeamToolsSection/>
+      <TeamToolsSection />
       <KeepPropertySection />
-      
+
       <ManageFeeSection />
       <ExplorePropertiesBanner />
     </section>

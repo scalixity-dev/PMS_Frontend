@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, ChevronLeft, Upload } from 'lucide-react';
+import { X, ChevronLeft, Upload, Edit2 } from 'lucide-react';
 import CustomDropdown from '../../../components/CustomDropdown';
 
 export interface PetFormData {
@@ -8,12 +8,14 @@ export interface PetFormData {
     weight: string;
     breed: string;
     photo?: File | null;
+    existingPhotoUrl?: string | null;
 }
 
 interface AddPetModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSave: (data: PetFormData) => void;
+    initialData?: PetFormData;
 }
 
 const typeOptions = [
@@ -31,7 +33,7 @@ const weightOptions = [
     { value: '> 20kg', label: '> 20kg' }
 ];
 
-const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave }) => {
+const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
     const [formData, setFormData] = useState<PetFormData>({
         type: '',
         name: '',
@@ -57,19 +59,28 @@ const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave }) =>
 
     // Reset form and errors when modal closes
     useEffect(() => {
-        if (!isOpen) {
+        if (isOpen && initialData) {
+            setFormData(initialData);
+            if (initialData.photo) {
+                const url = URL.createObjectURL(initialData.photo);
+                setPreviewUrl(url);
+            } else if (initialData.existingPhotoUrl) {
+                setPreviewUrl(initialData.existingPhotoUrl);
+            }
+        } else if (!isOpen) {
             setFormData({
                 type: '',
                 name: '',
                 weight: '',
                 breed: '',
-                photo: null
+                photo: null,
+                existingPhotoUrl: null
             });
             setErrors({});
             setTouched({});
             setPreviewUrl(null);
         }
-    }, [isOpen]);
+    }, [isOpen, initialData]);
 
     // Image preview state
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -179,7 +190,7 @@ const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave }) =>
                     <button onClick={onClose} className="hover:bg-white/10 p-1 rounded-full transition-colors">
                         <ChevronLeft size={24} />
                     </button>
-                    <h2 className="text-xl font-medium">Add a new pet</h2>
+                    <h2 className="text-xl font-medium">{initialData ? 'Edit pet' : 'Add a new pet'}</h2>
                     <button onClick={onClose} className="hover:bg-white/10 p-1 rounded-full transition-colors">
                         <X size={24} />
                     </button>
@@ -212,7 +223,12 @@ const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave }) =>
                             }}
                         >
                             {previewUrl ? (
-                                <img src={previewUrl} alt="Preview" className="absolute inset-0 w-full h-full object-cover z-20 rounded-3xl" />
+                                <>
+                                    <img src={previewUrl} alt="Preview" className="absolute inset-0 w-full h-full object-cover z-20 rounded-3xl" />
+                                    <div className="absolute top-2 right-2 z-30 bg-white/90 p-1.5 rounded-full shadow-sm text-gray-700">
+                                        <Edit2 size={14} />
+                                    </div>
+                                </>
                             ) : (
                                 <>
                                     <Upload size={40} className="mb-2 relative z-10" />
@@ -310,11 +326,11 @@ const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave }) =>
                                 onClick={handleSubmit}
                                 disabled={!isFormValid()}
                                 className={`px-8 py-3 rounded-xl text-sm font-medium transition-colors shadow-md ${isFormValid()
-                                        ? 'bg-[#3A6D6C] text-white hover:bg-[#2c5251] cursor-pointer'
-                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                    ? 'bg-[#3A6D6C] text-white hover:bg-[#2c5251] cursor-pointer'
+                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                     }`}
                             >
-                                Add
+                                {initialData ? 'Save' : 'Add'}
                             </button>
                         </div>
                     </div>

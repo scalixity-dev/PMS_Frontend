@@ -6,7 +6,7 @@ const RentalLeaseSection: React.FC = () => {
     <HeroCard
       badge=""
       title="Create a Rental Lease in Minutes"
-      description="No more copying and pasting details for every lease. With the help of AI, PMS auto-generates accurate, ready-to-sign lease agreements using your property and Pms data—saving time, reducing errors, and ensuring every document is consistent and compliant."
+      description="No more copying and pasting details for every lease. With the help of AI, SmartTenantAI auto-generates accurate, ready-to-sign lease agreements using your property and tenant data—saving time, reducing errors, and ensuring every document is consistent and compliant."
       features={[]}
       learnMoreLabel=""
       showStamp={false}

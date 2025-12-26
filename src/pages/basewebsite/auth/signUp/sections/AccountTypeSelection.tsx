@@ -6,7 +6,7 @@ import { useSignUpStore } from '../store/signUpStore';
 export const AccountTypeSelection: React.FC<AccountTypeSelectionProps> = ({ onNext }) => {
   const { formData, updateFormData, nextStep } = useSignUpStore();
   const accountTypes: AccountType[] = [
-    { id: 'renting', title: "I'm renting", subtitle: 'PMS', type: 'Free account' },
+    { id: 'renting', title: "I'm renting", subtitle: 'Tenant', type: 'Free account' },
     { id: 'manage', title: 'I manage rentals', subtitle: 'Property Manager', type: 'Start 14-days trail' },
     { id: 'fix', title: 'I fix rentals', subtitle: 'Service Pro', type: 'Free account' }
   ];
@@ -51,13 +51,13 @@ export const AccountTypeSelection: React.FC<AccountTypeSelectionProps> = ({ onNe
                     <span className={typeClass}>{account.type}</span>
                     <HelpCircleIcon className={`${helpIconClass} w-4 h-4 sm:w-5 sm:h-5`} />
                   </div>
-                  
+
                   {/* Middle Row: Checkmark Icon (or placeholder space) */}
                   <div className="w-10 h-10 sm:w-12 sm:h-12 mb-4 sm:mb-5 md:mb-6 flex items-center justify-center">
                     {isSelected ? (
-                        <CheckedCircleIcon className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16" />
+                      <CheckedCircleIcon className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16" />
                     ) : (
-                        <CheckCircleIcon className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16" />
+                      <CheckCircleIcon className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16" />
                     )}
                   </div>
 
@@ -76,7 +76,7 @@ export const AccountTypeSelection: React.FC<AccountTypeSelectionProps> = ({ onNe
               I'm a <span className="text-teal-500 font-medium cursor-pointer">Property Owner</span>. My properties are managed by Property Managers.
             </p>
           </div>
-          
+
 
           <div className="flex justify-center">
             <button
@@ -88,10 +88,10 @@ export const AccountTypeSelection: React.FC<AccountTypeSelectionProps> = ({ onNe
             </button>
           </div>
           <div className="mt-3 sm:mt-2 text-center text-xs sm:text-sm text-gray-600">
-              Already have an account?{' '}
-              <Link to="/login" className="font-medium text-(--color-primary) hover:text-green-600 hover:underline">
-                Sign In
-              </Link>
+            Already have an account?{' '}
+            <Link to="/login" className="font-medium text-(--color-primary) hover:text-green-600 hover:underline">
+              Sign In
+            </Link>
           </div>
         </div>
       </div>

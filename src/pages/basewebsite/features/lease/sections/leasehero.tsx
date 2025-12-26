@@ -19,7 +19,7 @@ const LeaseHeroSection: React.FC = () => {
           className="mb-4 w-full max-w-3xs rounded-xl"
         />
       }
-      description="Cut down on paperwork and save up to 20 hours a week with PmsCloud’s built-in lease templates. Pick from ready-to-go forms or create your own—customize once, reuse every time."
+      description="Cut down on paperwork and save up to 20 hours a week with SmartTenantAICloud’s built-in lease templates. Pick from ready-to-go forms or create your own—customize once, reuse every time."
       features={features}
       showStamp={false}
       learnMoreLabel=""

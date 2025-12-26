@@ -13,7 +13,7 @@ const LeasingSection: React.FC = () => {
     {
       icon: <Send />,
       title: "",
-      description: "Send instant responses to emails and phone calls, keeping potential Pms engaged and in the loop.",
+      description: "Send instant responses to emails and phone calls, keeping potential tenants engaged and in the loop.",
     },
     {
       icon: <CalendarClock />,
@@ -33,7 +33,7 @@ const LeasingSection: React.FC = () => {
         Meet the all-in-one leasing solution
       </h2>
       <p className="text-lg  px-16 text-[#414141]  mb-10 max-w-xl mx-auto">
-      List properties, schedule showings, and turn leads into PMS faster than ever.
+        List properties, schedule showings, and turn leads into tenants faster than ever.
       </p>
       <div className="max-w-5xl mx-auto px-4">
         <div className="border-8 rounded-xl border-[color:var(--color-primary)]">

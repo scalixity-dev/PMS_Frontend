@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     startOfMonth,
     endOfMonth,
@@ -12,6 +12,12 @@ import {
 } from 'date-fns';
 
 import { type Reminder } from './Calendar';
+import ReminderDetailModal from './components/ReminderDetailModal';
+import DayDetailModal from './components/DayDetailModal';
+import AddReminderModal from './components/AddReminderModal';
+import { getReminderColor } from './calendarUtils';
+import { useDeleteReminder } from '../../../../hooks/useReminderQueries';
+import { X, AlertTriangle, Loader2 } from 'lucide-react';
 
 interface MonthGridProps {
     month: Date;
@@ -24,31 +30,75 @@ const MonthGrid: React.FC<MonthGridProps> = ({ month, reminders }) => {
     const startDate = startOfWeek(monthStart, { weekStartsOn: 1 }); // Monday start
     const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 });
 
+    const [selectedReminder, setSelectedReminder] = useState<Reminder | null>(null);
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
+    // State for DayDetailModal
+    const [selectedDayDate, setSelectedDayDate] = useState<Date | null>(null);
+    const [dayReminders, setDayReminders] = useState<Reminder[]>([]);
+    const [isDayDetailModalOpen, setIsDayDetailModalOpen] = useState(false);
+
+    // State for Edit Modal
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [reminderToEdit, setReminderToEdit] = useState<Reminder | null>(null);
+
+    // State for Delete Confirmation
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [reminderToDelete, setReminderToDelete] = useState<Reminder | null>(null);
+
+    // Delete mutation
+    const deleteReminderMutation = useDeleteReminder();
+
     const dayList = eachDayOfInterval({
         start: startDate,
         end: endDate,
     });
 
+    // Handle Edit
+    const handleEdit = (reminder: Reminder) => {
+        setReminderToEdit(reminder);
+        setIsDetailModalOpen(false);
+        setIsEditModalOpen(true);
+    };
+
+    // Handle Delete
+    const handleDelete = (reminder: Reminder) => {
+        setReminderToDelete(reminder);
+        setIsDeleteModalOpen(true);
+    };
+
+    // Confirm Delete
+    const confirmDelete = async () => {
+        if (reminderToDelete) {
+            try {
+                await deleteReminderMutation.mutateAsync(reminderToDelete.id);
+                setIsDeleteModalOpen(false);
+                setIsDetailModalOpen(false);
+                setReminderToDelete(null);
+            } catch (error) {
+                console.error('Failed to delete reminder:', error);
+            }
+        }
+    };
+
     return (
         <div className="w-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-4">
-            {/* Month Label (Optional, maybe sticky?) */}
-            {/* <div className="p-4 font-bold text-lg border-b border-gray-200">
-        {format(month, 'MMMM yyyy')}
-      </div> */}
-
             <div className="grid grid-cols-7 text-center">
                 {dayList.map((dayItem, index) => {
-                    // We only want to render the grid, not the headers every time if we are stacking them.
-                    // However, for a continuous scroll, usually we just stack the days.
-                    // But wait, the design shows a single header for the whole view?
-                    // Or does it repeat? The prompt says "scrollable, it should be on the current month but if we scroll up... then the next months should be shown".
-                    // Usually infinite scroll calendars have headers per month or a sticky header.
-                    // The design shows one header at the top.
-                    // If I stack MonthGrids, the days must align perfectly.
-                    // So I should NOT render the week headers in MonthGrid, but in the main Calendar component.
-
                     const isCurrentMonth = isSameMonth(dayItem, monthStart);
                     const isDayToday = isToday(dayItem);
+
+                    // Filter reminders for this day
+                    const daysReminders = reminders.filter(
+                        (reminder) =>
+                            isSameMonth(reminder.date, monthStart) &&
+                            getDate(reminder.date) === getDate(dayItem)
+                    );
+
+                    // Logic for visible reminders (max 2) + overflow
+                    const MAX_VISIBLE_REMINDERS = 2;
+                    const visibleReminders = daysReminders.slice(0, MAX_VISIBLE_REMINDERS);
+                    const hiddenCount = daysReminders.length - MAX_VISIBLE_REMINDERS;
 
                     return (
                         <div
@@ -69,28 +119,136 @@ const MonthGrid: React.FC<MonthGridProps> = ({ month, reminders }) => {
 
                             {/* Reminders */}
                             <div className="mt-1 space-y-1">
-                                {reminders
-                                    .filter((reminder) => isSameMonth(reminder.date, monthStart) && getDate(reminder.date) === getDate(dayItem))
-                                    .map((reminder) => (
-                                        <div
-                                            key={reminder.id}
-                                            className={`px-1.5 py-0.5 rounded text-[10px] font-medium truncate
-                                                ${reminder.type === 'maintenance' ? 'bg-red-50 text-red-700 border border-red-100' :
-                                                    reminder.type === 'viewing' ? 'bg-blue-50 text-blue-700 border border-blue-100' :
-                                                        reminder.type === 'meeting' ? 'bg-purple-50 text-purple-700 border border-purple-100' :
-                                                            'bg-gray-50 text-gray-700 border border-gray-100'
-                                                }`}
-                                        >
-                                            {reminder.time} {reminder.title}
-                                        </div>
-                                    ))}
+                                {visibleReminders.map((reminder) => (
+                                    <div
+                                        key={reminder.id}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedReminder(reminder);
+                                            setIsDetailModalOpen(true);
+                                        }}
+                                        className={`px-1.5 py-0.5 rounded text-[10px] font-medium truncate border cursor-pointer hover:opacity-80 transition-opacity
+                                                ${getReminderColor(reminder.id)}`}
+                                    >
+                                        {reminder.time} {reminder.title}
+                                    </div>
+                                ))}
+
+                                {hiddenCount > 0 && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedDayDate(dayItem);
+                                            setDayReminders(daysReminders);
+                                            setIsDayDetailModalOpen(true);
+                                        }}
+                                        className="w-full px-1.5 py-0.5 rounded text-[10px] font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 border border-gray-200 transition-colors text-center"
+                                    >
+                                        +{hiddenCount} more
+                                    </button>
+                                )}
                             </div>
                         </div>
                     );
                 })}
             </div>
+
+            {/* Reminder Detail Modal */}
+            <ReminderDetailModal
+                isOpen={isDetailModalOpen}
+                onClose={() => setIsDetailModalOpen(false)}
+                reminder={selectedReminder}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+            />
+
+            {/* Day Detail Modal (for overflow) */}
+            {selectedDayDate && (
+                <DayDetailModal
+                    isOpen={isDayDetailModalOpen}
+                    onClose={() => setIsDayDetailModalOpen(false)}
+                    date={selectedDayDate}
+                    reminders={dayReminders}
+                    onReminderClick={(reminder) => {
+                        // Using setTimeout to ensure smooth transition if needed, but synchronous is fine
+                        setSelectedReminder(reminder);
+                        setIsDetailModalOpen(true);
+                    }}
+                />
+            )}
+
+            {/* Edit Reminder Modal */}
+            <AddReminderModal
+                isOpen={isEditModalOpen}
+                onClose={() => {
+                    setIsEditModalOpen(false);
+                    setReminderToEdit(null);
+                }}
+                editReminder={reminderToEdit}
+                mode="edit"
+            />
+
+            {/* Delete Confirmation Modal */}
+            {isDeleteModalOpen && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="bg-red-500 p-4 flex items-center justify-between text-white">
+                            <div className="flex items-center gap-2">
+                                <AlertTriangle size={20} className="stroke-2" />
+                                <span className="font-semibold">Delete Reminder?</span>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setIsDeleteModalOpen(false);
+                                    setReminderToDelete(null);
+                                }}
+                                className="hover:bg-white/10 p-1 rounded-full transition-colors"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="p-6 text-center">
+                            <p className="text-gray-700 mb-2">
+                                Are you sure you want to delete this reminder?
+                            </p>
+                            {reminderToDelete && (
+                                <p className="text-gray-900 font-semibold mb-6">
+                                    "{reminderToDelete.title}"
+                                </p>
+                            )}
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={() => {
+                                        setIsDeleteModalOpen(false);
+                                        setReminderToDelete(null);
+                                    }}
+                                    disabled={deleteReminderMutation.isPending}
+                                    className="flex-1 bg-gray-200 text-gray-800 py-2.5 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={confirmDelete}
+                                    disabled={deleteReminderMutation.isPending}
+                                    className="flex-1 bg-red-500 text-white py-2.5 rounded-lg font-semibold hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    {deleteReminderMutation.isPending ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                            Deleting...
+                                        </>
+                                    ) : (
+                                        'Delete'
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
 
 export default MonthGrid;
+

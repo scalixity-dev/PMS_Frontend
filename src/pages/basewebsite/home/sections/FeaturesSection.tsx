@@ -64,13 +64,13 @@ const FeaturesSection: React.FC = () => {
       title: "Accounting",
       subtitle: "Collect payments, effortlessly",
       description:
-        "No more chasing down payments. With PmsCloud, tenants have a flexible, convenient way to pay rent online, and you get peace of mind.",
+        "No more chasing down payments. With SmartTenantAICloud, tenants have a flexible, convenient way to pay rent online, and you get peace of mind.",
       points: [
         "Accept credit, debit, ACH, cash, or checks",
         "Reduce late payments by 90% with auto pay",
         "Automatically track paid and overdue invoices",
       ],
-  color: "--color-card-1",
+      color: "--color-card-1",
     },
     {
       icon: <Building className="text-[var(--color-primary)]" />,
@@ -83,7 +83,7 @@ const FeaturesSection: React.FC = () => {
         "Real-time occupancy and performance insights",
         "Streamline landlord–tenant communication",
       ],
-  color: "--color-card-2",
+      color: "--color-card-2",
     },
     {
       icon: <FileText className="text-[var(--color-primary)]" />,
@@ -96,7 +96,7 @@ const FeaturesSection: React.FC = () => {
         "Landlords report 20 hours/week saved",
         "Connect to QuickBooks and add multiple banks",
       ],
-  color: "--color-card-3",
+      color: "--color-card-3",
     },
     {
       icon: <Bot className="text-[var(--color-primary)]" />,
@@ -109,7 +109,7 @@ const FeaturesSection: React.FC = () => {
         "Smart rent prediction and reminder system",
         "Auto-generate leases, notices, and reports",
       ],
-  color: "--color-card-2",
+      color: "--color-card-2",
     },
   ];
 
@@ -205,15 +205,15 @@ const FeaturesSection: React.FC = () => {
 
       {/* Mobile: Scrollable - 1 card at a time */}
       <div className="block sm:hidden mb-8 -mx-4">
-        <div 
+        <div
           ref={mobileScrollRef}
           className="overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory"
           style={{ scrollBehavior: 'smooth' }}
         >
           <div className="flex gap-4 px-4">
             {features.map((feature, idx) => (
-              <div 
-                key={idx} 
+              <div
+                key={idx}
                 className="w-[calc(100vw-2rem)] flex-shrink-0 snap-center snap-always"
               >
                 <FeatureCard {...feature} />
@@ -221,11 +221,11 @@ const FeaturesSection: React.FC = () => {
             ))}
           </div>
         </div>
-        
+
         {/* Mobile Pagination - Centered */}
         <div className="flex justify-center px-4">
-          <PaginationButtons 
-            containerClassName="flex gap-2 mt-4" 
+          <PaginationButtons
+            containerClassName="flex gap-2 mt-4"
             onPrev={handleMobilePrevClick}
             onNext={handleMobileNextClick}
           />
@@ -234,15 +234,15 @@ const FeaturesSection: React.FC = () => {
 
       {/* Tablet: Scrollable - 2 cards at a time */}
       <div className="hidden sm:block lg:hidden mb-8 -mx-2">
-        <div 
+        <div
           ref={tabletScrollRef}
           className="overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory"
           style={{ scrollBehavior: 'smooth' }}
         >
           <div className="flex gap-6 px-6">
             {features.map((feature, idx) => (
-              <div 
-                key={idx} 
+              <div
+                key={idx}
                 className="w-[calc((100vw-4.5rem)/2)] flex-shrink-0 snap-start"
               >
                 <FeatureCard {...feature} />
@@ -250,11 +250,11 @@ const FeaturesSection: React.FC = () => {
             ))}
           </div>
         </div>
-        
+
         {/* Tablet Pagination - Centered */}
         <div className="flex justify-center px-6">
-          <PaginationButtons 
-            containerClassName="flex gap-2 mt-4" 
+          <PaginationButtons
+            containerClassName="flex gap-2 mt-4"
             onPrev={handleTabletPrevClick}
             onNext={handleTabletNextClick}
           />
@@ -263,7 +263,7 @@ const FeaturesSection: React.FC = () => {
 
       {/* Desktop: Horizontal Scroll with Pagination */}
       <div className="hidden lg:block mb-8">
-        <div 
+        <div
           ref={scrollContainerRef}
           className="overflow-x-auto pb-4 scrollbar-hide scroll-smooth"
           style={{ scrollBehavior: 'smooth' }}
@@ -279,8 +279,8 @@ const FeaturesSection: React.FC = () => {
 
         {/* Pagination aligned bottom-right - Desktop only */}
         <div className="flex justify-end">
-          <PaginationButtons 
-            containerClassName="flex gap-2 mt-6" 
+          <PaginationButtons
+            containerClassName="flex gap-2 mt-6"
             onPrev={handlePrevClick}
             onNext={handleNextClick}
           />

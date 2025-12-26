@@ -23,7 +23,7 @@ const EveryFeatureSection: React.FC = () => {
     {
       icon: <Gift />,
       title: "",
-      description: "Free for PMSCloud Pro and Business plans",
+      description: "Free for SmartTenantAI Pro and Business plans",
     },
   ];
 
@@ -36,7 +36,7 @@ const EveryFeatureSection: React.FC = () => {
           </h2>
         </div>
         <p className="text-gray-600 leading-relaxed">
-          From listing and leasing to rent collection and maintenance — everything is built right in. Manage Pms, track finances, and automate daily tasks effortlessly.
+          From listing and leasing to rent collection and maintenance — everything is built right in. Manage tenants, track finances, and automate daily tasks effortlessly.
         </p>
       </div>
 

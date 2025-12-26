@@ -5,22 +5,27 @@ import DatePicker from '../../../../../components/ui/DatePicker';
 import TimePicker from '../../../../../components/ui/TimePicker';
 import CustomDropdown from '../../../components/CustomDropdown';
 import { useReminderStore } from '../store/reminderStore';
-import { useCreateReminder } from '../../../../../hooks/useReminderQueries';
+import { useCreateReminder, useUpdateReminder } from '../../../../../hooks/useReminderQueries';
 import { useGetAllProperties } from '../../../../../hooks/usePropertyQueries';
+import { type Reminder } from '../Calendar';
 
 interface AddReminderModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSave?: (data: any) => void; // Optional now since we handle API calls internally
+    editReminder?: Reminder | null; // Reminder to edit (null for add mode)
+    mode?: 'add' | 'edit'; // Mode of the modal
 }
 
-const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, onSave }) => {
+const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, onSave, editReminder, mode = 'add' }) => {
     const { formData, setFormData, updateFormData, resetForm } = useReminderStore();
     const createReminderMutation = useCreateReminder();
-    
+    const updateReminderMutation = useUpdateReminder();
+    const isEditMode = mode === 'edit' && editReminder !== null && editReminder !== undefined;
+
     // Fetch properties for dropdown
     const { data: properties = [], isLoading: isLoadingProperties } = useGetAllProperties();
-    
+
     const [showExitConfirmation, setShowExitConfirmation] = React.useState(false);
     const [formErrors, setFormErrors] = React.useState({ title: false, date: false, time: false });
     const [initialSnapshot, setInitialSnapshot] = React.useState(formData);
@@ -29,29 +34,48 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
     useEffect(() => {
         // Only run when modal opens
         const isOpening = !prevIsOpenRef.current && isOpen;
-        
+
         if (isOpen && isOpening) {
-            // Reset form when opening in add mode
-            const emptyFormData = {
-                title: '',
-                details: '',
-                date: undefined,
-                time: '',
-                assignee: '',
-                property: '',
-                isRecurring: false,
-                frequency: '',
-                endDate: undefined,
-                type: 'reminder' as const,
-                color: undefined,
-            };
-            setFormData(emptyFormData);
-            setInitialSnapshot(emptyFormData);
+            if (isEditMode && editReminder) {
+                // Pre-fill form with existing reminder data for edit mode
+                const editFormData = {
+                    title: editReminder.title || '',
+                    details: editReminder.details || '',
+                    date: editReminder.date ? new Date(editReminder.date) : undefined,
+                    time: editReminder.time || '',
+                    assignee: editReminder.assigneeName || '',
+                    property: editReminder.propertyId || '',
+                    isRecurring: false,
+                    frequency: '',
+                    endDate: undefined,
+                    type: editReminder.type === 'maintenance' ? 'reminder' : (editReminder.type || 'reminder'),
+                    color: undefined,
+                };
+                setFormData(editFormData);
+                setInitialSnapshot(editFormData);
+            } else {
+                // Reset form when opening in add mode
+                const emptyFormData = {
+                    title: '',
+                    details: '',
+                    date: undefined,
+                    time: '',
+                    assignee: '',
+                    property: '',
+                    isRecurring: false,
+                    frequency: '',
+                    endDate: undefined,
+                    type: 'reminder' as const,
+                    color: undefined,
+                };
+                setFormData(emptyFormData);
+                setInitialSnapshot(emptyFormData);
+            }
         }
 
         // Update ref
         prevIsOpenRef.current = isOpen;
-    }, [isOpen, setFormData]);
+    }, [isOpen, setFormData, isEditMode, editReminder]);
 
     useEffect(() => {
         if (isOpen) {
@@ -119,8 +143,16 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
                 color: formData.color || undefined,
             };
 
-            // Create new reminder
-            await createReminderMutation.mutateAsync(reminderDto);
+            if (isEditMode && editReminder) {
+                // Update existing reminder
+                await updateReminderMutation.mutateAsync({
+                    id: editReminder.id,
+                    updateData: reminderDto,
+                });
+            } else {
+                // Create new reminder
+                await createReminderMutation.mutateAsync(reminderDto);
+            }
 
             // Call optional onSave callback if provided
             if (onSave) {
@@ -131,7 +163,7 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
             resetForm();
             onClose();
         } catch (error) {
-            console.error('Failed to create reminder:', error);
+            console.error(isEditMode ? 'Failed to update reminder:' : 'Failed to create reminder:', error);
             // Error handling could show a toast notification here
         }
     };
@@ -157,7 +189,7 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
         }
     };
 
-    const isLoading = createReminderMutation.isPending;
+    const isLoading = createReminderMutation.isPending || updateReminderMutation.isPending;
 
     if (!isOpen) return null;
 
@@ -171,7 +203,7 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
             <div className="bg-[#E8ECEB] rounded-3xl w-full max-w-sm shadow-2xl animate-slide-in-from-right relative">
                 {/* Header */}
                 <div className="bg-[#3D7475] p-4 flex items-center justify-between rounded-t-3xl">
-                    <h2 className="text-lg font-medium text-white">Add reminder</h2>
+                    <h2 className="text-lg font-medium text-white">{isEditMode ? 'Edit reminder' : 'Add reminder'}</h2>
                     <button onClick={handleCloseAttempt} className="text-white hover:bg-white/10 p-1 rounded-full transition-colors">
                         <X size={20} />
                     </button>
@@ -189,9 +221,8 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
                             onChange={(e) => updateFormData('title', e.target.value)}
                             placeholder="Enter Title"
                             disabled={isLoading}
-                            className={`w-full bg-white text-gray-800 placeholder-gray-400 px-3 py-2.5 rounded-md outline-none focus:ring-2 transition-all shadow-sm text-sm ${
-                                formErrors.title ? 'ring-2 ring-red-500 focus:ring-red-500' : 'focus:ring-[#3D7475]/20'
-                            } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            className={`w-full bg-white text-gray-800 placeholder-gray-400 px-3 py-2.5 rounded-md outline-none focus:ring-2 transition-all shadow-sm text-sm ${formErrors.title ? 'ring-2 ring-red-500 focus:ring-red-500' : 'focus:ring-[#3D7475]/20'
+                                } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                         />
                         {formErrors.title && <p className="text-red-500 text-xs mt-1">Title is required</p>}
                     </div>
@@ -344,10 +375,10 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
                         {isLoading ? (
                             <>
                                 <Loader2 className="w-4 h-4 animate-spin" />
-                                Creating...
+                                {isEditMode ? 'Updating...' : 'Creating...'}
                             </>
                         ) : (
-                            'Create'
+                            isEditMode ? 'Update' : 'Create'
                         )}
                     </button>
                 </div>

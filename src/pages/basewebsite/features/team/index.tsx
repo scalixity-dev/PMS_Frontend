@@ -27,12 +27,12 @@ const TeamPage: React.FC = () => {
       image: "https://res.cloudinary.com/dxwspucxw/image/upload/v1762162431/one_wmo5aa.png",
       title: "Collaborate in your own hub",
       description:
-        "No need for scattered texts and email chains. PMSCloud's instant messaging keeps conversation history in one place so it's easy to stay organized and respond quickly.",
+        "No need for scattered texts and email chains. SmartTenantAI's instant messaging keeps conversation history in one place so it's easy to stay organized and respond quickly.",
     },
   ];
   return (
     <section className="w-full">
-      
+
       <TeamManagementSection />
       <IconFeaturesRow
         title="Every feature you'll ever need, and more"
@@ -55,7 +55,7 @@ const TeamPage: React.FC = () => {
           }
         ]}
       />
-      
+
       <FeatureHighlightSection
         subtitle=""
         title="Collaborate with clarity — from assignments to automation"
@@ -93,7 +93,7 @@ const TeamPage: React.FC = () => {
         ]}
       />
 
-      
+
       <SplitHeroFeaturefull
         title="Make Property Descriptions Effortless"
         description={
@@ -102,8 +102,8 @@ const TeamPage: React.FC = () => {
         imageSrc={"https://res.cloudinary.com/dxwspucxw/image/upload/v1762263547/0fb6c58f-daa2-4303-80e3-58743edd561e.png"}
       />
       <Card />
-      <ExplorePropertiesBanner/>
-      
+      <ExplorePropertiesBanner />
+
     </section>
   );
 };

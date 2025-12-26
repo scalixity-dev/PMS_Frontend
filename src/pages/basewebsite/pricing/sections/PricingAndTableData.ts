@@ -50,9 +50,9 @@ export const allFeatureTables = [
       { name: "Service Providers", starter: "check", growth: "check", pro: "check", business: "check" },
       { name: "Data Export & Import", starter: "check", growth: "check", pro: "check", business: "check" },
       { name: "Notification Center", starter: "check", growth: "check", pro: "check", business: "check" },
-      { name: "Landlord, Pms, Service Pro & Owner Mobile Apps", starter: "check", growth: "check", pro: "check", business: "check" },
+      { name: "Landlord, SmartTenantAI, Service Pro & Owner Mobile Apps", starter: "check", growth: "check", pro: "check", business: "check" },
       { name: "Global Search", starter: "-", growth: "check", pro: "check", business: "check" },
-      { name: "Pms Message Board", starter: "-", growth: "check", pro: "check", business: "check" },
+      { name: "SmartTenantAI Message Board", starter: "-", growth: "check", pro: "check", business: "check" },
     ]
   },
   {
@@ -75,9 +75,9 @@ export const allFeatureTables = [
     ]
   },
   {
-    title: "Pms Screening",
+    title: "SmartTenantAI Screening",
     features: [
-      { name: "Full Pms Screenings", starter: "Free! (viva applied)", growth: "Free! (viva applied)", pro: "Free! (viva applied)", business: "Free! (viva applied)" },
+      { name: "Full SmartTenantAI Screenings", starter: "Free! (viva applied)", growth: "Free! (viva applied)", pro: "Free! (viva applied)", business: "Free! (viva applied)" },
       { name: "Local County Searches", starter: "check", growth: "check", pro: "check", business: "check" },
       { name: "Income Insights", starter: "check", growth: "check", pro: "check", business: "check" },
       { name: "Online Rental Applications", starter: "check", growth: "check", pro: "check", business: "check" },
