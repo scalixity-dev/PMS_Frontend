@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useAuth } from '../../../../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, FileText, FileWarning, Lightbulb, Check } from 'lucide-react';
 import PrimaryActionButton from '../../../../../components/common/buttons/PrimaryActionButton';
@@ -6,6 +7,8 @@ import TemplateEditor from '../components/TemplateEditor';
 
 const CreateTemplateWizard: React.FC = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
+    const userId = user?.id || 'default';
     const [currentStep, setCurrentStep] = useState(1);
     const [title, setTitle] = useState('');
     const [templateType, setTemplateType] = useState('');
@@ -29,12 +32,12 @@ const CreateTemplateWizard: React.FC = () => {
         };
 
         // Get existing templates
-        const saved = localStorage.getItem('myTemplates');
+        const saved = localStorage.getItem(`${userId}_myTemplates`);
         const templates = saved ? JSON.parse(saved) : [];
 
         // Add new template and save
         const updatedTemplates = [...templates, newTemplate];
-        localStorage.setItem('myTemplates', JSON.stringify(updatedTemplates));
+        localStorage.setItem(`${userId}_myTemplates`, JSON.stringify(updatedTemplates));
 
         // Navigate back to list
         navigate('/documents/my-templates');

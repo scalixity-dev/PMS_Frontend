@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useAuth } from '../../../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import ApplicationStepper from './components/ApplicationStepper';
@@ -18,10 +19,13 @@ import { useApplicationStore } from './store/applicationStore';
 import ApplicationSuccessModal from './components/ApplicationSuccessModal';
 import ApplicationErrorModal from './components/ApplicationErrorModal';
 
-const STORAGE_KEY = 'application_draft';
+const BASE_STORAGE_KEY = 'application_draft';
 
 const NewApplication: React.FC = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
+    const userId = user?.id || 'default';
+    const STORAGE_KEY = `${userId}_${BASE_STORAGE_KEY}`;
 
     const {
         formData,
@@ -89,19 +93,16 @@ const NewApplication: React.FC = () => {
                 const parsed = JSON.parse(savedData);
                 // Convert all date strings to Date objects recursively
                 parsed.formData = walkAndConvertDates(parsed.formData);
-                
                 // Check if documents were saved but files are lost
                 if (parsed.formData.documents && parsed.formData.documents.length > 0) {
                     setDocumentsNeedReupload(true);
                     // Clear documentFiles since they can't be restored
                     parsed.formData.documentFiles = [];
                 }
-                
                 // Clear photoFile as it can't be restored from localStorage
                 if (parsed.formData.photo) {
                     parsed.formData.photoFile = null;
                 }
-                
                 setFormData(parsed.formData);
                 setCurrentStep(parsed.currentStep);
                 setIsPropertySelected(parsed.isPropertySelected);
@@ -117,14 +118,12 @@ const NewApplication: React.FC = () => {
         if (isFormDirty) {
             // Exclude non-serializable File objects from localStorage
             const { documentFiles, photoFile, ...serializableFormData } = formData;
-            
             const dataToSave = {
                 formData: serializableFormData,
                 currentStep,
                 isPropertySelected,
                 timestamp: new Date().toISOString()
             };
-            
             try {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
             } catch (error) {
@@ -354,7 +353,6 @@ const NewApplication: React.FC = () => {
                         <div className="flex-1">
                             <h3 className="text-sm font-bold text-yellow-800 mb-1">Document Files Need Re-upload</h3>
                             <p className="text-xs text-yellow-700">
-                                Your document information was saved, but the actual files cannot be restored after a page refresh. 
                                 Please re-upload your documents ({formData.documents.length} file{formData.documents.length !== 1 ? 's' : ''} previously attached).
                             </p>
                             <button

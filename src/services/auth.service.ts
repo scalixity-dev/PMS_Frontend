@@ -98,14 +98,14 @@ class AuthService {
 
     if (!response.ok) {
       let errorMessage = 'Registration failed';
-      
+
       try {
         const errorData = await response.json();
-        
+
         // Handle NestJS validation errors (array format)
         if (Array.isArray(errorData.message)) {
           errorMessage = errorData.message.join('. ');
-        } 
+        }
         // Handle single error message
         else if (errorData.message) {
           errorMessage = errorData.message;
@@ -114,7 +114,7 @@ class AuthService {
         else if (errorData.error) {
           errorMessage = errorData.error;
         }
-        
+
         // Log error for debugging
         console.error('Registration error:', {
           status: response.status,
@@ -126,7 +126,7 @@ class AuthService {
         errorMessage = `Registration failed: ${response.statusText}`;
         console.error('Failed to parse error response:', parseError);
       }
-      
+
       throw new Error(errorMessage);
     }
 
@@ -160,7 +160,7 @@ class AuthService {
   async verifyEmail(userId: string, code: string): Promise<void> {
     // Ensure code is a string and exactly 6 digits
     const otpCode = String(code).trim();
-    
+
     if (!/^\d{6}$/.test(otpCode)) {
       throw new Error('OTP code must be exactly 6 digits');
     }
@@ -176,10 +176,10 @@ class AuthService {
 
     if (!response.ok) {
       let errorMessage = 'Email verification failed';
-      
+
       try {
         const errorData = await response.json();
-        
+
         // Handle validation errors (array format from NestJS)
         if (Array.isArray(errorData.message)) {
           errorMessage = errorData.message.join('. ');
@@ -192,7 +192,7 @@ class AuthService {
         // If JSON parsing fails, use status text
         errorMessage = `Email verification failed: ${response.statusText}`;
       }
-      
+
       throw new Error(errorMessage);
     }
   }
@@ -203,7 +203,7 @@ class AuthService {
   async verifyDevice(userId: string, code: string): Promise<void> {
     const deviceFingerprint = this.generateDeviceFingerprint();
     const otpCode = String(code).trim();
-    
+
     if (!/^\d{6}$/.test(otpCode)) {
       throw new Error('OTP code must be exactly 6 digits');
     }
@@ -220,10 +220,10 @@ class AuthService {
 
     if (!response.ok) {
       let errorMessage = 'Device verification failed';
-      
+
       try {
         const errorData = await response.json();
-        
+
         // Handle validation errors (array format from NestJS)
         if (Array.isArray(errorData.message)) {
           errorMessage = errorData.message.join('. ');
@@ -236,7 +236,7 @@ class AuthService {
         // If JSON parsing fails, use status text
         errorMessage = `Device verification failed: ${response.statusText}`;
       }
-      
+
       throw new Error(errorMessage);
     }
   }
@@ -306,7 +306,7 @@ class AuthService {
     const ctx = canvas.getContext('2d');
     ctx?.fillText('Device fingerprint', 2, 2);
     const canvasFingerprint = canvas.toDataURL();
-    
+
     const fingerprint = [
       navigator.userAgent,
       navigator.language,
@@ -314,7 +314,7 @@ class AuthService {
       new Date().getTimezoneOffset(),
       canvasFingerprint.slice(-20), // Last 20 chars of canvas fingerprint
     ].join('|');
-    
+
     // Simple hash function
     let hash = 0;
     for (let i = 0; i < fingerprint.length; i++) {
@@ -322,7 +322,7 @@ class AuthService {
       hash = ((hash << 5) - hash) + char;
       hash = hash & hash; // Convert to 32bit integer
     }
-    
+
     return Math.abs(hash).toString(36);
   }
 
@@ -331,9 +331,9 @@ class AuthService {
    */
   async login(email: string, password: string): Promise<LoginResponse> {
     const deviceFingerprint = this.generateDeviceFingerprint();
-    
+
     console.log('Attempting login to:', API_ENDPOINTS.AUTH.LOGIN);
-    
+
     const response = await fetch(API_ENDPOINTS.AUTH.LOGIN, {
       method: 'POST',
       headers: {
@@ -356,7 +356,7 @@ class AuthService {
         statusText: response.statusText,
         errorData,
       });
-      
+
       let errorMessage = 'Login failed. Please check your credentials.';
       if (errorData.message) {
         if (Array.isArray(errorData.message)) {
@@ -365,12 +365,12 @@ class AuthService {
           errorMessage = errorData.message;
         }
       }
-      
+
       // Add status code to error message for 401
       if (response.status === 401) {
         errorMessage = `Unauthorized (401): ${errorMessage}`;
       }
-      
+
       throw new Error(errorMessage);
     }
 
@@ -380,7 +380,7 @@ class AuthService {
       requiresDeviceVerification: data.requiresDeviceVerification,
       message: data.message
     });
-    
+
     return data;
   }
 
@@ -447,6 +447,10 @@ class AuthService {
     } catch (error) {
       console.error('Logout error:', error);
       // Continue with logout even if API call fails
+    } finally {
+      // Clear all local storage and session storage to prevent data leakage
+      localStorage.clear();
+      sessionStorage.clear();
     }
   }
 
@@ -478,10 +482,10 @@ class AuthService {
 
     if (!response.ok) {
       let errorMessage = 'Profile update failed';
-      
+
       try {
         const errorData = await response.json();
-        
+
         if (Array.isArray(errorData.message)) {
           errorMessage = errorData.message.join('. ');
         } else if (errorData.message) {
@@ -492,7 +496,7 @@ class AuthService {
       } catch (parseError) {
         errorMessage = `Profile update failed: ${response.statusText}`;
       }
-      
+
       throw new Error(errorMessage);
     }
   }

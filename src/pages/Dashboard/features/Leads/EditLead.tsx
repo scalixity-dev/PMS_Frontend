@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
+import { useAuth } from '../../../../context/AuthContext';
 import PrimaryActionButton from '../../../../components/common/buttons/PrimaryActionButton';
 
 const EditLead = () => {
     const navigate = useNavigate();
     const { id } = useParams();
+    const { user } = useAuth();
+    const userId = user?.id || 'default';
     const [leadType, setLeadType] = useState<'Hot' | 'Cold'>('Hot');
 
     // Pre-filled data (loaded from storage when available)
@@ -17,7 +20,7 @@ const EditLead = () => {
     const [errors, setErrors] = useState<Record<string, string>>({});
 
     useEffect(() => {
-        const stored = localStorage.getItem(`lead_${id || 1}`);
+        const stored = localStorage.getItem(`${userId}_lead_${id || 1}`);
         if (stored) {
             try {
                 const parsed = JSON.parse(stored) as {
@@ -80,7 +83,7 @@ const EditLead = () => {
                 ...formData,
                 leadType
             };
-            localStorage.setItem(`lead_${id || 1}`, JSON.stringify(leadData));
+            localStorage.setItem(`${userId}_lead_${id || 1}`, JSON.stringify(leadData));
 
             // Return to detail page
             navigate(`/dashboard/leasing/leads/${id || 1}`);

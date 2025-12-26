@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../../../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Plus } from 'lucide-react';
 import DashboardFilter from '../../../components/DashboardFilter';
@@ -18,16 +19,20 @@ const MOCK_TEMPLATES: Template[] = [
 
 const MyTemplates: React.FC = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
+    const userId = user?.id || 'default';
     const [searchQuery, setSearchQuery] = useState('');
-    const [templates, setTemplates] = useState<Template[]>(() => {
-        const saved = localStorage.getItem('myTemplates');
+    const [templates, setTemplates] = useState<Template[]>([]);
+
+    useEffect(() => {
+        const saved = localStorage.getItem(`${userId}_myTemplates`);
         if (saved) {
-            return JSON.parse(saved);
+            setTemplates(JSON.parse(saved));
+        } else {
+            localStorage.setItem(`${userId}_myTemplates`, JSON.stringify(MOCK_TEMPLATES));
+            setTemplates(MOCK_TEMPLATES);
         }
-        // Initialize with mocks if empty and save to localStorage
-        localStorage.setItem('myTemplates', JSON.stringify(MOCK_TEMPLATES));
-        return MOCK_TEMPLATES;
-    });
+    }, [userId]);
 
     const [activeDropdownId, setActiveDropdownId] = useState<number | null>(null);
     const dropdownRef = React.useRef<HTMLDivElement>(null);
@@ -50,7 +55,7 @@ const MyTemplates: React.FC = () => {
         e.stopPropagation();
         const updatedTemplates = templates.filter(t => t.id !== id);
         setTemplates(updatedTemplates);
-        localStorage.setItem('myTemplates', JSON.stringify(updatedTemplates));
+        localStorage.setItem(`${userId}_myTemplates`, JSON.stringify(updatedTemplates));
         setActiveDropdownId(null);
     };
 

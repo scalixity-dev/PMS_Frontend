@@ -16,6 +16,7 @@ export interface Lead {
 
 const LEADS_STORAGE_KEY = 'leads';
 
+const getLeadsKey = (userId: string): string => `${userId}_${LEADS_STORAGE_KEY}`;
 /**
  * Generate a unique ID for a new lead
  */
@@ -26,11 +27,11 @@ export const generateLeadId = (): string => {
 };
 
 /**
- * Get all leads from localStorage
+ * Get all leads from localStorage for a specific user
  */
-export const getAllLeads = (): Lead[] => {
+export const getAllLeads = (userId: string): Lead[] => {
     try {
-        const leadsJson = localStorage.getItem(LEADS_STORAGE_KEY);
+        const leadsJson = localStorage.getItem(getLeadsKey(userId));
         return leadsJson ? JSON.parse(leadsJson) : [];
     } catch (error) {
         console.error('Error reading leads from localStorage:', error);
@@ -39,17 +40,17 @@ export const getAllLeads = (): Lead[] => {
 };
 
 /**
- * Get a single lead by ID
+ * Get a single lead by ID for a specific user
  */
-export const getLeadById = (id: string): Lead | null => {
-    const leads = getAllLeads();
+export const getLeadById = (userId: string, id: string): Lead | null => {
+    const leads = getAllLeads(userId);
     return leads.find(lead => lead.id === id) || null;
 };
 
 /**
- * Save a new lead to localStorage
+ * Save a new lead to localStorage for a specific user
  */
-export const saveLead = (leadData: Omit<Lead, 'id' | 'createdAt' | 'status'>): Lead => {
+export const saveLead = (userId: string, leadData: Omit<Lead, 'id' | 'createdAt' | 'status'>): Lead => {
     const newLead: Lead = {
         id: generateLeadId(),
         ...leadData,
@@ -57,11 +58,11 @@ export const saveLead = (leadData: Omit<Lead, 'id' | 'createdAt' | 'status'>): L
         status: 'New'
     };
 
-    const leads = getAllLeads();
+    const leads = getAllLeads(userId);
     const updatedLeads = [...leads, newLead];
 
     try {
-        localStorage.setItem(LEADS_STORAGE_KEY, JSON.stringify(updatedLeads));
+        localStorage.setItem(getLeadsKey(userId), JSON.stringify(updatedLeads));
         return newLead;
     } catch (error) {
         console.error('Error saving lead to localStorage:', error);
@@ -70,10 +71,10 @@ export const saveLead = (leadData: Omit<Lead, 'id' | 'createdAt' | 'status'>): L
 };
 
 /**
- * Update an existing lead
+ * Update an existing lead for a specific user
  */
-export const updateLead = (id: string, updates: Partial<Omit<Lead, 'id' | 'createdAt'>>): Lead | null => {
-    const leads = getAllLeads();
+export const updateLead = (userId: string, id: string, updates: Partial<Omit<Lead, 'id' | 'createdAt'>>): Lead | null => {
+    const leads = getAllLeads(userId);
     const leadIndex = leads.findIndex(lead => lead.id === id);
 
     if (leadIndex === -1) {
@@ -89,7 +90,7 @@ export const updateLead = (id: string, updates: Partial<Omit<Lead, 'id' | 'creat
     leads[leadIndex] = updatedLead;
 
     try {
-        localStorage.setItem(LEADS_STORAGE_KEY, JSON.stringify(leads));
+        localStorage.setItem(getLeadsKey(userId), JSON.stringify(leads));
         return updatedLead;
     } catch (error) {
         console.error('Error updating lead in localStorage:', error);
@@ -98,10 +99,10 @@ export const updateLead = (id: string, updates: Partial<Omit<Lead, 'id' | 'creat
 };
 
 /**
- * Delete a lead by ID
+ * Delete a lead by ID for a specific user
  */
-export const deleteLead = (id: string): boolean => {
-    const leads = getAllLeads();
+export const deleteLead = (userId: string, id: string): boolean => {
+    const leads = getAllLeads(userId);
     const filteredLeads = leads.filter(lead => lead.id !== id);
 
     if (filteredLeads.length === leads.length) {
@@ -110,7 +111,7 @@ export const deleteLead = (id: string): boolean => {
     }
 
     try {
-        localStorage.setItem(LEADS_STORAGE_KEY, JSON.stringify(filteredLeads));
+        localStorage.setItem(getLeadsKey(userId), JSON.stringify(filteredLeads));
         return true;
     } catch (error) {
         console.error('Error deleting lead from localStorage:', error);
@@ -119,10 +120,10 @@ export const deleteLead = (id: string): boolean => {
 };
 
 /**
- * Search leads by name, email, or phone
+ * Search leads by name, email, or phone for a specific user
  */
-export const searchLeads = (query: string): Lead[] => {
-    const leads = getAllLeads();
+export const searchLeads = (userId: string, query: string): Lead[] => {
+    const leads = getAllLeads(userId);
     const lowerQuery = query.toLowerCase();
 
     return leads.filter(lead =>
@@ -133,34 +134,33 @@ export const searchLeads = (query: string): Lead[] => {
 };
 
 /**
- * Filter leads by type
+ * Filter leads by type for a specific user
  */
-export const filterLeadsByType = (type: 'Hot' | 'Cold'): Lead[] => {
-    const leads = getAllLeads();
+export const filterLeadsByType = (userId: string, type: 'Hot' | 'Cold'): Lead[] => {
+    const leads = getAllLeads(userId);
     return leads.filter(lead => lead.leadType === type);
 };
 
 /**
- * Filter leads by status
+ * Filter leads by status for a specific user
  */
-export const filterLeadsByStatus = (status: string): Lead[] => {
-    const leads = getAllLeads();
+export const filterLeadsByStatus = (userId: string, status: string): Lead[] => {
+    const leads = getAllLeads(userId);
     return leads.filter(lead => lead.status === status);
 };
 
 /**
- * Get leads count
+ * Get leads count for a specific user
  */
-export const getLeadsCount = (): number => {
-    return getAllLeads().length;
+export const getLeadsCount = (userId: string): number => {
+    return getAllLeads(userId).length;
 };
 
 /**
- * Clear all leads (use with caution!)
  */
-export const clearAllLeads = (): void => {
+export const clearAllLeads = (userId: string): void => {
     try {
-        localStorage.removeItem(LEADS_STORAGE_KEY);
+        localStorage.removeItem(getLeadsKey(userId));
     } catch (error) {
         console.error('Error clearing leads from localStorage:', error);
         throw error;

@@ -3,9 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import PrimaryActionButton from '../../../../components/common/buttons/PrimaryActionButton';
 import { saveLead } from './utils/leadsStorage';
+import { useAuth } from '../../../../context/AuthContext';
 
 const AddLead = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
+    const userId = user?.id || 'default';
     const [leadType, setLeadType] = useState<'Hot' | 'Cold'>('Hot');
     const [formData, setFormData] = useState({
         fullName: '',
@@ -49,7 +52,7 @@ const AddLead = () => {
         if (validateForm()) {
             try {
                 // Use the utility function to save the lead
-                const newLead = saveLead({
+                const newLead = saveLead(userId, {
                     fullName: formData.fullName,
                     phone: formData.phone,
                     email: formData.email,

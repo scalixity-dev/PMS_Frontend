@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { useAuth } from '../../../../../context/AuthContext';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ChevronDown, ChevronLeft, Plus, X, UploadCloud } from 'lucide-react';
 import DOMPurify from 'dompurify';
@@ -17,6 +18,8 @@ const MyTemplateDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const location = useLocation();
     const state = location.state as MyLocationState;
+    const { user } = useAuth();
+    const userId = user?.id || 'default';
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isAttachmentModalOpen, setIsAttachmentModalOpen] = useState(false);
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -110,7 +113,7 @@ const MyTemplateDetail: React.FC = () => {
             return;
         }
 
-        const saved = localStorage.getItem('myTemplates');
+        const saved = localStorage.getItem(`${userId}_myTemplates`);
         let found = null;
         if (saved) {
             const templates = JSON.parse(saved);
@@ -125,7 +128,7 @@ const MyTemplateDetail: React.FC = () => {
         setTemplate(found || null);
 
         // Load saved attachments metadata
-        const attachmentKey = `template_attachments_${id}`;
+        const attachmentKey = `${userId}_template_attachments_${id}`;
         const savedAttachments = localStorage.getItem(attachmentKey);
         if (savedAttachments) {
             try {
@@ -143,7 +146,7 @@ const MyTemplateDetail: React.FC = () => {
     const templateSubtitle = template?.subtitle || "Tenants Agreements";
 
     const allTemplates = (() => {
-        const saved = localStorage.getItem('myTemplates');
+        const saved = localStorage.getItem(`${userId}_myTemplates`);
         if (saved) {
             return JSON.parse(saved);
         }

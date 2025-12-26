@@ -8,6 +8,7 @@ import AddMeetingModal from './components/AddMeetingModal';
 import MessageModal from './components/MessageModal';
 import InviteToApplyModal from './components/InviteToApplyModal';
 import { useGetAllListings } from '../../../../hooks/useListingQueries';
+import { useAuth } from '../../../../context/AuthContext';
 
 interface ActivityItem {
     id: number;
@@ -27,6 +28,8 @@ interface DayActivity {
 
 const LeadDetail = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
+    const userId = user?.id || 'default';
     const [activeFilter, setActiveFilter] = useState('All');
     const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -52,7 +55,7 @@ const LeadDetail = () => {
     })) || [];
 
     useEffect(() => {
-        const savedData = localStorage.getItem(`lead_${id || 1}`);
+        const savedData = localStorage.getItem(`${userId}_lead_${id || 1}`);
         if (savedData) {
             setLeadInfo(JSON.parse(savedData));
         }

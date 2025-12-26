@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../../../../context/AuthContext';
 import { useNavigate, useParams } from 'react-router-dom';
 import PrimaryActionButton from '../../../../../components/common/buttons/PrimaryActionButton';
 import TemplateEditor from '../components/TemplateEditor';
@@ -6,6 +7,8 @@ import TemplateEditor from '../components/TemplateEditor';
 const EditTemplate: React.FC = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
+    const { user } = useAuth();
+    const userId = user?.id || 'default';
     const [editorContent, setEditorContent] = useState('');
     const [documentTitle, setDocumentTitle] = useState('');
     const [documentType, setDocumentType] = useState('');
@@ -19,7 +22,7 @@ const EditTemplate: React.FC = () => {
             return;
         }
 
-        const saved = localStorage.getItem('myTemplates');
+        const saved = localStorage.getItem(`${userId}_myTemplates`);
         if (!saved) {
             setDocumentTitle("Basic Residential Lease Agreement");
             setDocumentType("Tenants Agreement");
@@ -53,7 +56,7 @@ const EditTemplate: React.FC = () => {
 
     const handleUpdate = () => {
         const numericId = id ? Number(id) : Date.now();
-        const saved = localStorage.getItem('myTemplates');
+        const saved = localStorage.getItem(`${userId}_myTemplates`);
 
         let templates: Array<{
             id: number;
@@ -88,7 +91,7 @@ const EditTemplate: React.FC = () => {
             });
         }
 
-        localStorage.setItem('myTemplates', JSON.stringify(templates));
+        localStorage.setItem(`${userId}_myTemplates`, JSON.stringify(templates));
         navigate(`/documents/my-templates/${numericId}`);
     };
 
