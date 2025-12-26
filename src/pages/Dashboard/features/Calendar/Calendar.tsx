@@ -12,6 +12,10 @@ export interface Reminder {
     date: Date;
     time: string;
     type: 'maintenance' | 'viewing' | 'meeting' | 'other';
+    property?: string;
+    propertyId?: string;
+    details?: string;
+    assigneeName?: string;
 }
 
 const Calendar: React.FC = () => {
@@ -52,19 +56,19 @@ const Calendar: React.FC = () => {
     // Parse date string "DD MMM, YYYY" to Date object
     const parseDate = (dateStr: string): Date => {
         if (!dateStr || dateStr.trim() === '') return new Date();
-        
+
         const parts = dateStr.trim().split(' ');
         if (parts.length < 3) {
             console.warn('Invalid date format:', dateStr);
             return new Date();
         }
-        
+
         const day = parseInt(parts[0]);
         if (isNaN(day)) {
             console.warn('Invalid day in date:', dateStr);
             return new Date();
         }
-        
+
         // Remove comma from month name if present (e.g., "Jan," -> "Jan")
         const monthName = parts[1].replace(',', '').trim();
         const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -73,7 +77,7 @@ const Calendar: React.FC = () => {
             console.warn('Invalid month in date:', dateStr, 'monthName:', monthName);
             return new Date();
         }
-        
+
         // Remove comma from year if present
         const yearStr = parts[2].replace(',', '').trim();
         const year = parseInt(yearStr);
@@ -81,7 +85,7 @@ const Calendar: React.FC = () => {
             console.warn('Invalid year in date:', dateStr);
             return new Date();
         }
-        
+
         // Create date at midnight in local timezone to avoid timezone issues
         const parsedDate = new Date(year, month, day, 0, 0, 0, 0);
         // Validate the parsed date
@@ -89,11 +93,11 @@ const Calendar: React.FC = () => {
             console.warn('Invalid parsed date:', dateStr, '->', parsedDate);
             return new Date();
         }
-        
+
         return parsedDate;
     };
 
-   
+
     const reminders = useMemo<Reminder[]>(() => {
         // Valid reminder types
         const validReminderTypes: Array<'maintenance' | 'viewing' | 'meeting' | 'other'> = [
@@ -118,10 +122,10 @@ const Calendar: React.FC = () => {
             // Strategy 1: Prefer explicit type from metadata (normalize and validate)
             if (event.metadata?.reminderType) {
                 const metaType = String(event.metadata.reminderType).toLowerCase().trim();
-                
+
                 // Normalize common variations
                 const normalizedType = metaType === 'reminder' ? 'other' : metaType;
-                
+
                 // Validate against allowed values
                 if (validReminderTypes.includes(normalizedType as typeof reminderType)) {
                     reminderType = normalizedType as typeof reminderType;
@@ -194,6 +198,10 @@ const Calendar: React.FC = () => {
                 date: parseDate(event.date),
                 time: event.time || '',
                 type: reminderType,
+                property: event.propertyName,
+                propertyId: event.propertyId,
+                details: event.description,
+                assigneeName: event.assignee,
             };
         });
     }, [calendarEvents]);

@@ -8,7 +8,7 @@ const testimonials = [
     brand: 'capterra' as const,
     title: 'Manage Properties, Simplify Life',
     content:
-      'PMS makes property management simple — screen, market, collect rent, and manage maintenance all in one place.',
+      'SmartTenantAI makes property management simple — screen, market, collect rent, and manage maintenance all in one place.',
     rating: 5,
     authorName: 'Patrick G.',
     authorRole: 'broker',
@@ -29,7 +29,7 @@ const testimonials = [
     brand: 'capterra' as const,
     title: 'Long Time User',
     content:
-      'What I find the most useful is having everything in one spot and being able to communicate with the PMS about any issues they are having.',
+      'What I find the most useful is having everything in one spot and being able to communicate with the tenants about any issues they are having.',
     rating: 5,
     authorName: 'Marie K.',
     authorRole: 'broker',
@@ -104,7 +104,7 @@ const TestimonialsSection: React.FC = () => {
           </div>
         </div>
 
-        
+
       </div>
     </section>
   );

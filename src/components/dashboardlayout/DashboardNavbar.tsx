@@ -6,12 +6,13 @@ import {
   Search,
   Bell,
   MessageSquare,
-  Info,
+  // Info,
   User,
   LogOut,
   UserCog,
   FileText,
   Download,
+  Calendar,
 } from "lucide-react";
 import logo from "../../assets/images/logo.png";
 import { authService } from "../../services/auth.service";
@@ -102,14 +103,14 @@ export default function DashboardNavbar({ sidebarOpen, setSidebarOpen }: NavbarP
       <div className="flex items-center">
         {/* Desktop Logo */}
         <div className="hidden lg:flex items-center justify-center w-64 gap-2 text-white">
-          <img src={logo} alt="PMS" className="w-6 h-6" style={{ filter: "invert(1) brightness(2)" }} />
-          <span className="text-lg font-bold">PMS</span>
+          <img src={logo} alt="SmartTenantAI" className="w-6 h-6" style={{ filter: "invert(1) brightness(2)" }} />
+          <span className="text-lg font-bold">SmartTenantAI</span>
         </div>
 
         {/* Mobile/Tablet Logo */}
         <div className="flex lg:hidden items-center gap-2 text-white">
-          <img src={logo} alt="PMS" className="w-6 h-6" style={{ filter: "invert(1) brightness(2)" }} />
-          <span className="text-lg font-bold">PMS</span>
+          <img src={logo} alt="SmartTenantAI" className="w-6 h-6" style={{ filter: "invert(1) brightness(2)" }} />
+          <span className="text-lg font-bold">SmartTenantAI</span>
         </div>
       </div>
 
@@ -155,10 +156,11 @@ export default function DashboardNavbar({ sidebarOpen, setSidebarOpen }: NavbarP
 
         {/* Right side icons */}
         <div className="flex items-center gap-1 md:gap-2 ml-auto">
-          {/* File Icon */}
+          {/* Reports Icon */}
           <button
-            aria-label="Files"
+            aria-label="Reports"
             className="hidden md:flex w-8 h-8 rounded-full bg-white items-center justify-center hover:bg-gray-100 shadow-[0_3px_0_rgba(93,111,108)]"
+            onClick={() => navigate('/dashboard/reports')}
           >
             <FileText size={18} className="text-gray-800" />
           </button>
@@ -166,9 +168,18 @@ export default function DashboardNavbar({ sidebarOpen, setSidebarOpen }: NavbarP
           {/* Download Icon */}
           <button
             aria-label="Downloads"
-            className="hidden md:flex w-8 h-8 mr-6 rounded-full bg-white items-center justify-center hover:bg-gray-100 shadow-[0_3px_0_rgba(93,111,108)]"
+            className="hidden md:flex w-8 h-8 rounded-full bg-white items-center justify-center hover:bg-gray-100 shadow-[0_3px_0_rgba(93,111,108)]"
           >
             <Download size={18} className="text-gray-800" />
+          </button>
+
+          {/* Calendar Icon */}
+          <button
+            aria-label="Calendar"
+            className="hidden md:flex w-8 h-8 mr-6 rounded-full bg-white items-center justify-center hover:bg-gray-100 shadow-[0_3px_0_rgba(93,111,108)]"
+            onClick={() => navigate('/dashboard/calendar')}
+          >
+            <Calendar size={18} className="text-gray-800" />
           </button>
 
           {/* Messages Icon */}
@@ -181,12 +192,12 @@ export default function DashboardNavbar({ sidebarOpen, setSidebarOpen }: NavbarP
           </button>
 
           {/* Info Icon */}
-          <button
+          {/* <button
             aria-label="Info"
             className="w-8 h-8 rounded-full bg-white flex items-center justify-center hover:bg-gray-100 shadow-[0_3px_0_rgba(93,111,108)]"
           >
             <Info size={18} className="text-gray-800" />
-          </button>
+          </button> */}
 
           {/* Notification (Bell) Icon */}
           <button

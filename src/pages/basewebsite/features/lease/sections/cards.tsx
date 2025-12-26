@@ -25,21 +25,21 @@ interface LeaseCardProps {
 
 const LeaseCard: React.FC<LeaseCardProps> = ({ title, description, learnMoreTo }) => {
   return (
-  <div className="lease-card flex flex-col rounded-b-lg relative bg-transparent font-body shadow-sm overflow-hidden transition duration-200 hover:shadow-lg hover:ring-2 hover:ring-[rgba(167,243,208,0.12)] hover:bg-white/5 focus-within:shadow-lg focus-within:ring-2 focus-within:ring-[var(--color-primary)] focus:outline-none">
+    <div className="lease-card flex flex-col rounded-b-lg relative bg-transparent font-body shadow-sm overflow-hidden transition duration-200 hover:shadow-lg hover:ring-2 hover:ring-[rgba(167,243,208,0.12)] hover:bg-white/5 focus-within:shadow-lg focus-within:ring-2 focus-within:ring-[var(--color-primary)] focus:outline-none">
       {/* Border with glow effect - thicker on left and top */}
       <div className="absolute top-0 left-0 w-full h-full rounded-b-lg pointer-events-none border border-[rgba(167,243,208,0.6)] border-l-2 border-t border-r border-b" />
       {/* Gradient shadow at top left - curvy elliptical shape */}
-      <div 
+      <div
         className="absolute top-0 left-0 w-1/3 sm:w-1/2 h-1/3 sm:h-1/2 pointer-events-none z-0 overflow-hidden rounded-b-lg opacity-25"
         style={{
           background: 'radial-gradient(ellipse 70% 60% at top left, #20CC95 0%, #3BF75100 50%)',
         }}
       />
-  <div className="relative z-10 p-6 sm:p-8">
+      <div className="relative z-10 p-6 sm:p-8">
         <h3 className="text-white font-bold text-lg sm:text-[22px] mb-3 sm:mb-4 leading-tight">{title}</h3>
         <p className="text-[#C0C0C0] text-sm sm:text-[18px] mb-4 sm:mb-6 leading-relaxed">{description}</p>
         {learnMoreTo ? (
-          <Link 
+          <Link
             to={learnMoreTo}
             className="text-white text-sm sm:text-base hover:opacity-80 transition-opacity"
           >
@@ -66,7 +66,7 @@ const LeaseCardsSection: React.FC = () => {
     {
       number: "02",
       title: "Send, Sign, and Store Leases Digitally",
-      description: "Speed up the signing process with secure eSignatures. Simply create and send your lease form, then PmsCloud will walk Pms through the final steps. Don't need an e-signature? No worries— just upload the lease, and you're good to go.",
+      description: "Speed up the signing process with secure eSignatures. Simply create and send your lease form, then SmartTenantAICloud will walk SmartTenantAI through the final steps. Don't need an e-signature? No worries— just upload the lease, and you're good to go.",
       learnMoreTo: "#"
     },
     {

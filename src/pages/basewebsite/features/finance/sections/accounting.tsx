@@ -14,7 +14,7 @@ const AccountingSection: React.FC = () => {
       badge="Accounting"
       rightSideLogo={<Calculator className="w-4 h-4 stroke-current" />}
       title={<>Track every dollar, save hours</>}
-      description="Ditch third-party tools. Landlords report saving up to 20 hours a week on admin work with PMSCloud’s built-in accounting software."
+      description="Ditch third-party tools. Landlords report saving up to 20 hours a week on admin work with SmartTenantAI's built-in accounting software."
       features={features}
       learnMoreLabel=""
       showBackgroundCard={false}
@@ -35,4 +35,3 @@ const AccountingSection: React.FC = () => {
 };
 
 export default AccountingSection;
-

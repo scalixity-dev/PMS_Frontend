@@ -3,12 +3,12 @@ import HeroCard from '../../../../../components/common/cards/HeroCard';
 
 const RentReportingSection: React.FC = () => {
   const features = ["Free 14 day trial", "Credit card required", "Cancel anytime"] as const;
-  
+
   return (
     <HeroCard
       badge="Rent Reporting"
       title="Automated Rent Notifications"
-      description="Never miss a payment again. PMS sends smart reminders to tenants before due dates, making rent collection smoother and more reliable."
+      description="Never miss a payment again. SmartTenantAI sends smart reminders to tenants before due dates, making rent collection smoother and more reliable."
       features={features}
       showStamp={false}
       learnMoreLabel=""

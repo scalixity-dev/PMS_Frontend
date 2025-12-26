@@ -38,10 +38,10 @@ const EveryFeatureSection: React.FC = () => {
           </h2>
         </div>
         <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
-          From listing and leasing to rent collection and maintenance — everything is built right in. Manage Pms, track finances, and automate daily tasks effortlessly.
+          From listing and leasing to rent collection and maintenance — everything is built right in. Manage SmartTenantAI, track finances, and automate daily tasks effortlessly.
         </p>
       </div>
-    
+
       <div className="lg:w-3/5 w-full">
         <FeatureHighlightsGrid features={features} />
       </div>

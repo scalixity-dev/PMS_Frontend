@@ -26,16 +26,16 @@ const featuresData = {
     {
       image:
         "https://res.cloudinary.com/dxwspucxw/image/upload/v1762162431/one_wmo5aa.png",
-      title: "Free ACH payments for PMS",
+      title: "Free ACH payments for tenants",
       description:
-        "Give PMS 50 ACH fees when they set up active rent reporting to build credit history with their rent payments each month ($4.95/month).",
+        "Give tenants 50 ACH fees when they set up active rent reporting to build credit history with their rent payments each month ($4.95/month).",
     },
     {
       image:
         "https://res.cloudinary.com/dxwspucxw/image/upload/v1762162431/one_wmo5aa.png",
       title: "Why landlords love online pay",
       description:
-        "With faster payments, convenient tax tools, and a dashboard that gives you full visibility — it's no wonder why nearly 80% of PMScloud users recommend our online payments.",
+        "With faster payments, convenient tax tools, and a dashboard that gives you full visibility — it's no wonder why nearly 80% of SmartTenantAI users recommend our online payments.",
     },
   ],
   screenshotSetA: [
@@ -51,7 +51,7 @@ const featuresData = {
         "https://res.cloudinary.com/dxwspucxw/image/upload/v1762162431/one_wmo5aa.png",
       title: "Stay Current with Bank Reconciliation",
       description:
-        "Match your PmsCloud transactions to your bank statement. Spot errors like missing or duplicate entries fast, so your books stay accurate and stress-free.",
+        "Match your SmartTenantAI transactions to your bank statement. Spot errors like missing or duplicate entries fast, so your books stay accurate and stress-free.",
     },
     {
       image:
@@ -91,13 +91,13 @@ const FinancePage: React.FC = () => {
     <section className="w-full">
       <FinanceHeroSection />
       {/* Every Feature You'll Need */}
-      <KeyPointsSection/>
+      <KeyPointsSection />
 
       {/* Fast Track your Money */}
       <SplitHeroFeature
         title="Fast-track your money"
         description={
-          "Get quicker access to your funds with Faster Payments. Eligible PMSCloud users can enroll and receive ACH transactions in just 2-3 business days."
+          "Get quicker access to your funds with Faster Payments. Eligible SmartTenantAI users can enroll and receive ACH transactions in just 2-3 business days."
         }
         imageSrc={"https://res.cloudinary.com/dxwspucxw/image/upload/v1762414897/Screenshot_2025-11-06_131037_eadsof.png"}
         icon={<MailCheck className="w-10 h-10 text-white" />}
@@ -118,7 +118,7 @@ const FinancePage: React.FC = () => {
         “ Being able to do all of my accounting in one place allowed me to go from chasing down expenses I didn’t know existed, to being fully in control of the money coming in and out of my rental business. “
       </div>
 
-      <GradientFeatureList/>
+      <GradientFeatureList />
 
       <InvoicesSection />
 
@@ -154,7 +154,7 @@ const FinancePage: React.FC = () => {
       <FeatureHighlightSection
         subtitle=""
         title="Connect any account"
-        description="Reconcile and organize your transactions in seconds. Simply connect your bank account to PMSCloud through Stripe."
+        description="Reconcile and organize your transactions in seconds. Simply connect your bank account to SmartTenantAI through Stripe."
         imageSrc="https://res.cloudinary.com/dxwspucxw/image/upload/v1762335597/Clip_path_group_1_v4onjf.png"
       />
 

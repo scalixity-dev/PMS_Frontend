@@ -11,7 +11,7 @@ const ListingWebsiteSection: React.FC = () => {
     <HeroCard
       badge="Listing Website"
       title="Showcase Rentals on a Dedicated Listing Website"
-      description="Give your Pms an opportunity to boost their credit history by paying rent on time—we’ll even waive the ACH fees as long as they’re enrolled."
+      description="Give your SmartTenantAI an opportunity to boost their credit history by paying rent on time—we’ll even waive the ACH fees as long as they’re enrolled."
       features={features}
       learnMoreLabel=""
       showStamp={false}

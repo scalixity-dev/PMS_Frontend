@@ -1,2 +1,2 @@
-# PMS_Frontend
+# SmartTenantAI_Frontend
 Propert Managment Software Frontend

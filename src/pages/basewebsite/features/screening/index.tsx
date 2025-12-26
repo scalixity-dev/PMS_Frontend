@@ -15,9 +15,9 @@ const FeaturesPage: React.FC = () => {
       <EveryFeatureSection />
 
       <FeatureHighlightSection
-        subtitle="PMS Screening"
+        subtitle="SmartTenantAI Screening"
         title="Find and onboard the right tenants, faster"
-        description="PMS helps you automate identity verification and streamline tenant onboarding — saving time and reducing manual work."
+        description="SmartTenantAI helps you automate identity verification and streamline tenant onboarding — saving time and reducing manual work."
         imageSrc="https://res.cloudinary.com/dxwspucxw/image/upload/v1762162417/Property_Management_Dashboard_budkfv.png"
       />
 
@@ -26,24 +26,24 @@ const FeaturesPage: React.FC = () => {
       <FeatureHighlightSection
         subtitle=""
         title="Take control of the leasing process"
-        description="Customize application questions, set your fees, and track every applicant from first inquiry to signed lease—all on PMS"
+        description="Customize application questions, set your fees, and track every applicant from first inquiry to signed lease—all on SmartTenantAI"
         imageSrc="https://res.cloudinary.com/dxwspucxw/image/upload/v1762162417/leasingProcess_nfnnqm.png"
       />
 
       <AIPoweredFeaturesSection />
       <RentReportingSection />
-      <FeatureSectionFlat/>
+      <FeatureSectionFlat />
       <FeatureHighlightSection
         subtitle=""
         title="Faster payments, better future"
-        description="Rent reporting leads to more on-time payments for you—and real credit-building opportunities for PMS."
+        description="Rent reporting leads to more on-time payments for you—and real credit-building opportunities for tenants."
         imageSrc="https://res.cloudinary.com/dxwspucxw/image/upload/v1762162417/Dashboard_Overview_i12j7r.png"
       />
 
     </section>
   );
 };
-	
+
 
 export default FeaturesPage;
 

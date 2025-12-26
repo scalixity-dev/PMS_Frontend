@@ -96,7 +96,7 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
 
     return (
         <div ref={dropdownRef} className="bg-[#3A6D6C] p-4 rounded-full flex items-center gap-4 mb-8 justify-between relative shadow-md">
-            <div className="flex items-center gap-4 flex-1 overflow-visible flex-wrap">
+            <div className="flex items-center gap-4 flex-1 overflow-visible">
                 <div className="relative flex-shrink-0">
                     <input
                         type="text"
@@ -124,11 +124,10 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
                         <div key={filterType} className="relative">
                             <button
                                 onClick={() => setOpenDropdown(openDropdown === filterType ? null : filterType)}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
-                                    (selectedFilters[filterType]?.length || 0) > 0
+                                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${(selectedFilters[filterType]?.length || 0) > 0
                                         ? 'bg-[#7BD747] text-white'
                                         : 'bg-white text-gray-700 hover:bg-gray-50'
-                                }`}
+                                    }`}
                             >
                                 {getFilterLabel(filterType)}
                                 <Plus className="w-4 h-4" />
@@ -164,9 +163,8 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
             {showClearAll && (
                 <button
                     onClick={handleClearAll}
-                    className={`px-6 py-2 bg-white rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors whitespace-nowrap flex-shrink-0 ${
-                        hasActiveFilters() ? 'opacity-100' : 'opacity-50 cursor-not-allowed'
-                    }`}
+                    className={`px-6 py-2 bg-white rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors whitespace-nowrap flex-shrink-0 ${hasActiveFilters() ? 'opacity-100' : 'opacity-50 cursor-not-allowed'
+                        }`}
                     disabled={!hasActiveFilters()}
                 >
                     Clear All

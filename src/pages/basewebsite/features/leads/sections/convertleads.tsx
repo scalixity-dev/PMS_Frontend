@@ -4,8 +4,8 @@ import HeroCard from '../../../../../components/common/cards/HeroCard';
 const ConvertLeadsSection: React.FC = () => {
   return (
     <HeroCard
-      title="Convert leads into PMS"
-      description="Once you have leads, just click ‘Invite to apply’ and select the listing from your vacancies. We'll send your leads a link to apply online and make the process easier for everyone. All rental applications will go straight to your PMSCloud account for you to review."
+      title="Convert leads into tenants"
+      description="Once you have leads, just click 'Invite to apply' and select the listing from your vacancies. We'll send your leads a link to apply online and make the process easier for everyone. All rental applications will go straight to your SmartTenantAI account for you to review."
       features={[]}
       learnMoreLabel=""
       getStartedLabel="Learn more"
@@ -23,4 +23,3 @@ const ConvertLeadsSection: React.FC = () => {
 };
 
 export default ConvertLeadsSection;
-

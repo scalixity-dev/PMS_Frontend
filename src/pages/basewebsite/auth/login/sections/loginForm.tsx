@@ -53,7 +53,7 @@ const LoginForm: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
-        
+
         // Validate inputs
         const isEmailValid = validateEmail(email);
         const isPasswordValid = validatePassword(password);
@@ -66,14 +66,14 @@ const LoginForm: React.FC = () => {
 
         try {
             const response = await authService.login(email, password);
-            
+
             console.log('Login response:', {
                 hasUser: !!response.user,
                 requiresDeviceVerification: response.requiresDeviceVerification,
                 hasToken: !!response.token,
                 user: response.user
             });
-            
+
             // Check if device verification is required
             if (response.requiresDeviceVerification) {
                 // Redirect to OTP page for device verification
@@ -90,7 +90,7 @@ const LoginForm: React.FC = () => {
             console.error('Login error:', err);
             const errorMessage = err instanceof Error ? err.message : 'Login failed. Please try again.';
             setError(errorMessage);
-            
+
             // If it's a 401, provide more specific error
             if (err instanceof Error && errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
                 setError('Invalid email or password. Please check your credentials and try again.');
@@ -103,8 +103,8 @@ const LoginForm: React.FC = () => {
     return (
         <div className="w-full lg:w-1/2 p-2 sm:p-10 lg:p-6 flex flex-col justify-center">
             <div className="text-center lg:text-left mb-8">
-                <img src={logo} alt="PMS Logo" className="h-8 w-8 mx-auto lg:mx-0 mb-2 brightness-0" />
-                <h1 className="text-md font-body text-gray-800 font-bold mb-2">PMS</h1>
+                <img src={logo} alt="SmartTenantAI Logo" className="h-8 w-8 mx-auto lg:mx-0 mb-2 brightness-0" />
+                <h1 className="text-md font-body text-gray-800 font-bold mb-2">SmartTenantAI</h1>
                 <h2 className="text-xl font-heading font-semibold text-gray-900 mb-2">Sign in</h2>
                 <p className="text-gray-600 text-sm">Sign in to your rental management software.</p>
             </div>
@@ -117,125 +117,123 @@ const LoginForm: React.FC = () => {
                 )}
 
                 <div>
-                <label htmlFor="email-address" className="block text-xs font-medium text-gray-700">
-                    Email address
-                </label>
-                <div className="mt-1">
-                    <input
-                    id="email-address"
-                    name="email"
-                    type="email"
-                    required
-                    className={`appearance-none block w-full px-3 py-2 border rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 sm:text-sm transition-all ${
-                        emailError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => {
-                        setEmail(e.target.value);
-                        if (emailError) validateEmail(e.target.value);
-                    }}
-                    onBlur={() => validateEmail(email)}
-                    disabled={isLoading}
-                    />
-                </div>
-                {emailError && (
-                    <p className="mt-1 text-xs text-red-600">{emailError}</p>
-                )}
+                    <label htmlFor="email-address" className="block text-xs font-medium text-gray-700">
+                        Email address
+                    </label>
+                    <div className="mt-1">
+                        <input
+                            id="email-address"
+                            name="email"
+                            type="email"
+                            required
+                            className={`appearance-none block w-full px-3 py-2 border rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 sm:text-sm transition-all ${emailError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300'
+                                }`}
+                            placeholder="Enter your email"
+                            value={email}
+                            onChange={(e) => {
+                                setEmail(e.target.value);
+                                if (emailError) validateEmail(e.target.value);
+                            }}
+                            onBlur={() => validateEmail(email)}
+                            disabled={isLoading}
+                        />
+                    </div>
+                    {emailError && (
+                        <p className="mt-1 text-xs text-red-600">{emailError}</p>
+                    )}
                 </div>
 
                 <div>
-                <label htmlFor="password" className="block text-xs font-medium text-gray-700">
-                    Password
-                </label>
-                <div className="mt-1 relative">
-                    <input
-                    id="password"
-                    name="password"
-                    type={showPassword ? 'text' : 'password'}
-                    required
-                    className={`appearance-none block w-full px-3 py-2 pr-10 border rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 sm:text-sm transition-all ${
-                        passwordError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="********"
-                    value={password}
-                    onChange={(e) => {
-                        setPassword(e.target.value);
-                        if (passwordError) validatePassword(e.target.value);
-                    }}
-                    onBlur={() => validatePassword(password)}
-                    disabled={isLoading}
-                    />
+                    <label htmlFor="password" className="block text-xs font-medium text-gray-700">
+                        Password
+                    </label>
+                    <div className="mt-1 relative">
+                        <input
+                            id="password"
+                            name="password"
+                            type={showPassword ? 'text' : 'password'}
+                            required
+                            className={`appearance-none block w-full px-3 py-2 pr-10 border rounded-md placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 sm:text-sm transition-all ${passwordError ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300'
+                                }`}
+                            placeholder="********"
+                            value={password}
+                            onChange={(e) => {
+                                setPassword(e.target.value);
+                                if (passwordError) validatePassword(e.target.value);
+                            }}
+                            onBlur={() => validatePassword(password)}
+                            disabled={isLoading}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                            aria-label={showPassword ? 'Hide password' : 'Show password'}
+                            disabled={isLoading}
+                        >
+                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                    </div>
+                    {passwordError && (
+                        <p className="mt-1 text-xs text-red-600">{passwordError}</p>
+                    )}
+                </div>
+
+                <div>
                     <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
-                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        type="submit"
                         disabled={isLoading}
+                        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md text-sm font-medium text-white bg-[var(--color-primary)] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                     >
-                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        {isLoading ? 'Signing in...' : 'Continue'}
                     </button>
-                </div>
-                {passwordError && (
-                    <p className="mt-1 text-xs text-red-600">{passwordError}</p>
-                )}
-                </div>
-
-                <div>
-                <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md text-sm font-medium text-white bg-[var(--color-primary)] hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                >
-                    {isLoading ? 'Signing in...' : 'Continue'}
-                </button>
                 </div>
             </form>
 
             <div className="mt-6 text-center">
                 <div className="relative">
-                <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                    <div className="w-full border-t border-gray-300" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-white text-gray-500">
-                    OR
-                    </span>
-                </div>
+                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                        <div className="w-full border-t border-gray-300" />
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                        <span className="px-2 bg-white text-gray-500">
+                            OR
+                        </span>
+                    </div>
                 </div>
 
                 <div className="mt-6 space-y-3">
-                <button
-                    type="button"
-                    onClick={() => authService.initiateOAuth('google')}
-                    className="w-full inline-flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all transform hover:scale-[1.02] active:scale-[0.98] gap-3"
-                >
-                    <GoogleIcon /> Sign in with Google
-                </button>
-                <button
-                    type="button"
-                    onClick={() => authService.initiateOAuth('apple')}
-                    className="w-full inline-flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all transform hover:scale-[1.02] active:scale-[0.98] gap-3"
-                >
-                    <AppleIcon /> Sign in with Apple
-                </button>
-                <button
-                    type="button"
-                    onClick={() => authService.initiateOAuth('facebook')}
-                    className="w-full inline-flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all transform hover:scale-[1.02] active:scale-[0.98] gap-3"
-                >
-                    <FacebookIcon /> Sign in with Facebook
-                </button>
+                    <button
+                        type="button"
+                        onClick={() => authService.initiateOAuth('google')}
+                        className="w-full inline-flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all transform hover:scale-[1.02] active:scale-[0.98] gap-3"
+                    >
+                        <GoogleIcon /> Sign in with Google
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => authService.initiateOAuth('apple')}
+                        className="w-full inline-flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all transform hover:scale-[1.02] active:scale-[0.98] gap-3"
+                    >
+                        <AppleIcon /> Sign in with Apple
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => authService.initiateOAuth('facebook')}
+                        className="w-full inline-flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all transform hover:scale-[1.02] active:scale-[0.98] gap-3"
+                    >
+                        <FacebookIcon /> Sign in with Facebook
+                    </button>
                 </div>
             </div>
 
             <div className="mt-8 text-center text-sm text-gray-600">
                 Don't have an account?{' '}
                 <Link to="/signup" className="font-medium text-(--color-primary) hover:text-green-600 hover:underline transition-colors">
-                Sign up
+                    Sign up
                 </Link>
             </div>
-            </div>
+        </div>
     );
 };
 

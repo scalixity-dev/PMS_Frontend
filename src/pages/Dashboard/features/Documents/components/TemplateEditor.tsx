@@ -70,7 +70,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
 
     const handleDragStart = (e: React.DragEvent, label: string, isAutoFill: boolean = false) => {
         const dragData = JSON.stringify({ label, isAutoFill });
-        e.dataTransfer.setData('application/x-pms-autofill', dragData);
+        e.dataTransfer.setData('application/x-SmartTenantAI-autofill', dragData);
         e.dataTransfer.setData('text/plain', label);
         e.dataTransfer.dropEffect = 'copy';
     };
@@ -85,7 +85,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
 
         let dragData;
         try {
-            const rawData = dataTransfer.getData('application/x-pms-autofill');
+            const rawData = dataTransfer.getData('application/x-SmartTenantAI-autofill');
             if (rawData) {
                 dragData = JSON.parse(rawData);
             } else {

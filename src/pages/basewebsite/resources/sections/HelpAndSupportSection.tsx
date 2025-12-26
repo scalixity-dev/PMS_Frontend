@@ -6,7 +6,7 @@ const HelpAndSupportSection: React.FC = () => {
   return (
     <section className="py-16 px-4 bg-white">
       <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-16 justify-items-center">
-        
+
         {/* Card 1: Help Center */}
         <SupportCard
           icon={<SupportIcon />}
@@ -20,7 +20,7 @@ const HelpAndSupportSection: React.FC = () => {
         <SupportCard
           icon={<ChatIcon />}
           title="Priority Support"
-          description="PmsCloud business clients have access to immediate telephone support from 9 AM to 5 PM CST and are first in line for ticket responses."
+          description="SmartTenantAICloud business clients have access to immediate telephone support from 9 AM to 5 PM CST and are first in line for ticket responses."
           ctaText="Upgrade"
           ctaHref="#contact-section"
         />

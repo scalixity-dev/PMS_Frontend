@@ -286,8 +286,8 @@ const MaintenanceRequestsDetail: React.FC = () => {
                     </div>
                 </CollapsibleSection>
 
-                {/* PMS Information */}
-                <CollapsibleSection title="Pms information" defaultOpen={true}>
+                {/* Tenant Information */}
+                <CollapsibleSection title="SmartTenantAI information" defaultOpen={true}>
                     <div className="bg-[#f0f0f6] p-6 rounded-xl shadow-sm">
                         <div className="bg-[#7BD747] rounded-3xl p-8 grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 shadow-sm max-w-4xl">
                             <div className="space-y-4">

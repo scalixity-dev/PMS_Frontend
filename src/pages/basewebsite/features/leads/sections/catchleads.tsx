@@ -5,10 +5,10 @@ const CatchLeadsSection: React.FC = () => {
   return (
     <HeroCard
       title="Catch all your leads"
-      description="All leads will automatically appear in your CRM tool when potential PMS reach out with questions and tour requests from your listing website, submit rental applications, or when you add leads manually."
+      description="All leads will automatically appear in your CRM tool when potential tenants reach out with questions and tour requests from your listing website, submit rental applications, or when you add leads manually."
       betweenTitleAndDescription={
         <p className="font-heading font-light lg:text-sm xl:text-base leading-[150%] tracking-normal text-subheading mb-3">
-          With our Leads Tracking Tool you can view all prospective PMS and Premium Leads when you log into your PMSCloud account.
+          With our Leads Tracking Tool you can view all prospective tenants and Premium Leads when you log into your SmartTenantAI account.
         </p>
       }
       features={[]}

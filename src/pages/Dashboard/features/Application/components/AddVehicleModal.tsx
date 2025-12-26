@@ -16,6 +16,7 @@ interface AddVehicleModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSave: (data: VehicleFormData) => void;
+    initialData?: VehicleFormData;
 }
 
 const typeOptions = [
@@ -25,7 +26,7 @@ const typeOptions = [
     { value: 'Other', label: 'Other' }
 ];
 
-const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSave }) => {
+const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
     const [formData, setFormData] = useState<VehicleFormData>({
         type: '',
         make: '',
@@ -53,7 +54,9 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSa
 
     // Reset form and errors when modal closes
     useEffect(() => {
-        if (!isOpen) {
+        if (isOpen && initialData) {
+            setFormData(initialData);
+        } else if (!isOpen) {
             setFormData({
                 type: '',
                 make: '',
@@ -66,7 +69,7 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSa
             setErrors({});
             setTouched({});
         }
-    }, [isOpen]);
+    }, [isOpen, initialData]);
 
     if (!isOpen) return null;
 
@@ -217,7 +220,7 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSa
                     <button onClick={onClose} className="hover:bg-white/10 p-1 rounded-full transition-colors">
                         <ChevronLeft size={24} />
                     </button>
-                    <h2 className="text-xl font-medium">Add a new vehicle</h2>
+                    <h2 className="text-xl font-medium">{initialData ? 'Edit vehicle' : 'Add a new vehicle'}</h2>
                     <button onClick={onClose} className="hover:bg-white/10 p-1 rounded-full transition-colors">
                         <X size={24} />
                     </button>
@@ -254,7 +257,7 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSa
                                 className={getInputClassWithError('make')}
                                 value={formData.make}
                                 onChange={(e) => handleChange('make', e.target.value)}
-                                onBlur={() => handleBlur('make')} 
+                                onBlur={() => handleBlur('make')}
                             />
                             {touched.make && errors.make && (
                                 <p className="text-red-500 text-xs mt-1 ml-1">{errors.make}</p>
@@ -355,11 +358,11 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSa
                             onClick={handleSubmit}
                             disabled={!isFormValid()}
                             className={`px-8 py-3 rounded-xl text-sm font-medium transition-colors shadow-md ${isFormValid()
-                                    ? 'bg-[#3A6D6C] text-white hover:bg-[#2c5251] cursor-pointer'
-                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                ? 'bg-[#3A6D6C] text-white hover:bg-[#2c5251] cursor-pointer'
+                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                 }`}
                         >
-                            Add
+                            {initialData ? 'Save' : 'Add'}
                         </button>
                     </div>
                 </div>
