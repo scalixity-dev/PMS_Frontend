@@ -14,11 +14,13 @@ interface Property {
     balance: number;
     image: string | null;
     type: string;
-    status: 'active' | 'inactive' | 'pending';
+    status: 'active' | 'archived' ;
     occupancy: 'vacant' | 'occupied' | 'partially_occupied';
     propertyType: 'single_apartment' | 'multi_apartment';
     balanceCategory: 'low' | 'medium' | 'high';
     country?: string;
+    marketingStatus: 'listed' | 'unlisted' | 'draft';
+    currency?: string;
 }
 
 const Properties: React.FC = () => {
@@ -34,11 +36,13 @@ const Properties: React.FC = () => {
         status: string[];
         occupancy: string[];
         propertyType: string[];
+        marketingStatus: string[];
         balance: string[];
     }>({
         status: [],
         occupancy: [],
         propertyType: [],
+        marketingStatus: [],
         balance: []
     });
 
@@ -70,14 +74,13 @@ const Properties: React.FC = () => {
             || null;
 
         // Map status from backend to frontend
-        const statusMap: Record<string, 'active' | 'inactive' | 'pending'> = {
+        const statusMap: Record<string, 'active' | 'archived'> = {
             'ACTIVE': 'active',
-            'INACTIVE': 'inactive',
-            'ARCHIVED': 'inactive',
+            'ARCHIVED': 'archived',
         };
         const status = backendProperty.status
-            ? statusMap[backendProperty.status] || 'inactive'
-            : 'inactive';
+            ? statusMap[backendProperty.status] || 'archived'
+            : 'archived';
 
         // Map property type
         const propertyTypeMap: Record<string, 'single_apartment' | 'multi_apartment'> = {
@@ -113,12 +116,82 @@ const Properties: React.FC = () => {
                 : Number(backendProperty.marketRent) || 0;
         }
 
-        // Determine balance category based on monthly rent
+        // Map country to currency (default to USD if country not found)
+        const countryToCurrency: Record<string, string> = {
+            'United States': 'USD',
+            'USA': 'USD',
+            'US': 'USD',
+            'Canada': 'CAD',
+            'United Kingdom': 'GBP',
+            'UK': 'GBP',
+            'Australia': 'AUD',
+            'New Zealand': 'NZD',
+            'India': 'INR',
+            'China': 'CNY',
+            'Japan': 'JPY',
+            'Germany': 'EUR',
+            'France': 'EUR',
+            'Italy': 'EUR',
+            'Spain': 'EUR',
+            'Netherlands': 'EUR',
+            'Belgium': 'EUR',
+            'Switzerland': 'CHF',
+            'Singapore': 'SGD',
+            'Hong Kong': 'HKD',
+            'UAE': 'AED',
+            'United Arab Emirates': 'AED',
+            'Saudi Arabia': 'SAR',
+            'South Africa': 'ZAR',
+            'Brazil': 'BRL',
+            'Mexico': 'MXN',
+        };
+        const currency = country ? (countryToCurrency[country] || 'USD') : 'USD';
+
+        // Determine balance category based on monthly rent and currency
+        // Use currency-agnostic percentiles or currency-specific thresholds
         let balanceCategory: 'low' | 'medium' | 'high' = 'medium';
-        if (monthlyRent < 25000) {
+        
+        // Currency-specific thresholds (in base currency units)
+        const currencyThresholds: Record<string, { low: number; high: number }> = {
+            'USD': { low: 25000, high: 75000 },
+            'CAD': { low: 33000, high: 100000 },
+            'GBP': { low: 20000, high: 60000 },
+            'EUR': { low: 23000, high: 69000 },
+            'AUD': { low: 37000, high: 110000 },
+            'INR': { low: 2000000, high: 6000000 },
+            'CNY': { low: 180000, high: 540000 },
+            'JPY': { low: 3500000, high: 10500000 },
+            'SGD': { low: 33000, high: 100000 },
+            'HKD': { low: 195000, high: 585000 },
+            'AED': { low: 92000, high: 275000 },
+            'SAR': { low: 94000, high: 280000 },
+        };
+        
+        const thresholds = currencyThresholds[currency] || currencyThresholds['USD'];
+        if (monthlyRent < thresholds.low) {
             balanceCategory = 'low';
-        } else if (monthlyRent > 75000) {
+        } else if (monthlyRent > thresholds.high) {
             balanceCategory = 'high';
+        }
+
+        // Determine marketing status from listings
+        let marketingStatus: 'listed' | 'unlisted' | 'draft' = 'unlisted';
+        if (backendProperty.listings && backendProperty.listings.length > 0) {
+            // Check if any listing is ACTIVE
+            const hasActiveListing = backendProperty.listings.some(
+                listing => listing.listingStatus === 'ACTIVE'
+            );
+            // Check if any listing is DRAFT
+            const hasDraftListing = backendProperty.listings.some(
+                listing => listing.listingStatus === 'DRAFT'
+            );
+            
+            if (hasActiveListing) {
+                marketingStatus = 'listed';
+            } else if (hasDraftListing) {
+                marketingStatus = 'draft';
+            }
+            // Otherwise remains 'unlisted'
         }
 
         // Get property type label for display
@@ -140,16 +213,18 @@ const Properties: React.FC = () => {
             propertyType,
             balanceCategory,
             country,
+            marketingStatus,
+            currency,
         };
     };
 
-    // Fetch properties from API
+    // Fetch properties from API (include listings to determine marketing status)
     useEffect(() => {
         const fetchProperties = async () => {
             try {
                 setLoading(true);
                 setError(null);
-                const backendProperties = await propertyService.getAll();
+                const backendProperties = await propertyService.getAll(true); // Include listings
                 const transformedProperties = backendProperties.map(transformProperty);
                 setProperties(transformedProperties);
             } catch (err) {
@@ -175,8 +250,7 @@ const Properties: React.FC = () => {
     const filterOptions: Record<string, FilterOption[]> = {
         status: [
             { value: 'active', label: 'Active' },
-            { value: 'inactive', label: 'Inactive' },
-            { value: 'pending', label: 'Pending' },
+            { value: 'archived', label: 'Archived' },
         ],
         occupancy: [
             { value: 'occupied', label: 'Occupied' },
@@ -187,10 +261,15 @@ const Properties: React.FC = () => {
             { value: 'single_apartment', label: 'Single Apartment' },
             { value: 'multi_apartment', label: 'Multi Apartment' },
         ],
+        marketingStatus: [
+            { value: 'listed', label: 'Listed' },
+            { value: 'unlisted', label: 'Unlisted' },
+            { value: 'draft', label: 'Draft' },
+        ],
         balance: [
-            { value: 'low', label: 'Low (< $25k)' },
-            { value: 'medium', label: 'Medium ($25k - $75k)' },
-            { value: 'high', label: 'High (> $75k)' },
+            { value: 'low', label: 'Low' },
+            { value: 'medium', label: 'Medium' },
+            { value: 'high', label: 'High' },
         ]
     };
 
@@ -198,6 +277,7 @@ const Properties: React.FC = () => {
         status: 'Status',
         occupancy: 'Occupancy',
         propertyType: 'Property Type',
+        marketingStatus: 'Marketing Status',
         balance: 'Balance'
     };
 
@@ -221,11 +301,15 @@ const Properties: React.FC = () => {
             const matchesPropertyType = filters.propertyType.length === 0 ||
                 filters.propertyType.includes(property.propertyType);
 
-            // Balance filter
+            // Marketing Status filter
+            const matchesMarketingStatus = filters.marketingStatus.length === 0 ||
+                filters.marketingStatus.includes(property.marketingStatus);
+
+            // Balance filter (currency-agnostic - uses relative categories)
             const matchesBalance = filters.balance.length === 0 ||
                 filters.balance.includes(property.balanceCategory);
 
-            return matchesSearch && matchesStatus && matchesOccupancy && matchesPropertyType && matchesBalance;
+            return matchesSearch && matchesStatus && matchesOccupancy && matchesPropertyType && matchesMarketingStatus && matchesBalance;
         });
     }, [properties, searchQuery, filters]);
 
