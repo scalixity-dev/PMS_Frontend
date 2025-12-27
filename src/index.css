@@ -57,7 +57,27 @@
   --btn-nonactive-border: 4.89px solid #E3E3E3;
 
   --btn-text-color: #FFFFFF;
+
+  /* 🏠 Dashboard Specific Colors */
+  --dashboard-accent: #8CD74B;
+  --dashboard-secondary: #4D7E7D;
+  --dashboard-bg-light: #F7F7F7;
+  --dashboard-text-main: #1A1A1A;
+  --dashboard-border: rgba(32, 31, 35, 0.4);
+  --dashboard-glow: rgba(140, 215, 75, 0.2);
+
+  /* 💊 Status Pill Colors */
+  --status-open-bg: #6B647A;
+  --status-open-text: #7789A0;
+  --status-overdue-bg: #FFBEBE;
+  --status-overdue-text: #C56565;
+  --status-active-bg: #B6FF8C;
+  --status-active-text: #1BCB40;
+  --status-new-text: #FF2D55;
+  --status-critical-bg: #FF3D3D;
+  --status-normal-bg: #1BCB40;
 }
+
 
 /* 🌙 Optional Dark Theme */
 [data-theme='dark'] {
