@@ -2,45 +2,35 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import PrimaryActionButton from '../../../../components/common/buttons/PrimaryActionButton';
+import { useGetLead, useUpdateLead } from '../../../../hooks/useLeadQueries';
+import type { LeadType } from '../../../../services/lead.service';
 
 const EditLead = () => {
     const navigate = useNavigate();
     const { id } = useParams();
-    const [leadType, setLeadType] = useState<'Hot' | 'Cold'>('Hot');
+    const { data: lead, isLoading, error } = useGetLead(id || null, !!id);
+    const updateLeadMutation = useUpdateLead();
+    const [leadType, setLeadType] = useState<LeadType>('HOT');
 
-    // Pre-filled data (loaded from storage when available)
+    // Pre-filled data (loaded from API)
     const [formData, setFormData] = useState({
-        fullName: 'Sam',
-        phone: '+91 7049770293',
-        email: 'abc@gmail.com'
+        fullName: '',
+        phone: '',
+        email: ''
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
-        const stored = localStorage.getItem(`lead_${id || 1}`);
-        if (stored) {
-            try {
-                const parsed = JSON.parse(stored) as {
-                    fullName?: string;
-                    phone?: string;
-                    email?: string;
-                    leadType?: 'Hot' | 'Cold';
-                };
-
-                setFormData({
-                    fullName: parsed.fullName ?? 'Sam',
-                    phone: parsed.phone ?? '+91 7049770293',
-                    email: parsed.email ?? 'abc@gmail.com'
-                });
-
-                if (parsed.leadType === 'Hot' || parsed.leadType === 'Cold') {
-                    setLeadType(parsed.leadType);
-                }
-            } catch {
-                // Ignore parse errors and keep defaults
-            }
+        if (lead) {
+            setFormData({
+                fullName: lead.name || '',
+                phone: lead.phoneNumber || '',
+                email: lead.email || ''
+            });
+            setLeadType(lead.type || 'HOT');
         }
-    }, [id]);
+    }, [lead]);
 
     const validateForm = () => {
         const newErrors: Record<string, string> = {};
@@ -73,17 +63,30 @@ const EditLead = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSave = () => {
-        if (validateForm()) {
-            // For demo purposes, save to localStorage
-            const leadData = {
-                ...formData,
-                leadType
-            };
-            localStorage.setItem(`lead_${id || 1}`, JSON.stringify(leadData));
+    const handleSave = async () => {
+        if (validateForm() && !isSubmitting && id) {
+            setIsSubmitting(true);
+            try {
+                await updateLeadMutation.mutateAsync({
+                    id,
+                    data: {
+                        name: formData.fullName,
+                        phoneNumber: formData.phone,
+                        email: formData.email,
+                        type: leadType
+                    }
+                });
 
-            // Return to detail page
-            navigate(`/dashboard/leasing/leads/${id || 1}`);
+                // Return to detail page
+                navigate(`/dashboard/leasing/leads/${id}`);
+            } catch (error) {
+                console.error('Failed to update lead:', error);
+                setErrors({ 
+                    submit: error instanceof Error ? error.message : 'Failed to update lead. Please try again.' 
+                });
+            } finally {
+                setIsSubmitting(false);
+            }
         }
     };
 
@@ -107,7 +110,19 @@ const EditLead = () => {
                     <h1 className="text-xl font-bold text-gray-800">Edit lead details</h1>
                 </div>
 
-                {/* Main Form Container */}
+                {isLoading ? (
+                    <div className="bg-[#F0F0F6] rounded-[1.5rem] p-8 text-center">
+                        <p className="text-gray-500">Loading lead details...</p>
+                    </div>
+                ) : error ? (
+                    <div className="bg-[#F0F0F6] rounded-[1.5rem] p-8 text-center">
+                        <p className="text-red-500">Error loading lead</p>
+                        <p className="text-gray-400 text-sm mt-2">
+                            {error instanceof Error ? error.message : 'An unexpected error occurred'}
+                        </p>
+                    </div>
+                ) : (
+                /* Main Form Container */
                 <div className="bg-[#F0F0F6] rounded-[1.5rem] overflow-hidden border border-gray-200 shadow-sm">
                     {/* Form Sub-header */}
                     <div className="bg-[#3A6D6C] px-6 py-4">
@@ -161,20 +176,20 @@ const EditLead = () => {
                                 <label className="block text-sm font-bold text-gray-800 ml-1">Lead type *</label>
                                 <div className="flex gap-4">
                                     <button
-                                        onClick={() => setLeadType('Hot')}
+                                        onClick={() => setLeadType('HOT')}
                                         className="w-28 flex items-center justify-center gap-2 py-2.5 rounded-full font-bold text-white text-sm transition-all shadow-sm bg-[#82D95B]"
                                     >
                                         <div className="w-4 h-4 rounded-full border-2 border-white flex items-center justify-center flex-shrink-0">
-                                            {leadType === 'Hot' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                            {leadType === 'HOT' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                                         </div>
                                         Hot
                                     </button>
                                     <button
-                                        onClick={() => setLeadType('Cold')}
+                                        onClick={() => setLeadType('COLD')}
                                         className="w-28 flex items-center justify-center gap-2 py-2.5 rounded-full font-bold text-white text-sm transition-all shadow-sm bg-[#82D95B]"
                                     >
                                         <div className="w-4 h-4 rounded-full border-2 border-white flex items-center justify-center flex-shrink-0">
-                                            {leadType === 'Cold' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                            {leadType === 'COLD' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                                         </div>
                                         Cold
                                     </button>
@@ -183,14 +198,19 @@ const EditLead = () => {
                         </div>
 
                         <div className="mt-8">
+                            {errors.submit && (
+                                <p className="text-red-500 text-sm mb-4 ml-1">{errors.submit}</p>
+                            )}
                             <PrimaryActionButton
                                 onClick={handleSave}
-                                text="Save Changes"
+                                text={isSubmitting ? 'Saving...' : 'Save Changes'}
                                 className="px-8 py-2.5 rounded-lg font-bold text-base shadow-lg"
+                                disabled={isSubmitting}
                             />
                         </div>
                     </div>
                 </div>
+                )}
             </div>
         </div>
     );

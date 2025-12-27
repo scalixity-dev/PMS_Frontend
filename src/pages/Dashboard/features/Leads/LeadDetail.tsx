@@ -8,6 +8,8 @@ import AddMeetingModal from './components/AddMeetingModal';
 import MessageModal from './components/MessageModal';
 import InviteToApplyModal from './components/InviteToApplyModal';
 import { useGetAllListings } from '../../../../hooks/useListingQueries';
+import { useGetLead, useUpdateLead, useDeleteLead } from '../../../../hooks/useLeadQueries';
+import type { LeadStatus } from '../../../../services/lead.service';
 
 interface ActivityItem {
     id: number;
@@ -27,6 +29,11 @@ interface DayActivity {
 
 const LeadDetail = () => {
     const navigate = useNavigate();
+    const { id } = useParams();
+    const { data: lead, isLoading: isLoadingLead, error: leadError } = useGetLead(id || null, !!id);
+    const updateLeadMutation = useUpdateLead();
+    const deleteLeadMutation = useDeleteLead();
+    
     const [activeFilter, setActiveFilter] = useState('All');
     const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -36,14 +43,9 @@ const LeadDetail = () => {
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     const [showLogOptions, setShowLogOptions] = useState(false);
     const [editingItem, setEditingItem] = useState<{ dayId: number; item: ActivityItem } | null>(null);
-    const [status, setStatus] = useState('Working');
+    const [status, setStatus] = useState<LeadStatus>('NEW');
     const [showActionMenu, setShowActionMenu] = useState(false);
-    const { id } = useParams();
-    const [leadInfo, setLeadInfo] = useState({
-        fullName: 'Sam',
-        phone: '+91 98563 25832',
-        email: 'gurjaratul0723@gmail.com'
-    });
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const { data: listingsData } = useGetAllListings();
     const listings = listingsData?.map(l => ({
@@ -51,12 +53,32 @@ const LeadDetail = () => {
         title: l.title || l.property?.propertyName || 'Untitled Listing'
     })) || [];
 
+    // Helper function to convert status enum to display label
+    const getStatusLabel = (status: LeadStatus): string => {
+        const statusMap: Record<LeadStatus, string> = {
+            'NEW': 'New',
+            'WORKING': 'Working',
+            'CLOSED': 'Closed',
+        };
+        return statusMap[status] || status;
+    };
+
+    // Update lead info and status from API
     useEffect(() => {
-        const savedData = localStorage.getItem(`lead_${id || 1}`);
-        if (savedData) {
-            setLeadInfo(JSON.parse(savedData));
+        if (lead) {
+            setStatus(lead.status || 'NEW');
         }
-    }, [id]);
+    }, [lead]);
+
+    const leadInfo = lead ? {
+        fullName: lead.name,
+        phone: lead.phoneNumber,
+        email: lead.email
+    } : {
+        fullName: '',
+        phone: '',
+        email: ''
+    };
 
     const [activities, setActivities] = useState<DayActivity[]>([
         {
@@ -334,8 +356,8 @@ const LeadDetail = () => {
         const date = now.toLocaleDateString([], { day: 'numeric', month: 'short' });
 
         // 1. Update status to Working if it's New
-        if (status === 'New') {
-            setStatus('Working');
+        if (status === 'NEW') {
+            setStatus('WORKING');
         }
 
         // 2. Add Activity to timeline
@@ -410,6 +432,23 @@ const LeadDetail = () => {
             </div>
 
             <div className="p-6 bg-[#DFE5E3] min-h-screen rounded-[2.5rem] shadow-sm border border-[#E0E0E0] mx-2">
+                {isLoadingLead ? (
+                    <div className="text-center py-12">
+                        <p className="text-gray-500 text-lg">Loading lead details...</p>
+                    </div>
+                ) : leadError ? (
+                    <div className="text-center py-12">
+                        <p className="text-red-500 text-lg">Error loading lead</p>
+                        <p className="text-gray-400 text-sm mt-2">
+                            {leadError instanceof Error ? leadError.message : 'An unexpected error occurred'}
+                        </p>
+                    </div>
+                ) : !lead ? (
+                    <div className="text-center py-12">
+                        <p className="text-gray-500 text-lg">Lead not found</p>
+                    </div>
+                ) : (
+                    <>
                 {/* Header */}
                 <div className="flex items-center justify-start gap-3 mb-6 ml-2">
                     <div className="flex items-center gap-2">
@@ -419,11 +458,11 @@ const LeadDetail = () => {
                         <h1 className="text-2xl font-bold text-gray-900">{leadInfo.fullName}</h1>
                     </div>
 
-                    <div className={`${status === 'New' ? 'bg-blue-100 text-blue-700 border-blue-200' :
-                        status === 'Working' ? 'bg-[#82D95B]/20 text-[#2D6A4F] border-[#82D95B]/40' :
+                    <div className={`${status === 'NEW' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                        status === 'WORKING' ? 'bg-[#82D95B]/20 text-[#2D6A4F] border-[#82D95B]/40' :
                             'bg-red-100 text-red-700 border-red-200'
                         } h-9 px-4 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border transition-colors`}>
-                        {status} <Clock className="w-3.5 h-3.5" />
+                        {getStatusLabel(status)} <Clock className="w-3.5 h-3.5" />
                     </div>
 
                     <div className="relative">
@@ -441,7 +480,7 @@ const LeadDetail = () => {
                                 />
                                 <div className="absolute top-full right-0 mt-2 w-44 bg-white rounded-[1.2rem] shadow-xl border border-gray-100 py-2 z-[60] overflow-hidden animate-in fade-in zoom-in-95 duration-200 font-outfit">
                                     <button
-                                        onClick={() => navigate(`/dashboard/leasing/leads/edit/${id || 1}`)}
+                                        onClick={() => id && navigate(`/dashboard/leasing/leads/edit/${id}`)}
                                         className="w-full text-left px-5 py-2 hover:bg-gray-50 text-gray-700 font-bold flex items-center gap-2 transition-colors text-xs"
                                     >
                                         <Edit2 className="w-3.5 h-3.5" /> Edit Lead
@@ -451,11 +490,21 @@ const LeadDetail = () => {
 
                                     <h4 className="px-5 py-1 text-[9px] uppercase tracking-wider text-gray-400 font-black">Change Status</h4>
 
-                                    {['New', 'Working', 'Closed'].map((s) => (
+                                    {(['NEW', 'WORKING', 'CLOSED'] as LeadStatus[]).map((s) => (
                                         <button
                                             key={s}
-                                            onClick={() => {
-                                                setStatus(s);
+                                            onClick={async () => {
+                                                if (id && s !== status) {
+                                                    try {
+                                                        await updateLeadMutation.mutateAsync({
+                                                            id,
+                                                            data: { status: s }
+                                                        });
+                                                        setStatus(s);
+                                                    } catch (error) {
+                                                        console.error('Failed to update lead status:', error);
+                                                    }
+                                                }
                                                 setShowActionMenu(false);
                                             }}
                                             className={`w-full text-left px-5 py-2 transition-colors text-xs flex items-center justify-between ${status === s
@@ -463,7 +512,7 @@ const LeadDetail = () => {
                                                 : 'text-gray-600 font-medium hover:bg-gray-50'
                                                 }`}
                                         >
-                                            {s}
+                                            {getStatusLabel(s)}
                                             {status === s && <div className="w-1.5 h-1.5 rounded-full bg-[#2D6A4F]" />}
                                         </button>
                                     ))}
@@ -471,10 +520,25 @@ const LeadDetail = () => {
                                     <div className="h-[1px] bg-gray-100 my-1 mx-4" />
 
                                     <button
-                                        onClick={() => setShowActionMenu(false)}
-                                        className="w-full text-left px-5 py-2 hover:bg-red-50 text-red-500 font-bold flex items-center gap-2 transition-colors text-xs"
+                                        onClick={async () => {
+                                            if (id && !isDeleting) {
+                                                setIsDeleting(true);
+                                                try {
+                                                    await deleteLeadMutation.mutateAsync(id);
+                                                    navigate('/dashboard/leasing/leads');
+                                                } catch (error) {
+                                                    console.error('Failed to delete lead:', error);
+                                                    alert('Failed to delete lead. Please try again.');
+                                                } finally {
+                                                    setIsDeleting(false);
+                                                    setShowActionMenu(false);
+                                                }
+                                            }
+                                        }}
+                                        disabled={isDeleting}
+                                        className="w-full text-left px-5 py-2 hover:bg-red-50 text-red-500 font-bold flex items-center gap-2 transition-colors text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        <Trash2 className="w-3.5 h-3.5" /> Delete Lead
+                                        <Trash2 className="w-3.5 h-3.5" /> {isDeleting ? 'Deleting...' : 'Delete Lead'}
                                     </button>
                                 </div>
                             </>
@@ -699,6 +763,8 @@ const LeadDetail = () => {
                         ));
                     })()}
                 </div>
+                    </>
+                )}
             </div>
 
             <AddNoteModal
@@ -761,7 +827,7 @@ const LeadDetail = () => {
                 isOpen={isInviteModalOpen}
                 onClose={() => setIsInviteModalOpen(false)}
                 onSend={handleInviteSend}
-                initialEmail={leadInfo.email}
+                initialEmail={leadInfo.email || undefined}
                 listings={listings}
             />
         </div >
