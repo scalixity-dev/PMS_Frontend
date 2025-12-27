@@ -121,5 +121,12 @@ export const API_ENDPOINTS = {
   CALENDAR: {
     GET_EVENTS: `${API_BASE_URL}/calendar/events`,
   },
+  LEAD: {
+    GET_ALL: `${API_BASE_URL}/leads`,
+    GET_ONE: (id: string) => `${API_BASE_URL}/leads/${id}`,
+    CREATE: `${API_BASE_URL}/leads`,
+    UPDATE: (id: string) => `${API_BASE_URL}/leads/${id}`,
+    DELETE: (id: string) => `${API_BASE_URL}/leads/${id}`,
+  },
 };
 

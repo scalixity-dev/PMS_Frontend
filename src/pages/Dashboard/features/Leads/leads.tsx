@@ -4,37 +4,82 @@ import { Plus, ChevronLeft, Download, MoreHorizontal, Edit2, Trash2, Check, X } 
 import { utils, writeFile } from 'xlsx';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import SearchableDropdown from '../../../../components/ui/SearchableDropdown';
+import { useGetAllLeads, useUpdateLead, useDeleteLead } from '../../../../hooks/useLeadQueries';
+import { useGetAllListings } from '../../../../hooks/useListingQueries';
+import type { BackendLead, LeadStatus } from '../../../../services/lead.service';
 
-// Mock Data for Leads
-const MOCK_LEADS = [
-    {
-        id: 1,
-        status: 'New',
-        name: 'Sam',
-        phone: '+91 7049770293',
-        email: 'abc@gmail.com',
-        source: 'Created manually',
-        lastUpdate: '₹ 50,000',
-    },
-    {
-        id: 2,
-        status: 'Working',
-        name: 'John Doe',
-        phone: '+91 9876543210',
-        email: 'john.doe@example.com',
-        source: 'Website',
-        lastUpdate: '₹ 45,000',
-    }
-];
+// Helper function to convert enum to readable label
+export const getLeadSourceLabel = (source: string): string => {
+    const sourceMap: Record<string, string> = {
+        'CREATED_MANUALLY': 'Created Manually',
+        'RENTAL_APPLICATION': 'Rental Application',
+        'SENT_A_QUESTION': 'Sent a Question',
+        'REQUESTED_A_TOUR': 'Requested a Tour',
+        'ZILLOW': 'Zillow',
+        'ZUMPER': 'Zumper',
+        'RENTLER': 'Rentler',
+        'TENANT_PROFILE': 'Tenant Profile',
+        'REALTOR': 'Realtor',
+        'APARTMENTS': 'Apartments',
+        'RENT_GROUP': 'Rent Group',
+        'OTHER': 'Other',
+    };
+    return sourceMap[source] || source;
+};
+
+// Frontend Lead interface
+interface Lead {
+    id: string;
+    status: string; // Display label
+    statusEnum: string; // Backend enum value
+    type?: string | null; // Backend enum value (HOT/COLD)
+    listingId?: string | null; // Backend listing ID
+    name: string;
+    phone: string;
+    email: string;
+    source: string;
+    lastUpdate: string;
+}
 
 const Leads = () => {
     const navigate = useNavigate();
-    const [leads, setLeads] = useState(MOCK_LEADS);
-    const [selectedLeads, setSelectedLeads] = useState<number[]>([]);
-    const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+    const { data: backendLeads = [], isLoading, error } = useGetAllLeads();
+    const { data: listings = [] } = useGetAllListings();
+    const updateLeadMutation = useUpdateLead();
+    const deleteLeadMutation = useDeleteLead();
+    const [deletingLeadId, setDeletingLeadId] = useState<string | null>(null);
+    
+    // Helper function to convert status enum to display label
+    const getStatusLabel = (status: string): string => {
+        const statusMap: Record<string, string> = {
+            'NEW': 'New',
+            'WORKING': 'Working',
+            'CLOSED': 'Closed',
+        };
+        return statusMap[status] || status;
+    };
+
+    // Transform backend leads to frontend format
+    const leads: Lead[] = useMemo(() => {
+        return backendLeads.map((lead: BackendLead) => ({
+            id: lead.id,
+            status: getStatusLabel(lead.status) || 'New',
+            statusEnum: lead.status, // Keep enum value for filtering
+            type: lead.type || null, // Keep enum value for filtering
+            listingId: lead.listingId || null, // Keep listing ID for filtering
+            name: lead.name,
+            phone: lead.phoneNumber || '',
+            email: lead.email || '',
+            source: lead.source || 'OTHER',
+            lastUpdate: '₹ 0', // This might need to come from backend
+        }));
+    }, [backendLeads]);
+
+    const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
+    const [openMenuId, setOpenMenuId] = useState<string | null>(null);
     const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
-    const [currentLeadId, setCurrentLeadId] = useState<number | null>(null);
-    const [selectedStatus, setSelectedStatus] = useState('New');
+    const [currentLeadId, setCurrentLeadId] = useState<string | null>(null);
+    const [selectedStatus, setSelectedStatus] = useState<LeadStatus>('NEW');
     const [searchQuery, setSearchQuery] = useState('');
     const [filters, setFilters] = useState<Record<string, string[]>>({
         status: [],
@@ -43,26 +88,45 @@ const Leads = () => {
         type: []
     });
 
+    // Transform listings to filter options
+    const listingFilterOptions: FilterOption[] = useMemo(() => {
+        return listings.map((listing) => {
+            // Use title if available, otherwise use property name, or fallback to listing ID
+            const label = listing.title || 
+                         listing.property?.propertyName || 
+                         `Listing ${listing.id.substring(0, 8)}`;
+            return {
+                value: listing.id,
+                label: label
+            };
+        });
+    }, [listings]);
+
     // Filter options configuration
     const filterOptions: Record<string, FilterOption[]> = {
         status: [
-            { value: 'New', label: 'New' },
-            { value: 'Working', label: 'Working' },
-            { value: 'Closed', label: 'Closed' },
+            { value: 'NEW', label: 'New' },
+            { value: 'WORKING', label: 'Working' },
+            { value: 'CLOSED', label: 'Closed' },
         ],
-        listing: [
-            { value: 'Grand Villa', label: 'Grand Villa' },
-            { value: 'A2 Apartment', label: 'A2 Apartment' },
-            { value: 'B4 duplex', label: 'B4 duplex' },
-        ],
+        listing: listingFilterOptions,
         sources: [
-            { value: 'Created manually', label: 'Created manually' },
-            { value: 'Website', label: 'Website' },
-            { value: 'Referral', label: 'Referral' },
+            { value: 'CREATED_MANUALLY', label: 'Created Manually' },
+            { value: 'RENTAL_APPLICATION', label: 'Rental Application' },
+            { value: 'SENT_A_QUESTION', label: 'Sent a Question' },
+            { value: 'REQUESTED_A_TOUR', label: 'Requested a Tour' },
+            { value: 'ZILLOW', label: 'Zillow' },
+            { value: 'ZUMPER', label: 'Zumper' },
+            { value: 'RENTLER', label: 'Rentler' },
+            { value: 'TENANT_PROFILE', label: 'Tenant Profile' },
+            { value: 'REALTOR', label: 'Realtor' },
+            { value: 'APARTMENTS', label: 'Apartments' },
+            { value: 'RENT_GROUP', label: 'Rent Group' },
+            { value: 'OTHER', label: 'Other' },
         ],
         type: [
-            { value: 'Hot', label: 'Hot' },
-            { value: 'Cold', label: 'Cold' },
+            { value: 'HOT', label: 'Hot' },
+            { value: 'COLD', label: 'Cold' },
         ]
     };
 
@@ -75,7 +139,7 @@ const Leads = () => {
 
     // Invite Modal State
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-    const [selectedListing, setSelectedListing] = useState('Grand Villa');
+    const [selectedListing, setSelectedListing] = useState('');
     const [applicantEmail, setApplicantEmail] = useState('');
 
 
@@ -88,21 +152,21 @@ const Leads = () => {
                 lead.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 lead.phone.toLowerCase().includes(searchQuery.toLowerCase());
 
-            // Status filter
+            // Status filter - compare enum values
             const matchesStatus = filters.status.length === 0 ||
-                filters.status.includes(lead.status);
+                filters.status.includes(lead.statusEnum);
 
-            // Listing filter (assuming leads will have a listing property)
-            const matchesListing = filters.listing.length === 0;
-            // TODO: Add listing property to leads data model
+            // Listing filter - compare listing IDs
+            const matchesListing = filters.listing.length === 0 ||
+                (lead.listingId && filters.listing.includes(lead.listingId));
 
             // Sources filter
             const matchesSources = filters.sources.length === 0 ||
                 filters.sources.includes(lead.source);
 
-            // Type filter (assuming leads will have a type property)
-            const matchesType = filters.type.length === 0;
-            // TODO: Add type property to leads data model
+            // Type filter - compare enum values
+            const matchesType = filters.type.length === 0 ||
+                (lead.type && filters.type.includes(lead.type));
 
             return matchesSearch && matchesStatus && matchesListing && matchesSources && matchesType;
         });
@@ -125,12 +189,12 @@ const Leads = () => {
         } else {
             // Select all filtered leads in addition to any already selected ones
             setSelectedLeads([
-                ...new Set<number>([...selectedLeads, ...filteredIds]),
+                ...new Set<string>([...selectedLeads, ...filteredIds]),
             ]);
         }
     };
 
-    const toggleSelectLead = (id: number) => {
+    const toggleSelectLead = (id: string) => {
         if (selectedLeads.includes(id)) {
             setSelectedLeads(selectedLeads.filter(leadId => leadId !== id));
         } else {
@@ -138,14 +202,18 @@ const Leads = () => {
         }
     };
 
-    const handleStatusUpdate = () => {
+    const handleStatusUpdate = async () => {
         if (currentLeadId !== null) {
-            setLeads(prevLeads =>
-                prevLeads.map(lead =>
-                    lead.id === currentLeadId ? { ...lead, status: selectedStatus } : lead
-                )
-            );
-            setIsStatusModalOpen(false);
+            try {
+                await updateLeadMutation.mutateAsync({
+                    id: currentLeadId,
+                    data: { status: selectedStatus as LeadStatus }
+                });
+                setIsStatusModalOpen(false);
+            } catch (error) {
+                console.error('Failed to update lead status:', error);
+                // TODO: Show error message to user
+            }
         }
     };
 
@@ -175,6 +243,52 @@ const Leads = () => {
         writeFile(wb, fileName);
     };
 
+    const handleBulkDelete = async () => {
+        if (selectedLeads.length === 0) return;
+
+        const deletingIds = [...selectedLeads];
+        setDeletingLeadId(deletingIds[0]); // Show loading state for first item
+
+        try {
+            // Delete all selected leads
+            const results = await Promise.allSettled(
+                deletingIds.map(id => deleteLeadMutation.mutateAsync(id))
+            );
+            
+            // Check for failures (excluding "not found" which is treated as success)
+            const failures = results.filter((result) => {
+                if (result.status === 'rejected') {
+                    const reason = result.reason;
+                    const errorMessage = reason instanceof Error ? reason.message : String(reason);
+                    // Treat "not found" as success since the lead is already deleted
+                    return !errorMessage.includes('not found') && !errorMessage.includes('Not Found');
+                }
+                return false;
+            });
+            
+            if (failures.length > 0) {
+                console.error('Some leads failed to delete:', failures);
+                const errorMessages = failures.map((failure) => {
+                    const id = deletingIds[results.indexOf(failure)];
+                    const reason = failure.status === 'rejected' ? failure.reason : 'Unknown error';
+                    return `Lead ${id}: ${reason instanceof Error ? reason.message : String(reason)}`;
+                });
+                alert(`Failed to delete ${failures.length} lead(s):\n${errorMessages.join('\n')}`);
+            } else {
+                // All deletions succeeded (including "not found" cases)
+                console.log('All selected leads deleted successfully');
+            }
+            
+            // Clear selection after deletion attempts
+            setSelectedLeads([]);
+        } catch (error) {
+            console.error('Failed to delete leads:', error);
+            alert(`Failed to delete leads: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        } finally {
+            setDeletingLeadId(null);
+        }
+    };
+
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-10">
             {/* Breadcrumb */}
@@ -194,6 +308,16 @@ const Leads = () => {
                         <h1 className="text-2xl font-bold text-gray-800">Leads</h1>
                     </div>
                     <div className="flex gap-3">
+                        {selectedLeads.length > 0 && (
+                            <button
+                                onClick={handleBulkDelete}
+                                disabled={deletingLeadId !== null}
+                                className="flex items-center gap-2 bg-red-500 text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-red-600 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <Trash2 className="w-5 h-5" />
+                                Delete Selected ({selectedLeads.length})
+                            </button>
+                        )}
                         <button
                             onClick={() => navigate('/dashboard/leasing/leads/add')}
                             className="flex items-center gap-2 bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-all shadow-sm"
@@ -246,7 +370,24 @@ const Leads = () => {
 
                 {/* Table Body */}
                 <div className="flex flex-col gap-3 bg-[#F0F0F6] p-4 rounded-[2rem] rounded-t">
-                    {filteredLeads.map((lead) => (
+                    {isLoading ? (
+                        <div className="bg-white rounded-2xl px-6 py-12 text-center">
+                            <p className="text-gray-500 text-lg">Loading leads...</p>
+                        </div>
+                    ) : error ? (
+                        <div className="bg-white rounded-2xl px-6 py-12 text-center">
+                            <p className="text-red-500 text-lg">Error loading leads</p>
+                            <p className="text-gray-400 text-sm mt-2">
+                                {error instanceof Error ? error.message : 'An unexpected error occurred'}
+                            </p>
+                        </div>
+                    ) : filteredLeads.length === 0 ? (
+                        <div className="bg-white rounded-2xl px-6 py-12 text-center">
+                            <p className="text-gray-500 text-lg">No leads found matching your filters</p>
+                            <p className="text-gray-400 text-sm mt-2">Try adjusting your search or filters</p>
+                        </div>
+                    ) : (
+                        filteredLeads.map((lead) => (
                         <div key={lead.id} className="bg-white rounded-2xl px-6 py-4 grid grid-cols-[80px_1fr_1.2fr_1.2fr_1.5fr_1.2fr_1.8fr] gap-4 items-center shadow-sm hover:shadow-md transition-shadow">
                             <div className="flex justify-start pl-1">
                                 <div
@@ -265,7 +406,7 @@ const Leads = () => {
                             </div>
                             <div className="text-[#2E6819] font-medium text-sm text-center">{lead.phone}</div>
                             <div className="text-gray-600 font-medium text-sm text-left truncate">{lead.email}</div>
-                            <div className="text-gray-600 font-medium text-sm text-left">{lead.source}</div>
+                            <div className="text-gray-600 font-medium text-sm text-left">{getLeadSourceLabel(lead.source)}</div>
                             <div className="flex items-center justify-start gap-10">
                                 <span className="text-black font-normal text-sm whitespace-nowrap">{lead.lastUpdate}</span>
                                 <div className="flex items-center gap-3">
@@ -275,7 +416,33 @@ const Leads = () => {
                                     >
                                         <Edit2 className="w-4 h-4 stroke-[3]" />
                                     </button>
-                                    <button className="text-red-500 hover:text-red-600 transition-colors">
+                                    <button 
+                                        onClick={async (e) => {
+                                            e.stopPropagation();
+                                            setDeletingLeadId(lead.id);
+                                            try {
+                                                await deleteLeadMutation.mutateAsync(lead.id);
+                                                // Remove from selected leads if it was selected
+                                                setSelectedLeads(prev => prev.filter(id => id !== lead.id));
+                                                console.log('Lead deleted successfully:', lead.id);
+                                            } catch (error) {
+                                                console.error('Failed to delete lead:', error);
+                                                const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+                                                // If lead is not found, it's already deleted - treat as success
+                                                if (errorMessage.includes('not found') || errorMessage.includes('Not Found')) {
+                                                    console.log('Lead already deleted, removing from list');
+                                                    setSelectedLeads(prev => prev.filter(id => id !== lead.id));
+                                                } else {
+                                                    alert(`Failed to delete lead: ${errorMessage}`);
+                                                }
+                                            } finally {
+                                                setDeletingLeadId(null);
+                                            }
+                                        }}
+                                        disabled={deletingLeadId === lead.id}
+                                        className="text-red-500 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        title="Delete lead"
+                                    >
                                         <Trash2 className="w-4 h-4 stroke-[3]" />
                                     </button>
                                     <div className="relative">
@@ -292,7 +459,13 @@ const Leads = () => {
                                                     onClick={() => {
                                                         setIsStatusModalOpen(true);
                                                         setCurrentLeadId(lead.id);
-                                                        setSelectedStatus(lead.status);
+                                                        // Convert display status back to enum
+                                                        const statusMap: Record<string, LeadStatus> = {
+                                                            'New': 'NEW',
+                                                            'Working': 'WORKING',
+                                                            'Closed': 'CLOSED',
+                                                        };
+                                                        setSelectedStatus(statusMap[lead.status] || 'NEW');
                                                         setOpenMenuId(null);
                                                     }}
                                                     className="w-full text-center py-3 text-sm font-normal text-gray-800 hover:bg-gray-50 border-b border-gray-300 transition-colors"
@@ -315,7 +488,8 @@ const Leads = () => {
                                 </div>
                             </div>
                         </div>
-                    ))}
+                        ))
+                    )}
                 </div>
             </div>
 
@@ -341,8 +515,15 @@ const Leads = () => {
                             <div className="space-y-3">
                                 <label className="text-gray-900 font-bold ml-1">Lead Status*</label>
                                 <SearchableDropdown
-                                    value={selectedStatus}
-                                    onChange={setSelectedStatus}
+                                    value={getStatusLabel(selectedStatus)}
+                                    onChange={(value) => {
+                                        const statusMap: Record<string, LeadStatus> = {
+                                            'New': 'NEW',
+                                            'Working': 'WORKING',
+                                            'Closed': 'CLOSED',
+                                        };
+                                        setSelectedStatus(statusMap[value] || 'NEW');
+                                    }}
                                     options={['New', 'Working', 'Closed']}
                                     placeholder="Search status..."
                                     className="w-full"
@@ -386,7 +567,7 @@ const Leads = () => {
                                 <SearchableDropdown
                                     value={selectedListing}
                                     onChange={setSelectedListing}
-                                    options={['Grand Villa', 'A2 Apartment', 'B4 duplex']}
+                                    options={listingFilterOptions.map(opt => opt.label)}
                                     placeholder="Search listing..."
                                     className="w-full"
                                     buttonClassName="w-full bg-white rounded-2xl p-4 flex justify-between items-center border border-gray-200 text-gray-600 font-medium"
