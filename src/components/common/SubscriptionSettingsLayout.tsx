@@ -73,8 +73,8 @@ export function SubscriptionSettingsLayout(props: SubscriptionSettingsLayoutProp
                     type="button"
                     onClick={() => handleTabClick(tab)}
                     className={`px-5 py-2.5 rounded-full text-sm font-semibold ${isActive
-                        ? "text-white shadow-[0_6px_14px_rgba(124,217,71,0.45)]"
-                        : "text-gray-700 hover:bg-white"
+                      ? "text-white shadow-[0_6px_14px_rgba(124,217,71,0.45)]"
+                      : "text-gray-700 hover:bg-white"
                       }`}
                     style={isActive ? { backgroundColor: primaryColor } : undefined}
                   >
