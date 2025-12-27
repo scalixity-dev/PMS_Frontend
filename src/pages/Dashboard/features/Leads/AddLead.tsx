@@ -2,17 +2,20 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import PrimaryActionButton from '../../../../components/common/buttons/PrimaryActionButton';
-import { saveLead } from './utils/leadsStorage';
+import { useCreateLead } from '../../../../hooks/useLeadQueries';
+import type { LeadType } from '../../../../services/lead.service';
 
 const AddLead = () => {
     const navigate = useNavigate();
-    const [leadType, setLeadType] = useState<'Hot' | 'Cold'>('Hot');
+    const createLeadMutation = useCreateLead();
+    const [leadType, setLeadType] = useState<LeadType>('HOT');
     const [formData, setFormData] = useState({
         fullName: '',
         phone: '',
         email: ''
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const validateForm = () => {
         const newErrors: Record<string, string> = {};
@@ -45,15 +48,16 @@ const AddLead = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleCreate = () => {
-        if (validateForm()) {
+    const handleCreate = async () => {
+        if (validateForm() && !isSubmitting) {
+            setIsSubmitting(true);
             try {
-                // Use the utility function to save the lead
-                const newLead = saveLead({
-                    fullName: formData.fullName,
-                    phone: formData.phone,
+                const newLead = await createLeadMutation.mutateAsync({
+                    name: formData.fullName,
+                    phoneNumber: formData.phone,
                     email: formData.email,
-                    leadType
+                    type: leadType,
+                    source: 'CREATED_MANUALLY'
                 });
 
                 console.log('Lead created successfully:', newLead);
@@ -62,7 +66,11 @@ const AddLead = () => {
                 navigate(`/dashboard/leasing/leads/${newLead.id}`);
             } catch (error) {
                 console.error('Failed to create lead:', error);
-                // TODO: Show error message to user
+                setErrors({ 
+                    submit: error instanceof Error ? error.message : 'Failed to create lead. Please try again.' 
+                });
+            } finally {
+                setIsSubmitting(false);
             }
         }
     };
@@ -141,20 +149,20 @@ const AddLead = () => {
                                 <label className="block text-sm font-bold text-gray-800 ml-1">Lead type *</label>
                                 <div className="flex gap-4">
                                     <button
-                                        onClick={() => setLeadType('Hot')}
+                                        onClick={() => setLeadType('HOT')}
                                         className="w-28 flex items-center justify-center gap-2 py-2.5 rounded-full font-bold text-white text-sm transition-all shadow-sm bg-[#82D95B]"
                                     >
                                         <div className="w-4 h-4 rounded-full border-2 border-white flex items-center justify-center flex-shrink-0">
-                                            {leadType === 'Hot' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                            {leadType === 'HOT' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                                         </div>
                                         Hot
                                     </button>
                                     <button
-                                        onClick={() => setLeadType('Cold')}
+                                        onClick={() => setLeadType('COLD')}
                                         className="w-28 flex items-center justify-center gap-2 py-2.5 rounded-full font-bold text-white text-sm transition-all shadow-sm bg-[#82D95B]"
                                     >
                                         <div className="w-4 h-4 rounded-full border-2 border-white flex items-center justify-center flex-shrink-0">
-                                            {leadType === 'Cold' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                            {leadType === 'COLD' && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                                         </div>
                                         Cold
                                     </button>
@@ -163,10 +171,14 @@ const AddLead = () => {
                         </div>
 
                         <div className="mt-8">
+                            {errors.submit && (
+                                <p className="text-red-500 text-sm mb-4 ml-1">{errors.submit}</p>
+                            )}
                             <PrimaryActionButton
                                 onClick={handleCreate}
-                                text="Create"
+                                text={isSubmitting ? 'Creating...' : 'Create'}
                                 className="px-8 py-2.5 rounded-lg font-bold text-base shadow-lg"
+                                disabled={isSubmitting}
                             />
                         </div>
                     </div>
