@@ -9,6 +9,41 @@ import { useCreateReminder, useUpdateReminder } from '../../../../../hooks/useRe
 import { useGetAllProperties } from '../../../../../hooks/usePropertyQueries';
 import { type Reminder } from '../Calendar';
 
+// Valid form types for ReminderFormData
+type ValidFormType = 'reminder' | 'viewing' | 'meeting' | 'other';
+
+/**
+ * Type guard to check if a value is a valid form type
+ */
+const isValidFormType = (value: string): value is ValidFormType => {
+    return ['reminder', 'viewing', 'meeting', 'other'].includes(value);
+};
+
+/**
+ * Converts a Reminder type to a valid ReminderFormData type.
+ * Maps 'maintenance' to 'reminder' and validates the result.
+ */
+const mapReminderTypeToFormType = (reminderType: Reminder['type'] | undefined | null): ValidFormType => {
+    // Handle undefined/null cases
+    if (!reminderType) {
+        return 'reminder';
+    }
+    
+    // Map 'maintenance' to 'reminder' since form doesn't support 'maintenance'
+    if (reminderType === 'maintenance') {
+        return 'reminder';
+    }
+    
+    // Validate that the type is one of the valid form types
+    if (isValidFormType(reminderType)) {
+        return reminderType;
+    }
+    
+    // Fallback to 'reminder' if type is unexpected
+    console.warn(`Unexpected reminder type "${reminderType}", defaulting to "reminder"`);
+    return 'reminder';
+};
+
 interface AddReminderModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -48,7 +83,7 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
                     isRecurring: false,
                     frequency: '',
                     endDate: undefined,
-                    type: (editReminder.type === 'maintenance' ? 'reminder' : (editReminder.type || 'reminder')) as 'reminder' | 'viewing' | 'meeting' | 'other',
+                    type: mapReminderTypeToFormType(editReminder.type),
                     color: undefined,
                 };
                 setFormData(editFormData);
