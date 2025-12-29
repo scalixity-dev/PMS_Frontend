@@ -1,5 +1,28 @@
 import { API_ENDPOINTS } from '../config/api.config';
 
+/**
+ * Helper function to handle API error responses
+ * @param response - The fetch Response object
+ * @param defaultMessage - Default error message if parsing fails
+ * @returns Promise that rejects with an Error containing the formatted message
+ */
+async function handleApiError(response: Response, defaultMessage: string): Promise<never> {
+  let errorMessage = defaultMessage;
+  try {
+    const errorData = await response.json();
+    if (Array.isArray(errorData.message)) {
+      errorMessage = errorData.message.join('. ');
+    } else if (errorData.message) {
+      errorMessage = errorData.message;
+    } else if (errorData.error) {
+      errorMessage = errorData.error;
+    }
+  } catch (parseError) {
+    errorMessage = `${defaultMessage}: ${response.statusText}`;
+  }
+  throw new Error(errorMessage);
+}
+
 export type LeadSource = 
     | 'CREATED_MANUALLY'
     | 'RENTAL_APPLICATION'
@@ -105,7 +128,7 @@ export interface BackendActivity {
 }
 
 export interface CreateActivityDto {
-  activityType: string; // Required, must be a valid string (e.g., 'NOTE', 'TASK', 'CALL', 'MEETING', 'EMAIL', 'MESSAGE', 'STATUS_CHANGE', 'OTHER')
+  type: 'NOTE' | 'TASK' | 'CALL' | 'MEETING' | 'EMAIL' | 'MESSAGE' | 'STATUS_CHANGE' | 'OTHER'; // Required, must be a valid activity type
   description: string; // Required
   metadata?: Record<string, unknown>;
 }
@@ -169,20 +192,7 @@ class LeadService {
     });
 
     if (!response.ok) {
-      let errorMessage = 'Failed to fetch leads';
-      try {
-        const errorData = await response.json();
-        if (Array.isArray(errorData.message)) {
-          errorMessage = errorData.message.join('. ');
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } catch (parseError) {
-        errorMessage = `Failed to fetch leads: ${response.statusText}`;
-      }
-      throw new Error(errorMessage);
+      await handleApiError(response, 'Failed to fetch leads');
     }
 
     return response.json();
@@ -201,20 +211,7 @@ class LeadService {
     });
 
     if (!response.ok) {
-      let errorMessage = 'Failed to fetch lead';
-      try {
-        const errorData = await response.json();
-        if (Array.isArray(errorData.message)) {
-          errorMessage = errorData.message.join('. ');
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } catch (parseError) {
-        errorMessage = `Failed to fetch lead: ${response.statusText}`;
-      }
-      throw new Error(errorMessage);
+      await handleApiError(response, 'Failed to fetch lead');
     }
 
     return response.json();
@@ -234,20 +231,7 @@ class LeadService {
     });
 
     if (!response.ok) {
-      let errorMessage = 'Failed to create lead';
-      try {
-        const errorData = await response.json();
-        if (Array.isArray(errorData.message)) {
-          errorMessage = errorData.message.join('. ');
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } catch (parseError) {
-        errorMessage = `Failed to create lead: ${response.statusText}`;
-      }
-      throw new Error(errorMessage);
+      await handleApiError(response, 'Failed to create lead');
     }
 
     return response.json();
@@ -267,20 +251,7 @@ class LeadService {
     });
 
     if (!response.ok) {
-      let errorMessage = 'Failed to update lead';
-      try {
-        const errorData = await response.json();
-        if (Array.isArray(errorData.message)) {
-          errorMessage = errorData.message.join('. ');
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } catch (parseError) {
-        errorMessage = `Failed to update lead: ${response.statusText}`;
-      }
-      throw new Error(errorMessage);
+      await handleApiError(response, 'Failed to update lead');
     }
 
     return response.json();
@@ -305,22 +276,7 @@ class LeadService {
     }
 
     if (!response.ok) {
-      let errorMessage = 'Failed to delete lead';
-      try {
-        const errorData = await response.json();
-        console.error('Delete error response:', errorData);
-        if (Array.isArray(errorData.message)) {
-          errorMessage = errorData.message.join('. ');
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } catch (parseError) {
-        console.error('Failed to parse error response:', parseError);
-        errorMessage = `Failed to delete lead: ${response.status} ${response.statusText}`;
-      }
-      throw new Error(errorMessage);
+      await handleApiError(response, 'Failed to delete lead');
     }
   }
 
@@ -336,20 +292,7 @@ class LeadService {
     });
 
     if (!response.ok) {
-      let errorMessage = 'Failed to fetch notes';
-      try {
-        const errorData = await response.json();
-        if (Array.isArray(errorData.message)) {
-          errorMessage = errorData.message.join('. ');
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } catch (parseError) {
-        errorMessage = `Failed to fetch notes: ${response.statusText}`;
-      }
-      throw new Error(errorMessage);
+      await handleApiError(response, 'Failed to fetch notes');
     }
 
     return response.json();
@@ -365,20 +308,7 @@ class LeadService {
     });
 
     if (!response.ok) {
-      let errorMessage = 'Failed to fetch note';
-      try {
-        const errorData = await response.json();
-        if (Array.isArray(errorData.message)) {
-          errorMessage = errorData.message.join('. ');
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } catch (parseError) {
-        errorMessage = `Failed to fetch note: ${response.statusText}`;
-      }
-      throw new Error(errorMessage);
+      await handleApiError(response, 'Failed to fetch note');
     }
 
     return response.json();
@@ -395,20 +325,7 @@ class LeadService {
     });
 
     if (!response.ok) {
-      let errorMessage = 'Failed to create note';
-      try {
-        const errorData = await response.json();
-        if (Array.isArray(errorData.message)) {
-          errorMessage = errorData.message.join('. ');
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } catch (parseError) {
-        errorMessage = `Failed to create note: ${response.statusText}`;
-      }
-      throw new Error(errorMessage);
+      await handleApiError(response, 'Failed to create note');
     }
 
     return response.json();
@@ -425,20 +342,7 @@ class LeadService {
     });
 
     if (!response.ok) {
-      let errorMessage = 'Failed to update note';
-      try {
-        const errorData = await response.json();
-        if (Array.isArray(errorData.message)) {
-          errorMessage = errorData.message.join('. ');
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } catch (parseError) {
-        errorMessage = `Failed to update note: ${response.statusText}`;
-      }
-      throw new Error(errorMessage);
+      await handleApiError(response, 'Failed to update note');
     }
 
     return response.json();
@@ -455,20 +359,11 @@ class LeadService {
     }
 
     if (!response.ok) {
-      let errorMessage = 'Failed to delete note';
-      try {
-        const errorData = await response.json();
-        if (Array.isArray(errorData.message)) {
-          errorMessage = errorData.message.join('. ');
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } catch (parseError) {
-        errorMessage = `Failed to delete note: ${response.status} ${response.statusText}`;
+      // For DELETE, 404 is acceptable (resource already deleted)
+      if (response.status === 404) {
+        return;
       }
-      throw new Error(errorMessage);
+      await handleApiError(response, 'Failed to delete note');
     }
   }
 
@@ -484,20 +379,7 @@ class LeadService {
     });
 
     if (!response.ok) {
-      let errorMessage = 'Failed to fetch tasks';
-      try {
-        const errorData = await response.json();
-        if (Array.isArray(errorData.message)) {
-          errorMessage = errorData.message.join('. ');
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } catch (parseError) {
-        errorMessage = `Failed to fetch tasks: ${response.statusText}`;
-      }
-      throw new Error(errorMessage);
+      await handleApiError(response, 'Failed to fetch tasks');
     }
 
     return response.json();
@@ -513,20 +395,7 @@ class LeadService {
     });
 
     if (!response.ok) {
-      let errorMessage = 'Failed to fetch task';
-      try {
-        const errorData = await response.json();
-        if (Array.isArray(errorData.message)) {
-          errorMessage = errorData.message.join('. ');
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } catch (parseError) {
-        errorMessage = `Failed to fetch task: ${response.statusText}`;
-      }
-      throw new Error(errorMessage);
+      await handleApiError(response, 'Failed to fetch task');
     }
 
     return response.json();
@@ -543,20 +412,7 @@ class LeadService {
     });
 
     if (!response.ok) {
-      let errorMessage = 'Failed to create task';
-      try {
-        const errorData = await response.json();
-        if (Array.isArray(errorData.message)) {
-          errorMessage = errorData.message.join('. ');
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } catch (parseError) {
-        errorMessage = `Failed to create task: ${response.statusText}`;
-      }
-      throw new Error(errorMessage);
+      await handleApiError(response, 'Failed to create task');
     }
 
     return response.json();
@@ -573,20 +429,7 @@ class LeadService {
     });
 
     if (!response.ok) {
-      let errorMessage = 'Failed to update task';
-      try {
-        const errorData = await response.json();
-        if (Array.isArray(errorData.message)) {
-          errorMessage = errorData.message.join('. ');
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } catch (parseError) {
-        errorMessage = `Failed to update task: ${response.statusText}`;
-      }
-      throw new Error(errorMessage);
+      await handleApiError(response, 'Failed to update task');
     }
 
     return response.json();
@@ -603,20 +446,7 @@ class LeadService {
     }
 
     if (!response.ok) {
-      let errorMessage = 'Failed to delete task';
-      try {
-        const errorData = await response.json();
-        if (Array.isArray(errorData.message)) {
-          errorMessage = errorData.message.join('. ');
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } catch (parseError) {
-        errorMessage = `Failed to delete task: ${response.status} ${response.statusText}`;
-      }
-      throw new Error(errorMessage);
+      await handleApiError(response, 'Failed to delete task');
     }
   }
 
@@ -632,20 +462,7 @@ class LeadService {
     });
 
     if (!response.ok) {
-      let errorMessage = 'Failed to fetch activities';
-      try {
-        const errorData = await response.json();
-        if (Array.isArray(errorData.message)) {
-          errorMessage = errorData.message.join('. ');
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } catch (parseError) {
-        errorMessage = `Failed to fetch activities: ${response.statusText}`;
-      }
-      throw new Error(errorMessage);
+      await handleApiError(response, 'Failed to fetch activities');
     }
 
     return response.json();
@@ -661,50 +478,31 @@ class LeadService {
     });
 
     if (!response.ok) {
-      let errorMessage = 'Failed to fetch activity';
-      try {
-        const errorData = await response.json();
-        if (Array.isArray(errorData.message)) {
-          errorMessage = errorData.message.join('. ');
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } catch (parseError) {
-        errorMessage = `Failed to fetch activity: ${response.statusText}`;
-      }
-      throw new Error(errorMessage);
+      await handleApiError(response, 'Failed to fetch activity');
     }
 
     return response.json();
   }
 
   async createActivity(leadId: string, activityData: CreateActivityDto): Promise<BackendActivity> {
+    // Map 'type' to 'activityType' for backend compatibility
+    const payload = {
+      activityType: activityData.type,
+      description: activityData.description,
+      metadata: activityData.metadata,
+    };
+    
     const response = await fetch(API_ENDPOINTS.LEAD.ACTIVITIES.CREATE(leadId), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       credentials: 'include',
-      body: JSON.stringify(activityData),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
-      let errorMessage = 'Failed to create activity';
-      try {
-        const errorData = await response.json();
-        if (Array.isArray(errorData.message)) {
-          errorMessage = errorData.message.join('. ');
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } catch (parseError) {
-        errorMessage = `Failed to create activity: ${response.statusText}`;
-      }
-      throw new Error(errorMessage);
+      await handleApiError(response, 'Failed to create activity');
     }
 
     return response.json();
@@ -721,20 +519,11 @@ class LeadService {
     }
 
     if (!response.ok) {
-      let errorMessage = 'Failed to delete activity';
-      try {
-        const errorData = await response.json();
-        if (Array.isArray(errorData.message)) {
-          errorMessage = errorData.message.join('. ');
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } catch (parseError) {
-        errorMessage = `Failed to delete activity: ${response.status} ${response.statusText}`;
+      // For DELETE, 404 is acceptable (resource already deleted)
+      if (response.status === 404) {
+        return;
       }
-      throw new Error(errorMessage);
+      await handleApiError(response, 'Failed to delete activity');
     }
   }
 
@@ -750,20 +539,7 @@ class LeadService {
     });
 
     if (!response.ok) {
-      let errorMessage = 'Failed to fetch calls';
-      try {
-        const errorData = await response.json();
-        if (Array.isArray(errorData.message)) {
-          errorMessage = errorData.message.join('. ');
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } catch (parseError) {
-        errorMessage = `Failed to fetch calls: ${response.statusText}`;
-      }
-      throw new Error(errorMessage);
+      await handleApiError(response, 'Failed to fetch calls');
     }
 
     return response.json();
@@ -779,20 +555,7 @@ class LeadService {
     });
 
     if (!response.ok) {
-      let errorMessage = 'Failed to fetch call';
-      try {
-        const errorData = await response.json();
-        if (Array.isArray(errorData.message)) {
-          errorMessage = errorData.message.join('. ');
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } catch (parseError) {
-        errorMessage = `Failed to fetch call: ${response.statusText}`;
-      }
-      throw new Error(errorMessage);
+      await handleApiError(response, 'Failed to fetch call');
     }
 
     return response.json();
@@ -809,20 +572,7 @@ class LeadService {
     });
 
     if (!response.ok) {
-      let errorMessage = 'Failed to create call';
-      try {
-        const errorData = await response.json();
-        if (Array.isArray(errorData.message)) {
-          errorMessage = errorData.message.join('. ');
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } catch (parseError) {
-        errorMessage = `Failed to create call: ${response.statusText}`;
-      }
-      throw new Error(errorMessage);
+      await handleApiError(response, 'Failed to create call');
     }
 
     return response.json();
@@ -839,20 +589,7 @@ class LeadService {
     });
 
     if (!response.ok) {
-      let errorMessage = 'Failed to update call';
-      try {
-        const errorData = await response.json();
-        if (Array.isArray(errorData.message)) {
-          errorMessage = errorData.message.join('. ');
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } catch (parseError) {
-        errorMessage = `Failed to update call: ${response.statusText}`;
-      }
-      throw new Error(errorMessage);
+      await handleApiError(response, 'Failed to update call');
     }
 
     return response.json();
@@ -869,20 +606,7 @@ class LeadService {
     }
 
     if (!response.ok) {
-      let errorMessage = 'Failed to delete call';
-      try {
-        const errorData = await response.json();
-        if (Array.isArray(errorData.message)) {
-          errorMessage = errorData.message.join('. ');
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } catch (parseError) {
-        errorMessage = `Failed to delete call: ${response.status} ${response.statusText}`;
-      }
-      throw new Error(errorMessage);
+      await handleApiError(response, 'Failed to delete call');
     }
   }
 
@@ -898,20 +622,7 @@ class LeadService {
     });
 
     if (!response.ok) {
-      let errorMessage = 'Failed to fetch meetings';
-      try {
-        const errorData = await response.json();
-        if (Array.isArray(errorData.message)) {
-          errorMessage = errorData.message.join('. ');
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } catch (parseError) {
-        errorMessage = `Failed to fetch meetings: ${response.statusText}`;
-      }
-      throw new Error(errorMessage);
+      await handleApiError(response, 'Failed to fetch meetings');
     }
 
     return response.json();
@@ -927,20 +638,7 @@ class LeadService {
     });
 
     if (!response.ok) {
-      let errorMessage = 'Failed to fetch meeting';
-      try {
-        const errorData = await response.json();
-        if (Array.isArray(errorData.message)) {
-          errorMessage = errorData.message.join('. ');
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } catch (parseError) {
-        errorMessage = `Failed to fetch meeting: ${response.statusText}`;
-      }
-      throw new Error(errorMessage);
+      await handleApiError(response, 'Failed to fetch meeting');
     }
 
     return response.json();
@@ -957,20 +655,7 @@ class LeadService {
     });
 
     if (!response.ok) {
-      let errorMessage = 'Failed to create meeting';
-      try {
-        const errorData = await response.json();
-        if (Array.isArray(errorData.message)) {
-          errorMessage = errorData.message.join('. ');
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } catch (parseError) {
-        errorMessage = `Failed to create meeting: ${response.statusText}`;
-      }
-      throw new Error(errorMessage);
+      await handleApiError(response, 'Failed to create meeting');
     }
 
     return response.json();
@@ -987,20 +672,7 @@ class LeadService {
     });
 
     if (!response.ok) {
-      let errorMessage = 'Failed to update meeting';
-      try {
-        const errorData = await response.json();
-        if (Array.isArray(errorData.message)) {
-          errorMessage = errorData.message.join('. ');
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } catch (parseError) {
-        errorMessage = `Failed to update meeting: ${response.statusText}`;
-      }
-      throw new Error(errorMessage);
+      await handleApiError(response, 'Failed to update meeting');
     }
 
     return response.json();
@@ -1017,20 +689,11 @@ class LeadService {
     }
 
     if (!response.ok) {
-      let errorMessage = 'Failed to delete meeting';
-      try {
-        const errorData = await response.json();
-        if (Array.isArray(errorData.message)) {
-          errorMessage = errorData.message.join('. ');
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        }
-      } catch (parseError) {
-        errorMessage = `Failed to delete meeting: ${response.status} ${response.statusText}`;
+      // For DELETE, 404 is acceptable (resource already deleted)
+      if (response.status === 404) {
+        return;
       }
-      throw new Error(errorMessage);
+      await handleApiError(response, 'Failed to delete meeting');
     }
   }
 }

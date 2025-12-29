@@ -69,7 +69,7 @@ const AddLead = () => {
                     const activity = await createActivityMutation.mutateAsync({
                         leadId: newLead.id,
                         activityData: {
-                            activityType: 'OTHER',
+                            type: 'OTHER',
                             description: `New lead created: ${formData.fullName} (${leadType})`,
                             metadata: {
                                 action: 'LEAD_CREATED',

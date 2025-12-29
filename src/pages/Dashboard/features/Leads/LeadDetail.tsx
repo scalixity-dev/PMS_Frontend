@@ -31,11 +31,11 @@ import {
     useUpdateMeeting,
     useDeleteMeeting,
 } from '../../../../hooks/useLeadQueries';
-import type { LeadStatus } from '../../../../services/lead.service';
+import type { LeadStatus, CreateActivityDto } from '../../../../services/lead.service';
 import { authService } from '../../../../services/auth.service';
 
 interface ActivityItem {
-    id: number;
+    id: string; // Changed to string to use UUID directly
     user: string;
     time: string;
     type: string;
@@ -156,7 +156,7 @@ const LeadDetail = () => {
             }
             
             dayMap.get(dateKey)!.push({
-                id: parseInt(note.id.replace(/-/g, '').substring(0, 10), 16) || Date.now(),
+                id: note.id, // Use UUID directly
                 user: currentUserName,
                 time: time,
                 type: 'Note',
@@ -174,8 +174,8 @@ const LeadDetail = () => {
             const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }).toLowerCase();
             const timestamp = date.getTime(); // Store timestamp for sorting
             const dueDate = task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '';
-            const taskText = task.description 
-                ? `${task.description}${dueDate ? ` (Due: ${dueDate})` : ''}`
+            const taskText = task.title || task.description 
+                ? `${task.title || task.description}${dueDate ? ` (Due: ${dueDate})` : ''}`
                 : 'Task';
             
             // Format dueDate for datetime-local input (YYYY-MM-DDTHH:mm)
@@ -195,7 +195,7 @@ const LeadDetail = () => {
             }
             
             dayMap.get(dateKey)!.push({
-                id: parseInt(task.id.replace(/-/g, '').substring(0, 10), 16) || Date.now(),
+                id: task.id, // Use UUID directly
                 user: task.assignee || currentUserName,
                 time: time,
                 type: 'Task',
@@ -205,10 +205,11 @@ const LeadDetail = () => {
                     type: 'task', 
                     id: task.id, 
                     leadId: task.leadId,
-                    details: task.description || '', // Use description instead of title
+                    details: task.title || task.description || '', // Use title if available, fallback to description
                     date: formattedDueDate, // Store formatted date for datetime-local input
                     assignee: task.assignee || currentUserName,
-                    description: task.description
+                    description: task.description,
+                    title: task.title
                 }
             });
         });
@@ -256,7 +257,7 @@ const LeadDetail = () => {
             }
             
             dayMap.get(dateKey)!.push({
-                id: parseInt(call.id.replace(/-/g, '').substring(0, 10), 16) || Date.now(),
+                id: call.id, // Use UUID directly
                 user: currentUserName,
                 time: time,
                 type: 'Call',
@@ -299,7 +300,7 @@ const LeadDetail = () => {
             }
             
             dayMap.get(dateKey)!.push({
-                id: parseInt(meeting.id.replace(/-/g, '').substring(0, 10), 16) || Date.now(),
+                id: meeting.id, // Use UUID directly
                 user: currentUserName,
                 time: time,
                 type: 'Meeting',
@@ -332,7 +333,7 @@ const LeadDetail = () => {
             }
             
             dayMap.get(dateKey)!.push({
-                id: parseInt(activity.id.replace(/-/g, '').substring(0, 10), 16) || Date.now(),
+                id: activity.id, // Use UUID directly
                 user: currentUserName,
                 time: time,
                 type: 'Activity',
@@ -592,8 +593,8 @@ const LeadDetail = () => {
             }
 
             // 2. Add Activity to timeline
-            const activityData = {
-                activityType: 'EMAIL',
+            const activityData: CreateActivityDto = {
+                type: 'EMAIL',
                 description: `Sent invitation to ${email} for listing: ${listing}`,
                 metadata: {
                     email,
@@ -613,7 +614,7 @@ const LeadDetail = () => {
         }
     };
 
-    const handleDeleteActivity = async (dayId: number, itemId: number) => {
+    const handleDeleteActivity = async (dayId: number, itemId: string) => {
         if (!id) {
             console.error('No lead ID available');
             return;
@@ -774,7 +775,7 @@ const LeadDetail = () => {
                                                             const activity = await createActivityMutation.mutateAsync({
                                                                 leadId: id,
                                                                 activityData: {
-                                                                    activityType: 'STATUS_CHANGE',
+                                                                    type: 'STATUS_CHANGE',
                                                                     description: `Lead status changed from ${getStatusLabel(oldStatus)} to ${getStatusLabel(s)}`,
                                                                     metadata: {
                                                                         action: 'STATUS_CHANGED',
@@ -1080,7 +1081,7 @@ const LeadDetail = () => {
                 }}
                 onCreate={handleTaskCreate}
                 initialData={editingItem?.item.type === 'Task' ? {
-                    details: editingItem.item.originalData?.details || '',
+                    details: editingItem.item.originalData?.title || editingItem.item.originalData?.details || '',
                     date: editingItem.item.originalData?.date || '',
                     assignee: editingItem.item.originalData?.assignee || '',
                     image: editingItem.item.image
