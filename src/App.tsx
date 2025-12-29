@@ -103,6 +103,10 @@ import ApplicationsUser from './pages/userdashboard/Applications';
 import FileManager from './pages/userdashboard/FileManager';
 import Downloads from './pages/userdashboard/Downloads';
 import NewRequest from './pages/userdashboard/NewRequest';
+import PropertyDetailUser from './pages/userdashboard/PropertyDetail';
+import SettingsUser from './pages/userdashboard/Settings';
+
+
 
 // Settings pages
 import Settings from './pages/Dashboard/settings/index';
@@ -246,6 +250,7 @@ const App: React.FC = () => {
               <Route path="/dashboard/contacts/service-pros/edit/:id" element={<AddEditServicePro />} />
               <Route path="/dashboard/contacts/service-pros/:id" element={<ServiceProsDetail />} />
               <Route path="/dashboard/leasing/applications" element={<Application />} />
+              <Route path="/dashboard/property-detail/:id" element={<PropertyDetailUser />} />
               <Route path="/dashboard/application/new" element={<NewApplication />} />
               <Route path="/dashboard/application/:id" element={<ApplicationDetail />} />
               <Route path="/dashboard/leasing/leases" element={<Leases />} />
@@ -704,11 +709,14 @@ const App: React.FC = () => {
               <Route path="/userdashboard/requests" element={<RequestsUser />} />
               <Route path="/userdashboard/utility-providers" element={<UtilityProviders />} />
               <Route path="/userdashboard/properties" element={<PropertiesUser />} />
+              <Route path="/userdashboard/properties/:id" element={<PropertyDetailUser />} />
               <Route path="/userdashboard/applications" element={<ApplicationsUser />} />
               <Route path="/userdashboard/file-manager" element={<FileManager />} />
               <Route path="/userdashboard/downloads" element={<Downloads />} />
               <Route path="/userdashboard/new-request" element={<NewRequest />} />
+              <Route path="/userdashboard/settings" element={<SettingsUser />} />
             </Route>
+
 
             {/* Catch-all route */}
             <Route path="*" element={<HomePage />} />
