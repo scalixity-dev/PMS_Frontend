@@ -45,11 +45,11 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
                     time: editReminder.time || '',
                     assignee: editReminder.assigneeName || '',
                     property: editReminder.propertyId || '',
-                    isRecurring: editReminder.recurring ?? false,
-                    frequency: editReminder.frequency || '',
-                    endDate: editReminder.endDate ? new Date(editReminder.endDate) : undefined,
-                    type: (editReminder.type as 'reminder' | 'viewing' | 'meeting' | 'other') || 'reminder',
-                    color: editReminder.color,
+                    isRecurring: false,
+                    frequency: '',
+                    endDate: undefined,
+                    type: (editReminder.type === 'maintenance' ? 'reminder' : (editReminder.type || 'reminder')) as 'reminder' | 'viewing' | 'meeting' | 'other',
+                    color: undefined,
                 };
                 setFormData(editFormData);
                 setInitialSnapshot(editFormData);
