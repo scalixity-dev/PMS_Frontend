@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import PrimaryActionButton from '../../../../components/common/buttons/PrimaryActionButton';
-import { useGetLead, useUpdateLead } from '../../../../hooks/useLeadQueries';
+import { useGetLead, useUpdateLead, useCreateActivity } from '../../../../hooks/useLeadQueries';
 import type { LeadType } from '../../../../services/lead.service';
 
 const EditLead = () => {
@@ -10,7 +10,14 @@ const EditLead = () => {
     const { id } = useParams();
     const { data: lead, isLoading, error } = useGetLead(id || null, !!id);
     const updateLeadMutation = useUpdateLead();
+    const createActivityMutation = useCreateActivity();
     const [leadType, setLeadType] = useState<LeadType>('HOT');
+    const [originalLead, setOriginalLead] = useState<{ 
+        name?: string; 
+        phoneNumber?: string; 
+        email?: string; 
+        type?: LeadType | null 
+    } | null>(null);
 
     // Pre-filled data (loaded from API)
     const [formData, setFormData] = useState({
@@ -29,6 +36,13 @@ const EditLead = () => {
                 email: lead.email || ''
             });
             setLeadType(lead.type || 'HOT');
+            // Store original values to detect changes
+            setOriginalLead({
+                name: lead.name || '',
+                phoneNumber: lead.phoneNumber || '',
+                email: lead.email || '',
+                type: lead.type || null
+            });
         }
     }, [lead]);
 
@@ -67,15 +81,80 @@ const EditLead = () => {
         if (validateForm() && !isSubmitting && id) {
             setIsSubmitting(true);
             try {
+                const updateData: { name: string; phoneNumber: string; email: string; type?: LeadType } = {
+                    name: formData.fullName,
+                    phoneNumber: formData.phone,
+                    email: formData.email,
+                    type: leadType
+                };
+
                 await updateLeadMutation.mutateAsync({
                     id,
-                    data: {
-                        name: formData.fullName,
-                        phoneNumber: formData.phone,
-                        email: formData.email,
-                        type: leadType
-                    }
+                    data: updateData
                 });
+
+                // Create activities for changes
+                try {
+                    if (originalLead) {
+                        // Detect actual changes by comparing original values to new values
+                        const typeChanged = originalLead.type !== leadType;
+                        const nameChanged = originalLead.name !== formData.fullName;
+                        const phoneChanged = originalLead.phoneNumber !== formData.phone;
+                        const emailChanged = originalLead.email !== formData.email;
+                        
+                        const hasAnyChanges = typeChanged || nameChanged || phoneChanged || emailChanged;
+
+                        // Only create activities if there are actual changes
+                        if (hasAnyChanges) {
+                            // Create activity for type change (HOT/COLD) - keep separate
+                            if (typeChanged) {
+                                try {
+                                    console.log('Creating activity for type change:', id);
+                                    const createdActivity = await createActivityMutation.mutateAsync({
+                                        leadId: id,
+                                        activityData: {
+                                            type: 'OTHER',
+                                            description: `Lead type changed from ${originalLead.type || 'N/A'} to ${leadType}`,
+                                            metadata: {
+                                                action: 'TYPE_CHANGED',
+                                                oldType: originalLead.type,
+                                                newType: leadType
+                                            }
+                                        }
+                                    });
+                                    console.log('Activity created successfully for type change:', createdActivity);
+                                } catch (err) {
+                                    console.error('Failed to create activity for type change:', err);
+                                }
+                            }
+
+                            // If lead was edited (other changes, not type), create one general edit activity
+                            const hasOtherChanges = nameChanged || phoneChanged || emailChanged;
+                            if (hasOtherChanges) {
+                                try {
+                                    console.log('Creating activity for lead edit:', id);
+                                    const createdActivity = await createActivityMutation.mutateAsync({
+                                        leadId: id,
+                                        activityData: {
+                                            type: 'OTHER',
+                                            description: `Lead was edited`,
+                                            metadata: {
+                                                action: 'LEAD_EDITED'
+                                            }
+                                        }
+                                    });
+                                    console.log('Activity created successfully for lead edit:', createdActivity);
+                                } catch (err) {
+                                    console.error('Failed to create activity for lead edit:', err);
+                                }
+                            }
+                        }
+                    }
+                } catch (activityError) {
+                    console.error('Failed to create activity for lead update:', activityError);
+                    alert(`Warning: Lead updated but failed to log activity: ${activityError instanceof Error ? activityError.message : 'Unknown error'}`);
+                    // Don't block navigation if activity creation fails
+                }
 
                 // Return to detail page
                 navigate(`/dashboard/leasing/leads/${id}`);
@@ -203,7 +282,7 @@ const EditLead = () => {
                             )}
                             <PrimaryActionButton
                                 onClick={handleSave}
-                                text={isSubmitting ? 'Saving...' : 'Save Changes'}
+                                text={isSubmitting ? 'Updating...' : 'Update'}
                                 className="px-8 py-2.5 rounded-lg font-bold text-base shadow-lg"
                                 disabled={isSubmitting}
                             />
