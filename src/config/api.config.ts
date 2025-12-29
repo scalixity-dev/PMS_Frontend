@@ -127,6 +127,45 @@ export const API_ENDPOINTS = {
     CREATE: `${API_BASE_URL}/leads`,
     UPDATE: (id: string) => `${API_BASE_URL}/leads/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/leads/${id}`,
+    // Notes endpoints
+    NOTES: {
+      GET_ALL: (leadId: string) => `${API_BASE_URL}/leads/${leadId}/notes`,
+      GET_ONE: (leadId: string, noteId: string) => `${API_BASE_URL}/leads/${leadId}/notes/${noteId}`,
+      CREATE: (leadId: string) => `${API_BASE_URL}/leads/${leadId}/notes`,
+      UPDATE: (leadId: string, noteId: string) => `${API_BASE_URL}/leads/${leadId}/notes/${noteId}`,
+      DELETE: (leadId: string, noteId: string) => `${API_BASE_URL}/leads/${leadId}/notes/${noteId}`,
+    },
+    // Tasks endpoints
+    TASKS: {
+      GET_ALL: (leadId: string) => `${API_BASE_URL}/leads/${leadId}/tasks`,
+      GET_ONE: (leadId: string, taskId: string) => `${API_BASE_URL}/leads/${leadId}/tasks/${taskId}`,
+      CREATE: (leadId: string) => `${API_BASE_URL}/leads/${leadId}/tasks`,
+      UPDATE: (leadId: string, taskId: string) => `${API_BASE_URL}/leads/${leadId}/tasks/${taskId}`,
+      DELETE: (leadId: string, taskId: string) => `${API_BASE_URL}/leads/${leadId}/tasks/${taskId}`,
+    },
+    // Activities endpoints
+    ACTIVITIES: {
+      GET_ALL: (leadId: string) => `${API_BASE_URL}/leads/${leadId}/activities`,
+      GET_ONE: (leadId: string, activityId: string) => `${API_BASE_URL}/leads/${leadId}/activities/${activityId}`,
+      CREATE: (leadId: string) => `${API_BASE_URL}/leads/${leadId}/activities`,
+      DELETE: (leadId: string, activityId: string) => `${API_BASE_URL}/leads/${leadId}/activities/${activityId}`,
+    },
+    // Calls endpoints
+    CALLS: {
+      GET_ALL: (leadId: string) => `${API_BASE_URL}/leads/${leadId}/calls`,
+      GET_ONE: (leadId: string, callId: string) => `${API_BASE_URL}/leads/${leadId}/calls/${callId}`,
+      CREATE: (leadId: string) => `${API_BASE_URL}/leads/${leadId}/calls`,
+      UPDATE: (leadId: string, callId: string) => `${API_BASE_URL}/leads/${leadId}/calls/${callId}`,
+      DELETE: (leadId: string, callId: string) => `${API_BASE_URL}/leads/${leadId}/calls/${callId}`,
+    },
+    // Meetings endpoints
+    MEETINGS: {
+      GET_ALL: (leadId: string) => `${API_BASE_URL}/leads/${leadId}/meetings`,
+      GET_ONE: (leadId: string, meetingId: string) => `${API_BASE_URL}/leads/${leadId}/meetings/${meetingId}`,
+      CREATE: (leadId: string) => `${API_BASE_URL}/leads/${leadId}/meetings`,
+      UPDATE: (leadId: string, meetingId: string) => `${API_BASE_URL}/leads/${leadId}/meetings/${meetingId}`,
+      DELETE: (leadId: string, meetingId: string) => `${API_BASE_URL}/leads/${leadId}/meetings/${meetingId}`,
+    },
   },
 };
 

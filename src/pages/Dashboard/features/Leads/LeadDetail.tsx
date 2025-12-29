@@ -1,15 +1,38 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, MoreHorizontal, Clock, Plus, Edit2, Trash2, User, FileText, CheckSquare, LogIn } from 'lucide-react';
 import AddNoteModal from './components/AddNoteModal';
 import AddTaskModal from './components/AddleadsTaskModal';
 import AddLogModal from './components/AddLogModal';
 import AddMeetingModal from './components/AddMeetingModal';
-import MessageModal from './components/MessageModal';
 import InviteToApplyModal from './components/InviteToApplyModal';
 import { useGetAllListings } from '../../../../hooks/useListingQueries';
-import { useGetLead, useUpdateLead, useDeleteLead } from '../../../../hooks/useLeadQueries';
+import { 
+    useGetLead, 
+    useUpdateLead, 
+    useDeleteLead,
+    useGetAllNotes,
+    useGetAllTasks,
+    useGetAllActivities,
+    useCreateNote,
+    useUpdateNote,
+    useDeleteNote,
+    useCreateTask,
+    useUpdateTask,
+    useDeleteTask,
+    useCreateActivity,
+    useDeleteActivity,
+    useGetAllCalls,
+    useCreateCall,
+    useUpdateCall,
+    useDeleteCall,
+    useGetAllMeetings,
+    useCreateMeeting,
+    useUpdateMeeting,
+    useDeleteMeeting,
+} from '../../../../hooks/useLeadQueries';
 import type { LeadStatus } from '../../../../services/lead.service';
+import { authService } from '../../../../services/auth.service';
 
 interface ActivityItem {
     id: number;
@@ -19,6 +42,7 @@ interface ActivityItem {
     text: string;
     image?: string;
     originalData?: any;
+    timestamp: number; // Store actual timestamp for sorting
 }
 
 interface DayActivity {
@@ -34,24 +58,60 @@ const LeadDetail = () => {
     const updateLeadMutation = useUpdateLead();
     const deleteLeadMutation = useDeleteLead();
     
+    // Fetch notes, tasks, activities, calls, and meetings
+    const { data: notes = [] } = useGetAllNotes(id || null, !!id);
+    const { data: tasks = [] } = useGetAllTasks(id || null, !!id);
+    const { data: activities = [] } = useGetAllActivities(id || null, !!id);
+    const { data: calls = [] } = useGetAllCalls(id || null, !!id);
+    const { data: meetings = [] } = useGetAllMeetings(id || null, !!id);
+    
+    // Mutations
+    const createNoteMutation = useCreateNote();
+    const updateNoteMutation = useUpdateNote();
+    const deleteNoteMutation = useDeleteNote();
+    const createTaskMutation = useCreateTask();
+    const updateTaskMutation = useUpdateTask();
+    const deleteTaskMutation = useDeleteTask();
+    const createActivityMutation = useCreateActivity();
+    const deleteActivityMutation = useDeleteActivity();
+    const createCallMutation = useCreateCall();
+    const updateCallMutation = useUpdateCall();
+    const deleteCallMutation = useDeleteCall();
+    const createMeetingMutation = useCreateMeeting();
+    const updateMeetingMutation = useUpdateMeeting();
+    const deleteMeetingMutation = useDeleteMeeting();
+    
     const [activeFilter, setActiveFilter] = useState('All');
     const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
     const [isLogModalOpen, setIsLogModalOpen] = useState(false);
     const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
-    const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     const [showLogOptions, setShowLogOptions] = useState(false);
     const [editingItem, setEditingItem] = useState<{ dayId: number; item: ActivityItem } | null>(null);
     const [status, setStatus] = useState<LeadStatus>('NEW');
     const [showActionMenu, setShowActionMenu] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [currentUserName, setCurrentUserName] = useState<string>('User');
 
     const { data: listingsData } = useGetAllListings();
     const listings = listingsData?.map(l => ({
         id: l.id,
         title: l.title || l.property?.propertyName || 'Untitled Listing'
     })) || [];
+
+    // Fetch current user name
+    useEffect(() => {
+        const fetchUser = async () => {
+            try {
+                const user = await authService.getCurrentUser();
+                setCurrentUserName(user.fullName || 'User');
+            } catch (error) {
+                console.error('Failed to fetch user:', error);
+            }
+        };
+        fetchUser();
+    }, []);
 
     // Helper function to convert status enum to display label
     const getStatusLabel = (status: LeadStatus): string => {
@@ -80,340 +140,545 @@ const LeadDetail = () => {
         email: ''
     };
 
-    const [activities, setActivities] = useState<DayActivity[]>([
-        {
-            id: 1,
-            date: '10 Dec',
-            items: [
-                { id: 101, user: 'Sam James', time: '5:23 pm', type: 'Activity', text: 'The status of the lead has been changed from New to Working.' },
-                { id: 102, user: 'Sam James', time: '5:23 pm', type: 'Activity', text: 'The status of the lead has been changed from New to Working.' }
-            ]
-        }
-    ]);
-
-    const handleNoteConfirm = (noteText: string, file?: File | null) => {
-        const now = new Date();
-        const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }).toLowerCase();
-        const date = now.toLocaleDateString([], { day: 'numeric', month: 'short' });
-
-        if (editingItem) {
-            setActivities(prev => prev.map(day => ({
-                ...day,
-                items: day.items.map((item: any) => {
-                    if (item.id === editingItem.item.id) {
-                        return {
-                            ...item,
-                            text: noteText,
-                            image: file ? URL.createObjectURL(file) : item.image
-                        };
-                    }
-                    return item;
-                })
-            })));
-            setEditingItem(null);
-            return;
-        }
-
-        const newNote = {
-            id: Date.now(),
-            user: 'Sam James',
-            time: time,
-            type: 'Note',
-            text: noteText,
-            image: file ? URL.createObjectURL(file) : undefined
-        };
-
-        setActivities(prev => {
-            const todayIndex = prev.findIndex(day => day.date === date);
-            if (todayIndex !== -1) {
-                const newActivities = [...prev];
-                newActivities[todayIndex] = {
-                    ...newActivities[todayIndex],
-                    items: [newNote, ...newActivities[todayIndex].items]
-                };
-                return newActivities;
-            } else {
-                return [
-                    {
-                        id: Date.now(),
-                        date: date,
-                        items: [newNote]
-                    },
-                    ...prev
-                ];
+    // Transform backend data to frontend format
+    const transformedActivities = useMemo(() => {
+        const dayMap = new Map<string, ActivityItem[]>();
+        
+        // Process notes
+        notes.forEach((note) => {
+            const date = new Date(note.createdAt);
+            const dateKey = date.toLocaleDateString([], { day: 'numeric', month: 'short' });
+            const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }).toLowerCase();
+            const timestamp = date.getTime(); // Store timestamp for sorting
+            
+            if (!dayMap.has(dateKey)) {
+                dayMap.set(dateKey, []);
             }
+            
+            dayMap.get(dateKey)!.push({
+                id: parseInt(note.id.replace(/-/g, '').substring(0, 10), 16) || Date.now(),
+                user: currentUserName,
+                time: time,
+                type: 'Note',
+                text: note.content,
+                image: note.attachmentUrl || undefined,
+                timestamp: timestamp,
+                originalData: { type: 'note', id: note.id, leadId: note.leadId }
+            });
         });
-    };
-
-    const handleTaskCreate = (taskData: { details: string; date: string; assignee: string }, file?: File | null) => {
-        const now = new Date();
-        const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }).toLowerCase();
-        const date = now.toLocaleDateString([], { day: 'numeric', month: 'short' });
-
-        if (editingItem) {
-            setActivities(prev => prev.map(day => ({
-                ...day,
-                items: day.items.map((item: ActivityItem) => {
-                    if (item.id === editingItem.item.id) {
-                        return {
-                            ...item,
-                            text: `${taskData.details} (Due: ${taskData.date})`,
-                            originalData: taskData,
-                            image: file ? URL.createObjectURL(file) : item.image
-                        };
-                    }
-                    return item;
-                })
-            })));
-            setEditingItem(null);
-            return;
-        }
-
-        const newTask = {
-            id: Date.now(),
-            user: taskData.assignee || 'Sam James',
-            time: time,
-            type: 'Task',
-            text: `${taskData.details} (Due: ${taskData.date})`,
-            originalData: taskData,
-            image: file ? URL.createObjectURL(file) : undefined
-        };
-
-        setActivities(prev => {
-            const todayIndex = prev.findIndex(day => day.date === date);
-            if (todayIndex !== -1) {
-                const newActivities = [...prev];
-                newActivities[todayIndex] = {
-                    ...newActivities[todayIndex],
-                    items: [newTask, ...newActivities[todayIndex].items]
-                };
-                return newActivities;
-            } else {
-                return [
-                    {
-                        id: Date.now(),
-                        date: date,
-                        items: [newTask]
-                    },
-                    ...prev
-                ];
+        
+        // Process tasks
+        tasks.forEach((task) => {
+            const date = new Date(task.createdAt);
+            const dateKey = date.toLocaleDateString([], { day: 'numeric', month: 'short' });
+            const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }).toLowerCase();
+            const timestamp = date.getTime(); // Store timestamp for sorting
+            const dueDate = task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '';
+            const taskText = task.description 
+                ? `${task.description}${dueDate ? ` (Due: ${dueDate})` : ''}`
+                : 'Task';
+            
+            // Format dueDate for datetime-local input (YYYY-MM-DDTHH:mm)
+            let formattedDueDate = '';
+            if (task.dueDate) {
+                const dueDateObj = new Date(task.dueDate);
+                const year = dueDateObj.getFullYear();
+                const month = String(dueDateObj.getMonth() + 1).padStart(2, '0');
+                const day = String(dueDateObj.getDate()).padStart(2, '0');
+                const hours = String(dueDateObj.getHours()).padStart(2, '0');
+                const minutes = String(dueDateObj.getMinutes()).padStart(2, '0');
+                formattedDueDate = `${year}-${month}-${day}T${hours}:${minutes}`;
             }
-        });
-    };
-
-    const handleLogCreate = (logData: { details: string; date: string; results: string }, file?: File | null) => {
-        const now = new Date();
-        const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }).toLowerCase();
-        const date = now.toLocaleDateString([], { day: 'numeric', month: 'short' });
-
-        if (editingItem) {
-            setActivities(prev => prev.map(day => ({
-                ...day,
-                items: day.items.map((item: ActivityItem) => {
-                    if (item.id === editingItem.item.id) {
-                        return {
-                            ...item,
-                            text: `[Call Log] ${logData.details} - Result: ${logData.results} (at ${logData.date})`,
-                            originalData: logData,
-                            image: file ? URL.createObjectURL(file) : item.image
-                        };
-                    }
-                    return item;
-                })
-            })));
-            setEditingItem(null);
-            return;
-        }
-
-        const newLog = {
-            id: Date.now(),
-            user: 'Sam James',
-            time: time,
-            type: 'Activity',
-            text: `[Call Log] ${logData.details} - Result: ${logData.results} (at ${logData.date})`,
-            originalData: logData,
-            image: file ? URL.createObjectURL(file) : undefined
-        };
-
-        setActivities(prev => {
-            const todayIndex = prev.findIndex(day => day.date === date);
-            if (todayIndex !== -1) {
-                const newActivities = [...prev];
-                newActivities[todayIndex] = {
-                    ...newActivities[todayIndex],
-                    items: [newLog, ...newActivities[todayIndex].items]
-                };
-                return newActivities;
-            } else {
-                return [
-                    {
-                        id: Date.now(),
-                        date: date,
-                        items: [newLog]
-                    },
-                    ...prev
-                ];
+            
+            if (!dayMap.has(dateKey)) {
+                dayMap.set(dateKey, []);
             }
+            
+            dayMap.get(dateKey)!.push({
+                id: parseInt(task.id.replace(/-/g, '').substring(0, 10), 16) || Date.now(),
+                user: task.assignee || currentUserName,
+                time: time,
+                type: 'Task',
+                text: taskText,
+                timestamp: timestamp,
+                originalData: { 
+                    type: 'task', 
+                    id: task.id, 
+                    leadId: task.leadId,
+                    details: task.description || '', // Use description instead of title
+                    date: formattedDueDate, // Store formatted date for datetime-local input
+                    assignee: task.assignee || currentUserName,
+                    description: task.description
+                }
+            });
         });
-    };
-
-    const handleMeetingCreate = (meetingData: { details: string; date: string }, file?: File | null) => {
-        const now = new Date();
-        const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }).toLowerCase();
-        const date = now.toLocaleDateString([], { day: 'numeric', month: 'short' });
-
-
-        if (editingItem) {
-            setActivities(prev => prev.map(day => ({
-                ...day,
-                items: day.items.map((item: ActivityItem) => {
-                    if (item.id === editingItem.item.id) {
-                        return {
-                            ...item,
-                            text: `[Meeting Log] ${meetingData.details} (at ${meetingData.date})`,
-                            originalData: meetingData,
-                            image: file ? URL.createObjectURL(file) : item.image
-                        };
-                    }
-                    return item;
-                })
-            })));
-            setEditingItem(null);
-            return;
-        }
-
-        const newMeeting = {
-            id: Date.now(),
-            user: 'Sam James',
-            time: time,
-            type: 'Activity',
-            text: `[Meeting Log] ${meetingData.details} (at ${meetingData.date})`,
-            originalData: meetingData,
-            image: file ? URL.createObjectURL(file) : undefined
-        };
-
-        setActivities(prev => {
-            const todayIndex = prev.findIndex(day => day.date === date);
-            if (todayIndex !== -1) {
-                const newActivities = [...prev];
-                newActivities[todayIndex] = {
-                    ...newActivities[todayIndex],
-                    items: [newMeeting, ...newActivities[todayIndex].items]
+        
+        // Process calls
+        calls.forEach((call) => {
+            const date = new Date(call.createdAt);
+            const dateKey = date.toLocaleDateString([], { day: 'numeric', month: 'short' });
+            const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }).toLowerCase();
+            const timestamp = date.getTime();
+            
+            // Convert enum call result to readable label
+            const getCallResultLabel = (result: string): string => {
+                const resultMap: Record<string, string> = {
+                    'ANSWERED': 'Answered',
+                    'NO_ANSWER': 'No Answer',
+                    'VOICEMAIL': 'Voicemail',
+                    'BUSY': 'Busy',
+                    'FAILED': 'Failed',
+                    'OTHER': 'Other'
                 };
-                return newActivities;
-            } else {
-                return [
-                    {
-                        id: Date.now(),
-                        date: date,
-                        items: [newMeeting]
-                    },
-                    ...prev
-                ];
+                return resultMap[result] || result;
+            };
+            
+            const callText = call.callResult 
+                ? `${call.details} - Result: ${getCallResultLabel(call.callResult)}`
+                : call.details;
+            
+            // Format date for datetime-local input (YYYY-MM-DDTHH:mm)
+            let formattedDate = '';
+            if (call.dateTime) {
+                const dateObj = new Date(call.dateTime);
+                if (!isNaN(dateObj.getTime())) {
+                    const year = dateObj.getFullYear();
+                    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                    const day = String(dateObj.getDate()).padStart(2, '0');
+                    const hours = String(dateObj.getHours()).padStart(2, '0');
+                    const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+                    formattedDate = `${year}-${month}-${day}T${hours}:${minutes}`;
+                }
             }
-        });
-    };
-
-    const handleMessageConfirm = (messageText: string, file?: File | null) => {
-        const now = new Date();
-        const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }).toLowerCase();
-        const date = now.toLocaleDateString([], { day: 'numeric', month: 'short' });
-
-        const newMessage = {
-            id: Date.now(),
-            user: 'Sam James',
-            time: time,
-            type: 'Activity',
-            text: `[Text Message] ${messageText}`,
-            image: file ? URL.createObjectURL(file) : undefined
-        };
-
-        setActivities(prev => {
-            const todayIndex = prev.findIndex(day => day.date === date);
-            if (todayIndex !== -1) {
-                const newActivities = [...prev];
-                newActivities[todayIndex] = {
-                    ...newActivities[todayIndex],
-                    items: [newMessage, ...newActivities[todayIndex].items]
-                };
-                return newActivities;
-            } else {
-                return [
-                    {
-                        id: Date.now(),
-                        date: date,
-                        items: [newMessage]
-                    },
-                    ...prev
-                ];
+            
+            if (!dayMap.has(dateKey)) {
+                dayMap.set(dateKey, []);
             }
+            
+            dayMap.get(dateKey)!.push({
+                id: parseInt(call.id.replace(/-/g, '').substring(0, 10), 16) || Date.now(),
+                user: currentUserName,
+                time: time,
+                type: 'Call',
+                text: callText,
+                timestamp: timestamp,
+                originalData: { 
+                    type: 'call', 
+                    id: call.id, 
+                    leadId: call.leadId,
+                    details: call.details,
+                    date: formattedDate || call.dateTime,
+                    results: call.callResult || ''
+                }
+            });
         });
-    };
-
-    const handleInviteSend = (email: string, listing: string) => {
-        const now = new Date();
-        const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }).toLowerCase();
-        const date = now.toLocaleDateString([], { day: 'numeric', month: 'short' });
-
-        // 1. Update status to Working if it's New
-        if (status === 'NEW') {
-            setStatus('WORKING');
-        }
-
-        // 2. Add Activity to timeline
-        const newActivity = {
-            id: Date.now(),
-            user: 'Sam James',
-            time: time,
-            type: 'Activity',
-            text: `Sent invitation to ${email} for listing: ${listing}`,
-        };
-
-        setActivities(prev => {
-            const todayIndex = prev.findIndex(day => day.date === date);
-            if (todayIndex !== -1) {
-                const newActivities = [...prev];
-                newActivities[todayIndex] = {
-                    ...newActivities[todayIndex],
-                    items: [newActivity, ...newActivities[todayIndex].items]
-                };
-                return newActivities;
-            } else {
-                return [
-                    {
-                        id: Date.now(),
-                        date: date,
-                        items: [newActivity]
-                    },
-                    ...prev
-                ];
+        
+        // Process meetings
+        meetings.forEach((meeting) => {
+            const date = new Date(meeting.createdAt);
+            const dateKey = date.toLocaleDateString([], { day: 'numeric', month: 'short' });
+            const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }).toLowerCase();
+            const timestamp = date.getTime();
+            
+            // Format date for datetime-local input (YYYY-MM-DDTHH:mm)
+            let formattedDate = '';
+            if (meeting.dateTime) {
+                const dateObj = new Date(meeting.dateTime);
+                if (!isNaN(dateObj.getTime())) {
+                    const year = dateObj.getFullYear();
+                    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                    const day = String(dateObj.getDate()).padStart(2, '0');
+                    const hours = String(dateObj.getHours()).padStart(2, '0');
+                    const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+                    formattedDate = `${year}-${month}-${day}T${hours}:${minutes}`;
+                }
             }
+            
+            if (!dayMap.has(dateKey)) {
+                dayMap.set(dateKey, []);
+            }
+            
+            dayMap.get(dateKey)!.push({
+                id: parseInt(meeting.id.replace(/-/g, '').substring(0, 10), 16) || Date.now(),
+                user: currentUserName,
+                time: time,
+                type: 'Meeting',
+                text: meeting.details,
+                timestamp: timestamp,
+                originalData: { 
+                    type: 'meeting', 
+                    id: meeting.id, 
+                    leadId: meeting.leadId,
+                    details: meeting.details,
+                    date: formattedDate || meeting.dateTime
+                }
+            });
         });
-
-        // 3. Show success (In a real app, we'd use a toast library here)
-        console.log(`Successfully invited ${email} to ${listing}`);
-        setIsInviteModalOpen(false);
-    };
-
-    const handleDeleteActivity = (dayId: number, itemId: number) => {
-        setActivities(prev => prev.map(day => {
-            if (day.id === dayId) {
+        
+        // Process activities (excluding CALL and MEETING types since they're shown separately)
+        activities.forEach((activity) => {
+            // Skip CALL and MEETING type activities since calls and meetings are already processed above
+            if (activity.type === 'CALL' || activity.type === 'MEETING') {
+                return;
+            }
+            
+            const date = new Date(activity.createdAt);
+            const dateKey = date.toLocaleDateString([], { day: 'numeric', month: 'short' });
+            const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }).toLowerCase();
+            const timestamp = date.getTime(); // Store timestamp for sorting
+            
+            if (!dayMap.has(dateKey)) {
+                dayMap.set(dateKey, []);
+            }
+            
+            dayMap.get(dateKey)!.push({
+                id: parseInt(activity.id.replace(/-/g, '').substring(0, 10), 16) || Date.now(),
+                user: currentUserName,
+                time: time,
+                type: 'Activity',
+                text: activity.description,
+                timestamp: timestamp,
+                originalData: { type: 'activity', id: activity.id, leadId: activity.leadId, activityType: activity.type }
+            });
+        });
+        
+        // Convert to DayActivity array and sort by date (newest first)
+        const dayActivitiesWithTimestamp: (DayActivity & { dayTimestamp: number })[] = Array.from(dayMap.entries())
+            .map(([date, items], index) => {
+                // Sort items within each day by timestamp (newest first)
+                const sortedItems = items.sort((a, b) => {
+                    return b.timestamp - a.timestamp;
+                });
+                
                 return {
-                    ...day,
-                    items: day.items.filter((item: any) => item.id !== itemId)
+                    id: index + 1,
+                    date: date,
+                    items: sortedItems,
+                    // Store the newest timestamp of the day for day-level sorting
+                    dayTimestamp: sortedItems.length > 0 ? sortedItems[0].timestamp : 0
                 };
+            })
+            .sort((a, b) => {
+                // Sort days by the newest item timestamp in each day (newest first)
+                return b.dayTimestamp - a.dayTimestamp;
+            });
+        
+        // Remove dayTimestamp from final result
+        const dayActivities: DayActivity[] = dayActivitiesWithTimestamp.map(({ dayTimestamp, ...dayActivity }) => dayActivity);
+        
+        return dayActivities;
+    }, [notes, tasks, activities, calls, meetings, currentUserName]);
+
+    const handleNoteConfirm = async (noteText: string, _file?: File | null) => {
+        if (!id) return;
+
+        try {
+            // TODO: Handle file upload if _file is provided
+            // For now, we'll just create the note without attachment
+            const noteData = {
+                content: noteText,
+                attachmentUrl: _file ? undefined : undefined, // Will be set after file upload
+            };
+
+            if (editingItem && editingItem.item.originalData?.type === 'note') {
+                // Update existing note
+                await updateNoteMutation.mutateAsync({
+                    leadId: id,
+                    noteId: editingItem.item.originalData.id,
+                    noteData: { content: noteText }
+                });
+            } else {
+                // Create new note
+                await createNoteMutation.mutateAsync({
+                    leadId: id,
+                    noteData
+                });
             }
-            return day;
-        }).filter(day => day.items.length > 0));
+            
+            setIsNoteModalOpen(false);
+            setEditingItem(null);
+        } catch (error) {
+            console.error('Failed to save note:', error);
+            alert(`Failed to save note: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    };
+
+    const handleTaskCreate = async (taskData: { details: string; date: string; assignee: string }, _file?: File | null) => {
+        if (!id) return;
+
+        // Validate required fields
+        if (!taskData.details.trim()) {
+            alert('Task description is required');
+            return;
+        }
+
+        if (!taskData.date) {
+            alert('Due date is required');
+            return;
+        }
+
+        try {
+            // Parse the datetime-local value and convert to ISO string
+            const dueDate = new Date(taskData.date);
+            if (isNaN(dueDate.getTime())) {
+                alert('Invalid date format');
+                return;
+            }
+
+            const taskDto = {
+                description: taskData.details.trim(),
+                dueDate: dueDate.toISOString(),
+            };
+
+            if (editingItem && editingItem.item.originalData?.type === 'task') {
+                // Update existing task
+                await updateTaskMutation.mutateAsync({
+                    leadId: id,
+                    taskId: editingItem.item.originalData.id,
+                    taskData: {
+                        description: taskData.details.trim(),
+                        dueDate: dueDate.toISOString(),
+                    }
+                });
+            } else {
+                // Create new task
+                await createTaskMutation.mutateAsync({
+                    leadId: id,
+                    taskData: taskDto
+                });
+            }
+            
+            setIsTaskModalOpen(false);
+            setEditingItem(null);
+        } catch (error) {
+            console.error('Failed to save task:', error);
+            alert(`Failed to save task: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    };
+
+    const handleLogCreate = async (logData: { details: string; date: string; results: string }, _file?: File | null) => {
+        if (!id) return;
+
+        // Validate required fields
+        if (!logData.details || !logData.details.trim()) {
+            alert('Details are required');
+            return;
+        }
+
+        if (logData.details.length > 5000) {
+            alert('Details must not exceed 5000 characters');
+            return;
+        }
+
+        if (!logData.date) {
+            alert('Date and time are required');
+            return;
+        }
+
+        if (!logData.results || !logData.results.trim()) {
+            alert('Call result is required');
+            return;
+        }
+
+        try {
+            // Convert datetime-local format to ISO string
+            const dateObj = new Date(logData.date);
+            if (isNaN(dateObj.getTime())) {
+                alert('Invalid date format. Date and time must be a valid ISO 8601 date string');
+                return;
+            }
+            const isoDate = dateObj.toISOString();
+
+            if (editingItem && editingItem.item.originalData?.type === 'call') {
+                // Update existing call
+                await updateCallMutation.mutateAsync({
+                    leadId: id,
+                    callId: editingItem.item.originalData.id,
+                    callData: {
+                        details: logData.details.trim(),
+                        dateTime: isoDate,
+                        callResult: logData.results.trim()
+                    }
+                });
+            } else {
+                // Create new call
+                await createCallMutation.mutateAsync({
+                    leadId: id,
+                    callData: {
+                        details: logData.details.trim(),
+                        dateTime: isoDate,
+                        callResult: logData.results.trim()
+                    }
+                });
+            }
+            
+            setIsLogModalOpen(false);
+            setEditingItem(null);
+        } catch (error) {
+            console.error('Failed to create/update call:', error);
+            alert(`Failed to ${editingItem ? 'update' : 'create'} call: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    };
+
+    const handleMeetingCreate = async (meetingData: { details: string; date: string }, _file?: File | null) => {
+        if (!id) return;
+
+        // Validate required fields
+        if (!meetingData.details || !meetingData.details.trim()) {
+            alert('Details are required');
+            return;
+        }
+
+        if (meetingData.details.length > 5000) {
+            alert('Details must not exceed 5000 characters');
+            return;
+        }
+
+        if (!meetingData.date) {
+            alert('Date and time are required');
+            return;
+        }
+
+        try {
+            // Convert datetime-local format to ISO string
+            const dateObj = new Date(meetingData.date);
+            if (isNaN(dateObj.getTime())) {
+                alert('Invalid date format. Date and time must be a valid ISO 8601 date string');
+                return;
+            }
+            const isoDate = dateObj.toISOString();
+
+            if (editingItem && editingItem.item.originalData?.type === 'meeting') {
+                // Update existing meeting
+                await updateMeetingMutation.mutateAsync({
+                    leadId: id,
+                    meetingId: editingItem.item.originalData.id,
+                    meetingData: {
+                        details: meetingData.details.trim(),
+                        dateTime: isoDate
+                    }
+                });
+            } else {
+                // Create new meeting
+                await createMeetingMutation.mutateAsync({
+                    leadId: id,
+                    meetingData: {
+                        details: meetingData.details.trim(),
+                        dateTime: isoDate
+                    }
+                });
+            }
+            
+            setIsMeetingModalOpen(false);
+            setEditingItem(null);
+        } catch (error) {
+            console.error('Failed to create/update meeting:', error);
+            alert(`Failed to ${editingItem ? 'update' : 'create'} meeting: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    };
+
+
+    const handleInviteSend = async (email: string, listing: string) => {
+        if (!id) return;
+
+        try {
+            // 1. Update status to Working if it's New
+            if (status === 'NEW') {
+                await updateLeadMutation.mutateAsync({
+                    id,
+                    data: { status: 'WORKING' }
+                });
+                setStatus('WORKING');
+            }
+
+            // 2. Add Activity to timeline
+            const activityData = {
+                activityType: 'EMAIL',
+                description: `Sent invitation to ${email} for listing: ${listing}`,
+                metadata: {
+                    email,
+                    listing,
+                }
+            };
+
+            await createActivityMutation.mutateAsync({
+                leadId: id,
+                activityData
+            });
+
+            setIsInviteModalOpen(false);
+        } catch (error) {
+            console.error('Failed to send invitation:', error);
+            alert(`Failed to send invitation: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    };
+
+    const handleDeleteActivity = async (dayId: number, itemId: number) => {
+        if (!id) {
+            console.error('No lead ID available');
+            return;
+        }
+
+        const item = transformedActivities
+            .find(day => day.id === dayId)
+            ?.items.find(item => item.id === itemId);
+
+        if (!item) {
+            console.error('Item not found:', { dayId, itemId });
+            return;
+        }
+
+        if (!item.originalData) {
+            console.error('Item originalData not found:', item);
+            return;
+        }
+
+        try {
+            const { type, id: entityId } = item.originalData;
+            console.log('Deleting item:', { type, entityId, leadId: id });
+
+            if (type === 'note') {
+                await deleteNoteMutation.mutateAsync({
+                    leadId: id,
+                    noteId: entityId
+                });
+            } else if (type === 'task') {
+                await deleteTaskMutation.mutateAsync({
+                    leadId: id,
+                    taskId: entityId
+                });
+            } else if (type === 'call') {
+                await deleteCallMutation.mutateAsync({
+                    leadId: id,
+                    callId: entityId
+                });
+            } else if (type === 'meeting') {
+                await deleteMeetingMutation.mutateAsync({
+                    leadId: id,
+                    meetingId: entityId
+                });
+            } else if (type === 'activity') {
+                await deleteActivityMutation.mutateAsync({
+                    leadId: id,
+                    activityId: entityId
+                });
+            } else {
+                console.error('Unknown item type:', type);
+                alert(`Cannot delete: Unknown item type ${type}`);
+            }
+        } catch (error) {
+            console.error('Failed to delete item:', error);
+            alert(`Failed to delete item: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
     };
 
     const handleEditActivity = (dayId: number, item: any) => {
         setEditingItem({ dayId, item });
         if (item.type === 'Note') {
             setIsNoteModalOpen(true);
-        } else if (item.text.includes('[Meeting Log]')) {
+        } else if (item.type === 'Meeting' || item.originalData?.type === 'meeting') {
             setIsMeetingModalOpen(true);
-        } else if (item.text.includes('[Call Log]')) {
+        } else if (item.type === 'Call' || item.originalData?.type === 'call') {
             setIsLogModalOpen(true);
         } else if (item.type === 'Task') {
             setIsTaskModalOpen(true);
@@ -496,11 +761,33 @@ const LeadDetail = () => {
                                             onClick={async () => {
                                                 if (id && s !== status) {
                                                     try {
+                                                        const oldStatus = status;
                                                         await updateLeadMutation.mutateAsync({
                                                             id,
                                                             data: { status: s }
                                                         });
                                                         setStatus(s);
+                                                        
+                                                        // Create activity for status change
+                                                        try {
+                                                            console.log('Creating activity for status change:', id, oldStatus, s);
+                                                            const activity = await createActivityMutation.mutateAsync({
+                                                                leadId: id,
+                                                                activityData: {
+                                                                    activityType: 'STATUS_CHANGE',
+                                                                    description: `Lead status changed from ${getStatusLabel(oldStatus)} to ${getStatusLabel(s)}`,
+                                                                    metadata: {
+                                                                        action: 'STATUS_CHANGED',
+                                                                        oldStatus: oldStatus,
+                                                                        newStatus: s
+                                                                    }
+                                                                }
+                                                            });
+                                                            console.log('Activity created successfully for status change:', activity);
+                                                        } catch (activityError) {
+                                                            console.error('Failed to create activity for status change:', activityError);
+                                                            alert(`Warning: Status changed but failed to log activity: ${activityError instanceof Error ? activityError.message : 'Unknown error'}`);
+                                                        }
                                                     } catch (error) {
                                                         console.error('Failed to update lead status:', error);
                                                     }
@@ -574,7 +861,7 @@ const LeadDetail = () => {
                                     Invite to Apply
                                 </button>
                                 <button
-                                    onClick={() => setIsMessageModalOpen(true)}
+                                    onClick={() => navigate(`/dashboard/messages?leadId=${id}&leadName=${encodeURIComponent(leadInfo.fullName || 'Lead')}`)}
                                     className="bg-[#D9D9D9] text-[#222] py-2.5 px-2 rounded-lg text-[10px] font-bold border border-[#C9C9C9] shadow-[inset_0_4px_4px_0_rgba(0,0,0,0.25)] hover:bg-gray-300 transition-all uppercase tracking-tight"
                                 >
                                     Send a Text Message
@@ -663,7 +950,7 @@ const LeadDetail = () => {
                 <div className="bg-[#F0F0F650] p-8 rounded-[2.5rem] border border-white shadow-sm">
                     {/* Timeline */}
                     {(() => {
-                        const filteredActivities = activities.map(day => ({
+                        const filteredActivities = transformedActivities.map(day => ({
                             ...day,
                             items: day.items.filter(item => {
                                 if (activeFilter === 'All') return true;
@@ -741,21 +1028,29 @@ const LeadDetail = () => {
                                                 {item.text}
                                             </div>
 
-                                            {/* Action Icons */}
-                                            <div className="absolute top-3 right-5 flex items-center gap-2 opacity-100 group-hover:opacity-100 transition-opacity">
-                                                <button
-                                                    onClick={() => handleEditActivity(day.id, item)}
-                                                    className="text-[#3E706F] hover:scale-110 transition-transform p-1.5 "
-                                                >
-                                                    <Edit2 className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteActivity(day.id, item.id)}
-                                                    className="text-red-500 hover:scale-110 transition-transform p-1.5 "
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
+                                            {/* Action Icons - Not for activity*/}
+                                            {(item.type !== 'Activity') && (
+                                                <div className="absolute top-3 right-5 flex items-center gap-2 opacity-100 group-hover:opacity-100 transition-opacity">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleEditActivity(day.id, item);
+                                                        }}
+                                                        className="text-[#3E706F] hover:scale-110 transition-transform p-1.5 "
+                                                    >
+                                                        <Edit2 className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDeleteActivity(day.id, item.id);
+                                                        }}
+                                                        className="text-red-500 hover:scale-110 transition-transform p-1.5 "
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
@@ -798,7 +1093,7 @@ const LeadDetail = () => {
                     setEditingItem(null);
                 }}
                 onCreate={handleLogCreate}
-                initialData={editingItem?.item.text.includes('[Call Log]') ? {
+                initialData={editingItem?.item.originalData?.type === 'call' ? {
                     details: editingItem.item.originalData?.details || '',
                     date: editingItem.item.originalData?.date || '',
                     results: editingItem.item.originalData?.results || '',
@@ -812,16 +1107,11 @@ const LeadDetail = () => {
                     setEditingItem(null);
                 }}
                 onCreate={handleMeetingCreate}
-                initialData={editingItem?.item.text.includes('[Meeting Log]') ? {
+                initialData={editingItem?.item.originalData?.type === 'meeting' ? {
                     details: editingItem.item.originalData?.details || '',
                     date: editingItem.item.originalData?.date || '',
                     image: editingItem.item.image
                 } : undefined}
-            />
-            <MessageModal
-                isOpen={isMessageModalOpen}
-                onClose={() => setIsMessageModalOpen(false)}
-                onConfirm={handleMessageConfirm}
             />
             <InviteToApplyModal
                 isOpen={isInviteModalOpen}
