@@ -76,6 +76,10 @@
   --status-new-text: #FF2D55;
   --status-critical-bg: #FF3D3D;
   --status-normal-bg: #1BCB40;
+  --status-expired-bg: #FFBEBE;
+  --status-expired-text: #C56565;
+  --status-pending-bg: #FFF4CC;
+  --status-pending-text: #D97706;
 }
 
 

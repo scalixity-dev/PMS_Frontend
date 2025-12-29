@@ -1,4 +1,5 @@
 import type { Lease } from "../types";
+import { StatusPill } from "./StatusPill";
 
 export const LeaseCard = ({ lease }: { lease: Lease }) => {
     return (
@@ -12,10 +13,7 @@ export const LeaseCard = ({ lease }: { lease: Lease }) => {
 
             <div className="flex items-center gap-12">
                 {/* Status Pill */}
-                <div className="bg-[#B6FF8C]/40 text-[#1BCB40] px-5 py-2.5 rounded-md flex items-center gap-2.5 font-semibold text-sm">
-                    <div className="w-2.5 h-2.5 rounded-full bg-[#1BCB40]"></div>
-                    {lease.status}
-                </div>
+                <StatusPill status={lease.status} />
 
                 {/* Avatar */}
                 <div className="w-11 h-11 rounded-full overflow-hidden border-2 border-white shadow-sm">

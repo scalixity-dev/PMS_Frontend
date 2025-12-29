@@ -14,14 +14,9 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import PrimaryActionButton from "../../components/common/buttons/PrimaryActionButton";
+import type { PropertyFeature } from "./types";
 
 // --- Types ---
-interface PropertyFeature {
-    icon: React.ReactNode;
-    label: string;
-    value: string;
-}
-
 interface PropertyData {
     id: string;
     title: string;
@@ -33,12 +28,18 @@ interface PropertyData {
     discount: string;
     description: string;
     features: PropertyFeature[];
+    detailedFeatures: { label: string; selected: boolean }[];
+    amenities: { label: string; selected: boolean }[];
+    leaseTerms: { label: string; value: string; selected?: boolean }[];
+    policies: { label: string; value: string }[];
+    policyDescription: string;
     agent: {
         name: string;
         phone: string;
         email: string;
     };
 }
+
 
 // --- Internal Components ---
 
@@ -134,11 +135,43 @@ const PropertyDetailUser: React.FC = () => {
             { icon: <AirVent />, label: "A.C", value: "Central air" },
             { icon: <Dog />, label: "Pets", value: "Yes" },
         ],
+        detailedFeatures: [
+            { label: "Dishwasher", selected: false },
+            { label: "Hardwood floors", selected: true },
+            { label: "Internet", selected: false },
+            { label: "Carpet", selected: false },
+            { label: "Unfurnished", selected: false },
+            { label: "Renovated", selected: true },
+            { label: "Beautifully designed floor plans", selected: true },
+        ],
+        amenities: [
+            { label: "Dishwasher", selected: false },
+            { label: "Hardwood floors", selected: true },
+            { label: "Internet", selected: false },
+            { label: "Carpet", selected: false },
+            { label: "Unfurnished", selected: false },
+        ],
+        leaseTerms: [
+            { label: "Lease Duration", value: "6 Months - 12 Months" },
+            { label: "Security deposit", value: "300.00" },
+            { label: "Amount Refundable", value: "300.00" },
+            { label: "Month-to-month", value: "Yes", selected: true },
+            { label: "Application fee", value: "45.00" },
+            { label: "Screening", value: "Yes" },
+        ],
+        policies: [
+            { label: "Cat", value: "Ok" },
+            { label: "Small dog", value: "Yes" },
+            { label: "Pet Deposit", value: "300.00" },
+            { label: "Pet Fee", value: "40.00" },
+        ],
+        policyDescription: "We allow pets up to 60lbs. Pet deposit is $200 and non refundable pet fee is $200 with $40 per month in pet rent.",
         agent: {
             name: "Carlo at Washington",
             phone: "(305) 651-2820",
             email: "carlo@gmail.com"
         }
+
     };
 
     return (
@@ -172,40 +205,38 @@ const PropertyDetailUser: React.FC = () => {
                 <div className="lg:col-span-2">
                     <div className="mb-8">
                         <h1 className="text-3xl font-bold text-[var(--dashboard-text-main)] mb-2">{PROPERTY_DATA.title}</h1>
-                        <p className="text-gray-500 text-lg flex items-center gap-2 font-medium">{PROPERTY_DATA.address}</p>
+                        <p className="text-[#4B5563] text-xl flex items-center gap-2 font-light leading-relaxed">{PROPERTY_DATA.address}</p>
                     </div>
 
                     <div className="flex justify-between items-start mb-10">
                         <div>
-                            <p className="text-2xl font-bold text-[var(--dashboard-text-main)]">{PROPERTY_DATA.availabilityDate}</p>
-                            <p className="text-gray-400 font-medium">Availability</p>
+                            <p className="text-2xl font-semibold text-[var(--dashboard-text-main)]">{PROPERTY_DATA.availabilityDate}</p>
+                            <p className="text-[#4B5563] font-normal">Availability</p>
                         </div>
                         <div className="text-right">
-                            <p className="text-2xl font-bold text-[var(--dashboard-text-main)]">
-                                {PROPERTY_DATA.currency}{PROPERTY_DATA.rent} <span className="text-gray-500 text-lg font-medium">month</span>
+                            <p className="text-2xl font-semibold text-[var(--dashboard-text-main)]">
+                                {PROPERTY_DATA.currency}{PROPERTY_DATA.rent} <span className="text-gray-500 text-xl font-normal">month</span>
                             </p>
-                            <p className="text-gray-400 font-medium">Rent</p>
+                            <p className="text-[#4B5563] font-normal">Rent</p>
                         </div>
                     </div>
 
                     <FeaturesGrid features={PROPERTY_DATA.features} />
 
                     <div className="mb-8">
-                        <div className="mb-8 border-b-[0.5px] border-[var(--dashboard-border)] w-fit relative pb-0">
-                            <div className="flex items-end gap-2 overflow-x-auto scrollbar-hide">
+                        <div className="mb-8 border-b-[0.5px] border-[var(--dashboard-border)] w-fit relative pb-0 overflow-hidden">
+                            <div className="flex items-end gap-2">
                                 {["Description", "Features", "Amenities", "Lease Terms", "Policies"].map((tab) => (
                                     <button
                                         key={tab}
                                         onClick={() => setActiveBottomTab(tab)}
-                                        className={`relative px-6 py-2.5 text-sm font-bold transition-all duration-200 whitespace-nowrap ${activeBottomTab === tab
-                                            ? "bg-[var(--dashboard-accent)] text-white rounded-t-2xl z-10"
-                                            : "text-gray-400 hover:text-gray-600"
+                                        className={`relative px-8 py-3 text-base font-medium transition-all duration-200 whitespace-nowrap ${activeBottomTab === tab
+                                            ? "bg-[var(--dashboard-accent)] text-white rounded-t-[12px] z-10"
+                                            : "text-gray-500 hover:text-gray-700"
                                             }`}
+
                                     >
                                         {tab}
-                                        {activeBottomTab === tab && (
-                                            <div className="absolute -bottom-[60px] left-[-20%] right-[-20%] h-40 bg-[var(--dashboard-glow)] blur-[40px] -z-10 pointer-events-none rounded-full"></div>
-                                        )}
                                     </button>
                                 ))}
                             </div>
@@ -214,15 +245,87 @@ const PropertyDetailUser: React.FC = () => {
                         <div className="text-gray-500 leading-relaxed text-[15px]">
                             {activeBottomTab === "Description" ? (
                                 <p>{PROPERTY_DATA.description}</p>
+                            ) : activeBottomTab === "Features" ? (
+                                <div className="flex flex-wrap gap-4 mt-8">
+                                    {PROPERTY_DATA.detailedFeatures.map((feature, idx) => (
+                                        <div
+                                            key={idx}
+                                            className={`px-6 py-2.5 rounded-[10px] text-[15px] font-medium transition-all duration-200 border 
+                                                ${feature.selected
+                                                    ? "bg-[var(--dashboard-accent)] text-white border-[var(--dashboard-accent)] shadow-[0px_3.68px_3.68px_0px_rgba(0,0,0,0.15)]"
+                                                    : "bg-white text-[#4B5563] border-gray-200 shadow-sm"
+                                                }`}
+                                        >
+                                            {feature.label}
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : activeBottomTab === "Amenities" ? (
+                                <div className="flex flex-wrap gap-4 mt-8">
+                                    {PROPERTY_DATA.amenities.map((amenity, idx) => (
+                                        <div
+                                            key={idx}
+                                            className={`px-6 py-2.5 rounded-[10px] text-[15px] font-medium transition-all duration-200 border 
+                                                ${amenity.selected
+                                                    ? "bg-[var(--dashboard-accent)] text-white border-[var(--dashboard-accent)] shadow-[0px_3.68px_3.68px_0px_rgba(0,0,0,0.15)]"
+                                                    : "bg-white text-[#4B5563] border-gray-200 shadow-sm"
+                                                }`}
+                                        >
+                                            {amenity.label}
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : activeBottomTab === "Lease Terms" ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
+                                    {PROPERTY_DATA.leaseTerms.map((term, idx) => (
+                                        <div
+                                            key={idx}
+                                            className={`px-3 py-3 rounded-2xl transition-all duration-200 border 
+                                                ${term.selected
+                                                    ? "bg-[#A3E671] border-[#A3E671] shadow-[0px_3.68px_3.68px_0px_rgba(0,0,0,0.15)]"
+                                                    : "bg-white border-gray-50 shadow-[0px_3.68px_3.68px_0px_rgba(0,0,0,0.1)]"
+                                                }`}
+                                        >
+                                            <p className={`text-[16px] font-medium mb-1 ${term.selected ? "text-[#1A1A1A]" : "text-[#1A1A1A]"}`}>
+                                                {term.label}
+                                            </p>
+                                            <p className={`text-[15px] ${term.selected ? "text-[#4B5563]" : "text-[#4B5563]"}`}>
+                                                {term.value}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : activeBottomTab === "Policies" ? (
+                                <div className="mt-8">
+                                    <div className="bg-white rounded-[20px] border border-gray-50 shadow-[0px_3.68px_15px_0px_rgba(0,0,0,0.08)] flex overflow-hidden w-full lg:w-fit">
+                                        {PROPERTY_DATA.policies.map((policy, idx) => (
+                                            <div
+                                                key={idx}
+                                                className={`flex-1 px-6 py-4 min-w-[150px]  ${idx !== PROPERTY_DATA.policies.length - 1 ? "border-r border-gray-100" : ""
+                                                    }`}
+                                            >
+                                                <p className="text-[17px] font-medium text-[#1A1A1A] mb-1">{policy.label}</p>
+                                                <p className="text-[15px] text-[#4B5563]">{policy.value}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <p className="mt-8 text-[var(--dashboard-accent)] font-normal leading-relaxed max-w-xl">
+                                        {PROPERTY_DATA.policyDescription}
+                                    </p>
+                                </div>
                             ) : (
                                 <p>Content for {activeBottomTab} will be available soon.</p>
                             )}
+
+
+
+
                         </div>
                     </div>
                 </div>
 
                 <div className="lg:col-span-1">
-                    <div className="bg-white rounded-[var(--radius-lg)] border border-gray-50 p-8 shadow-[0_20px_50px_rgba(0,0,0,0.05)] sticky top-24">
+                    <div className="bg-white rounded-[var(--radius-lg)] border border-gray-50 p-8 shadow-[0px_3.68px_3.68px_0px_rgba(0,0,0,0.2)] sticky top-24">
                         <p className="text-[#4B5563] text-sm mb-1 uppercase tracking-normal font-normal">Listing Agent</p>
                         <h3 className="text-2xl font-bold text-[var(--dashboard-text-main)] mb-3">{PROPERTY_DATA.agent.name}</h3>
 

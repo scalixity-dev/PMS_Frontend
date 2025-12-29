@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 export interface Transaction {
     id: string;
     status: 'Open' | 'Overdue' | 'Active' | 'New' | 'Critical' | 'Normal';
@@ -24,7 +26,7 @@ export interface Lease {
 export type TabType = "Outstanding" | "Leases" | "Service providers" | "Inspections";
 
 export interface PropertyFeature {
-    icon: string; // Icon name from lucide-react
+    icon: ReactNode; // React component from lucide-react
     label: string;
     value: string;
 }
@@ -61,5 +63,3 @@ export interface FilterState {
     availability: string;
     selectedAmenities: string[];
 }
-
-

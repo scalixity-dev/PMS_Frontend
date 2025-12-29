@@ -104,6 +104,8 @@ import FileManager from './pages/userdashboard/FileManager';
 import Downloads from './pages/userdashboard/Downloads';
 import NewRequest from './pages/userdashboard/NewRequest';
 import PropertyDetailUser from './pages/userdashboard/PropertyDetail';
+import SettingsUser from './pages/userdashboard/Settings';
+
 
 
 // Settings pages
@@ -712,7 +714,9 @@ const App: React.FC = () => {
               <Route path="/userdashboard/file-manager" element={<FileManager />} />
               <Route path="/userdashboard/downloads" element={<Downloads />} />
               <Route path="/userdashboard/new-request" element={<NewRequest />} />
+              <Route path="/userdashboard/settings" element={<SettingsUser />} />
             </Route>
+
 
             {/* Catch-all route */}
             <Route path="*" element={<HomePage />} />
