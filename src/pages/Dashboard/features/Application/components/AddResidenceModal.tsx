@@ -13,13 +13,15 @@ export interface ResidenceFormData {
     state: string;
     zip: string;
     country: string;
-    residencyType: 'Rent' | 'Own';
+    residencyType: 'Rent' | 'Own' | 'Others';
+    otherResidencyType?: string;
     moveInDate: Date | undefined;
     moveOutDate: Date | undefined;
     reason: string;
     // Rent specific
     landlordName?: string;
     landlordPhone?: string;
+    landlordEmail?: string;
     landlordPhoneCountryCode?: string;
     rentAmount?: string;
 }
@@ -45,11 +47,13 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
         zip: '',
         country: '',
         residencyType: 'Rent',
+        otherResidencyType: '',
         moveInDate: undefined,
         moveOutDate: undefined,
         reason: '',
         landlordName: '',
         landlordPhone: '',
+        landlordEmail: '',
         landlordPhoneCountryCode: undefined,
         rentAmount: ''
     });
@@ -206,8 +210,10 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
                 reason: '',
                 landlordName: '',
                 landlordPhone: '',
+                landlordEmail: '',
                 landlordPhoneCountryCode: undefined,
-                rentAmount: ''
+                rentAmount: '',
+                otherResidencyType: ''
             });
             setErrors({});
             setTouched({});
@@ -247,6 +253,22 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
             if (key === 'landlordPhone' && (!value || value.trim() === '')) {
                 return 'Landlord phone is required';
             }
+            if (key === 'landlordEmail') {
+                if (!value || value.trim() === '') {
+                    return 'Landlord email is required';
+                }
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(value)) {
+                    return 'Please enter a valid email address';
+                }
+            }
+        }
+
+        // Conditional field for Others
+        if (formData.residencyType === 'Others' && key === 'otherResidencyType') {
+            if (!value || (typeof value === 'string' && value.trim() === '')) {
+                return 'Please specify the residence type';
+            }
         }
 
         return '';
@@ -278,13 +300,22 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
 
         // Conditional: landlord fields when Rent
         if (formData.residencyType === 'Rent') {
-            ['landlordName', 'landlordPhone'].forEach(field => {
+            ['landlordName', 'landlordPhone', 'landlordEmail'].forEach(field => {
                 const error = validateField(field, (formData as any)[field]);
                 if (error) {
                     newErrors[field] = error;
                     isValid = false;
                 }
             });
+        }
+
+        // Conditional: otherResidencyType when Others
+        if (formData.residencyType === 'Others') {
+            const error = validateField('otherResidencyType', formData.otherResidencyType);
+            if (error) {
+                newErrors.otherResidencyType = error;
+                isValid = false;
+            }
         }
 
         setErrors(newErrors);
@@ -309,16 +340,29 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
                     const moveOutDateError = validateField('moveOutDate', formData.moveOutDate);
                     const landlordNameError = validateField('landlordName', formData.landlordName);
                     const landlordPhoneError = validateField('landlordPhone', formData.landlordPhone);
+                    const landlordEmailError = validateField('landlordEmail', formData.landlordEmail);
                     if (moveOutDateError) newErrors.moveOutDate = moveOutDateError;
                     if (landlordNameError) newErrors.landlordName = landlordNameError;
                     if (landlordPhoneError) newErrors.landlordPhone = landlordPhoneError;
+                    if (landlordEmailError) newErrors.landlordEmail = landlordEmailError;
+                } else if (value === 'Others') {
+                    // Start validation for otherResidencyType if needed (though usually we wait for user format)
+                    // Clear rent errors
+                    delete newErrors.moveOutDate;
+                    delete newErrors.landlordName;
+                    delete newErrors.landlordPhone;
+                    delete newErrors.landlordEmail;
+                    setFormData(prev => ({ ...prev, moveOutDate: undefined }));
                 } else {
+                    // Own
                     // Clear moveOutDate and landlord field errors when switching to Own
                     delete newErrors.moveOutDate;
                     delete newErrors.landlordName;
                     delete newErrors.landlordPhone;
+                    delete newErrors.landlordEmail;
+                    delete newErrors.otherResidencyType;
                     // Clear moveOutDate value when switching to Own
-                    setFormData(prev => ({ ...prev, moveOutDate: undefined }));
+                    setFormData(prev => ({ ...prev, moveOutDate: undefined, otherResidencyType: '' }));
                 }
                 return newErrors;
             });
@@ -346,6 +390,11 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
             allTouched.moveOutDate = true;
             allTouched.landlordName = true;
             allTouched.landlordPhone = true;
+            allTouched.landlordEmail = true;
+        }
+
+        if (formData.residencyType === 'Others') {
+            allTouched.otherResidencyType = true;
         }
 
         setTouched(allTouched);
@@ -368,6 +417,7 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
                 reason: '',
                 landlordName: '',
                 landlordPhone: '',
+                landlordEmail: '',
                 rentAmount: ''
             });
             setErrors({});
@@ -392,10 +442,15 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
 
         // Check conditional landlord fields when Rent
         if (formData.residencyType === 'Rent') {
-            const landlordValid = ['landlordName', 'landlordPhone'].every(field => {
+            const landlordValid = ['landlordName', 'landlordPhone', 'landlordEmail'].every(field => {
                 return !validateField(field, (formData as any)[field]);
             });
             if (!landlordValid) return false;
+        }
+
+        // Check conditional otherResidencyType when Others
+        if (formData.residencyType === 'Others') {
+            if (validateField('otherResidencyType', formData.otherResidencyType)) return false;
         }
 
         return baseValid;
@@ -565,8 +620,38 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
                                     </div>
                                     Own
                                 </button>
+                                <button
+                                    className={`flex items-center gap-2 px-8 py-3 rounded-full font-bold transition-all ${formData.residencyType === 'Others'
+                                        ? 'bg-[#84D34C] text-white shadow-md'
+                                        : 'bg-white text-gray-500'
+                                        }`}
+                                    onClick={() => handleChange('residencyType', 'Others')}
+                                >
+                                    <div className={`w-4 h-4 rounded-full border-2 ${formData.residencyType === 'Others' ? 'border-white bg-transparent' : 'border-gray-400'}`} >
+                                        {formData.residencyType === 'Others' && <div className="w-full h-full bg-white rounded-full scale-50" />}
+                                    </div>
+                                    Others
+                                </button>
                             </div>
                         </div>
+
+                        {/* Specify Other Residency Type */}
+                        {formData.residencyType === 'Others' && (
+                            <div className="animate-in fade-in slide-in-from-top-4 duration-300">
+                                <label className={labelClasses}>Please Specify *</label>
+                                <input
+                                    type="text"
+                                    placeholder="Enter residence type"
+                                    className={getInputClassWithError('otherResidencyType')}
+                                    value={formData.otherResidencyType || ''}
+                                    onChange={(e) => handleChange('otherResidencyType', e.target.value)}
+                                    onBlur={() => handleBlur('otherResidencyType')}
+                                />
+                                {touched.otherResidencyType && errors.otherResidencyType && (
+                                    <p className="text-red-500 text-xs mt-1 ml-1">{errors.otherResidencyType}</p>
+                                )}
+                            </div>
+                        )}
 
                         {/* Dates */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -638,96 +723,113 @@ const AddResidenceModal: React.FC<AddResidenceModalProps> = ({ isOpen, onClose, 
                                     )}
                                 </div>
                                 <div>
-                                    <label className={labelClasses}>Landlord Phone *</label>
-                                    <div className={`flex bg-white rounded-lg transition-all ${touched.landlordPhone && errors.landlordPhone
-                                        ? 'border-red-500 border-2'
-                                        : 'focus-within:ring-2 focus-within:ring-[#3A6D6C] focus-within:border-[#3A6D6C]'
-                                        }`}>
-                                        {/* Phone Code Selector */}
-                                        <div className="relative" ref={landlordPhoneCodeRef}>
-                                            <button
-                                                type="button"
-                                                onClick={() => setIsLandlordPhoneCodeOpen(!isLandlordPhoneCodeOpen)}
-                                                className={`flex items-center gap-1 p-4 border-r rounded-l-lg focus:outline-none text-sm min-w-[100px] hover:bg-gray-50 transition-colors ${touched.landlordPhone && errors.landlordPhone
-                                                    ? 'border-red-500'
-                                                    : 'border-gray-200'
-                                                    }`}
-                                            >
-                                                <span className="text-sm font-medium">
-                                                    {selectedLandlordPhoneCode ? (
-                                                        <span className="flex items-center gap-1">
-                                                            <span>{selectedLandlordPhoneCode.flag}</span>
-                                                            <span className="hidden sm:inline">{selectedLandlordPhoneCode.phonecode}</span>
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-gray-500">Code</span>
-                                                    )}
-                                                </span>
-                                                <ChevronDown size={16} className={`text-gray-500 transition-transform ${isLandlordPhoneCodeOpen ? 'rotate-180' : ''}`} />
-                                            </button>
+                                    <div className="mb-6">
+                                        <label className={labelClasses}>Landlord Phone *</label>
+                                        <div className={`flex bg-white rounded-lg transition-all ${touched.landlordPhone && errors.landlordPhone
+                                            ? 'border-red-500 border-2'
+                                            : 'focus-within:ring-2 focus-within:ring-[#3A6D6C] focus-within:border-[#3A6D6C]'
+                                            }`}>
+                                            {/* Phone Code Selector */}
+                                            <div className="relative" ref={landlordPhoneCodeRef}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setIsLandlordPhoneCodeOpen(!isLandlordPhoneCodeOpen)}
+                                                    className={`flex items-center gap-1 p-4 border-r rounded-l-lg focus:outline-none text-sm min-w-[100px] hover:bg-gray-50 transition-colors ${touched.landlordPhone && errors.landlordPhone
+                                                        ? 'border-red-500'
+                                                        : 'border-gray-200'
+                                                        }`}
+                                                >
+                                                    <span className="text-sm font-medium">
+                                                        {selectedLandlordPhoneCode ? (
+                                                            <span className="flex items-center gap-1">
+                                                                <span>{selectedLandlordPhoneCode.flag}</span>
+                                                                <span className="hidden sm:inline">{selectedLandlordPhoneCode.phonecode}</span>
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-gray-500">Code</span>
+                                                        )}
+                                                    </span>
+                                                    <ChevronDown size={16} className={`text-gray-500 transition-transform ${isLandlordPhoneCodeOpen ? 'rotate-180' : ''}`} />
+                                                </button>
 
-                                            {/* Dropdown */}
-                                            {isLandlordPhoneCodeOpen && (
-                                                <div className="absolute left-0 top-full mt-1 w-80 bg-white border border-gray-300 rounded-lg shadow-lg z-[100] max-h-80 overflow-hidden flex flex-col">
-                                                    {/* Search Input */}
-                                                    <div className="p-2 border-b border-gray-200">
-                                                        <div className="relative">
-                                                            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                                            <input
-                                                                type="text"
-                                                                placeholder="Search country or code..."
-                                                                value={landlordPhoneCodeSearch}
-                                                                onChange={(e) => setLandlordPhoneCodeSearch(e.target.value)}
-                                                                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3A6D6C] text-sm"
-                                                                autoFocus
-                                                            />
+                                                {/* Dropdown */}
+                                                {isLandlordPhoneCodeOpen && (
+                                                    <div className="absolute left-0 top-full mt-1 w-80 bg-white border border-gray-300 rounded-lg shadow-lg z-[100] max-h-80 overflow-hidden flex flex-col">
+                                                        {/* Search Input */}
+                                                        <div className="p-2 border-b border-gray-200">
+                                                            <div className="relative">
+                                                                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                                <input
+                                                                    type="text"
+                                                                    placeholder="Search country or code..."
+                                                                    value={landlordPhoneCodeSearch}
+                                                                    onChange={(e) => setLandlordPhoneCodeSearch(e.target.value)}
+                                                                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3A6D6C] text-sm"
+                                                                    autoFocus
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Options List */}
+                                                        <div className="overflow-y-auto max-h-64">
+                                                            {filteredLandlordPhoneCodes.length > 0 ? (
+                                                                filteredLandlordPhoneCodes.map((code) => (
+                                                                    <button
+                                                                        key={code.value}
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            handleChange('landlordPhoneCountryCode', code.value);
+                                                                            setIsLandlordPhoneCodeOpen(false);
+                                                                            setLandlordPhoneCodeSearch('');
+                                                                        }}
+                                                                        className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-[#3A6D6C]/10 transition-colors text-left ${formData.landlordPhoneCountryCode === code.value ? 'bg-[#3A6D6C]/10' : ''
+                                                                            }`}
+                                                                    >
+                                                                        <span className="text-xl">{code.flag}</span>
+                                                                        <span className="flex-1 text-sm font-medium text-gray-900">{code.name}</span>
+                                                                        <span className="text-sm text-gray-600">{code.phonecode}</span>
+                                                                    </button>
+                                                                ))
+                                                            ) : (
+                                                                <div className="px-4 py-8 text-center text-sm text-gray-500">
+                                                                    No countries found
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
+                                                )}
+                                            </div>
 
-                                                    {/* Options List */}
-                                                    <div className="overflow-y-auto max-h-64">
-                                                        {filteredLandlordPhoneCodes.length > 0 ? (
-                                                            filteredLandlordPhoneCodes.map((code) => (
-                                                                <button
-                                                                    key={code.value}
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        handleChange('landlordPhoneCountryCode', code.value);
-                                                                        setIsLandlordPhoneCodeOpen(false);
-                                                                        setLandlordPhoneCodeSearch('');
-                                                                    }}
-                                                                    className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-[#3A6D6C]/10 transition-colors text-left ${formData.landlordPhoneCountryCode === code.value ? 'bg-[#3A6D6C]/10' : ''
-                                                                        }`}
-                                                                >
-                                                                    <span className="text-xl">{code.flag}</span>
-                                                                    <span className="flex-1 text-sm font-medium text-gray-900">{code.name}</span>
-                                                                    <span className="text-sm text-gray-600">{code.phonecode}</span>
-                                                                </button>
-                                                            ))
-                                                        ) : (
-                                                            <div className="px-4 py-8 text-center text-sm text-gray-500">
-                                                                No countries found
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            )}
+                                            {/* Phone Number Input */}
+                                            <input
+                                                type="tel"
+                                                placeholder="Enter phone number"
+                                                className={`flex-1 min-w-0 p-4 rounded-r-lg focus:outline-none text-sm placeholder-gray-400 bg-white border-0 ${touched.landlordPhone && errors.landlordPhone ? 'text-red-500' : 'text-gray-700'
+                                                    }`}
+                                                value={formData.landlordPhone}
+                                                onChange={(e) => handleChange('landlordPhone', e.target.value)}
+                                                onBlur={() => handleBlur('landlordPhone')}
+                                            />
                                         </div>
-
-                                        {/* Phone Number Input */}
-                                        <input
-                                            type="tel"
-                                            placeholder="Enter phone number"
-                                            className={`flex-1 min-w-0 p-4 rounded-r-lg focus:outline-none text-sm placeholder-gray-400 bg-white border-0 ${touched.landlordPhone && errors.landlordPhone ? 'text-red-500' : 'text-gray-700'
-                                                }`}
-                                            value={formData.landlordPhone}
-                                            onChange={(e) => handleChange('landlordPhone', e.target.value)}
-                                            onBlur={() => handleBlur('landlordPhone')}
-                                        />
+                                        {touched.landlordPhone && errors.landlordPhone && (
+                                            <p className="text-red-500 text-xs mt-1 ml-1">{errors.landlordPhone}</p>
+                                        )}
                                     </div>
-                                    {touched.landlordPhone && errors.landlordPhone && (
-                                        <p className="text-red-500 text-xs mt-1 ml-1">{errors.landlordPhone}</p>
-                                    )}
+
+                                    <div>
+                                        <label className={labelClasses}>Landlord Email *</label>
+                                        <input
+                                            type="email"
+                                            placeholder="Enter email"
+                                            className={getInputClassWithError('landlordEmail')}
+                                            value={formData.landlordEmail}
+                                            onChange={(e) => handleChange('landlordEmail', e.target.value)}
+                                            onBlur={() => handleBlur('landlordEmail')}
+                                        />
+                                        {touched.landlordEmail && errors.landlordEmail && (
+                                            <p className="text-red-500 text-xs mt-1 ml-1">{errors.landlordEmail}</p>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         ) : (
