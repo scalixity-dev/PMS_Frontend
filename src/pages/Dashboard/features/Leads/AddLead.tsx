@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import PrimaryActionButton from '../../../../components/common/buttons/PrimaryActionButton';
-import { useCreateLead } from '../../../../hooks/useLeadQueries';
+import { useCreateLead, useCreateActivity } from '../../../../hooks/useLeadQueries';
 import type { LeadType } from '../../../../services/lead.service';
 
 const AddLead = () => {
     const navigate = useNavigate();
     const createLeadMutation = useCreateLead();
+    const createActivityMutation = useCreateActivity();
     const [leadType, setLeadType] = useState<LeadType>('HOT');
     const [formData, setFormData] = useState({
         fullName: '',
@@ -61,6 +62,28 @@ const AddLead = () => {
                 });
 
                 console.log('Lead created successfully:', newLead);
+
+                // Create activity for new lead creation
+                try {
+                    console.log('Creating activity for new lead:', newLead.id);
+                    const activity = await createActivityMutation.mutateAsync({
+                        leadId: newLead.id,
+                        activityData: {
+                            type: 'OTHER',
+                            description: `New lead created: ${formData.fullName} (${leadType})`,
+                            metadata: {
+                                action: 'LEAD_CREATED',
+                                leadName: formData.fullName,
+                                leadType: leadType
+                            }
+                        }
+                    });
+                    console.log('Activity created successfully:', activity);
+                } catch (activityError) {
+                    console.error('Failed to create activity for new lead:', activityError);
+                    alert(`Warning: Lead created but failed to log activity: ${activityError instanceof Error ? activityError.message : 'Unknown error'}`);
+                    // Don't block navigation if activity creation fails
+                }
 
                 // Navigate to the newly created lead's detail page
                 navigate(`/dashboard/leasing/leads/${newLead.id}`);
