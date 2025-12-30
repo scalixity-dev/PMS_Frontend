@@ -8,13 +8,13 @@ import type { BackendEquipment } from '../../../../services/equipment.service';
 
 // Map backend status to display format
 const mapStatus = (status: string): string => {
-  const statusMap: Record<string, string> = {
-    'ACTIVE': 'active',
-    'UNDER_MAINTENANCE': 'maintenance',
-    'REPLACED': 'inactive',
-    'DISPOSED': 'inactive',
-  };
-  return statusMap[status] || status.toLowerCase();
+    const statusMap: Record<string, string> = {
+        'ACTIVE': 'active',
+        'UNDER_MAINTENANCE': 'maintenance',
+        'REPLACED': 'inactive',
+        'DISPOSED': 'inactive',
+    };
+    return statusMap[status] || status.toLowerCase();
 };
 
 // Legacy mock data for reference (can be removed)
@@ -287,16 +287,16 @@ const Equipments: React.FC = () => {
 
             <div className="p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem] overflow-visible">
                 {/* Header */}
-                <div className="flex items-center gap-4 mb-6">
-                    <div className="flex items-center gap-4">
-                        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-xl font-bold text-gray-800 hover:text-gray-600 transition-colors">
-                            <ChevronLeft className="w-6 h-6" />
-                            Equipments
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-2">
+                        <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
+                            <ChevronLeft className="w-6 h-6 text-gray-800" />
                         </button>
+                        <h1 className="text-2xl font-bold text-gray-800">Equipments</h1>
                     </div>
                     <button
                         onClick={() => navigate('/dashboard/equipments/add')}
-                        className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-2"
+                        className="px-5 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-1"
                     >
                         Add Equipment
                         <Plus className="w-4 h-4" />
@@ -329,88 +329,88 @@ const Equipments: React.FC = () => {
 
                 {/* Table Section */}
                 {!isLoading && !error && (
-                <>
-                <div className="bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm mt-8">
-                    {/* Table Header */}
-                    <div className="text-white px-6 py-4 grid grid-cols-[40px_80px_1fr_1.5fr_1fr_120px] gap-4 items-center text-sm font-medium">
-                        <div className="flex items-center justify-center ml-2">
-                            <button onClick={toggleAll} className="flex items-center justify-center">
-                                <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${selectedItems.length === paginatedEquipments.length && paginatedEquipments.length > 0 ? 'bg-[#7BD747]' : 'bg-white/20 border border-white/50'}`}>
-                                    {selectedItems.length === paginatedEquipments.length && paginatedEquipments.length > 0 && <Check className="w-3.5 h-3.5 text-white" />}
-                                </div>
-                            </button>
-                        </div>
-                        <div>ID</div>
-                        <div>Brand</div>
-                        <div>Category & subcategory</div>
-                        <div>Property</div>
-                        <div></div>
-                    </div>
-                </div>
-
-                {/* Table Body */}
-                <div className="flex flex-col gap-3 bg-[#F0F0F6] p-4 rounded-[2rem] rounded-t">
-                    {paginatedEquipments.length > 0 ? (
-                        paginatedEquipments.map((item) => (
-                            <div
-                                key={item.id}
-                                onClick={() => navigate(`/dashboard/equipments/${item.id}`)}
-                                className="bg-white rounded-2xl px-6 py-4 grid grid-cols-[40px_80px_1fr_1.5fr_1fr_120px] gap-4 items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                            >
-                                <div className="flex items-center justify-center">
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            toggleSelection(item.id);
-                                        }}
-                                        className="flex items-center justify-center"
-                                    >
-                                        <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${selectedItems.includes(item.id) ? 'bg-[#7BD747]' : 'bg-gray-200'}`}>
-                                            {selectedItems.includes(item.id) && <Check className="w-3.5 h-3.5 text-white" />}
+                    <>
+                        <div className="bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm mt-8">
+                            {/* Table Header */}
+                            <div className="text-white px-6 py-4 grid grid-cols-[40px_80px_1fr_1.5fr_1fr_120px] gap-4 items-center text-sm font-medium">
+                                <div className="flex items-center justify-center ml-2">
+                                    <button onClick={toggleAll} className="flex items-center justify-center">
+                                        <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${selectedItems.length === paginatedEquipments.length && paginatedEquipments.length > 0 ? 'bg-[#7BD747]' : 'bg-white/20 border border-white/50'}`}>
+                                            {selectedItems.length === paginatedEquipments.length && paginatedEquipments.length > 0 && <Check className="w-3.5 h-3.5 text-white" />}
                                         </div>
                                     </button>
                                 </div>
-                                <div className="font-bold text-gray-800 text-sm">{item.id.slice(0, 8)}</div>
-                                <div className="font-semibold text-gray-800 text-sm">{item.brand}</div>
-                                <div className="text-gray-800 text-sm font-semibold">
-                                    {item.category} {item.subcategory ? `/ ${item.subcategory}` : ''}
-                                </div>
-                                <div className="text-[#2E6819] text-sm font-semibold">{item.property}</div>
-
-                                <div className="flex items-center justify-end gap-3">
-                                   
-                                    <button
-                                        onClick={(e) => handleEdit(item.id, e)}
-                                        className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
-                                    >
-                                        <Edit className="w-5 h-5" />
-                                    </button>
-                                    <button
-                                        onClick={(e) => openDeleteModal(item, e)}
-                                        disabled={deleteEquipmentMutation.isPending}
-                                        className="text-red-500 hover:text-red-600 transition-colors disabled:opacity-50"
-                                    >
-                                        <Trash2 className="w-5 h-5" />
-                                    </button>
-                                </div>
+                                <div>ID</div>
+                                <div>Brand</div>
+                                <div>Category & subcategory</div>
+                                <div>Property</div>
+                                <div></div>
                             </div>
-                        ))
-                    ) : (
-                        <div className="text-center py-12 bg-white rounded-2xl">
-                            <p className="text-gray-500 text-lg">No equipments found matching your filters</p>
-                            <p className="text-gray-400 text-sm mt-2">Try adjusting your search or filters</p>
                         </div>
-                    )}
-                </div>
 
-                {totalPages > 1 && (
-                    <Pagination
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        onPageChange={setCurrentPage}
-                    />
-                )}
-                </>
+                        {/* Table Body */}
+                        <div className="flex flex-col gap-3 bg-[#F0F0F6] p-4 rounded-[2rem] rounded-t">
+                            {paginatedEquipments.length > 0 ? (
+                                paginatedEquipments.map((item) => (
+                                    <div
+                                        key={item.id}
+                                        onClick={() => navigate(`/dashboard/equipments/${item.id}`)}
+                                        className="bg-white rounded-2xl px-6 py-4 grid grid-cols-[40px_80px_1fr_1.5fr_1fr_120px] gap-4 items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                                    >
+                                        <div className="flex items-center justify-center">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    toggleSelection(item.id);
+                                                }}
+                                                className="flex items-center justify-center"
+                                            >
+                                                <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${selectedItems.includes(item.id) ? 'bg-[#7BD747]' : 'bg-gray-200'}`}>
+                                                    {selectedItems.includes(item.id) && <Check className="w-3.5 h-3.5 text-white" />}
+                                                </div>
+                                            </button>
+                                        </div>
+                                        <div className="font-bold text-gray-800 text-sm">{item.id.slice(0, 8)}</div>
+                                        <div className="font-semibold text-gray-800 text-sm">{item.brand}</div>
+                                        <div className="text-gray-800 text-sm font-semibold">
+                                            {item.category} {item.subcategory ? `/ ${item.subcategory}` : ''}
+                                        </div>
+                                        <div className="text-[#2E6819] text-sm font-semibold">{item.property}</div>
+
+                                        <div className="flex items-center justify-end gap-3">
+
+                                            <button
+                                                onClick={(e) => handleEdit(item.id, e)}
+                                                className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
+                                            >
+                                                <Edit className="w-5 h-5" />
+                                            </button>
+                                            <button
+                                                onClick={(e) => openDeleteModal(item, e)}
+                                                disabled={deleteEquipmentMutation.isPending}
+                                                className="text-red-500 hover:text-red-600 transition-colors disabled:opacity-50"
+                                            >
+                                                <Trash2 className="w-5 h-5" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="text-center py-12 bg-white rounded-2xl">
+                                    <p className="text-gray-500 text-lg">No equipments found matching your filters</p>
+                                    <p className="text-gray-400 text-sm mt-2">Try adjusting your search or filters</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {totalPages > 1 && (
+                            <Pagination
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                onPageChange={setCurrentPage}
+                            />
+                        )}
+                    </>
                 )}
 
                 {/* Delete Equipment Modal */}

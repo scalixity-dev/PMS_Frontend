@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, useOutletContext } from 'react-router-dom';
 import {
     ChevronLeft,
     ChevronDown,
@@ -355,6 +355,7 @@ const PropertyDetail: React.FC = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const unitId = searchParams.get('unitId'); // Get unit ID from query parameter
+    const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
 
     // All hooks must be declared before any early returns
     const [activeTab, setActiveTab] = useState('profile');
@@ -389,10 +390,10 @@ const PropertyDetail: React.FC = () => {
 
     // Fetch property data from backend
     const { data: backendProperty, isLoading: isLoadingProperty, error: propertyError } = useGetProperty(id || null, !!id);
-    
+
     // Fetch full unit data if viewing a specific unit
     const { data: fullUnitData, isLoading: isLoadingUnit, error: unitError } = useGetUnit(unitId || null, !!unitId && !!id);
-    
+
     const isLoading = isLoadingProperty || isLoadingUnit;
     const error = propertyError || unitError;
 
@@ -680,7 +681,7 @@ const PropertyDetail: React.FC = () => {
             parking,
             laundry,
             airConditioning,
-            description: selectedUnit 
+            description: selectedUnit
                 ? `${backendProperty.propertyName} - ${selectedUnit.unitName || 'Unit'}. ${backendProperty.description || ''}`
                 : backendProperty.description || '',
             attachments: backendProperty.attachments || [],
@@ -712,7 +713,7 @@ const PropertyDetail: React.FC = () => {
     // Loading state
     if (isLoading) {
         return (
-            <div className="max-w-6xl mx-auto min-h-screen pb-10 flex items-center justify-center">
+            <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-6xl'} mx-auto min-h-screen pb-10 flex items-center justify-center transition-all duration-300`}>
                 <div className="text-center">
                     <Loader2 className="w-8 h-8 animate-spin text-[#3A6D6C] mx-auto mb-4" />
                     <p className="text-gray-600">Loading property details...</p>
@@ -724,7 +725,7 @@ const PropertyDetail: React.FC = () => {
     // Error state - only show error if both backend and mock data failed
     if ((error || !property) && !mockData) {
         return (
-            <div className="max-w-6xl mx-auto min-h-screen pb-10 flex items-center justify-center">
+            <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-6xl'} mx-auto min-h-screen pb-10 flex items-center justify-center transition-all duration-300`}>
                 <div className="text-center">
                     <p className="text-red-500 text-lg mb-4">
                         {error instanceof Error ? error.message : 'Failed to load property details'}
@@ -746,7 +747,7 @@ const PropertyDetail: React.FC = () => {
     }
 
     return (
-        <div className="max-w-6xl mx-auto min-h-screen pb-10">
+        <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen pb-10 transition-all duration-300`}>
             {/* Breadcrumb */}
             <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
                 <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>Dashboard</span>
@@ -1013,7 +1014,7 @@ const PropertyDetail: React.FC = () => {
                                         <div className="bg-white rounded-[2rem] p-6 shadow-sm flex flex-col w-[340px]">
                                             <div className="flex items-center justify-between mb-4">
                                                 <h3 className="text-lg font-bold text-gray-800">Units Occupancy</h3>
-                                                <button 
+                                                <button
                                                     type="button"
                                                     onClick={() => navigate('/dashboard/portfolio/units')}
                                                     className="bg-[#3A6D6C] text-white px-4 py-1.5 rounded-full text-xs font-medium hover:bg-[#2c5554] transition-colors"

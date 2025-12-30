@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { ChevronLeft, Download, Check, MoreHorizontal, ChevronDown } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import { useTransactionStore } from '../Transactions/store/transactionStore';
@@ -60,6 +60,7 @@ const MOCK_PAYMENTS = [
 
 const Payments: React.FC = () => {
     const navigate = useNavigate();
+    const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
     const [activeTab, setActiveTab] = useState<'All' | 'Income' | 'Expense' | 'Refund'>('All');
     const [selectedItems, setSelectedItems] = useState<number[]>([]);
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
@@ -204,7 +205,7 @@ const Payments: React.FC = () => {
     };
 
     return (
-        <div className="max-w-7xl mx-auto min-h-screen font-outfit">
+        <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit transition-all duration-300`}>
             {/* Modals - Reused from Transactions */}
             <EditInvoiceModal />
             <DeleteTransactionModal

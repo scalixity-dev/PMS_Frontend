@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { ChevronLeft, Plus, Edit, Trash2, Check, Loader2 } from 'lucide-react';
 import DashboardFilter from '../../components/DashboardFilter';
 import { useGetAllKeys, useDeleteKey } from '../../../../hooks/useKeysQueries';
@@ -20,6 +20,7 @@ const mapKeyType = (keyType: string): string => {
 
 const KeysLocks = () => {
     const navigate = useNavigate();
+    const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [filters, setFilters] = useState<Record<string, string[]>>({});
@@ -119,7 +120,7 @@ const KeysLocks = () => {
     };
 
     return (
-        <div className="max-w-7xl mx-auto min-h-screen font-outfit">
+        <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit transition-all duration-300`}>
             {/* Breadcrumb */}
             <div className="inline-flex items-center px-4 py-2 bg-[#E0E5E5] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
                 <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
@@ -129,12 +130,12 @@ const KeysLocks = () => {
 
             <div className="p-6 bg-[#E0E5E5] min-h-screen rounded-[2rem]">
                 {/* Header */}
-                <div className="flex items-center gap-6 mb-6">
+                <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-2">
-                        <button onClick={() => navigate(-1)} className="p-2 hover:bg-black/5 rounded-full transition-colors">
-                            <ChevronLeft className="w-6 h-6 text-black" />
+                        <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
+                            <ChevronLeft className="w-6 h-6 text-gray-800" />
                         </button>
-                        <h1 className="text-2xl font-bold text-black">Keys & Locks</h1>
+                        <h1 className="text-2xl font-bold text-gray-800">Keys & Locks</h1>
                     </div>
                     <div className="flex gap-3">
                         <button onClick={() => navigate('/dashboard/portfolio/add-key')} className="px-5 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2 shadow-sm">

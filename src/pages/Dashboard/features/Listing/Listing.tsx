@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { useQueries } from '@tanstack/react-query';
 import ListingHeader from './components/ListingHeader';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
@@ -29,6 +29,7 @@ interface ListingCardData {
 
 const Listing: React.FC = () => {
     const navigate = useNavigate();
+    const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
     const [searchQuery, setSearchQuery] = useState('');
     const [filters, setFilters] = useState<{
         status: string[];
@@ -100,7 +101,7 @@ const Listing: React.FC = () => {
         const activeListingsMap = new Map<string, BackendListing>();
         // Create a map of unitId -> active listing (for units)
         const activeUnitListingsMap = new Map<string, BackendListing>();
-        
+
         listings.forEach((listing: BackendListing) => {
             if (listing.listingStatus === 'ACTIVE' && listing.isActive) {
                 // Check if listing is for a unit or property
@@ -138,7 +139,7 @@ const Listing: React.FC = () => {
         backendProperties.forEach((backendProperty: BackendProperty) => {
             if (backendProperty.propertyType === 'MULTI') {
                 const units = unitsByPropertyId.get(backendProperty.id) || [];
-                
+
                 // Format address for the property
                 let propertyAddress = 'Address not available';
                 let country: string | undefined;
@@ -151,7 +152,7 @@ const Listing: React.FC = () => {
                         backendProperty.address.zipCode,
                         backendProperty.address.country,
                     ].filter(part => part && part.trim() !== '');
-                    
+
                     if (addressParts.length > 0) {
                         propertyAddress = addressParts.join(', ');
                     }
@@ -166,12 +167,12 @@ const Listing: React.FC = () => {
                     let price: number | null = null;
                     if (hasActiveListing && activeListing) {
                         if (activeListing.listingPrice !== null && activeListing.listingPrice !== undefined) {
-                            price = typeof activeListing.listingPrice === 'string' 
-                                ? parseFloat(activeListing.listingPrice) 
+                            price = typeof activeListing.listingPrice === 'string'
+                                ? parseFloat(activeListing.listingPrice)
                                 : Number(activeListing.listingPrice);
                         } else if (activeListing.monthlyRent !== null && activeListing.monthlyRent !== undefined) {
-                            price = typeof activeListing.monthlyRent === 'string' 
-                                ? parseFloat(activeListing.monthlyRent) 
+                            price = typeof activeListing.monthlyRent === 'string'
+                                ? parseFloat(activeListing.monthlyRent)
                                 : Number(activeListing.monthlyRent);
                         }
                     } else if (unit.leasing?.monthlyRent) {
@@ -210,7 +211,7 @@ const Listing: React.FC = () => {
 
                     transformed.push({
                         id: unit.id,
-                        name: `${backendProperty.propertyName} - ${unit.unitName || 'Unit'}`,
+                        name: `${backendProperty.propertyName} - ${unit.unitName || 'Unit'} `,
                         address: propertyAddress,
                         price,
                         status: hasActiveListing ? 'listed' : 'unlisted',
@@ -243,7 +244,7 @@ const Listing: React.FC = () => {
                         backendProperty.address.zipCode,
                         backendProperty.address.country,
                     ].filter(part => part && part.trim() !== '');
-                    
+
                     if (addressParts.length > 0) {
                         address = addressParts.join(', ');
                     }
@@ -254,12 +255,12 @@ const Listing: React.FC = () => {
                 if (hasActiveListing && activeListing) {
                     // Prefer listingPrice, fallback to monthlyRent
                     if (activeListing.listingPrice !== null && activeListing.listingPrice !== undefined) {
-                        price = typeof activeListing.listingPrice === 'string' 
-                            ? parseFloat(activeListing.listingPrice) 
+                        price = typeof activeListing.listingPrice === 'string'
+                            ? parseFloat(activeListing.listingPrice)
                             : Number(activeListing.listingPrice);
                     } else if (activeListing.monthlyRent !== null && activeListing.monthlyRent !== undefined) {
-                        price = typeof activeListing.monthlyRent === 'string' 
-                            ? parseFloat(activeListing.monthlyRent) 
+                        price = typeof activeListing.monthlyRent === 'string'
+                            ? parseFloat(activeListing.monthlyRent)
                             : Number(activeListing.monthlyRent);
                     }
                 } else if (backendProperty.marketRent) {
@@ -278,9 +279,9 @@ const Listing: React.FC = () => {
                     : 0;
 
                 // Get image
-                const image = backendProperty.coverPhotoUrl 
-                    || backendProperty.photos?.find((p) => p.isPrimary)?.photoUrl 
-                    || backendProperty.photos?.[0]?.photoUrl 
+                const image = backendProperty.coverPhotoUrl
+                    || backendProperty.photos?.find((p) => p.isPrimary)?.photoUrl
+                    || backendProperty.photos?.[0]?.photoUrl
                     || '';
 
                 transformed.push({
@@ -348,7 +349,7 @@ const Listing: React.FC = () => {
     const error = listingsError || propertiesError || unitsError;
 
     return (
-        <div className="max-w-7xl mx-auto min-h-screen">
+        <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen transition-all duration-300`}>
             <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
                 <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
                 <span className="text-gray-500 text-sm mx-1">/</span>
