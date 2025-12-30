@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Check, Plus, Pencil, Trash2, Loader2, ChevronDown } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import AddTaskModal from './components/AddTaskModal';
@@ -25,6 +26,7 @@ export interface Task {
 }
 
 const Tasks: React.FC = () => {
+    const location = useLocation();
     const [searchQuery, setSearchQuery] = useState('');
     const [filters, setFilters] = useState<Record<string, string[]>>({});
     const [selectedTaskIds, setSelectedTaskIds] = useState<(string | number)[]>([]);
@@ -33,6 +35,15 @@ const Tasks: React.FC = () => {
     const [editingTask, setEditingTask] = useState<Task | null>(null);
     const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+    // Check if navigated from Dashboard with openAddModal state
+    useEffect(() => {
+        if (location.state?.openAddModal) {
+            setIsAddModalOpen(true);
+            // Clear the state to prevent reopening on refresh
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state]);
 
     // Fetch properties for filter dropdown
     const { data: properties = [] } = useGetAllProperties();
@@ -98,7 +109,7 @@ const Tasks: React.FC = () => {
     const stats = useMemo(() => {
         const activeTasks = tasks.filter(t => t.status === 'Active').length;
         const resolvedTasks = tasks.filter(t => t.status === 'Resolved').length;
-        
+
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const todayTasks = tasks.filter(t => {
@@ -168,7 +179,7 @@ const Tasks: React.FC = () => {
     ): 'OPEN' | 'IN_PROGRESS' | 'ON_HOLD' | 'RESOLVED' | 'COMPLETED' | 'CANCELLED' => {
         // Normalize frontend status (case-insensitive, trimmed)
         const normalizedStatus = frontendStatus.trim();
-        
+
         // Active status group: OPEN, IN_PROGRESS, ON_HOLD
         if (normalizedStatus === 'Active' || normalizedStatus === 'Open' || normalizedStatus === 'In Progress' || normalizedStatus === 'On Hold') {
             // If we have current backend status and it's already in the Active group, preserve it
@@ -191,7 +202,7 @@ const Tasks: React.FC = () => {
             // Default 'Active' -> 'OPEN'
             return 'OPEN';
         }
-        
+
         // Resolved status group: RESOLVED, COMPLETED, CANCELLED
         if (normalizedStatus === 'Resolved' || normalizedStatus === 'Completed' || normalizedStatus === 'Cancelled') {
             // If we have current backend status and it's already in the Resolved group, preserve it
@@ -211,7 +222,7 @@ const Tasks: React.FC = () => {
             // Default 'Resolved' -> 'RESOLVED'
             return 'RESOLVED';
         }
-        
+
         // Fallback: if status doesn't match known values, try to preserve current or default to OPEN
         if (currentBackendStatus) {
             const current = currentBackendStatus.toUpperCase();
@@ -219,7 +230,7 @@ const Tasks: React.FC = () => {
                 return current as 'OPEN' | 'IN_PROGRESS' | 'ON_HOLD' | 'RESOLVED' | 'COMPLETED' | 'CANCELLED';
             }
         }
-        
+
         // Ultimate fallback
         console.warn(`[Tasks] Unknown frontend status "${frontendStatus}", defaulting to OPEN`);
         return 'OPEN';
@@ -235,7 +246,7 @@ const Tasks: React.FC = () => {
             // TODO: Fetch current backend status from API to preserve granularity
             // For now, we don't have access to the original backend status, so we use defaults
             const backendStatus = mapStatusToBackend(newStatus);
-            
+
             await updateTaskMutation.mutateAsync({
                 id: taskId,
                 updateData: {
@@ -448,20 +459,18 @@ const Tasks: React.FC = () => {
                                                 handleStatusChange(task, e.target.value as 'Active' | 'Resolved');
                                             }}
                                             disabled={updateTaskMutation.isPending}
-                                            className={`appearance-none px-4 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 pr-8 ${
-                                                task.status === 'Resolved'
-                                                    ? 'bg-[#E8F8F0] text-[#2E6819] focus:ring-[#2E6819]'
-                                                    : 'bg-yellow-100 text-yellow-700 focus:ring-yellow-500'
-                                            } ${updateTaskMutation.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            className={`appearance-none px-4 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 pr-8 ${task.status === 'Resolved'
+                                                ? 'bg-[#E8F8F0] text-[#2E6819] focus:ring-[#2E6819]'
+                                                : 'bg-yellow-100 text-yellow-700 focus:ring-yellow-500'
+                                                } ${updateTaskMutation.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
                                             onClick={(e) => e.stopPropagation()}
                                         >
                                             <option value="Active">Active</option>
                                             <option value="Resolved">Resolved</option>
                                         </select>
-                                        <ChevronDown 
-                                            className={`absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none ${
-                                                task.status === 'Resolved' ? 'text-[#2E6819]' : 'text-yellow-700'
-                                            }`} 
+                                        <ChevronDown
+                                            className={`absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none ${task.status === 'Resolved' ? 'text-[#2E6819]' : 'text-yellow-700'
+                                                }`}
                                         />
                                     </div>
 

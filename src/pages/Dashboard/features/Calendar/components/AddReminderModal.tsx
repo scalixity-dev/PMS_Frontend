@@ -271,7 +271,7 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
                             placeholder="Enter Details"
                             rows={2}
                             disabled={isLoading}
-                            className={`w-full bg-[#F0F2F5] text-gray-800 placeholder-gray-400 px-3 py-2.5 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all resize-none shadow-sm text-sm ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            className={`w-full bg-white text-gray-800 placeholder-gray-400 px-3 py-2.5 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all resize-none shadow-sm text-sm ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                         />
                     </div>
 

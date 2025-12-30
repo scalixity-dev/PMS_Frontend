@@ -67,7 +67,7 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
                 </button>
                 <button
                     onClick={onAddReminder}
-                    className="flex items-center gap-2 px-4 py-2.5 border border-green-500 text-gray-700 font-medium rounded-full hover:bg-gray-50 transition-colors"
+                    className="flex bg-white items-center gap-2 px-4 py-2.5 border border-green-500 text-gray-700 font-medium rounded-full hover:bg-gray-50 transition-colors"
                 >
                     Add Reminder
                     <Plus size={18} />

@@ -105,10 +105,10 @@ const ReminderDetailModal: React.FC<ReminderDetailModalProps> = ({ isOpen, onClo
         >
             <div
                 ref={modalRef}
-                className="bg-white rounded-[2rem] w-full max-w-xl shadow-2xl animate-in zoom-in-95 duration-200 relative overflow-hidden"
+                className="bg-white rounded-[2rem] w-full max-w-xl shadow-2xl animate-in zoom-in-95 duration-200 relative overflow-hidden flex flex-col max-h-[90vh]"
             >
                 {/* Header */}
-                <div className="bg-[#3A6D6C] p-6 flex items-center justify-between text-white">
+                <div className="bg-[#3A6D6C] p-6 flex items-center justify-between text-white flex-shrink-0">
                     <h2 id="reminder-modal-title" className="text-xl font-bold truncate pr-4">Reminder details</h2>
                     <button
                         onClick={onClose}
@@ -119,8 +119,8 @@ const ReminderDetailModal: React.FC<ReminderDetailModalProps> = ({ isOpen, onClo
                     </button>
                 </div>
 
-                {/* Body */}
-                <div className="p-8 space-y-6">
+                {/* Scrollable Body */}
+                <div className="p-8 overflow-y-auto flex-1">
                     <div className="space-y-4">
                         {/* Title */}
                         <div>
@@ -186,40 +186,41 @@ const ReminderDetailModal: React.FC<ReminderDetailModalProps> = ({ isOpen, onClo
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <div className="pt-2 flex gap-3">
-                        <button
-                            onClick={() => {
-                                if (onEdit && reminder) {
-                                    onEdit(reminder);
-                                }
-                            }}
-                            className="flex-1 bg-blue-500 text-white py-3 rounded-xl font-bold text-sm hover:bg-blue-600 transition-colors shadow-lg flex items-center justify-center gap-2"
-                            aria-label="Edit reminder"
-                        >
-                            <Edit size={16} />
-                            Edit
-                        </button>
-                        <button
-                            onClick={() => {
-                                if (onDelete && reminder) {
-                                    onDelete(reminder);
-                                }
-                            }}
-                            className="flex-1 bg-red-500 text-white py-3 rounded-xl font-bold text-sm hover:bg-red-600 transition-colors shadow-lg flex items-center justify-center gap-2"
-                            aria-label="Delete reminder"
-                        >
-                            <Trash2 size={16} />
-                            Delete
-                        </button>
-                        <button
-                            onClick={onClose}
-                            className="flex-1 bg-[#3A6D6C] text-white py-3 rounded-xl font-bold text-sm hover:bg-[#2c5251] transition-colors shadow-lg"
-                            aria-label="Close reminder details"
-                        >
-                            Close
-                        </button>
-                    </div>
+                {/* Footer Buttons */}
+                <div className="p-8 pt-4 flex gap-3 flex-shrink-0 bg-white border-t border-gray-100">
+                    <button
+                        onClick={() => {
+                            if (onEdit && reminder) {
+                                onEdit(reminder);
+                            }
+                        }}
+                        className="flex-1 bg-blue-500 text-white py-3 rounded-xl font-bold text-sm hover:bg-blue-600 transition-colors shadow-lg flex items-center justify-center gap-2"
+                        aria-label="Edit reminder"
+                    >
+                        <Edit size={16} />
+                        Edit
+                    </button>
+                    <button
+                        onClick={() => {
+                            if (onDelete && reminder) {
+                                onDelete(reminder);
+                            }
+                        }}
+                        className="flex-1 bg-red-500 text-white py-3 rounded-xl font-bold text-sm hover:bg-red-600 transition-colors shadow-lg flex items-center justify-center gap-2"
+                        aria-label="Delete reminder"
+                    >
+                        <Trash2 size={16} />
+                        Delete
+                    </button>
+                    <button
+                        onClick={onClose}
+                        className="flex-1 bg-[#3A6D6C] text-white py-3 rounded-xl font-bold text-sm hover:bg-[#2c5251] transition-colors shadow-lg"
+                        aria-label="Close reminder details"
+                    >
+                        Close
+                    </button>
                 </div>
             </div>
         </div>
