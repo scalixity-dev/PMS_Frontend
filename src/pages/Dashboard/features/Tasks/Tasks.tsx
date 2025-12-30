@@ -37,6 +37,7 @@ const Tasks: React.FC = () => {
     const [editingTask, setEditingTask] = useState<Task | null>(null);
     const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [activeSavedFilter, setActiveSavedFilter] = useState<string | null>(null);
 
     // Mock saved filters state
     const [savedFilters, setSavedFilters] = useState<SavedFilter[]>([
@@ -44,7 +45,7 @@ const Tasks: React.FC = () => {
             name: 'Urgent Tasks',
             filters: {
                 status: ['active'],
-                frequency: ['DAILY']
+                date: ['today']
             }
         }
     ]);
@@ -194,6 +195,12 @@ const Tasks: React.FC = () => {
 
     const handleSelectSavedFilter = (filter: SavedFilter) => {
         setFilters(filter.filters);
+        setActiveSavedFilter(filter.name);
+    };
+
+    const handleClearSavedFilter = () => {
+        setFilters({});
+        setActiveSavedFilter(null);
     };
 
     // Map frontend status to backend status
@@ -410,6 +417,8 @@ const Tasks: React.FC = () => {
                     savedFilters={savedFilters}
                     onSaveFilter={handleSaveFilter}
                     onSelectSavedFilter={handleSelectSavedFilter}
+                    onClearSavedFilter={handleClearSavedFilter}
+                    activeSavedFilter={activeSavedFilter}
                     initialFilters={filters}
                 />
 

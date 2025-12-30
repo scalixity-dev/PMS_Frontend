@@ -12,6 +12,8 @@ export interface UnitGroup {
     units: Unit[];
     propertyType?: 'SINGLE' | 'MULTI';
     country?: string;
+    propertyStatus?: 'active' | 'archived';
+    balanceCategory?: 'low' | 'medium' | 'high';
 }
 
 interface UnitGroupCardProps {

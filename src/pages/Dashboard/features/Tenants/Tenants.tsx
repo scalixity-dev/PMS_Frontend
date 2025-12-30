@@ -1,85 +1,97 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import DashboardFilter from '../../components/DashboardFilter';
+import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
 import TenantCard from './components/TenantCard';
-import { Plus, ChevronLeft } from 'lucide-react';
+import { Plus, ChevronLeft, Loader2 } from 'lucide-react';
+import { useGetAllTenants, useDeleteTenant } from '../../../../hooks/useTenantQueries';
 import { tenantService, type Tenant } from '../../../../services/tenant.service';
 
 
 
 const Tenants = () => {
     const navigate = useNavigate();
-    const [, setFilters] = useState<Record<string, string[]>>({});
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filters, setFilters] = useState<Record<string, string[]>>({});
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 9;
+    const deleteTenantMutation = useDeleteTenant();
 
-    const handleSearchChange = (_search: string) => {
-        // console.log('Search:', search);
+    // Fetch tenants using React Query
+    const { data: backendTenants = [], isLoading, error } = useGetAllTenants();
+
+    // Transform backend tenants to frontend format
+    const tenants: Tenant[] = useMemo(() => {
+        return backendTenants.map((tenant) => tenantService.transformTenant(tenant));
+    }, [backendTenants]);
+
+    const handleSearchChange = (search: string) => {
+        setSearchQuery(search);
+        setCurrentPage(1); // Reset to first page on search
     };
 
     const handleFiltersChange = (newFilters: Record<string, string[]>) => {
         setFilters(newFilters);
-        // console.log('Filters:', newFilters);
+        setCurrentPage(1); // Reset to first page on filter change
     };
 
-    const filterOptions = {
+    const filterOptions: Record<string, FilterOption[]> = {
         tenantType: [
-            { value: 'active', label: 'Active' },
-            { value: 'past', label: 'Past' },
-            { value: 'prospective', label: 'Prospective' }
+            { value: '__no_items__', label: 'No tenant types available' }
         ],
         propertyUnits: [
-            { value: 'unit1', label: 'Unit 1' },
-            { value: 'unit2', label: 'Unit 2' }
+            { value: '__no_items__', label: 'No properties available' }
         ],
         lease: [
-            { value: 'active', label: 'Active' },
-            { value: 'expired', label: 'Expired' }
+            { value: '__no_items__', label: 'No lease data available' }
         ]
     };
 
-    const filterLabels = {
+    const filterLabels: Record<string, string> = {
         tenantType: 'Tenant Type',
         propertyUnits: 'Property & Units',
         lease: 'Lease'
     };
 
-    const [tenants, setTenants] = useState<Tenant[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        const fetchTenants = async () => {
-            try {
-                setLoading(true);
-                setError(null);
-                const backendTenants = await tenantService.getAll();
-                const transformedTenants = backendTenants.map((tenant) => tenantService.transformTenant(tenant));
-                setTenants(transformedTenants);
-            } catch (err) {
-                console.error('Error fetching tenants:', err);
-                setError(err instanceof Error ? err.message : 'Failed to fetch tenants');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchTenants();
-    }, []);
-
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-
-    const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 9;
 
     const handleSortToggle = () => {
         setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
     };
 
-    const sortedTenants = [...tenants].sort((a, b) => {
-        return sortOrder === 'asc'
-            ? a.name.localeCompare(b.name)
-            : b.name.localeCompare(a.name);
-    });
+    // Filter and search tenants
+    const filteredTenants = useMemo(() => {
+        return tenants.filter(tenant => {
+            // Search filter
+            const matchesSearch = !searchQuery ||
+                tenant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                tenant.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                tenant.phone.toLowerCase().includes(searchQuery.toLowerCase());
+
+            // Tenant type filter (ignore placeholder value)
+            const matchesTenantType = !filters.tenantType?.length ||
+                filters.tenantType.filter(v => v !== '__no_items__').length === 0;
+
+            // Property/Units filter (ignore placeholder value)
+            const matchesPropertyUnits = !filters.propertyUnits?.length ||
+                filters.propertyUnits.filter(v => v !== '__no_items__').length === 0;
+
+            // Lease filter (ignore placeholder value)
+            const matchesLease = !filters.lease?.length ||
+                filters.lease.filter(v => v !== '__no_items__').length === 0;
+
+            return matchesSearch && matchesTenantType && matchesPropertyUnits && matchesLease;
+        });
+    }, [tenants, searchQuery, filters]);
+
+    // Sort tenants
+    const sortedTenants = useMemo(() => {
+        return [...filteredTenants].sort((a, b) => {
+            return sortOrder === 'asc'
+                ? a.name.localeCompare(b.name)
+                : b.name.localeCompare(a.name);
+        });
+    }, [filteredTenants, sortOrder]);
 
     const totalPages = Math.ceil(sortedTenants.length / itemsPerPage);
     const currentTenants = sortedTenants.slice(
@@ -90,6 +102,17 @@ const Tenants = () => {
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
         window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleDeleteTenant = async (tenantId: string) => {
+        if (window.confirm('Are you sure you want to delete this tenant?')) {
+            try {
+                await deleteTenantMutation.mutateAsync(tenantId);
+            } catch (err) {
+                console.error('Failed to delete tenant:', err);
+                alert(`Failed to delete tenant: ${err instanceof Error ? err.message : 'Unknown error'}`);
+            }
+        }
     };
 
     return (
@@ -129,6 +152,8 @@ const Tenants = () => {
                     filterLabels={filterLabels}
                     onSearchChange={handleSearchChange}
                     onFiltersChange={handleFiltersChange}
+                    initialFilters={filters}
+                    showClearAll={true}
                 />
 
                 {/* Stats/Count Section */}
@@ -141,45 +166,51 @@ const Tenants = () => {
                     </button>
 
                     <div className="bg-[#3A6D6C] text-white px-4 py-1 rounded-full text-sm">
-                        {tenants.length} tenants
+                        {sortedTenants.length} Tenant{sortedTenants.length !== 1 ? 's' : ''}
                     </div>
                 </div>
 
                 {/* Loading State */}
-                {loading && (
-                    <div className="text-center py-12">
-                        <p className="text-gray-600">Loading tenants...</p>
+                {isLoading && (
+                    <div className="flex items-center justify-center py-12">
+                        <Loader2 className="w-8 h-8 animate-spin text-[#3A6D6C]" />
+                        <span className="ml-3 text-gray-600">Loading tenants...</span>
                     </div>
                 )}
 
                 {/* Error State */}
-                {error && !loading && (
-                    <div className="text-center py-12">
-                        <p className="text-red-600">Error: {error}</p>
-                        <button
-                            onClick={() => window.location.reload()}
-                            className="mt-4 px-4 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors"
-                        >
-                            Retry
-                        </button>
+                {error && !isLoading && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                        <p className="text-red-800 text-sm">
+                            {error instanceof Error ? error.message : 'Failed to load tenants. Please try again.'}
+                        </p>
                     </div>
                 )}
 
                 {/* Tenants Grid */}
-                {!loading && !error && (
+                {!isLoading && !error && (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                         {currentTenants.length > 0 ? (
                             currentTenants.map((tenant) => (
                                 <TenantCard
                                     key={tenant.id}
-                                    {...tenant}
+                                    id={tenant.id}
+                                    name={tenant.name}
+                                    phone={tenant.phone}
+                                    email={tenant.email}
                                     image={tenant.image || ''}
-                                    propertyName="Sunset Apartments, Unit 4B"
+                                    onDelete={() => {
+                                        handleDeleteTenant(tenant.id).catch(console.error);
+                                    }}
                                 />
                             ))
                         ) : (
                             <div className="col-span-full text-center py-12">
-                                <p className="text-gray-600">No tenants found</p>
+                                <p className="text-gray-600">
+                                    {searchQuery || Object.keys(filters).some(key => filters[key]?.length > 0)
+                                        ? 'No tenants match your filters'
+                                        : 'No tenants found'}
+                                </p>
                             </div>
                         )}
                     </div>

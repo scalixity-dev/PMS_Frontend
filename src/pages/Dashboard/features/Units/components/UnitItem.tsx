@@ -13,6 +13,7 @@ export interface Unit {
     sqft: number;
     image: string;
     hasActiveListing?: boolean;
+    hasDraftListing?: boolean;
 }
 
 interface UnitItemProps {

@@ -88,13 +88,20 @@ const Leads = () => {
         type: []
     });
 
-    // Transform listings to filter options
+    // Transform listings to filter options (only active/relevant listings)
     const listingFilterOptions: FilterOption[] = useMemo(() => {
-        return listings.map((listing) => {
+        // Filter out archived, removed, and inactive listings
+        const activeListings = listings.filter((listing) => {
+            return listing.listingStatus !== 'ARCHIVED' && 
+                   listing.listingStatus !== 'REMOVED' &&
+                   listing.isActive === true;
+        });
+
+        return activeListings.map((listing) => {
             // Use title if available, otherwise use property name, or fallback to listing ID
-            const label = listing.title || 
-                         listing.property?.propertyName || 
-                         `Listing ${listing.id.substring(0, 8)}`;
+            const label = listing.title ||
+                listing.property?.propertyName ||
+                `Listing ${listing.id.substring(0, 8)}`;
             return {
                 value: listing.id,
                 label: label
@@ -153,19 +160,19 @@ const Leads = () => {
                 lead.phone.toLowerCase().includes(searchQuery.toLowerCase());
 
             // Status filter - compare enum values
-            const matchesStatus = filters.status.length === 0 ||
+            const matchesStatus = !filters.status?.length ||
                 filters.status.includes(lead.statusEnum);
 
             // Listing filter - compare listing IDs
-            const matchesListing = filters.listing.length === 0 ||
+            const matchesListing = !filters.listing?.length ||
                 (lead.listingId && filters.listing.includes(lead.listingId));
 
             // Sources filter
-            const matchesSources = filters.sources.length === 0 ||
+            const matchesSources = !filters.sources?.length ||
                 filters.sources.includes(lead.source);
 
             // Type filter - compare enum values
-            const matchesType = filters.type.length === 0 ||
+            const matchesType = !filters.type?.length ||
                 (lead.type && filters.type.includes(lead.type));
 
             return matchesSearch && matchesStatus && matchesListing && matchesSources && matchesType;
@@ -341,6 +348,7 @@ const Leads = () => {
                     filterLabels={filterLabels}
                     onSearchChange={setSearchQuery}
                     onFiltersChange={setFilters}
+                    initialFilters={filters}
                     showMoreFilters={false}
                     showClearAll={true}
                 />

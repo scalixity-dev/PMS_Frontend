@@ -9,6 +9,7 @@ interface TenantCardProps {
     phone: string;
     email: string;
     propertyName?: string;
+    onDelete?: () => void;
 }
 
 const TenantCard: React.FC<TenantCardProps> = ({
@@ -17,7 +18,8 @@ const TenantCard: React.FC<TenantCardProps> = ({
     name,
     phone,
     email,
-    propertyName
+    propertyName,
+    onDelete
 }) => {
     const navigate = useNavigate();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -49,9 +51,10 @@ const TenantCard: React.FC<TenantCardProps> = ({
         {
             label: 'Delete',
             action: () => {
-                if (window.confirm('Are you sure you want to delete this tenant?')) {
+                if (onDelete) {
+                    onDelete();
+                } else if (window.confirm('Are you sure you want to delete this tenant?')) {
                     console.log('Deleting tenant:', id);
-                    // API call would go here
                 }
             },
             isDestructive: true

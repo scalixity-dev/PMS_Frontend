@@ -12,8 +12,17 @@ interface Transaction {
     balance: number;
 }
 
-const TenantTransactionsSection = () => {
-    // Mock transaction data
+interface TenantTransactionsSectionProps {
+    tenantId: string;
+    tenant: {
+        id: number;
+        name: string;
+    };
+}
+
+const TenantTransactionsSection = ({ tenantId, tenant }: TenantTransactionsSectionProps) => {
+    // Note: There's no direct API for tenant transactions yet
+    // This is a placeholder that shows empty state
     const transactions: Transaction[] = [
         {
             id: 1,
@@ -81,6 +90,15 @@ const TenantTransactionsSection = () => {
 
         return (parts[0][0] + parts[1][0]).toUpperCase();
     };
+
+    if (transactions.length === 0) {
+        return (
+            <div className="text-center py-12 bg-[#F0F0F6] rounded-[2rem]">
+                <p className="text-gray-600">No transactions found for this tenant</p>
+                <p className="text-sm text-gray-500 mt-2">Transaction data will appear here once available</p>
+            </div>
+        );
+    }
 
     return (
         <div>

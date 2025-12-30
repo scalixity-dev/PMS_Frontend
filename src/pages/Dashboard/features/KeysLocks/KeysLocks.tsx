@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Plus, Edit, Trash2, Check, Loader2 } from 'lucide-react';
-import DashboardFilter from '../../components/DashboardFilter';
+import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import { useGetAllKeys, useDeleteKey } from '../../../../hooks/useKeysQueries';
 import type { BackendKey } from '../../../../services/keys.service';
 
@@ -34,8 +34,11 @@ const KeysLocks = () => {
             id: key.id,
             name: key.keyName,
             type: mapKeyType(key.keyType),
+            keyType: key.keyType, // Keep original for filtering
             property: key.property?.propertyName || 'Unknown Property',
+            propertyId: key.propertyId,
             unit: key.unit?.unitName || '-----',
+            unitId: key.unitId,
             assignee: key.issuedTo || 'Unassigned',
             status: key.status,
             keyDescription: key.description || '',
@@ -49,20 +52,44 @@ const KeysLocks = () => {
         }));
     }, [keys]);
 
+    // Get unique properties and assignees for filter options
+    const propertyOptions = useMemo(() => {
+        const uniqueProperties = Array.from(new Set(transformedKeys.map(k => k.property).filter(Boolean)));
+        return uniqueProperties.map(prop => ({ value: prop, label: prop }));
+    }, [transformedKeys]);
+
+    const assigneeOptions = useMemo(() => {
+        const uniqueAssignees = Array.from(new Set(transformedKeys.map(k => k.assignee).filter(Boolean)));
+        return uniqueAssignees.map(assignee => ({ value: assignee, label: assignee }));
+    }, [transformedKeys]);
+
     // Filter keys based on search and filters
     const filteredKeys = useMemo(() => {
         return transformedKeys.filter(key => {
+            // Search filter
             const matchesSearch = !searchQuery ||
                 key.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 key.property.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                key.type.toLowerCase().includes(searchQuery.toLowerCase());
+                key.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                key.assignee.toLowerCase().includes(searchQuery.toLowerCase());
 
-            const matchesStatus = !filters.keyStatus?.length ||
-                filters.keyStatus.includes('all') ||
-                (filters.keyStatus.includes('active') && (key.status === 'AVAILABLE' || key.status === 'ISSUED')) ||
-                (filters.keyStatus.includes('inactive') && (key.status === 'INACTIVE' || key.status === 'LOST' || key.status === 'DAMAGED'));
+            // Status filter
+            const matchesStatus = !filters.status?.length ||
+                filters.status.includes(key.status);
 
-            return matchesSearch && matchesStatus;
+            // Key Type filter
+            const matchesKeyType = !filters.keyType?.length ||
+                filters.keyType.includes(key.keyType);
+
+            // Property filter
+            const matchesProperty = !filters.property?.length ||
+                filters.property.includes(key.property);
+
+            // Assignee filter
+            const matchesAssignee = !filters.assignee?.length ||
+                filters.assignee.includes(key.assignee);
+
+            return matchesSearch && matchesStatus && matchesKeyType && matchesProperty && matchesAssignee;
         });
     }, [transformedKeys, searchQuery, filters]);
 
@@ -74,16 +101,31 @@ const KeysLocks = () => {
         setFilters(newFilters);
     };
 
-    const filterOptions = {
-        keyStatus: [
-            { value: 'all', label: 'All' },
-            { value: 'active', label: 'Active' },
-            { value: 'inactive', label: 'Inactive' }
+    const filterOptions: Record<string, FilterOption[]> = {
+        status: [
+            { value: 'AVAILABLE', label: 'Available' },
+            { value: 'ISSUED', label: 'Issued' },
+            { value: 'LOST', label: 'Lost' },
+            { value: 'DAMAGED', label: 'Damaged' },
+            { value: 'INACTIVE', label: 'Inactive' },
         ],
+        keyType: [
+            { value: 'DOOR', label: 'Main Door' },
+            { value: 'MAILBOX', label: 'Mailbox' },
+            { value: 'GARAGE', label: 'Garage' },
+            { value: 'GATE', label: 'Gate' },
+            { value: 'STORAGE', label: 'Storage' },
+            { value: 'OTHER', label: 'Other' },
+        ],
+        property: propertyOptions,
+        assignee: assigneeOptions,
     };
 
-    const filterLabels = {
-        keyStatus: 'Key Status',
+    const filterLabels: Record<string, string> = {
+        status: 'Status',
+        keyType: 'Key Type',
+        property: 'Property',
+        assignee: 'Assignee',
     };
 
     const toggleSelection = (id: string) => {
@@ -150,6 +192,8 @@ const KeysLocks = () => {
                     filterLabels={filterLabels}
                     onSearchChange={handleSearchChange}
                     onFiltersChange={handleFiltersChange}
+                    initialFilters={filters}
+                    showClearAll={true}
                 />
 
                 {/* Loading State */}

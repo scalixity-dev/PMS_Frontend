@@ -101,11 +101,15 @@ const Equipments: React.FC = () => {
     const [filters, setFilters] = useState<{
         status: string[];
         category: string[];
+        subcategory: string[];
         property: string[];
+        unit: string[];
     }>({
         status: [],
         category: [],
-        property: []
+        subcategory: [],
+        property: [],
+        unit: []
     });
 
     // Fetch equipment from backend
@@ -135,7 +139,11 @@ const Equipments: React.FC = () => {
                 category: categoryName,
                 subcategory: subcategoryName, // Extracted from backend subcategory object
                 property: eq.property?.propertyName || '-',
+                propertyId: eq.propertyId,
+                unit: eq.unit?.unitName || '-',
+                unitId: eq.unitId,
                 status: mapStatus(eq.status),
+                backendStatus: eq.status, // Keep original for filtering
                 occupancy: eq.unitId ? 'occupied' : 'vacant', // Simplified logic
                 propertyType: 'household', // Default value
                 description: eq.equipmentDetails || '',
@@ -149,7 +157,7 @@ const Equipments: React.FC = () => {
         });
     }, [equipment]);
 
-    // Get unique categories and properties for filters (based on transformed equipment)
+    // Get unique values for filters (based on transformed equipment)
     const uniqueCategories = useMemo(() => {
         const categories = new Set(
             transformedEquipment
@@ -158,43 +166,73 @@ const Equipments: React.FC = () => {
         );
 
         return Array.from(categories).map(cat => ({
-            value: cat.toLowerCase().replace(/\s+/g, '_'),
+            value: cat,
             label: cat,
+        }));
+    }, [transformedEquipment]);
+
+    const uniqueSubcategories = useMemo(() => {
+        const subcategories = new Set(
+            transformedEquipment
+                .map(item => item.subcategory)
+                .filter((sub): sub is string => typeof sub === 'string' && sub.trim().length > 0)
+        );
+
+        return Array.from(subcategories).map(sub => ({
+            value: sub,
+            label: sub,
         }));
     }, [transformedEquipment]);
 
     const uniqueProperties = useMemo(() => {
         const properties = new Set(
-            equipment
-                .map((eq: BackendEquipment) => eq.property?.propertyName)
-                .filter(Boolean)
+            transformedEquipment
+                .map(item => item.property)
+                .filter((prop): prop is string => typeof prop === 'string' && prop !== '-')
         );
-        return Array.from(properties).map((prop, idx) => ({
-            value: `prop${idx + 1}`,
-            label: prop as string,
+        return Array.from(properties).map(prop => ({
+            value: prop,
+            label: prop,
         }));
-    }, [equipment]);
+    }, [transformedEquipment]);
+
+    const uniqueUnits = useMemo(() => {
+        const units = new Set(
+            transformedEquipment
+                .map(item => item.unit)
+                .filter((unit): unit is string => typeof unit === 'string' && unit !== '-')
+        );
+        return Array.from(units).map(unit => ({
+            value: unit,
+            label: unit,
+        }));
+    }, [transformedEquipment]);
 
     const filterOptions: Record<string, FilterOption[]> = {
-        property: uniqueProperties.length > 0 ? uniqueProperties : [
-            { value: 'prop1', label: 'Property 1' },
-            { value: 'prop2', label: 'Property 2' },
-        ],
         status: [
-            { value: 'active', label: 'Active' },
-            { value: 'inactive', label: 'Inactive' },
-            { value: 'maintenance', label: 'Under Maintenance' },
+            { value: 'ACTIVE', label: 'Active' },
+            { value: 'UNDER_MAINTENANCE', label: 'Under Maintenance' },
+            { value: 'REPLACED', label: 'Replaced' },
+            { value: 'DISPOSED', label: 'Disposed' },
         ],
         category: uniqueCategories.length > 0 ? uniqueCategories : [
-            { value: 'electric_meter', label: 'Electric meter' },
-            { value: 'appliances', label: 'Appliances' },
-        ]
+            { value: '__no_items__', label: 'No categories available' }
+        ],
+        subcategory: uniqueSubcategories.length > 0 ? uniqueSubcategories : [
+            { value: '__no_items__', label: 'No subcategories available' }
+        ],
+        property: uniqueProperties.length > 0 ? uniqueProperties : [],
+        unit: uniqueUnits.length > 0 ? uniqueUnits : [
+            { value: '__no_items__', label: 'No units available' }
+        ],
     };
 
     const filterLabels: Record<string, string> = {
-        property: 'Properties & units',
-        status: 'Equipment status',
-        category: 'Category & Subcategory'
+        status: 'Status',
+        category: 'Category',
+        subcategory: 'Subcategory',
+        property: 'Property',
+        unit: 'Unit',
     };
 
     // Reset page when filters change
@@ -208,18 +246,36 @@ const Equipments: React.FC = () => {
             const matchesSearch = searchQuery === '' ||
                 item.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 item.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                item.subcategory.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 item.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                item.model.toLowerCase().includes(searchQuery.toLowerCase());
+                item.model.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                item.property.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                item.unit.toLowerCase().includes(searchQuery.toLowerCase());
 
-            // Status filter
-            const matchesStatus = filters.status.length === 0 ||
-                filters.status.includes(item.status);
+            // Status filter (using backend status)
+            const matchesStatus = !filters.status?.length ||
+                filters.status.includes(item.backendStatus);
 
-            // Category filter
-            const matchesCategory = filters.category.length === 0 ||
-                filters.category.some(cat => item.category.toLowerCase().includes(cat.replace('_', ' ')));
+            // Category filter (ignore placeholder value)
+            const matchesCategory = !filters.category?.length ||
+                filters.category.filter(v => v !== '__no_items__').length === 0 ||
+                filters.category.includes(item.category);
 
-            return matchesSearch && matchesStatus && matchesCategory;
+            // Subcategory filter (ignore placeholder value)
+            const matchesSubcategory = !filters.subcategory?.length ||
+                filters.subcategory.filter(v => v !== '__no_items__').length === 0 ||
+                filters.subcategory.includes(item.subcategory);
+
+            // Property filter
+            const matchesProperty = !filters.property?.length ||
+                filters.property.includes(item.property);
+
+            // Unit filter (ignore placeholder value)
+            const matchesUnit = !filters.unit?.length ||
+                filters.unit.filter(v => v !== '__no_items__').length === 0 ||
+                filters.unit.includes(item.unit);
+
+            return matchesSearch && matchesStatus && matchesCategory && matchesSubcategory && matchesProperty && matchesUnit;
         });
     }, [transformedEquipment, searchQuery, filters]);
 
@@ -308,6 +364,8 @@ const Equipments: React.FC = () => {
                     filterLabels={filterLabels}
                     onSearchChange={setSearchQuery}
                     onFiltersChange={(newFilters) => setFilters(newFilters as any)}
+                    initialFilters={filters}
+                    showClearAll={true}
                 />
 
                 {/* Loading State */}
