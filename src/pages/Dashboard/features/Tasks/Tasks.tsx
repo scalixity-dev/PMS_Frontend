@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useLocation, useOutletContext } from 'react-router-dom';
 import { Check, Plus, Pencil, Trash2, Loader2, ChevronDown } from 'lucide-react';
-import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
+import DashboardFilter, { type FilterOption, type SavedFilter } from '../../components/DashboardFilter';
 import AddTaskModal from './components/AddTaskModal';
 import TaskDetailSideModal from './components/TaskDetailSideModal';
 import DeleteConfirmationModal from './components/DeleteConfirmationModal';
@@ -25,6 +26,9 @@ export interface Task {
 }
 
 const Tasks: React.FC = () => {
+    const location = useLocation();
+    const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
+
     const [searchQuery, setSearchQuery] = useState('');
     const [filters, setFilters] = useState<Record<string, string[]>>({});
     const [selectedTaskIds, setSelectedTaskIds] = useState<(string | number)[]>([]);
@@ -33,6 +37,26 @@ const Tasks: React.FC = () => {
     const [editingTask, setEditingTask] = useState<Task | null>(null);
     const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+    // Mock saved filters state
+    const [savedFilters, setSavedFilters] = useState<SavedFilter[]>([
+        {
+            name: 'Urgent Tasks',
+            filters: {
+                status: ['active'],
+                frequency: ['DAILY']
+            }
+        }
+    ]);
+
+    // Check if navigated from Dashboard with openAddModal state
+    useEffect(() => {
+        if (location.state?.openAddModal) {
+            setIsAddModalOpen(true);
+            // Clear the state to prevent reopening on refresh
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state]);
 
     // Fetch properties for filter dropdown
     const { data: properties = [] } = useGetAllProperties();
@@ -98,7 +122,7 @@ const Tasks: React.FC = () => {
     const stats = useMemo(() => {
         const activeTasks = tasks.filter(t => t.status === 'Active').length;
         const resolvedTasks = tasks.filter(t => t.status === 'Resolved').length;
-        
+
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const todayTasks = tasks.filter(t => {
@@ -160,6 +184,18 @@ const Tasks: React.FC = () => {
         }
     };
 
+    const handleSaveFilter = (name: string, filtersToSave: Record<string, string[]>) => {
+        const newFilter: SavedFilter = {
+            name,
+            filters: filtersToSave
+        };
+        setSavedFilters([...savedFilters, newFilter]);
+    };
+
+    const handleSelectSavedFilter = (filter: SavedFilter) => {
+        setFilters(filter.filters);
+    };
+
     // Map frontend status to backend status
     // Accepts optional currentBackendStatus to preserve granular status when toggling between Active/Resolved
     const mapStatusToBackend = (
@@ -168,7 +204,7 @@ const Tasks: React.FC = () => {
     ): 'OPEN' | 'IN_PROGRESS' | 'ON_HOLD' | 'RESOLVED' | 'COMPLETED' | 'CANCELLED' => {
         // Normalize frontend status (case-insensitive, trimmed)
         const normalizedStatus = frontendStatus.trim();
-        
+
         // Active status group: OPEN, IN_PROGRESS, ON_HOLD
         if (normalizedStatus === 'Active' || normalizedStatus === 'Open' || normalizedStatus === 'In Progress' || normalizedStatus === 'On Hold') {
             // If we have current backend status and it's already in the Active group, preserve it
@@ -191,7 +227,7 @@ const Tasks: React.FC = () => {
             // Default 'Active' -> 'OPEN'
             return 'OPEN';
         }
-        
+
         // Resolved status group: RESOLVED, COMPLETED, CANCELLED
         if (normalizedStatus === 'Resolved' || normalizedStatus === 'Completed' || normalizedStatus === 'Cancelled') {
             // If we have current backend status and it's already in the Resolved group, preserve it
@@ -211,7 +247,7 @@ const Tasks: React.FC = () => {
             // Default 'Resolved' -> 'RESOLVED'
             return 'RESOLVED';
         }
-        
+
         // Fallback: if status doesn't match known values, try to preserve current or default to OPEN
         if (currentBackendStatus) {
             const current = currentBackendStatus.toUpperCase();
@@ -219,23 +255,20 @@ const Tasks: React.FC = () => {
                 return current as 'OPEN' | 'IN_PROGRESS' | 'ON_HOLD' | 'RESOLVED' | 'COMPLETED' | 'CANCELLED';
             }
         }
-        
+
         // Ultimate fallback
         console.warn(`[Tasks] Unknown frontend status "${frontendStatus}", defaulting to OPEN`);
         return 'OPEN';
     };
 
     // Handle status change
-    // Note: To preserve granular status (e.g., IN_PROGRESS, ON_HOLD, COMPLETED, CANCELLED),
-    // we would need to fetch the current backend status from the API. For now, we use
-    // the simplified Active/Resolved mapping which defaults to OPEN/RESOLVED.
     const handleStatusChange = async (task: Task, newStatus: 'Active' | 'Resolved') => {
         try {
             const taskId = typeof task.id === 'number' ? task.id.toString() : task.id;
             // TODO: Fetch current backend status from API to preserve granularity
             // For now, we don't have access to the original backend status, so we use defaults
             const backendStatus = mapStatusToBackend(newStatus);
-            
+
             await updateTaskMutation.mutateAsync({
                 id: taskId,
                 updateData: {
@@ -307,7 +340,7 @@ const Tasks: React.FC = () => {
     const isAllSelected = filteredTasks.length > 0 && selectedTaskIds.length === filteredTasks.length;
 
     return (
-        <div className="max-w-6xl mx-auto min-h-screen">
+        <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen transition-all duration-300`}>
             <div className="inline-flex items-center px-4 py-2 bg-[#DFE5E3] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
                 <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
                 <span className="text-gray-500 text-sm mx-1">/</span>
@@ -373,7 +406,11 @@ const Tasks: React.FC = () => {
                     onSearchChange={setSearchQuery}
                     onFiltersChange={setFilters}
                     showMoreFilters={false}
-                    showClearAll={false}
+                    showClearAll={true}
+                    savedFilters={savedFilters}
+                    onSaveFilter={handleSaveFilter}
+                    onSelectSavedFilter={handleSelectSavedFilter}
+                    initialFilters={filters}
                 />
 
                 {/* Table Section */}
@@ -448,20 +485,18 @@ const Tasks: React.FC = () => {
                                                 handleStatusChange(task, e.target.value as 'Active' | 'Resolved');
                                             }}
                                             disabled={updateTaskMutation.isPending}
-                                            className={`appearance-none px-4 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 pr-8 ${
-                                                task.status === 'Resolved'
-                                                    ? 'bg-[#E8F8F0] text-[#2E6819] focus:ring-[#2E6819]'
-                                                    : 'bg-yellow-100 text-yellow-700 focus:ring-yellow-500'
-                                            } ${updateTaskMutation.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            className={`appearance-none px-4 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 pr-8 ${task.status === 'Resolved'
+                                                ? 'bg-[#E8F8F0] text-[#2E6819] focus:ring-[#2E6819]'
+                                                : 'bg-yellow-100 text-yellow-700 focus:ring-yellow-500'
+                                                } ${updateTaskMutation.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
                                             onClick={(e) => e.stopPropagation()}
                                         >
                                             <option value="Active">Active</option>
                                             <option value="Resolved">Resolved</option>
                                         </select>
-                                        <ChevronDown 
-                                            className={`absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none ${
-                                                task.status === 'Resolved' ? 'text-[#2E6819]' : 'text-yellow-700'
-                                            }`} 
+                                        <ChevronDown
+                                            className={`absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none ${task.status === 'Resolved' ? 'text-[#2E6819]' : 'text-yellow-700'
+                                                }`}
                                         />
                                     </div>
 

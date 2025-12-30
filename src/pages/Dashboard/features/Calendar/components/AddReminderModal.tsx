@@ -234,10 +234,10 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
     };
 
     return createPortal(
-        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/50 animate-in fade-in duration-200 font-['Urbanist']">
-            <div className="bg-[#E8ECEB] rounded-3xl w-full max-w-sm shadow-2xl animate-slide-in-from-right relative">
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/50 animate-in fade-in duration-200 font-['Urbanist'] p-4">
+            <div className="bg-[#E8ECEB] rounded-3xl w-full max-w-sm shadow-2xl animate-slide-in-from-right relative flex flex-col max-h-[90vh]">
                 {/* Header */}
-                <div className="bg-[#3D7475] p-4 flex items-center justify-between rounded-t-3xl">
+                <div className="bg-[#3D7475] p-4 flex items-center justify-between rounded-t-3xl flex-shrink-0">
                     <h2 className="text-lg font-medium text-white">{isEditMode ? 'Edit reminder' : 'Add reminder'}</h2>
                     <button onClick={handleCloseAttempt} className="text-white hover:bg-white/10 p-1 rounded-full transition-colors">
                         <X size={20} />
@@ -245,7 +245,7 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
                 </div>
 
                 {/* Body */}
-                <div className="p-5 space-y-3">
+                <div className="p-5 space-y-3 overflow-y-auto flex-1">
 
                     {/* Title */}
                     <div>
@@ -271,7 +271,7 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
                             placeholder="Enter Details"
                             rows={2}
                             disabled={isLoading}
-                            className={`w-full bg-[#F0F2F5] text-gray-800 placeholder-gray-400 px-3 py-2.5 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all resize-none shadow-sm text-sm ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            className={`w-full bg-white text-gray-800 placeholder-gray-400 px-3 py-2.5 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all resize-none shadow-sm text-sm ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                         />
                     </div>
 
@@ -394,7 +394,7 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
                 </div>
 
                 {/* Footer */}
-                <div className="p-5 pt-2 flex gap-3">
+                <div className="p-5 pt-2 flex gap-3 flex-shrink-0">
                     <button
                         onClick={handleCloseAttempt}
                         disabled={isLoading}

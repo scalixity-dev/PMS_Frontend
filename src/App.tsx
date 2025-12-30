@@ -77,6 +77,7 @@ import ApplicationDetail from './pages/Dashboard/features/Application/Applicatio
 import ProviderStatement from './pages/Dashboard/features/ServicePros/ProviderStatement';
 import TransactionDetail from './pages/Dashboard/features/Transactions/TransactionDetail';
 import ChatPage from './pages/Dashboard/features/Messages/ChatPage';
+import NotificationPage from './pages/Dashboard/features/Notification/Notification';
 // Documents pages
 import LandlordForms from './pages/Dashboard/features/Documents/landlordforms/LandlordForms';
 import TemplateView from './pages/Dashboard/features/Documents/landlordforms/TemplateView';
@@ -296,6 +297,7 @@ const App: React.FC = () => {
                   </ProtectedRoute>
                 }
               />
+              <Route path="/dashboard/notifications" element={<NotificationPage />} />
 
               {/* Settings Routes */}
               <Route

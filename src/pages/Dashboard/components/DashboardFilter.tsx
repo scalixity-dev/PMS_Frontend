@@ -1,9 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Plus, MoreHorizontal, X } from 'lucide-react';
+import { Search, Plus, X, Save, Filter } from 'lucide-react';
+import SaveFilterModal from './SaveFilterModal';
 
 export interface FilterOption {
     value: string;
     label: string;
+}
+
+export interface SavedFilter {
+    name: string;
+    filters: Record<string, string[]>;
 }
 
 export interface DashboardFilterProps {
@@ -14,6 +20,9 @@ export interface DashboardFilterProps {
     showMoreFilters?: boolean;
     showClearAll?: boolean;
     initialFilters?: Record<string, string[]>;
+    savedFilters?: SavedFilter[];
+    onSaveFilter?: (name: string, filters: Record<string, string[]>) => void;
+    onSelectSavedFilter?: (filter: SavedFilter) => void;
 }
 
 const DashboardFilter: React.FC<DashboardFilterProps> = ({
@@ -21,9 +30,11 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
     filterLabels,
     onSearchChange,
     onFiltersChange,
-    showMoreFilters = true,
     showClearAll = true,
-    initialFilters = {}
+    initialFilters = {},
+    savedFilters = [],
+    onSaveFilter,
+    onSelectSavedFilter
 }) => {
     const [searchQuery, setSearchQuery] = useState('');
     // Initialize selectedFilters based on keys from filterOptions
@@ -36,6 +47,7 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
     });
 
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+    const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -94,9 +106,16 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
         return searchQuery || Object.values(selectedFilters).some(arr => arr.length > 0);
     };
 
+    const handleSaveList = (name: string) => {
+        if (onSaveFilter) {
+            onSaveFilter(name, selectedFilters);
+        }
+        setIsSaveModalOpen(false);
+    };
+
     return (
         <div ref={dropdownRef} className="bg-[#3A6D6C] p-4 rounded-full flex items-center gap-4 mb-8 justify-between relative shadow-md">
-            <div className="flex items-center gap-4 flex-1 overflow-visible">
+            <div className="flex items-center gap-2 flex-1 overflow-visible">
                 <div className="relative flex-shrink-0">
                     <input
                         type="text"
@@ -119,14 +138,14 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
                     )}
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                     {Object.keys(filterOptions).map((filterType) => (
                         <div key={filterType} className="relative">
                             <button
                                 onClick={() => setOpenDropdown(openDropdown === filterType ? null : filterType)}
                                 className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${(selectedFilters[filterType]?.length || 0) > 0
-                                        ? 'bg-[#7BD747] text-white'
-                                        : 'bg-white text-gray-700 hover:bg-gray-50'
+                                    ? 'bg-[#7BD747] text-white'
+                                    : 'bg-white text-gray-700 hover:bg-gray-50'
                                     }`}
                             >
                                 {getFilterLabel(filterType)}
@@ -156,20 +175,71 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
                         </div>
                     ))}
 
-                   
+
                 </div>
+
+
             </div>
 
-            {showClearAll && (
-                <button
-                    onClick={handleClearAll}
-                    className={`px-6 py-2 bg-white rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors whitespace-nowrap flex-shrink-0 ${hasActiveFilters() ? 'opacity-100' : 'opacity-50 cursor-not-allowed'
-                        }`}
-                    disabled={!hasActiveFilters()}
-                >
-                    Clear All
-                </button>
-            )}
+            {/* Dynamic Save/Select Filter Button */}
+            <div className="flex items-center gap-1">
+                {hasActiveFilters() ? (
+                    <>
+                        <button
+                            onClick={() => setIsSaveModalOpen(true)}
+                            className="flex items-center px-2 gap-1 py-2 bg-white rounded-full text-sm font-medium text-[#3A6D6C] hover:bg-gray-50 transition-colors shadow-sm"
+                        >
+                            <Save className="w-4 h-4" />
+                            Save Filter
+                        </button>
+                        {showClearAll && (
+                            <button
+                                onClick={handleClearAll}
+                                className="px-4 py-2 text-sm font-medium text-white hover:text-white/80 transition-colors whitespace-nowrap flex-shrink-0 underline-offset-4 hover:underline"
+                            >
+                                Clear Filter
+                            </button>
+                        )}
+                    </>
+                ) : (
+                    savedFilters.length > 0 && (
+                        <div className="relative">
+                            <button
+                                onClick={() => setOpenDropdown(openDropdown === 'saved_filters' ? null : 'saved_filters')}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors shadow-sm ${openDropdown === 'saved_filters' ? 'bg-[#7BD747] text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+                            >
+                                <Filter className="w-4 h-4" />
+                                Select Filter
+                            </button>
+                            {/* Saved Filters Dropdown */}
+                            {openDropdown === 'saved_filters' && (
+                                <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                                    <div className="p-1">
+                                        {savedFilters.map((filter) => (
+                                            <button
+                                                key={filter.name}
+                                                onClick={() => {
+                                                    onSelectSavedFilter && onSelectSavedFilter(filter);
+                                                    setOpenDropdown(null);
+                                                }}
+                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md"
+                                            >
+                                                {filter.name}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )
+                )}
+            </div>
+
+            <SaveFilterModal
+                isOpen={isSaveModalOpen}
+                onClose={() => setIsSaveModalOpen(false)}
+                onSave={handleSaveList}
+            />
         </div>
     );
 };
