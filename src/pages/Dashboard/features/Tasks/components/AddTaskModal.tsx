@@ -46,6 +46,8 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
             const editIsRecurring = taskToEdit.isRecurring || false;
             const editFrequency = taskToEdit.frequency || '';
             const editEndDate = taskToEdit.endDate && taskToEdit.endDate !== 'Indefinite' ? new Date(taskToEdit.endDate) : undefined;
+            const editIsAllDay = taskToEdit.isAllDay || false;
+
 
             const editFormData = {
                 title: taskToEdit.title || '',
@@ -56,7 +58,8 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
                 property: editProperty,
                 isRecurring: editIsRecurring,
                 frequency: editFrequency,
-                endDate: editEndDate
+                endDate: editEndDate,
+                isAllDay: editIsAllDay
             };
 
             setFormData(editFormData);
@@ -72,7 +75,8 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
                 property: '',
                 isRecurring: false,
                 frequency: '',
-                endDate: undefined
+                endDate: undefined,
+                isAllDay: false
             };
             setFormData(emptyFormData);
             setInitialSnapshot(emptyFormData);
@@ -119,7 +123,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
         const errors = {
             title: !formData.title.trim(),
             date: !formData.date,
-            time: !formData.time.trim()
+            time: !formData.isAllDay && !formData.time.trim()
         };
 
         setFormErrors(errors);
@@ -135,12 +139,13 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
                 title: formData.title,
                 description: formData.description || undefined,
                 date: formData.date ? formData.date.toISOString() : '',
-                time: formData.time,
+                time: formData.isAllDay ? '' : formData.time,
                 assignee: formData.assignee || undefined,
                 propertyId: formData.property || undefined,
                 isRecurring: formData.isRecurring,
                 frequency: formData.frequency ? (formData.frequency.toUpperCase() as 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY' | 'ONCE') : undefined,
                 endDate: formData.endDate ? formData.endDate.toISOString() : undefined,
+                isAllDay: formData.isAllDay,
             };
 
             if (taskToEdit) {
@@ -182,7 +187,8 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
             formData.property !== initialSnapshot.property ||
             formData.isRecurring !== initialSnapshot.isRecurring ||
             formData.frequency !== initialSnapshot.frequency ||
-            !datesEqual(formData.endDate, initialSnapshot.endDate);
+            !datesEqual(formData.endDate, initialSnapshot.endDate) ||
+            formData.isAllDay !== initialSnapshot.isAllDay;
 
         if (isDirty) {
             setShowExitConfirmation(true);
@@ -242,7 +248,18 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
 
                     {/* Date & Time */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-700 mb-1">Date & Time *</label>
+                        <div className="flex items-center justify-between mb-1">
+                            <label className="block text-xs font-bold text-gray-700">Date & Time *</label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={formData.isAllDay}
+                                    onChange={(e) => updateFormData('isAllDay', e.target.checked)}
+                                    className="w-3 h-3 rounded border-gray-300 text-[#7BD747] focus:ring-[#7BD747] accent-[#7BD747]"
+                                />
+                                <span className="text-xs font-medium text-gray-600">All Day</span>
+                            </label>
+                        </div>
                         <div className="flex gap-2">
                             <div className="w-2/3">
                                 <DatePicker
@@ -254,7 +271,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
                                 />
                             </div>
                             <div className="w-1/3">
-                                <div className={isLoading ? 'opacity-50 pointer-events-none' : ''}>
+                                <div className={isLoading || formData.isAllDay ? 'opacity-50 pointer-events-none' : ''}>
                                     <TimePicker
                                         value={formData.time}
                                         onChange={(time) => updateFormData('time', time)}

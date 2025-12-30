@@ -23,6 +23,7 @@ export interface Task {
     frequency: string;
     isRecurring: boolean;
     endDate?: string;
+    isAllDay?: boolean;
 }
 
 const Tasks: React.FC = () => {
