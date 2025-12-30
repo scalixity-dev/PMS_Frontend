@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useOutletContext } from 'react-router-dom';
 import { Check, Plus, Pencil, Trash2, Loader2, ChevronDown } from 'lucide-react';
-import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
+import DashboardFilter, { type FilterOption, type SavedFilter } from '../../components/DashboardFilter';
 import AddTaskModal from './components/AddTaskModal';
 import TaskDetailSideModal from './components/TaskDetailSideModal';
 import DeleteConfirmationModal from './components/DeleteConfirmationModal';
@@ -27,6 +27,8 @@ export interface Task {
 
 const Tasks: React.FC = () => {
     const location = useLocation();
+    const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
+
     const [searchQuery, setSearchQuery] = useState('');
     const [filters, setFilters] = useState<Record<string, string[]>>({});
     const [selectedTaskIds, setSelectedTaskIds] = useState<(string | number)[]>([]);
@@ -35,6 +37,17 @@ const Tasks: React.FC = () => {
     const [editingTask, setEditingTask] = useState<Task | null>(null);
     const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+    // Mock saved filters state
+    const [savedFilters, setSavedFilters] = useState<SavedFilter[]>([
+        {
+            name: 'Urgent Tasks',
+            filters: {
+                status: ['active'],
+                frequency: ['DAILY']
+            }
+        }
+    ]);
 
     // Check if navigated from Dashboard with openAddModal state
     useEffect(() => {
@@ -171,6 +184,18 @@ const Tasks: React.FC = () => {
         }
     };
 
+    const handleSaveFilter = (name: string, filtersToSave: Record<string, string[]>) => {
+        const newFilter: SavedFilter = {
+            name,
+            filters: filtersToSave
+        };
+        setSavedFilters([...savedFilters, newFilter]);
+    };
+
+    const handleSelectSavedFilter = (filter: SavedFilter) => {
+        setFilters(filter.filters);
+    };
+
     // Map frontend status to backend status
     // Accepts optional currentBackendStatus to preserve granular status when toggling between Active/Resolved
     const mapStatusToBackend = (
@@ -237,9 +262,6 @@ const Tasks: React.FC = () => {
     };
 
     // Handle status change
-    // Note: To preserve granular status (e.g., IN_PROGRESS, ON_HOLD, COMPLETED, CANCELLED),
-    // we would need to fetch the current backend status from the API. For now, we use
-    // the simplified Active/Resolved mapping which defaults to OPEN/RESOLVED.
     const handleStatusChange = async (task: Task, newStatus: 'Active' | 'Resolved') => {
         try {
             const taskId = typeof task.id === 'number' ? task.id.toString() : task.id;
@@ -318,7 +340,7 @@ const Tasks: React.FC = () => {
     const isAllSelected = filteredTasks.length > 0 && selectedTaskIds.length === filteredTasks.length;
 
     return (
-        <div className="max-w-6xl mx-auto min-h-screen">
+        <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen transition-all duration-300`}>
             <div className="inline-flex items-center px-4 py-2 bg-[#DFE5E3] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
                 <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
                 <span className="text-gray-500 text-sm mx-1">/</span>
@@ -384,7 +406,11 @@ const Tasks: React.FC = () => {
                     onSearchChange={setSearchQuery}
                     onFiltersChange={setFilters}
                     showMoreFilters={false}
-                    showClearAll={false}
+                    showClearAll={true}
+                    savedFilters={savedFilters}
+                    onSaveFilter={handleSaveFilter}
+                    onSelectSavedFilter={handleSelectSavedFilter}
+                    initialFilters={filters}
                 />
 
                 {/* Table Section */}

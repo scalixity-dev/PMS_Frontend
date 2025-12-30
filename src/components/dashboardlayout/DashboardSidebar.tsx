@@ -56,6 +56,7 @@ function SidebarDropdownLink({ label, icon, children, activeDropdown, setActiveD
   const [isHovered, setIsHovered] = useState(false);
   const linkRef = useRef<HTMLDivElement>(null);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isActiveRoute = React.Children.toArray(children).some((child) => {
     if (React.isValidElement(child)) {
@@ -85,6 +86,9 @@ function SidebarDropdownLink({ label, icon, children, activeDropdown, setActiveD
   };
 
   const handleMouseEnter = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
     if (collapsed && linkRef.current) {
       const rect = linkRef.current.getBoundingClientRect();
       setMenuPosition({ top: rect.top, left: rect.right + 10 });
@@ -93,8 +97,17 @@ function SidebarDropdownLink({ label, icon, children, activeDropdown, setActiveD
   };
 
   const handleMouseLeave = () => {
-    setIsHovered(false);
+    timeoutRef.current = setTimeout(() => {
+      setIsHovered(false);
+    }, 200); // 200ms delay to cross the gap
   };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   return (
     <>
@@ -148,8 +161,15 @@ function SidebarDropdownLink({ label, icon, children, activeDropdown, setActiveD
         <div
           className="fixed bg-white rounded-lg shadow-xl border border-gray-100 z-[9999] py-2 w-48 animate-in fade-in zoom-in-95 duration-100"
           style={{ top: menuPosition.top, left: menuPosition.left }}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
+          onMouseEnter={() => {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            setIsHovered(true);
+          }}
+          onMouseLeave={() => {
+            timeoutRef.current = setTimeout(() => {
+              setIsHovered(false);
+            }, 200);
+          }}
         >
           <div className="px-3 py-2 font-semibold text-gray-900 border-b border-gray-100 mb-1 text-sm bg-gray-50/50">
             {label}
