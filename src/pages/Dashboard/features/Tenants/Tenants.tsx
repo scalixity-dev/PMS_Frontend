@@ -48,22 +48,22 @@ const Tenants = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        const fetchTenants = async () => {
-            try {
-                setLoading(true);
-                setError(null);
-                const backendTenants = await tenantService.getAll();
-                const transformedTenants = backendTenants.map((tenant) => tenantService.transformTenant(tenant));
-                setTenants(transformedTenants);
-            } catch (err) {
-                console.error('Error fetching tenants:', err);
-                setError(err instanceof Error ? err.message : 'Failed to fetch tenants');
-            } finally {
-                setLoading(false);
-            }
-        };
+    const fetchTenants = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const backendTenants = await tenantService.getAll();
+            const transformedTenants = backendTenants.map((tenant) => tenantService.transformTenant(tenant));
+            setTenants(transformedTenants);
+        } catch (err) {
+            console.error('Error fetching tenants:', err);
+            setError(err instanceof Error ? err.message : 'Failed to fetch tenants');
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
         fetchTenants();
     }, []);
 
@@ -168,7 +168,7 @@ const Tenants = () => {
 
                 {/* Tenants Grid */}
                 {!loading && !error && (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                         {currentTenants.length > 0 ? (
                             currentTenants.map((tenant) => (
                                 <TenantCard
@@ -176,6 +176,7 @@ const Tenants = () => {
                                     {...tenant}
                                     image={tenant.image || ''}
                                     propertyName="Sunset Apartments, Unit 4B"
+                                    onDeleteSuccess={fetchTenants}
                                 />
                             ))
                         ) : (
