@@ -211,7 +211,7 @@ const Listing: React.FC = () => {
 
                     transformed.push({
                         id: unit.id,
-                        name: `${backendProperty.propertyName} - ${unit.unitName || 'Unit'} `,
+                        name: `${backendProperty.propertyName} - ${unit.unitName || 'Unit'}`,
                         address: propertyAddress,
                         price,
                         status: hasActiveListing ? 'listed' : 'unlisted',
