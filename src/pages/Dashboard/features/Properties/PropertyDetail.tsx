@@ -713,7 +713,7 @@ const PropertyDetail: React.FC = () => {
     // Loading state
     if (isLoading) {
         return (
-            <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-6xl'} mx-auto min-h-screen pb-10 flex items-center justify-center transition-all duration-300`}>
+            <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen pb-10 flex items-center justify-center transition-all duration-300`}>
                 <div className="text-center">
                     <Loader2 className="w-8 h-8 animate-spin text-[#3A6D6C] mx-auto mb-4" />
                     <p className="text-gray-600">Loading property details...</p>
@@ -725,7 +725,7 @@ const PropertyDetail: React.FC = () => {
     // Error state - only show error if both backend and mock data failed
     if ((error || !property) && !mockData) {
         return (
-            <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-6xl'} mx-auto min-h-screen pb-10 flex items-center justify-center transition-all duration-300`}>
+            <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen pb-10 flex items-center justify-center transition-all duration-300`}>
                 <div className="text-center">
                     <p className="text-red-500 text-lg mb-4">
                         {error instanceof Error ? error.message : 'Failed to load property details'}

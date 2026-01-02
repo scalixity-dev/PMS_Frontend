@@ -22,6 +22,33 @@ const MoveInBothLateFees: React.FC<MoveInBothLateFeesProps> = ({ onNext, recurri
     const [maxMonthlyBalance, setMaxMonthlyBalance] = useState<string>('');
     const [dailyTime, setDailyTime] = useState<string>('06:00 PM'); // Usually same as one-time, but let's keep separate for flexibility
 
+    const [errors, setErrors] = useState<Record<string, string>>({});
+
+    const validateForm = () => {
+        const newErrors: Record<string, string> = {};
+
+        if (!oneTimeAmount || isNaN(Number(oneTimeAmount)) || Number(oneTimeAmount) <= 0) {
+            newErrors.oneTimeAmount = 'Amount is required and must be greater than zero';
+        }
+        if (!oneTimeGracePeriod || isNaN(Number(oneTimeGracePeriod)) || Number(oneTimeGracePeriod) < 0) {
+            newErrors.oneTimeGracePeriod = 'Grace period is required and must be non-negative';
+        }
+        if (!dailyAmount || isNaN(Number(dailyAmount)) || Number(dailyAmount) <= 0) {
+            newErrors.dailyAmount = 'Amount is required and must be greater than zero';
+        }
+        if (!maxMonthlyBalance || isNaN(Number(maxMonthlyBalance)) || Number(maxMonthlyBalance) <= 0) {
+            newErrors.maxMonthlyBalance = 'Max balance is required and must be greater than zero';
+        }
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const handleNext = () => {
+        if (validateForm()) {
+            onNext();
+        }
+    };
+
     const typeOptions = [
         { value: 'fixed', label: 'Fixed amount' },
         { value: 'outstanding', label: 'Percentage of outstanding charges' },
@@ -64,25 +91,50 @@ const MoveInBothLateFees: React.FC<MoveInBothLateFeesProps> = ({ onNext, recurri
                                 <input
                                     type="text"
                                     value={oneTimeAmount}
-                                    onChange={(e) => setOneTimeAmount(e.target.value)}
-                                    className="w-full bg-[#7BD747] text-white font-medium text-base placeholder-white/70 px-6 py-3 rounded-[1.5rem] border-none outline-none ring-0 h-[52px]"
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (/^\d*\.?\d*$/.test(val)) {
+                                            setOneTimeAmount(val);
+                                            if (errors.oneTimeAmount) {
+                                                setErrors(prev => {
+                                                    const next = { ...prev };
+                                                    delete next.oneTimeAmount;
+                                                    return next;
+                                                });
+                                            }
+                                        }
+                                    }}
+                                    className={`w-full bg-[#7BD747] text-white font-medium text-base placeholder-white/70 px-6 py-3 rounded-[1.5rem] border-none outline-none ring-0 h-[52px] ${errors.oneTimeAmount ? 'ring-2 ring-red-500' : ''}`}
                                     placeholder="00.00"
                                 />
                                 {(oneTimeType === 'outstanding' || oneTimeType === 'recurring') && (
                                     <span className="absolute right-6 top-1/2 -translate-y-1/2 text-white font-medium text-lg">%</span>
                                 )}
                             </div>
+                            {errors.oneTimeAmount && <span className="text-red-500 text-xs ml-2">{errors.oneTimeAmount}</span>}
                         </div>
 
                         <div className="flex flex-col gap-2">
                             <label className="text-xs font-bold text-gray-700 ml-1">Grace Period (days) *</label>
                             <input
-                                type="number"
-                                min="0"
+                                type="text"
                                 value={oneTimeGracePeriod}
-                                onChange={(e) => setOneTimeGracePeriod(e.target.value)}
-                                className="w-full bg-[#7BD747] text-white font-medium text-base placeholder-white/70 px-6 py-3 rounded-[1.5rem] border-none outline-none ring-0 h-[52px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (/^\d*$/.test(val)) {
+                                        setOneTimeGracePeriod(val);
+                                        if (errors.oneTimeGracePeriod) {
+                                            setErrors(prev => {
+                                                const next = { ...prev };
+                                                delete next.oneTimeGracePeriod;
+                                                return next;
+                                            });
+                                        }
+                                    }
+                                }}
+                                className={`w-full bg-[#7BD747] text-white font-medium text-base placeholder-white/70 px-6 py-3 rounded-[1.5rem] border-none outline-none ring-0 h-[52px] ${errors.oneTimeGracePeriod ? 'ring-2 ring-red-500' : ''}`}
                             />
+                            {errors.oneTimeGracePeriod && <span className="text-red-500 text-xs ml-2">{errors.oneTimeGracePeriod}</span>}
                         </div>
 
                         {/* Time */}
@@ -139,11 +191,24 @@ const MoveInBothLateFees: React.FC<MoveInBothLateFeesProps> = ({ onNext, recurri
                                     <input
                                         type="text"
                                         value={dailyAmount}
-                                        onChange={(e) => setDailyAmount(e.target.value)}
-                                        className="w-full bg-[#7BD747] text-white font-medium text-base placeholder-white/70 px-6 py-3 rounded-[1.5rem] border-none outline-none ring-0 h-[52px]"
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            if (/^\d*\.?\d*$/.test(val)) {
+                                                setDailyAmount(val);
+                                                if (errors.dailyAmount) {
+                                                    setErrors(prev => {
+                                                        const next = { ...prev };
+                                                        delete next.dailyAmount;
+                                                        return next;
+                                                    });
+                                                }
+                                            }
+                                        }}
+                                        className={`w-full bg-[#7BD747] text-white font-medium text-base placeholder-white/70 px-6 py-3 rounded-[1.5rem] border-none outline-none ring-0 h-[52px] ${errors.dailyAmount ? 'ring-2 ring-red-500' : ''}`}
                                         placeholder="00.00"
                                     />
                                 </div>
+                                {errors.dailyAmount && <span className="text-red-500 text-xs ml-2">{errors.dailyAmount}</span>}
                             </div>
 
                             {/* Maximum monthly balance */}
@@ -153,11 +218,24 @@ const MoveInBothLateFees: React.FC<MoveInBothLateFeesProps> = ({ onNext, recurri
                                     <input
                                         type="text"
                                         value={maxMonthlyBalance}
-                                        onChange={(e) => setMaxMonthlyBalance(e.target.value)}
-                                        className="w-full bg-[#7BD747] text-white font-medium text-base placeholder-white/70 px-6 py-3 rounded-[1.5rem] border-none outline-none ring-0 h-[52px]"
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            if (/^\d*\.?\d*$/.test(val)) {
+                                                setMaxMonthlyBalance(val);
+                                                if (errors.maxMonthlyBalance) {
+                                                    setErrors(prev => {
+                                                        const next = { ...prev };
+                                                        delete next.maxMonthlyBalance;
+                                                        return next;
+                                                    });
+                                                }
+                                            }
+                                        }}
+                                        className={`w-full bg-[#7BD747] text-white font-medium text-base placeholder-white/70 px-6 py-3 rounded-[1.5rem] border-none outline-none ring-0 h-[52px] ${errors.maxMonthlyBalance ? 'ring-2 ring-red-500' : ''}`}
                                         placeholder="00.00"
                                     />
                                 </div>
+                                {errors.maxMonthlyBalance && <span className="text-red-500 text-xs ml-2">{errors.maxMonthlyBalance}</span>}
                                 {maxMonthlyBalance && dailyAmount && (
                                     <p className="text-gray-400 text-[10px] mt-1.5 ml-1">
                                         {(() => {
@@ -253,7 +331,7 @@ const MoveInBothLateFees: React.FC<MoveInBothLateFeesProps> = ({ onNext, recurri
 
             <div className="mt-16">
                 <button
-                    onClick={onNext}
+                    onClick={handleNext}
                     className="px-8 py-3 bg-[#3D7475] text-white rounded-lg font-bold text-lg hover:opacity-90 transition-opacity shadow-sm min-w-[200px]"
                 >
                     Complete Move In

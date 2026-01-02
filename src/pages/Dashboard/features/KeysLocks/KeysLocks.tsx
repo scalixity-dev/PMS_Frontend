@@ -20,7 +20,7 @@ const mapKeyType = (keyType: string): string => {
 
 const KeysLocks = () => {
     const navigate = useNavigate();
-    const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
+    const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() ?? { sidebarCollapsed: false };
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [filters, setFilters] = useState<Record<string, string[]>>({});

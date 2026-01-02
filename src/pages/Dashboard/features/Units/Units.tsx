@@ -322,7 +322,10 @@ const Units: React.FC = () => {
                         >
                             Import
                         </button>
-                        <button className="bg-[#3A6D6C] text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2">
+                        <button
+                            onClick={() => navigate('/dashboard/property/add')}
+                            className="bg-[#3A6D6C] text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2"
+                        >
                             Add Properties
                             <Plus className="w-4 h-4" />
                         </button>
