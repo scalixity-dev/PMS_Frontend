@@ -47,33 +47,33 @@ const ServicePros = () => {
     };
 
     // Fetch service providers from API
+    const fetchServiceProviders = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const data = await serviceProviderService.getAll(true); // Only fetch active service providers
+
+            // Transform backend data to card format
+            const transformedData: ServiceProCardData[] = data.map((provider: BackendServiceProvider) => ({
+                id: provider.id,
+                initials: getInitials(provider.firstName, provider.lastName),
+                name: `${provider.firstName}${provider.middleName ? ` ${provider.middleName}` : ''} ${provider.lastName}`.trim(),
+                phone: formatPhoneNumber(provider.phoneNumber, provider.phoneCountryCode),
+                category: formatCategory(provider.category, provider.subcategory),
+                bgColor: 'bg-[#4ad1a6]',
+                image: provider.photoUrl || undefined,
+            }));
+
+            setServicePros(transformedData);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to load service providers');
+            console.error('Error fetching service providers:', err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchServiceProviders = async () => {
-            setIsLoading(true);
-            setError(null);
-            try {
-                const data = await serviceProviderService.getAll(true); // Only fetch active service providers
-
-                // Transform backend data to card format
-                const transformedData: ServiceProCardData[] = data.map((provider: BackendServiceProvider) => ({
-                    id: provider.id,
-                    initials: getInitials(provider.firstName, provider.lastName),
-                    name: `${provider.firstName}${provider.middleName ? ` ${provider.middleName}` : ''} ${provider.lastName}`.trim(),
-                    phone: formatPhoneNumber(provider.phoneNumber, provider.phoneCountryCode),
-                    category: formatCategory(provider.category, provider.subcategory),
-                    bgColor: 'bg-[#4ad1a6]',
-                    image: provider.photoUrl || undefined,
-                }));
-
-                setServicePros(transformedData);
-            } catch (err) {
-                setError(err instanceof Error ? err.message : 'Failed to load service providers');
-                console.error('Error fetching service providers:', err);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
         fetchServiceProviders();
     }, []);
 
@@ -226,6 +226,7 @@ const ServicePros = () => {
                                     <ServiceProCard
                                         key={pro.id}
                                         {...pro}
+                                        onDeleteSuccess={fetchServiceProviders}
                                     />
                                 ))}
                             </div>

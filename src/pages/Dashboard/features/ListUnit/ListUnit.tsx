@@ -713,11 +713,7 @@ const ListUnit: React.FC = () => {
                       onEditProperty={handleEditProperty}
                       onNext={handlePropertyNext}
                     />
-                    {formData.property && (
-                      <div className="w-full max-w-md mt-6 flex justify-center">
-                        <NextStepButton onClick={handleNext} />
-                      </div>
-                    )}
+
                   </div>
                 )}
 

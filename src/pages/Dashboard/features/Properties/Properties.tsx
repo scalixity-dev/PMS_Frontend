@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import PropertiesHeader from './components/PropertiesHeader';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
@@ -14,7 +14,7 @@ interface Property {
     balance: number;
     image: string | null;
     type: string;
-    status: 'active' | 'archived' ;
+    status: 'active' | 'archived';
     occupancy: 'vacant' | 'occupied' | 'partially_occupied';
     propertyType: 'single_apartment' | 'multi_apartment';
     balanceCategory: 'low' | 'medium' | 'high';
@@ -25,6 +25,7 @@ interface Property {
 
 const Properties: React.FC = () => {
     const navigate = useNavigate();
+    const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 9;
@@ -150,7 +151,7 @@ const Properties: React.FC = () => {
         // Determine balance category based on monthly rent and currency
         // Use currency-agnostic percentiles or currency-specific thresholds
         let balanceCategory: 'low' | 'medium' | 'high' = 'medium';
-        
+
         // Currency-specific thresholds (in base currency units)
         const currencyThresholds: Record<string, { low: number; high: number }> = {
             'USD': { low: 25000, high: 75000 },
@@ -166,7 +167,7 @@ const Properties: React.FC = () => {
             'AED': { low: 92000, high: 275000 },
             'SAR': { low: 94000, high: 280000 },
         };
-        
+
         const thresholds = currencyThresholds[currency] || currencyThresholds['USD'];
         if (monthlyRent < thresholds.low) {
             balanceCategory = 'low';
@@ -185,7 +186,7 @@ const Properties: React.FC = () => {
             const hasDraftListing = backendProperty.listings.some(
                 listing => listing.listingStatus === 'DRAFT'
             );
-            
+
             if (hasActiveListing) {
                 marketingStatus = 'listed';
             } else if (hasDraftListing) {
@@ -331,7 +332,7 @@ const Properties: React.FC = () => {
     };
 
     return (
-        <div className="max-w-6xl mx-auto min-h-screen">
+        <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen transition-all duration-300`}>
             <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
                 <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
                 <span className="text-gray-500 text-sm mx-1">/</span>

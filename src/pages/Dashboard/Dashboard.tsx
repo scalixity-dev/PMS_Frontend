@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 
 import profilePic from "../../assets/images/profilepic.png";
 import propertyPic from "../../assets/images/propertypic.png";
@@ -7,6 +7,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieCha
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
   // Data for charts
   const accountingData = [
     { name: '11 Nov', value: 2000 },
@@ -145,7 +146,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="space-y-5">
+    <div className={`space-y-5 ${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto transition-all duration-300`}>
       {/* Top Row - Overview, Tasks, Applications */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {/* Overview Section */}

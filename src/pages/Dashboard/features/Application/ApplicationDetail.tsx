@@ -19,7 +19,7 @@ import AddOccupantModal from './components/AddOccupantModal';
 import AddPetModal from './components/AddPetModal';
 import AddVehicleModal from './components/AddVehicleModal';
 import AddReferenceModal from './components/AddReferenceModal';
-import DeleteConfirmationModal from './components/DeleteConfirmationModal';
+import DeleteConfirmationModal from '../../components/DeleteConfirmationModal';
 import AddResidenceModal from './components/AddResidenceModal';
 import AddIncomeModal from './components/AddIncomeModal';
 import AddEmergencyContactModal from './components/AddEmergencyContactModal';

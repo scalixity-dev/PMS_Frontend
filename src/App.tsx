@@ -203,10 +203,7 @@ const App: React.FC = () => {
               <Route path="/dashboard/properties/edit/:id" element={<EditProperty />} />
               <Route path="/dashboard/units/edit/:unitId" element={<EditUnit />} />
               <Route path="/dashboard/units/:unitId" element={<UnitPropertyDetail />} />
-              <Route path="/dashboard/property/add" element={<AddProperty />} />
-              <Route path="/dashboard/portfolio/units" element={<Units />} />
-              <Route path="/dashboard/portfolio/keys-locks" element={<KeysLocks />} />
-              <Route path="/dashboard/portfolio/keys-locks/:id" element={<KeyDetail />} />
+
               <Route path="/dashboard/portfolio/listing" element={<Listing />} />
               <Route path="/dashboard/listings/:id" element={<ListingDetail />} />
               <Route path="/dashboard/calendar" element={<Calendar />} />
@@ -216,7 +213,7 @@ const App: React.FC = () => {
               <Route path="/dashboard/equipments/edit/:id" element={<CreateEquipment />} />
               <Route path="/dashboard/equipments/:id" element={<EquipmentDetail />} />
               <Route path="/dashboard/property/add" element={<AddProperty />} />
-              <Route path="/dashboard/properties/edit/:id" element={<EditProperty />} />
+
               <Route path="/dashboard/properties" element={<Properties />} />
               <Route path="/dashboard/properties/import" element={<ImportProperties />} />
               <Route path="/dashboard/accounting/transactions" element={<Transactions />} />

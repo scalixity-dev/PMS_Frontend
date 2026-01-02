@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Plus } from 'lucide-react';
+import { useOutletContext, useNavigate } from 'react-router-dom';
+import { Plus, ChevronLeft } from 'lucide-react';
 import { useQueries } from '@tanstack/react-query';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
@@ -12,6 +13,8 @@ import type { Unit } from './components/UnitItem';
 import type { BackendListing } from '../../../../services/listing.service';
 
 const Units: React.FC = () => {
+    const navigate = useNavigate();
+    const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
     const [searchQuery, setSearchQuery] = useState('');
     const [filters, setFilters] = useState<Record<string, string[]>>({});
     const [currentPage, setCurrentPage] = useState(1);
@@ -112,14 +115,14 @@ const Units: React.FC = () => {
                 if (property.propertyType === 'MULTI') {
                     // Get units from unit service data
                     const unitsData = unitsByPropertyId.get(property.id) || [];
-                    
+
                     if (unitsData.length > 0) {
                         // Transform MULTI property units from unit service
                         units = unitsData.map((unit: any) => {
                             // Determine unit status - only Occupied if there's an active lease/tenant
                             // Having leasing data doesn't mean occupied - it just means leasing terms are set
                             let unitStatus: 'Occupied' | 'Vacant' = 'Vacant';
-                            
+
                             // Check if unit has an active listing with OCCUPIED status
                             // First check the fetched listings map (most reliable)
                             const activeListing = activeListingsMap.unitListingsMap.get(unit.id);
@@ -127,17 +130,17 @@ const Units: React.FC = () => {
                                 unitStatus = 'Occupied';
                             } else if (unit.listings && Array.isArray(unit.listings) && unit.listings.length > 0) {
                                 // Fallback to unit's listings array if available
-                                const unitListing = unit.listings.find((l: any) => 
-                                    l.listingStatus === 'ACTIVE' && 
-                                    l.isActive && 
+                                const unitListing = unit.listings.find((l: any) =>
+                                    l.listingStatus === 'ACTIVE' &&
+                                    l.isActive &&
                                     (l.occupancyStatus === 'OCCUPIED' || l.occupancyStatus === 'PARTIALLY_OCCUPIED')
                                 );
                                 if (unitListing) {
                                     unitStatus = 'Occupied';
                                 }
                             }
-                            
-                          
+
+
                             let unitImage = '';
                             if (unit.photos && Array.isArray(unit.photos) && unit.photos.length > 0) {
                                 // Use primary photo or first photo
@@ -178,10 +181,10 @@ const Units: React.FC = () => {
                 } else if (property.propertyType === 'SINGLE' && property.singleUnitDetails) {
                     // Transform SINGLE property to a unit
                     const singleUnit = property.singleUnitDetails;
-                    
+
                     // Determine status for single unit - only Occupied if there's an active lease/tenant
                     let unitStatus: 'Occupied' | 'Vacant' = 'Vacant';
-                    
+
                     // Check if property has an active listing with OCCUPIED status
                     // First check the fetched listings map (most reliable)
                     const activeListing = activeListingsMap.propertyListingsMap.get(property.id);
@@ -189,16 +192,16 @@ const Units: React.FC = () => {
                         unitStatus = 'Occupied';
                     } else if (property.listings && Array.isArray(property.listings) && property.listings.length > 0) {
                         // Fallback to property's listings array if available
-                        const propertyListing = property.listings.find((l: any) => 
-                            l.listingStatus === 'ACTIVE' && 
-                            l.isActive && 
+                        const propertyListing = property.listings.find((l: any) =>
+                            l.listingStatus === 'ACTIVE' &&
+                            l.isActive &&
                             (l.occupancyStatus === 'OCCUPIED' || l.occupancyStatus === 'PARTIALLY_OCCUPIED')
                         );
                         if (propertyListing) {
                             unitStatus = 'Occupied';
                         }
                     }
-                    
+
                     // Check if property has an active listing
                     const hasActiveListing = activeListingsMap.propertyListingsMap.has(property.id);
 
@@ -295,7 +298,7 @@ const Units: React.FC = () => {
     };
 
     return (
-        <div className="max-w-7xl mx-auto min-h-screen">
+        <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen transition-all duration-300`}>
             {/* Breadcrumb */}
             <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
                 <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
@@ -305,20 +308,24 @@ const Units: React.FC = () => {
 
             <div className="p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem] overflow-visible">
                 {/* Header */}
-                <div className="flex items-center gap-6 mb-8">
+                <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-2">
-                        <button onClick={() => window.history.back()} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M15 18l-6-6 6-6" />
-                            </svg>
+                        <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
+                            <ChevronLeft className="w-6 h-6 text-gray-800" />
                         </button>
                         <h1 className="text-2xl font-bold text-gray-800">Units</h1>
                     </div>
                     <div className="flex gap-4">
-                        <button className="bg-[#3A6D6C] text-white px-6 py-2.5 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2">
+                        <button
+                            onClick={() => navigate('/dashboard/properties/import')}
+                            className="bg-[#3A6D6C] text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2"
+                        >
                             Import
                         </button>
-                        <button className="bg-[#3A6D6C] text-white px-6 py-2.5 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2">
+                        <button
+                            onClick={() => navigate('/dashboard/property/add')}
+                            className="bg-[#3A6D6C] text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2"
+                        >
                             Add Properties
                             <Plus className="w-4 h-4" />
                         </button>

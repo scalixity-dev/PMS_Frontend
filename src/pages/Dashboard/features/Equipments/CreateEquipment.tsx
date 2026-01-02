@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Upload, Check, Loader2, X } from 'lucide-react';
+import { Upload, Check, Loader2, X, ChevronLeft } from 'lucide-react';
 import CustomDropdown from '../../components/CustomDropdown';
+import UnsavedChangesModal from '../../components/UnsavedChangesModal';
 import DatePicker from '../../../../components/ui/DatePicker';
 import { format } from 'date-fns';
 import { useCreateEquipment, useUpdateEquipment, useGetEquipment, useGetEquipmentCategories, useGetEquipmentSubcategories } from '../../../../hooks/useEquipmentQueries';
@@ -13,7 +14,15 @@ const CreateEquipment = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
     const isEditMode = !!id;
-    
+
+    // Dirty state tracking for unsaved changes
+    const [isDirty, setIsDirty] = useState(false);
+    const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+    const [pendingNavigationPath, setPendingNavigationPath] = useState<string | null>(null);
+
+    // Initial loading ref to prevent dirty state on first load
+    const isInitializingRef = useRef(true);
+
     const { data: properties = [], isLoading: isLoadingProperties } = useGetAllProperties();
     const { data: categories = [], isLoading: isLoadingCategories } = useGetEquipmentCategories();
     const { data: existingEquipment, isLoading: isLoadingEquipment, error: equipmentError } = useGetEquipment(id || null, isEditMode);
@@ -62,6 +71,7 @@ const CreateEquipment = () => {
     // Pre-fill form when editing
     useEffect(() => {
         if (isEditMode && existingEquipment) {
+            isInitializingRef.current = true; // Start initialization
             const eq = existingEquipment as any;
             setFormData({
                 categoryId: typeof eq.category === 'object' ? eq.category?.id || '' : '',
@@ -80,6 +90,13 @@ const CreateEquipment = () => {
             if (eq.photoUrl) {
                 setUploadedImageUrl(eq.photoUrl);
             }
+            // Reset dirty state after a short delay to allow for state updates
+            setTimeout(() => {
+                setIsDirty(false);
+                isInitializingRef.current = false;
+            }, 100);
+        } else {
+            isInitializingRef.current = false;
         }
     }, [isEditMode, existingEquipment]);
 
@@ -107,6 +124,9 @@ const CreateEquipment = () => {
             }
             return newData;
         });
+        if (!isInitializingRef.current) {
+            setIsDirty(true);
+        }
     };
 
     const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -129,6 +149,7 @@ const CreateEquipment = () => {
 
                 const data = await response.json();
                 setUploadedImageUrl(data.url || data.imageUrl || data.path);
+                setIsDirty(true);
             } catch (error) {
                 console.error('Error uploading image:', error);
                 alert('Failed to upload image. Please try again.');
@@ -172,6 +193,7 @@ const CreateEquipment = () => {
 
         if (validFiles.length > 0) {
             setUploadedFiles(prev => [...prev, ...validFiles]);
+            setIsDirty(true);
         }
 
         // Reset input so same file can be selected again if needed
@@ -182,6 +204,7 @@ const CreateEquipment = () => {
 
     const handleRemoveFile = (index: number) => {
         setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+        setIsDirty(true);
     };
 
     // Helper to upload a document file to the backend (same pattern as AddProperty)
@@ -264,6 +287,30 @@ const CreateEquipment = () => {
         }
     };
 
+    const handleNavigation = (path: string) => {
+        if (isDirty) {
+            setPendingNavigationPath(path);
+            setShowUnsavedModal(true);
+        } else {
+            navigate(path);
+        }
+    };
+
+    const handleConfirmNavigation = () => {
+        setShowUnsavedModal(false);
+        setIsDirty(false);
+        if (pendingNavigationPath === '-1') {
+            navigate(-1);
+        } else if (pendingNavigationPath) {
+            navigate(pendingNavigationPath);
+        }
+    };
+
+    const handleCancelNavigation = () => {
+        setShowUnsavedModal(false);
+        setPendingNavigationPath(null);
+    };
+
     // Show loading state while categories or equipment data are being fetched
     if (isLoadingCategories || (isEditMode && isLoadingEquipment)) {
         return (
@@ -301,7 +348,7 @@ const CreateEquipment = () => {
                             {equipmentError instanceof Error ? equipmentError.message : 'The equipment you are trying to edit does not exist.'}
                         </p>
                         <button
-                            onClick={() => navigate('/dashboard/equipments')}
+                            onClick={() => handleNavigation('/dashboard/equipments')}
                             className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors"
                         >
                             Back to Equipments
@@ -313,15 +360,28 @@ const CreateEquipment = () => {
     }
 
     return (
-        <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-12">
-            {/* Header */}
+        <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-12 transition-all duration-300">
+            {/* Breadcrumb */}
             <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
                 <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
+                <span className="text-gray-500 text-sm mx-1">/</span>
+                <span className="text-gray-600 text-sm font-semibold cursor-pointer" onClick={() => handleNavigation('/dashboard/equipments')}>Equipments</span>
                 <span className="text-gray-500 text-sm mx-1">/</span>
                 <span className="text-gray-600 text-sm font-semibold">{isEditMode ? 'Edit Equipment' : 'Add Equipment'}</span>
             </div>
 
             <div className="p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem]">
+                {/* Header */}
+                <div className="flex items-center gap-4 mb-6">
+                    <button
+                        onClick={() => handleNavigation('/dashboard/equipments')}
+                        className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+                    >
+                        <ChevronLeft className="w-6 h-6 text-gray-800" />
+                    </button>
+                    <h1 className="text-2xl font-bold text-gray-800">{isEditMode ? 'Edit Equipment' : 'Add Equipment'}</h1>
+                </div>
+
                 {/* Cover Photo Upload */}
                 <div className="mb-8">
                     <h2 className="text-lg font-bold text-gray-800 mb-4">Equipment Photo</h2>
@@ -358,6 +418,7 @@ const CreateEquipment = () => {
                                             type="button"
                                             onClick={() => {
                                                 setUploadedImageUrl(null);
+                                                setIsDirty(true);
                                                 if (fileInputRef.current) {
                                                     fileInputRef.current.value = '';
                                                 }
@@ -384,12 +445,12 @@ const CreateEquipment = () => {
                                 <span className="text-xs text-gray-500 mt-1">Click to upload</span>
                             </div>
                         )}
-                        <input 
-                            type="file" 
+                        <input
+                            type="file"
                             ref={fileInputRef}
                             onChange={handleImageUpload}
                             accept="image/*"
-                            className="absolute inset-0 opacity-0 cursor-pointer" 
+                            className="absolute inset-0 opacity-0 cursor-pointer"
                         />
                     </div>
                 </div>
@@ -637,14 +698,14 @@ const CreateEquipment = () => {
                                 <span className="text-xs font-medium">
                                     {uploadedFiles.length >= 10 ? 'Maximum files reached' : `Upload File (${uploadedFiles.length}/10)`}
                                 </span>
-                                <input 
-                                    type="file" 
+                                <input
+                                    type="file"
                                     ref={fileUploadRef}
                                     onChange={handleFileUpload}
                                     multiple
                                     disabled={uploadedFiles.length >= 10}
                                     accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/plain"
-                                    className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed" 
+                                    className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed"
                                 />
                             </div>
                         </div>
@@ -653,7 +714,7 @@ const CreateEquipment = () => {
 
                 {/* Create/Update Button */}
                 <div>
-                    <button 
+                    <button
                         onClick={handleSubmit}
                         disabled={createEquipmentMutation.isPending || updateEquipmentMutation.isPending || isUploading}
                         className="px-8 py-3 bg-[#3A6D6C] text-white rounded-lg font-medium hover:bg-[#2c5251] transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
@@ -665,6 +726,16 @@ const CreateEquipment = () => {
                     </button>
                 </div>
             </div>
+            {/* Unsaved Changes Modal */}
+            <UnsavedChangesModal
+                isOpen={showUnsavedModal}
+                onClose={handleCancelNavigation}
+                onConfirm={handleConfirmNavigation}
+                title="Unsaved Changes"
+                message="You have unsaved changes. Are you sure you want to leave without saving?"
+                confirmText="Leave without saving"
+                cancelText="Keep editing"
+            />
         </div>
     );
 };
