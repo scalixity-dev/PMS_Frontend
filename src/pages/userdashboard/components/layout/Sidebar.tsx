@@ -1,13 +1,6 @@
 import { PiUserCircleFill } from "react-icons/pi";
-
-interface SidebarProps {
-    userName: string;
-    userEmail: string;
-    outstanding: string;
-    deposits: string;
-    credits: string;
-    roommateAvatar?: string;
-}
+import { Link } from "react-router-dom";
+import { useUserDashboardStore } from "../../store/userDashboardStore";
 
 const FinancialCard = ({ title, amount, currency, action }: { title: string; amount: string; currency: string; action?: string }) => (
     <div className="bg-white rounded-lg px-3 py-1 shadow-sm border border-gray-50">
@@ -26,16 +19,21 @@ const FinancialCard = ({ title, amount, currency, action }: { title: string; amo
     </div>
 );
 
-export const Sidebar = ({ userName, userEmail, outstanding, deposits, credits, roommateAvatar }: SidebarProps) => {
+export const Sidebar = () => {
+    const { userInfo, finances } = useUserDashboardStore();
+    const userName = `${userInfo.firstName} ${userInfo.lastName}`;
+    const userEmail = userInfo.email;
+    const { outstanding, deposits, credits } = finances;
+    const roommateAvatar = undefined;
     return (
-        <div className="w-full lg:w-60 flex flex-col gap-4">
+        <div className="w-full lg:w-64 flex flex-col gap-4">
             {/* Profile Card */}
             <div className="bg-[var(--dashboard-bg-light)] rounded-[1rem] p-3 flex flex-col items-center shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] border border-gray-50">
                 <div className="w-20 h-20 bg-[var(--dashboard-text-main)] rounded-full flex items-center justify-center mb-6 transition-transform hover:scale-105 cursor-pointer shadow-lg">
                     <PiUserCircleFill className="text-white text-7xl" />
                 </div>
                 <h2 className="text-3xl font-medium text-[var(--dashboard-text-main)] mb-1">{userName}</h2>
-                <p className="text-gray-500 text-sm font-medium">{userEmail}</p>
+                <p className="text-gray-500 text-sm font-normal">{userEmail}</p>
             </div>
 
             {/* Info Cards Container */}
@@ -59,8 +57,8 @@ export const Sidebar = ({ userName, userEmail, outstanding, deposits, credits, r
 
             {/* Rental Profile Card */}
             <div className="bg-[var(--dashboard-bg-light)] rounded-[1rem] p-4 flex justify-between items-center shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] border border-gray-50 hover:border-[var(--dashboard-accent)]/30 transition-colors group">
-                <span className="text-[var(--dashboard-text-main)] font-bold text-lg">Rental Profile</span>
-                <button className="text-[var(--dashboard-accent)] font-bold hover:underline">View</button>
+                <span className="text-[var(--dashboard-text-main)] font-medium text-lg">Rental Profile</span>
+                <Link to="/userdashboard/settings/public-renter-profile" className="text-[var(--dashboard-accent)] font-semibold hover:underline">View</Link>
             </div>
         </div>
     );

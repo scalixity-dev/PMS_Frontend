@@ -78,7 +78,7 @@ export default function UserDashboardNavbar({ sidebarOpen, setSidebarOpen }: Nav
 
     const handleAddAnotherAccount = () => {
         setIsProfileDropdownOpen(false);
-        navigate("/userdashboard/settings/profile"); // Changed from /dashboard
+        navigate("/userdashboard/settings/account/profile");
     };
 
     const handleManageProfile = () => {

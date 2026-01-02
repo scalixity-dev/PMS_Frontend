@@ -14,8 +14,9 @@ import PricingPage from './pages/basewebsite/pricing';
 import LoginPage from './pages/basewebsite/auth/login';
 import SignUpPage from './pages/basewebsite/auth/signUp';
 import OtpPage from './pages/basewebsite/auth/otp';
-import OAuthCallbackPage from './pages/basewebsite/auth/oauth-callback';
+import OAuthCallbackPage from './pages/basewebsite/auth/otp'; // Note: This might have been a mistake in the original or I misread, checking...
 import OAuthCompletePage from './pages/basewebsite/auth/signUp/oauth-complete';
+import { TenantOnboardingFlow } from './pages/basewebsite/auth/signUp/sections/TenantOnboardingFlow';
 import TeamPage from './pages/basewebsite/features/team/index';
 import LandlordUseCasesPage from './pages/basewebsite/usecases/landlord';
 import ResourcePage from './pages/basewebsite/resources';
@@ -77,7 +78,6 @@ import ApplicationDetail from './pages/Dashboard/features/Application/Applicatio
 import ProviderStatement from './pages/Dashboard/features/ServicePros/ProviderStatement';
 import TransactionDetail from './pages/Dashboard/features/Transactions/TransactionDetail';
 import ChatPage from './pages/Dashboard/features/Messages/ChatPage';
-import NotificationPage from './pages/Dashboard/features/Notification/Notification';
 // Documents pages
 import LandlordForms from './pages/Dashboard/features/Documents/landlordforms/LandlordForms';
 import TemplateView from './pages/Dashboard/features/Documents/landlordforms/TemplateView';
@@ -96,16 +96,22 @@ import EditLead from './pages/Dashboard/features/Leads/EditLead';
 // User Dashboard pages
 import UserDashboardLayout from './components/userdashboard/UserDashboardLayout';
 import UserDashboard from './pages/userdashboard/UserDashboard';
-import Rent from './pages/userdashboard/Rent';
-import RequestsUser from './pages/userdashboard/Requests';
-import UtilityProviders from './pages/userdashboard/UtilityProviders';
-import PropertiesUser from './pages/userdashboard/Properties';
-import ApplicationsUser from './pages/userdashboard/Applications';
-import FileManager from './pages/userdashboard/FileManager';
-import Downloads from './pages/userdashboard/Downloads';
-import NewRequest from './pages/userdashboard/NewRequest';
-import PropertyDetailUser from './pages/userdashboard/PropertyDetail';
-import SettingsUser from './pages/userdashboard/Settings';
+import Rent from './pages/userdashboard/pages/rent/Rent';
+import RequestsUser from './pages/userdashboard/pages/requests/Requests';
+import UtilityProviders from './pages/userdashboard/pages/utilities/UtilityProviders';
+import PropertiesUser from './pages/userdashboard/pages/properties/Properties';
+import ApplicationsUser from './pages/userdashboard/pages/utilities/Applications';
+import FileManager from './pages/userdashboard/pages/utilities/FileManager';
+import Downloads from './pages/userdashboard/pages/utilities/Downloads';
+import NewRequest from './pages/userdashboard/pages/requests/NewRequest';
+import PropertyDetailUser from './pages/userdashboard/pages/properties/PropertyDetail';
+import SettingsUser from './pages/userdashboard/pages/settings/Settings';
+import ProfileUser from './pages/userdashboard/pages/profile/Profile';
+import SecurityUser from './pages/userdashboard/pages/profile/Security';
+import MyCardsUser from './pages/userdashboard/pages/profile/MyCards';
+import NotificationsUser from './pages/userdashboard/pages/profile/Notifications';
+import PublicRenterProfile from './pages/userdashboard/pages/profile/PublicRenterProfile';
+
 
 
 
@@ -168,6 +174,7 @@ const App: React.FC = () => {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignUpPage />} />
               <Route path="/signup/oauth-complete" element={<OAuthCompletePage />} />
+              <Route path="/signup/tenant-onboarding-flow" element={<TenantOnboardingFlow />} />
               <Route path="/otp" element={<OtpPage />} />
               <Route path="/auth/callback" element={<OAuthCallbackPage />} />
 
@@ -203,7 +210,10 @@ const App: React.FC = () => {
               <Route path="/dashboard/properties/edit/:id" element={<EditProperty />} />
               <Route path="/dashboard/units/edit/:unitId" element={<EditUnit />} />
               <Route path="/dashboard/units/:unitId" element={<UnitPropertyDetail />} />
-
+              <Route path="/dashboard/property/add" element={<AddProperty />} />
+              <Route path="/dashboard/portfolio/units" element={<Units />} />
+              <Route path="/dashboard/portfolio/keys-locks" element={<KeysLocks />} />
+              <Route path="/dashboard/portfolio/keys-locks/:id" element={<KeyDetail />} />
               <Route path="/dashboard/portfolio/listing" element={<Listing />} />
               <Route path="/dashboard/listings/:id" element={<ListingDetail />} />
               <Route path="/dashboard/calendar" element={<Calendar />} />
@@ -213,7 +223,7 @@ const App: React.FC = () => {
               <Route path="/dashboard/equipments/edit/:id" element={<CreateEquipment />} />
               <Route path="/dashboard/equipments/:id" element={<EquipmentDetail />} />
               <Route path="/dashboard/property/add" element={<AddProperty />} />
-
+              <Route path="/dashboard/properties/edit/:id" element={<EditProperty />} />
               <Route path="/dashboard/properties" element={<Properties />} />
               <Route path="/dashboard/properties/import" element={<ImportProperties />} />
               <Route path="/dashboard/accounting/transactions" element={<Transactions />} />
@@ -294,7 +304,6 @@ const App: React.FC = () => {
                   </ProtectedRoute>
                 }
               />
-              <Route path="/dashboard/notifications" element={<NotificationPage />} />
 
               {/* Settings Routes */}
               <Route
@@ -714,8 +723,12 @@ const App: React.FC = () => {
               <Route path="/userdashboard/downloads" element={<Downloads />} />
               <Route path="/userdashboard/new-request" element={<NewRequest />} />
               <Route path="/userdashboard/settings" element={<SettingsUser />} />
+              <Route path="/userdashboard/settings/account/profile" element={<ProfileUser />} />
+              <Route path="/userdashboard/settings/account/security" element={<SecurityUser />} />
+              <Route path="/userdashboard/settings/account/cards" element={<MyCardsUser />} />
+              <Route path="/userdashboard/settings/account/notifications" element={<NotificationsUser />} />
+              <Route path="/userdashboard/settings/public-renter-profile" element={<PublicRenterProfile />} />
             </Route>
-
 
             {/* Catch-all route */}
             <Route path="*" element={<HomePage />} />

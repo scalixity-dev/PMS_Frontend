@@ -1,24 +1,18 @@
-import { useState } from "react";
-import { Sidebar } from "./components/Sidebar";
-import { TransactionTable } from "./components/TransactionTable";
-import { LeaseList } from "./components/LeaseList";
-import { mockTransactions, mockLeases, tabs } from "./mockData";
-import type { TabType } from "./types";
+import { useUserDashboardStore } from "./store/userDashboardStore";
+import { Sidebar } from "./components/layout/Sidebar";
+import { TransactionTable } from "./components/transaction/TransactionTable";
+import { LeaseList } from "./components/lease/LeaseList";
+import { mockTransactions, mockLeases, tabs } from "./utils/mockData";
+import type { TabType } from "./utils/types";
 import PrimaryActionButton from "../../components/common/buttons/PrimaryActionButton";
 
 const UserDashboard = () => {
-    const [activeTab, setActiveTab] = useState<TabType>("Outstanding");
+    const { activeTab, setActiveTab } = useUserDashboardStore();
 
     return (
         <div className="flex flex-col lg:flex-row gap-8 min-h-screen bg-white p-4 lg:p-8 ">
             {/* Left Sidebar */}
-            <Sidebar
-                userName="Siddak Bagga"
-                userEmail="siddakbagga@gmail.com"
-                outstanding="0.00"
-                deposits="0.00"
-                credits="0.00"
-            />
+            <Sidebar />
 
             {/* Main Content Area */}
             <div className="flex-1 mt-12">

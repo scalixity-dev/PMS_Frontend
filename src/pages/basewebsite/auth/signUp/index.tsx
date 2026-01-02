@@ -2,12 +2,14 @@ import React, { useEffect } from 'react';
 import { AccountTypeSelection } from './sections/AccountTypeSelection';
 import { EmailSignup } from './sections/EmailSignup';
 import { RegistrationForm } from './sections/RegistrationForm';
+import { TenantRegistrationForm } from './sections/TenantRegistrationForm';
+import { TenantOnboarding } from './sections/TenantOnboarding';
 import { LeftIcon, RightCircle } from './sections/signUpBackgroundIcons';
 import { useSignUpStore } from './store/signUpStore';
 
 // Main Signup Component
 const SignUpPage: React.FC = () => {
-  const { currentStep, nextStep, resetForm } = useSignUpStore();
+  const { currentStep, nextStep, resetForm, formData } = useSignUpStore();
 
   // Reset form when component mounts
   useEffect(() => {
@@ -36,7 +38,14 @@ const SignUpPage: React.FC = () => {
         />
       )}
       {currentStep === 3 && (
-        <RegistrationForm />
+        formData.accountType === 'renting' ? (
+          <TenantRegistrationForm />
+        ) : (
+          <RegistrationForm />
+        )
+      )}
+      {currentStep === 4 && formData.accountType === 'renting' && (
+        <TenantOnboarding />
       )}
     </>
   );
