@@ -320,7 +320,7 @@ const CreateEquipment = () => {
                     <span className="text-gray-500 text-sm mx-1">/</span>
                     <span className="text-gray-600 text-sm font-semibold">{isEditMode ? 'Edit Equipment' : 'Add Equipment'}</span>
                 </div>
-                <div className="p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem] flex items-center justify-center">
+                <div className="p-4 md:p-8 bg-[#E0E8E7] min-h-screen rounded-[1.5rem] md:rounded-[2rem] flex items-center justify-center">
                     <div className="flex flex-col items-center gap-4">
                         <Loader2 className="w-8 h-8 animate-spin text-[#3A6D6C]" />
                         <span className="text-sm text-gray-600">
@@ -341,7 +341,7 @@ const CreateEquipment = () => {
                     <span className="text-gray-500 text-sm mx-1">/</span>
                     <span className="text-gray-600 text-sm font-semibold">Edit Equipment</span>
                 </div>
-                <div className="p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem] flex items-center justify-center">
+                <div className="p-4 md:p-8 bg-[#E0E8E7] min-h-screen rounded-[1.5rem] md:rounded-[2rem] flex items-center justify-center">
                     <div className="bg-red-50 border border-red-200 rounded-2xl p-6 max-w-md text-center">
                         <p className="text-red-800 font-semibold mb-2">Equipment not found</p>
                         <p className="text-sm text-red-700 mb-4">

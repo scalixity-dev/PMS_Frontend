@@ -65,7 +65,7 @@ const SingleUnitCard: React.FC<SingleUnitCardProps> = ({ group }) => {
                 </div>
 
                 {/* Right Green Box */}
-                <div className="bg-[#82D64D] rounded-[1.5rem] md:rounded-[2.5rem] p-3 md:p-4 flex-1 flex flex-col justify-center gap-2 md:gap-3 text-white relative overflow-hidden min-h-[120px] md:h-[150px]">
+                <div className="bg-[#82D64D] rounded-[1.5rem] md:rounded-[2.5rem] p-3 md:p-4 flex-1 flex flex-col justify-center gap-2 md:gap-3 text-white relative overflow-hidden min-h-[120px] md:min-h-[150px]">
                     {/* Row 1 */}
                     <div className="flex flex-wrap items-center gap-2 md:gap-4">
                         <span className="text-base md:text-xl font-medium">{unit.name}</span>

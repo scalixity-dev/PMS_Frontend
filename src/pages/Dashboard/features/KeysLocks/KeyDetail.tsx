@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useNavigate, useParams, useOutletContext } from 'react-router-dom';
 import { ChevronLeft, Edit, Trash2, Loader2 } from 'lucide-react';
 import CustomTextBox from '../../components/CustomTextBox';
@@ -28,6 +28,40 @@ const KeyDetail = () => {
     const [isAssignModalOpen, setIsAssignModalOpen] = React.useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
     const [isUnassignModalOpen, setIsUnassignModalOpen] = React.useState(false);
+
+    // Refs for dropdown management
+    const dropdownRef = useRef<HTMLDivElement>(null);
+    const firstActionRef = useRef<HTMLButtonElement>(null);
+
+    // Close dropdown when clicking outside or pressing Escape
+    useEffect(() => {
+        if (!isActionDropdownOpen) return;
+
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsActionDropdownOpen(false);
+            }
+        };
+
+        const handleEscapeKey = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setIsActionDropdownOpen(false);
+            }
+        };
+
+        // Focus the first action button when opened
+        if (firstActionRef.current) {
+            firstActionRef.current.focus();
+        }
+
+        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('keydown', handleEscapeKey);
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('keydown', handleEscapeKey);
+        };
+    }, [isActionDropdownOpen]);
 
     // Fetch key data from backend
     const { data: keyData, isLoading, error } = useGetKey(id || null, !!id);
@@ -181,7 +215,7 @@ const KeyDetail = () => {
                                     Unassign
                                 </button>
                             )}
-                            <div className="relative flex-1 md:flex-none">
+                            <div className="relative flex-1 md:flex-none" ref={dropdownRef}>
                                 <button
                                     onClick={() => setIsActionDropdownOpen(!isActionDropdownOpen)}
                                     className="w-full md:w-auto justify-center px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-2"
@@ -191,6 +225,7 @@ const KeyDetail = () => {
                                 {isActionDropdownOpen && (
                                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-10 border border-gray-100 overflow-hidden">
                                         <button
+                                            ref={firstActionRef}
                                             className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3 border-b border-gray-50 last:border-0"
                                             onClick={() => {
                                                 setIsActionDropdownOpen(false);

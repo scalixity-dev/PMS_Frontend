@@ -44,13 +44,12 @@ const FinancialCard: React.FC<FinancialCardProps> = ({ record, onEdit, onDelete 
             {/* Header Pills */}
             <div className="flex flex-wrap gap-2 md:gap-4 mb-4 md:mb-8 pr-16 md:pr-20">
                 {record.headerPills.map((pill, index) => (
-                    <div key={index} className="bg-[#82D64D] text-white py-2 md:py-4 px-3 md:px-4 rounded-full flex items-center gap-2 md:gap-3 shadow-sm min-w-0 md:min-w-[200px]">
+                    <div key={index} className="bg-[#82D64D] text-white py-2 md:py-4 px-3 md:px-4 rounded-full flex items-center gap-2 md:gap-3 shadow-sm min-w-[140px] md:min-w-[200px]">
                         <span className="text-xs md:text-sm font-medium">{pill.label}</span>
-                        <div className="bg-[#F0F0F6] text-gray-700 px-2 md:px-4 py-1 md:py-1.5 rounded-full text-xs md:text-sm font-bold flex-1 text-center">
+                        <div className="bg-[#F0F0F6] text-gray-700 px-2 md:px-4 py-1 md:py-1.5 rounded-full text-xs md:text-sm font-bold text-center whitespace-nowrap">
                             {pill.value}
                         </div>
-                    </div>
-                ))}
+                    </div>))}
             </div>
 
             {/* Details Grid */}

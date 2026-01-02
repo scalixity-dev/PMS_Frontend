@@ -84,6 +84,13 @@ const KeysLocks = () => {
         return filteredKeys.slice(startIndex, startIndex + itemsPerPage);
     }, [filteredKeys, currentPage, itemsPerPage]);
 
+    // Reset to last valid page if current page exceeds total pages
+    useEffect(() => {
+        if (currentPage > totalPages && totalPages > 0) {
+            setCurrentPage(totalPages);
+        }
+    }, [currentPage, totalPages]);
+
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
         window.scrollTo({ top: 0, behavior: 'smooth' });

@@ -324,7 +324,7 @@ export default function DashboardNavbar({ setSidebarOpen }: NavbarProps) {
                       <div className="flex flex-col items-start space-y-0.5">
                         <p className="text-xs text-gray-500">{userRole || "Landlord"}</p>
                         <p className="text-xl font-semibold text-gray-900">{isLoading ? "Loading..." : userName}</p>
-                        <p className="text-sm text-gray-600 truncate">{userEmail || "shawnjames@gmail.com"}</p>
+                        <p className="text-sm text-gray-600 truncate">{userEmail || "No email available"}</p>
                         <button
                           onClick={handleManageProfile}
                           className="mt-3 inline-flex items-center justify-center px-5 py-2 rounded-lg bg-teal-700 text-white font-semibold shadow-[0_6px_12px_rgba(13,148,136,0.35)] hover:bg-teal-800 transition-colors"

@@ -356,7 +356,7 @@ const Listing: React.FC = () => {
                 <span className="text-gray-600 text-xs md:text-sm font-semibold">Listings</span>
             </div>
 
-            <div className="p-4 md:p-6 bg-[#E0E8E7] min-h-screen rounded-[1.5rem] md:rounded-[2rem] overflow-visible flex flex-col">
+            <div className="p-4 md:p-6 bg-[#E0E8E7] rounded-[1.5rem] md:rounded-[2rem] overflow-visible flex flex-col">
                 <ListingHeader onAddListing={handleAddListing} />
 
                 <DashboardFilter

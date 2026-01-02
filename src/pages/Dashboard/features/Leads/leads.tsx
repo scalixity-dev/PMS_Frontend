@@ -95,7 +95,7 @@ const Leads = () => {
             // Use title if available, otherwise use property name, or fallback to listing ID
             const label = listing.title ||
                 listing.property?.propertyName ||
-                `Listing ${listing.id.substring(0, 8)}`;
+                (listing.id ? `Listing ${listing.id.substring(0, 8)}` : 'Unknown Listing');
             return {
                 value: listing.id,
                 label: label

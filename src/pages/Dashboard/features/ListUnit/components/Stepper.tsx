@@ -39,9 +39,8 @@ const Stepper: React.FC<StepperProps> = ({ currentStep }) => {
                   {step.id}
                 </div>
                 <span
-                  className={`text-[10px] md:text-sm font-medium text-center ${isActive ? 'text-gray-900' : 'text-gray-500'
-                    }`}
-                >
+                  className={`text-xs md:text-sm font-medium text-center ${isActive ? 'text-gray-900' : 'text-gray-500'
+                    }`}                >
                   {step.label}
                 </span>
               </div>

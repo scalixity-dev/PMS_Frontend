@@ -38,8 +38,7 @@ const CollapsibleSection = ({ title, children, defaultOpen = false, action }: { 
 const MaintenanceRequestsDetail: React.FC = () => {
     const navigate = useNavigate();
     const { id } = useParams();
-    const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
-    const [isActionDropdownOpen, setIsActionDropdownOpen] = useState(false);
+    const { sidebarCollapsed = false } = useOutletContext<{ sidebarCollapsed?: boolean }>() || {}; const [isActionDropdownOpen, setIsActionDropdownOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
     const [status, setStatus] = useState('New');

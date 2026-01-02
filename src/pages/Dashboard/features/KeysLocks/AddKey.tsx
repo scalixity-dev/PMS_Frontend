@@ -446,7 +446,6 @@ const AddKey = () => {
                         Cancel
                     </button>
                     <button
-                        handleSubmit={handleSubmit}
                         onClick={handleSubmit}
                         disabled={createKeyMutation.isPending || updateKeyMutation.isPending || isUploading}
                         className="w-full md:w-auto bg-[#3A6D6C] text-white px-10 py-3 rounded-2xl font-bold text-sm shadow-sm hover:bg-[#2c5251] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"

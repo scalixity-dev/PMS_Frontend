@@ -41,11 +41,11 @@ const getNextIncompleteStep = (property: BackendProperty): number | null => {
   if (!property.coverPhotoUrl) {
     return 5;
   }
-  // Check for gallery photos - Optional, proceed if missing
-  // const galleryPhotos = property.photos?.filter(p => !p.isPrimary) || [];
-  // if (galleryPhotos.length === 0) {
-  //   return 5;
-  // }
+  // Check for gallery photos
+  const galleryPhotos = property.photos?.filter(p => !p.isPrimary) || [];
+  if (galleryPhotos.length === 0) {
+    return 5;
+  }
 
   // Step 6: MarketingDescription - needs description
   if (!property.description) {
