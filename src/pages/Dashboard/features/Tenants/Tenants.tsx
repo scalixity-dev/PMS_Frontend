@@ -10,7 +10,7 @@ import { tenantService, type Tenant } from '../../../../services/tenant.service'
 
 const Tenants = () => {
     const navigate = useNavigate();
-    const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
+    const { sidebarCollapsed = false } = useOutletContext<{ sidebarCollapsed: boolean }>() ?? {};
     const [, setFilters] = useState<Record<string, string[]>>({});
 
     const handleSearchChange = (_search: string) => {

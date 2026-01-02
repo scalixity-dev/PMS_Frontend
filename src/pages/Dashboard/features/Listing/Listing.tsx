@@ -29,7 +29,7 @@ interface ListingCardData {
 
 const Listing: React.FC = () => {
     const navigate = useNavigate();
-    const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
+    const { sidebarCollapsed = false } = useOutletContext<{ sidebarCollapsed: boolean }>() ?? {};
     const [searchQuery, setSearchQuery] = useState('');
     const [filters, setFilters] = useState<{
         status: string[];
@@ -211,7 +211,7 @@ const Listing: React.FC = () => {
 
                     transformed.push({
                         id: unit.id,
-                        name: `${backendProperty.propertyName} - ${unit.unitName || 'Unit'} `,
+                        name: `${backendProperty.propertyName} - ${unit.unitName || 'Unit'}`,
                         address: propertyAddress,
                         price,
                         status: hasActiveListing ? 'listed' : 'unlisted',

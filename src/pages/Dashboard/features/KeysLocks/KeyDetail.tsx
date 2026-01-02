@@ -146,7 +146,7 @@ const KeyDetail = () => {
                     <span className="text-gray-500 text-sm mx-1">/</span>
                     <span className="text-gray-600 text-sm font-semibold">Keys & Locks</span>
                     <span className="text-gray-500 text-sm mx-1">/</span>
-                    <span className="text-gray-600 text-sm font-semibold">Key no. {id || '123'}</span>
+                    <span className="text-gray-600 text-sm font-semibold">Key no. {id || 'Unknown'}</span>
                 </div>
 
                 <div className="p-6 bg-[#E0E5E5] min-h-screen rounded-[2rem]">
