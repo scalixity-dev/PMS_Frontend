@@ -29,7 +29,7 @@ interface ListingCardData {
 
 const Listing: React.FC = () => {
     const navigate = useNavigate();
-    const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
+    const { sidebarCollapsed = false } = useOutletContext<{ sidebarCollapsed: boolean }>() ?? {};
     const [searchQuery, setSearchQuery] = useState('');
     const [filters, setFilters] = useState<{
         status: string[];
