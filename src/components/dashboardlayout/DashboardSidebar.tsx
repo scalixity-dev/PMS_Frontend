@@ -199,10 +199,18 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
   const toggleCreateNew = () => {
     if (!isCreateNewOpen && createNewRef.current) {
       const rect = createNewRef.current.getBoundingClientRect();
-      setMenuPosition({
-        top: rect.top + 14,
-        left: rect.right + 10
-      });
+
+      if (isMobile) {
+        setMenuPosition({
+          top: rect.bottom + 5,
+          left: rect.left + 16
+        });
+      } else {
+        setMenuPosition({
+          top: rect.top + 14,
+          left: rect.right + 10
+        });
+      }
     }
     setIsCreateNewOpen(!isCreateNewOpen);
   };
@@ -223,10 +231,17 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
     const handleScroll = () => {
       if (isCreateNewOpen && createNewRef.current) {
         const rect = createNewRef.current.getBoundingClientRect();
-        setMenuPosition({
-          top: rect.top + 20,
-          left: rect.right + 10
-        });
+        if (isMobile) {
+          setMenuPosition({
+            top: rect.bottom + 5,
+            left: rect.left + 16
+          });
+        } else {
+          setMenuPosition({
+            top: rect.top + 20,
+            left: rect.right + 10
+          });
+        }
       }
     }
 

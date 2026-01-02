@@ -300,33 +300,34 @@ const Units: React.FC = () => {
     return (
         <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen transition-all duration-300`}>
             {/* Breadcrumb */}
-            <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
+            <div className="inline-flex items-center px-3 md:px-4 py-2 bg-[#E0E8E7] rounded-full mb-4 md:mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
+                <span className="text-[#4ad1a6] text-xs md:text-sm font-semibold">Dashboard</span>
                 <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">Units</span>
+                <span className="text-gray-600 text-xs md:text-sm font-semibold">Units</span>
             </div>
 
-            <div className="p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem] overflow-visible">
+            <div className="p-4 md:p-6 bg-[#E0E8E7] min-h-screen rounded-[1.5rem] md:rounded-[2rem] overflow-visible flex flex-col">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-2">
-                        <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
-                            <ChevronLeft className="w-6 h-6 text-gray-800" />
+                <div className="flex items-center justify-between mb-4 md:mb-6">
+                    <div className="flex items-center gap-1 md:gap-2">
+                        <button onClick={() => navigate(-1)} className="p-1.5 md:p-2 hover:bg-gray-200 rounded-full transition-colors">
+                            <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-gray-800" />
                         </button>
-                        <h1 className="text-2xl font-bold text-gray-800">Units</h1>
+                        <h1 className="text-xl md:text-2xl font-bold text-gray-800">Units</h1>
                     </div>
-                    <div className="flex gap-4">
+                    <div className="flex items-center gap-2 md:gap-4">
                         <button
                             onClick={() => navigate('/dashboard/properties/import')}
-                            className="bg-[#3A6D6C] text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2"
+                            className="hidden md:block px-5 py-2 text-sm font-medium text-white bg-[#3A6D6C] rounded-full hover:bg-[#2c5251] transition-colors"
                         >
                             Import
                         </button>
                         <button
                             onClick={() => navigate('/dashboard/property/add')}
-                            className="bg-[#3A6D6C] text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2"
+                            className="flex items-center gap-1 px-3 md:px-5 py-2 text-sm font-medium text-white bg-[#3A6D6C] rounded-full hover:bg-[#2c5251] transition-colors"
                         >
-                            Add Properties
+                            <span className="hidden md:inline">Add Properties</span>
+                            <span className="md:hidden">Add</span>
                             <Plus className="w-4 h-4" />
                         </button>
                     </div>
@@ -384,13 +385,12 @@ const Units: React.FC = () => {
                                 )
                             ))}
                         </div>
-                        {totalPages > 1 && (
-                            <Pagination
-                                currentPage={currentPage}
-                                totalPages={totalPages}
-                                onPageChange={handlePageChange}
-                            />
-                        )}
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={handlePageChange}
+                            className="mt-auto py-6"
+                        />
                     </>
                 )}
             </div>

@@ -312,7 +312,7 @@ const Properties: React.FC = () => {
                 <span className="text-gray-600 text-sm font-semibold">Properties</span>
             </div>
 
-            <div className="p-4 md:p-6 bg-[#E0E8E7] min-h-screen rounded-[1.5rem] md:rounded-[2rem] overflow-visible">
+            <div className="p-4 md:p-6 bg-[#E0E8E7] min-h-screen rounded-[1.5rem] md:rounded-[2rem] overflow-visible flex flex-col">
                 <PropertiesHeader onAddProperty={handleAddProperty} onImport={handleImport} />
 
                 {/* Filters - Now uses built-in mobile support */}
@@ -357,6 +357,7 @@ const Properties: React.FC = () => {
                             currentPage={currentPage}
                             totalPages={totalPages}
                             onPageChange={handlePageChange}
+                            className="mt-auto py-6"
                         />
                     </>
                 ) : (

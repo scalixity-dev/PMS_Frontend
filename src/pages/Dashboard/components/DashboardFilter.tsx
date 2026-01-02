@@ -69,6 +69,18 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
         };
     }, [openDropdown]);
 
+    useEffect(() => {
+        if (isMobileFiltersOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isMobileFiltersOpen]);
+
     const handleSearchChange = (value: string) => {
         setSearchQuery(value);
         onSearchChange(value);
@@ -281,6 +293,27 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
                             </button>
                         </div>
 
+                        {/* Saved Filters Section */}
+                        {savedFilters.length > 0 && (
+                            <div className="mb-6 border-b border-gray-100 pb-6">
+                                <h3 className="text-sm font-medium text-gray-700 mb-3">Saved Views</h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {savedFilters.map((filter) => (
+                                        <button
+                                            key={filter.name}
+                                            onClick={() => {
+                                                onSelectSavedFilter && onSelectSavedFilter(filter);
+                                                setIsMobileFiltersOpen(false);
+                                            }}
+                                            className="px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm"
+                                        >
+                                            {filter.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Filter Sections */}
                         {Object.entries(filterOptions).map(([filterType, options]) => (
                             <div key={filterType} className="mb-6">
@@ -308,21 +341,35 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
                         ))}
 
                         {/* Clear & Apply Buttons */}
-                        <div className="flex gap-3 mt-6">
-                            <button
-                                onClick={() => {
-                                    handleClearAll();
-                                }}
-                                className="flex-1 px-4 py-3 border border-gray-300 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50"
-                            >
-                                Clear All
-                            </button>
-                            <button
-                                onClick={() => setIsMobileFiltersOpen(false)}
-                                className="flex-1 px-4 py-3 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251]"
-                            >
-                                Apply Filters
-                            </button>
+                        {/* Mobile Actions Footer */}
+                        <div className="flex flex-col gap-3 mt-6">
+                            {hasActiveFilters() && (
+                                <button
+                                    onClick={() => {
+                                        setIsSaveModalOpen(true);
+                                    }}
+                                    className="w-full px-4 py-3 bg-white border border-[#3A6D6C] text-[#3A6D6C] rounded-full text-sm font-medium hover:bg-gray-50 flex items-center justify-center gap-2"
+                                >
+                                    <Save className="w-4 h-4" />
+                                    Save Current Filter
+                                </button>
+                            )}
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => {
+                                        handleClearAll();
+                                    }}
+                                    className="flex-1 px-4 py-3 border border-gray-300 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                >
+                                    Clear All
+                                </button>
+                                <button
+                                    onClick={() => setIsMobileFiltersOpen(false)}
+                                    className="flex-1 px-4 py-3 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251]"
+                                >
+                                    Apply Filters
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

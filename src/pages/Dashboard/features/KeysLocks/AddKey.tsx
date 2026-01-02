@@ -262,7 +262,7 @@ const AddKey = () => {
                 <span className="text-gray-600 text-sm font-semibold">{isEditMode ? 'Edit Key' : 'Add Key'}</span>
             </div>
 
-            <div className="p-6 bg-[#E0E5E5] min-h-screen rounded-[2rem]">
+            <div className="p-4 md:p-6 bg-[#E0E5E5] min-h-screen rounded-[1.5rem] md:rounded-[2rem]">
                 {/* Header */}
                 <div className="flex items-center gap-2 mb-6">
                     <button onClick={() => handleNavigation(-1)} className="p-2 hover:bg-black/5 rounded-full transition-colors">
@@ -342,7 +342,7 @@ const AddKey = () => {
                 </div>
 
                 {/* Form Fields */}
-                <div className="grid grid-cols-2 gap-12 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 mb-8">
                     {/* Key Name Input */}
                     <div className="w-full">
                         <label className="block text-xs font-bold text-gray-600 mb-2">
@@ -388,7 +388,7 @@ const AddKey = () => {
                              [Key Name] [Key Type]
                              [Property Type] (Looks like it's taking up about 50% width, aligned with Key Name column)
                          */}
-                    <div className="w-[calc(50%-1.5rem)]">
+                    <div className="w-full md:w-[calc(50%-1.5rem)]">
                         {isLoadingProperties ? (
                             <div className="flex items-center gap-2">
                                 <Loader2 className="w-4 h-4 animate-spin text-[#3A6D6C]" />
@@ -437,18 +437,19 @@ const AddKey = () => {
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-4">
+                <div className="flex flex-col md:flex-row gap-4">
                     <button
                         onClick={() => handleNavigation(-1)}
                         disabled={createKeyMutation.isPending || updateKeyMutation.isPending}
-                        className="bg-white text-black px-10 py-3 rounded-2xl font-bold text-sm shadow-sm hover:bg-gray-50 transition-colors border border-transparent disabled:opacity-50"
+                        className="w-full md:w-auto bg-white text-black px-10 py-3 rounded-2xl font-bold text-sm shadow-sm hover:bg-gray-50 transition-colors border border-transparent disabled:opacity-50 text-center"
                     >
                         Cancel
                     </button>
                     <button
+                        handleSubmit={handleSubmit}
                         onClick={handleSubmit}
                         disabled={createKeyMutation.isPending || updateKeyMutation.isPending || isUploading}
-                        className="bg-[#3A6D6C] text-white px-10 py-3 rounded-2xl font-bold text-sm shadow-sm hover:bg-[#2c5251] transition-colors disabled:opacity-50 flex items-center gap-2"
+                        className="w-full md:w-auto bg-[#3A6D6C] text-white px-10 py-3 rounded-2xl font-bold text-sm shadow-sm hover:bg-[#2c5251] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                         {(createKeyMutation.isPending || updateKeyMutation.isPending) && (
                             <Loader2 className="w-4 h-4 animate-spin" />

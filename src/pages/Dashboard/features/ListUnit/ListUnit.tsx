@@ -672,18 +672,18 @@ const ListUnit: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full w-full bg-[var(--color-background)] px-6 overflow-y-auto">
+    <div className="flex flex-col h-full w-full bg-[var(--color-background)] px-4 md:px-6 overflow-y-auto">
       <div className="flex-1 flex items-start justify-center">
-        <div className="bg-[#DFE5E3] rounded-2xl shadow-lg w-full max-w-3xl min-h-[600px] p-8">
-          <div className="relative flex items-center mb-8">
+        <div className="bg-[#DFE5E3] rounded-[1.5rem] md:rounded-[2rem] shadow-lg w-full max-w-3xl min-h-fit md:min-h-[600px] p-4 md:p-8">
+          <div className="relative flex items-center mb-6 md:mb-8">
             <button
               onClick={handleBack}
-              className="flex items-center gap-2 text-[#3D7475] font-bold hover:text-[var(--color-primary)] transition-colors"
+              className="flex items-center gap-1 md:gap-2 text-[#3D7475] font-bold text-xs md:text-base hover:text-[var(--color-primary)] transition-colors"
             >
-              <ArrowLeft size={18} />
+              <ArrowLeft className="w-4 h-4 md:w-5 md:h-5" />
               BACK
             </button>
-            <h1 className="absolute left-1/2 transform -translate-x-1/2 text-2xl font-bold text-[var(--color-heading)]">
+            <h1 className="absolute left-1/2 transform -translate-x-1/2 text-lg md:text-2xl font-bold text-[var(--color-heading)] whitespace-nowrap">
               List a Unit
             </h1>
           </div>
@@ -705,7 +705,7 @@ const ListUnit: React.FC = () => {
                 {currentStep === 1 && (
                   <div className="w-full flex flex-col items-center">
                     <div className="text-center">
-                      <h2 className="text-xl font-bold mb-2 text-[var(--color-heading)]">Select property</h2>
+                      <h2 className="text-lg md:text-xl font-bold mb-2 text-[var(--color-heading)]">Select property</h2>
                       <p className="text-[var(--color-subheading)]">Select the property or unit you want to list or create a new one.</p>
                     </div>
                     <PropertySelection
@@ -721,8 +721,8 @@ const ListUnit: React.FC = () => {
                   <div className="w-full flex flex-col items-center">
                     {leasingStep === 1 ? (
                       <>
-                        <div className="text-center mb-8">
-                          <h2 className="text-xl font-bold mb-2 text-[var(--color-heading)]">Lease details</h2>
+                        <div className="text-center mb-6 md:mb-8">
+                          <h2 className="text-lg md:text-xl font-bold mb-2 text-[var(--color-heading)]">Lease details</h2>
                           <p className="text-[var(--color-subheading)]">Add main lease terms and other leasing details if necessary.</p>
                         </div>
                         <LeasingDetails
