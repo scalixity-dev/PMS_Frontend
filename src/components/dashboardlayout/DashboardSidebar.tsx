@@ -471,9 +471,9 @@ export default function DashboardSidebar({ open, setOpen, collapsed, setCollapse
                 activeDropdown={activeDropdown}
                 setActiveDropdown={setActiveDropdown}
               >
-                <SidebarSubLink label="Landlord forms" to="/documents/landlord-forms" isCurrentPath={isCurrentPath} />
-                <SidebarSubLink label="My templates" to="/documents/my-templates" isCurrentPath={isCurrentPath} />
-                <SidebarSubLink label="File manager" to="/documents/file-manager" isCurrentPath={isCurrentPath} />
+                <SidebarSubLink label="Landlord forms" to="/dashboard/documents/landlord-forms" isCurrentPath={isCurrentPath} />
+                <SidebarSubLink label="My templates" to="/dashboard/documents/my-templates" isCurrentPath={isCurrentPath} />
+                <SidebarSubLink label="File manager" to="/dashboard/documents/file-manager" isCurrentPath={isCurrentPath} />
               </SidebarDropdownLink>
 
 

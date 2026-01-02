@@ -94,7 +94,7 @@ const Tenants = () => {
     };
 
     return (
-        <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-6xl'} mx-auto min-h-screen font-outfit transition-all duration-300`}>
+        <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit transition-all duration-300`}>
             <div className="inline-flex items-center px-4 py-2 bg-[#E0E5E5] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
                 <span className="text-[#4ad1a6] text-sm font-semibold">Contacts</span>
                 <span className="text-gray-500 text-sm mx-1">/</span>

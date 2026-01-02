@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Plus, ChevronLeft, Download, MoreHorizontal, Edit2, Trash2, Check, X } from 'lucide-react';
 import { utils, writeFile } from 'xlsx';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
@@ -43,12 +43,13 @@ interface Lead {
 
 const Leads = () => {
     const navigate = useNavigate();
+    const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
     const { data: backendLeads = [], isLoading, error } = useGetAllLeads();
     const { data: listings = [] } = useGetAllListings();
     const updateLeadMutation = useUpdateLead();
     const deleteLeadMutation = useDeleteLead();
     const [deletingLeadId, setDeletingLeadId] = useState<string | null>(null);
-    
+
     // Helper function to convert status enum to display label
     const getStatusLabel = (status: string): string => {
         const statusMap: Record<string, string> = {
@@ -92,9 +93,9 @@ const Leads = () => {
     const listingFilterOptions: FilterOption[] = useMemo(() => {
         return listings.map((listing) => {
             // Use title if available, otherwise use property name, or fallback to listing ID
-            const label = listing.title || 
-                         listing.property?.propertyName || 
-                         `Listing ${listing.id.substring(0, 8)}`;
+            const label = listing.title ||
+                listing.property?.propertyName ||
+                `Listing ${listing.id.substring(0, 8)}`;
             return {
                 value: listing.id,
                 label: label
@@ -254,7 +255,7 @@ const Leads = () => {
             const results = await Promise.allSettled(
                 deletingIds.map(id => deleteLeadMutation.mutateAsync(id))
             );
-            
+
             // Check for failures (excluding "not found" which is treated as success)
             const failures = results.filter((result) => {
                 if (result.status === 'rejected') {
@@ -265,7 +266,7 @@ const Leads = () => {
                 }
                 return false;
             });
-            
+
             if (failures.length > 0) {
                 console.error('Some leads failed to delete:', failures);
                 const errorMessages = failures.map((failure) => {
@@ -278,7 +279,7 @@ const Leads = () => {
                 // All deletions succeeded (including "not found" cases)
                 console.log('All selected leads deleted successfully');
             }
-            
+
             // Clear selection after deletion attempts
             setSelectedLeads([]);
         } catch (error) {
@@ -290,7 +291,7 @@ const Leads = () => {
     };
 
     return (
-        <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-10">
+        <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit pb-10 transition-all duration-300`}>
             {/* Breadcrumb */}
             <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
                 <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>Dashboard</span>
@@ -388,106 +389,106 @@ const Leads = () => {
                         </div>
                     ) : (
                         filteredLeads.map((lead) => (
-                        <div key={lead.id} className="bg-white rounded-2xl px-6 py-4 grid grid-cols-[80px_1fr_1.2fr_1.2fr_1.5fr_1.2fr_1.8fr] gap-4 items-center shadow-sm hover:shadow-md transition-shadow">
-                            <div className="flex justify-start pl-1">
-                                <div
-                                    onClick={() => toggleSelectLead(lead.id)}
-                                    className={`w-5 h-5 rounded flex items-center justify-center cursor-pointer transition-all ${selectedLeads.includes(lead.id) ? 'bg-[#1BCB40]' : 'bg-white border-2 border-[#1BCB40]'}`}
-                                >
-                                    {selectedLeads.includes(lead.id) && <Check className="w-3 h-3 text-white stroke-[4]" />}
+                            <div key={lead.id} className="bg-white rounded-2xl px-6 py-4 grid grid-cols-[80px_1fr_1.2fr_1.2fr_1.5fr_1.2fr_1.8fr] gap-4 items-center shadow-sm hover:shadow-md transition-shadow">
+                                <div className="flex justify-start pl-1">
+                                    <div
+                                        onClick={() => toggleSelectLead(lead.id)}
+                                        className={`w-5 h-5 rounded flex items-center justify-center cursor-pointer transition-all ${selectedLeads.includes(lead.id) ? 'bg-[#1BCB40]' : 'bg-white border-2 border-[#1BCB40]'}`}
+                                    >
+                                        {selectedLeads.includes(lead.id) && <Check className="w-3 h-3 text-white stroke-[4]" />}
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="text-[#20CC95] font-bold text-sm text-left">{lead.status}</div>
-                            <div
-                                onClick={() => navigate(`/dashboard/leasing/leads/${lead.id}`)}
-                                className="text-[#000000] font-medium text-sm text-left cursor-pointer hover:text-[#3A6D6C] transition-colors"
-                            >
-                                {lead.name}
-                            </div>
-                            <div className="text-[#2E6819] font-medium text-sm text-center">{lead.phone}</div>
-                            <div className="text-gray-600 font-medium text-sm text-left truncate">{lead.email}</div>
-                            <div className="text-gray-600 font-medium text-sm text-left">{getLeadSourceLabel(lead.source)}</div>
-                            <div className="flex items-center justify-start gap-10">
-                                <span className="text-black font-normal text-sm whitespace-nowrap">{lead.lastUpdate}</span>
-                                <div className="flex items-center gap-3">
-                                    <button
-                                        onClick={() => navigate(`/dashboard/leasing/leads/edit/${lead.id}`)}
-                                        className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
-                                    >
-                                        <Edit2 className="w-4 h-4 stroke-[3]" />
-                                    </button>
-                                    <button 
-                                        onClick={async (e) => {
-                                            e.stopPropagation();
-                                            setDeletingLeadId(lead.id);
-                                            try {
-                                                await deleteLeadMutation.mutateAsync(lead.id);
-                                                // Remove from selected leads if it was selected
-                                                setSelectedLeads(prev => prev.filter(id => id !== lead.id));
-                                                console.log('Lead deleted successfully:', lead.id);
-                                            } catch (error) {
-                                                console.error('Failed to delete lead:', error);
-                                                const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-                                                // If lead is not found, it's already deleted - treat as success
-                                                if (errorMessage.includes('not found') || errorMessage.includes('Not Found')) {
-                                                    console.log('Lead already deleted, removing from list');
-                                                    setSelectedLeads(prev => prev.filter(id => id !== lead.id));
-                                                } else {
-                                                    alert(`Failed to delete lead: ${errorMessage}`);
-                                                }
-                                            } finally {
-                                                setDeletingLeadId(null);
-                                            }
-                                        }}
-                                        disabled={deletingLeadId === lead.id}
-                                        className="text-red-500 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                        title="Delete lead"
-                                    >
-                                        <Trash2 className="w-4 h-4 stroke-[3]" />
-                                    </button>
-                                    <div className="relative">
+                                <div className="text-[#20CC95] font-bold text-sm text-left">{lead.status}</div>
+                                <div
+                                    onClick={() => navigate(`/dashboard/leasing/leads/${lead.id}`)}
+                                    className="text-[#000000] font-medium text-sm text-left cursor-pointer hover:text-[#3A6D6C] transition-colors"
+                                >
+                                    {lead.name}
+                                </div>
+                                <div className="text-[#2E6819] font-medium text-sm text-center">{lead.phone}</div>
+                                <div className="text-gray-600 font-medium text-sm text-left truncate">{lead.email}</div>
+                                <div className="text-gray-600 font-medium text-sm text-left">{getLeadSourceLabel(lead.source)}</div>
+                                <div className="flex items-center justify-start gap-10">
+                                    <span className="text-black font-normal text-sm whitespace-nowrap">{lead.lastUpdate}</span>
+                                    <div className="flex items-center gap-3">
                                         <button
-                                            onClick={() => setOpenMenuId(openMenuId === lead.id ? null : lead.id)}
-                                            className="text-gray-400 hover:text-gray-700 transition-colors pt-1"
+                                            onClick={() => navigate(`/dashboard/leasing/leads/edit/${lead.id}`)}
+                                            className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
                                         >
-                                            <MoreHorizontal className="w-5 h-5 stroke-[3]" />
+                                            <Edit2 className="w-4 h-4 stroke-[3]" />
                                         </button>
+                                        <button
+                                            onClick={async (e) => {
+                                                e.stopPropagation();
+                                                setDeletingLeadId(lead.id);
+                                                try {
+                                                    await deleteLeadMutation.mutateAsync(lead.id);
+                                                    // Remove from selected leads if it was selected
+                                                    setSelectedLeads(prev => prev.filter(id => id !== lead.id));
+                                                    console.log('Lead deleted successfully:', lead.id);
+                                                } catch (error) {
+                                                    console.error('Failed to delete lead:', error);
+                                                    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+                                                    // If lead is not found, it's already deleted - treat as success
+                                                    if (errorMessage.includes('not found') || errorMessage.includes('Not Found')) {
+                                                        console.log('Lead already deleted, removing from list');
+                                                        setSelectedLeads(prev => prev.filter(id => id !== lead.id));
+                                                    } else {
+                                                        alert(`Failed to delete lead: ${errorMessage}`);
+                                                    }
+                                                } finally {
+                                                    setDeletingLeadId(null);
+                                                }
+                                            }}
+                                            disabled={deletingLeadId === lead.id}
+                                            className="text-red-500 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                            title="Delete lead"
+                                        >
+                                            <Trash2 className="w-4 h-4 stroke-[3]" />
+                                        </button>
+                                        <div className="relative">
+                                            <button
+                                                onClick={() => setOpenMenuId(openMenuId === lead.id ? null : lead.id)}
+                                                className="text-gray-400 hover:text-gray-700 transition-colors pt-1"
+                                            >
+                                                <MoreHorizontal className="w-5 h-5 stroke-[3]" />
+                                            </button>
 
-                                        {openMenuId === lead.id && (
-                                            <div className="absolute right-0 top-full mt-3 w-48 bg-white rounded-3xl shadow-2xl border border-gray-100 z-[60] overflow-hidden transform origin-top-right transition-all">
-                                                <button
-                                                    onClick={() => {
-                                                        setIsStatusModalOpen(true);
-                                                        setCurrentLeadId(lead.id);
-                                                        // Convert display status back to enum
-                                                        const statusMap: Record<string, LeadStatus> = {
-                                                            'New': 'NEW',
-                                                            'Working': 'WORKING',
-                                                            'Closed': 'CLOSED',
-                                                        };
-                                                        setSelectedStatus(statusMap[lead.status] || 'NEW');
-                                                        setOpenMenuId(null);
-                                                    }}
-                                                    className="w-full text-center py-3 text-sm font-normal text-gray-800 hover:bg-gray-50 border-b border-gray-300 transition-colors"
-                                                >
-                                                    Change Status
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                        setIsInviteModalOpen(true);
-                                                        setApplicantEmail(lead.email);
-                                                        setOpenMenuId(null);
-                                                    }}
-                                                    className="w-full text-center py-3 text-sm font-normal text-gray-800 hover:bg-gray-50 transition-colors"
-                                                >
-                                                    Invite to Apply
-                                                </button>
-                                            </div>
-                                        )}
+                                            {openMenuId === lead.id && (
+                                                <div className="absolute right-0 top-full mt-3 w-48 bg-white rounded-3xl shadow-2xl border border-gray-100 z-[60] overflow-hidden transform origin-top-right transition-all">
+                                                    <button
+                                                        onClick={() => {
+                                                            setIsStatusModalOpen(true);
+                                                            setCurrentLeadId(lead.id);
+                                                            // Convert display status back to enum
+                                                            const statusMap: Record<string, LeadStatus> = {
+                                                                'New': 'NEW',
+                                                                'Working': 'WORKING',
+                                                                'Closed': 'CLOSED',
+                                                            };
+                                                            setSelectedStatus(statusMap[lead.status] || 'NEW');
+                                                            setOpenMenuId(null);
+                                                        }}
+                                                        className="w-full text-center py-3 text-sm font-normal text-gray-800 hover:bg-gray-50 border-b border-gray-300 transition-colors"
+                                                    >
+                                                        Change Status
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setIsInviteModalOpen(true);
+                                                            setApplicantEmail(lead.email);
+                                                            setOpenMenuId(null);
+                                                        }}
+                                                        className="w-full text-center py-3 text-sm font-normal text-gray-800 hover:bg-gray-50 transition-colors"
+                                                    >
+                                                        Invite to Apply
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
                         ))
                     )}
                 </div>
