@@ -22,7 +22,7 @@ const STORAGE_KEY = 'application_draft';
 
 const NewApplication: React.FC = () => {
     const navigate = useNavigate();
-    const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
+    const { sidebarCollapsed = false } = useOutletContext<{ sidebarCollapsed: boolean }>() || {};
 
     const {
         formData,

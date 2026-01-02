@@ -93,7 +93,7 @@ const ITEMS_PER_PAGE = 9;
 
 const Equipments: React.FC = () => {
     const navigate = useNavigate();
-    const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
+    const { sidebarCollapsed = false } = useOutletContext<{ sidebarCollapsed?: boolean }>() || {};
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedItems, setSelectedItems] = useState<string[]>([]);

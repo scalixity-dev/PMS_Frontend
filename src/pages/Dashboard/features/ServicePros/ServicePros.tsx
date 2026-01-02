@@ -18,7 +18,8 @@ interface ServiceProCardData {
 
 const ServicePros = () => {
     const navigate = useNavigate();
-    const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
+    const context = useOutletContext<{ sidebarCollapsed?: boolean }>();
+    const sidebarCollapsed = context?.sidebarCollapsed ?? false;
     const [, setFilters] = useState<Record<string, string[]>>({});
     const [servicePros, setServicePros] = useState<ServiceProCardData[]>([]);
     const [isLoading, setIsLoading] = useState(true);

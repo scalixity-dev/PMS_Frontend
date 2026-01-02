@@ -393,6 +393,15 @@ const Leads = () => {
                                 <div className="flex justify-start pl-1">
                                     <div
                                         onClick={() => toggleSelectLead(lead.id)}
+                                        role="checkbox"
+                                        aria-checked={selectedLeads.includes(lead.id)}
+                                        tabIndex={0}
+                                        onKeyDown={(e) => {
+                                            if (e.key === ' ' || e.key === 'Enter') {
+                                                e.preventDefault();
+                                                toggleSelectLead(lead.id);
+                                            }
+                                        }}
                                         className={`w-5 h-5 rounded flex items-center justify-center cursor-pointer transition-all ${selectedLeads.includes(lead.id) ? 'bg-[#1BCB40]' : 'bg-white border-2 border-[#1BCB40]'}`}
                                     >
                                         {selectedLeads.includes(lead.id) && <Check className="w-3 h-3 text-white stroke-[4]" />}

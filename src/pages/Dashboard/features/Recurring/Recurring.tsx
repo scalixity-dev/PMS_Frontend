@@ -59,8 +59,8 @@ const MOCK_RECURRING = [
 
 const Recurring: React.FC = () => {
     const navigate = useNavigate();
-    const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
-    const [activeTab, setActiveTab] = useState<'All' | 'Income' | 'Expense'>('All');
+    const context = useOutletContext<{ sidebarCollapsed?: boolean }>();
+    const sidebarCollapsed = context?.sidebarCollapsed ?? false; const [activeTab, setActiveTab] = useState<'All' | 'Income' | 'Expense'>('All');
     const [selectedItems, setSelectedItems] = useState<number[]>([]);
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
     const dropdownContainerRef = useRef<HTMLDivElement>(null);

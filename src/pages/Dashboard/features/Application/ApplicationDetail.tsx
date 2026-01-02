@@ -99,7 +99,7 @@ const Section = ({
 const ApplicationDetail = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
+    const { sidebarCollapsed = false } = useOutletContext<{ sidebarCollapsed: boolean }>() || {};
 
     // Modals State
     const [isOccupantModalOpen, setIsOccupantModalOpen] = useState(false);
