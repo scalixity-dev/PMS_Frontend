@@ -30,9 +30,9 @@ interface FinancialCardProps {
 
 const FinancialCard: React.FC<FinancialCardProps> = ({ record, onEdit, onDelete }) => {
     return (
-        <div className="bg-[#F0F0F6] rounded-[2rem] p-6 mb-4 relative">
+        <div className="bg-[#F0F0F6] rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6 mb-4 relative">
             {/* Actions */}
-            <div className="absolute top-6 right-6 flex gap-3">
+            <div className="absolute top-4 md:top-6 right-4 md:right-6 flex gap-2 md:gap-3">
                 <button onClick={onEdit} className="text-[#3A6D6C] hover:text-[#2c5554] transition-colors">
                     <Edit2 className="w-5 h-5" />
                 </button>
@@ -42,11 +42,11 @@ const FinancialCard: React.FC<FinancialCardProps> = ({ record, onEdit, onDelete 
             </div>
 
             {/* Header Pills */}
-            <div className="flex flex-wrap gap-4 mb-8 pr-20">
+            <div className="flex flex-wrap gap-2 md:gap-4 mb-4 md:mb-8 pr-16 md:pr-20">
                 {record.headerPills.map((pill, index) => (
-                    <div key={index} className="bg-[#82D64D] text-white  py-4 px-4 rounded-full flex items-center gap-3 shadow-sm min-w-[200px]">
-                        <span className="text-sm font-medium">{pill.label}</span>
-                        <div className="bg-[#F0F0F6] text-gray-700 px-4 py-1.5 rounded-full text-sm font-bold flex-1 text-center">
+                    <div key={index} className="bg-[#82D64D] text-white py-2 md:py-4 px-3 md:px-4 rounded-full flex items-center gap-2 md:gap-3 shadow-sm min-w-0 md:min-w-[200px]">
+                        <span className="text-xs md:text-sm font-medium">{pill.label}</span>
+                        <div className="bg-[#F0F0F6] text-gray-700 px-2 md:px-4 py-1 md:py-1.5 rounded-full text-xs md:text-sm font-bold flex-1 text-center">
                             {pill.value}
                         </div>
                     </div>
@@ -132,7 +132,7 @@ const FinancialsTab: React.FC = () => {
     return (
         <div className="space-y-8">
             {/* Insurances Section */}
-            <div className="bg-[#E9E9E9] shadow-lg rounded-[2rem] p-6">
+            <div className="bg-[#E9E9E9] shadow-lg rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6">
                 <SectionHeader
                     title="Insurances"
                     count={insurances.length}
@@ -151,7 +151,7 @@ const FinancialsTab: React.FC = () => {
             </div>
 
             {/* Loans Section */}
-            <div className="bg-[#E9E9E9] shadow-lg rounded-[2rem] p-6">
+            <div className="bg-[#E9E9E9] shadow-lg rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6">
                 <SectionHeader
                     title="Loans"
                     count={loans.length}
@@ -170,7 +170,7 @@ const FinancialsTab: React.FC = () => {
             </div>
 
             {/* Purchase Section */}
-            <div className="bg-[#E9E9E9] shadow-lg rounded-[2rem] p-6">
+            <div className="bg-[#E9E9E9] shadow-lg rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6">
                 <SectionHeader
                     title="Purchase"
                     count={purchases.length}
