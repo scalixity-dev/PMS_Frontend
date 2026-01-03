@@ -11,11 +11,11 @@ interface TenantLeasesSectionProps {
     };
 }
 
-const TenantLeasesSection = ({ tenantId, tenant }: TenantLeasesSectionProps) => {
+const TenantLeasesSection = ({ tenantId: _tenantId, tenant }: TenantLeasesSectionProps) => {
     const navigate = useNavigate();
     const [allLeases, setAllLeases] = useState<BackendLeasing[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    
+
     useEffect(() => {
         const fetchLeases = async () => {
             try {
@@ -30,10 +30,10 @@ const TenantLeasesSection = ({ tenantId, tenant }: TenantLeasesSectionProps) => 
         };
         fetchLeases();
     }, []);
-    
+
     // Safely compute tenant initial with fallback
     const tenantInitial = (typeof tenant.name === 'string' && tenant.name.length > 0) ? tenant.name.charAt(0) : '?';
-    
+
     // Transform leases for display
     // Note: BackendLeasing doesn't have tenantId, so we'll show all leases
     // In a real scenario, leases would be linked to tenants through applications or a tenantId field
@@ -43,7 +43,7 @@ const TenantLeasesSection = ({ tenantId, tenant }: TenantLeasesSectionProps) => 
             const createdAt = new Date(lease.createdAt);
             const date = createdAt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
             const time = createdAt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: true });
-            
+
             return {
                 id: lease.id,
                 tenantName: tenant.name,

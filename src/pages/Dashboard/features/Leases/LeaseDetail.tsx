@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, FileText, ChevronDown, SquarePen, Upload, Edit, Trash2, ClipboardCheck, XCircle } from 'lucide-react';
 import DetailTabs from '../../components/DetailTabs';
 import CustomTextBox from '../../components/CustomTextBox';
+import DeleteConfirmationModal from '../../components/DeleteConfirmationModal';
 
 // Mock Data for the view
 const MOCK_LEASE_DETAIL = {
@@ -47,6 +48,8 @@ const LeaseDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const [activeTab, setActiveTab] = useState('tenants');
     const [isActionDropdownOpen, setIsActionDropdownOpen] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isEndLeaseModalOpen, setIsEndLeaseModalOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     // Close dropdown when clicking outside
@@ -65,6 +68,19 @@ const LeaseDetail: React.FC = () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [isActionDropdownOpen]);
+
+    const handleDeleteLease = () => {
+        // In a real app, make API call here
+        console.log('Deleting lease', id);
+        setIsDeleteModalOpen(false);
+        navigate('/dashboard/portfolio/leases'); // Navigate back to list
+    };
+
+    const handleEndLease = () => {
+        // In a real app, make API call here
+        console.log('Ending lease', id);
+        setIsEndLeaseModalOpen(false);
+    };
 
     // In a real app, use 'id' to fetch data
     const lease = MOCK_LEASE_DETAIL;
@@ -111,7 +127,7 @@ const LeaseDetail: React.FC = () => {
                                 <button
                                     onClick={() => {
                                         setIsActionDropdownOpen(false);
-                                        // Navigate to edit page
+                                        navigate(`/dashboard/portfolio/leases/edit/${id}`);
                                     }}
                                     className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-50"
                                 >
@@ -121,7 +137,8 @@ const LeaseDetail: React.FC = () => {
                                 <button
                                     onClick={() => {
                                         setIsActionDropdownOpen(false);
-                                        // Handle inspection
+                                        // Handle inspection - Placeholder
+                                        console.log('Move-out inspection clicked');
                                     }}
                                     className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-50"
                                 >
@@ -131,7 +148,7 @@ const LeaseDetail: React.FC = () => {
                                 <button
                                     onClick={() => {
                                         setIsActionDropdownOpen(false);
-                                        // Handle end lease
+                                        setIsEndLeaseModalOpen(true);
                                     }}
                                     className="flex items-center gap-3 w-full px-4 py-3 text-sm text-orange-600 hover:bg-orange-50 transition-colors border-b border-gray-50"
                                 >
@@ -141,7 +158,7 @@ const LeaseDetail: React.FC = () => {
                                 <button
                                     onClick={() => {
                                         setIsActionDropdownOpen(false);
-                                        // Handle delete
+                                        setIsDeleteModalOpen(true);
                                     }}
                                     className="flex items-center gap-3 w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors"
                                 >
@@ -422,6 +439,25 @@ const LeaseDetail: React.FC = () => {
                     </div>
                 )}
             </div>
+            {/* Confirmation Modals */}
+            <DeleteConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={handleDeleteLease}
+                title="Delete Lease"
+                message="Are you sure you want to delete this lease? This action cannot be undone."
+                itemName={`Lease #${id}`}
+            />
+
+            <DeleteConfirmationModal
+                isOpen={isEndLeaseModalOpen}
+                onClose={() => setIsEndLeaseModalOpen(false)}
+                onConfirm={handleEndLease}
+                title="End Lease"
+                message="Are you sure you want to end this lease? This will change the status to historical."
+                confirmText="End Lease"
+                confirmButtonClass="bg-orange-600 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-orange-700 transition-colors shadow-sm"
+            />
         </div >
     );
 };

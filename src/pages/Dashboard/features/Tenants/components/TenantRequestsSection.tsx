@@ -14,7 +14,7 @@ interface TenantRequestsSectionProps {
     tenantId: string;
 }
 
-const TenantRequestsSection: React.FC<TenantRequestsSectionProps> = ({ tenantId }) => {
+const TenantRequestsSection: React.FC<TenantRequestsSectionProps> = ({ tenantId: _tenantId }) => {
     // Note: There's no direct API for tenant maintenance requests yet
     // This is a placeholder that shows empty state
     const requests: Request[] = [

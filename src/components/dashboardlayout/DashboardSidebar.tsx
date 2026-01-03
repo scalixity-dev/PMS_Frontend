@@ -7,7 +7,7 @@ import {
   PiChartLineUpFill, PiChartPieSliceFill, PiBuildingsFill, PiUsersFill,
   PiCurrencyDollarFill, PiWrenchFill, PiFileTextFill
 } from "react-icons/pi";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Dialog, Transition } from '@headlessui/react';
 import artworkImage from "../../assets/images/Artwork.png";
 import InviteToApplyModal from '../../pages/Dashboard/features/Application/components/InviteToApplyModal';
@@ -35,11 +35,19 @@ interface SidebarDropdownLinkProps {
 
 function SidebarSubLink({ label, to, isCurrentPath }: SidebarSubLinkProps) {
   const isActive = isCurrentPath(to);
+  const navigate = useNavigate();
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    navigate(to);
+  };
 
   return (
-    <Link
-      to={to}
-      className={`block py-2 px-3 rounded-md text-sm transition-colors 
+    <button
+      type="button"
+      onClick={handleClick}
+      className={`block w-full text-left py-2 px-3 rounded-md text-sm transition-colors 
               ${isActive
           ? "text-green-600 font-semibold"
           : "text-gray-600 hover:text-green-600 hover:bg-gray-50"
@@ -47,7 +55,7 @@ function SidebarSubLink({ label, to, isCurrentPath }: SidebarSubLinkProps) {
       }
     >
       {label}
-    </Link>
+    </button>
   );
 }
 
@@ -295,7 +303,7 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
       <div className="relative h-full flex flex-col justify-between">
         {/* Collapse Toggle Button (Desktop Only) */}
         {!isMobile && setCollapsed && (
-          <div className="flex justify-end px-3 pt-3">
+          <div className="flex justify-end px-3 pt-1">
             <button
               onClick={() => setCollapsed(!collapsed)}
               className={`p-1.5 rounded-lg text-gray-400 hover:text-[#1BCB40] hover:bg-green-50 transition-all duration-200 ${collapsed ? 'mx-auto' : ''}`}
@@ -324,7 +332,7 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
 
         <div className="flex-grow">
           {/* Create New Button */}
-          <div className={`relative pt-4 pb-2 transition-all ${collapsed ? 'px-2' : 'px-4'}`} ref={createNewRef}>
+          <div className={`relative pt-2 pb-2 transition-all ${collapsed ? 'px-2' : 'px-4'}`} ref={createNewRef}>
             <button
               onClick={toggleCreateNew}
               className={`bg-gradient-to-r from-[#1BCB40] to-[#7CD947] hover:opacity-95 text-white font-semibold flex items-center justify-center transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#1BCB40]/40 shadow-[0_20px_60px_rgba(27,203,64,0.32)] hover:shadow-[0_28px_90px_rgba(27,203,64,0.44)] overflow-hidden
@@ -505,9 +513,9 @@ export default function DashboardSidebar({ open, setOpen, collapsed, setCollapse
     <>
       {/* Desktop Sidebar */}
       <aside
-        className={`hidden lg:block fixed z-50 top-16 left-0 h-[calc(100vh-64px)] 
+        className={`hidden lg:block h-full
         bg-white shadow-md transition-all duration-300 overflow-y-auto scrollbar-hide
-        ${collapsed ? "w-20" : "w-55"}`}
+        ${collapsed ? "w-20" : "w-64"}`}
       >
         <SidebarContent collapsed={collapsed} setCollapsed={setCollapsed} />
       </aside>

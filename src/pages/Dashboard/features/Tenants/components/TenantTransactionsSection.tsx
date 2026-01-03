@@ -20,7 +20,7 @@ interface TenantTransactionsSectionProps {
     };
 }
 
-const TenantTransactionsSection = ({ tenantId, tenant }: TenantTransactionsSectionProps) => {
+const TenantTransactionsSection = ({ tenantId: _tenantId, tenant: _tenant }: TenantTransactionsSectionProps) => {
     // Note: There's no direct API for tenant transactions yet
     // This is a placeholder that shows empty state
     const transactions: Transaction[] = [

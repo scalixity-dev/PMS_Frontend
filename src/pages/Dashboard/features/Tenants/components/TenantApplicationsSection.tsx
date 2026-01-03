@@ -8,16 +8,16 @@ interface TenantApplicationsSectionProps {
     tenantUserId: string | null;
 }
 
-const TenantApplicationsSection = ({ tenantId, tenantUserId }: TenantApplicationsSectionProps) => {
+const TenantApplicationsSection = ({ tenantId: _tenantId, tenantUserId }: TenantApplicationsSectionProps) => {
     const { data: allApplications = [], isLoading } = useGetAllApplications();
-    
+
     // Filter applications by tenant's userId
     const tenantApplications = useMemo(() => {
         if (!tenantUserId) return [];
-        
+
         return allApplications.filter((app: BackendApplication) => {
             // Check if any applicant matches the tenant's userId
-            return app.applicants.some(applicant => applicant.userId === tenantUserId);
+            return app.applicants.some(applicant => applicant.email === tenantUserId);
         });
     }, [allApplications, tenantUserId]);
 
@@ -45,7 +45,7 @@ const TenantApplicationsSection = ({ tenantId, tenantUserId }: TenantApplication
                 const applicantName = primaryApplicant
                     ? `${primaryApplicant.firstName} ${primaryApplicant.middleName || ''} ${primaryApplicant.lastName}`.trim()
                     : 'Unknown Applicant';
-                
+
                 const applicationDate = new Date(app.applicationDate).toLocaleDateString('en-GB', {
                     day: '2-digit',
                     month: 'short',

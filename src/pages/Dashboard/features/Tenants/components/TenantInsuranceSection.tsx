@@ -4,7 +4,7 @@ interface TenantInsuranceSectionProps {
     tenantId: string;
 }
 
-const TenantInsuranceSection: React.FC<TenantInsuranceSectionProps> = ({ tenantId }) => {
+const TenantInsuranceSection: React.FC<TenantInsuranceSectionProps> = ({ tenantId: _tenantId }) => {
     // Note: There's no direct API for tenant insurance yet
     return (
         <div className="text-center py-12 bg-[#F0F0F6] rounded-[2rem]">
