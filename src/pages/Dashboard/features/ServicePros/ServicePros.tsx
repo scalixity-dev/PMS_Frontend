@@ -145,9 +145,9 @@ const ServicePros = () => {
                 <span className="text-gray-600 text-sm font-semibold">Service Pros</span>
             </div>
 
-            <div className="p-6 bg-[#E0E5E5] min-h-screen rounded-[2rem] flex flex-col">
+            <div className="p-4 sm:p-6 bg-[#E0E5E5] min-h-screen rounded-[1.5rem] sm:rounded-[2rem] flex flex-col">
                 {/* Header */}
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <div className="flex items-center gap-2">
                         {/* Adding Back button like Tenants page */}
                         <button onClick={() => navigate(-1)} className="p-2 hover:bg-black/5 rounded-full transition-colors text-black">
@@ -157,13 +157,13 @@ const ServicePros = () => {
                             Service Pros
                         </h1>
                     </div>
-                    <div className="flex gap-3">
-                        <button className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors">
+                    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                        <button className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors w-full sm:w-auto">
                             Import
                         </button>
                         <button
                             onClick={() => navigate('/dashboard/contacts/service-pros/add')}
-                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2"
+                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"
                         >
                             Add service pro
                             <Plus className="w-4 h-4" />
