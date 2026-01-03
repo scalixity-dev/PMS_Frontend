@@ -320,7 +320,7 @@ const CreateEquipment = () => {
                     <span className="text-gray-500 text-sm mx-1">/</span>
                     <span className="text-gray-600 text-sm font-semibold">{isEditMode ? 'Edit Equipment' : 'Add Equipment'}</span>
                 </div>
-                <div className="p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem] flex items-center justify-center">
+                <div className="p-4 md:p-8 bg-[#E0E8E7] min-h-screen rounded-[1.5rem] md:rounded-[2rem] flex items-center justify-center">
                     <div className="flex flex-col items-center gap-4">
                         <Loader2 className="w-8 h-8 animate-spin text-[#3A6D6C]" />
                         <span className="text-sm text-gray-600">
@@ -341,7 +341,7 @@ const CreateEquipment = () => {
                     <span className="text-gray-500 text-sm mx-1">/</span>
                     <span className="text-gray-600 text-sm font-semibold">Edit Equipment</span>
                 </div>
-                <div className="p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem] flex items-center justify-center">
+                <div className="p-4 md:p-8 bg-[#E0E8E7] min-h-screen rounded-[1.5rem] md:rounded-[2rem] flex items-center justify-center">
                     <div className="bg-red-50 border border-red-200 rounded-2xl p-6 max-w-md text-center">
                         <p className="text-red-800 font-semibold mb-2">Equipment not found</p>
                         <p className="text-sm text-red-700 mb-4">
@@ -370,7 +370,7 @@ const CreateEquipment = () => {
                 <span className="text-gray-600 text-sm font-semibold">{isEditMode ? 'Edit Equipment' : 'Add Equipment'}</span>
             </div>
 
-            <div className="p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem]">
+            <div className="p-4 md:p-6 bg-[#E0E8E7] min-h-screen rounded-[1.5rem] md:rounded-[2rem]">
                 {/* Header */}
                 <div className="flex items-center gap-4 mb-6">
                     <button
@@ -458,7 +458,7 @@ const CreateEquipment = () => {
                 {/* General Information */}
                 <div className="mb-8">
                     <h2 className="text-lg font-bold text-gray-800 mb-4">General information</h2>
-                    <div className="bg-[#F0F0F6] rounded-[2rem] p-8 grid grid-cols-2 gap-x-8 gap-y-6">
+                    <div className="bg-[#F0F0F6] rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                         <div>
                             <label className="block text-sm font-medium text-gray-600 mb-2">Category*</label>
                             <CustomDropdown
@@ -583,7 +583,7 @@ const CreateEquipment = () => {
                         <h2 className="text-lg font-bold text-gray-800">Warranty settings</h2>
                     </div>
 
-                    <div className="bg-[#F0F0F6] rounded-[2rem] p-8">
+                    <div className="bg-[#F0F0F6] rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-8">
                         {/* Warranty Checkbox */}
                         <div className="mb-6">
                             <div
@@ -650,7 +650,7 @@ const CreateEquipment = () => {
                         <span className="text-xs text-[#3A6D6C]">(Add any additional equipment details such as short description, sizes, color or a receipt file. (You can add up to 10 files.) )</span>
                     </div>
 
-                    <div className="bg-[#F0F0F6] rounded-[2rem] p-8">
+                    <div className="bg-[#F0F0F6] rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-8">
                         <textarea
                             value={formData.description}
                             onChange={(e) => handleInputChange('description', e.target.value)}
@@ -660,7 +660,7 @@ const CreateEquipment = () => {
                     </div>
 
                     {/* File Upload Box */}
-                    <div className="mt-4 bg-[#F0F0F6] rounded-[2rem] p-8">
+                    <div className="mt-4 bg-[#F0F0F6] rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-8">
                         {attachmentErrors.length > 0 && (
                             <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-lg text-xs text-red-700 space-y-1">
                                 {attachmentErrors.map((err, idx) => (
@@ -717,7 +717,7 @@ const CreateEquipment = () => {
                     <button
                         onClick={handleSubmit}
                         disabled={createEquipmentMutation.isPending || updateEquipmentMutation.isPending || isUploading}
-                        className="px-8 py-3 bg-[#3A6D6C] text-white rounded-lg font-medium hover:bg-[#2c5251] transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
+                        className="w-full md:w-auto px-8 py-3 bg-[#3A6D6C] text-white rounded-lg font-medium hover:bg-[#2c5251] transition-colors shadow-sm disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                         {(createEquipmentMutation.isPending || updateEquipmentMutation.isPending || isUploading) && (
                             <Loader2 className="w-4 h-4 animate-spin" />

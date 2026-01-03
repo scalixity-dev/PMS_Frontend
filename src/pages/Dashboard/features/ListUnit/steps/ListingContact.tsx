@@ -31,7 +31,7 @@ const ListingContact: React.FC<ListingContactProps> = ({ onSubmit }) => {
                         value={formData.contactName || ''}
                         onChange={(e) => updateFormData('contactName', e.target.value)}
                         placeholder="Enter contact name"
-                        className="w-full bg-[#84CC16] text-white placeholder-white/80 text-lg font-medium py-3 px-6 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#84CC16]"
+                        className="w-full bg-[#84CC16] text-white placeholder-white/80 text-base md:text-lg font-medium py-3 px-4 md:px-6 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#84CC16]"
                     />
                 </div>
 
@@ -98,7 +98,7 @@ const ListingContact: React.FC<ListingContactProps> = ({ onSubmit }) => {
                         value={formData.email || ''}
                         onChange={(e) => updateFormData('email', e.target.value)}
                         placeholder="Enter your email"
-                        className="w-full bg-[#84CC16] text-white placeholder-white/80 text-lg font-medium py-3 px-6 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#84CC16]"
+                        className="w-full bg-[#84CC16] text-white placeholder-white/80 text-base md:text-lg font-medium py-3 px-4 md:px-6 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#84CC16]"
                     />
                 </div>
             </div>
@@ -123,7 +123,7 @@ const ListingContact: React.FC<ListingContactProps> = ({ onSubmit }) => {
             <div className="w-full max-w-xs flex justify-center">
                 <button
                     onClick={onSubmit}
-                    className="bg-[#3D7475] text-white text-xl font-bold py-3 px-12 rounded-xl shadow-lg hover:bg-[#2c5556] transition-colors w-full"
+                    className="bg-[#3D7475] text-white text-lg md:text-xl font-bold py-3 px-8 md:px-12 rounded-xl shadow-lg hover:bg-[#2c5556] transition-colors w-full"
                 >
                     Submit Listing
                 </button>

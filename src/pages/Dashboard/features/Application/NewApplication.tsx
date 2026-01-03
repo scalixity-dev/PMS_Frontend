@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import ApplicationStepper from './components/ApplicationStepper';
 import PropertySelectionStep from './steps/PropertySelectionStep';
@@ -22,6 +22,7 @@ const STORAGE_KEY = 'application_draft';
 
 const NewApplication: React.FC = () => {
     const navigate = useNavigate();
+    const { sidebarCollapsed = false } = useOutletContext<{ sidebarCollapsed: boolean }>() || {};
 
     const {
         formData,
@@ -89,19 +90,19 @@ const NewApplication: React.FC = () => {
                 const parsed = JSON.parse(savedData);
                 // Convert all date strings to Date objects recursively
                 parsed.formData = walkAndConvertDates(parsed.formData);
-                
+
                 // Check if documents were saved but files are lost
                 if (parsed.formData.documents && parsed.formData.documents.length > 0) {
                     setDocumentsNeedReupload(true);
                     // Clear documentFiles since they can't be restored
                     parsed.formData.documentFiles = [];
                 }
-                
+
                 // Clear photoFile as it can't be restored from localStorage
                 if (parsed.formData.photo) {
                     parsed.formData.photoFile = null;
                 }
-                
+
                 setFormData(parsed.formData);
                 setCurrentStep(parsed.currentStep);
                 setIsPropertySelected(parsed.isPropertySelected);
@@ -117,14 +118,14 @@ const NewApplication: React.FC = () => {
         if (isFormDirty) {
             // Exclude non-serializable File objects from localStorage
             const { documentFiles, photoFile, ...serializableFormData } = formData;
-            
+
             const dataToSave = {
                 formData: serializableFormData,
                 currentStep,
                 isPropertySelected,
                 timestamp: new Date().toISOString()
             };
-            
+
             try {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
             } catch (error) {
@@ -312,7 +313,7 @@ const NewApplication: React.FC = () => {
     };
 
     return (
-        <div className="max-w-6xl mx-auto bg-[#DFE5E3] p-6 pb-20 flex flex-col rounded-xl">
+        <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto bg-[#DFE5E3] p-6 pb-20 flex flex-col rounded-xl transition-all duration-300`}>
             {/* Header Navigation */}
             <div className="w-full flex items-center justify-between mb-8">
                 <button
@@ -354,7 +355,7 @@ const NewApplication: React.FC = () => {
                         <div className="flex-1">
                             <h3 className="text-sm font-bold text-yellow-800 mb-1">Document Files Need Re-upload</h3>
                             <p className="text-xs text-yellow-700">
-                                Your document information was saved, but the actual files cannot be restored after a page refresh. 
+                                Your document information was saved, but the actual files cannot be restored after a page refresh.
                                 Please re-upload your documents ({formData.documents.length} file{formData.documents.length !== 1 ? 's' : ''} previously attached).
                             </p>
                             <button

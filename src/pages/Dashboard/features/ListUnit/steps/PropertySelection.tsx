@@ -32,16 +32,16 @@ const getNextIncompleteStep = (property: BackendProperty): number | null => {
     return 3;
   }
 
-  // Step 4: PropertyFeatures - needs propertyFeatures array (can be empty but should exist)
-  if (!property.amenities.propertyFeatures) {
-    return 4;
-  }
+  // Step 4: PropertyFeatures - Optional, proceed if missing
+  // if (!property.amenities.propertyFeatures) {
+  //   return 4;
+  // }
 
   // Step 5: PropertyPhotos - needs coverPhotoUrl and at least one gallery photo (non-primary)
   if (!property.coverPhotoUrl) {
     return 5;
   }
-  // Check for gallery photos (non-primary photos)
+  // Check for gallery photos
   const galleryPhotos = property.photos?.filter(p => !p.isPrimary) || [];
   if (galleryPhotos.length === 0) {
     return 5;
@@ -549,7 +549,7 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
 
   if (loading) {
     return (
-      <div className="bg-transparent p-8 rounded-lg w-full flex flex-col items-center justify-center min-h-[200px]">
+      <div className="bg-transparent p-4 rounded-lg w-full flex flex-col items-center justify-center min-h-[200px]">
         <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)]" />
         <p className="mt-4 text-gray-600">Loading properties...</p>
       </div>
@@ -601,7 +601,7 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
   const country = fullPropertyData?.address?.country || (selectedItem?.address ? selectedItem.address.split(', ').pop() : undefined);
 
   return (
-    <div className="bg-transparent p-8 rounded-lg w-full flex flex-col items-center">
+    <div className="bg-transparent p-0 md:p-4 rounded-lg w-full flex flex-col items-center">
       {selectedItem || selectedProperty ? (
         // Show Property Card when selected
         <PropertyCard

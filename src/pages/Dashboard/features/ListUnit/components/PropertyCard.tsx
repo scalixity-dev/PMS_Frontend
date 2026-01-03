@@ -43,7 +43,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onDelete, onBack,
       </div>
 
       {/* Property Details */}
-      <div className="p-6">
+      <div className="p-4 md:p-6">
         {/* Property Name */}
         <h3 className="text-xl font-bold text-gray-900 mb-1">{property.name}</h3>
 
@@ -51,7 +51,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onDelete, onBack,
         <p className="text-sm text-gray-600 mb-4">{property.address}</p>
 
         {/* Price and Amenities */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
           {/* Price */}
           <div className="flex items-baseline gap-1">
             <span className="text-2xl font-bold text-gray-900">{currencySymbol} {property.price.toLocaleString()}</span>
@@ -59,7 +59,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onDelete, onBack,
           </div>
 
           {/* Amenities */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 self-start sm:self-auto">
             {/* Bathrooms */}
             <div className="flex items-center gap-1.5">
               <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
@@ -83,37 +83,37 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onDelete, onBack,
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-3">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-3">
           <button
             onClick={onBack}
-            className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 bg-white rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+            className="w-full sm:w-auto sm:flex-1 px-3 md:px-4 py-2 md:py-2.5 border border-gray-300 text-gray-700 bg-white rounded-lg text-sm md:text-base font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
           >
             Back
           </button>
           {onEdit && (
             <button
               onClick={onEdit}
-              className="flex-1 px-4 py-2.5 bg-[var(--color-primary)] text-white rounded-lg font-medium hover:opacity-90 transition-colors flex items-center justify-center gap-2"
+              className="w-full sm:w-auto sm:flex-1 px-3 md:px-4 py-2 md:py-2.5 bg-[var(--color-primary)] text-white rounded-lg text-sm md:text-base font-medium hover:opacity-90 transition-colors flex items-center justify-center gap-2"
             >
-              <Edit size={18} />
+              <Edit className="w-4 h-4 md:w-[18px] md:h-[18px]" />
               Edit
             </button>
           )}
 
           <button
             onClick={onDelete}
-            className="flex-1 px-4 py-2.5 bg-gray-700 text-white rounded-lg font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+            className="w-full sm:w-auto sm:flex-1 px-3 md:px-4 py-2 md:py-2.5 bg-gray-700 text-white rounded-lg text-sm md:text-base font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
           >
-            <Trash2 size={18} />
+            <Trash2 className="w-4 h-4 md:w-[18px] md:h-[18px]" />
             Delete
           </button>
           {onNext && (
             <button
               onClick={onNext}
-              className="flex-1 px-4 py-2.5 bg-[var(--color-primary)] text-white rounded-lg font-medium hover:opacity-90 transition-colors flex items-center justify-center gap-2"
+              className="w-full sm:w-auto sm:flex-1 px-3 md:px-4 py-2 md:py-2.5 bg-[var(--color-primary)] text-white rounded-lg text-sm md:text-base font-medium hover:opacity-90 transition-colors flex items-center justify-center gap-2"
             >
               Next
-              <ArrowRight size={18} />
+              <ArrowRight className="w-4 h-4 md:w-[18px] md:h-[18px]" />
             </button>
           )}
         </div>

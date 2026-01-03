@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Edit, Trash2, Check, ChevronLeft, Plus, Loader2, AlertTriangle, X } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
@@ -93,6 +93,7 @@ const ITEMS_PER_PAGE = 9;
 
 const Equipments: React.FC = () => {
     const navigate = useNavigate();
+    const { sidebarCollapsed = false } = useOutletContext<{ sidebarCollapsed?: boolean }>() || {};
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -277,7 +278,7 @@ const Equipments: React.FC = () => {
     };
 
     return (
-        <div className="max-w-7xl mx-auto min-h-screen font-outfit">
+        <div className={`mx-auto min-h-screen font-outfit ${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'}`}>
             {/* Breadcrumb */}
             <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
                 <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
@@ -285,10 +286,10 @@ const Equipments: React.FC = () => {
                 <span className="text-gray-600 text-sm font-semibold">Equipments</span>
             </div>
 
-            <div className="p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem] overflow-visible">
+            <div className="p-4 md:p-6 bg-[#E0E8E7] min-h-screen rounded-[1.5rem] md:rounded-[2rem] overflow-visible flex flex-col">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-2">
+                <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
+                    <div className="flex items-center gap-2 w-full md:w-auto">
                         <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
                             <ChevronLeft className="w-6 h-6 text-gray-800" />
                         </button>
@@ -296,7 +297,7 @@ const Equipments: React.FC = () => {
                     </div>
                     <button
                         onClick={() => navigate('/dashboard/equipments/add')}
-                        className="px-5 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-1"
+                        className="w-full md:w-auto justify-center px-5 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-1"
                     >
                         Add Equipment
                         <Plus className="w-4 h-4" />
@@ -330,7 +331,7 @@ const Equipments: React.FC = () => {
                 {/* Table Section */}
                 {!isLoading && !error && (
                     <>
-                        <div className="bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm mt-8">
+                        <div className="bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm mt-8 hidden md:block">
                             {/* Table Header */}
                             <div className="text-white px-6 py-4 grid grid-cols-[40px_80px_1fr_1.5fr_1fr_120px] gap-4 items-center text-sm font-medium">
                                 <div className="flex items-center justify-center ml-2">
@@ -349,15 +350,15 @@ const Equipments: React.FC = () => {
                         </div>
 
                         {/* Table Body */}
-                        <div className="flex flex-col gap-3 bg-[#F0F0F6] p-4 rounded-[2rem] rounded-t">
+                        <div className="flex flex-col gap-3 md:bg-[#F0F0F6] md:p-4 md:rounded-[2rem] md:rounded-t-none">
                             {paginatedEquipments.length > 0 ? (
                                 paginatedEquipments.map((item) => (
                                     <div
                                         key={item.id}
                                         onClick={() => navigate(`/dashboard/equipments/${item.id}`)}
-                                        className="bg-white rounded-2xl px-6 py-4 grid grid-cols-[40px_80px_1fr_1.5fr_1fr_120px] gap-4 items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                                        className="bg-white rounded-2xl px-4 md:px-6 py-4 grid grid-cols-1 md:grid-cols-[40px_80px_1fr_1.5fr_1fr_120px] gap-2 md:gap-4 items-start md:items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer relative"
                                     >
-                                        <div className="flex items-center justify-center">
+                                        <div className="flex items-center justify-start md:justify-center absolute top-4 left-4 md:static">
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -370,15 +371,18 @@ const Equipments: React.FC = () => {
                                                 </div>
                                             </button>
                                         </div>
-                                        <div className="font-bold text-gray-800 text-sm">{item.id.slice(0, 8)}</div>
-                                        <div className="font-semibold text-gray-800 text-sm">{item.brand}</div>
-                                        <div className="text-gray-800 text-sm font-semibold">
+                                        <div className="font-bold text-gray-500 md:text-gray-800 text-xs md:text-sm pl-8 md:pl-0 mt-0.5 md:mt-0">ID: {item.id.slice(0, 8)}</div>
+                                        <div className="font-bold text-gray-800 text-lg md:text-sm md:font-semibold mt-1 md:mt-0">{item.brand}</div>
+                                        <div className="text-gray-600 md:text-gray-800 text-sm font-medium md:font-semibold">
+                                            <span className="md:hidden text-gray-400 text-xs block">Category</span>
                                             {item.category} {item.subcategory ? `/ ${item.subcategory}` : ''}
                                         </div>
-                                        <div className="text-[#2E6819] text-sm font-semibold">{item.property}</div>
+                                        <div className="text-[#2E6819] text-sm font-semibold">
+                                            <span className="md:hidden text-gray-400 text-xs block">Property</span>
+                                            {item.property}
+                                        </div>
 
-                                        <div className="flex items-center justify-end gap-3">
-
+                                        <div className="flex items-center justify-end gap-3 absolute top-4 right-4 md:static">
                                             <button
                                                 onClick={(e) => handleEdit(item.id, e)}
                                                 className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
@@ -403,13 +407,12 @@ const Equipments: React.FC = () => {
                             )}
                         </div>
 
-                        {totalPages > 1 && (
-                            <Pagination
-                                currentPage={currentPage}
-                                totalPages={totalPages}
-                                onPageChange={setCurrentPage}
-                            />
-                        )}
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={setCurrentPage}
+                            className="mt-auto py-6"
+                        />
                     </>
                 )}
 

@@ -772,17 +772,17 @@ const AddProperty: React.FC = () => {
       />
 
       {/* Breadcrumb */}
-      <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-        <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => handleNavigation('/dashboard')}>Dashboard</span>
+      <div className="inline-flex items-center px-3 md:px-4 py-2 bg-[#E0E8E7] rounded-full mb-4 md:mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
+        <span className="text-[#4ad1a6] text-xs md:text-sm font-semibold cursor-pointer" onClick={() => handleNavigation('/dashboard')}>Dashboard</span>
         <span className="text-gray-500 text-sm mx-1">/</span>
-        <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => handleNavigation('/dashboard/properties')}>Properties</span>
+        <span className="text-[#4ad1a6] text-xs md:text-sm font-semibold cursor-pointer" onClick={() => handleNavigation('/dashboard/properties')}>Properties</span>
         <span className="text-gray-500 text-sm mx-1">/</span>
-        <span className="text-gray-600 text-sm font-semibold">Add Property</span>
+        <span className="text-gray-600 text-xs md:text-sm font-semibold">Add Property</span>
       </div>
 
-      <div className={`bg-[#E0E8E7] min-h-screen p-8 font-sans rounded-[2rem] text-[#4B5563]`}>
+      <div className={`bg-[#E0E8E7] min-h-screen p-4 md:p-8 font-sans rounded-[1.5rem] md:rounded-[2rem] text-[#4B5563]`}>
         {/* Header */}
-        <div className="flex items-center gap-6 mb-8">
+        <div className="flex items-center gap-3 md:gap-6 mb-6 md:mb-8">
           <div className="flex items-center gap-2">
             <button
               onClick={() => handleNavigation('/dashboard/properties')}
@@ -790,7 +790,7 @@ const AddProperty: React.FC = () => {
             >
               <ChevronLeft className="w-6 h-6 text-gray-700" />
             </button>
-            <h1 className="text-2xl font-bold text-gray-800">Back to Properties</h1>
+            <h1 className="text-lg md:text-2xl font-bold text-gray-800">Back to Properties</h1>
           </div>
         </div>
         {error && (
@@ -852,9 +852,9 @@ const AddProperty: React.FC = () => {
               multiple
               className="hidden"
             />
-            <div className="flex gap-4 flex-wrap">
+            <div className="flex gap-3 md:gap-4 flex-wrap">
               {formData.galleryPhotos.map((photo, i) => (
-                <div key={i} className="bg-white rounded-xl border border-gray-200 w-40 h-40 flex flex-col items-center justify-center relative overflow-hidden">
+                <div key={i} className="bg-white rounded-xl border border-gray-200 w-28 h-28 sm:w-40 sm:h-40 flex flex-col items-center justify-center relative overflow-hidden">
                   <img
                     src={URL.createObjectURL(photo)}
                     alt={`Gallery ${i}`}
@@ -874,7 +874,7 @@ const AddProperty: React.FC = () => {
               <button
                 type="button"
                 onClick={() => galleryPhotosInputRef.current?.click()}
-                className="w-40 h-40 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center bg-white hover:bg-gray-50 transition-colors"
+                className="w-28 h-28 sm:w-40 sm:h-40 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center bg-white hover:bg-gray-50 transition-colors"
               >
                 <div className="flex flex-col items-center">
                   <div className="bg-teal-50 p-2 rounded-full mb-2">
@@ -913,7 +913,7 @@ const AddProperty: React.FC = () => {
                   <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.propertyName}</p>
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium mb-1 ml-1">Year Built*</label>
                   <Input
@@ -983,7 +983,7 @@ const AddProperty: React.FC = () => {
               </div>
 
               {/* Country & State/Region */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium mb-1 ml-1">Country*</label>
                   <CustomDropdown
@@ -1037,7 +1037,7 @@ const AddProperty: React.FC = () => {
               </div>
 
               {/* City & Zip */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium mb-1 ml-1">City*</label>
                   <CustomDropdown
@@ -1162,7 +1162,7 @@ const AddProperty: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-6">
                   <div>
                     <label className="block text-xs font-medium mb-1 ml-1">Beds*</label>
                     <CustomDropdown
@@ -1407,7 +1407,7 @@ const AddProperty: React.FC = () => {
 
                 <div className="mb-6">
                   <label className="block text-xs font-medium mb-2 ml-1">Enter Custom Features</label>
-                  <div className="flex gap-3">
+                  <div className="flex flex-col sm:flex-row gap-3">
                     <div className="flex-1">
                       <Input
                         placeholder="Custom Features"
@@ -1455,7 +1455,7 @@ const AddProperty: React.FC = () => {
                       <Trash2 size={18} />
                     </button>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                       <div>
                         <label className="block text-xs font-medium mb-1 ml-1">unit {index + 1}</label>
                         <Input
@@ -1528,7 +1528,7 @@ const AddProperty: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                       <div>
                         <label className="block text-xs font-medium mb-1 ml-1">Baths*</label>
                         <Input
@@ -1801,7 +1801,7 @@ const AddProperty: React.FC = () => {
           </section>
 
           {/* Footer Actions */}
-          <div className="flex gap-4 pt-4">
+          <div className="flex flex-col-reverse sm:flex-row gap-3 sm:gap-4 pt-4">
             <button
               type="button"
               onClick={() => handleNavigation('/dashboard/properties')}

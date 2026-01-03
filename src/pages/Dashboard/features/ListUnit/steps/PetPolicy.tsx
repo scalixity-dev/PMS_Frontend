@@ -11,8 +11,8 @@ const PetPolicy: React.FC<PetPolicyProps> = () => {
 
     return (
         <div className="w-full flex flex-col items-center">
-            <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold mb-2 text-[var(--color-heading)]">
+            <div className="text-center mb-6 md:mb-8">
+                <h2 className="text-lg md:text-2xl font-bold mb-2 text-[var(--color-heading)]">
                     Do you allow pets in your property?
                 </h2>
                 <p className="text-[var(--color-subheading)] text-gray-500">
