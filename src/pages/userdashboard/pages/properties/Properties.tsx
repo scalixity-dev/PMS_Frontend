@@ -31,7 +31,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
         <div className="absolute bottom-5 left-6 right-6 bg-white/90 backdrop-blur-sm rounded-[var(--radius-md)] p-4 shadow-[var(--shadow-sm)]">
           <div className="flex justify-between items-start">
             <div className="space-y-0.5 pr-8">
-              <h3 className="text-[var(--dashboard-text-main)] text-md font-semibold leading-tight">
+              <h3 className="text-[var(--dashboard-text-main)] text-base font-semibold leading-tight">
                 {property.title}
               </h3>
               <p className="text-gray-600 text-[12px] leading-snug">
@@ -52,7 +52,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
             </button>
           </div>
           <div className="mt-2 flex items-baseline gap-1">
-            <span className="text-[var(--dashboard-text-main)] text-md font-semibold">
+            <span className="text-[var(--dashboard-text-main)] text-base font-semibold">
               {property.price || `${property.currency}${property.rent}`}
             </span>
             <span className="text-gray-500 text-[10px]">month</span>
@@ -175,12 +175,12 @@ const Properties: React.FC = () => {
         {/* Header Section */}
         <div className="flex flex-col gap-4 mb-4">
           <nav aria-label="Breadcrumb">
-            <ol className="flex items-center gap-2 text-md font-medium">
+            <ol className="flex items-center gap-2 text-base font-medium">
               <li>
                 <Link to="/userdashboard" className="text-[var(--dashboard-accent)] font-medium hover:opacity-80 transition-opacity">Dashboard</Link>
               </li>
               <li aria-hidden="true" className="text-[#1A1A1A] font-semibold">/</li>
-              <li className="text-[#1A1A1A] font-lg font-medium" aria-current="page">Properties</li>
+              <li className="text-[#1A1A1A]  font-medium" aria-current="page">Properties</li>
             </ol>
           </nav>
           <div className="flex justify-end">

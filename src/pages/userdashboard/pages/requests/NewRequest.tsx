@@ -139,7 +139,7 @@ const NewRequest: React.FC = () => {
                         : "bg-[#F3F4F6] border-white"
                         }`} />
                     </div>
-                    <span className={`mt-2 font-medium  text-md transition-colors ${selectedCategory === category.id ? "#1F2937" : "text-gray-700"
+                    <span className={`mt-2 font-medium  text-base transition-colors ${selectedCategory === category.id ? "#1F2937" : "text-gray-700"
                       }`}>
                       {category.name}
                     </span>

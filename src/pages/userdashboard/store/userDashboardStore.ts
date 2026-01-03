@@ -1,37 +1,5 @@
 import { create } from 'zustand';
-import type { TabType, FilterState } from '../utils/types';
-
-interface UserInfo {
-    firstName: string;
-    lastName: string;
-    dob: string;
-    email: string;
-    phone: string;
-    role: string;
-    country: string;
-    city: string;
-    pincode: string;
-}
-
-interface UserFinances {
-    outstanding: string;
-    deposits: string;
-    credits: string;
-}
-
-interface RentFilters {
-    search: string;
-    status: string | null;
-    date: string | null;
-    schedule: string | null;
-}
-
-interface RequestFilters {
-    search: string;
-    status: string | null;
-    priority: string | null;
-    category: string | null;
-}
+import type { TabType, FilterState, UserInfo, UserFinances, RentFilters, RequestFilters } from '../utils/types';
 
 interface UserDashboardState {
     // Dashbord UI State
@@ -67,15 +35,15 @@ export const useUserDashboardStore = create<UserDashboardState>((set) => ({
     activeTab: "Outstanding",
 
     userInfo: {
-        firstName: "Rishabh",
-        lastName: "Awasthi",
-        dob: "13-11-2002",
-        email: "rishabhawasthi@gmail.com",
-        phone: "+91 7400908219",
-        role: "Tenant",
-        country: "India",
-        city: "Indore, Madhya Pradesh",
-        pincode: "452001",
+        firstName: "",
+        lastName: "",
+        dob: "",
+        email: "",
+        phone: "",
+        role: "",
+        country: "",
+        city: "",
+        pincode: "",
     },
 
     finances: {

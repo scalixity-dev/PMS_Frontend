@@ -63,3 +63,34 @@ export interface FilterState {
     availability: string;
     selectedAmenities: string[];
 }
+export interface UserInfo {
+    firstName: string;
+    lastName: string;
+    dob: string;
+    email: string;
+    phone: string;
+    role: string;
+    country: string;
+    city: string;
+    pincode: string;
+}
+
+export interface UserFinances {
+    outstanding: string;
+    deposits: string;
+    credits: string;
+}
+
+export interface RentFilters {
+    search: string;
+    status: string | null;
+    date: string | null;
+    schedule: string | null;
+}
+
+export interface RequestFilters {
+    search: string;
+    status: string | null;
+    priority: string | null;
+    category: string | null;
+}

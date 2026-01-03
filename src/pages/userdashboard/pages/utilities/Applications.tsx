@@ -23,7 +23,7 @@ const Applications: React.FC = () => {
       <div className="max-w-7xl mx-auto p-8 space-y-8">
         {/* Breadcrumbs */}
         <nav aria-label="Breadcrumb">
-          <ol className="flex items-center gap-2 text-md font-medium">
+          <ol className="flex items-center gap-2 text-base font-medium">
             <li>
               <Link
                 to="/userdashboard"
@@ -35,7 +35,7 @@ const Applications: React.FC = () => {
             <li aria-hidden="true" className="text-[#1A1A1A] font-semibold">
               /
             </li>
-            <li className="text-[#1A1A1A] font-lg font-medium" aria-current="page">
+            <li className="text-[#1A1A1A] font-medium" aria-current="page">
               Application
             </li>
           </ol>
@@ -45,7 +45,7 @@ const Applications: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-baseline gap-10">
             <h1 className="text-2xl font-semibold text-[#1A1A1A]">Application</h1>
-            <span className="text-[#A1A1AA] text-lg font-medium">Total 0</span>
+            <span className="text-[#A1A1AA] text-lg font-medium">Total {applications.length}</span>
           </div>
 
           <div className="flex items-center gap-4">
@@ -60,7 +60,7 @@ const Applications: React.FC = () => {
             {/* Find a Place Button */}
             <PrimaryActionButton
               text="Find a Place"
-              className="bg-[#7ED957] hover:bg-[#6BC847] !px-6 !py-2.5"
+              className="bg-[#7ED957] hover:bg-[#6BC847] px-6! py-2.5!"
             />
           </div>
         </div>
@@ -82,16 +82,16 @@ const Applications: React.FC = () => {
                 {/* User Info */}
                 <div className="space-y-1">
                   <h3 className="text-[22px] font-semibold text-[#1A1A1A]">{app.name}</h3>
-                  <p className="text-[#71717A] text-md font-medium">{app.phone}</p>
+                  <p className="text-[#71717A] text-base font-medium">{app.phone}</p>
                 </div>
               </div>
 
               {/* Actions */}
               <div className="flex items-center gap-10 mr-4">
-                <button className="text-[#7ED957] text-md font-semibold hover:opacity-80 transition-opacity">
+                <button className="text-[#7ED957] text-base font-semibold hover:opacity-80 transition-opacity">
                   View
                 </button>
-                <button className="text-[#A1A1AA] text-md font-semibold hover:text-gray-600 transition-colors">
+                <button className="text-[#A1A1AA] text-base font-semibold hover:text-gray-600 transition-colors">
                   Ignore
                 </button>
               </div>

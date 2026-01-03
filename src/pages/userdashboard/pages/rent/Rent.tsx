@@ -138,12 +138,12 @@ const Rent: React.FC = () => {
       <div className="max-w-full mx-auto p-8 space-y-6">
         {/* Breadcrumb */}
         <nav aria-label="Breadcrumb">
-          <ol className="flex items-center gap-2 text-md font-medium">
+          <ol className="flex items-center gap-2 text-base font-medium">
             <li>
               <Link to="/userdashboard" className="text-[var(--dashboard-accent)] font-medium hover:opacity-80 transition-opacity">Dashboard</Link>
             </li>
             <li aria-hidden="true" className="text-[#1A1A1A] font-semibold">/</li>
-            <li className="text-[#1A1A1A] font-lg font-medium" aria-current="page">Accounting</li>
+            <li className="text-[#1A1A1A]  font-medium" aria-current="page">Accounting</li>
           </ol>
         </nav>
 

@@ -1,13 +1,22 @@
+import { useEffect } from "react";
 import { useUserDashboardStore } from "./store/userDashboardStore";
 import { Sidebar } from "./components/layout/Sidebar";
 import { TransactionTable } from "./components/transaction/TransactionTable";
 import { LeaseList } from "./components/lease/LeaseList";
-import { mockTransactions, mockLeases, tabs } from "./utils/mockData";
+import { mockTransactions, mockLeases, tabs, mockUserInfo, mockFinances } from "./utils/mockData";
 import type { TabType } from "./utils/types";
 import PrimaryActionButton from "../../components/common/buttons/PrimaryActionButton";
 
 const UserDashboard = () => {
-    const { activeTab, setActiveTab } = useUserDashboardStore();
+    const { activeTab, setActiveTab, setUserInfo, setFinances, userInfo } = useUserDashboardStore();
+
+    // Load mock data on mount if store is empty
+    useEffect(() => {
+        if (!userInfo.firstName) {
+            setUserInfo(mockUserInfo);
+            setFinances(mockFinances);
+        }
+    }, [setUserInfo, setFinances, userInfo.firstName]);
 
     return (
         <div className="flex flex-col lg:flex-row gap-8 min-h-screen bg-white p-4 lg:p-8 ">
@@ -25,7 +34,7 @@ const UserDashboard = () => {
                                 <button
                                     key={tab}
                                     onClick={() => setActiveTab(tab as TabType)}
-                                    className={`relative px-5 py-2 font-medium text-md transition-all duration-200 ${activeTab === tab
+                                    className={`relative px-5 py-2 font-medium text-base transition-all duration-200 ${activeTab === tab
                                         ? "bg-[var(--dashboard-accent)] text-white rounded-t-2xl z-10"
                                         : "text-gray-400 hover:text-gray-600"
                                         }`}

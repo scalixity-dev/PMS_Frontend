@@ -43,7 +43,7 @@ const PublicRenterProfile: React.FC = () => {
                             <Link to="/userdashboard/settings" className="text-[var(--dashboard-accent)] font-medium hover:opacity-80 transition-opacity">Settings</Link>
                         </li>
                         <li aria-hidden="true" className="text-[#1A1A1A] font-semibold">/</li>
-                        <li className="text-[#1A1A1A] font-lg font-medium" aria-current="page">Public renter profile</li>
+                        <li className="text-[#1A1A1A]  font-medium" aria-current="page">Public renter profile</li>
                     </ol>
                 </nav>
 

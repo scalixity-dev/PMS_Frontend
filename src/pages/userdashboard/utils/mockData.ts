@@ -88,3 +88,22 @@ export const mockLeases: Lease[] = [
 ];
 
 export const tabs = ["Outstanding", "Leases", "Service providers", "Inspections"];
+
+export const mockUserInfo = {
+    firstName: "Rishabh",
+    lastName: "Awasthi",
+    dob: "13-11-2002",
+    email: "rishabhawasthi@gmail.com",
+    phone: "+91 7400908219",
+    role: "Tenant",
+    country: "India",
+    city: "Indore, Madhya Pradesh",
+    pincode: "452001",
+};
+
+export const mockFinances = {
+    outstanding: "0.00",
+    deposits: "0.00",
+    credits: "0.00",
+};
+

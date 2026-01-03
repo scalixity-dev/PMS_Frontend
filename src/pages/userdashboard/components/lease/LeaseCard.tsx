@@ -25,7 +25,7 @@ export const LeaseCard = ({ lease }: { lease: Lease }) => {
                 </div>
 
                 {/* View Button */}
-                <button className="text-[var(--dashboard-accent)] font-semibold text-md hover:opacity-80 transition-opacity pl-4 pr-2">
+                <button className="text-[var(--dashboard-accent)] font-semibold text-base hover:opacity-80 transition-opacity pl-4 pr-2">
                     View
                 </button>
             </div>

@@ -340,7 +340,7 @@ const PropertyDetailUser: React.FC = () => {
     return (
         <div className="min-h-screen bg-[#F5F5F5] p-6 lg:p-10 relative">
             <nav aria-label="Breadcrumb" className="mb-10">
-                <ol className="flex items-center gap-2 text-md font-medium">
+                <ol className="flex items-center gap-2 text-base font-medium">
                     <li>
                         <Link to="/userdashboard" className="text-[var(--dashboard-accent)] font-medium hover:opacity-80 transition-opacity">Dashboard</Link>
                     </li>
@@ -349,7 +349,7 @@ const PropertyDetailUser: React.FC = () => {
                         <Link to="/userdashboard/properties" className="text-[var(--dashboard-accent)] font-medium hover:opacity-80 transition-opacity">Properties</Link>
                     </li>
                     <li aria-hidden="true" className="text-[#1A1A1A] font-semibold">/</li>
-                    <li className="text-[#1A1A1A] font-lg font-medium" aria-current="page">Property Details</li>
+                    <li className="text-[#1A1A1A]  font-medium" aria-current="page">Property Details</li>
                 </ol>
             </nav>
 
