@@ -236,7 +236,7 @@ const KeysLocks = () => {
                                     >
                                         {/* Mobile: Header Row (Checkbox + Name + Actions) */}
                                         <div className="flex md:contents items-center justify-between w-full">
-                                            <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-3 min-w-0 pr-20 md:pr-0">
                                                 <div className="flex items-center justify-center absolute top-4 left-4 md:static">
                                                     <button
                                                         onClick={(e) => {
@@ -244,26 +244,29 @@ const KeysLocks = () => {
                                                             toggleSelection(item.id);
                                                         }}
                                                         className="flex items-center justify-center"
+                                                        aria-label={`Select key ${item.name}`}
                                                     >
                                                         <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${selectedItems.includes(item.id) ? 'bg-[#7BD747]' : 'bg-gray-200'}`}>
                                                             {selectedItems.includes(item.id) && <Check className="w-3.5 h-3.5 text-white" />}
                                                         </div>
                                                     </button>
                                                 </div>
-                                                <div className="font-semibold text-[#2E6819] text-sm md:hidden pl-8">{item.name}</div>
+                                                <div className="font-semibold text-[#2E6819] text-sm md:hidden pl-8 truncate">{item.name}</div>
                                             </div>
 
                                             {/* Mobile Actions */}
-                                            <div className="flex items-center gap-2 md:hidden absolute top-4 right-4">
+                                            <div className="flex items-center gap-2 md:hidden absolute top-4 right-4 bg-white pl-2">
                                                 <button
                                                     onClick={(e) => handleEdit(item.id, e)}
                                                     className="p-1.5 text-[#3A6D6C] hover:bg-gray-50 rounded-full"
+                                                    aria-label={`Edit key ${item.name}`}
                                                 >
                                                     <Edit className="w-4 h-4" />
                                                 </button>
                                                 <button
                                                     onClick={(e) => handleDelete(item.id, e)}
                                                     className="p-1.5 text-red-500 hover:bg-red-50 rounded-full"
+                                                    aria-label={`Delete key ${item.name}`}
                                                 >
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>

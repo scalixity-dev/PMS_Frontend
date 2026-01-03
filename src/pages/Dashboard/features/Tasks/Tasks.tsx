@@ -325,10 +325,25 @@ const Tasks: React.FC = () => {
     const isAllSelected = filteredTasks.length > 0 && selectedTaskIds.length === filteredTasks.length;
 
     const getStatusDisplay = (status: string) => {
-        if (status === 'Resolved') {
-            return { label: 'Resolved', className: 'bg-[#E8F8F0] text-[#2E6819]' };
+        const normalizedStatus = status.toUpperCase();
+
+        switch (normalizedStatus) {
+            case 'RESOLVED':
+            case 'COMPLETED':
+                return { label: 'Resolved', className: 'bg-[#E8F8F0] text-[#2E6819]' };
+            case 'IN_PROGRESS':
+            case 'IN PROGRESS':
+                return { label: 'In Progress', className: 'bg-blue-50 text-blue-700' };
+            case 'ON_HOLD':
+            case 'ON HOLD':
+                return { label: 'On Hold', className: 'bg-orange-50 text-orange-700' };
+            case 'CANCELLED':
+                return { label: 'Cancelled', className: 'bg-gray-100 text-gray-600' };
+            case 'OPEN':
+            case 'ACTIVE':
+            default:
+                return { label: 'Open', className: 'bg-[#E0E8E7] text-[#3A6D6C]' };
         }
-        return { label: 'Open', className: 'bg-[#E8F8F0] text-[#2E6819]' };
     };
 
     return (

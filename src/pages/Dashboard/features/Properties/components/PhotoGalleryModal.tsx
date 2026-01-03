@@ -66,7 +66,7 @@ const PhotoGalleryModal: React.FC<PhotoGalleryModalProps> = ({
                 <X className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
 
-            <div className="w-full max-w-7xl h-full max-h-[90vh] sm:max-h-[85vh] bg-white rounded-xl sm:rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-2xl">
+            <div className="w-full max-w-7xl h-full max-h-[85vh] sm:max-h-[90vh] bg-white rounded-xl sm:rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-2xl">
                 {/* Main Image Area */}
                 <div className="relative flex-1 bg-gray-50 flex items-center justify-center p-2 sm:p-4 min-h-0">
                     <img

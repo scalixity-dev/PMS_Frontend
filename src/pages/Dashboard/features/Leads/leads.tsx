@@ -8,6 +8,18 @@ import { useGetAllLeads, useUpdateLead, useDeleteLead } from '../../../../hooks/
 import { useGetAllListings } from '../../../../hooks/useListingQueries';
 import type { BackendLead, LeadStatus } from '../../../../services/lead.service';
 
+const STATUS_DISPLAY_TO_ENUM: Record<string, LeadStatus> = {
+    'New': 'NEW',
+    'Working': 'WORKING',
+    'Closed': 'CLOSED',
+};
+
+const STATUS_ENUM_TO_DISPLAY: Record<LeadStatus, string> = {
+    'NEW': 'New',
+    'WORKING': 'Working',
+    'CLOSED': 'Closed',
+};
+
 // Helper function to convert enum to readable label
 export const getLeadSourceLabel = (source: string): string => {
     const sourceMap: Record<string, string> = {
@@ -52,12 +64,7 @@ const Leads = () => {
 
     // Helper function to convert status enum to display label
     const getStatusLabel = (status: string): string => {
-        const statusMap: Record<string, string> = {
-            'NEW': 'New',
-            'WORKING': 'Working',
-            'CLOSED': 'Closed',
-        };
-        return statusMap[status] || status;
+        return STATUS_ENUM_TO_DISPLAY[status as LeadStatus] || status;
     };
 
     // Transform backend leads to frontend format
@@ -470,12 +477,7 @@ const Leads = () => {
                                                             setIsStatusModalOpen(true);
                                                             setCurrentLeadId(lead.id);
                                                             // Convert display status back to enum
-                                                            const statusMap: Record<string, LeadStatus> = {
-                                                                'New': 'NEW',
-                                                                'Working': 'WORKING',
-                                                                'Closed': 'CLOSED',
-                                                            };
-                                                            setSelectedStatus(statusMap[lead.status] || 'NEW');
+                                                            setSelectedStatus(STATUS_DISPLAY_TO_ENUM[lead.status] || 'NEW');
                                                             setOpenMenuId(null);
                                                         }}
                                                         className="w-full text-center py-3 text-sm font-normal text-gray-800 hover:bg-gray-50 border-b border-gray-300 transition-colors"
@@ -527,12 +529,7 @@ const Leads = () => {
                                 <SearchableDropdown
                                     value={getStatusLabel(selectedStatus)}
                                     onChange={(value) => {
-                                        const statusMap: Record<string, LeadStatus> = {
-                                            'New': 'NEW',
-                                            'Working': 'WORKING',
-                                            'Closed': 'CLOSED',
-                                        };
-                                        setSelectedStatus(statusMap[value] || 'NEW');
+                                        setSelectedStatus(STATUS_DISPLAY_TO_ENUM[value] || 'NEW');
                                     }}
                                     options={['New', 'Working', 'Closed']}
                                     placeholder="Search status..."

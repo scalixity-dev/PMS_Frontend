@@ -218,15 +218,39 @@ const KeyDetail = () => {
                             <div className="relative flex-1 md:flex-none" ref={dropdownRef}>
                                 <button
                                     onClick={() => setIsActionDropdownOpen(!isActionDropdownOpen)}
-                                    className="w-full md:w-auto justify-center px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-2"
+                                    className="justify-center px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-2"
+                                    aria-haspopup="true"
+                                    aria-expanded={isActionDropdownOpen}
                                 >
                                     Action
                                 </button>
                                 {isActionDropdownOpen && (
-                                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-10 border border-gray-100 overflow-hidden">
+                                    <div
+                                        className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-10 border border-gray-100 overflow-hidden"
+                                        role="menu"
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                                                e.preventDefault();
+                                                const items = dropdownRef.current?.querySelectorAll('[role="menuitem"]');
+                                                if (!items || items.length === 0) return;
+
+                                                const currentIndex = Array.from(items).indexOf(document.activeElement as Element);
+                                                let nextIndex;
+
+                                                if (e.key === 'ArrowDown') {
+                                                    nextIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0;
+                                                } else {
+                                                    nextIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
+                                                }
+
+                                                (items[nextIndex] as HTMLElement).focus();
+                                            }
+                                        }}
+                                    >
                                         <button
                                             ref={firstActionRef}
-                                            className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3 border-b border-gray-50 last:border-0"
+                                            role="menuitem"
+                                            className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3 border-b border-gray-50 last:border-0 focus:bg-gray-50 outline-none"
                                             onClick={() => {
                                                 setIsActionDropdownOpen(false);
                                                 navigate(`/dashboard/portfolio/edit-key/${id}`);
@@ -238,7 +262,8 @@ const KeyDetail = () => {
                                             <span className="font-medium">Edit</span>
                                         </button>
                                         <button
-                                            className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-3"
+                                            role="menuitem"
+                                            className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-3 focus:bg-red-50 outline-none"
                                             onClick={() => {
                                                 setIsActionDropdownOpen(false);
                                                 setIsDeleteModalOpen(true);
