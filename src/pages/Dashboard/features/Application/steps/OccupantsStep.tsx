@@ -41,7 +41,7 @@ const OccupantsStep: React.FC<OccupantsStepProps> = ({ onNext }) => {
                 Include any co-occupants who will be living with the main applicant, if applicable.
             </p>
 
-            <div className="bg-[#F0F0F6] rounded-[1.5rem] p-8 shadow-sm flex flex-col items-center justify-center gap-6 min-h-[300px]">
+            <div className="bg-[#F0F0F6] rounded-[1.5rem] p-4 sm:p-8 shadow-sm flex flex-col items-center justify-center gap-6 min-h-[300px]">
 
                 {/* List of added occupants */}
                 {formData.occupants && formData.occupants.length > 0 && (
@@ -72,10 +72,10 @@ const OccupantsStep: React.FC<OccupantsStepProps> = ({ onNext }) => {
                     </div>
                 )}
 
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                     <button
                         onClick={handleAddClick}
-                        className="bg-[#447D7C] text-white border border-white/20 px-6 py-3 rounded-full text-sm font-medium hover:bg-[#325c5b] transition-colors flex items-center gap-2"
+                        className="bg-[#447D7C] text-white border border-white/20 px-6 py-3 rounded-full text-sm font-medium hover:bg-[#325c5b] transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"
                     >
                         Add an Occupant
                         <Plus className="w-4 h-4 rounded-full border border-white p-0.5" />
@@ -83,7 +83,7 @@ const OccupantsStep: React.FC<OccupantsStepProps> = ({ onNext }) => {
 
                     <button
                         onClick={onNext}
-                        className="bg-[#447D7C] text-white border border-white/20 px-8 py-3 rounded-full text-sm font-medium hover:bg-[#325c5b] transition-colors"
+                        className="bg-[#447D7C] text-white border border-white/20 px-8 py-3 rounded-full text-sm font-medium hover:bg-[#325c5b] transition-colors w-full sm:w-auto"
                     >
                         Next
                     </button>

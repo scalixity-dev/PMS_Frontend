@@ -221,7 +221,7 @@ const PropertySelectionStep: React.FC<PropertySelectionStepProps> = ({ onNext })
                 Select a property below and proceed to filling out the rental application for it.
             </p>
 
-            <div className="bg-transparent p-8 rounded-lg w-full flex flex-col items-center">
+            <div className="bg-transparent p-4 sm:p-8 rounded-lg w-full flex flex-col items-center">
                 {(selectedPropertyId) ? (
                     // Show Property Card when selected
                     <div className="flex flex-col items-center w-full">
@@ -242,7 +242,7 @@ const PropertySelectionStep: React.FC<PropertySelectionStepProps> = ({ onNext })
                         // Hide edit button for now as it's not part of the requirement
                         // onEdit={...} 
                         />
-                        
+
                     </div>
                 ) : (
                     // Show Dropdown when no selection

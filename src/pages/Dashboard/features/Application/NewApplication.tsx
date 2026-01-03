@@ -313,7 +313,7 @@ const NewApplication: React.FC = () => {
     };
 
     return (
-        <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto bg-[#DFE5E3] p-6 pb-20 flex flex-col rounded-xl transition-all duration-300`}>
+        <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto bg-[#DFE5E3] p-4 sm:p-6 pb-20 flex flex-col rounded-xl transition-all duration-300`}>
             {/* Header Navigation */}
             <div className="w-full flex items-center justify-between mb-8">
                 <button

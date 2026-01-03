@@ -31,7 +31,7 @@ const AdditionalResidenceInfoStep: React.FC<AdditionalResidenceInfoStepProps> = 
             <div className="mt-10">
                 <button
                     onClick={onNext}
-                    className="bg-[#3A6D6C] text-white px-20 py-3 rounded-full text-lg font-medium hover:bg-[#2c5251] transition-colors shadow-lg"
+                    className="bg-[#3A6D6C] text-white px-8 sm:px-20 py-3 rounded-full text-lg font-medium hover:bg-[#2c5251] transition-colors shadow-lg w-full sm:w-auto"
                 >
                     Next
                 </button>
