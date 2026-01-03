@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { TabType, FilterState, UserInfo, UserFinances, RentFilters, RequestFilters } from '../utils/types';
+import type { TabType, FilterState, UserInfo, UserFinances, RentFilters, RequestFilters, ServiceRequest } from '../utils/types';
 
 interface UserDashboardState {
     // Dashbord UI State
@@ -14,6 +14,7 @@ interface UserDashboardState {
     requestFilters: RequestFilters;
     propertyFilters: FilterState | null;
     isPropertyFiltersOpen: boolean;
+    requests: ServiceRequest[];
 
     // Actions
     setActiveTab: (tab: TabType) => void;
@@ -25,6 +26,8 @@ interface UserDashboardState {
 
     setRequestFilters: (filters: Partial<RequestFilters>) => void;
     resetRequestFilters: () => void;
+
+    addRequest: (request: ServiceRequest) => void;
 
     setPropertyFilters: (filters: FilterState | null) => void;
     setIsPropertyFiltersOpen: (isOpen: boolean) => void;
@@ -68,6 +71,28 @@ export const useUserDashboardStore = create<UserDashboardState>((set) => ({
 
     propertyFilters: null,
     isPropertyFiltersOpen: false,
+    requests: [
+        {
+            id: 1,
+            status: "New",
+            requestId: "REQ-001",
+            category: "Appliances",
+            property: "Sunset Boulevard 123",
+            priority: "Critical",
+            assignee: "",
+            createdAt: new Date().toISOString(),
+        },
+        {
+            id: 2,
+            status: "New",
+            requestId: "REQ-002",
+            category: "Electrical",
+            property: "Harbor View Apt 4B",
+            priority: "Normal",
+            assignee: "",
+            createdAt: new Date().toISOString(),
+        },
+    ],
 
     // Actions
     setActiveTab: (tab) => set({ activeTab: tab }),
@@ -111,6 +136,11 @@ export const useUserDashboardStore = create<UserDashboardState>((set) => ({
                 category: null,
             }
         }),
+
+    addRequest: (request) =>
+        set((state) => ({
+            requests: [request, ...state.requests]
+        })),
 
     setPropertyFilters: (filters) => set({ propertyFilters: filters }),
     setIsPropertyFiltersOpen: (isOpen) => set({ isPropertyFiltersOpen: isOpen }),

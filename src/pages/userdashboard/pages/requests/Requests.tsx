@@ -4,47 +4,17 @@ import { Link, useNavigate } from "react-router-dom";
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
 import FilterDropdown from "../../../../components/ui/FilterDropdown";
 
-interface Request {
-  id: number;
-  status: "New" | "In Progress" | "Completed";
-  requestId: string;
-  category: string;
-  property: string;
-  priority: "Critical" | "Normal" | "Low";
-  assignee: string;
-}
+
 
 import { useUserDashboardStore } from "../../store/userDashboardStore";
 
 const Requests: React.FC = () => {
   const navigate = useNavigate();
-  const { requestFilters, setRequestFilters, resetRequestFilters } = useUserDashboardStore();
+  const { requestFilters, setRequestFilters, resetRequestFilters, requests } = useUserDashboardStore();
   const { search: searchQuery, status: statusFilter, priority: priorityFilter, category: categoryFilter } = requestFilters;
 
-  // Mock request data
-  const mockRequests: Request[] = [
-    {
-      id: 1,
-      status: "New",
-      requestId: "123",
-      category: "Appliances",
-      property: "abc",
-      priority: "Critical",
-      assignee: "",
-    },
-    {
-      id: 2,
-      status: "New",
-      requestId: "123",
-      category: "Appliances",
-      property: "abc",
-      priority: "Normal",
-      assignee: "",
-    },
-  ];
-
   const filteredRequests = useMemo(() => {
-    return mockRequests.filter((request) => {
+    return requests.filter((request) => {
       // Search filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
@@ -74,7 +44,7 @@ const Requests: React.FC = () => {
 
       return true;
     });
-  }, [searchQuery, statusFilter, priorityFilter, categoryFilter, mockRequests]);
+  }, [searchQuery, statusFilter, priorityFilter, categoryFilter, requests]);
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -107,7 +77,7 @@ const Requests: React.FC = () => {
         <div className="flex items-center pt-3 justify-between">
           <div className="flex items-center gap-5">
             <h1 className="text-2xl font-semibold text-gray-900">Requests</h1>
-            <span className="text-[#4B5563] text-sm">Total {mockRequests.length}</span>
+            <span className="text-[#4B5563] text-sm">Total {requests.length}</span>
           </div>
           <PrimaryActionButton
             text="Add Request"

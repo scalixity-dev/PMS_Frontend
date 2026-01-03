@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { ChevronLeft, Monitor, Lightbulb, Home, Brush, TreePine, Droplets, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
+import { useUserDashboardStore } from "../../store/userDashboardStore";
+import type { ServiceRequest } from "../../utils/types";
 
 
 const categories = [
@@ -19,6 +21,31 @@ const NewRequest: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
   const [selectedProblem, setSelectedProblem] = useState<string | null>(null);
+  const [authorization, setAuthorization] = useState<string | null>(null);
+  const [priority, setPriority] = useState<"Critical" | "Normal" | "Low" | null>(null);
+
+  const { addRequest } = useUserDashboardStore();
+
+  const handleSubmit = () => {
+    if (!selectedCategory || !priority) return;
+
+    const newRequest: ServiceRequest = {
+      id: Date.now(),
+      requestId: `REQ-${Math.floor(1000 + Math.random() * 9000)}`,
+      status: "New",
+      category: categories.find(c => c.id === selectedCategory)?.name || selectedCategory,
+      subCategory: selectedSubCategory || "",
+      problem: selectedProblem || "",
+      property: "Main Street Apartment", // This could be dynamic in a real app
+      priority: priority,
+      authorizationToEnter: authorization || "No",
+      assignee: "",
+      createdAt: new Date().toISOString(),
+    };
+
+    addRequest(newRequest);
+    navigate("/userdashboard/requests");
+  };
 
   const steps = [
     { id: 1, name: "General Details" },
@@ -245,29 +272,66 @@ const NewRequest: React.FC = () => {
           )}
 
           {currentStep === 4 && (
-            <div className="text-center py-20">
-              <h1 className="text-3xl font-bold text-[#1A1A1A] mb-6">Authorization to enter</h1>
-              <p className="text-gray-500 mb-10">Please provide details about entry authorization.</p>
+            <div className="text-center py-10">
+              <h1 className="text-xl font-medium text-[#1A1A1A] mb-1">Authorization to enter</h1>
+              <p className="text-gray-400 text-sm font-normal mb-8">Please provide details about entry authorization.</p>
+
+              <div className="flex flex-col gap-4 max-w-sm mx-auto mb-10">
+                {[
+                  { id: "yes", label: "Yes, I authorize entry if I'm not home" },
+                  { id: "no", label: "No, please call me first" }
+                ].map((option) => (
+                  <div
+                    key={option.id}
+                    onClick={() => setAuthorization(option.id)}
+                    className={`cursor-pointer flex items-center gap-4 bg-white px-6 py-4 rounded-xl border-2 transition-all duration-200 ${authorization === option.id ? "border-[#7ED957] shadow-sm" : "border-gray-100 hover:border-gray-200"}`}
+                  >
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${authorization === option.id ? "border-[#7ED957]" : "border-gray-300"}`}>
+                      {authorization === option.id && <div className="w-2.5 h-2.5 rounded-full bg-[#7ED957]" />}
+                    </div>
+                    <span className="font-medium text-gray-700">{option.label}</span>
+                  </div>
+                ))}
+              </div>
+
               <div className="flex justify-center gap-4">
                 <button onClick={() => setCurrentStep(3)} className="px-8 py-3 rounded-xl border border-gray-200 font-bold hover:bg-gray-50 transition-colors">Back</button>
-                <PrimaryActionButton onClick={() => setCurrentStep(5)} text="Next" className="bg-[#7ED957] hover:bg-[#6BC847]" />
-
+                <PrimaryActionButton
+                  disabled={!authorization}
+                  onClick={() => setCurrentStep(5)}
+                  text="Next"
+                  className={!authorization ? "!bg-gray-100 !text-gray-400 cursor-not-allowed uppercase shadow-none" : "bg-[#7ED957] hover:bg-[#6BC847]"}
+                />
               </div>
             </div>
           )}
 
           {currentStep === 5 && (
-            <div className="text-center py-20">
-              <h1 className="text-3xl font-bold text-[#1A1A1A] mb-6">Set Priority</h1>
-              <p className="text-gray-500 mb-10">How urgent is this request?</p>
+            <div className="text-center py-10">
+              <h1 className="text-xl font-medium text-[#1A1A1A] mb-1">Set Priority</h1>
+              <p className="text-gray-400 text-sm font-normal mb-8">How urgent is this request?</p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-xl mx-auto mb-10">
+                {(["Low", "Normal", "Critical"] as const).map((p) => (
+                  <div
+                    key={p}
+                    onClick={() => setPriority(p)}
+                    className={`cursor-pointer flex flex-col items-center gap-2 bg-white p-6 rounded-xl border-2 transition-all duration-200 ${priority === p ? "border-[#7ED957] shadow-sm bg-[#7ED957]/5" : "border-gray-100 hover:border-gray-200"}`}
+                  >
+                    <div className={`w-3 h-3 rounded-full ${p === 'Critical' ? 'bg-red-500' : p === 'Normal' ? 'bg-green-500' : 'bg-blue-500'}`} />
+                    <span className="font-bold text-gray-900">{p}</span>
+                  </div>
+                ))}
+              </div>
+
               <div className="flex justify-center gap-4">
                 <button onClick={() => setCurrentStep(4)} className="px-8 py-3 rounded-xl border border-gray-200 font-bold hover:bg-gray-50 transition-colors">Back</button>
                 <PrimaryActionButton
-                  onClick={() => navigate("/userdashboard/requests")}
+                  disabled={!priority}
+                  onClick={handleSubmit}
                   text="Submit Request"
-                  className="bg-[#7ED957] hover:bg-[#6BC847] shadow-lg shadow-[#7ED957]/30"
+                  className={!priority ? "!bg-gray-100 !text-gray-400 cursor-not-allowed uppercase shadow-none" : "bg-[#7ED957] hover:bg-[#6BC847] shadow-lg shadow-[#7ED957]/30"}
                 />
-
               </div>
             </div>
           )}

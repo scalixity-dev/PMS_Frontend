@@ -94,3 +94,17 @@ export interface RequestFilters {
     priority: string | null;
     category: string | null;
 }
+
+export interface ServiceRequest {
+    id: number;
+    status: "New" | "In Progress" | "Completed";
+    requestId: string;
+    category: string;
+    property: string;
+    priority: "Critical" | "Normal" | "Low";
+    assignee: string;
+    subCategory?: string;
+    problem?: string;
+    authorizationToEnter?: string;
+    createdAt: string;
+}
