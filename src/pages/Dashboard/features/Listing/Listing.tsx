@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { useQueries } from '@tanstack/react-query';
 import ListingHeader from './components/ListingHeader';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
@@ -31,6 +31,7 @@ interface ListingCardData {
 
 const Listing: React.FC = () => {
     const navigate = useNavigate();
+    const { sidebarCollapsed = false } = useOutletContext<{ sidebarCollapsed: boolean }>() ?? {};
     const [searchQuery, setSearchQuery] = useState('');
     const [filters, setFilters] = useState<{
         status: string[];
@@ -121,7 +122,7 @@ const Listing: React.FC = () => {
         const activeListingsMap = new Map<string, BackendListing>();
         // Create a map of unitId -> active listing (for units)
         const activeUnitListingsMap = new Map<string, BackendListing>();
-        
+
         listings.forEach((listing: BackendListing) => {
             if (listing.listingStatus === 'ACTIVE' && listing.isActive) {
                 // Check if listing is for a unit or property
@@ -159,7 +160,7 @@ const Listing: React.FC = () => {
         backendProperties.forEach((backendProperty: BackendProperty) => {
             if (backendProperty.propertyType === 'MULTI') {
                 const units = unitsByPropertyId.get(backendProperty.id) || [];
-                
+
                 // Format address for the property
                 let propertyAddress = 'Address not available';
                 let country: string | undefined;
@@ -172,7 +173,7 @@ const Listing: React.FC = () => {
                         backendProperty.address.zipCode,
                         backendProperty.address.country,
                     ].filter(part => part && part.trim() !== '');
-                    
+
                     if (addressParts.length > 0) {
                         propertyAddress = addressParts.join(', ');
                     }
@@ -199,12 +200,12 @@ const Listing: React.FC = () => {
                     let price: number | null = null;
                     if (hasActiveListing && activeListing) {
                         if (activeListing.listingPrice !== null && activeListing.listingPrice !== undefined) {
-                            price = typeof activeListing.listingPrice === 'string' 
-                                ? parseFloat(activeListing.listingPrice) 
+                            price = typeof activeListing.listingPrice === 'string'
+                                ? parseFloat(activeListing.listingPrice)
                                 : Number(activeListing.listingPrice);
                         } else if (activeListing.monthlyRent !== null && activeListing.monthlyRent !== undefined) {
-                            price = typeof activeListing.monthlyRent === 'string' 
-                                ? parseFloat(activeListing.monthlyRent) 
+                            price = typeof activeListing.monthlyRent === 'string'
+                                ? parseFloat(activeListing.monthlyRent)
                                 : Number(activeListing.monthlyRent);
                         }
                     } else if (unit.leasing?.monthlyRent) {
@@ -290,7 +291,7 @@ const Listing: React.FC = () => {
                         backendProperty.address.zipCode,
                         backendProperty.address.country,
                     ].filter(part => part && part.trim() !== '');
-                    
+
                     if (addressParts.length > 0) {
                         address = addressParts.join(', ');
                     }
@@ -301,12 +302,12 @@ const Listing: React.FC = () => {
                 if (hasActiveListing && activeListing) {
                     // Prefer listingPrice, fallback to monthlyRent
                     if (activeListing.listingPrice !== null && activeListing.listingPrice !== undefined) {
-                        price = typeof activeListing.listingPrice === 'string' 
-                            ? parseFloat(activeListing.listingPrice) 
+                        price = typeof activeListing.listingPrice === 'string'
+                            ? parseFloat(activeListing.listingPrice)
                             : Number(activeListing.listingPrice);
                     } else if (activeListing.monthlyRent !== null && activeListing.monthlyRent !== undefined) {
-                        price = typeof activeListing.monthlyRent === 'string' 
-                            ? parseFloat(activeListing.monthlyRent) 
+                        price = typeof activeListing.monthlyRent === 'string'
+                            ? parseFloat(activeListing.monthlyRent)
                             : Number(activeListing.monthlyRent);
                     }
                 } else if (backendProperty.marketRent) {
@@ -325,9 +326,9 @@ const Listing: React.FC = () => {
                     : 0;
 
                 // Get image
-                const image = backendProperty.coverPhotoUrl 
-                    || backendProperty.photos?.find((p) => p.isPrimary)?.photoUrl 
-                    || backendProperty.photos?.[0]?.photoUrl 
+                const image = backendProperty.coverPhotoUrl
+                    || backendProperty.photos?.find((p) => p.isPrimary)?.photoUrl
+                    || backendProperty.photos?.[0]?.photoUrl
                     || '';
 
                 transformed.push({
@@ -425,14 +426,14 @@ const Listing: React.FC = () => {
     const error = listingsError || propertiesError || unitsError;
 
     return (
-        <div className="max-w-7xl mx-auto min-h-screen">
-            <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
+        <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen transition-all duration-300`}>
+            <div className="inline-flex items-center px-3 md:px-4 py-2 bg-[#E0E8E7] rounded-full mb-4 md:mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
+                <span className="text-[#4ad1a6] text-xs md:text-sm font-semibold">Dashboard</span>
                 <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">Listings</span>
+                <span className="text-gray-600 text-xs md:text-sm font-semibold">Listings</span>
             </div>
 
-            <div className="p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem] overflow-visible">
+            <div className="p-4 md:p-6 bg-[#E0E8E7] rounded-[1.5rem] md:rounded-[2rem] overflow-visible flex flex-col">
                 <ListingHeader onAddListing={handleAddListing} />
 
                 <DashboardFilter
@@ -445,52 +446,56 @@ const Listing: React.FC = () => {
                     showClearAll={true}
                 />
 
-                {isLoading ? (
-                    <div className="text-center py-12 bg-white rounded-2xl">
-                        <p className="text-gray-500 text-lg">Loading listings...</p>
-                    </div>
-                ) : error ? (
-                    <div className="text-center py-12 bg-white rounded-2xl">
-                        <p className="text-red-500 text-lg">Error loading listings</p>
-                        <p className="text-gray-400 text-sm mt-2">
-                            {error instanceof Error ? error.message : 'An unexpected error occurred'}
-                        </p>
-                    </div>
-                ) : filteredListings.length > 0 ? (
-                    <>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-                            {currentListings.map((listing) => (
-                                <ListingCard
-                                    key={listing.id}
-                                    id={listing.id}
-                                    name={listing.name}
-                                    address={listing.address}
-                                    price={listing.price}
-                                    status={listing.status}
-                                    bathrooms={listing.bathrooms}
-                                    bedrooms={listing.bedrooms}
-                                    image={listing.image}
-                                    country={listing.country}
-                                    listingId={listing.listingId}
-                                    propertyId={listing.propertyId}
-                                />
-                            ))}
+                <div className="flex-1 flex flex-col">
+                    {isLoading ? (
+                        <div className="text-center py-12 bg-white rounded-2xl">
+                            <p className="text-gray-500 text-lg">Loading listings...</p>
                         </div>
+                    ) : error ? (
+                        <div className="text-center py-12 bg-white rounded-2xl">
+                            <p className="text-red-500 text-lg">Error loading listings</p>
+                            <p className="text-gray-400 text-sm mt-2">
+                                {error instanceof Error ? error.message : 'An unexpected error occurred'}
+                            </p>
+                        </div>
+                    ) : filteredListings.length > 0 ? (
+                        <>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+                                {currentListings.map((listing) => (
+                                    <ListingCard
+                                        key={listing.id}
+                                        id={listing.id}
+                                        name={listing.name}
+                                        address={listing.address}
+                                        price={listing.price}
+                                        status={listing.status}
+                                        bathrooms={listing.bathrooms}
+                                        bedrooms={listing.bedrooms}
+                                        image={listing.image}
+                                        country={listing.country}
+                                        listingId={listing.listingId}
+                                        propertyId={listing.propertyId}
+                                    />
+                                ))}
+                            </div>
 
-                        {/* Pagination */}
-                        <Pagination
-                            currentPage={currentPage}
-                            totalPages={totalPages}
-                            onPageChange={handlePageChange}
-                            className="pb-8"
-                        />
-                    </>
-                ) : (
-                    <div className="text-center py-12 bg-white rounded-2xl">
-                        <p className="text-gray-500 text-lg">No listings found matching your filters</p>
-                        <p className="text-gray-400 text-sm mt-2">Try adjusting your search or filters</p>
-                    </div>
-                )}
+                            {/* Pagination */}
+                            <div className="mt-auto">
+                                <Pagination
+                                    currentPage={currentPage}
+                                    totalPages={totalPages}
+                                    onPageChange={handlePageChange}
+                                    className="pb-8"
+                                />
+                            </div>
+                        </>
+                    ) : (
+                        <div className="text-center py-12 bg-white rounded-2xl">
+                            <p className="text-gray-500 text-lg">No listings found matching your filters</p>
+                            <p className="text-gray-400 text-sm mt-2">Try adjusting your search or filters</p>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

@@ -108,6 +108,7 @@ const MoveInDailyLateFees: React.FC<MoveInDailyLateFeesProps> = ({ onNext, recur
                             onChange={setTime}
                             className="w-full"
                             buttonClassName="bg-[#7BD747] text-white font-medium text-base px-6 py-3 rounded-[1.5rem] border-none outline-none h-[52px] hover:bg-[#7BD747] hover:opacity-90 placeholder:text-white/70"
+                            iconClassName="text-white"
                         />
                     </div>
                 </div>

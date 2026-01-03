@@ -16,11 +16,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className={`flex min-h-screen ${isMessagesPage ? 'bg-white' : 'bg-gray-100'} flex-col`}>
       <div className="fixed top-0 left-0 right-0 z-50 print:hidden">
-        <DashboardNavbar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+        <DashboardNavbar setSidebarOpen={setSidebarOpen} />
       </div>
 
       <div className={`flex flex-1 ${isMessagesPage ? 'pt-16' : 'pt-20'}`}>
-        <div className={`fixed left-0 top-16 bottom-0 z-40 h-[calc(100vh-32px)] transition-all duration-300 print:hidden ${sidebarCollapsed ? 'w-20' : 'w-55'}`}>
+        <div className={`hidden lg:block fixed left-0 top-16 bottom-0 z-40 h-[calc(100vh-32px)] transition-all duration-300 print:hidden ${sidebarCollapsed ? 'w-20' : 'w-55'}`}>
           <DashboardSidebar
             open={sidebarOpen}
             setOpen={setSidebarOpen}

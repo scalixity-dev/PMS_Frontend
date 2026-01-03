@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
 import {
     ChevronLeft,
     ChevronDown,
@@ -19,7 +19,7 @@ import AddOccupantModal from './components/AddOccupantModal';
 import AddPetModal from './components/AddPetModal';
 import AddVehicleModal from './components/AddVehicleModal';
 import AddReferenceModal from './components/AddReferenceModal';
-import DeleteConfirmationModal from './components/DeleteConfirmationModal';
+import DeleteConfirmationModal from '../../components/DeleteConfirmationModal';
 import AddResidenceModal from './components/AddResidenceModal';
 import AddIncomeModal from './components/AddIncomeModal';
 import AddEmergencyContactModal from './components/AddEmergencyContactModal';
@@ -99,6 +99,7 @@ const Section = ({
 const ApplicationDetail = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const { sidebarCollapsed = false } = useOutletContext<{ sidebarCollapsed: boolean }>() || {};
 
     // Modals State
     const [isOccupantModalOpen, setIsOccupantModalOpen] = useState(false);
@@ -1077,7 +1078,7 @@ const ApplicationDetail = () => {
     };
 
     return (
-        <div className="max-w-6xl mx-auto min-h-screen font-outfit pb-20">
+        <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit pb-20 transition-all duration-300`}>
             {/* Breadcrumb - Matches design style */}
             <div className="inline-flex items-center px-4 py-2 bg-[#E0E5E5] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
                 <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>Dashboard</span>

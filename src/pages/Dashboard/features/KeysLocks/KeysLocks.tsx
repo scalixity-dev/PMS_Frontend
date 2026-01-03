@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { ChevronLeft, Plus, Edit, Trash2, Check, Loader2 } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
+import Pagination from '../../components/Pagination';
 import { useGetAllKeys, useDeleteKey } from '../../../../hooks/useKeysQueries';
 import type { BackendKey } from '../../../../services/keys.service';
 
@@ -20,8 +21,11 @@ const mapKeyType = (keyType: string): string => {
 
 const KeysLocks = () => {
     const navigate = useNavigate();
+    const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() ?? { sidebarCollapsed: false };
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 9;
     const [filters, setFilters] = useState<Record<string, string[]>>({});
 
     // Fetch keys from backend
@@ -93,6 +97,32 @@ const KeysLocks = () => {
         });
     }, [transformedKeys, searchQuery, filters]);
 
+    // Reset to first page when filters or search change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, filters]);
+
+    // Calculate pagination
+    const totalPages = Math.ceil(filteredKeys.length / itemsPerPage);
+
+    // Get current page items
+    const currentKeys = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        return filteredKeys.slice(startIndex, startIndex + itemsPerPage);
+    }, [filteredKeys, currentPage, itemsPerPage]);
+
+    // Reset to last valid page if current page exceeds total pages
+    useEffect(() => {
+        if (currentPage > totalPages && totalPages > 0) {
+            setCurrentPage(totalPages);
+        }
+    }, [currentPage, totalPages]);
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     const handleSearchChange = (search: string) => {
         setSearchQuery(search);
     };
@@ -161,7 +191,7 @@ const KeysLocks = () => {
     };
 
     return (
-        <div className="max-w-7xl mx-auto min-h-screen font-outfit">
+        <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit transition-all duration-300`}>
             {/* Breadcrumb */}
             <div className="inline-flex items-center px-4 py-2 bg-[#E0E5E5] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
                 <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
@@ -169,19 +199,19 @@ const KeysLocks = () => {
                 <span className="text-gray-600 text-sm font-semibold">Keys & Locks</span>
             </div>
 
-            <div className="p-6 bg-[#E0E5E5] min-h-screen rounded-[2rem]">
+            <div className="p-4 md:p-6 bg-[#E0E5E5] min-h-screen rounded-[1.5rem] md:rounded-[2rem] flex flex-col">
                 {/* Header */}
-                <div className="flex items-center gap-6 mb-6">
+                <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-2">
-                        <button onClick={() => navigate(-1)} className="p-2 hover:bg-black/5 rounded-full transition-colors">
-                            <ChevronLeft className="w-6 h-6 text-black" />
+                        <button onClick={() => navigate(-1)} className="p-1.5 md:p-2 hover:bg-gray-200 rounded-full transition-colors">
+                            <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-gray-800" />
                         </button>
-                        <h1 className="text-2xl font-bold text-black">Keys & Locks</h1>
+                        <h1 className="text-lg md:text-2xl font-bold text-gray-800">Keys & Locks</h1>
                     </div>
                     <div className="flex gap-3">
-                        <button onClick={() => navigate('/dashboard/portfolio/add-key')} className="px-5 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2 shadow-sm">
+                        <button onClick={() => navigate('/dashboard/portfolio/add-key')} className="px-3 md:px-5 py-2 bg-[#3A6D6C] text-white rounded-full text-xs md:text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-1 md:gap-2 shadow-sm whitespace-nowrap">
                             Add Keys
-                            <Plus className="w-4 h-4" />
+                            <Plus className="w-3.5 h-3.5 md:w-4 md:h-4" />
                         </button>
                     </div>
                 </div>
@@ -216,10 +246,10 @@ const KeysLocks = () => {
                 {/* Table Section */}
                 {!isLoading && !error && (
                     <>
-                        <div className="bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm mt-8">
+                        <div className="bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm mt-8 hidden md:block">
                             {/* Table Header */}
-                            <div className="text-white px-6 py-4 grid grid-cols-[40px_1fr_1fr_1.5fr_1fr_1fr_80px] gap-4 items-center text-sm font-medium">
-                                <div className="flex items-center justify-center ml-7">
+                            <div className="bg-[#3A6D6C] text-white px-6 py-4 grid grid-cols-[40px_1fr_1fr_1.5fr_1fr_1fr_80px] gap-4 items-center text-sm font-medium">
+                                <div className="flex items-center justify-center ml-2">
                                     <button onClick={toggleAll} className="flex items-center justify-center">
                                         <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${selectedItems.length === filteredKeys.length && filteredKeys.length > 0 ? 'bg-[#7BD747]' : 'bg-white/20 border border-white/50'}`}>
                                             {selectedItems.length === filteredKeys.length && filteredKeys.length > 0 && <Check className="w-3.5 h-3.5 text-white" />}
@@ -236,37 +266,82 @@ const KeysLocks = () => {
                         </div>
 
                         {/* Table Body */}
-                        <div className="flex flex-col gap-3 bg-[#F0F0F6] p-4 rounded-[2rem] rounded-t">
+                        <div className="flex flex-col gap-3 md:bg-[#F0F0F6] md:p-4 md:rounded-[2rem] md:rounded-t-none">
                             {filteredKeys.length === 0 ? (
                                 <div className="bg-white rounded-2xl px-6 py-12 text-center">
                                     <p className="text-gray-500">No keys found</p>
                                 </div>
                             ) : (
-                                filteredKeys.map((item) => (
+                                currentKeys.map((item) => (
                                     <div
                                         key={item.id}
                                         onClick={() => navigate(`/dashboard/portfolio/keys-locks/${item.id}`)}
-                                        className="bg-white rounded-2xl px-6 py-4 grid grid-cols-[40px_1fr_1fr_1.5fr_1fr_1fr_80px] gap-4 items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                                        className="bg-white rounded-2xl px-4 md:px-6 py-4 grid grid-cols-1 md:grid-cols-[40px_1fr_1fr_1.5fr_1fr_1fr_80px] gap-4 items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer relative"
                                     >
-                                        <div className="flex items-center justify-center">
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    toggleSelection(item.id);
-                                                }}
-                                                className="flex items-center justify-center"
-                                            >
-                                                <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${selectedItems.includes(item.id) ? 'bg-[#7BD747]' : 'bg-gray-200'}`}>
-                                                    {selectedItems.includes(item.id) && <Check className="w-3.5 h-3.5 text-white" />}
+                                        {/* Mobile: Header Row (Checkbox + Name + Actions) */}
+                                        <div className="flex md:contents items-center justify-between w-full">
+                                            <div className="flex items-center gap-3 min-w-0 pr-20 md:pr-0">
+                                                <div className="flex items-center justify-center absolute top-4 left-4 md:static">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            toggleSelection(item.id);
+                                                        }}
+                                                        className="flex items-center justify-center"
+                                                        aria-label={`Select key ${item.name}`}
+                                                    >
+                                                        <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${selectedItems.includes(item.id) ? 'bg-[#7BD747]' : 'bg-gray-200'}`}>
+                                                            {selectedItems.includes(item.id) && <Check className="w-3.5 h-3.5 text-white" />}
+                                                        </div>
+                                                    </button>
                                                 </div>
-                                            </button>
+                                                <div className="font-semibold text-[#2E6819] text-sm md:hidden pl-8 truncate">{item.name}</div>
+                                            </div>
+
+                                            {/* Mobile Actions */}
+                                            <div className="flex items-center gap-2 md:hidden absolute top-4 right-4 bg-white pl-2">
+                                                <button
+                                                    onClick={(e) => handleEdit(item.id, e)}
+                                                    className="p-1.5 text-[#3A6D6C] hover:bg-gray-50 rounded-full"
+                                                    aria-label={`Edit key ${item.name}`}
+                                                >
+                                                    <Edit className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => handleDelete(item.id, e)}
+                                                    className="p-1.5 text-red-500 hover:bg-red-50 rounded-full"
+                                                    aria-label={`Delete key ${item.name}`}
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
                                         </div>
-                                        <div className="font-semibold text-[#2E6819] text-sm">{item.name}</div>
-                                        <div className="text-[#2E6819] text-sm font-semibold">{item.type}</div>
-                                        <div className="text-[#2E6819] text-sm font-semibold">{item.property}</div>
-                                        <div className="text-gray-400 text-sm font-medium tracking-widest">{item.unit}</div>
-                                        <div className="text-[#4ad1a6] text-sm font-semibold">{item.assignee}</div>
-                                        <div className="flex items-center justify-end gap-3">
+
+                                        {/* Desktop Name (hidden on mobile) */}
+                                        <div className="font-semibold text-[#2E6819] text-sm hidden md:block">{item.name}</div>
+
+                                        {/* Content Grid */}
+                                        <div className="grid grid-cols-2 gap-y-3 gap-x-4 w-full md:contents mt-8 md:mt-0 pl-2 md:pl-0">
+                                            <div className="flex flex-col md:block">
+                                                <span className="text-xs text-gray-500 md:hidden mb-1">Type</span>
+                                                <span className="text-[#2E6819] text-sm font-semibold">{item.type}</span>
+                                            </div>
+                                            <div className="flex flex-col md:block">
+                                                <span className="text-xs text-gray-500 md:hidden mb-1">Property</span>
+                                                <span className="text-[#2E6819] text-sm font-semibold truncate">{item.property}</span>
+                                            </div>
+                                            <div className="flex flex-col md:block">
+                                                <span className="text-xs text-gray-500 md:hidden mb-1">Unit</span>
+                                                <span className="text-gray-400 text-sm font-medium tracking-widest">{item.unit}</span>
+                                            </div>
+                                            <div className="flex flex-col md:block">
+                                                <span className="text-xs text-gray-500 md:hidden mb-1">Assignee</span>
+                                                <span className="text-[#4ad1a6] text-sm font-semibold">{item.assignee}</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Desktop Actions */}
+                                        <div className="hidden md:flex items-center justify-end gap-3">
                                             <button
                                                 onClick={(e) => handleEdit(item.id, e)}
                                                 className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
@@ -285,6 +360,12 @@ const KeysLocks = () => {
                                 ))
                             )}
                         </div>
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={handlePageChange}
+                            className="mt-auto py-6"
+                        />
                     </>
                 )}
             </div>

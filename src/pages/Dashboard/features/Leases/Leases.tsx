@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Trash2, ChevronLeft, Eye, ChevronDown } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
@@ -52,7 +52,9 @@ const ITEMS_PER_PAGE = 9;
 
 const Leases: React.FC = () => {
     const navigate = useNavigate();
+    const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
     const [searchQuery, setSearchQuery] = useState('');
+
     const [currentPage, setCurrentPage] = useState(1);
     const [filters, setFilters] = useState<Record<string, string[]>>({});
 
@@ -123,7 +125,7 @@ const Leases: React.FC = () => {
     };
 
     return (
-        <div className="max-w-7xl mx-auto min-h-screen font-outfit">
+        <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit transition-all duration-300`}>
             {/* Breadcrumb */}
             <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
                 <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>

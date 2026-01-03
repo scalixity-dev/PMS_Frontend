@@ -11,7 +11,7 @@ interface MoveInOneTimeLateFeesProps {
 const MoveInOneTimeLateFees: React.FC<MoveInOneTimeLateFeesProps> = ({ onNext, recurringRentAmount }) => {
     const [lateFeeType, setLateFeeType] = useState<string>('fixed');
     const [amount, setAmount] = useState<string>('');
-    const [gracePeriod, setGracePeriod] = useState<string>('none');
+    const [gracePeriod, setGracePeriod] = useState<string>('0');
     const [time, setTime] = useState<string>('8:00 AM');
 
     const typeOptions = [
@@ -20,14 +20,7 @@ const MoveInOneTimeLateFees: React.FC<MoveInOneTimeLateFeesProps> = ({ onNext, r
         { value: 'recurring', label: 'Percentage of recurring charges' }
     ];
 
-    // Generate days 1-30 for options along with "None"
-    const gracePeriodOptions = [
-        { value: 'none', label: 'None' },
-        ...Array.from({ length: 30 }, (_, i) => ({
-            value: `${i + 1}`,
-            label: `${i + 1} Day${i + 1 > 1 ? 's' : ''}`
-        }))
-    ];
+
 
     return (
         <div className="w-full flex flex-col items-center">
@@ -69,18 +62,14 @@ const MoveInOneTimeLateFees: React.FC<MoveInOneTimeLateFeesProps> = ({ onNext, r
                     </div>
                 </div>
 
-                {/* Grace Period */}
                 <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-gray-700 ml-1">Grace Period *</label>
-                    <CustomDropdown
+                    <label className="text-xs font-bold text-gray-700 ml-1">Grace Period (days) *</label>
+                    <input
+                        type="number"
+                        min="0"
                         value={gracePeriod}
-                        onChange={setGracePeriod}
-                        options={gracePeriodOptions}
-                        placeholder="Select period"
-                        buttonClassName="bg-[#7BD747] border-none rounded-[1.5rem] px-5 py-3 h-[52px]"
-                        textClassName="text-white font-medium text-base"
-                        iconClassName="text-white"
-                        dropdownClassName="rounded-xl mt-1"
+                        onChange={(e) => setGracePeriod(e.target.value)}
+                        className="w-full bg-[#7BD747] text-white font-medium text-base placeholder-white/70 px-6 py-3 rounded-[1.5rem] border-none outline-none ring-0 h-[52px] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                 </div>
 
@@ -93,6 +82,7 @@ const MoveInOneTimeLateFees: React.FC<MoveInOneTimeLateFeesProps> = ({ onNext, r
                             onChange={setTime}
                             className="w-full"
                             buttonClassName="bg-[#7BD747] text-white font-medium text-base px-6 py-3 rounded-[1.5rem] border-none outline-none h-[52px] hover:bg-[#7BD747] hover:opacity-90 placeholder:text-white/70"
+                            iconClassName="text-white"
                         />
                     </div>
                 </div>
@@ -108,7 +98,7 @@ const MoveInOneTimeLateFees: React.FC<MoveInOneTimeLateFeesProps> = ({ onNext, r
                                 let dateStr = placeholderDate;
                                 const today = new Date();
                                 const daysToAdd = parseInt(gracePeriod);
-                                if (!isNaN(daysToAdd)) {
+                                if (!isNaN(daysToAdd) && daysToAdd >= 0) {
                                     const targetDate = new Date(today);
                                     targetDate.setDate(today.getDate() + daysToAdd);
                                     dateStr = targetDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });

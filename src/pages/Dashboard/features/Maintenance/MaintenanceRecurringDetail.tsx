@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { ChevronLeft, ChevronDown, Trash2 } from 'lucide-react';
 import CustomTextBox from '../../components/CustomTextBox';
 import ConfirmationModal from '../KeysLocks/ConfirmationModal';
@@ -50,6 +50,7 @@ const MOCK_RELATED_REQUESTS = [
 
 const MaintenanceRecurringDetail: React.FC = () => {
     const navigate = useNavigate();
+    const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
     const [isGeneralInfoCollapsed, setIsGeneralInfoCollapsed] = useState(false);
     const [isRelatedRequestCollapsed, setIsRelatedRequestCollapsed] = useState(false);
     const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
@@ -75,7 +76,7 @@ const MaintenanceRecurringDetail: React.FC = () => {
     };
 
     return (
-        <div className="max-w-7xl mx-auto min-h-screen font-outfit">
+        <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit transition-all duration-300`}>
             {/* Breadcrumb */}
             <div className="inline-flex items-center px-4 py-2 bg-[#DFE5E3] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
                 <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>

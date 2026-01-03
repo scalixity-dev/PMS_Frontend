@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
 import TenantCard from './components/TenantCard';
@@ -19,6 +19,8 @@ const Tenants = () => {
 
     // Fetch tenants using React Query
     const { data: backendTenants = [], isLoading, error } = useGetAllTenants();
+    const { sidebarCollapsed = false } = useOutletContext<{ sidebarCollapsed: boolean }>() ?? {};
+    const [, setFilters] = useState<Record<string, string[]>>({});
 
     // Transform backend tenants to frontend format
     const tenants: Tenant[] = useMemo(() => {
@@ -52,6 +54,29 @@ const Tenants = () => {
         propertyUnits: 'Property & Units',
         lease: 'Lease'
     };
+
+    const [tenants, setTenants] = useState<Tenant[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    const fetchTenants = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const backendTenants = await tenantService.getAll();
+            const transformedTenants = backendTenants.map((tenant) => tenantService.transformTenant(tenant));
+            setTenants(transformedTenants);
+        } catch (err) {
+            console.error('Error fetching tenants:', err);
+            setError(err instanceof Error ? err.message : 'Failed to fetch tenants');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchTenants();
+    }, []);
 
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
@@ -116,7 +141,7 @@ const Tenants = () => {
     };
 
     return (
-        <div className="max-w-6xl mx-auto min-h-screen font-outfit">
+        <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit transition-all duration-300`}>
             <div className="inline-flex items-center px-4 py-2 bg-[#E0E5E5] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
                 <span className="text-[#4ad1a6] text-sm font-semibold">Contacts</span>
                 <span className="text-gray-500 text-sm mx-1">/</span>
@@ -188,8 +213,8 @@ const Tenants = () => {
                 )}
 
                 {/* Tenants Grid */}
-                {!isLoading && !error && (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                {!loading && !error && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                         {currentTenants.length > 0 ? (
                             currentTenants.map((tenant) => (
                                 <TenantCard
@@ -199,9 +224,8 @@ const Tenants = () => {
                                     phone={tenant.phone}
                                     email={tenant.email}
                                     image={tenant.image || ''}
-                                    onDelete={() => {
-                                        handleDeleteTenant(tenant.id).catch(console.error);
-                                    }}
+                                    propertyName="Sunset Apartments, Unit 4B"
+                                    onDeleteSuccess={fetchTenants}
                                 />
                             ))
                         ) : (

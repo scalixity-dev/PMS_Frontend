@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, MessageCircle, Phone, Mail, Home } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import DeleteConfirmationModal from '../../../components/DeleteConfirmationModal';
+import { tenantService } from '../../../../../services/tenant.service';
 
 interface TenantCardProps {
     id: string | number;
@@ -9,7 +11,7 @@ interface TenantCardProps {
     phone: string;
     email: string;
     propertyName?: string;
-    onDelete?: () => void;
+    onDeleteSuccess?: () => void;
 }
 
 const TenantCard: React.FC<TenantCardProps> = ({
@@ -19,11 +21,26 @@ const TenantCard: React.FC<TenantCardProps> = ({
     phone,
     email,
     propertyName,
-    onDelete
+    onDeleteSuccess
 }) => {
     const navigate = useNavigate();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
+
+    // Initial generation logic if image is missing
+    const getInitials = (name: string) => {
+        return name
+            .split(' ')
+            .map(n => n[0])
+            .join('')
+            .toUpperCase()
+            .slice(0, 2);
+    };
+
+    const initials = getInitials(name);
+    // Use a default color similar to ServiceProCard if needed, or stick to one.
+    const bgColor = 'bg-[#4ad1a6]';
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -41,6 +58,19 @@ const TenantCard: React.FC<TenantCardProps> = ({
         };
     }, [isMenuOpen]);
 
+    const handleDelete = async () => {
+        try {
+            await tenantService.delete(String(id));
+            setIsDeleteModalOpen(false);
+            if (onDeleteSuccess) {
+                onDeleteSuccess();
+            }
+        } catch (error) {
+            console.error('Error deleting tenant:', error);
+            alert('Failed to delete tenant');
+        }
+    };
+
     const menuItems = [
         { label: 'Edit', action: () => navigate(`/dashboard/contacts/tenants/edit/${id}`) },
         { label: 'Send connection', action: () => { } },
@@ -50,99 +80,121 @@ const TenantCard: React.FC<TenantCardProps> = ({
         { label: 'Archive', action: () => { } },
         {
             label: 'Delete',
-            action: () => {
-                if (onDelete) {
-                    onDelete();
-                } else if (window.confirm('Are you sure you want to delete this tenant?')) {
-                    console.log('Deleting tenant:', id);
-                }
-            },
+            action: () => setIsDeleteModalOpen(true),
             isDestructive: true
         },
     ];
 
+    const handleMessage = () => {
+        // TODO: Implement message functionality
+    };
+
     return (
-        <div className="bg-[#F6F6F8] rounded-[2.5rem] p-4 flex gap-5 relative items-center">
-            {/* Context Menu */}
-            <div className="absolute top-5 right-5 z-10" ref={menuRef}>
-                <div
-                    onClick={() => setIsMenuOpen(!isMenuOpen)}
-                    className="bg-white/30 backdrop-blur-md border border-white/40 shadow-sm w-12 h-8 rounded-full hover:bg-white/40 transition-all cursor-pointer flex items-center justify-center"
-                >
-                    <MoreHorizontal className="w-6 h-6 text-gray-700" />
-                </div>
+        <>
+            <div className="bg-[#F6F6F8] rounded-[2rem] p-4 flex gap-4 relative hover:shadow-lg transition-all duration-200 group">
+                {/* Action Buttons - Top Right */}
+                <div className="absolute top-4 right-4 z-10">
+                    {/* More Options Menu */}
+                    <div ref={menuRef}>
+                        <button
+                            onClick={() => setIsMenuOpen(!isMenuOpen)}
+                            className="w-10 h-6 flex items-center justify-center bg-white/30 backdrop-blur-md border border-white/40 shadow-sm rounded-full hover:bg-white/40 transition-all cursor-pointer"
+                            title="More Options"
+                        >
+                            <MoreHorizontal className="w-6 h-6 text-gray-700" />
+                        </button>
 
-                {isMenuOpen && (
-                    <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 overflow-hidden">
-                        {menuItems.map((item, index) => (
-                            <button
-                                key={index}
-                                onClick={() => {
-                                    item.action();
-                                    setIsMenuOpen(false);
-                                }}
-                                className={`w-full text-left px-4 py-2.5 text-sm transition-colors border-b border-gray-50 last:border-none
-                                    ${item.isDestructive
-                                        ? 'text-red-600 hover:bg-red-50'
-                                        : 'text-gray-700 hover:bg-gray-50'
-                                    }`}
-                            >
-                                {item.label}
-                            </button>
-                        ))}
-                    </div>
-                )}
-            </div>
-
-            {/* Image Section */}
-            <div className="w-50 h-50 flex-shrink-0">
-                <img
-                    src={image}
-                    alt={name}
-                    className="w-full h-full object-cover rounded-[2rem]"
-                />
-            </div>
-
-            {/* Content Section */}
-            <div className="flex-1 flex flex-col justify-center gap-3 pr-2">
-
-                {/* Info Pill */}
-                <div className="bg-[#3A6D6C] rounded-[2rem] p-4 text-white text-center w-full shadow-sm mt-3">
-                    <h3 className="font-bold text-base mb-1">{name}</h3>
-                    <div className="flex flex-col gap-0.5">
-                        <p className="text-[11px] opacity-90">{phone}</p>
-                        <p className="text-[11px] opacity-90">{email}</p>
+                        {isMenuOpen && (
+                            <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 z-20 overflow-hidden">
+                                {menuItems.map((item, index) => (
+                                    <button
+                                        key={index}
+                                        onClick={() => {
+                                            item.action();
+                                            setIsMenuOpen(false);
+                                        }}
+                                        className={`w-full text-left px-4 py-2.5 text-sm transition-colors border-b border-gray-50 last:border-none
+                                            ${item.isDestructive
+                                                ? 'text-red-600 hover:bg-red-50'
+                                                : 'text-gray-700 hover:bg-gray-50'
+                                            }`}
+                                    >
+                                        {item.label}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {/* Actions */}
-                <div className="flex items-center justify-center gap-3 w-full pl-2">
-                    <button
-                        onClick={() => navigate(`/dashboard/contacts/tenants/${id}`)}
-                        className="bg-[#C8C8C8] text-gray-700 px-6 py-2 rounded-full text-xs font-bold hover:bg-[#b8b8b8] transition-colors shadow-sm"
-                    >
-                        View Profile
-                    </button>
-
-                    <button
-                        className="text-[#2c3e50] hover:text-[#3A6D6C] transition-colors"
-                        title="Chat"
-                    >
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
-                        </svg>
-                    </button>
+                {/* Image/Initials Section */}
+                <div className="w-32 h-32 flex-shrink-0 relative">
+                    {image ? (
+                        <img
+                            src={image}
+                            alt={name}
+                            className="w-full h-full object-cover rounded-[1.5rem] shadow-md"
+                        />
+                    ) : (
+                        <div className={`w-full h-full ${bgColor} rounded-[1.5rem] flex items-center justify-center shadow-md`}>
+                            <span className="text-white text-4xl font-medium">{initials}</span>
+                        </div>
+                    )}
+                    {/* Status indicator */}
+                    <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
                 </div>
 
-                {propertyName && (
-                    <div className="text-center mt-1">
-                        <p className="text-[#888888] text-sm font-medium">
-                            Rented: <span className="text-gray-600">{propertyName}</span>
-                        </p>
+                {/* Content Section */}
+                <div className="flex-1 flex flex-col justify-between min-h-[128px]">
+                    {/* Info Section */}
+                    <div className="bg-[#3A6D6C] rounded-xl p-3 text-white mb-3 shadow-sm">
+                        <h3 className="font-bold text-sm mb-2 truncate" title={name}>{name}</h3>
+                        <div className="space-y-1">
+                            {propertyName && (
+                                <div className="flex items-center gap-1.5 text-[10px] opacity-100 font-medium text-yellow-50">
+                                    <Home size={12} className="flex-shrink-0" />
+                                    <span className="truncate" title={propertyName}>{propertyName}</span>
+                                </div>
+                            )}
+                            <div className="flex items-center gap-1.5 text-[10px] opacity-90">
+                                <Phone size={12} className="flex-shrink-0" />
+                                <span className="truncate">{phone}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 text-[10px] opacity-90">
+                                <Mail size={12} className="flex-shrink-0" />
+                                <span className="truncate" title={email}>{email}</span>
+                            </div>
+                        </div>
                     </div>
-                )}
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => navigate(`/dashboard/contacts/tenants/${id}`)}
+                            className="flex-1 bg-[#C8C8C8] text-gray-700 py-2 rounded-full text-xs font-medium hover:bg-[#b8b8b8] transition-colors shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]"
+                        >
+                            View Profile
+                        </button>
+                        <button
+                            onClick={handleMessage}
+                            className="px-3 py-2 bg-[#3A6D6C] text-white rounded-full hover:bg-[#2c5251] transition-colors shadow-md flex items-center justify-center"
+                            title="Quick Message"
+                        >
+                            <MessageCircle size={16} />
+                        </button>
+                    </div>
+                </div>
             </div>
-        </div>
+
+            <DeleteConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={handleDelete}
+                title="Delete Tenant"
+                itemName={name}
+                message={`Are you sure you want to delete tenant "${name}"? This action cannot be undone.`}
+            />
+        </>
     );
 };
 

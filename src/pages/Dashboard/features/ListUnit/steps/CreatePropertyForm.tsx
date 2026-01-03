@@ -34,17 +34,17 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
   } = useCreatePropertyStore();
 
   const [error, setError] = useState<string | null>(null);
-  
+
   // Track if we've just created a property to prevent step reset
   const isNewlyCreatedRef = useRef(false);
-  
+
   // Track previous initialPropertyId to detect when we switch between create/edit
   const previousInitialPropertyIdRef = useRef<string | undefined>(initialPropertyId);
 
   // Use store values or fallback to local state
   const propertyId = storePropertyId || initialPropertyId || null;
   const managerId = storeManagerId;
-  
+
   // Reset form when switching from edit to create mode (initialPropertyId changes from value to undefined)
   useEffect(() => {
     // If we had a propertyId before and now we don't (switching to create mode), reset the form
@@ -92,7 +92,7 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
       }
       return;
     }
-    
+
     // Don't interfere if we just created this property
     if (isNewlyCreatedRef.current) return;
 
@@ -110,7 +110,7 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
 
     setPropertyId(propertyData.id);
 
-   
+
     const formatDecimalForInput = (value: unknown): string => {
       if (value === null || value === undefined) return '';
       const num = Number(value);
@@ -120,7 +120,7 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
 
     const mappedData: any = {
       propertyName: propertyData.propertyName || '',
-      propertyType: '', 
+      propertyType: '',
       isManufactured: '', // Will be set by user in GeneralInfo if needed
       marketRent: formatDecimalForInput(propertyData.marketRent),
       address: propertyData.address?.streetAddress || '',
@@ -173,66 +173,66 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
   // Map frontend amenity values to backend enum values
   // Since BasicAmenities now uses enum values directly, we just validate and pass through
   const mapParkingType = (value: string): 'NONE' | 'STREET' | 'GARAGE' | 'DRIVEWAY' | 'DEDICATED_SPOT' | 'PRIVATE_LOT' | 'ASSIGNED' => {
-      const validValues: Array<'NONE' | 'STREET' | 'GARAGE' | 'DRIVEWAY' | 'DEDICATED_SPOT' | 'PRIVATE_LOT' | 'ASSIGNED'> = [
-        'NONE', 'STREET', 'GARAGE', 'DRIVEWAY', 'DEDICATED_SPOT', 'PRIVATE_LOT', 'ASSIGNED'
-      ];
-      // Support both enum values and legacy lowercase values for backward compatibility
-      const mapping: Record<string, 'NONE' | 'STREET' | 'GARAGE' | 'DRIVEWAY' | 'DEDICATED_SPOT' | 'PRIVATE_LOT' | 'ASSIGNED'> = {
-        'none': 'NONE',
-        'street': 'STREET',
-        'garage': 'GARAGE',
-        'driveway': 'DRIVEWAY',
-        'dedicated_spot': 'DEDICATED_SPOT',
-        'dedicated spot': 'DEDICATED_SPOT',
-        'private_lot': 'PRIVATE_LOT',
-        'private lot': 'PRIVATE_LOT',
-        'assigned': 'ASSIGNED',
-      };
-      const upperValue = value.toUpperCase();
-      if (validValues.includes(upperValue as any)) {
-        return upperValue as any;
-      }
-      return mapping[value.toLowerCase()] || 'NONE';
+    const validValues: Array<'NONE' | 'STREET' | 'GARAGE' | 'DRIVEWAY' | 'DEDICATED_SPOT' | 'PRIVATE_LOT' | 'ASSIGNED'> = [
+      'NONE', 'STREET', 'GARAGE', 'DRIVEWAY', 'DEDICATED_SPOT', 'PRIVATE_LOT', 'ASSIGNED'
+    ];
+    // Support both enum values and legacy lowercase values for backward compatibility
+    const mapping: Record<string, 'NONE' | 'STREET' | 'GARAGE' | 'DRIVEWAY' | 'DEDICATED_SPOT' | 'PRIVATE_LOT' | 'ASSIGNED'> = {
+      'none': 'NONE',
+      'street': 'STREET',
+      'garage': 'GARAGE',
+      'driveway': 'DRIVEWAY',
+      'dedicated_spot': 'DEDICATED_SPOT',
+      'dedicated spot': 'DEDICATED_SPOT',
+      'private_lot': 'PRIVATE_LOT',
+      'private lot': 'PRIVATE_LOT',
+      'assigned': 'ASSIGNED',
     };
+    const upperValue = value.toUpperCase();
+    if (validValues.includes(upperValue as any)) {
+      return upperValue as any;
+    }
+    return mapping[value.toLowerCase()] || 'NONE';
+  };
 
-    const mapLaundryType = (value: string): 'NONE' | 'IN_UNIT' | 'ON_SITE' | 'HOOKUPS' => {
-      const validValues: Array<'NONE' | 'IN_UNIT' | 'ON_SITE' | 'HOOKUPS'> = [
-        'NONE', 'IN_UNIT', 'ON_SITE', 'HOOKUPS'
-      ];
-      // Support both enum values and legacy lowercase values for backward compatibility
-      const mapping: Record<string, 'NONE' | 'IN_UNIT' | 'ON_SITE' | 'HOOKUPS'> = {
-        'none': 'NONE',
-        'in_unit': 'IN_UNIT',
-        'in unit': 'IN_UNIT',
-        'on_site': 'ON_SITE',
-        'on site': 'ON_SITE',
-        'hookups': 'HOOKUPS',
-      };
-      const upperValue = value.toUpperCase();
-      if (validValues.includes(upperValue as any)) {
-        return upperValue as any;
-      }
-      return mapping[value.toLowerCase()] || 'NONE';
+  const mapLaundryType = (value: string): 'NONE' | 'IN_UNIT' | 'ON_SITE' | 'HOOKUPS' => {
+    const validValues: Array<'NONE' | 'IN_UNIT' | 'ON_SITE' | 'HOOKUPS'> = [
+      'NONE', 'IN_UNIT', 'ON_SITE', 'HOOKUPS'
+    ];
+    // Support both enum values and legacy lowercase values for backward compatibility
+    const mapping: Record<string, 'NONE' | 'IN_UNIT' | 'ON_SITE' | 'HOOKUPS'> = {
+      'none': 'NONE',
+      'in_unit': 'IN_UNIT',
+      'in unit': 'IN_UNIT',
+      'on_site': 'ON_SITE',
+      'on site': 'ON_SITE',
+      'hookups': 'HOOKUPS',
     };
+    const upperValue = value.toUpperCase();
+    if (validValues.includes(upperValue as any)) {
+      return upperValue as any;
+    }
+    return mapping[value.toLowerCase()] || 'NONE';
+  };
 
-    const mapACType = (value: string): 'NONE' | 'CENTRAL' | 'WINDOW' | 'PORTABLE' | 'COOLER' => {
-      const validValues: Array<'NONE' | 'CENTRAL' | 'WINDOW' | 'PORTABLE' | 'COOLER'> = [
-        'NONE', 'CENTRAL', 'WINDOW', 'PORTABLE', 'COOLER'
-      ];
-      // Support both enum values and legacy lowercase values for backward compatibility
-      const mapping: Record<string, 'NONE' | 'CENTRAL' | 'WINDOW' | 'PORTABLE' | 'COOLER'> = {
-        'none': 'NONE',
-        'central': 'CENTRAL',
-        'window': 'WINDOW',
-        'portable': 'PORTABLE',
-        'cooler': 'COOLER',
-      };
-      const upperValue = value.toUpperCase();
-      if (validValues.includes(upperValue as any)) {
-        return upperValue as any;
-      }
-      return mapping[value.toLowerCase()] || 'NONE';
+  const mapACType = (value: string): 'NONE' | 'CENTRAL' | 'WINDOW' | 'PORTABLE' | 'COOLER' => {
+    const validValues: Array<'NONE' | 'CENTRAL' | 'WINDOW' | 'PORTABLE' | 'COOLER'> = [
+      'NONE', 'CENTRAL', 'WINDOW', 'PORTABLE', 'COOLER'
+    ];
+    // Support both enum values and legacy lowercase values for backward compatibility
+    const mapping: Record<string, 'NONE' | 'CENTRAL' | 'WINDOW' | 'PORTABLE' | 'COOLER'> = {
+      'none': 'NONE',
+      'central': 'CENTRAL',
+      'window': 'WINDOW',
+      'portable': 'PORTABLE',
+      'cooler': 'COOLER',
     };
+    const upperValue = value.toUpperCase();
+    if (validValues.includes(upperValue as any)) {
+      return upperValue as any;
+    }
+    return mapping[value.toLowerCase()] || 'NONE';
+  };
 
   // Map ribbon type from frontend format to backend enum
   const mapRibbonType = (value: string): 'NONE' | 'CHAT' | 'CUSTOM' => {
@@ -257,40 +257,40 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
     // Prepare address object
     const address = formData.address && formData.city && formData.stateRegion && formData.zip && formData.country
       ? {
-          streetAddress: formData.address,
-          city: formData.city,
-          stateRegion: formData.stateRegion,
-          zipCode: formData.zip,
-          country: formData.country,
-        }
+        streetAddress: formData.address,
+        city: formData.city,
+        stateRegion: formData.stateRegion,
+        zipCode: formData.zip,
+        country: formData.country,
+      }
       : undefined;
 
     // Prepare single unit details
     const singleUnitDetails = formData.beds
       ? {
-          beds: parseInt(formData.beds) || 0,
-          baths: formData.bathrooms ? parseFloat(formData.bathrooms) : undefined,
-          marketRent: formData.marketRent ? parseFloat(formData.marketRent) : undefined,
-        }
+        beds: parseInt(formData.beds) || 0,
+        baths: formData.bathrooms ? parseFloat(formData.bathrooms) : undefined,
+        marketRent: formData.marketRent ? parseFloat(formData.marketRent) : undefined,
+      }
       : undefined;
 
     // Prepare amenities
     const amenities = formData.parking || formData.laundry || formData.ac || (Array.isArray(formData.extendedAmenities) && formData.extendedAmenities.length > 0) || (Array.isArray(formData.features) && formData.features.length > 0)
       ? {
-          parking: mapParkingType(formData.parking || 'none'),
-          laundry: mapLaundryType(formData.laundry || 'none'),
-          airConditioning: mapACType(formData.ac || 'none'),
-          propertyAmenities: Array.isArray(formData.extendedAmenities) ? formData.extendedAmenities : [],
-          propertyFeatures: Array.isArray(formData.features) ? formData.features : [],
-        }
+        parking: mapParkingType(formData.parking || 'none'),
+        laundry: mapLaundryType(formData.laundry || 'none'),
+        airConditioning: mapACType(formData.ac || 'none'),
+        propertyAmenities: Array.isArray(formData.extendedAmenities) ? formData.extendedAmenities : [],
+        propertyFeatures: Array.isArray(formData.features) ? formData.features : [],
+      }
       : undefined;
 
     // Prepare photos
     const photos: Array<{ photoUrl: string; isPrimary: boolean }> = [];
     if (formData.coverPhoto) {
       // Extract URL from coverPhoto (can be string or PhotoFile object)
-      const coverPhotoUrl = typeof formData.coverPhoto === 'string' 
-        ? formData.coverPhoto 
+      const coverPhotoUrl = typeof formData.coverPhoto === 'string'
+        ? formData.coverPhoto
         : formData.coverPhoto.previewUrl || '';
       if (coverPhotoUrl) {
         photos.push({ photoUrl: coverPhotoUrl, isPrimary: true });
@@ -299,8 +299,8 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
     if (Array.isArray(formData.galleryPhotos)) {
       formData.galleryPhotos.forEach((photo) => {
         // Extract URL from photo (can be string or PhotoFile object)
-        const photoUrl = typeof photo === 'string' 
-          ? photo 
+        const photoUrl = typeof photo === 'string'
+          ? photo
           : photo.previewUrl || '';
         if (photoUrl && !photos.some(p => p.photoUrl === photoUrl)) {
           photos.push({ photoUrl: photoUrl, isPrimary: false });
@@ -483,10 +483,10 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
 
       try {
         const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
-        
+
         // Handle cover photo - can be a string URL (existing) or object with file (new upload)
         let coverPhotoUrl: string;
-        
+
         if (typeof formData.coverPhoto === 'string') {
           // Existing cover photo URL - use it directly
           coverPhotoUrl = formData.coverPhoto;
@@ -521,7 +521,7 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
         // Handle gallery photos - can be strings (existing URLs) or objects with files (new uploads)
         const galleryPhotoUrls: string[] = [];
         const galleryPhotos = formData.galleryPhotos || [];
-        
+
         for (const galleryPhoto of galleryPhotos) {
           if (typeof galleryPhoto === 'string') {
             // Existing gallery photo URL - use it directly
@@ -596,7 +596,7 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
           propertyId,
           updateData,
         });
-        
+
         // If property is already complete (being edited), allow completing directly from step 7
         // Otherwise, move to step 8 (AddRibbon)
         if (initialPropertyId && propertyData) {
@@ -625,7 +625,7 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
       try {
         // Map ribbon type to backend format
         const ribbonType = mapRibbonType(formData.ribbonType || 'none');
-        
+
         // Update property with ribbon data
         const updateData: any = {
           ribbonType: ribbonType,
@@ -637,7 +637,7 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
           propertyId,
           updateData,
         });
-        
+
         // Call the onSubmit callback with the updated property
         onSubmit(updatedProperty);
       } catch (err) {
@@ -666,7 +666,7 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
           propertyId,
           updateData,
         });
-        
+
         // Call the onSubmit callback with the updated property
         onSubmit(updatedProperty);
       } catch (err) {
@@ -691,7 +691,7 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return <GeneralInfo 
+        return <GeneralInfo
           onPropertyCreated={handlePropertyCreated}
           propertyId={propertyId || undefined}
         />;
@@ -746,18 +746,18 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onSubmit, prope
           <button
             onClick={handleBack}
             disabled={updatePropertyMutation.isPending || currentStep === 1}
-            className="flex items-center gap-2 px-6 py-3 border border-gray-300 text-gray-700 bg-white rounded-lg font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-4 md:px-6 py-3 border border-gray-300 text-gray-700 bg-white rounded-lg font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
           >
-            <ArrowLeft size={18} />
+            <ArrowLeft className="w-4 h-4 md:w-[18px] md:h-[18px]" />
             Back
           </button>
           {/* Next Button */}
           <NextStepButton onClick={handleNext} disabled={updatePropertyMutation.isPending || !managerId || !propertyId}>
-            {updatePropertyMutation.isPending 
-              ? 'Updating...' 
+            {updatePropertyMutation.isPending
+              ? 'Updating...'
               : currentStep === 8 || (currentStep === 7 && initialPropertyId && propertyData)
-              ? 'Complete Property' 
-              : 'Next'}
+                ? 'Complete Property'
+                : 'Next'}
           </NextStepButton>
         </div>
       )}

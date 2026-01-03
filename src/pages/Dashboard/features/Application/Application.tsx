@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import Pagination from '../../components/Pagination';
 import ApplicationCard from './components/ApplicationCard';
 import { Plus, ChevronLeft, Loader2 } from 'lucide-react';
@@ -64,6 +64,7 @@ const transformApplicationToCard = (app: BackendApplication) => {
 
 const Application = () => {
     const navigate = useNavigate();
+    const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
     const [filters, setFilters] = useState<Record<string, string[]>>({});
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
     const [currentPage, setCurrentPage] = useState(1);
@@ -192,7 +193,7 @@ const Application = () => {
     };
 
     return (
-        <div className="max-w-6xl mx-auto min-h-screen font-outfit">
+        <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit transition-all duration-300`}>
             <div className="inline-flex items-center px-4 py-2 bg-[#E0E5E5] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
                 <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
                 <span className="text-gray-500 text-sm mx-1">/</span>

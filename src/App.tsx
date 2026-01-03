@@ -90,6 +90,7 @@ import Leads from './pages/Dashboard/features/Leads/leads';
 import AddLead from './pages/Dashboard/features/Leads/AddLead';
 import LeadDetail from './pages/Dashboard/features/Leads/LeadDetail';
 import EditLead from './pages/Dashboard/features/Leads/EditLead';
+import FileManagerFeature from './pages/Dashboard/features/FileManager/FileManager';
 
 
 
@@ -203,10 +204,7 @@ const App: React.FC = () => {
               <Route path="/dashboard/properties/edit/:id" element={<EditProperty />} />
               <Route path="/dashboard/units/edit/:unitId" element={<EditUnit />} />
               <Route path="/dashboard/units/:unitId" element={<UnitPropertyDetail />} />
-              <Route path="/dashboard/property/add" element={<AddProperty />} />
-              <Route path="/dashboard/portfolio/units" element={<Units />} />
-              <Route path="/dashboard/portfolio/keys-locks" element={<KeysLocks />} />
-              <Route path="/dashboard/portfolio/keys-locks/:id" element={<KeyDetail />} />
+
               <Route path="/dashboard/portfolio/listing" element={<Listing />} />
               <Route path="/dashboard/listings/:id" element={<ListingDetail />} />
               <Route path="/dashboard/calendar" element={<Calendar />} />
@@ -216,7 +214,7 @@ const App: React.FC = () => {
               <Route path="/dashboard/equipments/edit/:id" element={<CreateEquipment />} />
               <Route path="/dashboard/equipments/:id" element={<EquipmentDetail />} />
               <Route path="/dashboard/property/add" element={<AddProperty />} />
-              <Route path="/dashboard/properties/edit/:id" element={<EditProperty />} />
+
               <Route path="/dashboard/properties" element={<Properties />} />
               <Route path="/dashboard/properties/import" element={<ImportProperties />} />
               <Route path="/dashboard/accounting/transactions" element={<Transactions />} />
@@ -511,7 +509,7 @@ const App: React.FC = () => {
               />
               {/* Documents Routes */}
               <Route
-                path="/documents/landlord-forms"
+                path="/dashboard/documents/landlord-forms"
                 element={
                   <ProtectedRoute>
                     <LandlordForms />
@@ -519,7 +517,7 @@ const App: React.FC = () => {
                 }
               />
               <Route
-                path="/documents/landlord-forms/template/:templateName"
+                path="/dashboard/documents/landlord-forms/template/:templateName"
                 element={
                   <ProtectedRoute>
                     <TemplateView />
@@ -527,7 +525,7 @@ const App: React.FC = () => {
                 }
               />
               <Route
-                path="/documents/landlord-forms/use-template/:templateName"
+                path="/dashboard/documents/landlord-forms/use-template/:templateName"
                 element={
                   <ProtectedRoute>
                     <UseTemplateWizard />
@@ -535,7 +533,7 @@ const App: React.FC = () => {
                 }
               />
               <Route
-                path="/documents/my-templates"
+                path="/dashboard/documents/my-templates"
                 element={
                   <ProtectedRoute>
                     <MyTemplates />
@@ -543,7 +541,7 @@ const App: React.FC = () => {
                 }
               />
               <Route
-                path="/documents/my-templates/create-wizard"
+                path="/dashboard/documents/my-templates/create-wizard"
                 element={
                   <ProtectedRoute>
                     <CreateTemplateWizard />
@@ -551,7 +549,7 @@ const App: React.FC = () => {
                 }
               />
               <Route
-                path="/documents/my-templates/:id"
+                path="/dashboard/documents/my-templates/:id"
                 element={
                   <ProtectedRoute>
                     <MyTemplateDetail />
@@ -559,7 +557,7 @@ const App: React.FC = () => {
                 }
               />
               <Route
-                path="/documents/my-templates/:id/edit"
+                path="/dashboard/documents/my-templates/:id/edit"
                 element={
                   <ProtectedRoute>
                     <EditTemplate />
@@ -567,15 +565,15 @@ const App: React.FC = () => {
                 }
               />
               <Route
-                path="/documents/file-manager"
+                path="/dashboard/documents/file-manager"
                 element={
                   <ProtectedRoute>
-                    <FileManager />
+                    <FileManagerFeature />
                   </ProtectedRoute>
                 }
               />
               <Route
-                path="/documents"
+                path="/dashboard/documents"
                 element={
                   <ProtectedRoute>
                     <Dashboard />

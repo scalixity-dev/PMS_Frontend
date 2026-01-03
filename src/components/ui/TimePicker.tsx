@@ -8,10 +8,11 @@ interface TimePickerProps {
     placeholder?: string;
     className?: string;
     buttonClassName?: string;
+    iconClassName?: string;
     disabled?: boolean;
 }
 
-const TimePicker: React.FC<TimePickerProps> = ({ value, onChange, placeholder = "Select time", className, buttonClassName, disabled = false }) => {
+const TimePicker: React.FC<TimePickerProps> = ({ value, onChange, placeholder = "Select time", className, buttonClassName, iconClassName, disabled = false }) => {
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -53,7 +54,7 @@ const TimePicker: React.FC<TimePickerProps> = ({ value, onChange, placeholder = 
                 <span className={cn("text-sm", !value && "text-gray-400")}>
                     {value || placeholder}
                 </span>
-                <Clock size={18} className="text-gray-400" />
+                <Clock size={18} className={cn("text-gray-400", iconClassName)} />
             </button>
 
             {isOpen && (

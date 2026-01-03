@@ -14,6 +14,7 @@ import MoveInLateFees from './steps/MoveInLateFees';
 import MoveInLateFeesType from './steps/MoveInLateFeesType';
 import MoveInOneTimeLateFees from './steps/MoveInOneTimeLateFees';
 import MoveInDailyLateFees from './steps/MoveInDailyLateFees';
+import MoveInBothLateFees from './steps/MoveInBothLateFees';
 import MoveInSuccessModal from './components/MoveInSuccessModal';
 
 interface MoveInScenarioCardProps {
@@ -77,7 +78,7 @@ const MoveIn: React.FC = () => {
     const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
 
     const [recurringRentAmount, setRecurringRentAmount] = useState<string>('');
-    const [lateFeeType, setLateFeeType] = useState<'one-time' | 'daily'>('one-time');
+    const [lateFeeType, setLateFeeType] = useState<'one-time' | 'daily' | 'both'>('one-time');
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 
     const handleBack = () => {
@@ -151,7 +152,7 @@ const MoveIn: React.FC = () => {
         }
     }
 
-    const handleLateFeesTypeNext = (type: 'one-time' | 'daily') => {
+    const handleLateFeesTypeNext = (type: 'one-time' | 'daily' | 'both') => {
         setLateFeeType(type);
         // Proceed to Step 10 (One Time Late Fee or Daily Late Fee)
         setCurrentStep(10);
@@ -164,7 +165,7 @@ const MoveIn: React.FC = () => {
     return (
         <div className="flex flex-col h-full w-full bg-[var(--color-background)] px-6 overflow-y-auto">
             <div className="flex-1 flex items-start justify-center pt-8">
-                <div className={`bg-[#DFE5E3] rounded-[2rem] p-12 flex flex-col items-center w-full shadow-sm min-h-[80vh] relative ${currentStep > 0 ? 'max-w-3xl' : 'max-w-5xl'}`}>
+                <div className={`bg-[#DFE5E3] rounded-[2rem] p-12 flex flex-col items-center w-full shadow-sm min-h-[80vh] relative max-w-4xl`}>
 
                     {/* Back Button */}
                     <div className="absolute top-8 left-8">
@@ -291,6 +292,14 @@ const MoveIn: React.FC = () => {
 
                                 {currentStep === 10 && lateFeeType === 'daily' && (
                                     <MoveInDailyLateFees
+                                        onNext={handleCompleteMoveIn}
+                                        onBack={handleBack}
+                                        recurringRentAmount={recurringRentAmount}
+                                    />
+                                )}
+
+                                {currentStep === 10 && lateFeeType === 'both' && (
+                                    <MoveInBothLateFees
                                         onNext={handleCompleteMoveIn}
                                         onBack={handleBack}
                                         recurringRentAmount={recurringRentAmount}
