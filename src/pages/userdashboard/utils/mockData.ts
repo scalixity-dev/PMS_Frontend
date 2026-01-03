@@ -4,7 +4,7 @@ export const mockTransactions: Transaction[] = [
     {
         id: "1",
         status: "Open",
-        dueDate: "17 Dec",
+        dueDate: "02 Jan, 2026", // Today
         category: "Rent",
         contact: {
             name: "Ashendra Sharma",
@@ -17,7 +17,7 @@ export const mockTransactions: Transaction[] = [
     {
         id: "2",
         status: "Open",
-        dueDate: "17 Dec",
+        dueDate: "05 Jan, 2026", // This week
         category: "Rent",
         contact: {
             name: "Ashendra Sharma",
@@ -30,7 +30,7 @@ export const mockTransactions: Transaction[] = [
     {
         id: "3",
         status: "Overdue",
-        dueDate: "17 Dec",
+        dueDate: "15 Jan, 2026", // This month
         category: "Deposit",
         contact: {
             name: "Ashendra Sharma",
@@ -38,6 +38,32 @@ export const mockTransactions: Transaction[] = [
             avatarColor: "#52D3A2"
         },
         amount: -26111.00,
+        currency: "INR"
+    },
+    {
+        id: "4",
+        status: "Open",
+        dueDate: "20 Dec, 2025", // Last month
+        category: "Maintenance Fee",
+        contact: {
+            name: "John Doe",
+            initials: "JD",
+            avatarColor: "#FF6B6B"
+        },
+        amount: -5000.00,
+        currency: "INR"
+    },
+    {
+        id: "5",
+        status: "Active",
+        dueDate: "01 Jan, 2026", // This week
+        category: "Utility Bill",
+        contact: {
+            name: "Sarah Wilson",
+            initials: "SW",
+            avatarColor: "#4ECDC4"
+        },
+        amount: -1500.00,
         currency: "INR"
     }
 ];

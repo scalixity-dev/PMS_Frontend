@@ -1,4 +1,4 @@
-import type { Lease } from "../types";
+import type { Lease } from "../../utils/types";
 import { StatusPill } from "./StatusPill";
 
 export const LeaseCard = ({ lease }: { lease: Lease }) => {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Search, ChevronDown, Check } from "lucide-react";
 
-import type { FilterState } from "../types";
+import type { FilterState } from "../../utils/types";
 
 interface PropertyFiltersProps {
     isOpen: boolean;
