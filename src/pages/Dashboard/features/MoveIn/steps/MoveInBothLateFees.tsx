@@ -68,7 +68,7 @@ const MoveInBothLateFees: React.FC<MoveInBothLateFeesProps> = ({ onNext, recurri
                 {/* Section 1: One Time Rent Late Fee */}
                 <div className="bg-white/50 p-6 rounded-3xl border border-gray-100">
                     <h3 className="text-lg font-bold text-[#374151] mb-6 border-b pb-2">1. One Time Rent Late Fee</h3>
-                    <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                         {/* Type of fee */}
                         <div className="flex flex-col gap-2">
                             <label className="text-xs font-bold text-gray-700 ml-1">Type of fee *</label>
@@ -166,7 +166,7 @@ const MoveInBothLateFees: React.FC<MoveInBothLateFeesProps> = ({ onNext, recurri
 
 
 
-                    <div className="grid grid-cols-[0.8fr_1.2fr] gap-x-8 gap-y-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
                         {/* Type of fee */}
                         <div className="flex flex-col gap-2">
                             <label className="text-xs font-bold text-gray-700 ml-1">Type of fee *</label>
@@ -183,9 +183,9 @@ const MoveInBothLateFees: React.FC<MoveInBothLateFeesProps> = ({ onNext, recurri
                         </div>
 
                         {/* Amount and Max Monthly Balance */}
-                        <div className="flex flex-row gap-4">
+                        <div className="flex flex-col md:flex-row gap-4">
                             {/* Amount */}
-                            <div className="flex flex-col gap-2 shrink-0 w-[140px]">
+                            <div className="flex flex-col gap-2 shrink-0 w-full md:w-[140px]">
                                 <label className="text-xs font-bold text-gray-700 ml-1">Amount *</label>
                                 <div className="relative">
                                     <input
@@ -212,8 +212,8 @@ const MoveInBothLateFees: React.FC<MoveInBothLateFeesProps> = ({ onNext, recurri
                             </div>
 
                             {/* Maximum monthly balance */}
-                            <div className="flex flex-col gap-2 flex-1">
-                                <label className="text-xs font-bold text-gray-700 ml-1 whitespace-nowrap">Max monthly balance *</label>
+                            <div className="flex flex-col gap-2 flex-1 w-full">
+                                <label className="text-xs font-bold text-gray-700 ml-1">Max monthly balance *</label>
                                 <div className="relative">
                                     <input
                                         type="text"
@@ -269,9 +269,9 @@ const MoveInBothLateFees: React.FC<MoveInBothLateFeesProps> = ({ onNext, recurri
                         </div>
 
                         {/* Daily Time (Optional, maybe hidden if same?) */}
-                        <div className="flex flex-col gap-2 col-span-2">
+                        <div className="flex flex-col gap-2 lg:col-span-2">
                             <label className="text-xs font-bold text-gray-700 ml-1">Time*</label>
-                            <div className="relative max-w-[50%]">
+                            <div className="relative w-full md:w-1/2 lg:w-1/2">
                                 <TimePicker
                                     value={dailyTime}
                                     onChange={setDailyTime}

@@ -14,10 +14,10 @@ const MoveInLateFeesType: React.FC<MoveInLateFeesTypeProps> = ({ onNext }) => {
                 <p className="text-[#6B7280]">Select the option below.</p>
             </div>
 
-            <div className="bg-[#F3F4F6] rounded-full p-2.5 flex gap-4 items-center justify-center shadow-inner w-full max-w-4xl">
+            <div className="bg-[#F3F4F6] rounded-[2rem] md:rounded-full p-4 flex flex-col md:flex-row gap-4 items-center justify-center shadow-inner w-full max-w-4xl">
                 <button
                     onClick={() => onNext('one-time')}
-                    className="flex items-center gap-3 px-8 py-3.5 rounded-full font-medium text-white transition-all bg-[#7BD747] hover:bg-[#6ac13c] shadow-md min-w-[240px] justify-center"
+                    className="flex items-center gap-3 px-6 md:px-8 py-3.5 rounded-xl md:rounded-full font-medium text-white transition-all bg-[#7BD747] hover:bg-[#6ac13c] shadow-md w-full md:w-auto md:min-w-[240px] justify-center"
                 >
                     <Clock size={20} className="text-white" />
                     <span>One time rent late fee</span>
@@ -25,7 +25,7 @@ const MoveInLateFeesType: React.FC<MoveInLateFeesTypeProps> = ({ onNext }) => {
 
                 <button
                     onClick={() => onNext('daily')}
-                    className="flex items-center gap-3 px-8 py-3.5 rounded-full font-medium text-white transition-all bg-[#6B7280] hover:bg-[#5a606b] shadow-md min-w-[240px] justify-center"
+                    className="flex items-center gap-3 px-6 md:px-8 py-3.5 rounded-xl md:rounded-full font-medium text-white transition-all bg-[#6B7280] hover:bg-[#5a606b] shadow-md w-full md:w-auto md:min-w-[240px] justify-center"
                 >
                     <Calendar size={20} className="text-white" />
                     <span>Daily rent late fee</span>
@@ -33,7 +33,7 @@ const MoveInLateFeesType: React.FC<MoveInLateFeesTypeProps> = ({ onNext }) => {
 
                 <button
                     onClick={() => onNext('both')}
-                    className="flex items-center gap-3 px-8 py-3.5 rounded-full font-medium text-white transition-all bg-[#3D7475] hover:bg-[#2c5251] shadow-md min-w-[240px] justify-center"
+                    className="flex items-center gap-3 px-6 md:px-8 py-3.5 rounded-xl md:rounded-full font-medium text-white transition-all bg-[#3D7475] hover:bg-[#2c5251] shadow-md w-full md:w-auto md:min-w-[240px] justify-center"
                 >
                     <Clock size={20} className="text-white" />
                     <span className="mx-1">+</span>
