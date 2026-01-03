@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from "react";
+import React, { useMemo } from "react";
 import { Filter, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
-import PropertyFilters from "./components/PropertyFilters";
-import type { Property, FilterState } from "./types";
+import PropertyFilters from "../../components/property/PropertyFilters";
+import type { Property } from "../../utils/types";
 
 // --- Internal Components ---
 
@@ -31,7 +31,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
         <div className="absolute bottom-5 left-6 right-6 bg-white/90 backdrop-blur-sm rounded-[var(--radius-md)] p-4 shadow-[var(--shadow-sm)]">
           <div className="flex justify-between items-start">
             <div className="space-y-0.5 pr-8">
-              <h3 className="text-[var(--dashboard-text-main)] text-md font-semibold leading-tight">
+              <h3 className="text-[var(--dashboard-text-main)] text-base font-semibold leading-tight">
                 {property.title}
               </h3>
               <p className="text-gray-600 text-[12px] leading-snug">
@@ -52,7 +52,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
             </button>
           </div>
           <div className="mt-2 flex items-baseline gap-1">
-            <span className="text-[var(--dashboard-text-main)] text-md font-semibold">
+            <span className="text-[var(--dashboard-text-main)] text-base font-semibold">
               {property.price || `${property.currency}${property.rent}`}
             </span>
             <span className="text-gray-500 text-[10px]">month</span>
@@ -63,9 +63,15 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
   );
 };
 
+import { useUserDashboardStore } from "../../store/userDashboardStore";
+
 const Properties: React.FC = () => {
-  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-  const [filters, setFilters] = useState<FilterState | null>(null);
+  const {
+    propertyFilters: filters,
+    setPropertyFilters: setFilters,
+    isPropertyFiltersOpen,
+    setIsPropertyFiltersOpen
+  } = useUserDashboardStore();
 
   const mockProperties: Property[] = [
     {
@@ -159,8 +165,8 @@ const Properties: React.FC = () => {
   return (
     <div className="relative h-[calc(100vh-64px)] bg-white overflow-hidden flex flex-col">
       <PropertyFilters
-        isOpen={isFiltersOpen}
-        onClose={() => setIsFiltersOpen(false)}
+        isOpen={isPropertyFiltersOpen}
+        onClose={() => setIsPropertyFiltersOpen(false)}
         onApply={(newFilters) => setFilters(newFilters)}
       />
 
@@ -168,14 +174,18 @@ const Properties: React.FC = () => {
       <div className="flex-1 overflow-y-auto p-6 lg:p-10">
         {/* Header Section */}
         <div className="flex flex-col gap-4 mb-4">
-          <div className="flex items-center gap-2 text-lg font-medium">
-            <span className="text-[var(--dashboard-accent)]">Dashboard</span>
-            <span className="text-gray-400">/</span>
-            <span className="text-gray-900 font-semibold">Properties</span>
-          </div>
+          <nav aria-label="Breadcrumb">
+            <ol className="flex items-center gap-2 text-base font-medium">
+              <li>
+                <Link to="/userdashboard" className="text-[var(--dashboard-accent)] font-medium hover:opacity-80 transition-opacity">Dashboard</Link>
+              </li>
+              <li aria-hidden="true" className="text-[#1A1A1A] font-semibold">/</li>
+              <li className="text-[#1A1A1A]  font-medium" aria-current="page">Properties</li>
+            </ol>
+          </nav>
           <div className="flex justify-end">
             <button
-              onClick={() => setIsFiltersOpen(true)}
+              onClick={() => setIsPropertyFiltersOpen(true)}
               className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors bg-[#F7F7F7] border-[0.97px] border-white shadow-[0px_3.9px_3.9px_0px_#00000040]"
             >
               <Filter size={18} />
@@ -203,7 +213,7 @@ const Properties: React.FC = () => {
           )}
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 

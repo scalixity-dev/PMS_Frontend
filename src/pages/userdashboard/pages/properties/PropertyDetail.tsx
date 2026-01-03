@@ -10,11 +10,14 @@ import {
     Dog,
     Phone,
     Mail,
-    Send
+    Send,
+    X,
+    ChevronLeft,
+    ChevronRight
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import PrimaryActionButton from "../../components/common/buttons/PrimaryActionButton";
-import type { PropertyFeature } from "./types";
+import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
+import type { PropertyFeature } from "../../utils/types";
 
 // --- Types ---
 interface PropertyData {
@@ -43,15 +46,138 @@ interface PropertyData {
 
 // --- Internal Components ---
 
-const ImageGallery: React.FC<{ images: string[]; discount?: string }> = ({ images, discount }) => {
+const ImageGalleryModal: React.FC<{
+    images: string[];
+    onClose: () => void;
+    initialIndex: number;
+    title: string;
+    rent: string;
+}> = ({ images, onClose, initialIndex, title, rent }) => {
+    const [currentIndex, setCurrentIndex] = useState(initialIndex);
+
+    // Prevent body scroll when modal is open
+    React.useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, []);
+
+    const nextImage = () => {
+        setCurrentIndex((prev) => (prev + 1) % images.length);
+    };
+
+    const prevImage = () => {
+        setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+    };
+
+    return (
+        <div className="fixed inset-0 z-40 bg-black/10 lg:left-[var(--sidebar-width)] transition-all duration-300">
+
+
+            <div className="w-full flex justify-center mt-6 lg:mt-20 px-10 p-10 transition-all duration-300">
+                <div className="bg-white w-full max-w-7xl max-h-[calc(100vh-160px)] rounded-xl shadow-2xl relative flex flex-col overflow-hidden transition-all duration-300">
+
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-shrink-0">
+                        <h3 className="text-lg font-bold text-gray-800">Property Images</h3>
+                        <button
+                            onClick={onClose}
+                            className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-md hover:bg-gray-100"
+                        >
+                            <X size={24} />
+                        </button>
+                    </div>
+
+                    <div className="flex flex-1 overflow-hidden min-h-0">
+                        {/* Main Image Area */}
+                        <div className="flex-1 bg-[#F9FAFB] flex items-center justify-center relative p-2 lg:p-4 overflow-hidden group">
+                            <button
+                                onClick={prevImage}
+                                className="absolute left-4 p-2 rounded-full bg-white shadow-md text-gray-700 hover:text-black transition-all border border-gray-100 opacity-0 group-hover:opacity-100 z-10"
+                            >
+                                <ChevronLeft size={24} />
+                            </button>
+
+                            <img
+                                src={images[currentIndex]}
+                                alt={`Gallery ${currentIndex + 1}`}
+                                className="max-w-full max-h-full object-contain drop-shadow-sm"
+                            />
+
+                            <button
+                                onClick={nextImage}
+                                className="absolute right-4 p-2 rounded-full bg-white shadow-md text-gray-700 hover:text-black transition-all border border-gray-100 opacity-0 group-hover:opacity-100 z-10"
+                            >
+                                <ChevronRight size={24} />
+                            </button>
+                        </div>
+
+                        {/* Sidebar: Details & Thumbnails */}
+                        <div className="w-80 lg:w-96 bg-white border-l border-gray-100 flex flex-col h-full">
+                            {/* Fixed Details Section */}
+                            <div className="p-4 border-b border-gray-100 flex-shrink-0">
+                                <h2 className="text-xl font-bold text-[var(--dashboard-text-main)] mb-1 leading-tight">{title}</h2>
+                                <p className="text-[var(--dashboard-accent)] font-semibold text-lg">{rent}</p>
+                                <p className="text-sm text-gray-500 mt-2">All Details</p>
+                            </div>
+
+                            {/* Scrollable Thumbnails Section */}
+                            <div className="p-4 flex-1 overflow-y-auto custom-scrollbar min-h-0">
+                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">All Images ({images.length})</p>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {images.map((img, idx) => (
+                                        <button
+                                            key={idx}
+                                            onClick={() => setCurrentIndex(idx)}
+                                            className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all duration-200 ${idx === currentIndex
+                                                ? "border-[var(--dashboard-accent)] ring-1 ring-[var(--dashboard-accent)] shadow-sm"
+                                                : "border-transparent hover:border-gray-200"
+                                                }`}
+                                        >
+                                            <img
+                                                src={img}
+                                                alt={`Thumbnail ${idx + 1}`}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const ImageGallery: React.FC<{
+    images: string[];
+    discount?: string;
+    title: string;
+    rent: string;
+}> = ({ images, discount, title, rent }) => {
+    const [showModal, setShowModal] = useState(false);
+    const [initialIndex, setInitialIndex] = useState(0);
+
     const mainImage = images[0] || "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=800";
     const sideImages = images.slice(1, 4);
     const remainingCount = images.length > 5 ? images.length - 5 : 0;
 
+    const openModal = (index: number) => {
+        setInitialIndex(index);
+        setShowModal(true);
+    };
+
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
-            <div className="relative rounded-[var(--radius-lg)] overflow-hidden aspect-[3/2] h-full">
-                <img src={mainImage} alt="Main" className="w-full h-full object-cover" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div
+                className="relative rounded-[var(--radius-lg)] overflow-hidden aspect-[3/2] h-full cursor-pointer group"
+                onClick={() => openModal(0)}
+            >
+                <img src={mainImage} alt="Main" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
                 {discount && (
                     <div className="absolute bottom-6 left-6 bg-[var(--dashboard-accent)] text-white px-5 py-2 rounded-lg text-sm font-bold shadow-sm">
                         {discount}
@@ -60,21 +186,39 @@ const ImageGallery: React.FC<{ images: string[]; discount?: string }> = ({ image
             </div>
             <div className="grid grid-cols-2 gap-4">
                 {sideImages.map((img, idx) => (
-                    <div key={idx} className="rounded-[var(--radius-lg)] overflow-hidden aspect-[3/2]">
-                        <img src={img} alt={`Gallery ${idx}`} className="w-full h-full object-cover" />
+                    <div
+                        key={idx}
+                        className="rounded-[var(--radius-lg)] overflow-hidden aspect-[3/2] cursor-pointer group relative"
+                        onClick={() => openModal(idx + 1)}
+                    >
+                        <img src={img} alt={`Gallery ${idx}`} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
                     </div>
                 ))}
                 {images[4] && (
-                    <div className="relative rounded-[var(--radius-lg)] overflow-hidden aspect-[3/2]">
-                        <img src={images[4]} alt="Gallery 4" className="w-full h-full object-cover" />
+                    <div
+                        className="relative rounded-[var(--radius-lg)] overflow-hidden aspect-[3/2] cursor-pointer group"
+                        onClick={() => openModal(4)}
+                    >
+                        <img src={images[4]} alt="Gallery 4" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
                         {remainingCount > 0 && (
-                            <div className="absolute bottom-4 right-4 bg-[var(--dashboard-accent)] text-white px-4 py-1.5 rounded-lg text-sm font-bold shadow-sm">
+                            <div className="absolute bottom-2 right-2 bg-[var(--dashboard-accent)] text-white px-3 py-1 rounded-md text-xs font-bold shadow-sm z-10 hover:bg-[var(--dashboard-accent)]/90 transition-colors">
                                 +{remainingCount} Images
                             </div>
                         )}
                     </div>
                 )}
             </div>
+            {showModal && (
+                <ImageGalleryModal
+                    images={images}
+                    onClose={() => setShowModal(false)}
+                    initialIndex={initialIndex}
+                    title={title}
+                    rent={rent}
+                />
+            )}
         </div>
     );
 };
@@ -106,7 +250,6 @@ const FeaturesGrid: React.FC<{ features: PropertyFeature[] }> = ({ features }) =
 );
 
 const PropertyDetailUser: React.FC = () => {
-    const [activeTab, setActiveTab] = useState("Overview");
     const [activeBottomTab, setActiveBottomTab] = useState("Description");
 
     const PROPERTY_DATA: PropertyData = {
@@ -120,6 +263,26 @@ const PropertyDetailUser: React.FC = () => {
             "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=800",
             "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=400",
             "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=400",
+            "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=400",
+            "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=400",
+            "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=400",
+            // Simulating 20+ images
+            "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=800",
+            "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=400",
+            "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=400",
+            "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=400",
+            "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=400",
+            "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=400",
+            "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=800",
+            "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=400",
+            "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=400",
+            "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=400",
+            "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=400",
+            "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=400",
+            "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=800",
+            "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=400",
+            "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=400",
+            "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=400",
             "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=400",
             "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=400",
         ],
@@ -175,46 +338,42 @@ const PropertyDetailUser: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#F5F5F5] p-6 lg:p-10">
-            {/* Breadcrumb */}
-            <div className="flex items-center gap-2 text-lg font-medium mb-8">
-                <Link to="/userdashboard" className="text-[var(--dashboard-accent)] font-bold">Dashboard</Link>
-                <span className="text-gray-400">/</span>
-                <Link to="/userdashboard/properties" className="text-gray-900 font-semibold">Properties</Link>
-            </div>
+        <div className="min-h-screen bg-[#F5F5F5] p-6 lg:p-10 relative">
+            <nav aria-label="Breadcrumb" className="mb-10">
+                <ol className="flex items-center gap-2 text-base font-medium">
+                    <li>
+                        <Link to="/userdashboard" className="text-[var(--dashboard-accent)] font-medium hover:opacity-80 transition-opacity">Dashboard</Link>
+                    </li>
+                    <li aria-hidden="true" className="text-[#1A1A1A] font-semibold">/</li>
+                    <li>
+                        <Link to="/userdashboard/properties" className="text-[var(--dashboard-accent)] font-medium hover:opacity-80 transition-opacity">Properties</Link>
+                    </li>
+                    <li aria-hidden="true" className="text-[#1A1A1A] font-semibold">/</li>
+                    <li className="text-[#1A1A1A]  font-medium" aria-current="page">Property Details</li>
+                </ol>
+            </nav>
 
-            {/* Top Tabs */}
-            <div className="flex items-center border-b border-gray-100 mb-8 overflow-hidden w-fit">
-                {["Overview", "Map"].map((tab) => (
-                    <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab)}
-                        className={`px-8 py-2.5 text-sm font-semibold transition-all duration-200 ${activeTab === tab
-                            ? "bg-[var(--dashboard-accent)] text-white rounded-t-lg"
-                            : "text-gray-400 hover:text-gray-600"
-                            }`}
-                    >
-                        {tab}
-                    </button>
-                ))}
-            </div>
-
-            <ImageGallery images={PROPERTY_DATA.images} discount={PROPERTY_DATA.discount} />
+            <ImageGallery
+                images={PROPERTY_DATA.images}
+                discount={PROPERTY_DATA.discount}
+                title={PROPERTY_DATA.title}
+                rent={`${PROPERTY_DATA.currency}${PROPERTY_DATA.rent}`}
+            />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
                 <div className="lg:col-span-2">
                     <div className="mb-8">
-                        <h1 className="text-3xl font-bold text-[var(--dashboard-text-main)] mb-2">{PROPERTY_DATA.title}</h1>
+                        <h1 className="text-3xl font-semibold text-[var(--dashboard-text-main)] mb-2">{PROPERTY_DATA.title}</h1>
                         <p className="text-[#4B5563] text-xl flex items-center gap-2 font-light leading-relaxed">{PROPERTY_DATA.address}</p>
                     </div>
 
                     <div className="flex justify-between items-start mb-10">
                         <div>
-                            <p className="text-2xl font-semibold text-[var(--dashboard-text-main)]">{PROPERTY_DATA.availabilityDate}</p>
+                            <p className="text-2xl font-medium text-[var(--dashboard-text-main)]">{PROPERTY_DATA.availabilityDate}</p>
                             <p className="text-[#4B5563] font-normal">Availability</p>
                         </div>
                         <div className="text-right">
-                            <p className="text-2xl font-semibold text-[var(--dashboard-text-main)]">
+                            <p className="text-2xl font-medium text-[var(--dashboard-text-main)]">
                                 {PROPERTY_DATA.currency}{PROPERTY_DATA.rent} <span className="text-gray-500 text-xl font-normal">month</span>
                             </p>
                             <p className="text-[#4B5563] font-normal">Rent</p>
@@ -327,20 +486,20 @@ const PropertyDetailUser: React.FC = () => {
                 <div className="lg:col-span-1">
                     <div className="bg-white rounded-[var(--radius-lg)] border border-gray-50 p-8 shadow-[0px_3.68px_3.68px_0px_rgba(0,0,0,0.2)] sticky top-24">
                         <p className="text-[#4B5563] text-sm mb-1 uppercase tracking-normal font-normal">Listing Agent</p>
-                        <h3 className="text-2xl font-bold text-[var(--dashboard-text-main)] mb-3">{PROPERTY_DATA.agent.name}</h3>
+                        <h3 className="text-2xl font-semibold text-[var(--dashboard-text-main)] mb-3">{PROPERTY_DATA.agent.name}</h3>
 
-                        <div className="space-y-4 mb-4">
-                            <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-[var(--dashboard-accent)] flex items-center justify-center text-white shadow-[var(--shadow-sm)]">
+                        <div className="space-y-3 mb-4">
+                            <div className="flex items-center gap-2">
+                                <div className="w-7 h-7 rounded-full bg-[var(--dashboard-accent)] flex items-center justify-center text-white shadow-[var(--shadow-sm)]">
                                     <Phone size={16} />
                                 </div>
-                                <span className="text-gray-600 font-medium">{PROPERTY_DATA.agent.phone}</span>
+                                <span className="text-gray-600 text-sm font-medium">{PROPERTY_DATA.agent.phone}</span>
                             </div>
-                            <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-[var(--dashboard-accent)] flex items-center justify-center text-white shadow-[var(--shadow-sm)]">
+                            <div className="flex items-center gap-2">
+                                <div className="w-7 h-7 rounded-full bg-[var(--dashboard-accent)] flex items-center justify-center text-white shadow-[var(--shadow-sm)]">
                                     <Mail size={16} />
                                 </div>
-                                <span className="text-gray-600 font-medium">{PROPERTY_DATA.agent.email}</span>
+                                <span className="text-gray-600 text-sm font-medium">{PROPERTY_DATA.agent.email}</span>
                             </div>
                         </div>
 

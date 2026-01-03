@@ -13,7 +13,13 @@ export default function UserDashboardLayout({ children }: UserDashboardLayoutPro
     const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
 
     return (
-        <div className="flex min-h-screen bg-gray-100 flex-col">
+        <div
+            className="flex min-h-screen bg-gray-100 flex-col"
+            style={{
+                '--sidebar-width': sidebarCollapsed ? '80px' : '220px',
+                '--sidebar-collapsed': sidebarCollapsed ? '1' : '0'
+            } as React.CSSProperties}
+        >
             <div className="fixed top-0 left-0 right-0 z-50">
                 <UserDashboardNavbar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
             </div>
