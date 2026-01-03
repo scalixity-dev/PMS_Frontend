@@ -1,13 +1,11 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
 import TenantCard from './components/TenantCard';
 import { Plus, ChevronLeft, Loader2 } from 'lucide-react';
-import { useGetAllTenants, useDeleteTenant } from '../../../../hooks/useTenantQueries';
+import { useGetAllTenants } from '../../../../hooks/useTenantQueries';
 import { tenantService, type Tenant } from '../../../../services/tenant.service';
-
-
 
 const Tenants = () => {
     const navigate = useNavigate();
@@ -15,12 +13,10 @@ const Tenants = () => {
     const [filters, setFilters] = useState<Record<string, string[]>>({});
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 9;
-    const deleteTenantMutation = useDeleteTenant();
 
     // Fetch tenants using React Query
-    const { data: backendTenants = [], isLoading, error } = useGetAllTenants();
+    const { data: backendTenants = [], isLoading, error, refetch } = useGetAllTenants();
     const { sidebarCollapsed = false } = useOutletContext<{ sidebarCollapsed: boolean }>() ?? {};
-    const [, setFilters] = useState<Record<string, string[]>>({});
 
     // Transform backend tenants to frontend format
     const tenants: Tenant[] = useMemo(() => {
@@ -54,29 +50,6 @@ const Tenants = () => {
         propertyUnits: 'Property & Units',
         lease: 'Lease'
     };
-
-    const [tenants, setTenants] = useState<Tenant[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    const fetchTenants = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-            const backendTenants = await tenantService.getAll();
-            const transformedTenants = backendTenants.map((tenant) => tenantService.transformTenant(tenant));
-            setTenants(transformedTenants);
-        } catch (err) {
-            console.error('Error fetching tenants:', err);
-            setError(err instanceof Error ? err.message : 'Failed to fetch tenants');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchTenants();
-    }, []);
 
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
@@ -127,17 +100,6 @@ const Tenants = () => {
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
         window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
-    const handleDeleteTenant = async (tenantId: string) => {
-        if (window.confirm('Are you sure you want to delete this tenant?')) {
-            try {
-                await deleteTenantMutation.mutateAsync(tenantId);
-            } catch (err) {
-                console.error('Failed to delete tenant:', err);
-                alert(`Failed to delete tenant: ${err instanceof Error ? err.message : 'Unknown error'}`);
-            }
-        }
     };
 
     return (
@@ -213,7 +175,7 @@ const Tenants = () => {
                 )}
 
                 {/* Tenants Grid */}
-                {!loading && !error && (
+                {!isLoading && !error && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                         {currentTenants.length > 0 ? (
                             currentTenants.map((tenant) => (
@@ -225,7 +187,7 @@ const Tenants = () => {
                                     email={tenant.email}
                                     image={tenant.image || ''}
                                     propertyName="Sunset Apartments, Unit 4B"
-                                    onDeleteSuccess={fetchTenants}
+                                    onDeleteSuccess={() => refetch()}
                                 />
                             ))
                         ) : (

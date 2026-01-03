@@ -39,7 +39,7 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
     onSaveFilter,
     onSelectSavedFilter,
     onClearSavedFilter,
-    activeSavedFilter
+    activeSavedFilter,
     searchPlaceholder = 'Search Here...'
 }) => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -81,6 +81,7 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
         });
         setSelectedFilters(updated);
     }, [initialFilters, filterOptions]);
+
     useEffect(() => {
         if (isMobileFiltersOpen) {
             document.body.style.overflow = 'hidden';
@@ -179,37 +180,6 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
                 </button>
             </div>
 
-                <div className="flex items-center gap-2">
-                    {/* Display active saved filter badge */}
-                    {activeSavedFilter && (
-                        <div className="flex items-center gap-2 px-4 py-2 bg-[#7BD747] text-white rounded-full text-sm font-medium">
-                            <span>{activeSavedFilter}</span>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    // Clear all filters first
-                                    setSearchQuery('');
-                                    const clearedFilters: Record<string, string[]> = {};
-                                    Object.keys(filterOptions).forEach(key => {
-                                        clearedFilters[key] = [];
-                                    });
-                                    setSelectedFilters(clearedFilters);
-                                    onSearchChange('');
-                                    onFiltersChange(clearedFilters);
-                                    // Then clear the saved filter state
-                                    if (onClearSavedFilter) {
-                                        onClearSavedFilter();
-                                    }
-                                }}
-                                className="ml-1 hover:bg-white/20 rounded-full p-0.5 transition-colors"
-                                title="Remove saved filter"
-                            >
-                                <X className="w-3.5 h-3.5" />
-                            </button>
-                        </div>
-                    )}
-                    {Object.keys(filterOptions).map((filterType) => (
-                        <div key={filterType} className="relative">
             {/* Desktop Filter Bar */}
             <div ref={dropdownRef} className="hidden lg:flex bg-[#3A6D6C] p-4 rounded-full items-center gap-4 mb-8 justify-between relative shadow-md">
                 <div className="flex items-center gap-2 flex-1 overflow-visible">
@@ -235,34 +205,35 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
                         )}
                     </div>
 
-                            {openDropdown === filterType && (
-                                <div className="absolute top-full left-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 min-w-[200px] z-[100]">
-                                    <div className="p-2">
-                                        {filterOptions[filterType].map((option) => {
-                                            const isDisabled = option.value === '__no_items__';
-                                            return (
-                                                <label
-                                                    key={option.value}
-                                                    className={`flex items-center gap-2 px-3 py-2 rounded ${isDisabled ? 'cursor-not-allowed opacity-50' : 'hover:bg-gray-50 cursor-pointer'}`}
-                                                >
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selectedFilters[filterType]?.includes(option.value)}
-                                                        onChange={() => !isDisabled && handleFilterToggle(filterType, option.value)}
-                                                        disabled={isDisabled}
-                                                        className="rounded border-gray-300 text-[#7BD747] focus:ring-[#7BD747] disabled:cursor-not-allowed"
-                                                    />
-                                                    <span className={`text-sm ${isDisabled ? 'text-gray-400' : 'text-gray-700'}`}>{option.label}</span>
-                                                </label>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    ))}
-
                     <div className="flex items-center gap-2">
+                        {/* Display active saved filter badge */}
+                        {activeSavedFilter && (
+                            <div className="flex items-center gap-2 px-4 py-2 bg-[#7BD747] text-white rounded-full text-sm font-medium">
+                                <span>{activeSavedFilter}</span>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        // Clear all filters first
+                                        setSearchQuery('');
+                                        const clearedFilters: Record<string, string[]> = {};
+                                        Object.keys(filterOptions).forEach(key => {
+                                            clearedFilters[key] = [];
+                                        });
+                                        setSelectedFilters(clearedFilters);
+                                        onSearchChange('');
+                                        onFiltersChange(clearedFilters);
+                                        // Then clear the saved filter state
+                                        if (onClearSavedFilter) {
+                                            onClearSavedFilter();
+                                        }
+                                    }}
+                                    className="ml-1 hover:bg-white/20 rounded-full p-0.5 transition-colors"
+                                    title="Remove saved filter"
+                                >
+                                    <X className="w-3.5 h-3.5" />
+                                </button>
+                            </div>
+                        )}
                         {Object.keys(filterOptions).map((filterType) => (
                             <div key={filterType} className="relative">
                                 <button
@@ -279,20 +250,24 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
                                 {openDropdown === filterType && (
                                     <div className="absolute top-full left-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 min-w-[200px] z-[100]">
                                         <div className="p-2">
-                                            {filterOptions[filterType].map((option) => (
-                                                <label
-                                                    key={option.value}
-                                                    className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 rounded cursor-pointer"
-                                                >
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selectedFilters[filterType]?.includes(option.value)}
-                                                        onChange={() => handleFilterToggle(filterType, option.value)}
-                                                        className="rounded border-gray-300 text-[#7BD747] focus:ring-[#7BD747]"
-                                                    />
-                                                    <span className="text-sm text-gray-700">{option.label}</span>
-                                                </label>
-                                            ))}
+                                            {filterOptions[filterType].map((option) => {
+                                                const isDisabled = option.value === '__no_items__';
+                                                return (
+                                                    <label
+                                                        key={option.value}
+                                                        className={`flex items-center gap-2 px-3 py-2 rounded ${isDisabled ? 'cursor-not-allowed opacity-50' : 'hover:bg-gray-50 cursor-pointer'}`}
+                                                    >
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedFilters[filterType]?.includes(option.value)}
+                                                            onChange={() => !isDisabled && handleFilterToggle(filterType, option.value)}
+                                                            disabled={isDisabled}
+                                                            className="rounded border-gray-300 text-[#7BD747] focus:ring-[#7BD747] disabled:cursor-not-allowed"
+                                                        />
+                                                        <span className={`text-sm ${isDisabled ? 'text-gray-400' : 'text-gray-700'}`}>{option.label}</span>
+                                                    </label>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 )}
@@ -400,15 +375,16 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
                                 </h3>
                                 <div className="flex flex-wrap gap-2">
                                     {options.map((option) => {
-                                        const isActive = selectedFilters[filterType]?.includes(option.value);
+                                        const isDisabled = option.value === '__no_items__';
                                         return (
                                             <button
                                                 key={option.value}
-                                                onClick={() => handleFilterToggle(filterType, option.value)}
-                                                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${isActive
+                                                onClick={() => !isDisabled && handleFilterToggle(filterType, option.value)}
+                                                disabled={isDisabled}
+                                                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${selectedFilters[filterType]?.includes(option.value)
                                                     ? 'bg-[#7BD747] text-white'
                                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                                    }`}
+                                                    } ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                             >
                                                 {option.label}
                                             </button>
