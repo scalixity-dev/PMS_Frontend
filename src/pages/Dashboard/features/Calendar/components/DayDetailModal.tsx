@@ -37,10 +37,10 @@ const DayDetailModal: React.FC<DayDetailModalProps> = ({ isOpen, onClose, date, 
             }}
         >
             <div
-                className="bg-white rounded-[2rem] w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-200 relative overflow-hidden flex flex-col max-h-[80vh]"
+                className="bg-white rounded-[2rem] w-[95%] sm:w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-200 relative overflow-hidden flex flex-col max-h-[80vh]"
             >
                 {/* Header */}
-                <div className="bg-[#3A6D6C] p-6 flex items-center justify-between text-white flex-shrink-0">
+                <div className="bg-[#3A6D6C] p-4 sm:p-6 flex items-center justify-between text-white flex-shrink-0">
                     <div>
                         <h2 className="text-xl font-bold truncate pr-4">
                             {format(date, 'd MMMM')}
