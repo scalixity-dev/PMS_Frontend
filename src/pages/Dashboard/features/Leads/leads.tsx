@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Plus, ChevronLeft, Download, MoreHorizontal, Edit2, Trash2, Check, X } from 'lucide-react';
 import { utils, writeFile } from 'xlsx';
@@ -85,6 +85,7 @@ const Leads = () => {
 
     const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
     const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+    const menuRef = useRef<HTMLDivElement>(null);
     const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
     const [currentLeadId, setCurrentLeadId] = useState<string | null>(null);
     const [selectedStatus, setSelectedStatus] = useState<LeadStatus>('NEW');
@@ -150,6 +151,30 @@ const Leads = () => {
     const [selectedListing, setSelectedListing] = useState('');
     const [applicantEmail, setApplicantEmail] = useState('');
 
+    // Close menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setOpenMenuId(null);
+            }
+        };
+
+        const handleEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setOpenMenuId(null);
+            }
+        };
+
+        if (openMenuId) {
+            document.addEventListener('mousedown', handleClickOutside);
+            document.addEventListener('keydown', handleEscape);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('keydown', handleEscape);
+        };
+    }, [openMenuId]);
 
     // Filtering logic
     const filteredLeads = useMemo(() => {
@@ -462,9 +487,12 @@ const Leads = () => {
                                         >
                                             <Trash2 className="w-4 h-4 stroke-[3]" />
                                         </button>
-                                        <div className="relative">
+                                        <div className="relative" ref={openMenuId === lead.id ? menuRef : null}>
                                             <button
-                                                onClick={() => setOpenMenuId(openMenuId === lead.id ? null : lead.id)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setOpenMenuId(openMenuId === lead.id ? null : lead.id);
+                                                }}
                                                 className="text-gray-400 hover:text-gray-700 transition-colors pt-1"
                                             >
                                                 <MoreHorizontal className="w-5 h-5 stroke-[3]" />

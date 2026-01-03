@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, FileText, ChevronDown, SquarePen, Upload } from 'lucide-react';
+import { ChevronLeft, FileText, ChevronDown, SquarePen, Upload, Edit, Trash2, ClipboardCheck, XCircle } from 'lucide-react';
 import DetailTabs from '../../components/DetailTabs';
 import CustomTextBox from '../../components/CustomTextBox';
 
@@ -46,6 +46,25 @@ const LeaseDetail: React.FC = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
     const [activeTab, setActiveTab] = useState('tenants');
+    const [isActionDropdownOpen, setIsActionDropdownOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsActionDropdownOpen(false);
+            }
+        };
+
+        if (isActionDropdownOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isActionDropdownOpen]);
 
     // In a real app, use 'id' to fetch data
     const lease = MOCK_LEASE_DETAIL;
@@ -78,9 +97,60 @@ const LeaseDetail: React.FC = () => {
                         </button>
                         <h1 className="text-2xl font-bold text-gray-800">{id}</h1>
                     </div>
-                    <button className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors">
-                        Action
-                    </button>
+                    <div className="relative" ref={dropdownRef}>
+                        <button
+                            onClick={() => setIsActionDropdownOpen(!isActionDropdownOpen)}
+                            className="flex items-center gap-2 px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors"
+                        >
+                            Action
+                            <ChevronDown className={`w-4 h-4 transition-transform ${isActionDropdownOpen ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {isActionDropdownOpen && (
+                            <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50">
+                                <button
+                                    onClick={() => {
+                                        setIsActionDropdownOpen(false);
+                                        // Navigate to edit page
+                                    }}
+                                    className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-50"
+                                >
+                                    <Edit className="w-4 h-4" />
+                                    Edit
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setIsActionDropdownOpen(false);
+                                        // Handle inspection
+                                    }}
+                                    className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-50"
+                                >
+                                    <ClipboardCheck className="w-4 h-4" />
+                                    Move-out Inspection
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setIsActionDropdownOpen(false);
+                                        // Handle end lease
+                                    }}
+                                    className="flex items-center gap-3 w-full px-4 py-3 text-sm text-orange-600 hover:bg-orange-50 transition-colors border-b border-gray-50"
+                                >
+                                    <XCircle className="w-4 h-4" />
+                                    End Lease
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setIsActionDropdownOpen(false);
+                                        // Handle delete
+                                    }}
+                                    className="flex items-center gap-3 w-full px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                    Delete
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Top Section Cards */}

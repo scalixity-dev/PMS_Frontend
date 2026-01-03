@@ -123,7 +123,6 @@ export default function DashboardNavbar({ setSidebarOpen }: NavbarProps) {
               type="text"
               placeholder="Search anything..."
               className="w-full h-10 pl-4 pr-10 rounded-full bg-white text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 shadow-sm"
-              onBlur={() => setIsMobileSearchOpen(false)} // Optional: close on blur
             />
             <button className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
               <Search size={18} />

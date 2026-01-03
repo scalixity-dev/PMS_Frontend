@@ -60,11 +60,10 @@ const PhotoGalleryModal: React.FC<PhotoGalleryModalProps> = ({
 
             <button
                 onClick={onClose}
-                className="absolute top-2 right-2 sm:top-4 sm:right-4 z-50 p-1.5 sm:p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors backdrop-blur-md"
+                className="absolute top-2 right-2 sm:top-4 sm:right-4 z-50 p-2.5 sm:p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors backdrop-blur-md"
                 aria-label="Close gallery"
             >
-                <X className="w-5 h-5 sm:w-6 sm:h-6" />
-            </button>
+                <X className="w-5 h-5 sm:w-6 sm:h-6" />            </button>
 
             <div className="w-full max-w-7xl h-full max-h-[85vh] sm:max-h-[90vh] bg-white rounded-xl sm:rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-2xl">
                 {/* Main Image Area */}
@@ -80,23 +79,24 @@ const PhotoGalleryModal: React.FC<PhotoGalleryModalProps> = ({
                         <>
                             <button
                                 onClick={handlePrevious}
-                                className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 bg-white/80 hover:bg-white text-gray-800 rounded-full transition-all hover:scale-110 active:scale-95 shadow-md border border-gray-100"
+                                className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-3 sm:p-3 bg-white/80 hover:bg-white text-gray-800 rounded-full transition-all hover:scale-110 active:scale-95 shadow-md border border-gray-100"
+                                aria-label="Previous image"
                             >
                                 <ChevronLeft className="w-4 h-4 sm:w-6 sm:h-6" />
                             </button>
                             <button
                                 onClick={handleNext}
-                                className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-2 sm:p-3 bg-white/80 hover:bg-white text-gray-800 rounded-full transition-all hover:scale-110 active:scale-95 shadow-md border border-gray-100"
+                                className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-3 sm:p-3 bg-white/80 hover:bg-white text-gray-800 rounded-full transition-all hover:scale-110 active:scale-95 shadow-md border border-gray-100"
+                                aria-label="Next image"
                             >
                                 <ChevronRight className="w-4 h-4 sm:w-6 sm:h-6" />
                             </button>
                         </>
                     )}
 
-                    <div className="absolute bottom-2 sm:bottom-4 left-1/2 -translate-x-1/2 bg-white/80 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-gray-700 text-[10px] sm:text-xs font-semibold backdrop-blur-md border border-gray-200 shadow-sm">
+                    <div className="absolute bottom-2 sm:bottom-4 left-1/2 -translate-x-1/2 bg-white/80 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-gray-700 text-[11px] sm:text-xs font-semibold backdrop-blur-md border border-gray-200 shadow-sm">
                         {currentIndex + 1} / {images.length}
-                    </div>
-                </div>
+                    </div>                </div>
 
                 {/* Thumbnail List - Horizontal on mobile/small, Vertical sidebar on tablet+ */}
                 <div className="h-20 sm:h-24 md:h-full md:w-48 lg:w-64 bg-white border-t md:border-t-0 md:border-l border-gray-100 flex flex-col">

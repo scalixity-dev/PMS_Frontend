@@ -16,9 +16,8 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({ title, count, actionLabel
             <div className="flex items-center gap-2">
                 {!hideCount && (
                     <span className="bg-white border border-[#82D64D] text-gray-600 px-2 md:px-3 pl-1 py-1 rounded-full text-xs md:text-sm font-bold flex items-center gap-1 shadow-[inset_0px_3.09px_3.09px_0px_rgba(0,0,0,0.25),inset_0_0_0_2px_#82D64D]">
-                        <span className="bg-[#7BD747] text-white w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center text-[11px] md:text-xs">{count}</span>                        Records
-                    </span>
-                )}
+                        <span className="bg-[#7BD747] text-white w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center text-[11px] md:text-xs">{count}</span> Records
+                    </span>)}
                 <button
                     onClick={onAction}
                     className="bg-white border border-[#82D64D] text-gray-600 px-2 md:px-3 py-1.5 md:py-2 rounded-full text-[10px] md:text-xs font-bold flex items-center gap-1 shadow-[inset_0px_3.09px_3.09px_0px_rgba(0,0,0,0.25)]"
