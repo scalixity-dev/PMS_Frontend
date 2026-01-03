@@ -56,15 +56,7 @@ const Leases: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
 
     const [currentPage, setCurrentPage] = useState(1);
-    const [filters, setFilters] = useState<{
-        status: string[];
-        occupancy: string[];
-        propertyType: string[];
-    }>({
-        status: [],
-        occupancy: [],
-        propertyType: []
-    });
+    const [filters, setFilters] = useState<Record<string, string[]>>({});
 
     const filterOptions: Record<string, FilterOption[]> = {
         status: [
@@ -72,12 +64,10 @@ const Leases: React.FC = () => {
             { value: 'Draft', label: 'Draft' },
         ],
         occupancy: [
-            { value: 'Occupied', label: 'Occupied' },
-            { value: 'Vacant', label: 'Vacant' },
+            { value: '__no_items__', label: 'No occupancy data available' }
         ],
         propertyType: [
-            { value: 'Residential', label: 'Residential' },
-            { value: 'Commercial', label: 'Commercial' },
+            { value: '__no_items__', label: 'No property types available' }
         ]
     };
 
@@ -97,13 +87,22 @@ const Leases: React.FC = () => {
             // Search filter
             const matchesSearch = searchQuery === '' ||
                 lease.property.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                lease.tenant.toLowerCase().includes(searchQuery.toLowerCase());
+                lease.tenant.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                lease.lease.toString().includes(searchQuery);
 
             // Status filter
-            const matchesStatus = filters.status.length === 0 ||
+            const matchesStatus = !filters.status?.length ||
                 filters.status.includes(lease.status);
 
-            return matchesSearch && matchesStatus;
+            // Occupancy filter (ignore placeholder value)
+            const matchesOccupancy = !filters.occupancy?.length ||
+                filters.occupancy.filter(v => v !== '__no_items__').length === 0;
+
+            // Property type filter (ignore placeholder value)
+            const matchesPropertyType = !filters.propertyType?.length ||
+                filters.propertyType.filter(v => v !== '__no_items__').length === 0;
+
+            return matchesSearch && matchesStatus && matchesOccupancy && matchesPropertyType;
         });
     }, [searchQuery, filters]);
 
@@ -200,7 +199,9 @@ const Leases: React.FC = () => {
                     filterOptions={filterOptions}
                     filterLabels={filterLabels}
                     onSearchChange={setSearchQuery}
-                    onFiltersChange={(newFilters) => setFilters(newFilters as any)}
+                    onFiltersChange={(newFilters) => setFilters(newFilters)}
+                    initialFilters={filters}
+                    showClearAll={true}
                 />
 
                 {/* Group By Property Header - Mimicking the Design in Screenshot */}

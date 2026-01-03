@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
+import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import DashboardFilter from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
 import ApplicationCard from './components/ApplicationCard';
 import { Plus, ChevronLeft, Loader2 } from 'lucide-react';
@@ -34,6 +34,18 @@ const transformApplicationToCard = (app: BackendApplication) => {
     };
     const status = statusMap[app.status] || 'Pending';
 
+    // Get property and unit info
+    const property = app.leasing?.property;
+    const unit = app.leasing?.unit;
+    let propertyUnit = '-';
+    if (property?.propertyName) {
+        if (property.propertyType === 'MULTI' && unit?.unitName) {
+            propertyUnit = `${property.propertyName} - ${unit.unitName}`;
+        } else {
+            propertyUnit = property.propertyName;
+        }
+    }
+
     // Get image from application or use empty string
     const image = app.imageUrl || '';
 
@@ -43,6 +55,10 @@ const transformApplicationToCard = (app: BackendApplication) => {
         image,
         appliedDate,
         status,
+        backendStatus: app.status,
+        propertyUnit,
+        propertyId: property?.id,
+        unitId: unit?.id,
     };
 };
 
@@ -69,31 +85,46 @@ const Application = () => {
         setCurrentPage(1); // Reset to first page on filter change
     };
 
-    const filterOptions = {
-        status: [
+    // Get unique property/units for filters
+    const uniquePropertyUnits = useMemo(() => {
+        const propertyUnits = new Set(
+            applications
+                .map(app => {
+                    const property = app.leasing?.property;
+                    const unit = app.leasing?.unit;
+                    if (property?.propertyName) {
+                        if (property.propertyType === 'MULTI' && unit?.unitName) {
+                            return `${property.propertyName} - ${unit.unitName}`;
+                        }
+                        return property.propertyName;
+                    }
+                    return null;
+                })
+                .filter((pu): pu is string => pu !== null)
+        );
+        return Array.from(propertyUnits).map(pu => ({
+            value: pu,
+            label: pu,
+        }));
+    }, [applications]);
+
+    const filterOptions: Record<string, FilterOption[]> = {
+        screeningStatus: [
             { value: 'approved', label: 'Approved' },
             { value: 'pending', label: 'Pending' },
             { value: 'rejected', label: 'Rejected' },
         ],
-        propertyUnits: [
-            { value: 'unit1', label: 'Unit 1' },
-            { value: 'unit2', label: 'Unit 2' }
-        ],
-        screeningStatus: [
-            { value: 'completed', label: 'Completed' },
-            { value: 'in_progress', label: 'In Progress' },
-            { value: 'pending', label: 'Pending' }
+        propertyUnits: uniquePropertyUnits.length > 0 ? uniquePropertyUnits : [
+            { value: '__no_items__', label: 'No properties available' }
         ],
         applicationType: [
-            { value: 'individual', label: 'Individual' },
-            { value: 'cosigner', label: 'Co-signer' }
+            { value: '__no_items__', label: 'No application types available' }
         ]
     };
 
-    const filterLabels = {
-        status: 'Status',
-        propertyUnits: 'Property & Units',
+    const filterLabels: Record<string, string> = {
         screeningStatus: 'Screening Status',
+        propertyUnits: 'Property & Units',
         applicationType: 'Application Type'
     };
 
@@ -110,19 +141,33 @@ const Application = () => {
             const query = searchQuery.toLowerCase();
             filtered = filtered.filter(app =>
                 app.name.toLowerCase().includes(query) ||
-                app.appliedDate.toLowerCase().includes(query)
+                app.appliedDate.toLowerCase().includes(query) ||
+                app.propertyUnit.toLowerCase().includes(query)
             );
         }
 
-        // Apply status filter
-        if (filters.status && filters.status.length > 0) {
+        // Apply screening status filter
+        if (filters.screeningStatus && filters.screeningStatus.length > 0) {
             filtered = filtered.filter(app => {
                 const appStatus = app.status.toLowerCase();
-                return filters.status.some(filterStatus =>
+                return filters.screeningStatus.some(filterStatus =>
                     appStatus === filterStatus.toLowerCase()
                 );
             });
         }
+
+        // Apply property/unit filter (ignore placeholder value)
+        if (filters.propertyUnits && filters.propertyUnits.length > 0) {
+            const validFilters = filters.propertyUnits.filter(v => v !== '__no_items__');
+            if (validFilters.length > 0) {
+                filtered = filtered.filter(app =>
+                    validFilters.includes(app.propertyUnit)
+                );
+            }
+        }
+
+        // Screening status and application type filters are placeholders for now
+        // They will be ignored if only placeholder is selected
 
         return filtered;
     }, [applications, searchQuery, filters]);
@@ -187,7 +232,9 @@ const Application = () => {
                     filterLabels={filterLabels}
                     onSearchChange={handleSearchChange}
                     onFiltersChange={handleFiltersChange}
+                    initialFilters={filters}
                     showMoreFilters={false}
+                    showClearAll={true}
                 />
 
                 {/* Sort and Count */}

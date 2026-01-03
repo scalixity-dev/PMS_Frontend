@@ -19,6 +19,8 @@ interface ListingCardData {
     address: string;
     price: number | null;
     status: 'listed' | 'unlisted';
+    daysListed?: number; // Days since listing was created
+    isSyndicated?: boolean; // Whether listing is syndicated
     bathrooms: number;
     bedrooms: number;
     image: string;
@@ -35,10 +37,14 @@ const Listing: React.FC = () => {
         status: string[];
         daysListed: string[];
         syndication: string[];
+        bedrooms: string[];
+        bathrooms: string[];
     }>({
         status: [],
         daysListed: [],
-        syndication: []
+        syndication: [],
+        bedrooms: [],
+        bathrooms: []
     });
 
     const [currentPage, setCurrentPage] = useState(1);
@@ -86,13 +92,28 @@ const Listing: React.FC = () => {
         syndication: [
             { value: 'yes', label: 'Yes' },
             { value: 'no', label: 'No' },
+        ],
+        bedrooms: [
+            { value: '1', label: '1' },
+            { value: '2', label: '2' },
+            { value: '3', label: '3' },
+            { value: '4', label: '4' },
+            { value: '5+', label: '5+' },
+        ],
+        bathrooms: [
+            { value: '1', label: '1' },
+            { value: '2', label: '2' },
+            { value: '3', label: '3' },
+            { value: '4+', label: '4+' },
         ]
     };
 
     const filterLabels: Record<string, string> = {
-        status: 'Status',
+        status: 'Listing Status',
         daysListed: 'Days Listed',
-        syndication: 'Syndication'
+        syndication: 'Syndication',
+        bedrooms: 'Bedrooms',
+        bathrooms: 'Bathrooms'
     };
 
     // Transform listings and properties into ListingCardData
@@ -163,6 +184,18 @@ const Listing: React.FC = () => {
                     const activeListing = activeUnitListingsMap.get(unit.id);
                     const hasActiveListing = !!activeListing;
 
+                    // Calculate days listed
+                    let daysListed: number | undefined;
+                    if (activeListing && activeListing.listedAt) {
+                        const listedDate = new Date(activeListing.listedAt);
+                        const today = new Date();
+                        const diffTime = today.getTime() - listedDate.getTime();
+                        daysListed = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                    }
+
+                    // Check if listing is syndicated (has external listing URL)
+                    const isSyndicated = activeListing ? !!(activeListing.externalListingUrl) : false;
+
                     // Get price from unit listing, unit leasing, or unit rent
                     let price: number | null = null;
                     if (hasActiveListing && activeListing) {
@@ -215,6 +248,8 @@ const Listing: React.FC = () => {
                         address: propertyAddress,
                         price,
                         status: hasActiveListing ? 'listed' : 'unlisted',
+                        daysListed,
+                        isSyndicated,
                         bathrooms,
                         bedrooms,
                         image,
@@ -231,6 +266,18 @@ const Listing: React.FC = () => {
             if (backendProperty.propertyType === 'SINGLE') {
                 const hasActiveListing = listedPropertyIds.has(backendProperty.id);
                 const activeListing = activeListingsMap.get(backendProperty.id);
+
+                // Calculate days listed
+                let daysListed: number | undefined;
+                if (activeListing && activeListing.listedAt) {
+                    const listedDate = new Date(activeListing.listedAt);
+                    const today = new Date();
+                    const diffTime = today.getTime() - listedDate.getTime();
+                    daysListed = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                }
+
+                // Check if listing is syndicated (has external listing URL)
+                const isSyndicated = activeListing ? !!(activeListing.externalListingUrl) : false;
 
                 // Format address
                 let address = 'Address not available';
@@ -290,6 +337,8 @@ const Listing: React.FC = () => {
                     address,
                     price,
                     status: hasActiveListing ? 'listed' : 'unlisted',
+                    daysListed,
+                    isSyndicated,
                     bathrooms,
                     bedrooms,
                     image,
@@ -311,17 +360,45 @@ const Listing: React.FC = () => {
                 listing.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 listing.address.toLowerCase().includes(searchQuery.toLowerCase());
 
-            // Status filter
-            const matchesStatus = filters.status.length === 0 ||
+            // Status filter (listing status: listed/unlisted)
+            const matchesStatus = !filters.status?.length ||
                 filters.status.includes(listing.status);
 
-            // Days listed filter (mock for now - would need listing date)
-            const matchesDaysListed = true;
+            // Days listed filter (only applies to listed items with a listing date)
+            // If no filter selected, show all. If filter selected, only show items that match
+            const matchesDaysListed = !filters.daysListed?.length || 
+                (listing.daysListed !== undefined && (
+                    (filters.daysListed.includes('new') && listing.daysListed < 7) ||
+                    (filters.daysListed.includes('recent') && listing.daysListed >= 7 && listing.daysListed <= 30) ||
+                    (filters.daysListed.includes('old') && listing.daysListed > 30)
+                ));
 
-            // Syndication filter (mock for now)
-            const matchesSyndication = true;
+            // Syndication filter
+            const matchesSyndication = !filters.syndication?.length ||
+                (filters.syndication.includes('yes') && listing.isSyndicated) ||
+                (filters.syndication.includes('no') && !listing.isSyndicated);
 
-            return matchesSearch && matchesStatus && matchesDaysListed && matchesSyndication;
+            // Bedrooms filter
+            const matchesBedrooms = !filters.bedrooms?.length ||
+                filters.bedrooms.some(filterValue => {
+                    if (filterValue === '5+') {
+                        return listing.bedrooms >= 5;
+                    }
+                    const filterBedrooms = parseInt(filterValue, 10);
+                    return listing.bedrooms === filterBedrooms;
+                });
+
+            // Bathrooms filter
+            const matchesBathrooms = !filters.bathrooms?.length ||
+                filters.bathrooms.some(filterValue => {
+                    if (filterValue === '4+') {
+                        return listing.bathrooms >= 4;
+                    }
+                    const filterBathrooms = parseInt(filterValue, 10);
+                    return listing.bathrooms === filterBathrooms;
+                });
+
+            return matchesSearch && matchesStatus && matchesDaysListed && matchesSyndication && matchesBedrooms && matchesBathrooms;
         });
     }, [allListingsData, searchQuery, filters]);
 
@@ -364,7 +441,9 @@ const Listing: React.FC = () => {
                     filterLabels={filterLabels}
                     onSearchChange={setSearchQuery}
                     onFiltersChange={(newFilters) => setFilters(newFilters as any)}
+                    initialFilters={filters}
                     showMoreFilters={false}
+                    showClearAll={true}
                 />
 
                 <div className="flex-1 flex flex-col">

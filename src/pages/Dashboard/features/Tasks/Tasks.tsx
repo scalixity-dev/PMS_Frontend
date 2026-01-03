@@ -38,6 +38,7 @@ const Tasks: React.FC = () => {
     const [editingTask, setEditingTask] = useState<Task | null>(null);
     const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [activeSavedFilter, setActiveSavedFilter] = useState<string | null>(null);
     const [mobileMenuOpen, setMobileMenuOpen] = useState<string | number | null>(null);
     const mobileMenuRef = useRef<HTMLDivElement>(null);
 
@@ -47,7 +48,7 @@ const Tasks: React.FC = () => {
             name: 'Urgent Tasks',
             filters: {
                 status: ['active'],
-                frequency: ['DAILY']
+                date: ['today']
             }
         }
     ]);
@@ -207,6 +208,12 @@ const Tasks: React.FC = () => {
 
     const handleSelectSavedFilter = (filter: SavedFilter) => {
         setFilters(filter.filters);
+        setActiveSavedFilter(filter.name);
+    };
+
+    const handleClearSavedFilter = () => {
+        setFilters({});
+        setActiveSavedFilter(null);
     };
 
     const mapStatusToBackend = (
@@ -418,6 +425,8 @@ const Tasks: React.FC = () => {
                     savedFilters={savedFilters}
                     onSaveFilter={handleSaveFilter}
                     onSelectSavedFilter={handleSelectSavedFilter}
+                    onClearSavedFilter={handleClearSavedFilter}
+                    activeSavedFilter={activeSavedFilter}
                     initialFilters={filters}
                     searchPlaceholder="Search tasks..."
                 />

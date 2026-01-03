@@ -1,3 +1,4 @@
+import React from 'react';
 import { Eye } from 'lucide-react';
 
 interface Request {
@@ -9,8 +10,13 @@ interface Request {
     property: string;
 }
 
-const TenantRequestsSection = () => {
-    // Mock request data
+interface TenantRequestsSectionProps {
+    tenantId: string;
+}
+
+const TenantRequestsSection: React.FC<TenantRequestsSectionProps> = ({ tenantId }) => {
+    // Note: There's no direct API for tenant maintenance requests yet
+    // This is a placeholder that shows empty state
     const requests: Request[] = [
         {
             id: 1,
@@ -42,6 +48,15 @@ const TenantRequestsSection = () => {
                 return 'bg-gray-500';
         }
     };
+
+    if (requests.length === 0) {
+        return (
+            <div className="text-center py-12 bg-[#F0F0F6] rounded-[2rem]">
+                <p className="text-gray-600">No maintenance requests found for this tenant</p>
+                <p className="text-sm text-gray-500 mt-2">Maintenance request data will appear here once available</p>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-4 bg-[#F0F0F6] p-4 rounded-[2rem]">

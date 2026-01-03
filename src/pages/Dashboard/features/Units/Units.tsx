@@ -45,30 +45,51 @@ const Units: React.FC = () => {
     const isLoading = isLoadingProperties || isLoadingUnits || isLoadingListings;
     const error = propertiesError || unitsError || listingsError;
 
-    // Create maps of active listings for quick lookup
-    const activeListingsMap = useMemo(() => {
-        const propertyListingsMap = new Map<string, BackendListing>();
-        const unitListingsMap = new Map<string, BackendListing>();
+    // Create maps of listings for quick lookup (active and draft)
+    const listingsMap = useMemo(() => {
+        const activePropertyListingsMap = new Map<string, BackendListing>();
+        const activeUnitListingsMap = new Map<string, BackendListing>();
+        const draftPropertyListingsMap = new Map<string, BackendListing>();
+        const draftUnitListingsMap = new Map<string, BackendListing>();
 
         listings.forEach((listing: BackendListing) => {
             if (listing.listingStatus === 'ACTIVE' && listing.isActive) {
                 if (listing.unitId) {
                     // Unit-level listing
-                    const existing = unitListingsMap.get(listing.unitId);
+                    const existing = activeUnitListingsMap.get(listing.unitId);
                     if (!existing || new Date(listing.listedAt) > new Date(existing.listedAt)) {
-                        unitListingsMap.set(listing.unitId, listing);
+                        activeUnitListingsMap.set(listing.unitId, listing);
                     }
                 } else {
                     // Property-level listing
-                    const existing = propertyListingsMap.get(listing.propertyId);
+                    const existing = activePropertyListingsMap.get(listing.propertyId);
                     if (!existing || new Date(listing.listedAt) > new Date(existing.listedAt)) {
-                        propertyListingsMap.set(listing.propertyId, listing);
+                        activePropertyListingsMap.set(listing.propertyId, listing);
+                    }
+                }
+            } else if (listing.listingStatus === 'DRAFT') {
+                if (listing.unitId) {
+                    // Unit-level draft listing
+                    const existing = draftUnitListingsMap.get(listing.unitId);
+                    if (!existing || new Date(listing.listedAt) > new Date(existing.listedAt)) {
+                        draftUnitListingsMap.set(listing.unitId, listing);
+                    }
+                } else {
+                    // Property-level draft listing
+                    const existing = draftPropertyListingsMap.get(listing.propertyId);
+                    if (!existing || new Date(listing.listedAt) > new Date(existing.listedAt)) {
+                        draftPropertyListingsMap.set(listing.propertyId, listing);
                     }
                 }
             }
         });
 
-        return { propertyListingsMap, unitListingsMap };
+        return { 
+            activePropertyListingsMap, 
+            activeUnitListingsMap,
+            draftPropertyListingsMap,
+            draftUnitListingsMap
+        };
     }, [listings]);
 
     // Transform backend properties to UnitGroup format
@@ -104,6 +125,15 @@ const Units: React.FC = () => {
                     address = `${property.address.streetAddress}, ${property.address.city}, ${property.address.stateRegion} ${property.address.zipCode}, ${property.address.country}`;
                 }
 
+                // Map property status from backend to frontend
+                const statusMap: Record<string, 'active' | 'archived'> = {
+                    'ACTIVE': 'active',
+                    'ARCHIVED': 'archived',
+                };
+                const propertyStatus = property.status
+                    ? (statusMap[property.status] || 'archived')
+                    : 'archived';
+
                 // Get cover photo or first photo - for multi-apartment, use empty string if no image
                 const image = property.propertyType === 'MULTI'
                     ? (property.coverPhotoUrl || (property.photos && property.photos.length > 0 ? property.photos[0].photoUrl : '') || '')
@@ -125,7 +155,7 @@ const Units: React.FC = () => {
 
                             // Check if unit has an active listing with OCCUPIED status
                             // First check the fetched listings map (most reliable)
-                            const activeListing = activeListingsMap.unitListingsMap.get(unit.id);
+                            const activeListing = listingsMap.activeUnitListingsMap.get(unit.id);
                             if (activeListing && (activeListing.occupancyStatus === 'OCCUPIED' || activeListing.occupancyStatus === 'PARTIALLY_OCCUPIED')) {
                                 unitStatus = 'Occupied';
                             } else if (unit.listings && Array.isArray(unit.listings) && unit.listings.length > 0) {
@@ -152,7 +182,8 @@ const Units: React.FC = () => {
                             // If no unit photos or coverPhotoUrl, unitImage remains empty string (will show "No Image")
 
                             // Check if unit has an active listing
-                            const hasActiveListing = activeListingsMap.unitListingsMap.has(unit.id);
+                            const hasActiveListing = listingsMap.activeUnitListingsMap.has(unit.id);
+                            const hasDraftListing = listingsMap.draftUnitListingsMap.has(unit.id);
 
                             return {
                                 id: unit.id,
@@ -165,6 +196,7 @@ const Units: React.FC = () => {
                                 sqft: unit.sizeSqft ? (typeof unit.sizeSqft === 'string' ? parseFloat(unit.sizeSqft) : Number(unit.sizeSqft)) : 0,
                                 image: unitImage,
                                 hasActiveListing,
+                                hasDraftListing,
                             };
                         });
 
@@ -187,7 +219,7 @@ const Units: React.FC = () => {
 
                     // Check if property has an active listing with OCCUPIED status
                     // First check the fetched listings map (most reliable)
-                    const activeListing = activeListingsMap.propertyListingsMap.get(property.id);
+                    const activeListing = listingsMap.activePropertyListingsMap.get(property.id);
                     if (activeListing && (activeListing.occupancyStatus === 'OCCUPIED' || activeListing.occupancyStatus === 'PARTIALLY_OCCUPIED')) {
                         unitStatus = 'Occupied';
                     } else if (property.listings && Array.isArray(property.listings) && property.listings.length > 0) {
@@ -203,7 +235,8 @@ const Units: React.FC = () => {
                     }
 
                     // Check if property has an active listing
-                    const hasActiveListing = activeListingsMap.propertyListingsMap.has(property.id);
+                    const hasActiveListing = listingsMap.activePropertyListingsMap.has(property.id);
+                    const hasDraftListing = listingsMap.draftPropertyListingsMap.has(property.id);
 
                     units = [{
                         id: property.id,
@@ -216,9 +249,79 @@ const Units: React.FC = () => {
                         sqft: property.sizeSqft ? (typeof property.sizeSqft === 'string' ? parseFloat(property.sizeSqft) : Number(property.sizeSqft)) : 0,
                         image: image,
                         hasActiveListing,
+                        hasDraftListing,
                     }];
 
                     status = unitStatus;
+                }
+
+                // Calculate total monthly rent for balance category
+                let totalMonthlyRent = 0;
+                if (units.length > 0) {
+                    // Sum up all unit rents
+                    totalMonthlyRent = units.reduce((sum, unit) => sum + (unit.rent || 0), 0);
+                } else if (property.marketRent) {
+                    // Fallback to property market rent if no units
+                    totalMonthlyRent = typeof property.marketRent === 'string'
+                        ? parseFloat(property.marketRent) || 0
+                        : Number(property.marketRent) || 0;
+                }
+
+                // Map country to currency (default to USD if country not found)
+                const countryToCurrency: Record<string, string> = {
+                    'United States': 'USD',
+                    'USA': 'USD',
+                    'US': 'USD',
+                    'Canada': 'CAD',
+                    'United Kingdom': 'GBP',
+                    'UK': 'GBP',
+                    'Australia': 'AUD',
+                    'New Zealand': 'NZD',
+                    'India': 'INR',
+                    'China': 'CNY',
+                    'Japan': 'JPY',
+                    'Germany': 'EUR',
+                    'France': 'EUR',
+                    'Italy': 'EUR',
+                    'Spain': 'EUR',
+                    'Netherlands': 'EUR',
+                    'Belgium': 'EUR',
+                    'Switzerland': 'CHF',
+                    'Singapore': 'SGD',
+                    'Hong Kong': 'HKD',
+                    'UAE': 'AED',
+                    'United Arab Emirates': 'AED',
+                    'Saudi Arabia': 'SAR',
+                    'South Africa': 'ZAR',
+                    'Brazil': 'BRL',
+                    'Mexico': 'MXN',
+                };
+                const currency = country ? (countryToCurrency[country] || 'USD') : 'USD';
+
+                // Determine balance category based on total monthly rent and currency
+                let balanceCategory: 'low' | 'medium' | 'high' = 'medium';
+                
+                // Currency-specific thresholds (in base currency units)
+                const currencyThresholds: Record<string, { low: number; high: number }> = {
+                    'USD': { low: 25000, high: 75000 },
+                    'CAD': { low: 33000, high: 100000 },
+                    'GBP': { low: 20000, high: 60000 },
+                    'EUR': { low: 23000, high: 69000 },
+                    'AUD': { low: 37000, high: 110000 },
+                    'INR': { low: 2000000, high: 6000000 },
+                    'CNY': { low: 180000, high: 540000 },
+                    'JPY': { low: 3500000, high: 10500000 },
+                    'SGD': { low: 33000, high: 100000 },
+                    'HKD': { low: 195000, high: 585000 },
+                    'AED': { low: 92000, high: 275000 },
+                    'SAR': { low: 94000, high: 280000 },
+                };
+                
+                const thresholds = currencyThresholds[currency] || currencyThresholds['USD'];
+                if (totalMonthlyRent < thresholds.low) {
+                    balanceCategory = 'low';
+                } else if (totalMonthlyRent > thresholds.high) {
+                    balanceCategory = 'high';
                 }
 
                 return {
@@ -230,24 +333,50 @@ const Units: React.FC = () => {
                     units,
                     propertyType: property.propertyType,
                     country,
+                    propertyStatus,
+                    balanceCategory,
                 };
             });
-    }, [properties, unitQueries, multiProperties, activeListingsMap]);
+    }, [properties, unitQueries, multiProperties, listingsMap]);
 
     const unitGroups = useMemo(() => {
         return allUnitGroups.filter(group => {
-            const matchesSearch = group.propertyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            // Search filter
+            const matchesSearch = searchQuery === '' ||
+                group.propertyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 group.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 group.units.some(unit => unit.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
-            // Basic filter implementation - can be expanded based on specific requirements
-            // Treat 'Partially Occupied' as occupied for filtering purposes
-            const matchesDisplay = !filters.display?.length ||
-                filters.display.includes('all') ||
-                (filters.display.includes('occupied') && (group.status === 'Occupied' || group.status === 'Partially Occupied')) ||
-                (filters.display.includes('vacant') && group.status === 'Vacant');
+            // Status filter
+            const matchesStatus = !filters.status?.length ||
+                (group.propertyStatus && filters.status.includes(group.propertyStatus));
 
-            return matchesSearch && matchesDisplay;
+            // Occupancy filter
+            const matchesOccupancy = !filters.occupancy?.length ||
+                (filters.occupancy.includes('occupied') && group.status === 'Occupied') ||
+                (filters.occupancy.includes('vacant') && group.status === 'Vacant') ||
+                (filters.occupancy.includes('partially_occupied') && group.status === 'Partially Occupied');
+
+            // Property Type filter
+            const matchesPropertyType = !filters.propertyType?.length ||
+                (group.propertyType && filters.propertyType.includes(group.propertyType));
+
+            // Marketing Status filter
+            // Check if any unit in the group has an active listing, draft listing, or is unlisted
+            const hasActiveListing = group.units.some(unit => unit.hasActiveListing);
+            const hasDraftListing = group.units.some(unit => unit.hasDraftListing);
+            const isUnlisted = !hasActiveListing && !hasDraftListing;
+            
+            const matchesMarketingStatus = !filters.marketingStatus?.length ||
+                (filters.marketingStatus.includes('listed') && hasActiveListing) ||
+                (filters.marketingStatus.includes('unlisted') && isUnlisted) ||
+                (filters.marketingStatus.includes('draft') && hasDraftListing);
+
+            // Balance filter
+            const matchesBalance = !filters.balance?.length ||
+                (group.balanceCategory && filters.balance.includes(group.balanceCategory));
+
+            return matchesSearch && matchesStatus && matchesOccupancy && matchesPropertyType && matchesMarketingStatus && matchesBalance;
         });
     }, [allUnitGroups, searchQuery, filters]);
 
@@ -271,30 +400,37 @@ const Units: React.FC = () => {
     };
 
     const filterOptions: Record<string, FilterOption[]> = {
-        display: [
-            { value: 'all', label: 'All' },
+        status: [
+            { value: 'active', label: 'Active' },
+            { value: 'archived', label: 'Archived' },
+        ],
+        occupancy: [
             { value: 'occupied', label: 'Occupied' },
-            { value: 'vacant', label: 'Vacant' }
+            { value: 'vacant', label: 'Vacant' },
+            { value: 'partially_occupied', label: 'Partially Occupied' },
         ],
-        property: [
-            { value: 'luxury', label: 'Luxury Apartment' },
-            { value: 'avaza', label: 'Avaza Apartment' }
-        ],
-        unitType: [
-            { value: 'single', label: 'Single Family' },
-            { value: 'apartment', label: 'Apartment' }
+        propertyType: [
+            { value: 'SINGLE', label: 'Single Apartment' },
+            { value: 'MULTI', label: 'Multi Apartment' },
         ],
         marketingStatus: [
             { value: 'listed', label: 'Listed' },
-            { value: 'unlisted', label: 'Unlisted' }
+            { value: 'unlisted', label: 'Unlisted' },
+            { value: 'draft', label: 'Draft' },
+        ],
+        balance: [
+            { value: 'low', label: 'Low' },
+            { value: 'medium', label: 'Medium' },
+            { value: 'high', label: 'High' },
         ]
     };
 
     const filterLabels: Record<string, string> = {
-        display: 'Display',
-        property: 'Property',
-        unitType: 'Unit Type',
-        marketingStatus: 'Marketing Status'
+        status: 'Status',
+        occupancy: 'Occupancy',
+        propertyType: 'Property Type',
+        marketingStatus: 'Marketing Status',
+        balance: 'Balance'
     };
 
     return (
@@ -339,6 +475,8 @@ const Units: React.FC = () => {
                     filterLabels={filterLabels}
                     onSearchChange={setSearchQuery}
                     onFiltersChange={setFilters}
+                    initialFilters={filters}
+                    showClearAll={true}
                 />
 
                 {/* Units List */}
