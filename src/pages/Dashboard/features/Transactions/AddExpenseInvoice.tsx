@@ -27,10 +27,10 @@ const AddExpenseInvoice: React.FC = () => {
     }, [location.state]);
 
     return (
-        <div className="p-6 max-w-6xl mx-auto font-['Urbanist']">
+        <div className="p-4 sm:p-6 max-w-6xl mx-auto font-['Urbanist']">
 
             {/* Main Card */}
-            <div className="bg-[#DFE5E3] rounded-[2rem] p-8 shadow-sm min-h-auto">
+            <div className="bg-[#DFE5E3] rounded-[1.5rem] sm:rounded-[2rem] p-4 sm:p-6 md:p-8 shadow-sm min-h-auto">
                 {/* Header */}
                 <div className="flex items-center mb-6">
                     <button
@@ -57,7 +57,7 @@ const AddExpenseInvoice: React.FC = () => {
 
 
                 {/* Form Fields */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8 ">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 sm:gap-8 mb-8 ">
                     {/* Category */}
                     <div className="col-span-1 md:col-span-2 ">
                         <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Category & subcategory*</label>
@@ -183,11 +183,11 @@ const AddExpenseInvoice: React.FC = () => {
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-4">
-                    <button className="bg-[#84CC16] text-white px-8 py-3 rounded-md font-semibold shadow-lg shadow-[#84CC16]/20 hover:bg-[#65a30d] hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row gap-4">
+                    <button className="bg-[#84CC16] text-white px-8 py-3 rounded-md font-semibold shadow-lg shadow-[#84CC16]/20 hover:bg-[#65a30d] hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2 w-full sm:w-auto">
                         Upload File
                     </button>
-                    <button className="bg-[#3D7475] text-white px-10 py-3 rounded-md font-semibold shadow-lg shadow-[#3D7475]/20 hover:bg-[#2c5556] hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200">
+                    <button className="bg-[#3D7475] text-white px-10 py-3 rounded-md font-semibold shadow-lg shadow-[#3D7475]/20 hover:bg-[#2c5556] hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 w-full sm:w-auto">
                         Create
                     </button>
                 </div>
