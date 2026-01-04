@@ -14,8 +14,8 @@ import type { BackendTenantProfile } from '../../../../services/tenant.service';
 // Transform backend tenant profile to detail page format
 const transformTenantForDetail = (backendTenant: BackendTenantProfile) => {
     const email = backendTenant.user?.email || backendTenant.contactBookEntry?.email || 'N/A';
-    const phone = backendTenant.phoneNumber 
-        ? `${backendTenant.phoneCountryCode || ''}${backendTenant.phoneNumber}`.trim() 
+    const phone = backendTenant.phoneNumber
+        ? `${backendTenant.phoneCountryCode || ''}${backendTenant.phoneNumber}`.trim()
         : 'N/A';
     const name = [backendTenant.firstName, backendTenant.middleName, backendTenant.lastName]
         .filter(Boolean)
@@ -176,16 +176,16 @@ const TenantDetail = () => {
                 <span className="text-gray-600 text-sm font-semibold">{tenant.name}</span>
             </div>
 
-            <div className="p-6 bg-[#E0E5E5] min-h-screen rounded-[2rem]">
+            <div className="p-4 sm:p-6 bg-[#E0E5E5] min-h-screen rounded-[1.5rem] sm:rounded-[2rem]">
                 {/* Header Actions */}
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <div className="flex items-center gap-2">
                         <button onClick={() => navigate(-1)} className="p-2 hover:bg-black/5 rounded-full transition-colors">
                             <ChevronLeft className="w-6 h-6 text-black" />
                         </button>
                         <h1 className="text-2xl font-bold text-black">Tenant</h1>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 w-full sm:w-auto flex-wrap sm:flex-nowrap">
                         <button
                             onClick={() => navigate('/dashboard/accounting/transactions/income/add', {
                                 state: {
@@ -197,7 +197,7 @@ const TenantDetail = () => {
                                     prefilledLease: 'Lease #101' // Mock lease for now
                                 }
                             })}
-                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2"
+                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2 whitespace-nowrap"
                         >
                             Add Invoice
                             <Plus className="w-4 h-4" />
@@ -205,7 +205,7 @@ const TenantDetail = () => {
                         <div className="relative" ref={actionMenuRef}>
                             <button
                                 onClick={() => setIsActionMenuOpen(!isActionMenuOpen)}
-                                className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors"
+                                className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors whitespace-nowrap"
                             >
                                 Action
                             </button>
@@ -233,15 +233,15 @@ const TenantDetail = () => {
                     </div>
                 </div>
 
-                <div className='shadow-lg rounded-[2rem] p-6 mb-8'>
+                <div className='shadow-lg rounded-[2rem] p-4 sm:p-6 mb-8 bg-white'>
                     {/* Top Card */}
-                    <div className="bg-[#F6F6F8] rounded-[2rem] shadow-lg p-6 mb-8">
-                        <div className="flex flex-col lg:flex-row gap-8">
+                    <div className="bg-[#F6F6F8] rounded-[1.5rem] sm:rounded-[2rem] shadow-lg p-4 sm:p-6 mb-8">
+                        <div className="flex flex-col xl:flex-row gap-8">
                             {/* Tenant Info */}
-                            <div className="flex gap-6 items-start">
+                            <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start w-full xl:w-auto">
                                 <img src={tenant.image} alt={tenant.name} className="w-32 h-32 rounded-2xl object-cover" />
-                                <div className="flex flex-col gap-3">
-                                    <div className="bg-[#3A6D6C] text-white p-4 rounded-xl text-center min-w-[200px]">
+                                <div className="flex flex-col gap-3 w-full sm:w-auto">
+                                    <div className="bg-[#3A6D6C] text-white p-4 rounded-xl text-center min-w-[200px] w-full sm:w-auto">
                                         <h2 className="font-bold text-lg">{tenant.name}</h2>
                                         <p className="text-xs opacity-90">{tenant.phone}</p>
                                         <p className="text-xs opacity-90">{tenant.email}</p>
@@ -265,49 +265,49 @@ const TenantDetail = () => {
                             </div>
 
                             {/* Stats & Reports */}
-                            <div className="flex-1 flex flex-col justify-between gap-4">
-                                <div className="grid grid-cols-3 gap-4">
-                                    <div className="bg-[#7BD747] rounded-full px-4 py-3 flex flex-col justify-between h-18 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">
+                            <div className="flex-1 flex flex-col justify-between gap-4 w-full">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="bg-[#7BD747] rounded-full px-6 py-3 flex flex-row md:flex-col justify-between items-center md:items-stretch h-auto md:h-24 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)] gap-2">
                                         <span className="text-xs font-semibold text-white">Outstanding</span>
-                                        <div className="flex justify-between items-center">
+                                        <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-2">
                                             <div className="bg-[#E8F5E9] px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">₹{tenant.outstanding.toLocaleString()}.00</div>
                                             <button className="bg-[#3A6D6C] text-white px-3 py-1 rounded-full text-[10px] font-medium uppercase shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">Received</button>
                                         </div>
                                     </div>
-                                    <div className="bg-[#7BD747] rounded-full px-4 py-3 flex flex-col justify-between h-18 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">
+                                    <div className="bg-[#7BD747] rounded-full px-6 py-3 flex flex-row md:flex-col justify-between items-center md:items-stretch h-auto md:h-24 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)] gap-2">
                                         <span className="text-xs font-semibold text-white">Deposits</span>
-                                        <div className="flex justify-between items-center">
+                                        <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-2">
                                             <div className="bg-[#E8F5E9] px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">₹{tenant.deposits.toLocaleString()}.00</div>
                                             <button className="bg-[#3A6D6C] text-white px-3 py-1 rounded-full text-[10px] font-medium uppercase shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">Action</button>
                                         </div>
                                     </div>
-                                    <div className="bg-[#7BD747] rounded-full px-4 py-3 flex flex-col justify-between h-18 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">
+                                    <div className="bg-[#7BD747] rounded-full px-6 py-3 flex flex-row md:flex-col justify-between items-center md:items-stretch h-auto md:h-24 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)] gap-2">
                                         <span className="text-xs font-semibold text-white">Credits</span>
-                                        <div className="flex justify-between items-center">
+                                        <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-2">
                                             <div className="bg-[#E8F5E9] px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">₹{tenant.credits.toLocaleString()}.00</div>
                                             <button className="bg-[#3A6D6C] text-white px-3 py-1 rounded-full text-[10px] font-medium uppercase shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">Action</button>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="bg-[#E4E4E4] rounded-[3.5rem] p-4 shadow-lg">
+                                <div className="bg-[#E4E4E4] rounded-[2rem] sm:rounded-[3.5rem] p-4 shadow-lg">
                                     <h3 className="text-gray-700 font-bold mb-2 ml-1">Reports</h3>
-                                    <div className="flex gap-4">
-                                        <div className="flex-1 bg-[#7BD747] rounded-full px-4 py-3 flex flex-col justify-between min-h-[5rem] shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">
+                                    <div className="flex flex-col md:flex-row gap-4">
+                                        <div className="flex-1 bg-[#7BD747] rounded-3xl sm:rounded-full px-4 py-4 flex flex-col justify-between min-h-[5rem] shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)] gap-2">
                                             <div className="flex flex-col">
                                                 <span className="text-xs font-bold text-white">Financial</span>
                                             </div>
-                                            <div className="flex justify-between items-center">
-                                                <div className="bg-[#E8F5E9] px-4 py-1 rounded-full text-xs text-gray-600 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">Tenant Statement</div>
+                                            <div className="flex justify-between items-center gap-2">
+                                                <div className="bg-[#E8F5E9] px-4 py-1 rounded-full text-xs text-gray-600 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)] whitespace-nowrap">Tenant Statement</div>
                                                 <button className="bg-[#3A6D6C] text-white px-4 py-1.5 rounded-full text-xs font-medium uppercase shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">View</button>
                                             </div>
                                         </div>
-                                        <div className="flex-1 bg-[#7BD747] rounded-full px-4 py-3 flex flex-col justify-between min-h-[5rem] shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
+                                        <div className="flex-1 bg-[#7BD747] rounded-3xl sm:rounded-full px-4 py-4 flex flex-col justify-between min-h-[5rem] shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] gap-2">
                                             <div className="flex flex-col">
                                                 <span className="text-xs font-bold text-white">Notice</span>
                                             </div>
-                                            <div className="flex justify-between items-center">
-                                                <div className="bg-[#E8F5E9] px-4 py-1 rounded-full text-xs text-gray-600 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">Tenant Notice</div>
+                                            <div className="flex justify-between items-center gap-2">
+                                                <div className="bg-[#E8F5E9] px-4 py-1 rounded-full text-xs text-gray-600 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] whitespace-nowrap">Tenant Notice</div>
                                                 <button className="bg-[#3A6D6C] text-white px-4 py-1.5 rounded-full text-xs font-medium uppercase shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">Send</button>
                                             </div>
                                         </div>

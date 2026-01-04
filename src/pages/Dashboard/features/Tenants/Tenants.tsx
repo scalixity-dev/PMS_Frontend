@@ -110,22 +110,22 @@ const Tenants = () => {
                 <span className="text-gray-600 text-sm font-semibold">Tenants</span>
             </div>
 
-            <div className="p-6 bg-[#E0E5E5] min-h-screen rounded-[2rem] flex flex-col">
+            <div className="p-4 sm:p-6 bg-[#E0E5E5] min-h-screen rounded-[1.5rem] sm:rounded-[2rem] flex flex-col">
                 {/* Header */}
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <div className="flex items-center gap-2">
                         <button onClick={() => navigate(-1)} className="p-2 hover:bg-black/5 rounded-full transition-colors">
                             <ChevronLeft className="w-6 h-6 text-black" />
                         </button>
                         <h1 className="text-2xl font-bold text-black">Tenants</h1>
                     </div>
-                    <div className="flex gap-3">
-                        <button className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors">
+                    <div className="flex gap-3 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+                        <button className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors whitespace-nowrap">
                             Import
                         </button>
                         <button
                             onClick={() => navigate('/dashboard/contacts/tenants/add')}
-                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2"
+                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2 whitespace-nowrap"
                         >
                             Add Tenants
                             <Plus className="w-4 h-4" />

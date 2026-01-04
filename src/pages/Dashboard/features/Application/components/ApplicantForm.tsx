@@ -45,7 +45,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
     const [imageToCrop, setImageToCrop] = React.useState<string | null>(null);
     const [isPhoneCodeOpen, setIsPhoneCodeOpen] = React.useState(false);
     const [phoneCodeSearch, setPhoneCodeSearch] = React.useState('');
-    
+
     // Refs for form fields to enable focus management
     const firstNameRef = React.useRef<HTMLInputElement>(null);
     const lastNameRef = React.useRef<HTMLInputElement>(null);
@@ -71,7 +71,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
     const filteredPhoneCodes = useMemo(() => {
         if (!phoneCodeSearch) return phoneCountryCodes;
         const searchLower = phoneCodeSearch.toLowerCase();
-        return phoneCountryCodes.filter(code => 
+        return phoneCountryCodes.filter(code =>
             code.name.toLowerCase().includes(searchLower) ||
             code.phonecode.includes(searchLower) ||
             code.isoCode.toLowerCase().includes(searchLower)
@@ -151,18 +151,18 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
             // Remove spaces, dashes, parentheses, and plus signs to count actual digits
             const digitsOnly = value.replace(/[\s\-\+\(\)]/g, '');
             const phoneRegex = /^[\d\s\-\+\(\)]+$/;
-            
+
             // Check if it contains only valid characters
             if (!phoneRegex.test(value)) {
                 return 'Please enter a valid phone number';
             }
-            
+
             // Check if it has at least 4 digits (minimum for most countries)
             // and at most 15 digits (ITU-T E.164 standard maximum)
             if (digitsOnly.length < 4) {
                 return 'Phone number must contain at least 4 digits';
             }
-            
+
             if (digitsOnly.length > 15) {
                 return 'Phone number cannot exceed 15 digits';
             }
@@ -217,7 +217,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
 
     const handleFieldChange = (key: keyof FormData, value: any) => {
         onChange(key, value);
-        
+
         // Clear error for this field when user starts typing
         if (touched[key]) {
             const error = validateField(key, value);
@@ -253,7 +253,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                     shortBio: bioRef,
                     moveInDate: moveInDateRef
                 };
-                
+
                 const fieldRef = refMap[firstErrorField];
                 if (fieldRef?.current) {
                     fieldRef.current.focus();
@@ -271,7 +271,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
         const requiredFields: Array<keyof FormData> = [
             'firstName', 'lastName', 'email', 'phoneNumber', 'dob', 'shortBio', 'moveInDate'
         ];
-        
+
         return requiredFields.every(key => {
             return !validateField(key, data[key]);
         });
@@ -279,8 +279,8 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
 
     const getInputClass = (fieldName: string) => {
         const baseClass = "w-full p-3 rounded-xl border text-sm focus:outline-none focus:border-[#3A6D6C] bg-white";
-        const errorClass = touched[fieldName] && errors[fieldName] 
-            ? "border-red-500 border-2" 
+        const errorClass = touched[fieldName] && errors[fieldName]
+            ? "border-red-500 border-2"
             : "border-gray-200";
         return `${baseClass} ${errorClass}`;
     };
@@ -292,7 +292,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                 {subTitle}
             </p>
 
-            <div className="bg-[#EEEEF0] rounded-[2rem] p-8 shadow-sm">
+            <div className="bg-[#EEEEF0] rounded-[2rem] p-4 sm:p-8 shadow-sm">
                 <div className="flex flex-col lg:flex-row gap-8">
                     {/* Upload Section */}
                     <div className="w-full lg:w-48 flex-shrink-0">
@@ -405,21 +405,19 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                         </div>
                         <div className="flex flex-col gap-1">
                             <label className="text-sm font-semibold text-[#2c3e50]">Phone Number *</label>
-                            <div className={`flex border rounded-xl transition-all ${
-                                touched.phoneNumber && errors.phoneNumber 
-                                    ? 'border-red-500 border-2' 
+                            <div className={`flex border rounded-xl transition-all ${touched.phoneNumber && errors.phoneNumber
+                                    ? 'border-red-500 border-2'
                                     : 'border-gray-200 focus-within:ring-2 focus-within:ring-[#3A6D6C] focus-within:border-[#3A6D6C]'
-                            }`}>
+                                }`}>
                                 {/* Phone Code Selector */}
                                 <div className="relative" ref={phoneCodeRef}>
                                     <button
                                         type="button"
                                         onClick={() => setIsPhoneCodeOpen(!isPhoneCodeOpen)}
-                                        className={`flex items-center gap-1 px-3 py-3 border-r bg-white rounded-l-xl focus:outline-none text-sm min-w-[100px] hover:bg-gray-50 transition-colors ${
-                                            touched.phoneNumber && errors.phoneNumber 
-                                                ? 'border-red-500' 
+                                        className={`flex items-center gap-1 px-3 py-3 border-r bg-white rounded-l-xl focus:outline-none text-sm min-w-[100px] hover:bg-gray-50 transition-colors ${touched.phoneNumber && errors.phoneNumber
+                                                ? 'border-red-500'
                                                 : 'border-gray-200'
-                                        }`}
+                                            }`}
                                     >
                                         <span className="text-sm font-medium">
                                             {selectedPhoneCode ? (
@@ -464,9 +462,8 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                                                                 setIsPhoneCodeOpen(false);
                                                                 setPhoneCodeSearch('');
                                                             }}
-                                                            className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-[#3A6D6C]/10 transition-colors text-left ${
-                                                                data.phoneCountryCode === code.value ? 'bg-[#3A6D6C]/10' : ''
-                                                            }`}
+                                                            className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-[#3A6D6C]/10 transition-colors text-left ${data.phoneCountryCode === code.value ? 'bg-[#3A6D6C]/10' : ''
+                                                                }`}
                                                         >
                                                             <span className="text-xl">{code.flag}</span>
                                                             <span className="flex-1 text-sm font-medium text-gray-900">{code.name}</span>
@@ -600,11 +597,10 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                 <button
                     onClick={handleSubmitClick}
                     disabled={!isFormValid()}
-                    className={`px-8 py-3 rounded-lg text-sm font-medium transition-colors shadow-md ${
-                        isFormValid()
+                    className={`px-8 py-3 rounded-lg text-sm font-medium transition-colors shadow-md ${isFormValid()
                             ? 'bg-[#3A6D6C] text-white hover:bg-[#2c5251] cursor-pointer'
                             : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    }`}
+                        }`}
                     aria-label={submitLabel}
                 >
                     {submitLabel}

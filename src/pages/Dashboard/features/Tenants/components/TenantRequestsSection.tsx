@@ -64,10 +64,10 @@ const TenantRequestsSection: React.FC<TenantRequestsSectionProps> = ({ tenantId:
 
                 <div
                     key={request.id}
-                    className="bg-[#F6F6F8] rounded-[2rem] p-6 shadow-lg grid grid-cols-[1.2fr_0.8fr_2fr_1fr_0.8fr] gap-4 items-center"
+                    className="bg-[#F6F6F8] rounded-[2rem] p-6 shadow-lg flex flex-col md:grid md:grid-cols-[1.2fr_0.8fr_2fr_1fr_0.8fr] gap-4 items-center"
                 >
                     {/* Name & Image */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 w-full md:w-auto justify-center md:justify-start">
                         <div className="w-12 h-12 rounded-full bg-[#7BD747] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                             {request.tenantInitial}
                         </div>
@@ -75,28 +75,28 @@ const TenantRequestsSection: React.FC<TenantRequestsSectionProps> = ({ tenantId:
                     </div>
 
                     {/* Status Badge */}
-                    <div className="flex justify-center">
+                    <div className="flex justify-center w-full md:w-auto">
                         <div className={`${getStatusColor(request.status)} text-white px-4 py-2 rounded-full text-xs font-medium shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)] inline-block`}>
                             {request.status}
                         </div>
                     </div>
 
                     {/* Description */}
-                    <div className="text-sm font-medium text-[#2E6819] truncate text-center">
+                    <div className="text-sm font-medium text-[#2E6819] text-center w-full md:w-auto md:truncate whitespace-normal">
                         {request.description}
                     </div>
 
                     {/* Property Badge */}
-                    <div className="flex justify-center">
+                    <div className="flex justify-center w-full md:w-auto">
                         <div className="bg-[#7BD747] text-white px-4 py-2 rounded-full text-xs font-medium shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)] inline-block">
                             {request.property}
                         </div>
                     </div>
 
                     {/* View Button */}
-                    <div className="flex justify-end">
+                    <div className="flex justify-center md:justify-end w-full md:w-auto">
                         <button
-                            className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-xs font-medium hover:bg-[#2c5251] transition-colors shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] flex items-center gap-2"
+                            className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-xs font-medium hover:bg-[#2c5251] transition-colors shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] flex items-center justify-center gap-2 w-full md:w-auto"
                             onClick={() => { }}
                         >
                             <Eye className="w-4 h-4" />

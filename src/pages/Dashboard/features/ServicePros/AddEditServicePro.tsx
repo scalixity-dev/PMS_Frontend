@@ -62,30 +62,30 @@ const AddEditServicePro = () => {
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
-    
+
     // Image cropping state
     const [showCropModal, setShowCropModal] = useState(false);
     const [imageToCrop, setImageToCrop] = useState<string | null>(null);
-    
+
     // Location data
     const [countries, setCountries] = useState<ICountry[]>([]);
     const [states, setStates] = useState<IState[]>([]);
     const [cities, setCities] = useState<ICity[]>([]);
-    
+
     // Phone country code state
     const [isPhoneCodeOpen, setIsPhoneCodeOpen] = useState(false);
     const [phoneCodeSearch, setPhoneCodeSearch] = useState('');
-    
+
     // Fax country code state
     const [isFaxCodeOpen, setIsFaxCodeOpen] = useState(false);
     const [faxCodeSearch, setFaxCodeSearch] = useState('');
     const faxCodeRef = useRef<HTMLDivElement>(null);
-    
+
     // Country/State dropdown state
     const [isCountryOpen, setIsCountryOpen] = useState(false);
     const [countrySearch, setCountrySearch] = useState('');
     const countryRef = useRef<HTMLDivElement>(null);
-    
+
     const [isStateOpen, setIsStateOpen] = useState(false);
     const [stateSearch, setStateSearch] = useState('');
     const stateRef = useRef<HTMLDivElement>(null);
@@ -171,7 +171,7 @@ const AddEditServicePro = () => {
     const filteredPhoneCodes = useMemo(() => {
         if (!phoneCodeSearch) return phoneCountryCodes;
         const searchLower = phoneCodeSearch.toLowerCase();
-        return phoneCountryCodes.filter(code => 
+        return phoneCountryCodes.filter(code =>
             code.name.toLowerCase().includes(searchLower) ||
             code.phonecode.includes(searchLower) ||
             code.isoCode.toLowerCase().includes(searchLower)
@@ -194,7 +194,7 @@ const AddEditServicePro = () => {
     const filteredCountries = useMemo(() => {
         if (!countrySearch) return countries;
         const searchLower = countrySearch.toLowerCase();
-        return countries.filter(country => 
+        return countries.filter(country =>
             country.name.toLowerCase().includes(searchLower) ||
             country.isoCode.toLowerCase().includes(searchLower)
         );
@@ -204,7 +204,7 @@ const AddEditServicePro = () => {
     const filteredStates = useMemo(() => {
         if (!stateSearch) return states;
         const searchLower = stateSearch.toLowerCase();
-        return states.filter(state => 
+        return states.filter(state =>
             state.name.toLowerCase().includes(searchLower) ||
             state.isoCode.toLowerCase().includes(searchLower)
         );
@@ -244,7 +244,7 @@ const AddEditServicePro = () => {
                 try {
                     setIsLoading(true);
                     const data = await serviceProviderService.getOne(id);
-                    
+
                     // Extract phone country code - find matching code from phoneCountryCodes
                     let phoneCountryCode = '';
                     if (data.phoneCountryCode && data.country) {
@@ -259,7 +259,7 @@ const AddEditServicePro = () => {
                             phoneCountryCode = matchingCode.value;
                         }
                     }
-                    
+
                     // Transform backend data to form data structure
                     setFormData({
                         general: {
@@ -289,7 +289,7 @@ const AddEditServicePro = () => {
                             country: data.country || ''
                         }
                     });
-                    
+
                     if (data.photoUrl) {
                         setProfilePhoto(data.photoUrl);
                     }
@@ -522,12 +522,12 @@ const AddEditServicePro = () => {
             }
 
             // Extract phone country code
-            const [, phoneCode] = formData.general.phoneCountryCode 
+            const [, phoneCode] = formData.general.phoneCountryCode
                 ? formData.general.phoneCountryCode.split('|')
                 : ['', ''];
 
             // Extract fax country code
-            const [, faxCode] = formData.general.faxCountryCode 
+            const [, faxCode] = formData.general.faxCountryCode
                 ? formData.general.faxCountryCode.split('|')
                 : ['', ''];
 
@@ -555,7 +555,7 @@ const AddEditServicePro = () => {
 
             let serviceProviderId: string;
             let isNewProvider = false;
-            
+
             if (isEditMode && id) {
                 // Update existing service provider
                 const updated = await serviceProviderService.update(id, apiData);
@@ -575,7 +575,7 @@ const AddEditServicePro = () => {
                     }
                 } catch (uploadError) {
                     const errorMessage = uploadError instanceof Error ? uploadError.message : 'Failed to upload some documents';
-                    
+
                     // If this is a new provider (not edit mode), attempt rollback by deleting it
                     if (isNewProvider && serviceProviderId) {
                         try {
@@ -585,7 +585,7 @@ const AddEditServicePro = () => {
                             // Log rollback error but don't crash the UI
                             console.error('Failed to rollback service provider creation:', rollbackError);
                             const rollbackMessage = rollbackError instanceof Error ? rollbackError.message : 'Failed to cleanup';
-                            
+
                             // Notify user about the cleanup failure
                             setSubmitError(
                                 `${errorMessage}. Additionally, the service provider was created but document upload failed. ` +
@@ -595,7 +595,7 @@ const AddEditServicePro = () => {
                             return;
                         }
                     }
-                    
+
                     // Set error message (rollback succeeded or not applicable)
                     if (isNewProvider) {
                         setSubmitError(
@@ -621,8 +621,8 @@ const AddEditServicePro = () => {
     };
 
     return (
-        <div className="max-w-6xl mx-auto min-h-screen font-outfit pb-10">
-            <div className="p-6 bg-[#E0E5E5] min-h-screen rounded-[2rem]">
+        <div className="max-w-6xl mx-auto min-h-screen font-outfit pb-10 px-4 sm:px-6">
+            <div className="p-4 sm:p-6 bg-[#E0E5E5] min-h-screen rounded-[1.5rem] sm:rounded-[2rem]">
                 {/* Header */}
                 <div className="flex justify-between items-center mb-8">
                     <div className="flex items-center gap-2">
@@ -709,21 +709,19 @@ const AddEditServicePro = () => {
                         <InputField label="Email *" name="email" value={formData.general.email} onChange={handleGeneralChange} placeholder="Add email here" error={errors.email} />
                         <div>
                             <label className="block text-xs font-bold text-gray-600 mb-2 ml-1">Phone *</label>
-                            <div className={`flex border rounded-xl transition-all ${
-                                errors.phone 
-                                    ? 'border-red-500 border-2' 
+                            <div className={`flex border rounded-xl transition-all ${errors.phone
+                                    ? 'border-red-500 border-2'
                                     : 'border-gray-200 focus-within:ring-2 focus-within:ring-[#3A6D6C] focus-within:border-[#3A6D6C]'
-                            }`}>
+                                }`}>
                                 {/* Phone Code Selector */}
                                 <div className="relative" ref={phoneCodeRef}>
                                     <button
                                         type="button"
                                         onClick={() => setIsPhoneCodeOpen(!isPhoneCodeOpen)}
-                                        className={`flex items-center gap-1 px-3 py-3 border-r bg-white rounded-l-xl focus:outline-none text-sm min-w-[100px] hover:bg-gray-50 transition-colors ${
-                                            errors.phone 
-                                                ? 'border-red-500' 
+                                        className={`flex items-center gap-1 px-3 py-3 border-r bg-white rounded-l-xl focus:outline-none text-sm min-w-[100px] hover:bg-gray-50 transition-colors ${errors.phone
+                                                ? 'border-red-500'
                                                 : 'border-gray-200'
-                                        }`}
+                                            }`}
                                     >
                                         <span className="text-sm font-medium">
                                             {selectedPhoneCode ? (
@@ -771,9 +769,8 @@ const AddEditServicePro = () => {
                                                                 setIsPhoneCodeOpen(false);
                                                                 setPhoneCodeSearch('');
                                                             }}
-                                                            className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-[#3A6D6C]/10 transition-colors text-left ${
-                                                                formData.general.phoneCountryCode === code.value ? 'bg-[#3A6D6C]/10' : ''
-                                                            }`}
+                                                            className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-[#3A6D6C]/10 transition-colors text-left ${formData.general.phoneCountryCode === code.value ? 'bg-[#3A6D6C]/10' : ''
+                                                                }`}
                                                         >
                                                             <span className="text-xl">{code.flag}</span>
                                                             <span className="flex-1 text-sm font-medium text-gray-900">{code.name}</span>
@@ -865,9 +862,8 @@ const AddEditServicePro = () => {
                                                                     setIsFaxCodeOpen(false);
                                                                     setFaxCodeSearch('');
                                                                 }}
-                                                                className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-[#3A6D6C]/10 transition-colors text-left ${
-                                                                    formData.general.faxCountryCode === code.value ? 'bg-[#3A6D6C]/10' : ''
-                                                                }`}
+                                                                className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-[#3A6D6C]/10 transition-colors text-left ${formData.general.faxCountryCode === code.value ? 'bg-[#3A6D6C]/10' : ''
+                                                                    }`}
                                                             >
                                                                 <span className="text-xl">{code.flag}</span>
                                                                 <span className="flex-1 text-sm font-medium text-gray-900">{code.name}</span>
@@ -996,7 +992,7 @@ const AddEditServicePro = () => {
                                     className="w-full bg-white border border-gray-200 text-gray-800 px-6 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[#3A6D6C]/20 transition-all font-medium text-left flex items-center justify-between"
                                 >
                                     <span className={formData.address.country ? 'text-gray-900' : 'text-gray-400'}>
-                                        {formData.address.country 
+                                        {formData.address.country
                                             ? countries.find(c => c.isoCode === formData.address.country)?.name || 'Select Country'
                                             : 'Select Country'}
                                     </span>
@@ -1036,9 +1032,8 @@ const AddEditServicePro = () => {
                                                             setIsCountryOpen(false);
                                                             setCountrySearch('');
                                                         }}
-                                                        className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-[#3A6D6C]/10 transition-colors text-left ${
-                                                            formData.address.country === country.isoCode ? 'bg-[#3A6D6C]/10' : ''
-                                                        }`}
+                                                        className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-[#3A6D6C]/10 transition-colors text-left ${formData.address.country === country.isoCode ? 'bg-[#3A6D6C]/10' : ''
+                                                            }`}
                                                     >
                                                         <span className="flex-1 text-sm font-medium text-gray-900">{country.name}</span>
                                                     </button>
@@ -1066,7 +1061,7 @@ const AddEditServicePro = () => {
                                     className="w-full bg-white border border-gray-200 text-gray-800 px-6 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[#3A6D6C]/20 transition-all font-medium text-left flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <span className={formData.address.state ? 'text-gray-900' : 'text-gray-400'}>
-                                        {formData.address.state 
+                                        {formData.address.state
                                             ? states.find(s => s.isoCode === formData.address.state)?.name || 'Select State'
                                             : 'Select State'}
                                     </span>
@@ -1106,9 +1101,8 @@ const AddEditServicePro = () => {
                                                             setIsStateOpen(false);
                                                             setStateSearch('');
                                                         }}
-                                                        className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-[#3A6D6C]/10 transition-colors text-left ${
-                                                            formData.address.state === state.isoCode ? 'bg-[#3A6D6C]/10' : ''
-                                                        }`}
+                                                        className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-[#3A6D6C]/10 transition-colors text-left ${formData.address.state === state.isoCode ? 'bg-[#3A6D6C]/10' : ''
+                                                            }`}
                                                     >
                                                         <span className="flex-1 text-sm font-medium text-gray-900">{state.name}</span>
                                                     </button>
@@ -1195,11 +1189,11 @@ const AddEditServicePro = () => {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex justify-start gap-4">
+                <div className="flex justify-start gap-4 w-full sm:w-auto">
                     <button
                         onClick={handleSubmit}
                         disabled={isLoading}
-                        className="bg-[#3A6D6C] text-white px-8 py-3 rounded-md font-semibold shadow-lg hover:bg-[#2c5251] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="bg-[#3A6D6C] text-white px-8 py-3 rounded-md font-semibold shadow-lg hover:bg-[#2c5251] transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
                     >
                         {isLoading ? 'Creating...' : (isEditMode ? 'Update' : 'Create')}
                     </button>

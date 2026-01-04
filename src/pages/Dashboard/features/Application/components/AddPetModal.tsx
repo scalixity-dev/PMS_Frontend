@@ -183,7 +183,7 @@ const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave, init
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200">
-            <div className="bg-[#EAEAEA] rounded-3xl w-full max-w-4xl shadow-2xl animate-slide-in-from-right relative overflow-visible">
+            <div className="bg-[#EAEAEA] rounded-3xl w-[95%] sm:w-full max-w-4xl shadow-2xl animate-slide-in-from-right relative overflow-visible">
 
                 {/* Header */}
                 <div className="bg-[#3A6D6C] p-4 flex items-center justify-between text-white rounded-t-3xl">
@@ -197,10 +197,11 @@ const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave, init
                 </div>
 
                 {/* Body */}
-                <div className="p-8 grid grid-cols-3 gap-8">
+                {/* Body */}
+                <div className="p-4 sm:p-8 grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
 
                     {/* Left Column: Image Upload */}
-                    <div className="col-span-1">
+                    <div className="col-span-1 flex justify-center lg:block">
                         <input
                             type="file"
                             ref={fileInputRef}
@@ -210,7 +211,7 @@ const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave, init
                         />
                         <div
                             onClick={() => fileInputRef.current?.click()}
-                            className="bg-white rounded-3xl aspect-square flex flex-col items-center justify-center border-2 border-dashed border-gray-300 text-gray-500 cursor-pointer hover:border-[#3A6D6C] hover:text-[#3A6D6C] transition-colors p-4 relative overflow-hidden group"
+                            className="bg-white rounded-3xl w-40 sm:w-full aspect-square flex flex-col items-center justify-center border-2 border-dashed border-gray-300 text-gray-500 cursor-pointer hover:border-[#3A6D6C] hover:text-[#3A6D6C] transition-colors p-4 relative overflow-hidden group"
                             style={{
                                 backgroundImage: `
                                     linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
@@ -239,8 +240,8 @@ const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave, init
                     </div>
 
                     {/* Right Column: Form Fields */}
-                    <div className="col-span-2 space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                    <div className="col-span-1 lg:col-span-2 space-y-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {/* Type */}
                             <div>
                                 <label className="block text-sm font-semibold text-[#2c3e50] mb-1 ml-1">Type *</label>

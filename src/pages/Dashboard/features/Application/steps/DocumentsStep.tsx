@@ -14,7 +14,7 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext }) => {
         const files = event.target.files;
         if (files && files.length > 0) {
             const newFiles = Array.from(files);
-            
+
             // Convert Files to FileMetadata for serialization
             const newMetadata: FileMetadata[] = newFiles.map(file => ({
                 name: file.name,
@@ -22,7 +22,7 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext }) => {
                 type: file.type,
                 lastModified: file.lastModified
             }));
-            
+
             // Update both metadata and runtime File objects
             const existingFiles = formData.documentFiles || [];
             setFormData({
@@ -48,7 +48,7 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext }) => {
     };
 
     return (
-        <div className="bg-white p-8 rounded-xl shadow-sm max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="bg-white p-4 sm:p-8 rounded-xl shadow-sm max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
             <h2 className="text-2xl font-bold text-[#2c3e50] mb-2">Documents</h2>
             <p className="text-gray-500 mb-8">Please upload any relevant documents (ID, Pay stubs, etc.). Supported formats: PDF, DOC, DOCX, Images.</p>
 
@@ -102,7 +102,7 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext }) => {
             <div className="flex justify-center mt-8">
                 <button
                     onClick={onNext}
-                    className="px-8 py-3 bg-[#3A6D6C] text-white rounded-xl font-bold hover:bg-[#2c5251] transition-colors shadow-lg shadow-[#3A6D6C]/20 flex items-center gap-2"
+                    className="px-8 sm:px-12 py-3 bg-[#3A6D6C] text-white rounded-xl font-bold hover:bg-[#2c5251] transition-colors shadow-lg shadow-[#3A6D6C]/20 flex items-center justify-center gap-2 w-full sm:w-auto"
                 >
                     Submit Application
                 </button>

@@ -227,7 +227,7 @@ const Properties: React.FC = () => {
         navigate('/dashboard/properties/import');
     };
 
-    const filterOptions: Record<string, FilterOption[]> = {
+    const filterOptions: Record<string, FilterOption[]> = useMemo(() => ({
         status: [
             { value: 'active', label: 'Active' },
             { value: 'archived', label: 'Archived' },
@@ -251,15 +251,15 @@ const Properties: React.FC = () => {
             { value: 'medium', label: 'Medium' },
             { value: 'high', label: 'High' },
         ]
-    };
+    }), []);
 
-    const filterLabels: Record<string, string> = {
+    const filterLabels: Record<string, string> = useMemo(() => ({
         status: 'Status',
         occupancy: 'Occupancy',
         propertyType: 'Property Type',
         marketingStatus: 'Marketing Status',
         balance: 'Balance'
-    };
+    }), []);
 
     const filteredProperties = useMemo(() => {
         return properties.filter(property => {

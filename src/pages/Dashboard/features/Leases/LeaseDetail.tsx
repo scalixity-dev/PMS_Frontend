@@ -4,6 +4,8 @@ import { ChevronLeft, FileText, ChevronDown, SquarePen, Upload, Edit, Trash2, Cl
 import DetailTabs from '../../components/DetailTabs';
 import CustomTextBox from '../../components/CustomTextBox';
 import DeleteConfirmationModal from '../../components/DeleteConfirmationModal';
+import EditLeaseTermsModal from './components/EditLeaseTermsModal';
+
 
 // Mock Data for the view
 const MOCK_LEASE_DETAIL = {
@@ -50,6 +52,7 @@ const LeaseDetail: React.FC = () => {
     const [isActionDropdownOpen, setIsActionDropdownOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isEndLeaseModalOpen, setIsEndLeaseModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     // Close dropdown when clicking outside
@@ -82,6 +85,12 @@ const LeaseDetail: React.FC = () => {
         setIsEndLeaseModalOpen(false);
     };
 
+    const handleUpdateLease = (data: any) => {
+        console.log('Updating lease data:', data);
+        // API call to update lease
+        setIsEditModalOpen(false);
+    };
+
     // In a real app, use 'id' to fetch data
     const lease = MOCK_LEASE_DETAIL;
 
@@ -104,9 +113,9 @@ const LeaseDetail: React.FC = () => {
                 <span className="text-gray-600 text-sm font-semibold">{id}</span>
             </div>
 
-            <div className="p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem]">
+            <div className="p-4 sm:p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem]">
                 {/* Header */}
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                     <div className="flex items-center gap-2">
                         <button onClick={() => navigate(-1)} className="p-2 hover:text-gray-600 transition-colors">
                             <ChevronLeft className="w-6 h-6 text-gray-800" />
@@ -127,7 +136,8 @@ const LeaseDetail: React.FC = () => {
                                 <button
                                     onClick={() => {
                                         setIsActionDropdownOpen(false);
-                                        navigate(`/dashboard/portfolio/leases/edit/${id}`);
+                                        // navigate(`/dashboard/portfolio/leases/edit/${id}`);
+                                        setIsEditModalOpen(true);
                                     }}
                                     className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-50"
                                 >
@@ -178,13 +188,15 @@ const LeaseDetail: React.FC = () => {
                             <img src={lease.property.image} alt={lease.property.name} className="w-24 h-24 rounded-2xl object-cover" />
                             <div className="flex flex-col gap-2 flex-1">
                                 <h3 className="font-bold text-gray-800 text-sm">{lease.property.name}</h3>
-                                <div className="w-full">
+                                <div className="w-full min-w-0">
                                     <CustomTextBox
                                         value={lease.property.address}
                                         onChange={() => { }}
                                         label=""
                                         placeholder="Address"
-                                        className="bg-[#E0E8E7] text-[10px] text-gray-600 truncate py-1"
+                                        multiline={true}
+                                        className="bg-[#E0E8E7] py-1 w-full"
+                                        valueClassName="text-[10px] text-gray-600 line-clamp-2 leading-tight"
                                     />
                                 </div>
 
@@ -260,7 +272,7 @@ const LeaseDetail: React.FC = () => {
                                 <ChevronDown className="w-5 h-5 text-gray-800" />
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-[#F0F0F6] rounded-lg p-6">
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 bg-[#F0F0F6] rounded-lg p-6">
                                 {/* Tenant Profile Card */}
                                 <div className="bg-[#7BD747] rounded-lg p-6 flex flex-col items-center text-center shadow-sm h-full">
                                     <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white mb-3">
@@ -321,7 +333,7 @@ const LeaseDetail: React.FC = () => {
                             </div>
                             <div className="bg-[#F0F2F5] rounded-[1.5rem] overflow-hidden shadow-sm">
                                 {/* Table Header */}
-                                <div className="bg-[#3A6D6C] text-white px-6 py-4 grid grid-cols-5 text-xs font-semibold text-center">
+                                <div className="bg-[#3A6D6C] text-white px-6 py-4 hidden md:grid grid-cols-5 text-xs font-semibold text-center">
                                     <div>Status</div>
                                     <div>First invoice</div>
                                     <div>Category</div>
@@ -331,12 +343,35 @@ const LeaseDetail: React.FC = () => {
                                 {/* Table Body */}
                                 <div className="p-2">
                                     {lease.recurringRent.map((rent, index) => (
-                                        <div key={index} className="bg-white rounded-xl px-6 py-4 grid grid-cols-5 items-center text-center text-sm font-medium shadow-sm mb-2 last:mb-0">
-                                            <div className="text-[#7BD747]">{rent.status}</div>
-                                            <div>{rent.firstInvoice}</div>
-                                            <div>{rent.category}</div>
-                                            <div className="text-gray-400">{rent.nextInvoice || '--'}</div>
-                                            <div>{rent.totalSchedule}</div>
+                                        <div key={index} className="bg-white rounded-xl px-6 py-4 shadow-sm mb-2 last:mb-0 block md:grid md:grid-cols-5 md:items-center md:text-center text-sm font-medium">
+                                            {/* Mobile View */}
+                                            <div className="md:hidden flex flex-col gap-2">
+                                                <div className="flex justify-between items-center border-b border-gray-100 pb-2 mb-2">
+                                                    <span className="font-bold text-gray-800">{rent.category}</span>
+                                                    <span className="text-[#7BD747] font-bold text-xs bg-green-50 px-2 py-1 rounded-full">{rent.status}</span>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-2 text-xs text-gray-500">
+                                                    <div>
+                                                        <span className="block text-gray-400 text-[10px]">First Invoice</span>
+                                                        {rent.firstInvoice}
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className="block text-gray-400 text-[10px]">Next Invoice</span>
+                                                        {rent.nextInvoice || '--'}
+                                                    </div>
+                                                </div>
+                                                <div className="mt-2 text-right">
+                                                    <span className="block text-gray-400 text-[10px]">Total & Schedule</span>
+                                                    <span className="text-[#3A6D6C] font-bold">{rent.totalSchedule}</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Desktop View */}
+                                            <div className="text-[#7BD747] hidden md:block">{rent.status}</div>
+                                            <div className="hidden md:block">{rent.firstInvoice}</div>
+                                            <div className="hidden md:block">{rent.category}</div>
+                                            <div className="text-gray-400 hidden md:block">{rent.nextInvoice || '--'}</div>
+                                            <div className="hidden md:block">{rent.totalSchedule}</div>
                                         </div>
                                     ))}
                                 </div>
@@ -364,18 +399,20 @@ const LeaseDetail: React.FC = () => {
                                 <ChevronDown className="w-5 h-5 text-gray-800" />
                             </div>
                             <div className="bg-[#F0F2F5] rounded-[2rem] p-4">
-                                <div className="bg-white/50 rounded-full px-6 py-3 flex items-center justify-between md:justify-start md:gap-12 shadow-sm">
-                                    <div className="bg-[#b5e39e] text-[#3D7475] text-xs font-bold px-6 py-2 rounded-full min-w-[100px] text-center">
+                                <div className="bg-white/50 rounded-[2rem] sm:rounded-full px-6 py-4 sm:py-3 flex flex-col sm:flex-row items-center sm:justify-start gap-4 sm:gap-12 shadow-sm">
+                                    <div className="bg-[#b5e39e] text-[#3D7475] text-xs font-bold px-6 py-2 rounded-full min-w-[100px] text-center mb-2 sm:mb-0">
                                         Late fees
                                     </div>
-                                    <CustomTextBox
-                                        label={lease.extraFees.label}
-                                        value={lease.extraFees.amount}
-                                        onChange={() => { }}
-                                        labelClassName="text-xs font-medium text-gray-600 !w-auto"
-                                        valueClassName="text-xs font-medium text-gray-600 !w-auto !overflow-visible !whitespace-nowrap"
-                                        className="px-4 py-2 gap-4 rounded-full w-auto"
-                                    />
+                                    <div className="flex-1 w-full sm:w-auto">
+                                        <CustomTextBox
+                                            label={lease.extraFees.label}
+                                            value={lease.extraFees.amount}
+                                            onChange={() => { }}
+                                            labelClassName="text-xs font-medium text-gray-600 !w-auto"
+                                            valueClassName="text-xs font-medium text-gray-600 !w-auto !overflow-visible !whitespace-normal sm:!whitespace-nowrap"
+                                            className="px-4 py-2 gap-2 sm:gap-4 rounded-full w-full sm:w-auto flex-col sm:flex-row items-start sm:items-center"
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -457,6 +494,13 @@ const LeaseDetail: React.FC = () => {
                 message="Are you sure you want to end this lease? This will change the status to historical."
                 confirmText="End Lease"
                 confirmButtonClass="bg-orange-600 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-orange-700 transition-colors shadow-sm"
+            />
+
+            <EditLeaseTermsModal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                initialData={lease} // Pass current lease data
+                onUpdate={handleUpdateLease}
             />
         </div >
     );

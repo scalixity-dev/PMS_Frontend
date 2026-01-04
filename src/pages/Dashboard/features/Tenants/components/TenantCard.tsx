@@ -128,7 +128,7 @@ const TenantCard: React.FC<TenantCardProps> = ({
                 </div>
 
                 {/* Image/Initials Section */}
-                <div className="w-32 h-32 flex-shrink-0 relative">
+                <div className="w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0 relative">
                     {image ? (
                         <img
                             src={image}
@@ -137,11 +137,11 @@ const TenantCard: React.FC<TenantCardProps> = ({
                         />
                     ) : (
                         <div className={`w-full h-full ${bgColor} rounded-[1.5rem] flex items-center justify-center shadow-md`}>
-                            <span className="text-white text-4xl font-medium">{initials}</span>
+                            <span className="text-white text-3xl sm:text-4xl font-medium">{initials}</span>
                         </div>
                     )}
                     {/* Status indicator */}
-                    <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+                    <div className="absolute bottom-0 right-0 w-3 h-3 sm:w-4 sm:h-4 bg-green-500 border-2 border-white rounded-full"></div>
                 </div>
 
                 {/* Content Section */}

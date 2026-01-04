@@ -8,15 +8,37 @@ interface ApplicationStepperProps {
 const steps = [
     { id: 1, label: 'Applicant' },
     { id: 2, label: 'Occupants' },
-    { id: 3, label: 'Residences & income' },
+    { id: 3, label: 'Residences & Income' },
     { id: 4, label: 'Contacts' },
     { id: 5, label: 'Documents' },
 ];
 
 const ApplicationStepper: React.FC<ApplicationStepperProps> = ({ currentStep }) => {
+    const currentStepLabel = steps.find(s => s.id === currentStep)?.label || '';
+    const progressPercentage = ((Math.min(currentStep, 5) - 1) / (steps.length - 1)) * 100;
+
     return (
-        <div className="w-full max-w-4xl mx-auto mb-8 px-4">
-            <div className="bg-gray-100 rounded-full py-4 px-8 relative flex items-center justify-between shadow-sm">
+        <div className="w-full max-w-4xl mx-auto mb-6 sm:mb-8 px-2 sm:px-4">
+            {/* Mobile View - Simple Progress */}
+            <div className="block md:hidden">
+                <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-bold text-[#2c3e50]">
+                        Step {currentStep} of {steps.length}
+                    </span>
+                    <span className="text-sm font-medium text-gray-500">
+                        {currentStepLabel}
+                    </span>
+                </div>
+                <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                        className="h-full bg-[#7BD747] transition-all duration-300 rounded-full"
+                        style={{ width: `${progressPercentage}%` }}
+                    />
+                </div>
+            </div>
+
+            {/* Desktop View - Full Stepper */}
+            <div className="hidden md:flex bg-gray-100 rounded-full py-4 px-8 relative items-center justify-between shadow-sm">
                 {/* Progress bar container */}
                 <div className="absolute left-20 right-20 top-1/2 h-1 bg-gray-300 -z-0 -translate-y-[15px]">
                     <div

@@ -7,7 +7,7 @@ import {
   PiChartLineUpFill, PiChartPieSliceFill, PiBuildingsFill, PiUsersFill,
   PiCurrencyDollarFill, PiWrenchFill, PiFileTextFill
 } from "react-icons/pi";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, NavLink } from "react-router-dom";
 import { Dialog, Transition } from '@headlessui/react';
 import artworkImage from "../../assets/images/Artwork.png";
 import InviteToApplyModal from '../../pages/Dashboard/features/Application/components/InviteToApplyModal';
@@ -21,41 +21,33 @@ interface SidebarProps {
   collapsed: boolean;
   setCollapsed: (collapsed: boolean) => void;
 }
-interface SidebarSubLinkProps { label: string; to: string; isCurrentPath: (path: string) => boolean; }
+
 interface SidebarDropdownLinkProps {
   label: string;
   icon: React.ReactNode;
   children: React.ReactNode;
-  isCurrentPath: (path: string) => boolean;
   activeDropdown: string | null;
   setActiveDropdown: (label: string | null) => void;
 }
 
 // --- Component Implementations ---
 
-function SidebarSubLink({ label, to, isCurrentPath }: SidebarSubLinkProps) {
-  const isActive = isCurrentPath(to);
-  const navigate = useNavigate();
+interface SidebarSubLinkProps { label: string; to: string; }
 
-  const handleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    navigate(to);
-  };
-
+function SidebarSubLink({ label, to }: SidebarSubLinkProps) {
   return (
-    <button
-      type="button"
-      onClick={handleClick}
-      className={`block w-full text-left py-2 px-3 rounded-md text-sm transition-colors 
-              ${isActive
+    <NavLink
+      to={to}
+      className={({ isActive }) =>
+        `block w-full text-left py-2 px-3 rounded-md text-sm transition-colors ${isActive
           ? "text-green-600 font-semibold"
           : "text-gray-600 hover:text-green-600 hover:bg-gray-50"
         }`
       }
+      end
     >
       {label}
-    </button>
+    </NavLink>
   );
 }
 
@@ -195,7 +187,7 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
   isMobile?: boolean;
   closeMobileDrawer?: () => void;
 }) {
-  const location = useLocation();
+
   const navigate = useNavigate();
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [isCreateNewOpen, setIsCreateNewOpen] = useState(false);
@@ -270,27 +262,26 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
     if (isMobile && closeMobileDrawer) closeMobileDrawer();
   }
 
-  const isCurrentPath = (path: string) => location.pathname === path;
+
 
   // Enhance SidebarSubLink to close drawer on mobile click
   const MobileSidebarSubLink = ({ label, to }: { label: string, to: string }) => {
-    const isActive = isCurrentPath(to);
     return (
-      <a // Use 'a' or button to avoid React Router Link interfering with onClick easily without wrapping?
-        // Actually Link with onClick is fine.
-        href={to}
-        onClick={(e) => {
-          e.preventDefault();
-          onNavigate(to);
+      <NavLink
+        to={to}
+        onClick={() => {
+          if (isMobile && closeMobileDrawer) closeMobileDrawer();
         }}
-        className={`block py-2 px-3 rounded-md text-sm transition-colors 
-                  ${isActive
+        className={({ isActive }) =>
+          `block py-2 px-3 rounded-md text-sm transition-colors ${isActive
             ? "text-green-600 font-semibold"
             : "text-gray-600 hover:text-green-600 hover:bg-gray-50"
-          }`}
+          }`
+        }
+        end
       >
         {label}
-      </a>
+      </NavLink>
     )
   }
 
@@ -402,84 +393,84 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
             <SidebarDropdownLink
               label="Dashboard"
               icon={<PiChartLineUpFill size={24} />}
-              isCurrentPath={isCurrentPath}
+
               activeDropdown={activeDropdown}
               setActiveDropdown={setActiveDropdown}
             >
-              <SubLink label="Overview" to="/dashboard" isCurrentPath={isCurrentPath} />
-              <SubLink label="Tasks" to="/dashboard/tasks" isCurrentPath={isCurrentPath} />
+              <SubLink label="Overview" to="/dashboard" />
+              <SubLink label="Tasks" to="/dashboard/tasks" />
             </SidebarDropdownLink>
 
             <SidebarDropdownLink
               label="Portfolio"
               icon={<PiChartPieSliceFill size={24} />}
-              isCurrentPath={isCurrentPath}
+
               activeDropdown={activeDropdown}
               setActiveDropdown={setActiveDropdown}
             >
-              <SubLink label="Properties" to="/dashboard/properties" isCurrentPath={isCurrentPath} />
-              <SubLink label="Units" to="/dashboard/portfolio/units" isCurrentPath={isCurrentPath} />
-              <SubLink label="Listing" to="/dashboard/portfolio/listing" isCurrentPath={isCurrentPath} />
-              <SubLink label="Keys & Locks" to="/dashboard/portfolio/keys-locks" isCurrentPath={isCurrentPath} />
-              <SubLink label="Equipment" to="/dashboard/equipments" isCurrentPath={isCurrentPath} />
+              <SubLink label="Properties" to="/dashboard/properties" />
+              <SubLink label="Units" to="/dashboard/portfolio/units" />
+              <SubLink label="Listing" to="/dashboard/portfolio/listing" />
+              <SubLink label="Keys & Locks" to="/dashboard/portfolio/keys-locks" />
+              <SubLink label="Equipment" to="/dashboard/equipments" />
             </SidebarDropdownLink>
 
             <SidebarDropdownLink
               label="Leasing"
               icon={<PiBuildingsFill size={24} />}
-              isCurrentPath={isCurrentPath}
+
               activeDropdown={activeDropdown}
               setActiveDropdown={setActiveDropdown}
             >
-              <SubLink label="Applications" to="/dashboard/leasing/applications" isCurrentPath={isCurrentPath} />
-              <SubLink label="Leases" to="/dashboard/leasing/leases" isCurrentPath={isCurrentPath} />
-              <SubLink label="Leads" to="/dashboard/leasing/leads" isCurrentPath={isCurrentPath} />
+              <SubLink label="Applications" to="/dashboard/leasing/applications" />
+              <SubLink label="Leases" to="/dashboard/leasing/leases" />
+              <SubLink label="Leads" to="/dashboard/leasing/leads" />
             </SidebarDropdownLink>
 
             <SidebarDropdownLink
               label="Contacts"
               icon={<PiUsersFill size={24} />}
-              isCurrentPath={isCurrentPath}
+
               activeDropdown={activeDropdown}
               setActiveDropdown={setActiveDropdown}
             >
-              <SubLink label="Tenants" to="/dashboard/contacts/tenants" isCurrentPath={isCurrentPath} />
-              <SubLink label="Service Pros" to="/dashboard/contacts/service-pros" isCurrentPath={isCurrentPath} />
+              <SubLink label="Tenants" to="/dashboard/contacts/tenants" />
+              <SubLink label="Service Pros" to="/dashboard/contacts/service-pros" />
             </SidebarDropdownLink>
 
             <SidebarDropdownLink
               label="Accounting"
               icon={<PiCurrencyDollarFill size={24} />}
-              isCurrentPath={isCurrentPath}
+
               activeDropdown={activeDropdown}
               setActiveDropdown={setActiveDropdown}
             >
-              <SubLink label="Transactions" to="/dashboard/accounting/transactions" isCurrentPath={isCurrentPath} />
-              <SubLink label="Payments" to="/dashboard/accounting/payments" isCurrentPath={isCurrentPath} />
-              <SubLink label="Recurring" to="/dashboard/accounting/recurring" isCurrentPath={isCurrentPath} />
+              <SubLink label="Transactions" to="/dashboard/accounting/transactions" />
+              <SubLink label="Payments" to="/dashboard/accounting/payments" />
+              <SubLink label="Recurring" to="/dashboard/accounting/recurring" />
             </SidebarDropdownLink>
 
             <SidebarDropdownLink
               label="Maintenance"
               icon={<PiWrenchFill size={24} />}
-              isCurrentPath={isCurrentPath}
+
               activeDropdown={activeDropdown}
               setActiveDropdown={setActiveDropdown}
             >
-              <SubLink label="Requests" to="/dashboard/maintenance/requests" isCurrentPath={isCurrentPath} />
-              <SubLink label="Recurring" to="/dashboard/maintenance/recurring" isCurrentPath={isCurrentPath} />
+              <SubLink label="Requests" to="/dashboard/maintenance/requests" />
+              <SubLink label="Recurring" to="/dashboard/maintenance/recurring" />
             </SidebarDropdownLink>
 
             <SidebarDropdownLink
               label="Documents"
               icon={<PiFileTextFill size={24} />}
-              isCurrentPath={isCurrentPath}
+
               activeDropdown={activeDropdown}
               setActiveDropdown={setActiveDropdown}
             >
-              <SubLink label="Landlord forms" to="/dashboard/documents/landlord-forms" isCurrentPath={isCurrentPath} />
-              <SubLink label="My templates" to="/dashboard/documents/my-templates" isCurrentPath={isCurrentPath} />
-              <SubLink label="File manager" to="/dashboard/documents/file-manager" isCurrentPath={isCurrentPath} />
+              <SubLink label="Landlord forms" to="/dashboard/documents/landlord-forms" />
+              <SubLink label="My templates" to="/dashboard/documents/my-templates" />
+              <SubLink label="File manager" to="/dashboard/documents/file-manager" />
             </SidebarDropdownLink>
           </nav>
         </div>

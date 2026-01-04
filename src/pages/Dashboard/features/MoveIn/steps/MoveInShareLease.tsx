@@ -35,8 +35,8 @@ const MoveInShareLease: React.FC<MoveInShareLeaseProps> = ({ onNext }) => {
 
             <div className="w-full max-w-4xl bg-[#F0F0F6] rounded-[2.5rem] p-6 shadow-sm border border-gray-100">
 
-                {/* Table Header */}
-                <div className="bg-[#3A6D6C] rounded-t-3xl px-8 py-4 grid grid-cols-[1fr_1fr_1.5fr_100px] gap-4 items-center text-white font-medium">
+                {/* Table Header - Hidden on Mobile */}
+                <div className="hidden md:grid bg-[#3A6D6C] rounded-t-3xl px-8 py-4 grid-cols-[1fr_1fr_1.5fr_100px] gap-4 items-center text-white font-medium">
                     <div>Name</div>
                     <div>Status</div>
                     <div>Email</div>
@@ -44,23 +44,39 @@ const MoveInShareLease: React.FC<MoveInShareLeaseProps> = ({ onNext }) => {
                 </div>
 
                 {/* Table Body */}
-                <div className="flex flex-col bg-[#F0F0F6] rounded-b-3xl overflow-hidden shadow-lg">
+                <div className="flex flex-col bg-[#F0F0F6] rounded-b-3xl md:rounded-b-3xl rounded-3xl overflow-hidden shadow-lg md:shadow-lg">
                     {TENANT_STATUS_DATA.map((tenant, index) => (
                         <div
                             key={tenant.id}
                             className={`
-                        grid grid-cols-[1fr_1fr_1.5fr_100px] gap-4 items-center px-8 py-6
+                        flex flex-col md:grid md:grid-cols-[1fr_1fr_1.5fr_100px] gap-2 md:gap-4 items-start md:items-center px-6 py-6 md:px-8
                         ${index !== TENANT_STATUS_DATA.length - 1 ? 'border-b border-gray-200' : ''}
                     `}
                         >
-                            <div className="text-[#374151] font-medium">{tenant.name}</div>
-                            <div className="text-[#4D7C0F] font-bold">{tenant.status}</div>
-                            <div className="text-[#4D7C0F] font-medium">{tenant.email}</div>
-                            <div className="flex justify-center">
+                            {/* Mobile Labels */}
+                            <div className="flex md:hidden justify-between w-full items-center mb-2">
+                                <span className="text-[#374151] font-bold text-lg">{tenant.name}</span>
+                                <div className="bg-[#4D7C0F]/10 px-3 py-1 rounded-full">
+                                    <span className="text-[#4D7C0F] font-bold text-sm">{tenant.status}</span>
+                                </div>
+                            </div>
+
+                            {/* Desktop Cells */}
+                            <div className="hidden md:block text-[#374151] font-medium">{tenant.name}</div>
+                            <div className="hidden md:block text-[#4D7C0F] font-bold">{tenant.status}</div>
+
+                            {/* Email */}
+                            <div className="text-gray-500 md:text-[#4D7C0F] font-medium text-sm md:text-base w-full break-all">
+                                {tenant.email}
+                            </div>
+
+                            {/* Share Action */}
+                            <div className="flex md:justify-center w-full md:w-auto mt-4 md:mt-0">
                                 <button
                                     onClick={() => handleShare(tenant.id)}
-                                    className="text-[#3A6D6C] hover:text-[#2c5554] transition-colors p-2 hover:bg-[#3A6D6C]/10 rounded-full"
+                                    className="flex items-center justify-center gap-2 text-[#3A6D6C] hover:text-[#2c5554] transition-colors p-2 hover:bg-[#3A6D6C]/10 rounded-full w-full md:w-auto border border-[#3A6D6C]/20 md:border-none"
                                 >
+                                    <span className="md:hidden font-medium">Share Lease</span>
                                     <Share2 size={20} />
                                 </button>
                             </div>

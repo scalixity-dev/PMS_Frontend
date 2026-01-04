@@ -36,7 +36,7 @@ const AdditionalIncomeStep: React.FC<AdditionalIncomeStepProps> = ({ onNext }) =
             <div className="mt-4">
                 <button
                     onClick={onNext}
-                    className="bg-[#3A6D6C] text-white border border-white/20 px-6 py-3 rounded-lg text-md font-medium hover:bg-[#2c5251] transition-colors shadow-sm"
+                    className="bg-[#3A6D6C] text-white border border-white/20 px-6 sm:px-12 py-3 rounded-lg text-md font-medium hover:bg-[#2c5251] transition-colors shadow-sm w-full sm:w-auto"
                 >
                     Continue
                 </button>

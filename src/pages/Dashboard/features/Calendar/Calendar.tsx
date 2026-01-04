@@ -421,13 +421,13 @@ const Calendar: React.FC = () => {
 
                 {/* Weekday Header - Aligned with the grid */}
                 <div className="flex">
-                    {/* Spacer for the side label column */}
-                    <div className="w-12 flex-none"></div>
+                    {/* Spacer for the side label column - Hidden on tablet/mobile */}
+                    <div className="hidden lg:block w-12 flex-none"></div>
 
                     {/* Weekdays */}
                     <div className="flex-1 grid grid-cols-7 mb-2 bg-[#43767c] text-white rounded-t-lg overflow-hidden shadow-md">
                         {weekDays.map((day) => (
-                            <div key={day} className="py-3 text-center text-sm font-semibold tracking-wider border-r border-[#54878d] last:border-r-0">
+                            <div key={day} className="py-2 md:py-3 text-center text-xs md:text-sm font-semibold tracking-wider border-r border-[#54878d] last:border-r-0">
                                 {day}
                             </div>
                         ))}
@@ -461,10 +461,17 @@ const Calendar: React.FC = () => {
                             <div
                                 key={month.toISOString()}
                                 data-date={month.toISOString()}
-                                className="month-section flex mb-4"
+                                className="month-section flex flex-col lg:flex-row mb-4"
                             >
-                                {/* Rotated Month Label */}
-                                <div className="w-12 flex-none flex items-center justify-center relative">
+                                {/* Mobile/Tablet Horizontal Month Label */}
+                                <div className="lg:hidden pb-2 pl-1 sticky top-0 bg-gray-50/95 backdrop-blur-sm z-10 py-2 border-b border-gray-100 mb-2">
+                                    <span className="text-[#3D7475] font-bold text-lg">
+                                        {format(month, 'MMMM yyyy')}
+                                    </span>
+                                </div>
+
+                                {/* Rotated Month Label - Desktop only */}
+                                <div className="hidden lg:flex w-12 flex-none items-center justify-center relative">
                                     <div className="absolute transform rotate-180 text-gray-700 font-bold tracking-widest text-sm uppercase" style={{ writingMode: 'vertical-rl' }}>
                                         {format(month, 'MMMM yyyy')}
                                     </div>
