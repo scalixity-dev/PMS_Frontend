@@ -1,24 +1,27 @@
-import { useState } from "react";
-import { Sidebar } from "./components/Sidebar";
-import { TransactionTable } from "./components/TransactionTable";
-import { LeaseList } from "./components/LeaseList";
-import { mockTransactions, mockLeases, tabs } from "./mockData";
-import type { TabType } from "./types";
+import { useEffect } from "react";
+import { useUserDashboardStore } from "./store/userDashboardStore";
+import { Sidebar } from "./components/layout/Sidebar";
+import { TransactionTable } from "./components/transaction/TransactionTable";
+import { LeaseList } from "./components/lease/LeaseList";
+import { mockTransactions, mockLeases, tabs, mockUserInfo, mockFinances } from "./utils/mockData";
+import type { TabType } from "./utils/types";
 import PrimaryActionButton from "../../components/common/buttons/PrimaryActionButton";
 
 const UserDashboard = () => {
-    const [activeTab, setActiveTab] = useState<TabType>("Outstanding");
+    const { activeTab, setActiveTab, setUserInfo, setFinances, userInfo } = useUserDashboardStore();
+
+    // Load mock data on mount if store is empty
+    useEffect(() => {
+        if (!userInfo.firstName) {
+            setUserInfo(mockUserInfo);
+            setFinances(mockFinances);
+        }
+    }, [setUserInfo, setFinances, userInfo.firstName]);
 
     return (
         <div className="flex flex-col lg:flex-row gap-8 min-h-screen bg-white p-4 lg:p-8 ">
             {/* Left Sidebar */}
-            <Sidebar
-                userName="Siddak Bagga"
-                userEmail="siddakbagga@gmail.com"
-                outstanding="0.00"
-                deposits="0.00"
-                credits="0.00"
-            />
+            <Sidebar />
 
             {/* Main Content Area */}
             <div className="flex-1 mt-12">
@@ -26,12 +29,12 @@ const UserDashboard = () => {
                 <div className="flex flex-col xl:flex-row justify-between items-end mb-10 gap-6">
                     {/* Navigation Tabs */}
                     <div className="flex-1 w-full relative">
-                        <div className="flex items-end gap-4 border-b-[0.5px] border-[var(--dashboard-border)] w-fit relative">
+                        <div className="flex items-end gap-3 border-b-[0.5px] border-[var(--dashboard-border)] w-fit relative">
                             {tabs.map((tab) => (
                                 <button
                                     key={tab}
                                     onClick={() => setActiveTab(tab as TabType)}
-                                    className={`relative px-5 py-2 font-medium text-md transition-all duration-200 ${activeTab === tab
+                                    className={`relative px-5 py-2 font-medium text-base transition-all duration-200 ${activeTab === tab
                                         ? "bg-[var(--dashboard-accent)] text-white rounded-t-2xl z-10"
                                         : "text-gray-400 hover:text-gray-600"
                                         }`}
