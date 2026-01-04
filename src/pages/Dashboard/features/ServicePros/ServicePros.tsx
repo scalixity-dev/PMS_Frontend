@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import DashboardFilter from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
@@ -88,7 +88,7 @@ const ServicePros = () => {
         // TODO: Implement filter functionality
     };
 
-    const filterOptions = {
+    const filterOptions = useMemo(() => ({
         serviceProType: [
             { value: 'individual', label: 'Individual' },
             { value: 'company', label: 'Company' }
@@ -102,13 +102,13 @@ const ServicePros = () => {
             { value: 'connected', label: 'Connected' },
             { value: 'pending', label: 'Pending' }
         ]
-    };
+    }), []);
 
-    const filterLabels = {
+    const filterLabels = useMemo(() => ({
         serviceProType: 'Service Pro type',
         category: 'Category & Sub-category',
         connection: 'Connection'
-    };
+    }), []);
 
 
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');

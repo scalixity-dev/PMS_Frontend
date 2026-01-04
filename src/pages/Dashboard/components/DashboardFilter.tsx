@@ -79,8 +79,20 @@ const DashboardFilter: React.FC<DashboardFilterProps> = ({
         Object.keys(filterOptions).forEach(key => {
             updated[key] = initialFilters[key] || [];
         });
-        setSelectedFilters(updated);
-    }, [initialFilters, filterOptions]);
+
+        // Deep compare to avoid unnecessary state updates
+        const isDifferent = Object.keys(updated).some(key => {
+            const newVal = updated[key];
+            const oldVal = selectedFilters[key] || [];
+            if (newVal.length !== oldVal.length) return true;
+            return !newVal.every((v, i) => v === oldVal[i]);
+        });
+
+        if (isDifferent) {
+            setSelectedFilters(updated);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [JSON.stringify(initialFilters), JSON.stringify(Object.keys(filterOptions))]);
 
     useEffect(() => {
         if (isMobileFiltersOpen) {
