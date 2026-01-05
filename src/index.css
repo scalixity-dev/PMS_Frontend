@@ -67,8 +67,8 @@
   --dashboard-glow: rgba(140, 215, 75, 0.2);
 
   /* 💊 Status Pill Colors */
-  --status-open-bg: #6B647A;
-  --status-open-text: #7789A0;
+  --status-open-bg: #FFF4CC;
+  --status-open-text: #D97706;
   --status-overdue-bg: #FFBEBE;
   --status-overdue-text: #C56565;
   --status-active-bg: #B6FF8C;
