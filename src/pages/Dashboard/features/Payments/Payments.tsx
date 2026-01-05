@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { ChevronLeft, Download, Check, MoreHorizontal, ChevronDown } from 'lucide-react';
+import { ChevronLeft, Download, Check, MoreHorizontal } from 'lucide-react';
+import MoneyInMoneyOutButtons from '../../components/MoneyInMoneyOutButtons';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import { useTransactionStore } from '../Transactions/store/transactionStore';
 import EditInvoiceModal from '../Transactions/components/EditInvoiceModal';
@@ -256,48 +257,7 @@ const Payments: React.FC = () => {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto" ref={dropdownContainerRef}>
-                        {/* Money In */}
-                        <div className="relative flex-1 sm:flex-none">
-                            <button
-                                onClick={() => setActiveDropdown(activeDropdown === 'money_in' ? null : 'money_in')}
-                                className="w-full sm:w-auto px-6 py-2 bg-[#3A6D6C] text-white rounded-md text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center justify-center gap-2"
-                            >
-                                Money In
-                                <ChevronDown className="w-4 h-4" />
-                            </button>
-
-                            {activeDropdown === 'money_in' && (
-                                <div className="absolute top-full left-0 mt-2 bg-white rounded-md shadow-xl border border-gray-100 w-full z-50 overflow-hidden">
-                                    <button onClick={() => navigate('/dashboard/accounting/transactions/income/add')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Income invoice</button>
-                                    <button onClick={() => navigate('/dashboard/accounting/transactions/income-payments')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Income payment</button>
-                                    <button onClick={() => navigate('/dashboard/accounting/transactions/recurring-income/add')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Recurring income</button>
-                                    <button onClick={() => navigate('/dashboard/accounting/transactions/bulk-payments-income')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Bulk change</button>
-                                    <button onClick={() => navigate('/dashboard/accounting/transactions/deposit/add')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Deposit</button>
-                                    <button onClick={() => navigate('/dashboard/accounting/transactions/credits/add')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Credits</button>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Money Out */}
-                        <div className="relative flex-1 sm:flex-none">
-                            <button
-                                onClick={() => setActiveDropdown(activeDropdown === 'money_out' ? null : 'money_out')}
-                                className="w-full sm:w-auto px-6 py-2 bg-[#1f2937] text-white rounded-md text-sm font-medium hover:bg-red-600 transition-colors shadow-sm flex items-center justify-center gap-2"
-                            >
-                                Money Out
-                                <ChevronDown className="w-4 h-4" />
-                            </button>
-                            {activeDropdown === 'money_out' && (
-                                <div className="absolute top-full left-0 mt-2 bg-white rounded-md shadow-xl border border-gray-100 w-full z-50 overflow-hidden">
-                                    <button onClick={() => navigate('/dashboard/accounting/transactions/expense/add')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Expense invoice</button>
-                                    <button onClick={() => navigate('/dashboard/accounting/transactions/expense-payments')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Expense payment</button>
-                                    <button onClick={() => navigate('/dashboard/accounting/transactions/recurring-expense/add')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Recurring expense</button>
-                                    <button onClick={() => navigate('/dashboard/accounting/transactions/bulk-payments-expense')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Bulk change</button>
-                                    <button onClick={() => navigate('/dashboard/accounting/transactions/return-deposit')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Return deposit</button>
-                                    <button onClick={() => navigate('/dashboard/accounting/transactions/apply-deposit')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Apply deposit</button>
-                                </div>
-                            )}
-                        </div>
+                        <MoneyInMoneyOutButtons />
 
                         <button
                             onClick={handleExport}
