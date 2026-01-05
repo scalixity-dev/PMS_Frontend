@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, ChevronLeft, Paperclip } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 import DatePicker from '@/components/ui/DatePicker';
 import PreciseTimePicker from '@/components/ui/PreciseTimePicker';
 import SearchableDropdown from '@/components/ui/SearchableDropdown';
@@ -64,7 +64,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
                 setSelectedFile(null);
             }
         }
-    }, [isOpen, initialData]);
+    }, [isOpen, initialData?.details, initialData?.date, initialData?.assignee, initialData?.image]);
 
     // Effect 2: Handle keyboard events and focus management
     useEffect(() => {
@@ -132,30 +132,10 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
             return;
         }
 
-        // Combine Date and Time into ISO-like string (YYYY-MM-DDTHH:mm)
         try {
-            const timeParts = selectedTime.match(/(\d+):(\d+)\s?(AM|PM)/i);
-            if (!timeParts) {
-                throw new Error('Invalid time format');
-            }
-
-            let hours = parseInt(timeParts[1], 10);
-            const minutes = parseInt(timeParts[2], 10);
-            const modifier = timeParts[3].toUpperCase();
-
-            if (hours === 12 && modifier === 'AM') {
-                hours = 0;
-            } else if (hours !== 12 && modifier === 'PM') {
-                hours += 12;
-            }
-
-            const yyyy = selectedDate.getFullYear();
-            const mm = String(selectedDate.getMonth() + 1).padStart(2, '0');
-            const dd = String(selectedDate.getDate()).padStart(2, '0');
-            const hh = String(hours).padStart(2, '0');
-            const min = String(minutes).padStart(2, '0');
-
-            const dateString = `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+            // Parse time string and combine with date
+            const timeDate = parse(selectedTime, 'h:mm a', selectedDate);
+            const dateString = format(timeDate, "yyyy-MM-dd'T'HH:mm");
 
             onCreate({ details, date: dateString, assignee }, selectedFile);
 

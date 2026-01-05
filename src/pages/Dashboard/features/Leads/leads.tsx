@@ -62,7 +62,7 @@ const Leads = () => {
     const { data: listings = [] } = useGetAllListings();
     const updateLeadMutation = useUpdateLead();
     const deleteLeadMutation = useDeleteLead();
-    const [deletingLeadId, setDeletingLeadId] = useState<string | null>(null);
+    const [deletingLeadIds, setDeletingLeadIds] = useState<string[]>([]);
 
     // Delete Confirmation State
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -304,7 +304,7 @@ const Leads = () => {
         }
 
         // Set loading state
-        setDeletingLeadId(ids[0]);
+        setDeletingLeadIds(ids);
 
         try {
             // Delete all selected leads
@@ -348,7 +348,7 @@ const Leads = () => {
             console.error('Failed to delete leads:', error);
             alert(`Failed to delete leads: ${error instanceof Error ? error.message : 'Unknown error'}`);
         } finally {
-            setDeletingLeadId(null);
+            setDeletingLeadIds([]);
             setIsDeleteModalOpen(false);
             setDeleteConfig({ type: 'single', ids: [] });
         }
@@ -376,7 +376,7 @@ const Leads = () => {
                         {selectedLeads.length > 0 && (
                             <button
                                 onClick={() => initiateDelete('bulk', selectedLeads)}
-                                disabled={deletingLeadId !== null}
+                                disabled={deletingLeadIds.length > 0}
                                 className="flex items-center gap-2 bg-red-500 text-white px-4 sm:px-6 py-2 rounded-full text-sm font-medium hover:bg-red-600 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex-1 sm:flex-none justify-center"
                             >
                                 <Trash2 className="w-5 h-5" />
@@ -602,7 +602,7 @@ const Leads = () => {
                                                     e.stopPropagation();
                                                     initiateDelete('single', [lead.id]);
                                                 }}
-                                                disabled={deletingLeadId === lead.id}
+                                                disabled={deletingLeadIds.includes(lead.id)}
                                                 className="text-red-500 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                                 title="Delete lead"
                                             >

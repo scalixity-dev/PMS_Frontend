@@ -14,9 +14,11 @@ interface AddMeetingModalProps {
 
 const AddMeetingModal: React.FC<AddMeetingModalProps> = ({ isOpen, onClose, onCreate, initialData }) => {
     const [details, setDetails] = useState(initialData?.details || '');
-    const [selectedDate, setSelectedDate] = useState<Date | undefined>(
-        initialData?.date ? new Date(initialData.date) : undefined
-    );
+    const [selectedDate, setSelectedDate] = useState<Date | undefined>(() => {
+        if (!initialData?.date) return undefined;
+        const dateObj = new Date(initialData.date);
+        return !isNaN(dateObj.getTime()) ? dateObj : undefined;
+    });
     const [selectedTime, setSelectedTime] = useState(
         initialData?.date && !isNaN(new Date(initialData.date).getTime())
             ? format(new Date(initialData.date), 'h:mm a')
@@ -99,8 +101,8 @@ const AddMeetingModal: React.FC<AddMeetingModalProps> = ({ isOpen, onClose, onCr
     };
 
     const handleCreate = () => {
-        if (!selectedDate || !selectedTime) {
-            alert('Please select both date and time');
+        if (!details.trim() || !selectedDate || !selectedTime) {
+            alert('Please provide details, date, and time');
             return;
         }
 
@@ -121,13 +123,14 @@ const AddMeetingModal: React.FC<AddMeetingModalProps> = ({ isOpen, onClose, onCr
                 hours += 12;
             }
 
-            const yyyy = selectedDate.getFullYear();
-            const mm = String(selectedDate.getMonth() + 1).padStart(2, '0');
-            const dd = String(selectedDate.getDate()).padStart(2, '0');
-            const hh = String(hours).padStart(2, '0');
-            const min = String(minutes).padStart(2, '0');
+            // Create a date object with the correct time
+            const dateTime = new Date(selectedDate);
+            dateTime.setHours(hours);
+            dateTime.setMinutes(minutes);
+            dateTime.setSeconds(0);
 
-            const dateString = `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+            // Format with timezone offset explicitly
+            const dateString = format(dateTime, "yyyy-MM-dd'T'HH:mm:ssXXX");
 
             onCreate({ details, date: dateString }, selectedFile);
 

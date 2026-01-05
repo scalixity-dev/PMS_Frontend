@@ -46,6 +46,18 @@ const BulkPaymentsIncome: React.FC = () => {
         setProperty(''); // Reset property when payer changes
     };
 
+    const handleEdit = (id: string) => {
+        console.log('Edit income payment', id);
+    };
+
+    const handleDelete = (id: string) => {
+        console.log('Delete income payment', id);
+    };
+
+    const handleMore = (id: string) => {
+        console.log('More options for income', id);
+    };
+
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit">
             {/* Breadcrumb */}
@@ -131,11 +143,10 @@ const BulkPaymentsIncome: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Table Body */}
                 <div className="flex flex-col gap-3 bg-[#F0F0F6] p-4 rounded-[2rem] rounded-t min-h-[300px]">
                     {tableData.length > 0 ? (
-                        tableData.map((item, index) => (
-                            <div key={index}>
+                        tableData.map((item) => (
+                            <div key={item.id}>
                                 {/* Desktop View */}
                                 <div className="hidden md:grid bg-white rounded-2xl px-6 py-4 grid-cols-5 gap-4 items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
                                     <div className="font-semibold text-gray-800 text-sm">{item.id}</div>
@@ -145,13 +156,28 @@ const BulkPaymentsIncome: React.FC = () => {
                                     <div className="text-gray-800 text-sm font-semibold flex items-center justify-between">
                                         {item.amount}
                                         <div className="flex items-center gap-3">
-                                            <button className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleEdit(item.id)}
+                                                aria-label={`Edit payment ${item.id}`}
+                                                className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
+                                            >
                                                 <Edit className="w-5 h-5" />
                                             </button>
-                                            <button className="text-red-500 hover:text-red-600 transition-colors">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleDelete(item.id)}
+                                                aria-label={`Delete payment ${item.id}`}
+                                                className="text-red-500 hover:text-red-600 transition-colors"
+                                            >
                                                 <Trash2 className="w-5 h-5" />
                                             </button>
-                                            <button className="text-gray-400 hover:text-gray-600 transition-colors">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleMore(item.id)}
+                                                aria-label={`More options for ${item.id}`}
+                                                className="text-gray-400 hover:text-gray-600 transition-colors"
+                                            >
                                                 <MoreHorizontal className="w-5 h-5" />
                                             </button>
                                         </div>
@@ -182,13 +208,28 @@ const BulkPaymentsIncome: React.FC = () => {
                                     </div>
 
                                     <div className="flex justify-end gap-3 pt-2">
-                                        <button className="p-2 text-[#3A6D6C] bg-gray-50 rounded-full hover:bg-gray-100">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleEdit(item.id)}
+                                            aria-label={`Edit payment ${item.id}`}
+                                            className="p-2 text-[#3A6D6C] bg-gray-50 rounded-full hover:bg-gray-100"
+                                        >
                                             <Edit className="w-4 h-4" />
                                         </button>
-                                        <button className="p-2 text-red-500 bg-red-50 rounded-full hover:bg-red-100">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleDelete(item.id)}
+                                            aria-label={`Delete payment ${item.id}`}
+                                            className="p-2 text-red-500 bg-red-50 rounded-full hover:bg-red-100"
+                                        >
                                             <Trash2 className="w-4 h-4" />
                                         </button>
-                                        <button className="p-2 text-gray-400 bg-gray-50 rounded-full hover:bg-gray-100">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleMore(item.id)}
+                                            aria-label={`More options for ${item.id}`}
+                                            className="p-2 text-gray-400 bg-gray-50 rounded-full hover:bg-gray-100"
+                                        >
                                             <MoreHorizontal className="w-4 h-4" />
                                         </button>
                                     </div>

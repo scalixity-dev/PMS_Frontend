@@ -32,7 +32,11 @@ const PreciseTimePicker: React.FC<PreciseTimePickerProps> = ({
             let h = parseInt(match[1]);
             const m = parseInt(match[2]);
             const ap = match[3].toUpperCase() as 'AM' | 'PM';
-            return { hour: h, minute: m, amp: ap };
+
+            // Validate ranges
+            if (h >= 1 && h <= 12 && m >= 0 && m <= 59 && (ap === 'AM' || ap === 'PM')) {
+                return { hour: h, minute: m, amp: ap };
+            }
         }
         return { hour: 12, minute: 0, amp: 'AM' as const };
     };
@@ -40,9 +44,7 @@ const PreciseTimePicker: React.FC<PreciseTimePickerProps> = ({
     const [tempTime, setTempTime] = useState(parseTime(value));
 
     useEffect(() => {
-        if (value) {
-            setTempTime(parseTime(value));
-        }
+        setTempTime(parseTime(value));
     }, [value]);
 
     const hours = Array.from({ length: 12 }, (_, i) => i + 1);

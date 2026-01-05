@@ -32,7 +32,9 @@ const RESULT_OPTIONS = Object.keys(RESULT_MAPPING);
 const AddLogModal: React.FC<AddLogModalProps> = ({ isOpen, onClose, onCreate, initialData }) => {
     const [details, setDetails] = useState(initialData?.details || '');
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(
-        initialData?.date ? new Date(initialData.date) : undefined
+        initialData?.date && !isNaN(new Date(initialData.date).getTime())
+            ? new Date(initialData.date)
+            : undefined
     );
     const [selectedTime, setSelectedTime] = useState(
         initialData?.date && !isNaN(new Date(initialData.date).getTime())
@@ -124,8 +126,8 @@ const AddLogModal: React.FC<AddLogModalProps> = ({ isOpen, onClose, onCreate, in
     };
 
     const handleCreate = () => {
-        if (!selectedDate || !selectedTime) {
-            alert('Please select both date and time');
+        if (!details.trim() || !selectedDate || !selectedTime) {
+            alert('Please provide details, date, and time');
             return;
         }
 
