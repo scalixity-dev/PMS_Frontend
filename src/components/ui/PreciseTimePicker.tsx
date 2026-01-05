@@ -24,7 +24,7 @@ const PreciseTimePicker: React.FC<PreciseTimePickerProps> = ({
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
 
-    // Parse parsing logic
+    // Parsing logic
     const parseTime = (timeStr?: string) => {
         if (!timeStr) return { hour: 12, minute: 0, amp: 'AM' as const };
         const match = timeStr.match(/(\d+):(\d+)\s?(AM|PM)/i);
