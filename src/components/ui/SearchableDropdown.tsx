@@ -9,6 +9,7 @@ interface SearchableDropdownProps {
     placeholder?: string;
     className?: string;
     buttonClassName?: string;
+    dropUp?: boolean;
     labelClassName?: string;
 }
 
@@ -20,6 +21,7 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
     placeholder = "Search",
     className,
     buttonClassName,
+    dropUp = false,
     labelClassName
 }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -56,7 +58,7 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
                 </button>
 
                 {isOpen && (
-                    <div className="absolute z-50 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                    <div className={`absolute z-50 w-full bg-white border border-gray-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100 ${dropUp ? 'bottom-full mb-2' : 'mt-2'}`}>
                         <div className="p-2 border-b border-gray-100 sticky top-0 bg-white">
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />

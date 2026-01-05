@@ -34,14 +34,14 @@ const RecurringExpense: React.FC = () => {
             if (dataToLoad.amount) {
                 // Normalize amount: strip non-digits/non-dots, keep only first decimal point
                 let normalized = dataToLoad.amount.replace(/[^0-9.]/g, '').trim();
-                
+
                 // Keep only the first decimal point
                 const firstDotIndex = normalized.indexOf('.');
                 if (firstDotIndex !== -1) {
-                    normalized = normalized.substring(0, firstDotIndex + 1) + 
-                                 normalized.substring(firstDotIndex + 1).replace(/\./g, '');
+                    normalized = normalized.substring(0, firstDotIndex + 1) +
+                        normalized.substring(firstDotIndex + 1).replace(/\./g, '');
                 }
-                
+
                 // Validate the result is a valid number
                 if (/^\d+(\.\d+)?$/.test(normalized) && isFinite(parseFloat(normalized))) {
                     setAmount(normalized);
@@ -60,18 +60,18 @@ const RecurringExpense: React.FC = () => {
     }, [clonedTransactionData]);
 
     return (
-        <div className="p-6 max-w-6xl mx-auto font-['Urbanist']">
-            {/* Main Card */}
-            <div className="p-6 bg-[#DFE5E3] min-h-screen rounded-[2rem] overflow-visible">
+        <div className="max-w-7xl mx-auto min-h-screen font-outfit">
+
+            <div className="p-6 bg-[#DFE5E3] rounded-[2rem] overflow-visible">
                 {/* Header */}
-                <div className="flex items-center mb-6">
+                <div className="flex items-center mb-6 pl-4 pt-4">
                     <button
                         onClick={() => navigate(-1)}
-                        className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                        className="flex items-center gap-2 text-xl font-bold text-gray-800 hover:text-gray-600 transition-colors"
                     >
-                        <ChevronLeft className="w-6 h-6 text-gray-700" />
+                        <ChevronLeft className="w-6 h-6" />
+                        Recurring Expense
                     </button>
-                    <h1 className="text-2xl font-bold text-gray-800">Recurring expense</h1>
                 </div>
 
                 {/* Toggle */}
@@ -87,7 +87,7 @@ const RecurringExpense: React.FC = () => {
                 </div>
 
                 {/* Form Fields */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-x-8 gap-y-6 mb-8 mt-8">
                     {/* Category */}
                     <div className="col-span-1 md:col-span-2">
                         <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Category & subcategory*</label>
@@ -229,8 +229,8 @@ const RecurringExpense: React.FC = () => {
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-4">
-                    <button className="bg-[#7BD747] text-white px-8 py-3 rounded-lg font-semibold shadow-md hover:bg-[#6cc73d] hover:shadow-lg transition-all duration-200 flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row gap-4">
+                    <button className="bg-[#7BD747] text-white px-8 py-3 rounded-lg font-semibold shadow-md hover:bg-[#6cc73d] hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2">
                         Upload File
                     </button>
                     <button className="bg-[#3A6D6C] text-white px-10 py-3 rounded-lg font-semibold shadow-md hover:bg-[#2c5251] hover:shadow-lg transition-all duration-200">

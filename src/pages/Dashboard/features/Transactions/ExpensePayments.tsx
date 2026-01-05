@@ -21,18 +21,17 @@ const ExpensePayments: React.FC = () => {
 
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit">
-            {/* Header */}
-            <div className="flex items-center mb-6 pl-4 pt-4">
-                <button
-                    onClick={() => navigate(-1)}
-                    className="flex items-center gap-2 text-xl font-bold text-gray-800 hover:text-gray-600 transition-colors"
-                >
-                    <ChevronLeft className="w-6 h-6" />
-                    Expense Payments
-                </button>
-            </div>
-
             <div className="p-6 bg-[#DFE5E3] rounded-[2rem] overflow-visible">
+                {/* Header */}
+                <div className="flex items-center mb-6 pl-4 pt-4">
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="flex items-center gap-2 text-xl font-bold text-gray-800 hover:text-gray-600 transition-colors"
+                    >
+                        <ChevronLeft className="w-6 h-6" />
+                        Expense Payments
+                    </button>
+                </div>
 
                 {/* Toggle Switch */}
                 <TransactionToggle
@@ -148,7 +147,7 @@ const ExpensePayments: React.FC = () => {
                 </div>
 
                 {/* Footer Buttons */}
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-4">
                     <button className="bg-[#7BD747] text-white px-8 py-3 rounded-lg font-semibold shadow-md hover:bg-[#6cc73d] hover:shadow-lg transition-all duration-200">
                         Upload File
                     </button>

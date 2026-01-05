@@ -93,7 +93,7 @@ const ReturnDeposit: React.FC = () => {
                 </div>
 
                 {/* Table Section */}
-                <div className="bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm mt-8 pl-4">
+                <div className="bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm mt-8 pl-4 hidden md:block">
                     {/* Table Header */}
                     <div className="text-white px-6 py-4 grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_100px] gap-4 items-center text-sm font-medium">
                         <div>Payment</div>
@@ -107,7 +107,8 @@ const ReturnDeposit: React.FC = () => {
 
                 {/* Table Body */}
                 <div className="flex flex-col gap-3 bg-[#F0F0F6] p-4 rounded-[2rem] rounded-t min-h-[300px]">
-                    <div className="bg-white rounded-2xl px-6 py-4 grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_100px] gap-4 items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                    {/* Desktop View */}
+                    <div className="hidden md:grid bg-white rounded-2xl px-6 py-4 grid-cols-[1.5fr_1fr_1fr_1fr_1fr_100px] gap-4 items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
                         <div className="font-semibold text-gray-800 text-sm">INV-20251122-8492</div>
                         <div className="text-gray-800 text-sm font-semibold">08 Dec</div>
                         <div className="text-gray-800 text-sm font-semibold">ABC</div>
@@ -123,6 +124,42 @@ const ReturnDeposit: React.FC = () => {
                             </button>
                             <button className="text-gray-400 hover:text-gray-600 transition-colors">
                                 <MoreHorizontal className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Mobile Card View */}
+                    <div className="md:hidden bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex flex-col gap-4">
+                        <div className="flex justify-between items-start">
+                            <div className="flex flex-col">
+                                <span className="font-bold text-gray-800 text-base">INV-20251122-8492</span>
+                                <span className="text-gray-500 text-xs">08 Dec</span>
+                            </div>
+                            <span className="text-[#7BD747] font-bold text-sm bg-green-50 px-2 py-1 rounded-lg">
+                                Bal: +69,0000
+                            </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 text-sm border-t border-gray-100 pt-3">
+                            <div className="flex flex-col">
+                                <span className="text-gray-500 text-xs">Payer</span>
+                                <span className="text-gray-800 font-medium">ABC</span>
+                            </div>
+                            <div className="flex flex-col items-end">
+                                <span className="text-gray-500 text-xs">Refund Amount</span>
+                                <span className="text-gray-800 font-bold text-lg">₹ 50,000</span>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
+                            <button className="p-2 text-[#3A6D6C] bg-gray-50 rounded-full hover:bg-gray-100">
+                                <Edit className="w-4 h-4" />
+                            </button>
+                            <button className="p-2 text-red-500 bg-red-50 rounded-full hover:bg-red-100">
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                            <button className="p-2 text-gray-400 bg-gray-50 rounded-full hover:bg-gray-100">
+                                <MoreHorizontal className="w-4 h-4" />
                             </button>
                         </div>
                     </div>

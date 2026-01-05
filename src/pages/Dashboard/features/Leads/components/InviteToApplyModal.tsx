@@ -84,7 +84,7 @@ const InviteToApplyModal: React.FC<InviteToApplyModalProps> = ({
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="invite-modal-title"
-                className="bg-white rounded-3xl w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-300 overflow-hidden mx-4"
+                className="bg-white rounded-3xl w-full max-w-[95%] sm:max-w-lg shadow-2xl animate-in zoom-in-95 duration-300 overflow-hidden mx-4"
             >
                 {/* Header */}
                 <div className="bg-[#3E706F] px-5 py-3 flex items-center justify-between text-white relative">
@@ -106,7 +106,7 @@ const InviteToApplyModal: React.FC<InviteToApplyModalProps> = ({
                 </div>
 
                 {/* Body */}
-                <div className="p-6 bg-[#F8FAFC]">
+                <div className="p-4 sm:p-6 bg-[#F8FAFC]">
                     <div className="flex flex-col gap-5">
                         {/* Select Listing */}
                         <div className="space-y-1.5">
@@ -145,10 +145,10 @@ const InviteToApplyModal: React.FC<InviteToApplyModalProps> = ({
                         </div>
                     </div>
 
-                    <div className="border-t border-gray-100 mt-8 pt-6 flex items-center justify-end gap-3">
+                    <div className="border-t border-gray-100 mt-8 pt-6 flex flex-col sm:flex-row items-center justify-end gap-3">
                         <button
                             onClick={onClose}
-                            className="bg-white text-[#4B5563] px-6 py-2.5 rounded-xl font-bold border border-gray-200 hover:bg-gray-50 transition-all text-sm"
+                            className="w-full sm:w-auto bg-white text-[#4B5563] px-6 py-2.5 rounded-xl font-bold border border-gray-200 hover:bg-gray-50 transition-all text-sm"
                         >
                             Cancel
                         </button>
@@ -157,7 +157,7 @@ const InviteToApplyModal: React.FC<InviteToApplyModalProps> = ({
                                 onSend(email, listing);
                                 onClose();
                             }}
-                            className="bg-[#3E706F] text-white px-8 py-2.5 rounded-xl font-bold shadow-lg hover:bg-[#2c5251] transition-all hover:scale-[1.02] active:scale-[0.98] text-sm"
+                            className="w-full sm:w-auto bg-[#3E706F] text-white px-8 py-2.5 rounded-xl font-bold shadow-lg hover:bg-[#2c5251] transition-all hover:scale-[1.02] active:scale-[0.98] text-sm"
                         >
                             Send invitation
                         </button>

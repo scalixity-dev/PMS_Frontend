@@ -71,17 +71,19 @@ const RecurringIncome: React.FC = () => {
                 </div>
 
                 {/* Toggle Switch */}
-                <TransactionToggle
-                    value={incomeType}
-                    onChange={(val) => setIncomeType(val as 'Property Income' | 'General Income')}
-                    options={[
-                        { label: 'Property Income', value: 'Property Income' },
-                        { label: 'General Income', value: 'General Income' }
-                    ]}
-                />
+                <div className="mb-10">
+                    <TransactionToggle
+                        value={incomeType}
+                        onChange={(val) => setIncomeType(val as 'Property Income' | 'General Income')}
+                        options={[
+                            { label: 'Property Income', value: 'Property Income' },
+                            { label: 'General Income', value: 'General Income' }
+                        ]}
+                    />
+                </div>
 
                 {/* Form Fields */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-x-8 gap-y-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-x-8 gap-y-6 mb-8 mt-8">
                     {/* Category */}
                     <div className="col-span-1 md:col-span-2">
                         <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Category & subcategory*</label>
@@ -205,7 +207,7 @@ const RecurringIncome: React.FC = () => {
                 </div>
 
                 {/* Footer Buttons */}
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-4">
                     <button className="bg-[#7BD747] text-white px-8 py-3 rounded-lg font-semibold shadow-md hover:bg-[#6cc73d] hover:shadow-lg transition-all duration-200">
                         Upload File
                     </button>

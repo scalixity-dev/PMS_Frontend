@@ -82,7 +82,7 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({ isOpen, onClose, onConfirm,
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="note-modal-title"
-                className="bg-white rounded-3xl w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-300 overflow-hidden mx-4"
+                className="bg-white rounded-3xl w-full max-w-[95%] sm:max-w-lg shadow-2xl animate-in zoom-in-95 duration-300 overflow-hidden mx-4"
             >
                 {/* Header */}
                 <div className="bg-[#3E706F] px-5 py-3 flex items-center justify-between text-white relative">
@@ -104,7 +104,7 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({ isOpen, onClose, onConfirm,
                 </div>
 
                 {/* Body */}
-                <div className="p-6 bg-[#F8FAFC]">
+                <div className="p-4 sm:p-6 bg-[#F8FAFC]">
                     <div className="bg-white rounded-2xl border border-gray-200 p-3 shadow-sm min-h-[150px] flex flex-col">
                         <textarea
                             ref={textareaRef}
@@ -132,7 +132,7 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({ isOpen, onClose, onConfirm,
                                 </button>
                             </div>
                         )}
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-col sm:flex-row items-center gap-3">
                             <input
                                 type="file"
                                 ref={fileInputRef}
@@ -142,7 +142,7 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({ isOpen, onClose, onConfirm,
                             />
                             <button
                                 onClick={() => fileInputRef.current?.click()}
-                                className="bg-[#4F5867] text-white px-6 py-2.5 rounded-lg font-bold shadow-lg hover:bg-[#3f4753] transition-all hover:scale-[1.02] active:scale-[0.98] text-sm"
+                                className="w-full sm:w-auto bg-[#4F5867] text-white px-6 py-2.5 rounded-lg font-bold shadow-lg hover:bg-[#3f4753] transition-all hover:scale-[1.02] active:scale-[0.98] text-sm"
                             >
                                 Upload File
                             </button>
@@ -154,7 +154,7 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({ isOpen, onClose, onConfirm,
                                     setExistingFileUrl(null);
                                     onClose();
                                 }}
-                                className="bg-[#3E706F] text-white px-8 py-2.5 rounded-lg font-bold shadow-lg hover:bg-[#2c5251] transition-all hover:scale-[1.02] active:scale-[0.98] text-sm"
+                                className="w-full sm:w-auto bg-[#3E706F] text-white px-8 py-2.5 rounded-lg font-bold shadow-lg hover:bg-[#2c5251] transition-all hover:scale-[1.02] active:scale-[0.98] text-sm"
                             >
                                 {initialNote ? 'Save Changes' : 'Confirm'}
                             </button>
