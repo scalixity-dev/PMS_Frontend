@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Trash2, CheckSquare, Square } from 'lucide-react';
+import { useNavigate, useOutletContext  } from 'react-router-dom';
+import { Trash2, CheckSquare, Square,Loader2, Building2 } from 'lucide-react';
 import PropertiesHeader from './components/PropertiesHeader';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
