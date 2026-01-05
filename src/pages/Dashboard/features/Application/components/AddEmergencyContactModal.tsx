@@ -198,7 +198,7 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200">
-            <div className="bg-[#EAEAEA] rounded-[2rem] overflow-hidden w-full max-w-4xl shadow-2xl animate-slide-in-from-right relative max-h-[90vh] flex flex-col font-sans">
+            <div className="bg-[#EAEAEA] rounded-[2rem] overflow-hidden w-[95%] sm:w-full max-w-4xl shadow-2xl animate-slide-in-from-right relative max-h-[90vh] flex flex-col font-sans">
 
                 {/* Header */}
                 <div className="bg-[#3A6D6C] p-4 flex items-center justify-between text-white rounded-t-[2rem] shrink-0">
@@ -253,8 +253,8 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
                             <div>
                                 <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Contact Number *</label>
                                 <div className={`flex border rounded-xl transition-all ${touched.phoneNumber && errors.phoneNumber
-                                        ? 'border-red-500 border-2'
-                                        : 'border-gray-200 focus-within:ring-2 focus-within:ring-[#3A6D6C] focus-within:border-[#3A6D6C]'
+                                    ? 'border-red-500 border-2'
+                                    : 'border-gray-200 focus-within:ring-2 focus-within:ring-[#3A6D6C] focus-within:border-[#3A6D6C]'
                                     }`}>
                                     {/* Phone Code Selector */}
                                     <div className="relative" ref={phoneCodeRef}>
@@ -262,8 +262,8 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
                                             type="button"
                                             onClick={() => setIsPhoneCodeOpen(!isPhoneCodeOpen)}
                                             className={`flex items-center gap-1 px-3 py-2.5 border-r bg-white rounded-l-xl focus:outline-none text-sm min-w-[100px] hover:bg-gray-50 transition-colors ${touched.phoneNumber && errors.phoneNumber
-                                                    ? 'border-red-500'
-                                                    : 'border-gray-200'
+                                                ? 'border-red-500'
+                                                : 'border-gray-200'
                                                 }`}
                                         >
                                             <span className="text-sm font-medium">
@@ -350,8 +350,8 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
                                     type="button"
                                     onClick={() => setIsRelationshipOpen(!isRelationshipOpen)}
                                     className={`w-full bg-white p-3 rounded-xl outline-none text-left flex items-center justify-between text-sm ${touched.relationship && errors.relationship
-                                            ? 'border-2 border-red-500'
-                                            : 'border border-gray-200 focus-within:ring-2 focus-within:ring-[#3A6D6C] focus-within:border-[#3A6D6C]'
+                                        ? 'border-2 border-red-500'
+                                        : 'border border-gray-200 focus-within:ring-2 focus-within:ring-[#3A6D6C] focus-within:border-[#3A6D6C]'
                                         } ${formData.relationship ? 'text-gray-700' : 'text-gray-500'}`}
                                 >
                                     <span>{formData.relationship || 'Select relationship'}</span>

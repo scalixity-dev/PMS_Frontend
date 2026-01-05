@@ -63,7 +63,7 @@ const ResidenceItem: React.FC<{ residence: ResidenceFormData & { id: string }; o
             </div>
 
             {/* Bottom Section - Teal Info */}
-            <div className="bg-[#3A6D6C] p-6 px-10 flex items-center justify-center gap-10">
+            <div className="bg-[#3A6D6C] p-4 sm:p-6 sm:px-10 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-10">
                 <div className="bg-white rounded-[2rem] px-12 py-4 flex flex-col items-center justify-center min-w-[140px]">
                     <span className="text-xs font-bold text-[#2c3e50] mb-1">Move in date</span>
                     <span className="text-sm font-semibold text-[#2c3e50]">{formatDate(residence.moveInDate)}</span>
@@ -126,11 +126,11 @@ const ResidencesStep: React.FC<ResidencesStepProps> = ({ onNext }) => {
             )}
 
             {/* Button Container - Reverted to 'Before' Style (Grey Box) */}
-            <div className="bg-[#F0F0F6] rounded-full p-8 shadow-sm flex flex-col items-center justify-center gap-6 max-w-3xl mx-auto w-full mt-8">
-                <div className="flex gap-10">
+            <div className="bg-[#F0F0F6] rounded-[2rem] p-4 sm:p-8 shadow-sm flex flex-col items-center justify-center gap-6 max-w-3xl mx-auto w-full mt-8">
+                <div className="flex flex-col sm:flex-row gap-4 sm:gap-10 w-full sm:w-auto">
                     <button
                         onClick={() => setIsAdding(true)}
-                        className="bg-[#3A6D6C] text-white border border-white/20 px-6 py-3 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2"
+                        className="bg-[#3A6D6C] text-white border border-white/20 px-6 py-3 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"
                     >
                         Add a Residence
                         <Plus className="w-4 h-4 rounded-full border border-white p-0.5" />
@@ -139,7 +139,7 @@ const ResidencesStep: React.FC<ResidencesStepProps> = ({ onNext }) => {
                     <button
                         onClick={onNext}
                         disabled={residences.length === 0}
-                        className={`bg-[#3A6D6C] text-white border border-white/20 px-16 py-3 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors ${residences.length > 0 ? '' : 'opacity-50 cursor-not-allowed bg-gray-400 border-gray-400 hover:bg-gray-400'}`}
+                        className={`bg-[#3A6D6C] text-white border border-white/20 px-16 py-3 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors w-full sm:w-auto ${residences.length > 0 ? '' : 'opacity-50 cursor-not-allowed bg-gray-400 border-gray-400 hover:bg-gray-400'}`}
                     >
                         Next
                     </button>

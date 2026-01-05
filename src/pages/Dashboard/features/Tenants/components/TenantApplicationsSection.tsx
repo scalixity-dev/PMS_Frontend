@@ -64,13 +64,13 @@ const TenantApplicationsSection = ({ tenantId: _tenantId, tenantUserId }: Tenant
 
                 return (
                     <div key={app.id} className="bg-[#F6F6F8] rounded-[2rem] p-6 shadow-lg">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                             <div>
                                 <h3 className="text-lg font-bold text-gray-800 mb-2">{applicantName}</h3>
                                 <p className="text-sm text-gray-600">Applied: {applicationDate}</p>
                                 <p className="text-sm text-gray-600">Status: {status}</p>
                             </div>
-                            <div className="bg-[#7BD747] text-white px-4 py-2 rounded-full text-xs font-medium shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">
+                            <div className="bg-[#7BD747] text-white px-4 py-2 rounded-full text-xs font-medium shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)] w-fit">
                                 {status}
                             </div>
                         </div>

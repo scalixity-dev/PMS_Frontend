@@ -59,7 +59,7 @@ const Section = ({
 
     return (
         <div className="mb-6">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2 sm:gap-0">
                 <button
                     onClick={() => setIsOpen(!isOpen)}
                     className="flex items-center gap-2 text-lg font-bold text-black hover:text-gray-700 transition-colors"
@@ -67,7 +67,7 @@ const Section = ({
                     {title}
                     <ChevronDown className={`w-5 h-5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                 </button>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 self-end sm:self-auto">
                     {secondaryButton}
                     {onAdd && (
                         <button
@@ -1080,12 +1080,12 @@ const ApplicationDetail = () => {
     return (
         <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit pb-20 transition-all duration-300`}>
             {/* Breadcrumb - Matches design style */}
-            <div className="inline-flex items-center px-4 py-2 bg-[#E0E5E5] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
+            <div className="inline-flex flex-wrap items-center px-4 py-2 bg-[#E0E5E5] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] gap-y-1">
                 <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>Dashboard</span>
                 <span className="text-gray-500 text-sm mx-1">/</span>
                 <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer">Tenants</span>
                 <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">No.{application.id.substring(0, 8)}</span>
+                <span className="text-gray-600 text-sm font-semibold truncate max-w-[150px]">No.{application.id.substring(0, 8)}</span>
             </div>
 
             {/* Main Container */}
@@ -1096,14 +1096,14 @@ const ApplicationDetail = () => {
                     <button onClick={() => navigate(-1)} className="p-1 hover:bg-black/5 rounded-full transition-colors">
                         <ChevronLeft className="w-6 h-6 text-gray-700" />
                     </button>
-                    <h1 className="text-xl font-bold text-gray-800">No. {application.id}</h1>
+                    <h1 className="text-xl font-bold text-gray-800 truncate">No. {application.id}</h1>
                 </div>
 
-                <div className="bg-[#F6F6F8] p-4 shadow-lg rounded-[2rem] mb-8">
+                <div className="bg-[#F6F6F8] p-4 md:p-6 shadow-lg rounded-[2rem] mb-8">
                     {/* Profile Card */}
-                    <div className=" flex flex-col lg:flex-row gap-8 items-start">
+                    <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start">
                         {/* Left: Applicant Info & Image */}
-                        <div className="flex gap-6 items-start">
+                        <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start w-full lg:w-auto">
                             <div className="w-32 h-32 flex-shrink-0 relative group">
                                 {application.imageUrl ? (
                                     <>
@@ -1145,13 +1145,13 @@ const ApplicationDetail = () => {
                                 />
                             </div>
 
-                            <div className="flex flex-col gap-2">
-                                <div className="bg-[#3A6D6C] text-white p-4 py-3 rounded-xl text-center min-w-[200px] relative group">
-                                    <div className="relative inline-flex items-center justify-center mb-1">
-                                        <h2 className="font-bold text-lg">{applicantName}</h2>
+                            <div className="flex flex-col gap-2 items-center sm:items-start w-full">
+                                <div className="bg-[#3A6D6C] text-white p-4 py-3 rounded-xl text-center min-w-[200px] w-full sm:w-auto relative group">
+                                    <div className="relative inline-flex items-center justify-center mb-1 w-full">
+                                        <h2 className="font-bold text-lg truncate px-4">{applicantName}</h2>
                                         <button
                                             onClick={() => setNameEditModalOpen(true)}
-                                            className="absolute left-full ml-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-white/20 rounded-full"
+                                            className="absolute right-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-white/20 rounded-full"
                                             title="Edit name"
                                         >
                                             <Edit2 size={12} className="text-white" />
@@ -1160,17 +1160,17 @@ const ApplicationDetail = () => {
                                     <p className="text-[10px] uppercase tracking-wider opacity-80 mb-0.5">VIA INVITATION EMAIL</p>
                                     <p className="text-xs opacity-90 truncate max-w-[180px] mx-auto">{primaryApplicant?.email}</p>
                                 </div>
-                                <div className="w-full bg-[#C8C8C8] text-gray-700 py-1 rounded-full text-sm font-bold text-center shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
+                                <div className="w-full sm:w-[200px] bg-[#C8C8C8] text-gray-700 py-1 rounded-full text-sm font-bold text-center shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
                                     {statusDisplay}
                                 </div>
                             </div>
                         </div>
 
                         {/* Right: Property & Listing Stats */}
-                        <div className="flex-1 flex flex-col justify-center bg-[#E4E4E4] p-4 rounded-full">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl">
+                        <div className="flex-1 w-full flex flex-col justify-center bg-[#E4E4E4] p-4 rounded-3xl lg:rounded-full">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full lg:max-w-2xl mx-auto">
                                 {/* Property Pill */}
-                                <div className="bg-[#7BD747] rounded-full px-6 py-3 flex flex-col justify-center h-24 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)] relative group">
+                                <div className="bg-[#7BD747] rounded-3xl px-6 py-3 flex flex-col justify-center h-auto min-h-[6rem] shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)] relative group">
                                     <button
                                         onClick={() => setIsPropertyEditModalOpen(true)}
                                         className="absolute top-4 right-6 opacity-0 bg-white/90 group-hover:opacity-100 transition-opacity p-1 hover:bg-white rounded-full"
@@ -1181,12 +1181,12 @@ const ApplicationDetail = () => {
                                     <div className="flex items-center gap-2 mb-2 ml-1">
                                         <span className="text-xs font-semibold text-white">Property</span>
                                     </div>
-                                    <div className="flex justify-between items-center gap-2">
-                                        <div className="bg-[#E8F5E9] px-4 py-1.5 rounded-full text-sm font-bold text-gray-700 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)] flex-1 truncate">
+                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                                        <div className="bg-[#E8F5E9] px-4 py-1.5 rounded-full text-sm font-bold text-gray-700 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)] flex-1 truncate w-full sm:w-auto">
                                             {property?.propertyName || 'N/A'}
                                         </div>
                                         {unit?.unitName && (
-                                            <div className="bg-[#3A6D6C] text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">
+                                            <div className="bg-[#3A6D6C] text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)] self-start sm:self-auto">
                                                 {unit.unitName}
                                             </div>
                                         )}
@@ -1194,7 +1194,7 @@ const ApplicationDetail = () => {
                                 </div>
 
                                 {/* Listing Content Link */}
-                                <div className="bg-[#7BD747] rounded-full px-6 py-3 flex flex-col justify-center h-24 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">
+                                <div className="bg-[#7BD747] rounded-3xl px-6 py-3 flex flex-col justify-center h-auto min-h-[6rem] shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">
                                     <span className="text-xs font-semibold text-white mb-2 ml-1">Listing content</span>
                                     <div className="flex justify-between items-center bg-[#E8F5E9] rounded-full p-1 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">
                                         <div className="px-4 py-0.5 text-sm font-bold text-gray-700">
@@ -1211,9 +1211,9 @@ const ApplicationDetail = () => {
 
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                     {/* Section Header */}
-                    <div className="flex items-center gap-4 mb-8">
-                        <div className="bg-[#7CD947] text-white pl-6 pr-2 py-2 rounded-full shadow-sm flex items-center gap-4">
-                            <h2 className="text-lg font-bold">Application Details</h2>
+                    <div className="flex flex-col sm:flex-row items-center gap-4 mb-8">
+                        <div className="bg-[#7CD947] text-white pl-6 pr-2 py-2 rounded-full shadow-sm flex flex-wrap items-center gap-4 justify-between w-full sm:w-auto">
+                            <h2 className="text-lg font-bold whitespace-nowrap">Application Details</h2>
                             <div className="relative" ref={actionDropdownRef}>
                                 <button
                                     onClick={() => setIsActionDropdownOpen(!isActionDropdownOpen)}

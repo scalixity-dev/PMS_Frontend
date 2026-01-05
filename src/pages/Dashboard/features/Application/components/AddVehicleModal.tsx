@@ -212,8 +212,8 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSa
     const labelClasses = "block text-sm font-semibold text-[#2c3e50] mb-1 ml-1";
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200">
-            <div className="bg-[#EAEAEA] rounded-3xl w-full max-w-4xl shadow-2xl animate-slide-in-from-right relative overflow-visible">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200 p-4">
+            <div className="bg-[#EAEAEA] rounded-3xl w-[95%] sm:w-full max-w-4xl shadow-2xl animate-slide-in-from-right relative flex flex-col max-h-[90vh] overflow-hidden">
 
                 {/* Header */}
                 <div className="bg-[#3A6D6C] p-4 flex items-center justify-between text-white rounded-t-3xl">
@@ -227,7 +227,7 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSa
                 </div>
 
                 {/* Body */}
-                <div className="p-8 space-y-6">
+                <div className="p-4 sm:p-8 space-y-6 overflow-y-auto custom-scrollbar flex-1">
                     {/* Row 1 */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>

@@ -28,17 +28,17 @@ const mapReminderTypeToFormType = (reminderType: Reminder['type'] | undefined | 
     if (!reminderType) {
         return 'reminder';
     }
-    
+
     // Map 'maintenance' to 'reminder' since form doesn't support 'maintenance'
     if (reminderType === 'maintenance') {
         return 'reminder';
     }
-    
+
     // Validate that the type is one of the valid form types
     if (isValidFormType(reminderType)) {
         return reminderType;
     }
-    
+
     // Fallback to 'reminder' if type is unexpected
     console.warn(`Unexpected reminder type "${reminderType}", defaulting to "reminder"`);
     return 'reminder';
@@ -235,7 +235,7 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
 
     return createPortal(
         <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/50 animate-in fade-in duration-200 font-['Urbanist'] p-4">
-            <div className="bg-[#E8ECEB] rounded-3xl w-full max-w-sm shadow-2xl animate-slide-in-from-right relative flex flex-col max-h-[90vh]">
+            <div className="bg-[#E8ECEB] rounded-3xl w-[95%] sm:w-full max-w-sm shadow-2xl animate-slide-in-from-right relative flex flex-col max-h-[90vh]">
                 {/* Header */}
                 <div className="bg-[#3D7475] p-4 flex items-center justify-between rounded-t-3xl flex-shrink-0">
                     <h2 className="text-lg font-medium text-white">{isEditMode ? 'Edit reminder' : 'Add reminder'}</h2>
@@ -245,7 +245,7 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
                 </div>
 
                 {/* Body */}
-                <div className="p-5 space-y-3 overflow-y-auto flex-1">
+                <div className="p-4 sm:p-5 space-y-3 overflow-y-auto flex-1 custom-scrollbar">
 
                     {/* Title */}
                     <div>
@@ -278,8 +278,8 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
                     {/* Date & Time */}
                     <div>
                         <label className="block text-xs font-bold text-gray-700 mb-1">Date & Time *</label>
-                        <div className="flex gap-2">
-                            <div className="w-2/3">
+                        <div className="flex flex-col sm:flex-row gap-2">
+                            <div className="w-full sm:w-2/3">
                                 <DatePicker
                                     value={formData.date}
                                     onChange={(date) => updateFormData('date', date)}
@@ -288,7 +288,7 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
                                     className={formErrors.date ? 'ring-2 ring-red-500' : ''}
                                 />
                             </div>
-                            <div className="w-1/3">
+                            <div className="w-full sm:w-1/3">
                                 <div className={isLoading ? 'opacity-50 pointer-events-none' : ''}>
                                     <TimePicker
                                         value={formData.time}

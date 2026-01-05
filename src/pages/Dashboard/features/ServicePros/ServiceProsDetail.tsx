@@ -42,7 +42,7 @@ const formatAddress = (address: string, city?: string | null, state?: string, zi
 // Transform backend data to component format
 const transformServiceProvider = (data: BackendServiceProvider) => {
     const fullName = `${data.firstName}${data.middleName ? ` ${data.middleName}` : ''} ${data.lastName}`.trim();
-    
+
     return {
         id: data.id,
         initials: getInitials(data.firstName, data.lastName),
@@ -102,7 +102,7 @@ const ServiceProsDetail = () => {
             try {
                 const data = await serviceProviderService.getOne(id);
                 setServicePro(transformServiceProvider(data));
-                
+
                 // Fetch documents
                 setIsLoadingDocuments(true);
                 try {
@@ -133,7 +133,7 @@ const ServiceProsDetail = () => {
 
     const handleDelete = async () => {
         if (!id) return;
-        
+
         setIsDeleting(true);
         try {
             await serviceProviderService.delete(id);
@@ -149,7 +149,7 @@ const ServiceProsDetail = () => {
 
     const handleArchive = async () => {
         if (!id || !servicePro) return;
-        
+
         setIsArchiving(true);
         try {
             await serviceProviderService.update(id, { isActive: false });
@@ -224,16 +224,16 @@ const ServiceProsDetail = () => {
                 <span className="text-gray-600 text-sm font-semibold">{servicePro.name}</span>
             </div>
 
-            <div className="p-6 bg-[#E0E5E5] min-h-screen rounded-[2rem]">
+            <div className="p-4 sm:p-6 bg-[#E0E5E5] min-h-screen rounded-[1.5rem] sm:rounded-[2rem]">
                 {/* Header Actions */}
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <div className="flex items-center gap-2">
                         <button onClick={() => navigate(-1)} className="p-2 hover:bg-black/5 rounded-full transition-colors">
                             <ChevronLeft className="w-6 h-6 text-black" />
                         </button>
                         <h1 className="text-2xl font-bold text-black">Service Pro</h1>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 flex-wrap w-full sm:w-auto">
                         <button
                             onClick={() => navigate('/dashboard/accounting/transactions/expense/add', {
                                 state: {
@@ -244,15 +244,15 @@ const ServiceProsDetail = () => {
                                     }
                                 }
                             })}
-                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2"
+                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"
                         >
                             Add Invoice
                             <Plus className="w-4 h-4" />
                         </button>
-                        <div className="relative" ref={actionMenuRef}>
+                        <div className="relative w-full sm:w-auto" ref={actionMenuRef}>
                             <button
                                 onClick={() => setIsActionMenuOpen(!isActionMenuOpen)}
-                                className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2"
+                                className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"
                             >
                                 Action
                                 <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg" className={`transition-transform duration-200 ${isActionMenuOpen ? 'rotate-180' : ''}`}>
@@ -277,16 +277,16 @@ const ServiceProsDetail = () => {
                                             Send Connection
                                         </button>
                                     )}
-                                    <button 
-                                        onClick={() => { setIsArchiveModalOpen(true); setIsActionMenuOpen(false); }} 
+                                    <button
+                                        onClick={() => { setIsArchiveModalOpen(true); setIsActionMenuOpen(false); }}
                                         className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors flex items-center gap-2"
                                         disabled={isArchiving}
                                     >
                                         <Archive className="w-4 h-4" />
                                         {isArchiving ? 'Archiving...' : 'Archive'}
                                     </button>
-                                    <button 
-                                        onClick={() => { setIsDeleteModalOpen(true); setIsActionMenuOpen(false); }} 
+                                    <button
+                                        onClick={() => { setIsDeleteModalOpen(true); setIsActionMenuOpen(false); }}
                                         className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
                                         disabled={isDeleting}
                                     >
@@ -299,28 +299,29 @@ const ServiceProsDetail = () => {
                     </div>
                 </div>
 
-                <div className='shadow-lg rounded-[2rem] p-6 mb-8'>
+                <div className='shadow-lg rounded-[1.5rem] sm:rounded-[2rem] p-4 sm:p-6 mb-8 bg-white'>
                     {/* Top Card */}
-                    <div className="bg-[#F6F6F8] rounded-[2rem] shadow-lg p-6 mb-8">
-                        <div className="flex flex-col lg:flex-row gap-8 items-start">
+                    <div className="bg-[#F6F6F8] rounded-[1.5rem] sm:rounded-[2rem] shadow-lg p-4 sm:p-6 mb-8">
+                        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-center lg:items-start">
                             {/* Left: Image */}
-                            <div className="flex-shrink-0">
+                            <div className="flex-shrink-0 flex justify-center lg:justify-start w-full lg:w-auto">
                                 {servicePro.image ? (
-                                    <img src={servicePro.image} alt={servicePro.name} className="w-[250px] h-[250px] rounded-[2rem] object-cover" />
+                                    <img src={servicePro.image} alt={servicePro.name} className="w-[200px] h-[200px] sm:w-[250px] sm:h-[250px] rounded-[2rem] object-cover" />
                                 ) : (
-                                    <div className="w-[250px] h-[250px] bg-[#4ad1a6] rounded-[2rem] flex items-center justify-center">
+                                    <div className="w-[200px] h-[200px] sm:w-[250px] sm:h-[250px] bg-[#4ad1a6] rounded-[2rem] flex items-center justify-center">
                                         <span className="text-white text-5xl font-medium">{servicePro.initials}</span>
                                     </div>
                                 )}
                             </div>
 
                             {/* Middle: Info + Outstanding Stack */}
-                            <div className="flex flex-col gap-2 min-w-[280px]">
+                            <div className="flex flex-col gap-2 min-w-full sm:min-w-[280px]">
                                 {/* Info Card */}
                                 <div className="bg-[#3A6D6C] text-white p-4 rounded-[2rem] text-center shadow-md">
                                     <h2 className="font-bold text-xl mb-1 capitalize">{servicePro.name}</h2>
                                     <p className="text-sm opacity-90 mb-0.5">{servicePro.phone}</p>
-                                    <p className="text-sm opacity-90">{servicePro.email}</p>
+                                    <p className="text-sm opacity-90 break-words">{servicePro.email}</p>
+                                    <div className="mt-2 text-xs bg-white/20 inline-block px-3 py-1 rounded-full">{servicePro.personalInfo.category}</div>
                                 </div>
 
                                 {/* View Profile Button */}
@@ -340,18 +341,16 @@ const ServiceProsDetail = () => {
                             {/* Right: Reports */}
                             <div className="flex-1 bg-[#E4E4E4] rounded-[2.5rem] p-6 shadow-lg h-full self-stretch">
                                 <h3 className="text-gray-700 font-bold mb-4 ml-1 text-lg">Reports</h3>
-                                <div className="bg-[#7BD747] rounded-[2.5rem] p-5 flex items-center justify-between gap-4 shadow-inner relative overflow-hidden h-[100px]">
-                                    {/* Green background container for the report item */}
-                                    {/* Based on screenshot, "Rentals" text is in top left, pills bottom right */}
-                                    <span className="absolute top-4 left-6 text-white font-bold text-lg">Rentals</span>
+                                <div className="bg-[#7BD747] rounded-[2.5rem] p-5 shadow-inner relative overflow-hidden flex flex-col justify-between h-auto min-h-[140px] sm:min-h-[100px]">
+                                    <span className="text-white font-bold text-lg mb-4 sm:mb-0 sm:absolute sm:top-4 sm:left-6">Rentals</span>
 
-                                    <div className="absolute bottom-4 left-6 right-6 flex justify-between items-center p-1 rounded-full backdrop-blur-sm">
-                                        <div className="bg-[#E8F5E9] px-4 py-1.5 rounded-full text-xs font-medium text-gray-700 shadow-sm flex-1 text-center mr-2">
+                                    <div className="flex flex-col sm:flex-row sm:absolute sm:bottom-4 sm:left-6 sm:right-6 justify-between items-center gap-3 sm:gap-0 p-1 rounded-3xl sm:rounded-full sm:backdrop-blur-sm w-full sm:w-auto">
+                                        <div className="bg-[#E8F5E9] px-4 py-2 sm:py-1.5 rounded-full text-xs font-medium text-gray-700 shadow-sm w-full sm:flex-1 text-center sm:mr-2">
                                             Provider Statement
                                         </div>
                                         <button
                                             onClick={() => navigate('/dashboard/reports/statement')}
-                                            className="bg-[#3A6D6C] text-white px-5 py-1.5 rounded-full text-xs font-medium shadow-md hover:bg-[#2c5251] transition-colors"
+                                            className="bg-[#3A6D6C] text-white px-5 py-2 sm:py-1.5 rounded-full text-xs font-medium shadow-md hover:bg-[#2c5251] transition-colors w-full sm:w-auto"
                                         >
                                             View
                                         </button>

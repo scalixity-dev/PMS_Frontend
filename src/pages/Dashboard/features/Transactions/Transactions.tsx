@@ -288,26 +288,35 @@ const Transactions: React.FC = () => {
                 <span className="text-gray-600 text-sm font-semibold">Transactions</span>
             </div>
 
-            <div className="p-6 bg-[#DFE5E3] min-h-screen rounded-[2rem] overflow-visible">
+            <div className="p-4 sm:p-6 bg-[#DFE5E3] min-h-screen rounded-[1.5rem] sm:rounded-[2rem] overflow-visible">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-6">
-                    <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-xl font-bold text-gray-800 hover:text-gray-600 transition-colors">
-                        <ChevronLeft className="w-6 h-6" />
-                        Transactions
-                    </button>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div className="flex items-center justify-between w-full sm:w-auto">
+                        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-xl font-bold text-gray-800 hover:text-gray-600 transition-colors">
+                            <ChevronLeft className="w-6 h-6" />
+                            Transactions
+                        </button>
+                        <button
+                            onClick={handleExport}
+                            className="sm:hidden w-10 h-10 bg-[#3A6D6C] rounded-full flex items-center justify-center text-white hover:bg-[#2c5251] transition-colors shadow-sm"
+                            title="Download Excel"
+                        >
+                            <Download className="w-5 h-5" />
+                        </button>
+                    </div>
 
-                    <div className="flex items-center gap-3" ref={moneyDropdownRef}>
+                    <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto" ref={moneyDropdownRef}>
                         {/* Money In Dropdown */}
-                        <div className="relative">
+                        <div className="relative flex-1 sm:flex-none">
                             <button
                                 onClick={() => setActiveDropdown(activeDropdown === 'money_in' ? null : 'money_in')}
-                                className="px-6 py-2 bg-[#3A6D6C] text-white rounded-md text-sm font-medium hover:bg-[#6cc73d] transition-colors shadow-sm flex items-center gap-2"
+                                className="w-full sm:w-auto px-6 py-2 bg-[#3A6D6C] text-white rounded-md text-sm font-medium hover:bg-[#6cc73d] transition-colors shadow-sm flex items-center justify-center gap-2"
                             >
                                 Money In
                                 <ChevronDown className="w-4 h-4" />
                             </button>
                             {activeDropdown === 'money_in' && (
-                                <div className="absolute top-full left-0 mt-2 bg-white rounded-md shadow-xl border border-gray-100 w-48 z-50 overflow-hidden">
+                                <div className="absolute top-full left-0 mt-2 bg-white rounded-md shadow-xl border border-gray-100 w-full z-50 overflow-hidden">
                                     <button
                                         onClick={() => navigate('/dashboard/accounting/transactions/income/add')}
                                         className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100"
@@ -349,16 +358,16 @@ const Transactions: React.FC = () => {
                         </div>
 
                         {/* Money Out Dropdown */}
-                        <div className="relative">
+                        <div className="relative flex-1 sm:flex-none">
                             <button
                                 onClick={() => setActiveDropdown(activeDropdown === 'money_out' ? null : 'money_out')}
-                                className="px-6 py-2 bg-[#1f2937] text-white rounded-md text-sm font-medium hover:bg-red-600 transition-colors shadow-sm flex items-center gap-2"
+                                className="w-full sm:w-auto px-6 py-2 bg-[#1f2937] text-white rounded-md text-sm font-medium hover:bg-red-600 transition-colors shadow-sm flex items-center justify-center gap-2"
                             >
                                 Money Out
                                 <ChevronDown className="w-4 h-4" />
                             </button>
                             {activeDropdown === 'money_out' && (
-                                <div className="absolute top-full left-0 mt-2 bg-white rounded-md shadow-xl border border-gray-100 w-48 z-50 overflow-hidden">
+                                <div className="absolute top-full left-0 mt-2 bg-white rounded-md shadow-xl border border-gray-100 w-full z-50 overflow-hidden">
                                     <button
                                         onClick={() => navigate('/dashboard/accounting/transactions/expense/add')}
                                         className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100"
@@ -410,7 +419,7 @@ const Transactions: React.FC = () => {
 
                         <button
                             onClick={handleExport}
-                            className="w-10 h-10 bg-[#3A6D6C] rounded-full flex items-center justify-center text-white hover:bg-[#2c5251] transition-colors shadow-sm"
+                            className="hidden sm:flex w-10 h-10 bg-[#3A6D6C] rounded-full items-center justify-center text-white hover:bg-[#2c5251] transition-colors shadow-sm"
                             title="Download Excel"
                         >
                             <Download className="w-5 h-5" />
@@ -419,28 +428,28 @@ const Transactions: React.FC = () => {
                 </div>
 
                 {/* Stats Cards */}
-                <div className="bg-[#f0f0f6] rounded-full p-4 mb-8 shadow-sm">
-                    <div className="grid grid-cols-3 gap-4">
+                <div className="bg-[#f0f0f6] rounded-[2rem] p-4 mb-8 shadow-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         {/* Outstanding / Paid Income */}
-                        <div className="p-4 bg-[#7BD747] rounded-full flex flex-col justify-center items-center h-24">
+                        <div className="p-4 bg-[#7BD747] rounded-[1.5rem] sm:rounded-full flex flex-col justify-center items-center h-24">
                             <span className="text-white text-sm font-medium mb-2">Paid Income</span>
-                            <div className="bg-[#E3EBDE] px-6 py-2 rounded-full w-[80%] text-center shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.15)]">
+                            <div className="bg-[#E3EBDE] px-6 py-2 rounded-full w-full sm:w-[80%] text-center shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.15)]">
                                 <span className="text-gray-600 text-lg font-bold">₹45,000.00</span>
                             </div>
                         </div>
 
                         {/* Paid Expense */}
-                        <div className="p-4 bg-[#7BD747] rounded-full flex flex-col justify-center items-center h-24">
+                        <div className="p-4 bg-[#7BD747] rounded-[1.5rem] sm:rounded-full flex flex-col justify-center items-center h-24">
                             <span className="text-white text-sm font-medium mb-2">Paid Expense</span>
-                            <div className="bg-[#E3EBDE] px-6 py-2 rounded-full w-[80%] text-center shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.15)]">
+                            <div className="bg-[#E3EBDE] px-6 py-2 rounded-full w-full sm:w-[80%] text-center shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.15)]">
                                 <span className="text-gray-600 text-lg font-bold">₹45,000.00</span>
                             </div>
                         </div>
 
                         {/* Paid Refund */}
-                        <div className="p-4 bg-[#7BD747] rounded-full flex flex-col justify-center items-center h-24">
+                        <div className="p-4 bg-[#7BD747] rounded-[1.5rem] sm:rounded-full flex flex-col justify-center items-center h-24">
                             <span className="text-white text-sm font-medium mb-2">Paid Refund</span>
-                            <div className="bg-[#E3EBDE] px-6 py-2 rounded-full w-[80%] text-center shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.15)]">
+                            <div className="bg-[#E3EBDE] px-6 py-2 rounded-full w-full sm:w-[80%] text-center shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.15)]">
                                 <span className="text-gray-600 text-lg font-bold">₹ 00.00</span>
                             </div>
                         </div>
@@ -448,12 +457,12 @@ const Transactions: React.FC = () => {
                 </div>
 
                 {/* Tabs */}
-                <div className="flex gap-4 mb-8 bg-[#f1f3f2] rounded-full p-2 w-min">
+                <div className="flex gap-4 mb-8 bg-[#f1f3f2] rounded-full p-2 w-max max-w-full overflow-x-auto">
                     {(['All', 'Income', 'Expense'] as const).map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
-                            className={`px-8 py-2 rounded-full text-sm font-medium transition-colors ${activeTab === tab
+                            className={`px-6 sm:px-8 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${activeTab === tab
                                 ? 'bg-[#7BD747] text-white shadow-sm'
                                 : 'bg-[#DDDDDD] text-black hover:bg-gray-300'
                                 }`}
@@ -473,7 +482,7 @@ const Transactions: React.FC = () => {
                 />
 
                 {/* Table Section */}
-                <div className="bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm mt-8 pl-4">
+                <div className="bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm mt-8 pl-4 hidden lg:block">
                     {/* Table Header */}
                     <div className="text-white px-6 py-4 grid grid-cols-[40px_1fr_1fr_1fr_1fr_1fr_1fr_1fr_100px] gap-4 items-center text-sm font-medium">
                         <div className="flex items-center justify-center">
@@ -511,51 +520,207 @@ const Transactions: React.FC = () => {
                                     <div
                                         key={item.id}
                                         onClick={() => navigate(`/dashboard/accounting/transactions/${item.id}`)}
-                                        className="bg-white rounded-2xl px-6 py-4 grid grid-cols-[40px_1fr_1fr_1fr_1fr_1fr_1fr_1fr_100px] gap-4 items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                                        className="bg-white rounded-[1.5rem] sm:rounded-2xl px-4 sm:px-6 py-4 flex flex-col lg:grid lg:grid-cols-[40px_1fr_1fr_1fr_1fr_1fr_1fr_1fr_100px] gap-3 lg:gap-4 items-start lg:items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer relative"
                                     >
-                                        <div className="flex items-center justify-center">
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    toggleSelection(item.id);
-                                                }}
-                                                className="flex items-center justify-center"
-                                            >
-                                                <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${selectedItems.includes(item.id) ? 'bg-[#7BD747]' : 'bg-gray-200'}`}>
-                                                    {selectedItems.includes(item.id) && <Check className="w-3.5 h-3.5 text-white" />}
+                                        <div className="flex items-center justify-between w-full lg:w-auto mb-2 lg:mb-0">
+                                            <div className="flex items-center gap-3 lg:justify-center">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        toggleSelection(item.id);
+                                                    }}
+                                                    className="flex items-center justify-center"
+                                                >
+                                                    <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${selectedItems.includes(item.id) ? 'bg-[#7BD747]' : 'bg-gray-200'}`}>
+                                                        {selectedItems.includes(item.id) && <Check className="w-3.5 h-3.5 text-white" />}
+                                                    </div>
+                                                </button>
+                                                {/* Mobile Status - Shown next to checkbox on mobile */}
+                                                <div className="flex lg:hidden items-center gap-2">
+                                                    <div className={`w-2.5 h-2.5 rounded ${getStatusColor(item.status)}`}></div>
+                                                    <span className="text-gray-800 text-sm font-medium">{item.status}</span>
                                                 </div>
-                                            </button>
+                                            </div>
+
+                                            {/* Mobile Actions - Shown at top right relative to card */}
+                                            <div className="block lg:hidden">
+                                                <div className="relative" ref={moreMenuOpenId === item.id ? moreMenuRef : null}>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setMoreMenuOpenId(moreMenuOpenId === item.id ? null : item.id);
+                                                        }}
+                                                        className="text-gray-600 hover:text-gray-800 transition-colors"
+                                                    >
+                                                        <MoreHorizontal className="w-8 h-8 bg-gray-100 rounded-full p-1.5" />
+                                                    </button>
+                                                    {moreMenuOpenId === item.id && (
+                                                        <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-[60]">
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setMoreMenuOpenId(null);
+                                                                    setSelectedTransactionId(item.id);
+                                                                    setEditInvoiceOpen(true);
+                                                                }}
+                                                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"
+                                                            >
+                                                                Edit
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setMoreMenuOpenId(null);
+                                                                    setSelectedTransactionId(item.id);
+                                                                    setMarkAsPaidOpen(true);
+                                                                }}
+                                                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"
+                                                            >
+                                                                Mark as paid
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setMoreMenuOpenId(null);
+                                                                    const dataToPass = {
+                                                                        amount: `₹${item.total.toLocaleString()}`,
+                                                                        user: item.contact,
+                                                                        date: item.dueDate,
+                                                                        category: item.category,
+                                                                        property: item.property
+                                                                    };
+                                                                    setClonedTransactionData(dataToPass);
+                                                                    navigate('/dashboard/accounting/transactions/recurring-expense/add');
+                                                                }}
+                                                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"
+                                                            >
+                                                                Make recurring
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setMoreMenuOpenId(null);
+                                                                    const dataToClone = {
+                                                                        amount: `₹${item.total.toLocaleString()}`,
+                                                                        user: item.contact,
+                                                                        date: item.dueDate,
+                                                                        category: item.category,
+                                                                        property: item.property
+                                                                    };
+                                                                    setClonedTransactionData(dataToClone);
+                                                                    navigate('/dashboard/accounting/transactions/clone');
+                                                                }}
+                                                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"
+                                                            >
+                                                                Clone
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setMoreMenuOpenId(null);
+                                                                    setSelectedTransactionId(item.id);
+                                                                    setApplyDepositsOpen(true);
+                                                                }}
+                                                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"
+                                                            >
+                                                                Apply deposits
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setMoreMenuOpenId(null);
+                                                                    setSelectedTransactionId(item.id);
+                                                                    setApplyCreditsOpen(true);
+                                                                }}
+                                                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"
+                                                            >
+                                                                Apply credits
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setMoreMenuOpenId(null);
+                                                                    setSelectedTransactionId(item.id);
+                                                                    setAddDiscountOpen(true);
+                                                                }}
+                                                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"
+                                                            >
+                                                                Add discount
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setMoreMenuOpenId(null);
+                                                                    setSelectedTransactionId(item.id);
+                                                                    setVoidModalOpen(true);
+                                                                }}
+                                                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"
+                                                            >
+                                                                Void
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setMoreMenuOpenId(null);
+                                                                    setSelectedTransactionId(item.id);
+                                                                    setDeleteTransactionOpen(true);
+                                                                }}
+                                                                className="w-full px-4 py-2 text-left text-sm text-red-500 hover:bg-red-50 transition-colors"
+                                                            >
+                                                                Delete
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
 
-                                        {/* Status */}
-                                        <div className="flex items-center gap-2">
+                                        {/* Desktop Status */}
+                                        <div className="hidden lg:flex items-center gap-2">
                                             <div className={`w-2.5 h-2.5 rounded ${getStatusColor(item.status)}`}></div>
                                             <span className="text-gray-800 text-sm font-medium">{item.status}</span>
                                         </div>
 
                                         {/* Due Date */}
-                                        <div className="font-semibold text-gray-800 text-sm">{item.dueDate}</div>
-
-                                        {/* Category */}
-                                        <div className="text-gray-800 text-sm font-semibold truncate" title={item.category}>{item.category}</div>
-
-                                        {/* Property */}
-                                        <div className="text-gray-800 text-sm font-semibold">{item.property}</div>
-
-                                        {/* Contact */}
-                                        <div className="text-gray-800 text-sm font-semibold">{item.contact}</div>
-
-                                        {/* Total */}
-                                        <div className="font-bold text-gray-900 text-sm">₹ {item.total.toLocaleString()}</div>
-
-                                        {/* Balance */}
-                                        <div className={`text-sm font-bold ${item.balance > 0 ? 'text-[#3A6D6C]' : 'text-gray-800'}`}>
-                                            ₹ {item.balance.toLocaleString()}
+                                        <div className="w-full lg:w-auto flex justify-between lg:block">
+                                            <span className="lg:hidden text-xs text-gray-500 font-bold uppercase tracking-wider">Due Date</span>
+                                            <span className="font-semibold text-gray-800 text-sm">{item.dueDate}</span>
                                         </div>
 
-                                        {/* Actions */}
-                                        {/* Actions */}
-                                        <div className="flex items-center justify-end gap-3 relative">
+                                        {/* Category */}
+                                        <div className="w-full lg:w-auto flex justify-between lg:block">
+                                            <span className="lg:hidden text-xs text-gray-500 font-bold uppercase tracking-wider">Category</span>
+                                            <div className="text-gray-800 text-sm font-semibold truncate max-w-[200px]" title={item.category}>{item.category}</div>
+                                        </div>
+
+                                        {/* Property */}
+                                        <div className="w-full lg:w-auto flex justify-between lg:block">
+                                            <span className="lg:hidden text-xs text-gray-500 font-bold uppercase tracking-wider">Property</span>
+                                            <div className="text-gray-800 text-sm font-semibold">{item.property}</div>
+                                        </div>
+
+                                        {/* Contact */}
+                                        <div className="w-full lg:w-auto flex justify-between lg:block">
+                                            <span className="lg:hidden text-xs text-gray-500 font-bold uppercase tracking-wider">Contact</span>
+                                            <div className="text-gray-800 text-sm font-semibold">{item.contact}</div>
+                                        </div>
+
+                                        {/* Total */}
+                                        <div className="w-full lg:w-auto flex justify-between lg:block">
+                                            <span className="lg:hidden text-xs text-gray-500 font-bold uppercase tracking-wider">Total</span>
+                                            <div className="font-bold text-gray-900 text-sm">₹ {item.total.toLocaleString()}</div>
+                                        </div>
+
+                                        {/* Balance */}
+                                        <div className="w-full lg:w-auto flex justify-between lg:block">
+                                            <span className="lg:hidden text-xs text-gray-500 font-bold uppercase tracking-wider">Balance</span>
+                                            <div className={`text-sm font-bold ${item.balance > 0 ? 'text-[#3A6D6C]' : 'text-gray-800'}`}>
+                                                ₹ {item.balance.toLocaleString()}
+                                            </div>
+                                        </div>
+
+                                        {/* Desktop Actions */}
+                                        <div className="hidden lg:flex items-center justify-end gap-3 relative w-full">
                                             <div className="relative" ref={moreMenuOpenId === item.id ? moreMenuRef : null}>
                                                 <button
                                                     onClick={(e) => {

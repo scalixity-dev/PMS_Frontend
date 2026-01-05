@@ -277,7 +277,7 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200">
-            <div className="bg-[#EAEAEA] rounded-xl w-full max-w-4xl shadow-2xl animate-slide-in-from-right relative max-h-[90vh] flex flex-col font-sans">
+            <div className="bg-[#EAEAEA] rounded-xl w-[95%] sm:w-full max-w-4xl shadow-2xl animate-slide-in-from-right relative max-h-[90vh] flex flex-col font-sans">
 
                 {/* Header */}
                 <div className="bg-[#3A6D6C] p-4 flex items-center justify-between text-white rounded-t-xl shrink-0">
@@ -293,7 +293,7 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
                 </div>
 
                 {/* Body - Scrollable */}
-                <div className="p-8 overflow-y-auto custom-scrollbar flex-1">
+                <div className="p-4 sm:p-8 overflow-y-auto custom-scrollbar flex-1">
 
                     {/* Current Employment & Type */}
                     <div className="flex items-center justify-between mb-6">
@@ -319,7 +319,7 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
                     </div>
 
                     {/* Form Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
 
                         {/* Start Date */}
                         <div>
@@ -366,7 +366,7 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
                         </div>
 
                         {/* Position */}
-                        <div className="md:col-span-1.5">
+                        <div className="md:col-span-1">
                             <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Position / Title *</label>
                             <input
                                 type="text"
@@ -380,11 +380,11 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
                         </div>
 
                         {/* Monthly Income */}
-                        <div className="md:col-span-1.5">
+                        <div className="md:col-span-1">
                             <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Monthly Income*</label>
                             <div className={`flex border rounded-xl transition-all ${touched.monthlyAmount && errors.monthlyAmount
-                                    ? 'border-red-500 border-2'
-                                    : 'border-gray-200 focus-within:ring-2 focus-within:ring-[#3A6D6C] focus-within:border-[#3A6D6C]'
+                                ? 'border-red-500 border-2'
+                                : 'border-gray-200 focus-within:ring-2 focus-within:ring-[#3A6D6C] focus-within:border-[#3A6D6C]'
                                 }`}>
                                 {/* Currency Selector */}
                                 <div className="relative" ref={currencyRef}>
@@ -392,8 +392,8 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
                                         type="button"
                                         onClick={() => setIsCurrencyOpen(!isCurrencyOpen)}
                                         className={`flex items-center gap-1 px-3 py-3 border-r bg-white rounded-l-xl focus:outline-none text-sm min-w-[80px] hover:bg-gray-50 transition-colors ${touched.monthlyAmount && errors.monthlyAmount
-                                                ? 'border-red-500'
-                                                : 'border-gray-200'
+                                            ? 'border-red-500'
+                                            : 'border-gray-200'
                                             }`}
                                     >
                                         <span className="text-sm font-medium">
@@ -476,7 +476,7 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
                         </div>
 
                         {/* Address */}
-                        <div className="md:col-span-1.5">
+                        <div className="md:col-span-2">
                             <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Address *</label>
                             <input
                                 type="text"
@@ -490,7 +490,7 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
                         </div>
 
                         {/* Office */}
-                        <div className="md:col-span-1.5">
+                        <div className="md:col-span-1">
                             <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Office *</label>
                             <input
                                 type="text"
@@ -504,7 +504,7 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
                         </div>
 
                         {/* Company Phone */}
-                        <div className="md:col-span-1.5">
+                        <div className="md:col-span-1">
                             <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Company Phone Number *</label>
                             <input
                                 type="tel"
@@ -518,7 +518,7 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
                         </div>
 
                         {/* Supervisor Full Name */}
-                        <div className="md:col-span-1.5">
+                        <div className="md:col-span-1">
                             <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Supervisor Full Name*</label>
                             <input
                                 type="text"
@@ -532,7 +532,7 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
                         </div>
 
                         {/* Supervisor Email */}
-                        <div className="md:col-span-1.5">
+                        <div className="md:col-span-1">
                             <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Supervisor Email</label>
                             <input
                                 type="email"
@@ -546,7 +546,7 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
                         </div>
 
                         {/* Supervisor Phone */}
-                        <div className="md:col-span-1.5">
+                        <div className="md:col-span-1">
                             <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Supervisor Phone Number *</label>
                             <input
                                 type="tel"

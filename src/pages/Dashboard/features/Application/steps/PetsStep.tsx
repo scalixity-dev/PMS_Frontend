@@ -80,7 +80,7 @@ const PetsStep: React.FC<PetsStepProps> = ({ onNext }) => {
                 Provide the information about your pets below if you have any.
             </p>
 
-            <div className={`bg-[#F0F0F6] ${pets.length > 0 ? 'rounded-[1.5rem]' : 'rounded-full'} p-8 shadow-sm flex flex-col items-center justify-center gap-6 max-w-3xl mx-auto`}>
+            <div className={`bg-[#F0F0F6] ${pets.length > 0 ? 'rounded-[1.5rem]' : 'rounded-full'} p-4 sm:p-8 shadow-sm flex flex-col items-center justify-center gap-6 max-w-3xl mx-auto`}>
 
                 {/* List of Pets */}
                 {pets.length > 0 && (
@@ -95,10 +95,10 @@ const PetsStep: React.FC<PetsStepProps> = ({ onNext }) => {
                     </div>
                 )}
 
-                <div className="flex gap-10">
+                <div className="flex flex-col sm:flex-row gap-4 sm:gap-10 w-full sm:w-auto">
                     <button
                         onClick={() => setIsAdding(true)}
-                        className="bg-[#3A6D6C] text-white border border-white/20 px-6 py-3 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2"
+                        className="bg-[#3A6D6C] text-white border border-white/20 px-6 py-3 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"
                     >
                         Add a Pet
                         <Plus className="w-4 h-4 rounded-full border border-white p-0.5" />
@@ -106,7 +106,7 @@ const PetsStep: React.FC<PetsStepProps> = ({ onNext }) => {
 
                     <button
                         onClick={onNext}
-                        className="bg-[#3A6D6C] text-white border border-white/20 px-16 py-3 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors"
+                        className="bg-[#3A6D6C] text-white border border-white/20 px-16 py-3 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors w-full sm:w-auto"
                     >
                         Next
                     </button>
