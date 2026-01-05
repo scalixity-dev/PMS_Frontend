@@ -123,7 +123,7 @@ const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({ onConfirm }) => {
     const labelClasses = "block text-sm font-bold text-[#2c3e50] mb-2";
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200 p-4">
             <div className="bg-[#dfe5e3] rounded-[1.5rem] w-full max-w-2xl shadow-2xl animate-in slide-in-from-bottom-4 duration-300 relative overflow-hidden flex flex-col max-h-[90vh]">
 
                 {/* Header */}
@@ -138,7 +138,7 @@ const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({ onConfirm }) => {
                 </div>
 
                 {/* Body */}
-                <div className="p-8 overflow-y-auto custom-scrollbar">
+                <div className="p-4 sm:p-8 overflow-y-auto custom-scrollbar">
                     {/* Category & Subcategory */}
                     <div className="mb-6">
                         <CustomDropdown
@@ -240,7 +240,7 @@ const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({ onConfirm }) => {
                     )}
 
                     {/* Footer Actions */}
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
                         <input
                             ref={fileInputRef}
                             type="file"
@@ -250,13 +250,13 @@ const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({ onConfirm }) => {
                         />
                         <button
                             onClick={handleFileClick}
-                            className="flex-1 py-3 px-6 bg-[#5F6D7E] text-white rounded-lg font-medium hover:bg-[#4a5563] transition-colors shadow-lg"
+                            className="w-full sm:flex-1 py-3 px-6 bg-[#5F6D7E] text-white rounded-lg font-medium hover:bg-[#4a5563] transition-colors shadow-lg"
                         >
                             Upload File
                         </button>
                         <button
                             onClick={handleConfirm}
-                            className="flex-1 py-3 px-6 bg-[#3A6D6C] text-white rounded-lg font-medium hover:bg-[#2c5251] transition-colors shadow-lg"
+                            className="w-full sm:flex-1 py-3 px-6 bg-[#3A6D6C] text-white rounded-lg font-medium hover:bg-[#2c5251] transition-colors shadow-lg"
                         >
                             Confirm
                         </button>

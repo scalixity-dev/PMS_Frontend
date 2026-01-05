@@ -115,7 +115,7 @@ const TransactionDetail: React.FC = () => {
 
             <div className="bg-[#dfe5e3] rounded-[2rem] p-6 pb-20 min-h-screen">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
                     <button
                         onClick={() => navigate(-1)}
                         className="flex items-center gap-2 text-xl font-bold text-gray-800 hover:text-gray-600 transition-colors"
@@ -123,19 +123,19 @@ const TransactionDetail: React.FC = () => {
                         <ChevronLeft className="w-6 h-6" />
                         Transaction
                     </button>
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap gap-3">
                         <button
                             onClick={() => setEditInvoiceOpen(true)}
-                            className="px-6 py-2 bg-[#5F6D7E] text-white rounded-full text-sm font-medium hover:bg-[#4a5563] transition-colors"
+                            className="px-6 py-2 bg-[#5F6D7E] text-white rounded-full text-sm font-medium hover:bg-[#4a5563] transition-colors flex-1 sm:flex-none"
                         >
                             Edit
                         </button>
 
                         {/* Actions Dropdown */}
-                        <div className="relative" ref={actionsDropdownRef}>
+                        <div className="relative flex-1 sm:flex-none" ref={actionsDropdownRef}>
                             <button
                                 onClick={() => setIsActionsOpen(!isActionsOpen)}
-                                className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2"
+                                className="w-full sm:w-auto px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center justify-center gap-2"
                             >
                                 Action
                                 <ChevronDown className={`w-4 h-4 transition-transform ${isActionsOpen ? 'rotate-180' : ''}`} />
@@ -224,7 +224,7 @@ const TransactionDetail: React.FC = () => {
                         </div>
                         <button
                             onClick={() => setMarkAsPaidOpen(true)}
-                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors"
+                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex-1 sm:flex-none whitespace-nowrap"
                         >
                             Mark As Paid
                         </button>
@@ -232,7 +232,7 @@ const TransactionDetail: React.FC = () => {
                 </div>
 
                 {/* Top Card */}
-                <div className="bg-[#F0F0F6] rounded-[2rem] p-8 mb-8">
+                <div className="bg-[#F0F0F6] rounded-[2rem] p-4 sm:p-8 mb-8">
                     {/* Due Date Pill */}
                     <div className="mb-10">
                         <span className="px-6 py-2 bg-[#7BD747] text-white rounded-full text-sm font-bold shadow-[4px_4px_0px_rgba(0,0,0,0.1)]">
@@ -241,14 +241,14 @@ const TransactionDetail: React.FC = () => {
                     </div>
 
                     {/* Main White Card with Overlapping Pill */}
-                    <div className="bg-white rounded-[2rem] p-8 pb-4 border border-[#7BD747] relative mb-8 shadow-sm">
+                    <div className="bg-white rounded-[2rem] p-4 sm:p-8 pb-4 border border-[#7BD747] relative mb-8 shadow-sm mt-8">
 
                         {/* Overlapping Rent Pill - Half Outside */}
-                        <div className="absolute -top-5 left-8 bg-[#3A6D6C] text-white px-6 py-2 rounded-full flex items-center gap-2">
-                            <div className="w-5 h-5 rounded-full border border-white flex items-center justify-center">
+                        <div className="absolute -top-5 left-4 sm:left-8 bg-[#3A6D6C] text-white px-4 sm:px-6 py-2 rounded-full flex items-center gap-2 max-w-[90%] sm:max-w-none">
+                            <div className="w-5 h-5 rounded-full border border-white flex items-center justify-center flex-shrink-0">
                                 <span className="text-white text-xs font-bold">₹</span>
                             </div>
-                            <span className="font-semibold text-sm">Rent for ₹53,200.00 INR</span>
+                            <span className="font-semibold text-xs sm:text-sm truncate">Rent for ₹53,200.00 INR</span>
                         </div>
 
                         {/* Progress Bar Container */}
@@ -259,7 +259,7 @@ const TransactionDetail: React.FC = () => {
                             </div>
 
                             {/* Status Text Row */}
-                            <div className="flex justify-between items-center text-sm font-bold text-gray-700">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-sm font-bold text-gray-700 gap-1">
                                 <span>₹200.00 Left</span>
                                 <span className="text-[#2F5C5B]">₹53,200.00 Paid</span>
                             </div>
@@ -274,7 +274,7 @@ const TransactionDetail: React.FC = () => {
                     </div>
 
                     {/* Tags Row - Outside the white card */}
-                    <div className="flex gap-4 flex-wrap px-2">
+                    <div className="flex gap-4 flex-wrap px-0 sm:px-2">
                         {['Equipment', 'Recurring Requests', 'SmartTenantAI', 'Maintenance'].map((tag, idx) => (
                             <div key={idx} className="flex items-center gap-2 px-4 py-2 rounded-full border-[1.5px] border-[#7BD747] text-xs font-bold text-gray-700 bg-white shadow-sm">
                                 <div className="w-5 h-5 rounded-full bg-[#7BD747] text-white flex items-center justify-center text-[10px] font-bold">2</div>
@@ -285,11 +285,11 @@ const TransactionDetail: React.FC = () => {
                 </div>
 
                 {/* Payers Section */}
-                <div className="bg-[#F0F0F6] rounded-[2rem] p-6 mb-8 flex items-center gap-4">
-                    <button className="px-6 py-2 bg-[#7BD747] text-white rounded-full text-sm font-bold shadow-sm">
+                <div className="bg-[#F0F0F6] rounded-[2rem] p-6 mb-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                    <button className="px-6 py-2 bg-[#7BD747] text-white rounded-full text-sm font-bold shadow-sm text-center">
                         Payers
                     </button>
-                    <div className="px-8 py-2 bg-[#dcdcdc] text-gray-700 rounded-full text-sm font-medium">
+                    <div className="px-8 py-2 bg-[#dcdcdc] text-gray-700 rounded-full text-sm font-medium text-center">
                         Jay
                     </div>
                 </div>
@@ -306,7 +306,7 @@ const TransactionDetail: React.FC = () => {
 
                     {!isSummaryCollapsed && (
                         <div className="bg-[#F0F0F6] rounded-[2.5rem] p-8 shadow-md">
-                            <div className="grid grid-cols-2 gap-x-12 gap-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
                                 {/* Row 1 */}
                                 <CustomTextBox
                                     label="Property"
@@ -340,7 +340,7 @@ const TransactionDetail: React.FC = () => {
                                 />
 
                                 {/* Row 3 - Full Width Details */}
-                                <div className="col-span-2">
+                                <div className="col-span-1 md:col-span-2">
                                     <CustomTextBox
                                         label="Details"
                                         value={mockSummaryData.details}
@@ -368,8 +368,8 @@ const TransactionDetail: React.FC = () => {
                     {!isPaymentsCollapsed && (
                         <div className="bg-[#F0F0F6] rounded-[2.5rem] p-4 shadow-md">
                             <div className="w-full">
-                                {/* Header Row */}
-                                <div className="grid grid-cols-[1fr_1fr_1fr_1fr_100px_80px] gap-4 items-center px-4 py-3 bg-[var(--color-primary)] rounded-t-lg mb-2 text-xs font-bold text-white">
+                                {/* Header Row - Hidden on mobile */}
+                                <div className="hidden md:grid grid-cols-[1fr_1fr_1fr_1fr_100px_80px] gap-4 items-center px-4 py-3 bg-[var(--color-primary)] rounded-t-lg mb-2 text-xs font-bold text-white">
                                     <div>Date</div>
                                     <div>Status</div>
                                     <div>Amount</div>
@@ -379,50 +379,102 @@ const TransactionDetail: React.FC = () => {
                                 </div>
 
                                 {mockActivities.map((activity, index) => (
-                                    <CustomTextBox
-                                        key={activity.id}
-                                        value={
-                                            <div className="grid grid-cols-[1fr_1fr_1fr_1fr_100px_80px] gap-10 items-center w-full">
-                                                <div>{activity.date}</div>
-                                                <div className="text-green-600 font-bold">{activity.status}</div>
-                                                <div>{activity.amount}</div>
-                                                <div>{activity.user}</div>
-                                                <div>
-                                                    <button
-                                                        onClick={() => {
-                                                            setSelectedPayment({ date: activity.date, amount: activity.amount });
-                                                            setRefundModalOpen(true);
-                                                        }}
-                                                        className="bg-[#a8f090] text-green-800 px-4 py-1 rounded-full text-xs font-bold hover:bg-[#97e080]"
-                                                    >
-                                                        Refund
-                                                    </button>
+                                    <div key={activity.id} className="mb-2">
+                                        {/* Desktop View */}
+                                        <div className="hidden md:block">
+                                            <CustomTextBox
+                                                value={
+                                                    <div className="grid grid-cols-[1fr_1fr_1fr_1fr_100px_80px] gap-10 items-center w-full">
+                                                        <div>{activity.date}</div>
+                                                        <div className="text-green-600 font-bold">{activity.status}</div>
+                                                        <div>{activity.amount}</div>
+                                                        <div>{activity.user}</div>
+                                                        <div>
+                                                            <button
+                                                                onClick={() => {
+                                                                    setSelectedPayment({ date: activity.date, amount: activity.amount });
+                                                                    setRefundModalOpen(true);
+                                                                }}
+                                                                className="bg-[#a8f090] text-green-800 px-4 py-1 rounded-full text-xs font-bold hover:bg-[#97e080]"
+                                                            >
+                                                                Refund
+                                                            </button>
+                                                        </div>
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                className="text-[#3A6D6C] hover:text-[#2c5251]"
+                                                                onClick={() => {
+                                                                    setSelectedPayment({ date: activity.date, amount: activity.amount });
+                                                                    setEditPaymentModalOpen(true);
+                                                                }}
+                                                            >
+                                                                <Edit className="w-4 h-4" />
+                                                            </button>
+                                                            <button
+                                                                className="text-red-500 hover:text-red-600"
+                                                                onClick={() => {
+                                                                    setSelectedPayment({ date: activity.date, amount: activity.amount });
+                                                                    setDeleteModalOpen(true);
+                                                                }}
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                }
+                                                className={`w-full px-0 py-3 h-auto ${index !== mockActivities.length - 1 ? 'border-b border-gray-200' : ''}`}
+                                                valueClassName="w-full"
+                                            />
+                                        </div>
+
+                                        {/* Mobile View - Card Layout */}
+                                        <div className="md:hidden bg-white rounded-xl p-4 shadow-sm border border-gray-100 mb-3 last:mb-0">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div className="flex flex-col">
+                                                    <span className="text-gray-800 font-bold text-base">{activity.amount}</span>
+                                                    <span className="text-gray-500 text-xs">{activity.date}</span>
                                                 </div>
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        className="text-[#3A6D6C] hover:text-[#2c5251]"
-                                                        onClick={() => {
-                                                            setSelectedPayment({ date: activity.date, amount: activity.amount });
-                                                            setEditPaymentModalOpen(true);
-                                                        }}
-                                                    >
-                                                        <Edit className="w-4 h-4" />
-                                                    </button>
-                                                    <button
-                                                        className="text-red-500 hover:text-red-600"
-                                                        onClick={() => {
-                                                            setSelectedPayment({ date: activity.date, amount: activity.amount });
-                                                            setDeleteModalOpen(true);
-                                                        }}
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                </div>
+                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${activity.status === 'Success' ? 'bg-green-100 text-green-700' :
+                                                    'bg-gray-100 text-gray-700'
+                                                    }`}>
+                                                    {activity.status}
+                                                </span>
                                             </div>
-                                        }
-                                        className={`w-full px-0 py-3 mb-2 h-auto ${index !== mockActivities.length - 1 ? 'border-b border-gray-200' : ''}`}
-                                        valueClassName="w-full"
-                                    />
+                                            <div className="flex justify-between items-center text-sm mb-3">
+                                                <span className="text-gray-600">User:</span>
+                                                <span className="text-gray-800 font-medium">{activity.user}</span>
+                                            </div>
+                                            <div className="flex justify-end gap-2 border-t border-gray-100 pt-3">
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedPayment({ date: activity.date, amount: activity.amount });
+                                                        setRefundModalOpen(true);
+                                                    }}
+                                                    className="bg-[#a8f090] text-green-800 px-3 py-1 rounded-full text-xs font-bold hover:bg-[#97e080]"
+                                                >
+                                                    Refund
+                                                </button>
+                                                <button
+                                                    className="text-[#3A6D6C] hover:text-[#2c5251] p-1 rounded-full"
+                                                    onClick={() => {
+                                                        setSelectedPayment({ date: activity.date, amount: activity.amount });
+                                                        setEditPaymentModalOpen(true);
+                                                    }}
+                                                >
+                                                    <Edit className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    className="text-red-500 hover:text-red-600 p-1 rounded-full"
+                                                    onClick={() => {
+                                                        setSelectedPayment({ date: activity.date, amount: activity.amount });
+                                                        setDeleteModalOpen(true);
+                                                    }}
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
                                 ))}
                             </div>
                         </div>

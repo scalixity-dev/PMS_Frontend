@@ -122,7 +122,7 @@ const BulkPaymentsExpense: React.FC = () => {
                 </div>
 
                 {/* Table Section */}
-                <div className="bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm mt-8 pl-4">
+                <div className="bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm mt-8 pl-4 hidden md:block">
                     {/* Table Header */}
                     <div className="text-white px-6 py-4 grid grid-cols-5 gap-4 items-center text-sm font-medium">
                         <div>Invoice ID</div>
@@ -137,22 +137,61 @@ const BulkPaymentsExpense: React.FC = () => {
                 <div className="flex flex-col gap-3 bg-[#F0F0F6] p-4 rounded-[2rem] rounded-t min-h-[300px]">
                     {tableData.length > 0 ? (
                         tableData.map((item, index) => (
-                            <div key={index} className="bg-white rounded-2xl px-6 py-4 grid grid-cols-5 gap-4 items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-                                <div className="font-semibold text-gray-800 text-sm">{item.id}</div>
-                                <div className="text-gray-800 text-sm font-semibold">{item.dueOn}</div>
-                                <div className="text-gray-800 text-sm font-semibold">{item.category}</div>
-                                <div className="text-[#7BD747] text-sm font-bold">{item.balance}</div>
-                                <div className="text-gray-800 text-sm font-semibold flex items-center justify-between">
-                                    {item.amount}
-                                    <div className="flex items-center gap-3">
-                                        <button className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors">
-                                            <Edit className="w-5 h-5" />
+                            <div key={index}>
+                                {/* Desktop View */}
+                                <div className="hidden md:grid bg-white rounded-2xl px-6 py-4 grid-cols-5 gap-4 items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                                    <div className="font-semibold text-gray-800 text-sm">{item.id}</div>
+                                    <div className="text-gray-800 text-sm font-semibold">{item.dueOn}</div>
+                                    <div className="text-gray-800 text-sm font-semibold">{item.category}</div>
+                                    <div className="text-[#7BD747] text-sm font-bold">{item.balance}</div>
+                                    <div className="text-gray-800 text-sm font-semibold flex items-center justify-between">
+                                        {item.amount}
+                                        <div className="flex items-center gap-3">
+                                            <button className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors">
+                                                <Edit className="w-5 h-5" />
+                                            </button>
+                                            <button className="text-red-500 hover:text-red-600 transition-colors">
+                                                <Trash2 className="w-5 h-5" />
+                                            </button>
+                                            <button className="text-gray-400 hover:text-gray-600 transition-colors">
+                                                <MoreHorizontal className="w-5 h-5" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Mobile View - Card Layout */}
+                                <div className="md:hidden bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex flex-col gap-3">
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex flex-col">
+                                            <span className="font-bold text-gray-800 text-base">{item.id}</span>
+                                            <span className="text-gray-500 text-xs">Due: {item.dueOn}</span>
+                                        </div>
+                                        <span className="text-[#7BD747] font-bold text-sm bg-green-50 px-2 py-1 rounded-lg">
+                                            {item.balance}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex justify-between items-center text-sm border-t border-gray-100 pt-3 mt-1">
+                                        <div className="flex flex-col">
+                                            <span className="text-gray-500 text-xs">Category</span>
+                                            <span className="text-gray-800 font-medium">{item.category}</span>
+                                        </div>
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-gray-500 text-xs">Amount</span>
+                                            <span className="text-gray-800 font-bold text-lg">{item.amount}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-end gap-3 pt-2">
+                                        <button className="p-2 text-[#3A6D6C] bg-gray-50 rounded-full hover:bg-gray-100">
+                                            <Edit className="w-4 h-4" />
                                         </button>
-                                        <button className="text-red-500 hover:text-red-600 transition-colors">
-                                            <Trash2 className="w-5 h-5" />
+                                        <button className="p-2 text-red-500 bg-red-50 rounded-full hover:bg-red-100">
+                                            <Trash2 className="w-4 h-4" />
                                         </button>
-                                        <button className="text-gray-400 hover:text-gray-600 transition-colors">
-                                            <MoreHorizontal className="w-5 h-5" />
+                                        <button className="p-2 text-gray-400 bg-gray-50 rounded-full hover:bg-gray-100">
+                                            <MoreHorizontal className="w-4 h-4" />
                                         </button>
                                     </div>
                                 </div>
