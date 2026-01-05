@@ -148,8 +148,8 @@ const BulkPaymentsExpense: React.FC = () => {
                 {/* Table Body */}
                 <div className="flex flex-col gap-3 bg-[#F0F0F6] p-4 rounded-[2rem] rounded-t min-h-[300px]">
                     {tableData.length > 0 ? (
-                        tableData.map((item, index) => (
-                            <div key={index}>
+                        tableData.map((item) => (
+                            <div key={item.id}>
                                 {/* Desktop View */}
                                 <div className="hidden md:grid bg-white rounded-2xl px-6 py-4 grid-cols-5 gap-4 items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
                                     <div className="font-semibold text-gray-800 text-sm">{item.id}</div>
