@@ -4,7 +4,7 @@ import { Check, Plus, Pencil, Trash2, Loader2, ChevronDown, MoreHorizontal, Clip
 import DashboardFilter, { type FilterOption, type SavedFilter } from '../../components/DashboardFilter';
 import AddTaskModal from './components/AddTaskModal';
 import TaskDetailSideModal from './components/TaskDetailSideModal';
-import DeleteConfirmationModal from './components/DeleteConfirmationModal';
+import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import { useGetAllTasks, useDeleteTask, useUpdateTask } from '../../../../hooks/useTaskQueries';
 import { useGetAllProperties } from '../../../../hooks/usePropertyQueries';
 import type { TaskFilters } from '../../../../services/task.service';
@@ -687,9 +687,9 @@ const Tasks: React.FC = () => {
                     }
                 }}
                 onConfirm={confirmDeleteTask}
-                taskTitle={taskToDelete?.title}
-                isLoading={deleteTaskMutation.isPending}
+                itemName={taskToDelete?.title}
             />
+
         </div>
     );
 };

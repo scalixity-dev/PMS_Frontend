@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { useSignUpStore } from '../store/signUpStore';
 import { useRegister } from '../../../../../hooks/useAuthQueries';
+import { authService } from '../../../../../services/auth.service';
 
 // Helper function to apply consistent styling to inputs/selects
 const inputClasses = () =>
@@ -13,7 +14,7 @@ const labelClasses = "block text-xs font-medium text-gray-700 mb-1";
 
 export const TenantRegistrationForm: React.FC<RegistrationFormProps> = () => {
   // Get state from Zustand store
-  const { formData, updateFormData, nextStep } = useSignUpStore();
+  const { formData, updateFormData, nextStep, setUserId } = useSignUpStore();
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -127,11 +128,15 @@ export const TenantRegistrationForm: React.FC<RegistrationFormProps> = () => {
     setError(null);
 
     try {
-      await registerMutation.mutateAsync({
+      // Use tenant-specific registration endpoint
+      const response = await authService.registerTenant({
         email: formData.email!,
         password: formData.password!,
         fullName: formData.fullName!,
       });
+
+      // Store user ID in store for onboarding
+      setUserId(response.id);
 
       // Registration successful - go to onboarding step
       nextStep();

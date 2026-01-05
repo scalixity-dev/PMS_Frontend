@@ -20,17 +20,17 @@ const parseDate = (dateStr: string): Date | null => {
     try {
         const cleanDateStr = dateStr.trim();
         const parts = cleanDateStr.split(/[\s,]+/);
-        
+
         if (parts.length >= 3) {
             const day = parseInt(parts[0]);
             const month = parts[1];
             const year = parseInt(parts[2]);
-            
+
             const monthMap: Record<string, number> = {
                 'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
                 'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
             };
-            
+
             const monthIndex = monthMap[month];
             if (monthIndex !== undefined) {
                 return new Date(year, monthIndex, day);
@@ -46,10 +46,10 @@ const parseDate = (dateStr: string): Date | null => {
 const matchesTimeFilter = (dateStr: string, filter: string): boolean => {
     const transactionDate = parseDate(dateStr);
     if (!transactionDate) return true; // If can't parse, show it
-    
+
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
+
     switch (filter) {
         case "today": {
             const transDate = new Date(transactionDate.getFullYear(), transactionDate.getMonth(), transactionDate.getDate());
@@ -63,13 +63,13 @@ const matchesTimeFilter = (dateStr: string, filter: string): boolean => {
             return transactionDate >= weekStart && transactionDate <= weekEnd;
         }
         case "this_month": {
-            return transactionDate.getMonth() === now.getMonth() && 
-                   transactionDate.getFullYear() === now.getFullYear();
+            return transactionDate.getMonth() === now.getMonth() &&
+                transactionDate.getFullYear() === now.getFullYear();
         }
         case "last_month": {
             const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-            return transactionDate.getMonth() === lastMonth.getMonth() && 
-                   transactionDate.getFullYear() === lastMonth.getFullYear();
+            return transactionDate.getMonth() === lastMonth.getMonth() &&
+                transactionDate.getFullYear() === lastMonth.getFullYear();
         }
         case "all_time":
         default:
@@ -90,8 +90,8 @@ export const TransactionTable = ({ transactions }: TransactionTableProps) => {
         if (!selectedTimeFilter || selectedTimeFilter === "all_time") {
             return transactions;
         }
-        
-        return transactions.filter(transaction => 
+
+        return transactions.filter(transaction =>
             matchesTimeFilter(transaction.dueDate, selectedTimeFilter)
         );
     }, [transactions, selectedTimeFilter]);

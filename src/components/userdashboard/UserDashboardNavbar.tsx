@@ -10,8 +10,7 @@ import {
     User,
     LogOut,
     UserCog,
-    FileText,
-    Download,
+    Building2,
 } from "lucide-react";
 import logo from "../../assets/images/logo.png";
 import { authService } from "../../services/auth.service";
@@ -83,7 +82,7 @@ export default function UserDashboardNavbar({ sidebarOpen, setSidebarOpen }: Nav
 
     const handleManageProfile = () => {
         setIsProfileDropdownOpen(false);
-        navigate("/userdashboard/settings"); // Changed from /dashboard
+        navigate("/userdashboard/settings");
     };
 
     return (
@@ -132,30 +131,21 @@ export default function UserDashboardNavbar({ sidebarOpen, setSidebarOpen }: Nav
                     </button>
                 </div>
 
-                <button className="sm:hidden text-white p-1">
-                    <Search size={20} />
-                </button>
 
-                <div className="flex items-center gap-1 md:gap-2 ml-auto">
+                <div className="flex items-center gap-2 ml-auto">
                     <button
-                        aria-label="Files"
-                        className="hidden md:flex w-8 h-8 rounded-full bg-white items-center justify-center hover:bg-gray-100 shadow-[0_3px_0_rgba(93,111,108)]"
+                        aria-label="Property"
+                        className="w-8 h-8 rounded-full bg-white flex items-center justify-center hover:bg-gray-100 shadow-[0_3px_0_rgba(93,111,108)]"
                     >
-                        <FileText size={18} className="text-gray-800" />
-                    </button>
-
-                    <button
-                        aria-label="Downloads"
-                        className="hidden md:flex w-8 h-8 mr-6 rounded-full bg-white items-center justify-center hover:bg-gray-100 shadow-[0_3px_0_rgba(93,111,108)]"
-                    >
-                        <Download size={18} className="text-gray-800" />
+                        <Building2 size={18} className="text-gray-800" />
                     </button>
 
                     <button
                         aria-label="Messages"
-                        className="w-8 h-8 rounded-full bg-white flex items-center justify-center hover:bg-gray-100 shadow-[0_3px_0_rgba(93,111,108)]"
+                        className="w-8 h-8 rounded-full bg-white flex items-center justify-center hover:bg-gray-100 shadow-[0_3px_0_rgba(93,111,108)] relative"
                     >
                         <MessageSquare size={18} className="text-gray-800" />
+                        <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border border-white" />
                     </button>
 
                     <button

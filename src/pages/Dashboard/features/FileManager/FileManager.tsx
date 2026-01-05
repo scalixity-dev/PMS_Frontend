@@ -4,7 +4,7 @@ import { MoreHorizontal, Check, X, FileText } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
 import EditNameModal from './components/EditNameModal';
-import DeleteConfirmationModal from './components/DeleteConfirmationModal';
+import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 
 // Mock Data structure based on the screenshot
 interface FileData {
@@ -602,8 +602,9 @@ const FileManager: React.FC = () => {
 
             <DeleteConfirmationModal
                 isOpen={!!deletingFile}
-                fileName={deletingFile?.name}
+                itemName={deletingFile?.name}
                 onClose={() => setDeletingFile(null)}
+
                 onConfirm={() => {
                     // TODO: Replace with actual API call when backend is ready
                     // Example: await fileService.deleteFile(deletingFile?.id);

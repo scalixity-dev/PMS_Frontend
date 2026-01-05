@@ -10,6 +10,7 @@ interface SearchableDropdownProps {
     className?: string;
     buttonClassName?: string;
     dropUp?: boolean;
+    labelClassName?: string;
 }
 
 const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
@@ -20,7 +21,8 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
     placeholder = "Search",
     className,
     buttonClassName,
-    dropUp = false
+    dropUp = false,
+    labelClassName
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -45,7 +47,7 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
 
     return (
         <div className={`flex flex-col gap-2 relative ${className || ''}`} ref={dropdownRef}>
-            {label && <label className="text-sm font-bold text-gray-700">{label}</label>}
+            {label && <label className={`text-sm font-bold text-gray-700 ${labelClassName || ''}`}>{label}</label>}
             <div className="relative">
                 <button
                     onClick={() => setIsOpen(!isOpen)}

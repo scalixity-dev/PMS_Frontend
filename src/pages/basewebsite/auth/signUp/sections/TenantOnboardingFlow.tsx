@@ -1,68 +1,12 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Check, ChevronDown } from 'lucide-react';
+import { ChevronLeft, Check } from 'lucide-react';
+import { Country, State, City } from 'country-state-city';
+import type { ICountry, IState, ICity } from 'country-state-city';
 import PrimaryActionButton from '../../../../../components/common/buttons/PrimaryActionButton';
-
-// Custom Dropdown Component
-interface CustomDropdownProps {
-  label: string;
-  value: string;
-  options: string[];
-  onChange: (value: string) => void;
-}
-
-const CustomDropdown: React.FC<CustomDropdownProps> = ({ label, value, options, onChange }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  return (
-    <div className="relative" ref={dropdownRef}>
-      <label className="block text-left text-sm font-medium text-gray-700 mb-2">{label}</label>
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-4 py-3 bg-white border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3D7475] text-gray-700 transition-all flex items-center justify-between hover:border-gray-500"
-      >
-        <span>{value}</span>
-        <ChevronDown
-          size={20}
-          className={`text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-        />
-      </button>
-
-      {isOpen && (
-        <div className="absolute top-full mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="max-h-60 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden p-1">
-            {options.map((option) => (
-              <button
-                key={option}
-                onClick={() => {
-                  onChange(option);
-                  setIsOpen(false);
-                }}
-                className={`w-full text-left px-4 py-2.5 text-sm transition-all rounded-lg hover:bg-gray-50 ${
-                  value === option ? 'text-[#3D7475] font-semibold bg-teal-50' : 'text-gray-700'
-                }`}
-              >
-                {option}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
+import CustomDropdown from '../../../../Dashboard/components/CustomDropdown';
+import { useSignUpStore } from '../store/signUpStore';
+import { API_ENDPOINTS } from '../../../../../config/api.config';
 
 const RENTAL_TYPES = [
   'Room',
@@ -81,8 +25,25 @@ const RENTAL_TYPES = [
   'Residence Hall',
 ];
 
-const BED_OPTIONS = ['Any', '1', '2', '3', '4', '5+'];
-const BATH_OPTIONS = ['Any', '1', '1.5', '2', '2.5', '3', '3.5', '4+'];
+const BED_OPTIONS = [
+  { value: 'Any', label: 'Any' },
+  { value: '1', label: '1' },
+  { value: '2', label: '2' },
+  { value: '3', label: '3' },
+  { value: '4', label: '4' },
+  { value: '5+', label: '5+' },
+];
+
+const BATH_OPTIONS = [
+  { value: 'Any', label: 'Any' },
+  { value: '1', label: '1' },
+  { value: '1.5', label: '1.5' },
+  { value: '2', label: '2' },
+  { value: '2.5', label: '2.5' },
+  { value: '3', label: '3' },
+  { value: '3.5', label: '3.5' },
+  { value: '4+', label: '4+' },
+];
 
 const STEPS = [
   { id: 1, name: 'Location' },
@@ -92,10 +53,19 @@ const STEPS = [
 
 export const TenantOnboardingFlow: React.FC = () => {
   const navigate = useNavigate();
+  const { userId } = useSignUpStore();
   const [currentStep, setCurrentStep] = useState(1);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Location data
+  const [countries, setCountries] = useState<ICountry[]>([]);
+  const [states, setStates] = useState<IState[]>([]);
+  const [cities, setCities] = useState<ICity[]>([]);
 
   // Step 1: Location
-  const [location, setLocation] = useState('');
+  const [country, setCountry] = useState('');
+  const [stateRegion, setStateRegion] = useState('');
+  const [city, setCity] = useState('');
 
   // Step 2: Rental Types
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
@@ -107,6 +77,66 @@ export const TenantOnboardingFlow: React.FC = () => {
   const [maxPrice, setMaxPrice] = useState<number>(10000);
   const [petsAllowed, setPetsAllowed] = useState<boolean>(false);
 
+  // Load all countries on mount
+  useEffect(() => {
+    setCountries(Country.getAllCountries());
+  }, []);
+
+  // Load states when country changes
+  useEffect(() => {
+    if (country) {
+      const countryStates = State.getStatesOfCountry(country);
+      setStates(countryStates);
+      // Reset state and city when country changes
+      if (stateRegion) {
+        setStateRegion('');
+      }
+      if (city) {
+        setCity('');
+      }
+    } else {
+      setStates([]);
+    }
+  }, [country]);
+
+  // Load cities when state changes
+  useEffect(() => {
+    if (country && stateRegion) {
+      const stateCities = City.getCitiesOfState(country, stateRegion);
+      setCities(stateCities);
+      // Reset city when state changes
+      if (city) {
+        setCity('');
+      }
+    } else {
+      setCities([]);
+    }
+  }, [country, stateRegion]);
+
+  // Convert countries to dropdown options
+  const countryOptions = useMemo(() => {
+    return countries.map(country => ({
+      value: country.isoCode,
+      label: country.name
+    })).sort((a, b) => a.label.localeCompare(b.label));
+  }, [countries]);
+
+  // Convert states to dropdown options
+  const stateOptions = useMemo(() => {
+    return states.map(state => ({
+      value: state.isoCode,
+      label: state.name
+    })).sort((a, b) => a.label.localeCompare(b.label));
+  }, [states]);
+
+  // Convert cities to dropdown options
+  const cityOptions = useMemo(() => {
+    return cities.map(city => ({
+      value: city.name,
+      label: city.name
+    })).sort((a, b) => a.label.localeCompare(b.label));
+  }, [cities]);
+
   const handleBack = () => {
     if (currentStep === 1) {
       navigate(-1);
@@ -116,8 +146,7 @@ export const TenantOnboardingFlow: React.FC = () => {
   };
 
   const handleStep1Continue = () => {
-    if (location.trim()) {
-      localStorage.setItem('tenant_preferred_location', location);
+    if (country && stateRegion && city) {
       setCurrentStep(2);
     }
   };
@@ -129,10 +158,116 @@ export const TenantOnboardingFlow: React.FC = () => {
     }
   };
 
-  const handleStep3Finish = () => {
-    const criteria = { beds, baths, minPrice, maxPrice, petsAllowed };
-    localStorage.setItem('tenant_rental_criteria', JSON.stringify(criteria));
-    navigate('/userdashboard');
+  const handleStep3Finish = async () => {
+    if (!userId) {
+      console.error('User ID not found');
+      navigate('/userdashboard');
+      return;
+    }
+
+    // Validate required fields before proceeding
+    if (!country || !stateRegion || !city) {
+      console.error('Location fields are required');
+      alert('Please complete all location fields');
+      return;
+    }
+
+    if (!selectedTypes || selectedTypes.length === 0) {
+      console.error('At least one rental type is required');
+      alert('Please select at least one rental type');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      // Prepare preferences data matching the backend DTO structure exactly
+      const preferences = {
+        location: {
+          country: country.trim(),
+          state: stateRegion.trim(),
+          city: city.trim(),
+        },
+        rentalTypes: selectedTypes.filter(type => type && type.trim().length > 0), // Ensure no empty strings
+        criteria: {
+          beds: beds === 'Any' || !beds ? null : beds,
+          baths: baths === 'Any' || !baths ? null : baths,
+          minPrice: minPrice && minPrice > 0 ? minPrice : undefined,
+          maxPrice: maxPrice && maxPrice > 0 ? maxPrice : undefined,
+          petsAllowed: petsAllowed || false,
+        },
+      };
+
+      // Validate preferences structure
+      if (!preferences.location.country || !preferences.location.state || !preferences.location.city) {
+        throw new Error('Invalid location data');
+      }
+
+      if (!preferences.rentalTypes || preferences.rentalTypes.length === 0) {
+        throw new Error('At least one rental type is required');
+      }
+
+      console.log('Saving preferences:', preferences);
+
+      // Save to localStorage as backup
+      localStorage.setItem('tenant_preferred_location', JSON.stringify(preferences.location));
+      localStorage.setItem('tenant_rental_types', JSON.stringify(preferences.rentalTypes));
+      localStorage.setItem('tenant_rental_criteria', JSON.stringify(preferences.criteria));
+
+      // Save to backend API
+      try {
+        const response = await fetch(API_ENDPOINTS.TENANT.SAVE_PREFERENCES, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include', // Include cookies for JWT
+          body: JSON.stringify(preferences),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: 'Failed to save preferences' }));
+          console.error('Failed to save preferences:', {
+            status: response.status,
+            statusText: response.statusText,
+            error: errorData,
+          });
+          
+          // Show user-friendly error message
+          if (response.status === 401) {
+            alert('Please log in again to save your preferences');
+          } else if (response.status === 403) {
+            alert('Only tenants can save preferences');
+          } else {
+            alert(`Failed to save preferences: ${errorData.message || 'Unknown error'}`);
+          }
+          
+          // Still navigate even if save fails (preferences saved to localStorage)
+          navigate('/userdashboard');
+          return;
+        }
+
+        const result = await response.json();
+        console.log('Preferences saved successfully:', result);
+        
+        // Verify the response
+        if (result.success && result.preferences) {
+          console.log('Preferences confirmed in database:', result.preferences);
+        }
+      } catch (error) {
+        console.error('Error saving preferences to backend:', error);
+        alert('Failed to save preferences to server. Your preferences have been saved locally.');
+        // Still navigate even if save fails
+      }
+
+      navigate('/userdashboard');
+    } catch (error) {
+      console.error('Error preparing preferences:', error);
+      alert(error instanceof Error ? error.message : 'An error occurred while saving preferences');
+      setIsSaving(false);
+      // Don't navigate if there's a validation error
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleToggleType = (type: string) => {
@@ -214,28 +349,61 @@ export const TenantOnboardingFlow: React.FC = () => {
                 Where do you want to live?
               </h1>
               <p className="text-gray-400 text-md font-normal mb-8">
-                Enter the city to let us find you the perfect place
+                Select your preferred location to find the perfect place
               </p>
 
-              <div className="max-w-xl mx-auto mb-8">
-                <label className="block text-left text-sm font-medium text-gray-700 mb-2">
-                  Location <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  placeholder="Start typing the address and then select from the..."
-                  className="w-full px-4 py-3 bg-white border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3D7475] focus:border-transparent text-gray-700 placeholder:text-gray-400 transition-all"
-                />
+              <div className="max-w-xl mx-auto mb-8 space-y-4">
+                {/* Country */}
+                <div>
+                  <CustomDropdown
+                    label="Country"
+                    value={country}
+                    onChange={setCountry}
+                    options={countryOptions}
+                    placeholder="Select country"
+                    required
+                    searchable={true}
+                    buttonClassName="bg-white border-2 border-gray-400 px-4 py-3 rounded-lg focus:ring-2 focus:ring-[#3D7475]"
+                  />
+                </div>
+
+                {/* State/Region */}
+                <div>
+                  <CustomDropdown
+                    label="State / Region"
+                    value={stateRegion}
+                    onChange={setStateRegion}
+                    options={stateOptions}
+                    placeholder={country ? "Select state" : "Select country first"}
+                    required
+                    disabled={!country || stateOptions.length === 0}
+                    searchable={true}
+                    buttonClassName="bg-white border-2 border-gray-400 px-4 py-3 rounded-lg focus:ring-2 focus:ring-[#3D7475]"
+                  />
+                </div>
+
+                {/* City */}
+                <div>
+                  <CustomDropdown
+                    label="City"
+                    value={city}
+                    onChange={setCity}
+                    options={cityOptions}
+                    placeholder={stateRegion ? "Select city" : country ? "Select state first" : "Select country first"}
+                    required
+                    disabled={!stateRegion || cityOptions.length === 0}
+                    searchable={true}
+                    buttonClassName="bg-white border-2 border-gray-400 px-4 py-3 rounded-lg focus:ring-2 focus:ring-[#3D7475]"
+                  />
+                </div>
               </div>
 
               <div className="mt-6 mb-2 flex justify-center">
                 <PrimaryActionButton
-                  disabled={!location.trim()}
+                  disabled={!country || !stateRegion || !city}
                   onClick={handleStep1Continue}
                   className={
-                    !location.trim()
+                    !country || !stateRegion || !city
                       ? 'bg-gray-100! text-gray-400! cursor-not-allowed uppercase shadow-none'
                       : 'bg-[#3D7475] hover:bg-[#2F5C5D] shadow-lg shadow-[#3D7475]/40'
                   }
@@ -407,8 +575,9 @@ export const TenantOnboardingFlow: React.FC = () => {
               <div className="mt-10 mb-2 flex justify-center">
                 <PrimaryActionButton
                   onClick={handleStep3Finish}
-                  className="bg-[#3D7475] hover:bg-[#2F5C5D] shadow-lg shadow-[#3D7475]/40"
-                  text="Finish"
+                  disabled={isSaving}
+                  className="bg-[#3D7475] hover:bg-[#2F5C5D] shadow-lg shadow-[#3D7475]/40 disabled:opacity-50 disabled:cursor-not-allowed"
+                  text={isSaving ? 'Saving...' : 'Finish'}
                 />
               </div>
             </div>

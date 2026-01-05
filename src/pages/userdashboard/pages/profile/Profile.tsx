@@ -1,28 +1,92 @@
-import React, { useState } from "react";
-import { Check } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Check, Eye, EyeOff } from "lucide-react";
 import EditProfileModal from "../../components/modals/EditProfileModal";
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
 import profilePic from "../../../../assets/images/generated_profile_avatar.png";
 import UserAccountSettingsLayout from "../../components/layout/UserAccountSettingsLayout";
 
 import { useUserDashboardStore } from "../../store/userDashboardStore";
+import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
+
+
 
 const Profile: React.FC = () => {
   const { userInfo, setUserInfo } = useUserDashboardStore();
 
-  // Modal State
-  const [editMode, setEditMode] = useState<'personal' | 'address' | null>(null);
-  const [tempInfo, setTempInfo] = useState(userInfo);
+  useEffect(() => {
+    if (!userInfo.email) {
+      setUserInfo({
+        firstName: "Rishabh",
+        lastName: "Awasthi",
+        dob: "20/02/1990",
+        email: "rishabh@gmail.com",
+        phone: "+91 9999999999",
+        role: "Tenant",
+        country: "India",
+        city: "Mumbai",
+        pincode: "400001",
+      });
+    }
+  }, [userInfo.email, setUserInfo]);
 
-  const handleEditClick = (mode: 'personal' | 'address') => {
+  // Modal State
+  const [editMode, setEditMode] = useState<'personal' | 'address' | 'email' | 'password' | null>(null);
+  const [tempInfo, setTempInfo] = useState(userInfo);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [passwordVisibility, setPasswordVisibility] = useState({
+    current: false,
+    new: false,
+    confirm: false
+  });
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+
+  const togglePasswordVisibility = (field: 'current' | 'new' | 'confirm') => {
+    setPasswordVisibility(prev => ({
+      ...prev,
+      [field]: !prev[field]
+    }));
+  };
+
+  const handleEditClick = (mode: 'personal' | 'address' | 'email' | 'password') => {
     setTempInfo(userInfo);
+    // Reset password data when opening password modal
+    if (mode === 'password') {
+      setPasswordData({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+      setPasswordVisibility({
+        current: false,
+        new: false,
+        confirm: false
+      });
+    }
     setEditMode(mode);
   };
 
   const handleSave = () => {
+    if (editMode === 'password') {
+      // Mock password save validation could go here
+      console.log("Password changed", passwordData);
+      setEditMode(null);
+      return;
+    }
     setUserInfo(tempInfo);
     setEditMode(null);
   };
+
+  const handleDeleteAccount = () => {
+    // Implement delete account logic here
+    console.log("Account deleted");
+    setIsDeleteModalOpen(false);
+  };
+
 
   const handleClose = () => {
     setEditMode(null);
@@ -31,6 +95,11 @@ const Profile: React.FC = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setTempInfo(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setPasswordData(prev => ({ ...prev, [name]: value }));
   };
 
   return (
@@ -173,7 +242,10 @@ const Profile: React.FC = () => {
                 Your Email id is {userInfo.email}
               </p>
             </div>
-            <button className="text-sm font-bold text-[#617C6C] hover:text-[#4A6354] transition-colors">
+            <button
+              onClick={() => handleEditClick('email')}
+              className="text-sm font-bold text-[#617C6C] hover:text-[#4A6354] transition-colors"
+            >
               Change
             </button>
           </div>
@@ -188,7 +260,10 @@ const Profile: React.FC = () => {
               </div>
               <p className="text-[13px] text-[#6B7280] font-medium">You haven&apos;t changed the password yet.</p>
             </div>
-            <button className="text-sm font-bold text-[#617C6C] hover:text-[#4A6354] transition-colors">
+            <button
+              onClick={() => handleEditClick('password')}
+              className="text-sm font-bold text-[#617C6C] hover:text-[#4A6354] transition-colors"
+            >
               Change
             </button>
           </div>
@@ -245,17 +320,24 @@ const Profile: React.FC = () => {
           Please note that all of the information will be permanently deleted.
         </p>
         <button
+          onClick={() => setIsDeleteModalOpen(true)}
           className="px-6 py-2 bg-[#FF4F5B] text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition-colors shadow-[0px_3.68px_3.68px_0px_#00000040]"
         >
           Delete Account
         </button>
+
       </section>
 
       {/* Edit Modal */}
       <EditProfileModal
         isOpen={!!editMode}
         onClose={handleClose}
-        title={editMode === 'personal' ? 'Edit Personal Information' : 'Edit Address'}
+        title={
+          editMode === 'personal' ? 'Edit Personal Information' :
+            editMode === 'address' ? 'Edit Address' :
+              editMode === 'email' ? 'Change Email Address' :
+                'Change Password'
+        }
         onSave={handleSave}
       >
         {editMode === 'personal' && (
@@ -298,7 +380,7 @@ const Profile: React.FC = () => {
                 value={tempInfo.email}
                 disabled
                 className="w-full px-3 py-2 bg-gray-100 border border-gray-200 rounded-md text-sm text-gray-500 cursor-not-allowed"
-                title="Email cannot be changed here"
+                title="Email cannot be changed here, please use Change Email button"
               />
             </div>
             <div>
@@ -348,8 +430,99 @@ const Profile: React.FC = () => {
             </div>
           </div>
         )}
+
+        {editMode === 'email' && (
+          <div className="grid grid-cols-1 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">New Email Address</label>
+              <input
+                type="email"
+                name="email"
+                value={tempInfo.email}
+                onChange={handleChange}
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm focus:outline-none focus:border-[#7CD947] focus:ring-1 focus:ring-[#7CD947]"
+                placeholder="Enter new email address"
+              />
+            </div>
+          </div>
+        )}
+
+        {editMode === 'password' && (
+          <div className="grid grid-cols-1 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Current Password</label>
+              <div className="relative">
+                <input
+                  type={passwordVisibility.current ? "text" : "password"}
+                  name="currentPassword"
+                  value={passwordData.currentPassword}
+                  onChange={handlePasswordChange}
+                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm focus:outline-none focus:border-[#7CD947] focus:ring-1 focus:ring-[#7CD947] pr-10"
+                  placeholder="Enter current password"
+                />
+                <button
+                  type="button"
+                  onClick={() => togglePasswordVisibility('current')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {passwordVisibility.current ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">New Password</label>
+              <div className="relative">
+                <input
+                  type={passwordVisibility.new ? "text" : "password"}
+                  name="newPassword"
+                  value={passwordData.newPassword}
+                  onChange={handlePasswordChange}
+                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm focus:outline-none focus:border-[#7CD947] focus:ring-1 focus:ring-[#7CD947] pr-10"
+                  placeholder="Enter new password"
+                />
+                <button
+                  type="button"
+                  onClick={() => togglePasswordVisibility('new')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {passwordVisibility.new ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Confirm New Password</label>
+              <div className="relative">
+                <input
+                  type={passwordVisibility.confirm ? "text" : "password"}
+                  name="confirmPassword"
+                  value={passwordData.confirmPassword}
+                  onChange={handlePasswordChange}
+                  className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm focus:outline-none focus:border-[#7CD947] focus:ring-1 focus:ring-[#7CD947] pr-10"
+                  placeholder="Confirm new password"
+                />
+                <button
+                  type="button"
+                  onClick={() => togglePasswordVisibility('confirm')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {passwordVisibility.confirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </EditProfileModal>
+
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDeleteAccount}
+        title="Delete Account"
+        message="Are you sure you want to delete your account? All of your information will be permanently deleted. This action cannot be undone."
+        confirmText="Delete Account"
+      />
     </UserAccountSettingsLayout>
+
   );
 };
 

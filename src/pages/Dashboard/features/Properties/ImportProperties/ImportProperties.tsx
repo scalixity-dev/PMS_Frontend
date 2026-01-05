@@ -245,7 +245,10 @@ const ImportProperties: React.FC = () => {
             <ImportSuccessModal
                 isOpen={showSuccessModal}
                 onClose={handleModalClose}
-                successCount={importResult?.successful || 0}
+                successCount={importResult 
+                    ? (importResult.total - importResult.failed) 
+                    : 0
+                }
                 failureCount={importResult?.failed || 0}
                 total={importResult?.total || 0}
                 jobId={importResult?.jobId || null}
