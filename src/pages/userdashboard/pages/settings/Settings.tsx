@@ -146,7 +146,7 @@ const Settings: React.FC = () => {
         <div className="min-h-screen bg-white p-6 lg:p-10">
             {/* Breadcrumb */}
             <nav aria-label="Breadcrumb">
-                <ol className="flex items-center gap-2 text-lg font-medium mb-8 ml-1">
+                <ol className="flex items-center gap-2 text-base font-medium mb-8 ml-1">
                     <li>
                         <Link to="/userdashboard" className="text-[var(--dashboard-accent)] font-smedium hover:opacity-80 transition-opacity">Dashboard</Link>
                     </li>

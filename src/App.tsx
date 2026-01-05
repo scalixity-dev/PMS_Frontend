@@ -112,6 +112,7 @@ import SecurityUser from './pages/userdashboard/pages/profile/Security';
 import MyCardsUser from './pages/userdashboard/pages/profile/MyCards';
 import NotificationsUser from './pages/userdashboard/pages/profile/Notifications';
 import PublicRenterProfile from './pages/userdashboard/pages/profile/PublicRenterProfile';
+import LeaseDetails from './pages/userdashboard/pages/lease/LeaseDetails';
 
 
 
@@ -729,6 +730,7 @@ const App: React.FC = () => {
               <Route path="/userdashboard/settings/account/cards" element={<MyCardsUser />} />
               <Route path="/userdashboard/settings/account/notifications" element={<NotificationsUser />} />
               <Route path="/userdashboard/settings/public-renter-profile" element={<PublicRenterProfile />} />
+              <Route path="/userdashboard/leases/:id" element={<LeaseDetails />} />
             </Route>
 
             {/* Catch-all route */}

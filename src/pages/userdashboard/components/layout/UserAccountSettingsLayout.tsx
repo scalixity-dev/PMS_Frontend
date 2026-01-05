@@ -27,7 +27,7 @@ const UserAccountSettingsLayout: React.FC<UserAccountSettingsLayoutProps> = ({ c
             <div className="max-w-7xl mx-auto space-y-8 ">
                 {/* Breadcrumb */}
                 <nav aria-label="Breadcrumb">
-                    <ol className="flex items-center gap-2 text-lg font-medium ml-1">
+                    <ol className="flex items-center gap-2 text-base font-medium ml-1">
                         <li>
                             <Link to="/userdashboard" className="text-[var(--dashboard-accent)] font-medium hover:opacity-80 transition-opacity">Dashboard</Link>
                         </li>

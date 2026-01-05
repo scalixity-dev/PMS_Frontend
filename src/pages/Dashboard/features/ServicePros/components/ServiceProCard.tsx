@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MoreHorizontal, MessageCircle, Phone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import DeleteConfirmationModal from '../../../components/DeleteConfirmationModal';
+import DeleteConfirmationModal from '../../../../../components/common/modals/DeleteConfirmationModal';
 import { serviceProviderService } from '../../../../../services/service-provider.service';
 
 interface ServiceProCardProps {

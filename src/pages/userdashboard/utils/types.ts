@@ -14,13 +14,34 @@ export interface Transaction {
     currency: string;
 }
 
+export interface TenantSummary {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    avatarSeed: string;
+}
+
+export interface LandlordSummary {
+    name: string;
+    avatarSeed?: string;
+}
+
+export interface PropertySummary {
+    name: string;
+    address: string;
+}
+
 export interface Lease {
     id: string;
     number: string;
     startDate: string;
     endDate: string;
     status: 'Active' | 'Expired' | 'Pending';
-    landlordAvatar?: string;
+    property: PropertySummary;
+    landlord: LandlordSummary;
+    tenants: TenantSummary[];
 }
 
 export type TabType = "Outstanding" | "Leases" | "Service providers" | "Inspections";
@@ -95,9 +116,15 @@ export interface RequestFilters {
     category: string | null;
 }
 
+export interface AvailabilityOption {
+    id: number;
+    date: string;
+    timeSlots: string[];
+}
+
 export interface ServiceRequest {
     id: number;
-    status: "New" | "In Progress" | "Completed";
+    status: "New" | "In Progress" | "Completed" | "Cancelled";
     requestId: string;
     category: string;
     property: string;
@@ -106,5 +133,11 @@ export interface ServiceRequest {
     subCategory?: string;
     problem?: string;
     authorizationToEnter?: string;
+    authorizationCode?: string;
+    setUpDateTime?: string;
+    availability?: AvailabilityOption[];
     createdAt: string;
+    attachments?: File[];
+    video?: File | null;
+    pets?: string[];
 }

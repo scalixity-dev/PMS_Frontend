@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useUserDashboardStore } from "./store/userDashboardStore";
 import { Sidebar } from "./components/layout/Sidebar";
 import { TransactionTable } from "./components/transaction/TransactionTable";
@@ -8,6 +9,7 @@ import type { TabType } from "./utils/types";
 import PrimaryActionButton from "../../components/common/buttons/PrimaryActionButton";
 
 const UserDashboard = () => {
+    const navigate = useNavigate();
     const { activeTab, setActiveTab, setUserInfo, setFinances, userInfo } = useUserDashboardStore();
 
     // Load mock data on mount if store is empty
@@ -56,6 +58,7 @@ const UserDashboard = () => {
                         />
                         <PrimaryActionButton
                             text="Request repair"
+                            onClick={() => navigate("/userdashboard/new-request")}
                             className="bg-[var(--dashboard-accent)] hover:bg-[var(--dashboard-accent)] hover:opacity-90 rounded-lg font-bold"
                         />
                     </div>

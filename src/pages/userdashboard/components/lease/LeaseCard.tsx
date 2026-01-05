@@ -1,7 +1,9 @@
 import type { Lease } from "../../utils/types";
 import { StatusPill } from "./StatusPill";
+import { useNavigate } from "react-router-dom";
 
 export const LeaseCard = ({ lease }: { lease: Lease }) => {
+    const navigate = useNavigate();
     return (
         <div className="bg-[#F7F7F7] rounded-[1.25rem] p-5 flex items-center justify-between shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] border border-[#F1F1F1] hover:shadow-lg transition-all duration-300 w-full">
             <div className="flex flex-col gap-1.5">
@@ -18,14 +20,17 @@ export const LeaseCard = ({ lease }: { lease: Lease }) => {
                 {/* Avatar */}
                 <div className="w-11 h-11 rounded-full overflow-hidden border-2 border-white shadow-sm">
                     <img
-                        src={lease.landlordAvatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"}
-                        alt="Landlord"
+                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${lease.landlord.avatarSeed || 'Felix'}`}
+                        alt={lease.landlord.name || "Landlord"}
                         className="w-full h-full object-cover"
                     />
                 </div>
 
                 {/* View Button */}
-                <button className="text-[var(--dashboard-accent)] font-semibold text-base hover:opacity-80 transition-opacity pl-4 pr-2">
+                <button
+                    onClick={() => navigate(`/userdashboard/leases/${lease.id}`)}
+                    className="text-[var(--dashboard-accent)] font-semibold text-base hover:opacity-80 transition-opacity pl-4 pr-2"
+                >
                     View
                 </button>
             </div>

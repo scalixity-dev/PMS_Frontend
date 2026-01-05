@@ -75,7 +75,32 @@ export const mockLeases: Lease[] = [
         startDate: "17 Dec, 2025",
         endDate: "17 Dec, 2026",
         status: "Active",
-        landlordAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+        property: {
+            name: "Sunset Apartments",
+            address: "123 Sunset Blvd, CA"
+        },
+        landlord: {
+            name: "Ashendra Sharma",
+            avatarSeed: "Felix"
+        },
+        tenants: [
+            {
+                id: "t1",
+                firstName: "Siddak",
+                lastName: "Bagga",
+                email: "siddak@example.com",
+                phone: "+1 (888) 888 8888",
+                avatarSeed: "Siddak"
+            },
+            {
+                id: "t2",
+                firstName: "Atul",
+                lastName: "Rawat",
+                email: "atul@example.com",
+                phone: "+1 (888) 888 8888",
+                avatarSeed: "Atul"
+            }
+        ]
     },
     {
         id: "2",
@@ -83,7 +108,24 @@ export const mockLeases: Lease[] = [
         startDate: "17 Dec, 2025",
         endDate: "17 Dec, 2026",
         status: "Active",
-        landlordAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+        property: {
+            name: "Green Valley Homes",
+            address: "456 Green Valley Dr, TX"
+        },
+        landlord: {
+            name: "John Doesmith",
+            avatarSeed: "Aneka"
+        },
+        tenants: [
+            {
+                id: "t3",
+                firstName: "Rishabh",
+                lastName: "Awasthi",
+                email: "rishabh@example.com",
+                phone: "+1 (555) 555 5555",
+                avatarSeed: "Rishabh"
+            }
+        ]
     }
 ];
 
@@ -106,4 +148,27 @@ export const mockFinances = {
     deposits: "0.00",
     credits: "0.00",
 };
+
+export const mockRequests = [
+    {
+        id: 1,
+        status: "New",
+        requestId: "REQ-001",
+        category: "Appliances",
+        property: "Sunset Boulevard 123",
+        priority: "Critical",
+        assignee: "",
+        createdAt: new Date().toISOString(),
+    },
+    {
+        id: 2,
+        status: "New",
+        requestId: "REQ-002",
+        category: "Electrical",
+        property: "Harbor View Apt 4B",
+        priority: "Normal",
+        assignee: "",
+        createdAt: new Date().toISOString(),
+    },
+];
 
