@@ -16,6 +16,7 @@ const MyCards: React.FC = () => {
     ]);
 
     const [showAddCard, setShowAddCard] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [cardNumber, setCardNumber] = useState("");
     const [cardName, setCardName] = useState("");
     const [expiryMonth, setExpiryMonth] = useState("");
@@ -72,7 +73,7 @@ const MyCards: React.FC = () => {
         );
     };
 
-    const handleAddCard = (e: React.FormEvent) => {
+    const handleAddCard = async (e: React.FormEvent) => {
         e.preventDefault();
         setErrorMsg("");
 
@@ -82,10 +83,11 @@ const MyCards: React.FC = () => {
             return;
         }
 
-        const brand = getCardBrand(cardNumber);
+        const rawCardNumber = cardNumber.replace(/\s/g, "");
+        const brand = getCardBrand(rawCardNumber);
 
         // Card Number Length & Luhn
-        if (cardNumber.length < 13 || cardNumber.length > 19 || !validateLuhn(cardNumber)) {
+        if (rawCardNumber.length < 13 || rawCardNumber.length > 19 || !validateLuhn(rawCardNumber)) {
             setErrorMsg("Invalid card number.");
             return;
         }
@@ -109,25 +111,42 @@ const MyCards: React.FC = () => {
             return;
         }
 
-        const newCard = {
-            id: Date.now(), // Unique ID generation
-            last4: cardNumber.slice(-4),
-            brand: brand === "Unknown" ? "Credit Card" : brand,
-            expiryMonth: month,
-            expiryYear: year,
-            isDefault: savedCards.length === 0,
-        };
+        setIsSubmitting(true);
 
-        setSavedCards([...savedCards, newCard]);
-        setShowAddCard(false);
+        try {
+            /** 
+             * SIMULATED TOKENIZATION CALL
+             * In a real scenario, this is where we send raw data to a payment gateway (e.g., Stripe)
+             * to receive a secure token. This ensures our app never stores raw PAN/CVV.
+             * The backend dev will replace this mock with the actual API integration.
+             */
+            await new Promise(resolve => setTimeout(resolve, 1500));
 
-        // Reset form
-        setCardNumber("");
-        setCardName("");
-        setExpiryMonth("");
-        setExpiryYear("");
-        setCvv("");
-        setErrorMsg("");
+            const newCard = {
+                id: Date.now(),
+                last4: cardNumber.slice(-4),
+                brand: brand === "Unknown" ? "Credit Card" : brand,
+                expiryMonth: month,
+                expiryYear: year,
+                isDefault: savedCards.length === 0,
+                // token: "tok_mock_123...", // This would be returned from the payment provider
+            };
+
+            setSavedCards([...savedCards, newCard]);
+            setShowAddCard(false);
+
+            // Reset form and clear raw data from memory immediately
+            setCardNumber("");
+            setCardName("");
+            setExpiryMonth("");
+            setExpiryYear("");
+            setCvv("");
+            setErrorMsg("");
+        } catch (error) {
+            setErrorMsg("Failed to securely process card. Please try again.");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -208,13 +227,20 @@ const MyCards: React.FC = () => {
                 {showAddCard && (
                     <section className="border border-[#E8E8E8] rounded-2xl bg-[#FBFBFB] px-6 py-5 space-y-4 mt-8">
                         <div className="flex justify-between items-center">
-                            <h2 className="text-lg font-semibold text-gray-900">Add New Card</h2>
+                            <div>
+                                <h2 className="text-lg font-semibold text-gray-900">Add New Card</h2>
+                                <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[#7CD947]"></span>
+                                    Your payment information is encrypted and secure
+                                </p>
+                            </div>
                             <button
                                 onClick={() => {
                                     setShowAddCard(false);
                                     setErrorMsg("");
                                 }}
-                                className="text-gray-500 hover:text-gray-700 text-sm"
+                                disabled={isSubmitting}
+                                className="text-gray-500 hover:text-gray-700 text-sm disabled:opacity-50"
                             >
                                 Cancel
                             </button>
@@ -248,10 +274,14 @@ const MyCards: React.FC = () => {
                                 <input
                                     type="text"
                                     value={cardNumber}
-                                    onChange={(e) => setCardNumber(e.target.value.replace(/\s/g, "").slice(0, 16))}
+                                    onChange={(e) => {
+                                        const value = e.target.value.replace(/\D/g, "");
+                                        const formattedValue = value.replace(/(\d{4})(?=\d)/g, "$1 ").slice(0, 19);
+                                        setCardNumber(formattedValue);
+                                    }}
                                     className="w-full px-4 py-2.5 border border-[#E8E8E8] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7CD947]"
                                     placeholder="1234 5678 9012 3456"
-                                    maxLength={16}
+                                    maxLength={19}
                                     required
                                 />
                             </div>
@@ -309,13 +339,27 @@ const MyCards: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="pt-2">
+                            <div className="pt-2 flex flex-col gap-3">
                                 <Button
                                     type="submit"
-                                    className="bg-[#486370] hover:bg-[#3a505b] text-white px-8 py-2 rounded-lg font-medium"
+                                    disabled={isSubmitting}
+                                    className="bg-[#486370] hover:bg-[#3a505b] text-white px-8 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2"
                                 >
-                                    Add Card
+                                    {isSubmitting ? (
+                                        <>
+                                            <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                                            Processing...
+                                        </>
+                                    ) : (
+                                        "Add Card"
+                                    )}
                                 </Button>
+                                <div className="flex items-center gap-4 opacity-50 grayscale hover:grayscale-0 transition-all duration-300">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/100px-Visa_Inc._logo.svg.png" alt="Visa" className="h-4" />
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/100px-Mastercard-logo.svg.png" alt="Mastercard" className="h-6" />
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/PayPal.svg/100px-PayPal.svg.png" alt="PayPal" className="h-4" />
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/American_Express_logo.svg/100px-American_Express_logo.svg.png" alt="Amex" className="h-6" />
+                                </div>
                             </div>
                         </form>
                     </section>

@@ -39,7 +39,7 @@ const Step1Category: React.FC<Step1Props> = ({ selectedCategory, onSelect, onNex
                                 : "bg-[#F3F4F6] border-white"
                                 }`} />
                         </div>
-                        <span className={`mt-2 font-medium text-base transition-colors ${selectedCategory === category.id ? "#1F2937" : "text-gray-700"
+                        <span className={`mt-2 font-medium text-base transition-colors ${selectedCategory === category.id ? "text-[#1F2937]" : "text-gray-700"
                             }`}>
                             {category.name}
                         </span>
