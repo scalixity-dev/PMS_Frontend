@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, FileText, ChevronDown, SquarePen, Upload, Edit, Trash2, ClipboardCheck, XCircle } from 'lucide-react';
 import DetailTabs from '../../components/DetailTabs';
 import CustomTextBox from '../../components/CustomTextBox';
-import DeleteConfirmationModal from '../../components/DeleteConfirmationModal';
+import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import EditLeaseTermsModal, { type Lease } from './components/EditLeaseTermsModal';
 
 
