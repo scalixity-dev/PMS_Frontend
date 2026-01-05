@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronUp, Download, LayoutTemplate, X, Check } from 'lucide-react';
+import { ChevronUp, Download, LayoutTemplate, X, Check, ChevronLeft } from 'lucide-react';
 import DashboardFilter from '../../components/DashboardFilter';
 import type { FilterOption } from '../../components/DashboardFilter';
 
@@ -147,19 +147,29 @@ const Contacts: React.FC = () => {
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-20">
             {/* Breadcrumb */}
-            <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>Dashboard</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard/reports')}>Reports</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-800 text-sm font-semibold">Contacts</span>
+            <div className="flex w-full overflow-x-auto pb-2 md:pb-0 mb-6 scrollbar-hide">
+                <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] whitespace-nowrap">
+                    <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>Dashboard</span>
+                    <span className="text-gray-500 text-sm mx-1">/</span>
+                    <span className="text-gray-600 text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard/reports')}>Reports</span>
+                    <span className="text-gray-500 text-sm mx-1">/</span>
+                    <span className="text-gray-800 text-sm font-semibold">Contacts</span>
+                </div>
             </div>
 
             <div className="bg-[#E0E8E7] rounded-[2rem] p-8 min-h-[calc(100vh-100px)] relative">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-                    <h1 className="text-2xl font-bold text-gray-900">Contacts</h1>
-                    <div className="flex gap-3">
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => navigate('/dashboard/reports')}
+                            className="p-2 hover:bg-black/5 rounded-full transition-colors"
+                        >
+                            <ChevronLeft className="w-6 h-6 text-black" />
+                        </button>
+                        <h1 className="text-2xl font-bold text-gray-900">Contacts</h1>
+                    </div>
+                    <div className="flex flex-wrap gap-3">
                         <button
                             onClick={() => setIsColumnModalOpen(true)}
                             className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-lg shadow-[#3A6D6C]/20 flex items-center gap-2"
@@ -193,7 +203,7 @@ const Contacts: React.FC = () => {
                 {/* Table Container - Grid Layout */}
                 <div>
                     {/* Table Header */}
-                    <div className="bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm">
+                    <div className="hidden md:block bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm">
                         <div
                             className="text-white px-6 py-4 grid gap-4 items-center text-sm font-medium"
                             style={{ gridTemplateColumns }}
@@ -213,14 +223,31 @@ const Contacts: React.FC = () => {
                             filteredContacts.map(contact => (
                                 <div
                                     key={contact.id}
-                                    className="bg-white rounded-2xl px-6 py-4 grid gap-4 items-center shadow-sm hover:shadow-md transition-shadow"
-                                    style={{ gridTemplateColumns }}
+                                    className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow"
                                 >
-                                    {activeColumns.map(col => (
-                                        <div key={col.id} className="text-sm">
-                                            {renderCellContent(contact, col.id)}
-                                        </div>
-                                    ))}
+                                    {/* Desktop View */}
+                                    <div
+                                        className="hidden md:grid px-6 py-4 gap-4 items-center"
+                                        style={{ gridTemplateColumns }}
+                                    >
+                                        {activeColumns.map(col => (
+                                            <div key={col.id} className="text-sm">
+                                                {renderCellContent(contact, col.id)}
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Mobile View */}
+                                    <div className="md:hidden p-4 space-y-3">
+                                        {activeColumns.map(col => (
+                                            <div key={col.id} className="flex justify-between items-start gap-4">
+                                                <span className="text-gray-500 text-xs font-medium uppercase mt-1">{col.label}</span>
+                                                <div className="text-sm text-right flex-1">
+                                                    {renderCellContent(contact, col.id)}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             ))
                         ) : (

@@ -5,6 +5,7 @@ import { TanStackDevtools } from '@tanstack/react-devtools';
 import AppLayout from './components/layout/AppLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import DashboardLayout from './components/dashboardlayout/DashboardLayout';
+import ScrollToTop from './components/ScrollToTop';
 import HomePage from './pages/basewebsite/home';
 import ScreeningPage from './pages/basewebsite/features/screening/index';
 import LeasePage from './pages/basewebsite/features/lease/index';

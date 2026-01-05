@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ChevronLeft } from 'lucide-react';
 import SearchableDropdown from '../../../../components/ui/SearchableDropdown';
 
 const Rentability: React.FC = () => {
@@ -18,16 +19,26 @@ const Rentability: React.FC = () => {
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit">
             {/* Breadcrumb */}
-            <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>Dashboard</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard/reports')}>Reports</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">Rentability</span>
+            <div className="flex w-full overflow-x-auto pb-2 md:pb-0 mb-6 scrollbar-hide">
+                <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] whitespace-nowrap">
+                    <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>Dashboard</span>
+                    <span className="text-gray-500 text-sm mx-1">/</span>
+                    <span className="text-gray-600 text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard/reports')}>Reports</span>
+                    <span className="text-gray-500 text-sm mx-1">/</span>
+                    <span className="text-gray-600 text-sm font-semibold">Rentability</span>
+                </div>
             </div>
 
-            <div className="p-8 bg-[#E0E8E7] min-h-screen rounded-[2rem] overflow-visible">
-                <h1 className="text-2xl font-bold text-gray-800 mb-8">Rentability</h1>
+            <div className="p-4 md:p-8 bg-[#E0E8E7] min-h-screen rounded-[2rem] overflow-visible">
+                <div className="flex items-center gap-4 mb-8">
+                    <button
+                        onClick={() => navigate('/dashboard/reports')}
+                        className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+                    >
+                        <ChevronLeft className="w-6 h-6 text-gray-700" />
+                    </button>
+                    <h1 className="text-2xl font-bold text-gray-800">Rentability</h1>
+                </div>
 
                 {/* Info Cards Banner */}
                 <div className="bg-[#F0F0F6] rounded-[3rem] p-3 shadow-sm mb-8">
@@ -77,7 +88,7 @@ const Rentability: React.FC = () => {
                                 onChange={setSelectedProperty}
                                 placeholder="Select unit..."
                                 className="w-full"
-                                buttonClassName="bg-white text-gray-700 rounded-lg"
+                                buttonClassName="w-full flex items-center justify-between bg-white text-gray-700 px-4 py-3 rounded-lg shadow-sm"
                             />
                         </div>
                         <div>
@@ -108,14 +119,14 @@ const Rentability: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="flex gap-4 mt-4">
+                <div className="flex flex-col sm:flex-row gap-4 mt-4 w-full">
                     <button
                         onClick={() => navigate('/dashboard/reports')}
-                        className="px-8 py-3 bg-[#6B7280] text-white font-bold rounded-lg shadow-md hover:bg-[#4B5563] transition-colors"
+                        className="w-full sm:w-auto px-8 py-3 bg-[#6B7280] text-white font-bold rounded-lg shadow-md hover:bg-[#4B5563] transition-colors"
                     >
                         Back
                     </button>
-                    <button className="px-8 py-3 bg-[#3A6D6C] text-white font-bold rounded-lg shadow-md hover:bg-[#2c5251] transition-colors">
+                    <button className="w-full sm:w-auto px-8 py-3 bg-[#3A6D6C] text-white font-bold rounded-lg shadow-md hover:bg-[#2c5251] transition-colors">
                         Order
                     </button>
                 </div>
