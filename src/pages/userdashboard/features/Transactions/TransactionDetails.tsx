@@ -6,8 +6,33 @@ const TransactionDetails = () => {
     const navigate = useNavigate();
 
     // Mock data based on ID - in a real app this would fetch from API
+    // Adding validation for the ID
+    const isValidId = id && id.length > 0;
+
+    if (!isValidId) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
+                <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 text-center max-w-md">
+                    <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <User size={32} />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Transaction Not Found</h2>
+                    <p className="text-gray-600 mb-6">
+                        We couldn't find the transaction you're looking for. It might have been deleted or the link is incorrect.
+                    </p>
+                    <button
+                        onClick={() => navigate('/userdashboard/rent')}
+                        className="w-full py-3 bg-[#7ED957] text-white font-bold rounded-xl hover:opacity-90 transition-opacity"
+                    >
+                        Back to Accounting
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     const transaction = {
-        id: id || "1234567",
+        id: id,
         status: "Open" as const,
         dueDate: "Apr 10, 2025",
         category: "Cleaning",
@@ -21,7 +46,7 @@ const TransactionDetails = () => {
         amount: 600.00,
         paidAmount: 0.00,
         currency: "USD",
-        invoiceNumber: id || "1234567",
+        invoiceNumber: id,
         property: "Luxury Apartment",
         unit: "-",
         type: "Income / One Time"
@@ -94,8 +119,8 @@ const TransactionDetails = () => {
                                 ></div>
                             </div>
                             <div className="flex justify-between text-sm font-semibold text-gray-500">
-                                <span>${transaction.paidAmount.toFixed(2)} Left</span>
-                                <span>${transaction.amount.toFixed(2)} Left</span>
+                                <span>${transaction.paidAmount.toFixed(2)} Paid</span>
+                                <span>${(transaction.amount - transaction.paidAmount).toFixed(2)} Left</span>
                             </div>
                         </div>
 

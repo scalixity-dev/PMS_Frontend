@@ -58,7 +58,7 @@ export const LeaseTransactionsTable = () => {
             <div className="flex flex-col">
                 {transactions.map((item, index) => (
                     <div
-                        key={index}
+                        key={item.id}
                         onClick={() => navigate(`/userdashboard/transactions/${item.id}`)}
                         className={`flex items-center px-8 py-6 ${index !== transactions.length - 1 ? 'border-b border-gray-100' : ''} hover:bg-gray-50/30 transition-all cursor-pointer`}
                     >

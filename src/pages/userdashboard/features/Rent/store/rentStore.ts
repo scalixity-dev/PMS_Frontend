@@ -7,24 +7,21 @@ interface RentState {
     resetRentFilters: () => void;
 }
 
+const initialFilters: RentFilters = {
+    search: "",
+    status: null,
+    date: null,
+    schedule: null,
+};
+
 export const useRentStore = create<RentState>((set) => ({
-    rentFilters: {
-        search: "",
-        status: null,
-        date: null,
-        schedule: null,
-    },
+    rentFilters: initialFilters,
     setRentFilters: (filters) =>
         set((state) => ({
             rentFilters: { ...state.rentFilters, ...filters }
         })),
     resetRentFilters: () =>
         set({
-            rentFilters: {
-                search: "",
-                status: null,
-                date: null,
-                schedule: null,
-            }
+            rentFilters: initialFilters
         }),
 }));

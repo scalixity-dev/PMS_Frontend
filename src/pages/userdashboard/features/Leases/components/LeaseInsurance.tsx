@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useCallback } from 'react';
 import { UploadCloud } from 'lucide-react';
 import BaseModal from "@/components/common/modals/BaseModal";
 
@@ -28,12 +28,12 @@ export const LeaseInsurance = () => {
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
-    };
+    }, []);
 
-    const handleOpenModal = () => {
+    const handleOpenModal = useCallback(() => {
         if (insuranceData) {
             // Pre-fill form with existing data when editing
             setFormData({
@@ -49,9 +49,9 @@ export const LeaseInsurance = () => {
             setFormData(initialFormData);
         }
         setIsModalOpen(true);
-    };
+    }, [insuranceData]);
 
-    const handleUpdate = () => {
+    const handleUpdate = useCallback(() => {
         const updatedData: InsuranceData = {
             ...formData,
             fileName: uploadedFile?.name || insuranceData?.fileName || null
@@ -64,21 +64,21 @@ export const LeaseInsurance = () => {
         // Reset form
         setFormData(initialFormData);
         setUploadedFile(null);
-    };
+    }, [formData, uploadedFile, insuranceData]);
 
-    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
             setUploadedFile(file);
         }
-    };
+    }, []);
 
-    const handleRemoveFile = () => {
+    const handleRemoveFile = useCallback(() => {
         setUploadedFile(null);
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
-    };
+    }, []);
 
     const footerButtons = useMemo(() => [
         {
