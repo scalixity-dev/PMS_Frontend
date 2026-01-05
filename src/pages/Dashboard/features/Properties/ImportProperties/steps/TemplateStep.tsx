@@ -1,10 +1,14 @@
 import React from 'react';
+import { generatePropertyImportTemplate } from '../utils/generateExcelTemplate';
 
 const TemplateStep: React.FC = () => {
     const handleDownload = () => {
-        // Mock download logic
-        alert('Downloading template...');
-        // In real implementation: window.open('/assets/templates/properties_template.csv');
+        try {
+            generatePropertyImportTemplate();
+        } catch (error) {
+            console.error('Error generating template:', error);
+            alert('Failed to generate template. Please try again.');
+        }
     };
 
     return (
@@ -23,7 +27,11 @@ const TemplateStep: React.FC = () => {
                     <p className="text-gray-600 mb-6">
                         Use this example to organize the data accordingly before importing your properties to the system.
                         <br />
-                        Allowed extensions: .csv, .xls, .xlsx
+                        Allowed extensions: .xls, .xlsx (Excel files only)
+                        <br />
+                        <span className="text-sm text-gray-500">
+                            Maximum file size: 10MB
+                        </span>
                     </p>
 
                     <button

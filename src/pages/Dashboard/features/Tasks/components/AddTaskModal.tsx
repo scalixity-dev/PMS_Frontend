@@ -25,8 +25,9 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
     const { data: properties = [], isLoading: isLoadingProperties } = useGetAllProperties();
 
     const [showExitConfirmation, setShowExitConfirmation] = React.useState(false);
-    const [formErrors, setFormErrors] = React.useState({ title: false, date: false, time: false });
+    const [formErrors, setFormErrors] = React.useState({ title: false, date: false, time: false, description: false });
     const [initialSnapshot, setInitialSnapshot] = React.useState(formData);
+    const MAX_DESCRIPTION_LENGTH = 100;
     const prevIsOpenRef = React.useRef(isOpen);
     const prevTaskToEditRef = React.useRef(taskToEdit);
 
@@ -129,7 +130,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
         setFormErrors(errors);
 
         // Prevent submission if any required field is invalid
-        if (errors.title || errors.date || errors.time) {
+        if (errors.title || errors.date || errors.time || errors.description) {
             return;
         }
 
@@ -235,15 +236,35 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
 
                     {/* Description */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-700 mb-1">Description</label>
+                        <div className="flex items-center justify-between mb-1">
+                            <label className="block text-xs font-bold text-gray-700">Description</label>
+                            <span className={`text-xs ${formData.description && formData.description.length > MAX_DESCRIPTION_LENGTH ? 'text-red-500 font-semibold' : 'text-gray-500'}`}>
+                                {formData.description?.length || 0}/{MAX_DESCRIPTION_LENGTH}
+                            </span>
+                        </div>
                         <textarea
                             value={formData.description}
-                            onChange={(e) => updateFormData('description', e.target.value)}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                if (value.length <= MAX_DESCRIPTION_LENGTH) {
+                                    updateFormData('description', value);
+                                }
+                            }}
                             placeholder="Enter Details"
                             rows={2}
                             disabled={isLoading}
-                            className={`w-full bg-white text-gray-800 placeholder-gray-400 px-3 py-2 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all resize-none shadow-sm text-sm ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            maxLength={MAX_DESCRIPTION_LENGTH}
+                            className={`w-full bg-[#F0F2F5] text-gray-800 placeholder-gray-400 px-3 py-2 rounded-md outline-none focus:ring-2 transition-all resize-none shadow-sm text-sm ${
+                                formErrors.description 
+                                    ? 'ring-2 ring-red-500 focus:ring-red-500' 
+                                    : 'focus:ring-[#3D7475]/20'
+                            } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                         />
+                        {formErrors.description && (
+                            <p className="text-red-500 text-xs mt-1">
+                                Description cannot exceed {MAX_DESCRIPTION_LENGTH} characters
+                            </p>
+                        )}
                     </div>
 
                     {/* Date & Time */}

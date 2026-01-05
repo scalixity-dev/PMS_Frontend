@@ -11,6 +11,9 @@ interface PropertyCardProps {
     type?: string;
     country?: string;
     propertyType?: 'single_apartment' | 'multi_apartment';
+    isSelected?: boolean;
+    onSelect?: (id: string | number, selected: boolean) => void;
+    selectionMode?: boolean;
 }
 
 const PropertyCard: React.FC<PropertyCardProps> = ({
@@ -21,14 +24,54 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
     balance,
     type = 'Single Apartment',
     country,
-    propertyType = 'single_apartment'
+    propertyType = 'single_apartment',
+    isSelected = false,
+    onSelect,
+    selectionMode = false
 }) => {
     const navigate = useNavigate();
     const currencySymbol = getCurrencySymbol(country);
     const isSingleApartment = propertyType === 'single_apartment';
 
+    const handleCardClick = () => {
+        if (selectionMode && onSelect) {
+            onSelect(id, !isSelected);
+        } else {
+            navigate(`/dashboard/properties/${id}`);
+        }
+    };
+
+    const handleCheckboxChange = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (onSelect) {
+            onSelect(id, !isSelected);
+        }
+    };
+
     return (
-        <div className="bg-[#F6F6F8] rounded-[2rem] p-4 shadow-sm relative flex flex-col h-full">
+        <div 
+            className={`bg-[#F6F6F8] rounded-[2rem] p-4 shadow-sm relative flex flex-col h-full ${selectionMode ? 'cursor-pointer hover:shadow-md transition-shadow' : ''} ${isSelected ? 'ring-2 ring-[#82D64D] ring-offset-2' : ''}`}
+            onClick={handleCardClick}
+        >
+            {/* Selection Checkbox */}
+            {selectionMode && (
+                <div 
+                    className="absolute top-4 left-4 z-10"
+                    onClick={handleCheckboxChange}
+                >
+                    <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors ${
+                        isSelected 
+                            ? 'bg-[#82D64D] border-[#82D64D]' 
+                            : 'bg-white border-gray-300'
+                    }`}>
+                        {isSelected && (
+                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                        )}
+                    </div>
+                </div>
+            )}
             {/* Image Section */}
             <div className="w-full h-48 mb-4 relative flex-shrink-0">
                 {image ? (
@@ -76,7 +119,10 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
                 </p>
 
                 <button
-                    onClick={() => navigate(`/dashboard/properties/${id}`)}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/dashboard/properties/${id}`);
+                    }}
                     className="bg-[#82D64D] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#72c042] transition-colors w-full mb-4 mt-auto"
                 >
                     View Property

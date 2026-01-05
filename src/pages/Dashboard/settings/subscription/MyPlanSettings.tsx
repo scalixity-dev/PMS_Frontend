@@ -1,10 +1,129 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Button from "../../../../components/common/Button";
 import { Check } from "lucide-react";
 import { SubscriptionSettingsLayout } from "../../../../components/common/SubscriptionSettingsLayout";
+import { subscriptionService, type Subscription, type BillingHistoryItem } from "../../../../services/subscription.service";
+import ChangePlanModal from "./components/ChangePlanModal";
 
 const MyPlanSettings: React.FC = () => {
   const [accountMode, setAccountMode] = useState<"Landlord" | "Property Manager">("Landlord");
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [billingHistory, setBillingHistory] = useState<BillingHistoryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isRenewing, setIsRenewing] = useState(false);
+  const [dateRange, setDateRange] = useState({ startDate: "", endDate: "" });
+  const [isChangePlanModalOpen, setIsChangePlanModalOpen] = useState(false);
+
+  // Format date for display
+  const formatDate = (dateString: string | null): string => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  };
+
+  // Check if subscription is expired
+  const isSubscriptionExpired = (sub: Subscription | null): boolean => {
+    if (!sub) return false;
+    const now = new Date();
+    const endDate = sub.endDate ? new Date(sub.endDate) : null;
+    const isExpiredByDate = endDate && endDate < now;
+    const isExpiredByStatus = sub.status === "EXPIRED" || sub.status === "PAST_DUE";
+    return isExpiredByDate || isExpiredByStatus;
+  };
+
+  // Fetch subscription data
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const [subData, billingData] = await Promise.all([
+          subscriptionService.getCurrent(),
+          subscriptionService.getBillingHistory(),
+        ]);
+        setSubscription(subData);
+        setBillingHistory(billingData.items);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load subscription data");
+        console.error("Error fetching subscription:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Handle billing history date filter
+  const handleDateFilter = async () => {
+    setIsLoading(true);
+    try {
+      const billingData = await subscriptionService.getBillingHistory(
+        dateRange.startDate || undefined,
+        dateRange.endDate || undefined
+      );
+      setBillingHistory(billingData.items);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load billing history");
+      console.error("Error fetching billing history:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle switch to yearly/monthly
+  const handleSwitchBilling = async () => {
+    if (!subscription) return;
+    setIsUpdating(true);
+    try {
+      const updated = await subscriptionService.update({
+        isYearly: !subscription.isYearly,
+      });
+      setSubscription(updated);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update subscription");
+      console.error("Error updating subscription:", err);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Handle change plan modal
+  const handleChangePlan = () => {
+    setIsChangePlanModalOpen(true);
+  };
+
+  // Handle plan changed callback
+  const handlePlanChanged = (updatedSubscription: Subscription) => {
+    setSubscription(updatedSubscription);
+    // Refresh billing history
+    subscriptionService.getBillingHistory().then((data) => {
+      setBillingHistory(data.items);
+    });
+  };
+
+  // Handle renew subscription
+  const handleRenew = async () => {
+    if (!subscription) return;
+    setIsRenewing(true);
+    setError(null);
+    try {
+      const renewed = await subscriptionService.renew({
+        isYearly: subscription.isYearly,
+      });
+      setSubscription(renewed);
+      // Refresh billing history
+      const billingData = await subscriptionService.getBillingHistory();
+      setBillingHistory(billingData.items);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to renew subscription");
+      console.error("Error renewing subscription:", err);
+    } finally {
+      setIsRenewing(false);
+    }
+  };
 
   return (
     <SubscriptionSettingsLayout
@@ -13,6 +132,7 @@ const MyPlanSettings: React.FC = () => {
         <>
           <Button
             variant="primary"
+            onClick={handleChangePlan}
             className="bg-[#486370] hover:bg-[#486370] text-white px-5 py-2 rounded-lg font-medium"
           >
             Change Plan
@@ -25,18 +145,79 @@ const MyPlanSettings: React.FC = () => {
     >
       {/* Current Plan Section */}
       <section className="border border-[#E8E8E8] rounded-2xl bg-[#FBFBFB] px-6 py-5">
-        <div className="flex justify-between items-start">
-          <div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Starter</h2>
-            <p className="text-gray-600 mb-4 max-w-lg text-sm">
-              Next payment of $18.00 (monthly) occurs on 21 Dec, 2025<br />
-              you can upgrade or modify your account subscription at any time
-            </p>
+        {isLoading ? (
+          <div className="text-center py-4">Loading subscription data...</div>
+        ) : error ? (
+          <div className="text-red-500 py-4">{error}</div>
+        ) : subscription ? (
+          <div className="flex justify-between items-start">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <h2 className="text-xl font-bold text-gray-900">{subscription.planName}</h2>
+                {isSubscriptionExpired(subscription) && (
+                  <span className="bg-red-100 text-red-700 text-xs px-2 py-1 rounded-full font-semibold">
+                    Expired
+                  </span>
+                )}
+                {subscription.status === "TRIALING" && (
+                  <span className="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full font-semibold">
+                    Trial
+                  </span>
+                )}
+              </div>
+              <p className="text-gray-600 mb-4 max-w-lg text-sm">
+                {isSubscriptionExpired(subscription) ? (
+                  <>
+                    <span className="text-red-600 font-semibold">Your subscription has expired.</span>
+                    <br />
+                    Renew now to continue using all features. Your plan: ${subscription.amount.toFixed(2)} ({subscription.isYearly ? "yearly" : "monthly"})
+                    <br />
+                    {subscription.endDate && (
+                      <>
+                        Expired on: {formatDate(subscription.endDate)}
+                        <br />
+                      </>
+                    )}
+                  </>
+                ) : subscription.nextBillingDate ? (
+                  <>
+                    Next payment of ${subscription.amount.toFixed(2)} ({subscription.isYearly ? "yearly" : "monthly"}) occurs on {formatDate(subscription.nextBillingDate)}
+                    <br />
+                  </>
+                ) : (
+                  <>
+                    Current plan: ${subscription.amount.toFixed(2)} ({subscription.isYearly ? "yearly" : "monthly"})
+                    <br />
+                  </>
+                )}
+                {!isSubscriptionExpired(subscription) && (
+                  <>you can upgrade or modify your account subscription at any time</>
+                )}
+              </p>
+            </div>
+            <div className="flex flex-col gap-2">
+              {isSubscriptionExpired(subscription) ? (
+                <Button
+                  onClick={handleRenew}
+                  disabled={isRenewing}
+                  className="bg-[#7BD747] hover:bg-[#6bc238] text-white px-6 py-2.5 rounded-lg text-sm font-medium disabled:opacity-50"
+                >
+                  {isRenewing ? "Renewing..." : "Renew Subscription"}
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleSwitchBilling}
+                  disabled={isUpdating}
+                  className="bg-[#486370] hover:bg-[#3a505b] text-white px-5 py-2.5 rounded-lg text-sm font-medium disabled:opacity-50"
+                >
+                  {isUpdating ? "Updating..." : `Switch to ${subscription.isYearly ? "monthly" : "yearly"}`}
+                </Button>
+              )}
+            </div>
           </div>
-          <Button className="bg-[#486370] hover:bg-[#3a505b] text-white px-5 py-2.5 rounded-lg text-sm font-medium">
-            Switch to yearly
-          </Button>
-        </div>
+        ) : (
+          <div className="text-gray-500 py-4">No subscription found</div>
+        )}
       </section>
 
       {/* Account Mode Section */}
@@ -110,47 +291,81 @@ const MyPlanSettings: React.FC = () => {
         <div className="flex justify-between items-center">
           <h2 className="text-lg font-semibold text-gray-900">Billing history</h2>
           <div className="flex items-center gap-3 bg-white px-3 py-1.5 rounded-lg border border-gray-200">
-            <span className="text-sm font-medium text-gray-700">6/12/2025</span>
+            <input
+              type="date"
+              value={dateRange.startDate}
+              onChange={(e) => setDateRange({ ...dateRange, startDate: e.target.value })}
+              className="text-sm font-medium text-gray-700 border-none outline-none bg-transparent"
+              placeholder="Start date"
+            />
             <span className="text-gray-400">⇄</span>
-            <span className="text-sm font-medium text-gray-700">6/12/2025</span>
+            <input
+              type="date"
+              value={dateRange.endDate}
+              onChange={(e) => setDateRange({ ...dateRange, endDate: e.target.value })}
+              className="text-sm font-medium text-gray-700 border-none outline-none bg-transparent"
+              placeholder="End date"
+            />
+            {(dateRange.startDate || dateRange.endDate) && (
+              <button
+                onClick={handleDateFilter}
+                className="text-[#486370] text-sm font-medium hover:underline ml-2"
+              >
+                Filter
+              </button>
+            )}
           </div>
         </div>
 
         <div className="overflow-x-auto rounded-lg border border-[#E8E8E8]">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-[#7CD947] text-white">
-                <th className="py-3 px-4 text-left font-semibold text-sm">Status</th>
-                <th className="py-3 px-4 text-left font-semibold text-sm">Date</th>
-                <th className="py-3 px-4 text-left font-semibold text-sm">Amount</th>
-                <th className="py-3 px-4 text-left font-semibold text-sm">Plan</th>
-                <th className="py-3 px-4 text-left font-semibold text-sm">Billing period</th>
-                <th className="py-3 px-4 text-left font-semibold text-sm">Receipt</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
-              {[
-                { status: "Paid", date: "Nov 22, 2025", amount: "$18.00", plan: "Subscription: Starter", period: "Monthly" },
-                { status: "Failed", date: "Nov 21, 2025", amount: "$18.00", plan: "Subscription: Starter", period: "Monthly" },
-                { status: "Failed", date: "Nov 19, 2025", amount: "$18.00", plan: "Subscription: Starter", period: "Monthly" },
-              ].map((row, index) => (
-                <tr key={index} className="hover:bg-gray-50 transition-colors">
-                  <td className={`py-4 px-4 text-sm font-medium ${row.status === "Paid" ? "text-green-600" : "text-red-500"}`}>
-                    {row.status}
-                  </td>
-                  <td className="py-4 px-4 text-sm text-gray-600">{row.date}</td>
-                  <td className="py-4 px-4 text-sm text-gray-900 font-medium">{row.amount}</td>
-                  <td className="py-4 px-4 text-sm text-gray-600">{row.plan}</td>
-                  <td className="py-4 px-4 text-sm text-gray-600">{row.period}</td>
-                  <td className="py-4 px-4">
-                    <button className="text-gray-900 font-bold text-sm hover:underline">View</button>
-                  </td>
+          {isLoading ? (
+            <div className="text-center py-8 text-gray-500">Loading billing history...</div>
+          ) : billingHistory.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">No billing history found</div>
+          ) : (
+            <table className="w-full">
+              <thead>
+                <tr className="bg-[#7CD947] text-white">
+                  <th className="py-3 px-4 text-left font-semibold text-sm">Status</th>
+                  <th className="py-3 px-4 text-left font-semibold text-sm">Date</th>
+                  <th className="py-3 px-4 text-left font-semibold text-sm">Amount</th>
+                  <th className="py-3 px-4 text-left font-semibold text-sm">Plan</th>
+                  <th className="py-3 px-4 text-left font-semibold text-sm">Billing period</th>
+                  <th className="py-3 px-4 text-left font-semibold text-sm">Receipt</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-100 bg-white">
+                {billingHistory.map((row) => (
+                  <tr key={row.id} className="hover:bg-gray-50 transition-colors">
+                    <td className={`py-4 px-4 text-sm font-medium ${
+                      row.status === "Paid" || row.status === "Trial" 
+                        ? "text-green-600" 
+                        : "text-red-500"
+                    }`}>
+                      {row.status}
+                    </td>
+                    <td className="py-4 px-4 text-sm text-gray-600">{formatDate(row.date)}</td>
+                    <td className="py-4 px-4 text-sm text-gray-900 font-medium">${row.amount.toFixed(2)}</td>
+                    <td className="py-4 px-4 text-sm text-gray-600">{row.plan}</td>
+                    <td className="py-4 px-4 text-sm text-gray-600">{row.billingPeriod}</td>
+                    <td className="py-4 px-4">
+                      <button className="text-gray-900 font-bold text-sm hover:underline">View</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </section>
+
+      {/* Change Plan Modal */}
+      <ChangePlanModal
+        isOpen={isChangePlanModalOpen}
+        onClose={() => setIsChangePlanModalOpen(false)}
+        currentSubscription={subscription}
+        onPlanChanged={handlePlanChanged}
+      />
     </SubscriptionSettingsLayout>
   );
 };
