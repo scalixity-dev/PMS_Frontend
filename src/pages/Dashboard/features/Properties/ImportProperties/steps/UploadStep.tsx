@@ -37,13 +37,20 @@ const UploadStep: React.FC<UploadStepProps> = ({ file, onFileSelect }) => {
     };
 
     const validateAndSetFile = (uploadedFile: File) => {
-        // Validate file extension
-        const allowedExtensions = ['.csv', '.xls', '.xlsx'];
+        // Validate file extension - only Excel files are supported
+        const allowedExtensions = ['.xls', '.xlsx'];
         const fileName = uploadedFile.name.toLowerCase();
         const isValidExtension = allowedExtensions.some(ext => fileName.endsWith(ext));
         
         if (!isValidExtension) {
-            alert(`Invalid file type. Please upload a file with one of the following extensions: ${allowedExtensions.join(', ')}`);
+            alert(`Invalid file type. Please upload an Excel file (.xls or .xlsx)`);
+            return;
+        }
+        
+        // Validate file size (10MB max)
+        const maxSizeBytes = 10 * 1024 * 1024;
+        if (uploadedFile.size > maxSizeBytes) {
+            alert('File size must not exceed 10MB');
             return;
         }
         
@@ -79,7 +86,7 @@ const UploadStep: React.FC<UploadStepProps> = ({ file, onFileSelect }) => {
                         ref={fileInputRef}
                         type="file"
                         className="hidden"
-                        accept=".csv,.xls,.xlsx"
+                        accept=".xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                         onChange={handleChange}
                     />
 

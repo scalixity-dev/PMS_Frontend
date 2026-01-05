@@ -62,8 +62,9 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
     const { data: properties = [], isLoading: isLoadingProperties } = useGetAllProperties();
 
     const [showExitConfirmation, setShowExitConfirmation] = React.useState(false);
-    const [formErrors, setFormErrors] = React.useState({ title: false, date: false, time: false });
+    const [formErrors, setFormErrors] = React.useState({ title: false, date: false, time: false, details: false });
     const [initialSnapshot, setInitialSnapshot] = React.useState(formData);
+    const MAX_DETAILS_LENGTH = 100;
     const prevIsOpenRef = React.useRef(isOpen);
 
     useEffect(() => {
@@ -152,13 +153,14 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
         const errors = {
             title: !formData.title.trim(),
             date: !formData.date,
-            time: !formData.time.trim()
+            time: !formData.time.trim(),
+            details: formData.details ? formData.details.length > MAX_DETAILS_LENGTH : false
         };
 
         setFormErrors(errors);
 
         // Prevent submission if any required field is invalid
-        if (errors.title || errors.date || errors.time) {
+        if (errors.title || errors.date || errors.time || errors.details) {
             return;
         }
 
@@ -264,15 +266,30 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
 
                     {/* Details */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-700 mb-1">Details</label>
+                        <div className="flex items-center justify-between mb-1">
+                            <label className="block text-xs font-bold text-gray-700">Details</label>
+                            <span className={`text-xs ${formData.details && formData.details.length > MAX_DETAILS_LENGTH ? 'text-red-500 font-semibold' : 'text-gray-500'}`}>
+                                {formData.details?.length || 0}/{MAX_DETAILS_LENGTH}
+                            </span>
+                        </div>
                         <textarea
                             value={formData.details}
-                            onChange={(e) => updateFormData('details', e.target.value)}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                if (value.length <= MAX_DETAILS_LENGTH) {
+                                    updateFormData('details', value);
+                                }
+                            }}
                             placeholder="Enter Details"
                             rows={2}
                             disabled={isLoading}
                             className={`w-full bg-white text-gray-800 placeholder-gray-400 px-3 py-2.5 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all resize-none shadow-sm text-sm ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                         />
+                        {formErrors.details && (
+                            <p className="text-red-500 text-xs mt-1">
+                                Details cannot exceed {MAX_DETAILS_LENGTH} characters
+                            </p>
+                        )}
                     </div>
 
                     {/* Date & Time */}

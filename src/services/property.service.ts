@@ -496,6 +496,129 @@ class PropertyService {
   }
 
   /**
+   * Validate Excel file without importing
+   */
+  async validateExcel(file: File): Promise<{
+    headers: string[];
+    total: number;
+    successful: number;
+    failed: number;
+    errors: Array<{ row: number; error: string }>;
+    message: string;
+  }> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(API_ENDPOINTS.PROPERTY.VALIDATE_EXCEL, {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to validate file';
+      
+      try {
+        const errorData = await response.json();
+        
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join('. ');
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+        
+        console.error('File validation error:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+        });
+      } catch (parseError) {
+        errorMessage = `Failed to validate file: ${response.statusText}`;
+        console.error('Failed to parse error response:', parseError);
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get system field definitions for mapping
+   */
+  async getImportFields(): Promise<{
+    fields: Array<{
+      key: string;
+      label: string;
+      required: boolean;
+      category: string;
+    }>;
+  }> {
+    const response = await fetch(API_ENDPOINTS.PROPERTY.GET_IMPORT_FIELDS, {
+      method: 'GET',
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch import fields');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Import properties from Excel file
+   */
+  async importFromExcel(file: File): Promise<{
+    total: number;
+    successful: number;
+    failed: number;
+    errors: Array<{ row: number; error: string }>;
+    jobId: string | null;
+    message: string;
+  }> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(API_ENDPOINTS.PROPERTY.IMPORT_EXCEL, {
+      method: 'POST',
+      credentials: 'include', // Include cookies for JWT
+      body: formData,
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to import properties';
+      
+      try {
+        const errorData = await response.json();
+        
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join('. ');
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+        
+        console.error('Property import error:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+        });
+      } catch (parseError) {
+        errorMessage = `Failed to import properties: ${response.statusText}`;
+        console.error('Failed to parse error response:', parseError);
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  }
+
+  /**
    * Delete a property
    */
   async delete(propertyId: string): Promise<{ message: string; property: BackendProperty }> {
@@ -525,6 +648,53 @@ class PropertyService {
         });
       } catch (parseError) {
         errorMessage = `Failed to delete property: ${response.statusText}`;
+        console.error('Failed to parse error response:', parseError);
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Bulk delete multiple properties
+   */
+  async bulkDelete(propertyIds: string[]): Promise<{
+    deleted: number;
+    failed: number;
+    errors: Array<{ id: string; error: string }>;
+  }> {
+    const response = await fetch(API_ENDPOINTS.PROPERTY.BULK_DELETE, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include', // Include cookies for JWT
+      body: JSON.stringify({ propertyIds }),
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to delete properties';
+      
+      try {
+        const errorData = await response.json();
+        
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join('. ');
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+        
+        console.error('Bulk property deletion error:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+        });
+      } catch (parseError) {
+        errorMessage = `Failed to delete properties: ${response.statusText}`;
         console.error('Failed to parse error response:', parseError);
       }
       
