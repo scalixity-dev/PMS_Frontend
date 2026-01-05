@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import type { TabType, FilterState, UserInfo, UserFinances, RentFilters, RequestFilters, ServiceRequest } from '../utils/types';
+import type { TabType, FilterState, UserInfo, UserFinances, RentFilters, RequestFilters, ServiceRequest, Lease } from '../utils/types';
+import { mockRequests } from '../utils/mockData';
 
 interface UserDashboardState {
     // Dashbord UI State
@@ -15,6 +16,7 @@ interface UserDashboardState {
     propertyFilters: FilterState | null;
     isPropertyFiltersOpen: boolean;
     requests: ServiceRequest[];
+    selectedLease: Lease | null;
 
     // Actions
     setActiveTab: (tab: TabType) => void;
@@ -28,6 +30,8 @@ interface UserDashboardState {
     resetRequestFilters: () => void;
 
     addRequest: (request: ServiceRequest) => void;
+    updateRequestStatus: (id: number, status: ServiceRequest["status"]) => void;
+    setSelectedLease: (lease: Lease | null) => void;
 
     setPropertyFilters: (filters: FilterState | null) => void;
     setIsPropertyFiltersOpen: (isOpen: boolean) => void;
@@ -71,31 +75,11 @@ export const useUserDashboardStore = create<UserDashboardState>((set) => ({
 
     propertyFilters: null,
     isPropertyFiltersOpen: false,
-    requests: [
-        {
-            id: 1,
-            status: "New",
-            requestId: "REQ-001",
-            category: "Appliances",
-            property: "Sunset Boulevard 123",
-            priority: "Critical",
-            assignee: "",
-            createdAt: new Date().toISOString(),
-        },
-        {
-            id: 2,
-            status: "New",
-            requestId: "REQ-002",
-            category: "Electrical",
-            property: "Harbor View Apt 4B",
-            priority: "Normal",
-            assignee: "",
-            createdAt: new Date().toISOString(),
-        },
-    ],
+    requests: mockRequests as ServiceRequest[],
+    selectedLease: null,
 
     // Actions
-    setActiveTab: (tab) => set({ activeTab: tab }),
+    setActiveTab: (tab) => set({ activeTab: tab, selectedLease: null }),
 
     setUserInfo: (info) =>
         set((state) => ({
@@ -141,6 +125,15 @@ export const useUserDashboardStore = create<UserDashboardState>((set) => ({
         set((state) => ({
             requests: [request, ...state.requests]
         })),
+
+    updateRequestStatus: (id, status) =>
+        set((state) => ({
+            requests: state.requests.map((req) =>
+                req.id === id ? { ...req, status } : req
+            )
+        })),
+
+    setSelectedLease: (lease) => set({ selectedLease: lease }),
 
     setPropertyFilters: (filters) => set({ propertyFilters: filters }),
     setIsPropertyFiltersOpen: (isOpen) => set({ isPropertyFiltersOpen: isOpen }),
