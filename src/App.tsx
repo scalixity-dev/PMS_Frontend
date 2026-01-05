@@ -150,6 +150,7 @@ import GeneralExpenses from './pages/Dashboard/features/Reports/GeneralExpenses'
 import GeneralIncome from './pages/Dashboard/features/Reports/GeneralIncome';
 import PropertyExpenses from './pages/Dashboard/features/Reports/PropertyExpenses';
 import PropertyStatement from './pages/Dashboard/features/Reports/PropertyStatement';
+import Notification from './pages/Dashboard/features/Notification/Notification';
 
 // Create a QueryClient instance
 const queryClient = new QueryClient({
@@ -304,6 +305,15 @@ const App: React.FC = () => {
                 element={
                   <ProtectedRoute>
                     <ChatPage />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/dashboard/notifications"
+                element={
+                  <ProtectedRoute>
+                    <Notification />
                   </ProtectedRoute>
                 }
               />

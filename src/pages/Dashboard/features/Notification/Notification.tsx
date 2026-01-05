@@ -1,8 +1,14 @@
 import { Archive, ChevronLeft, Settings } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
+
+interface DashboardContext {
+    sidebarOpen: boolean;
+}
 
 const Notification = () => {
     const navigate = useNavigate();
+    const { sidebarOpen } = useOutletContext<DashboardContext>();
+
     const notifications = [
         {
             id: 1,
@@ -58,8 +64,9 @@ const Notification = () => {
         }
     };
 
+    
     return (
-        <div className="max-w-6xl mx-auto min-h-screen font-outfit">
+        <div className={`mx-auto min-h-screen font-outfit transition-all duration-300 ${sidebarOpen ? 'max-w-7xl' : 'max-w-full'}`}>
             {/* Breadcrumb Feed */}
             <div className="inline-flex items-center px-4 py-2 bg-[#E0E5E5] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
                 <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
@@ -68,10 +75,10 @@ const Notification = () => {
             </div>
 
             {/* Main Container */}
-            <div className="p-6 bg-[#E0E5E5] min-h-screen rounded-[2rem] flex flex-col">
+            <div className="p-4 sm:p-6 bg-[#E0E5E5] min-h-screen rounded-[2rem] flex flex-col">
 
                 {/* Header */}
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
                     <div className="flex items-center gap-2">
                         <button onClick={() => navigate(-1)} className="p-2 hover:bg-black/5 rounded-full transition-colors">
                             <ChevronLeft className="w-6 h-6 text-black" />
@@ -80,7 +87,7 @@ const Notification = () => {
                     </div>
                     <button
                         onClick={() => navigate('/dashboard/settings/notifications')}
-                        className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-2"
+                        className="w-full sm:w-auto px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center justify-center gap-2"
                         aria-label="Notification Settings"
                     >
                         <Settings className="w-4 h-4" />
@@ -89,12 +96,12 @@ const Notification = () => {
                 </div>
 
                 {/* Header Bar */}
-                <div className="bg-[#3A6D6C] rounded-full p-4 flex items-center justify-between text-white shadow-lg mb-8">
-                    <div className="bg-white text-[#3A6D6C] px-4 py-2 rounded-xl flex items-center gap-2 shadow-sm">
+                <div className="bg-[#3A6D6C] rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between text-white shadow-lg mb-8 gap-4">
+                    <div className="bg-white text-[#3A6D6C] px-4 py-2 rounded-xl flex items-center gap-2 shadow-sm w-full sm:w-auto justify-center sm:justify-start">
                         <span className="font-bold text-sm">What's New</span>
                         <Archive size={16} className="text-gray-800" />
                     </div>
-                    <button className="text-sm mr-4 font-medium hover:text-white/80 transition-colors">
+                    <button className="text-sm font-medium hover:text-white/80 transition-colors w-full sm:w-auto text-center sm:text-right sm:mr-4">
                         Mark all as read
                     </button>
                 </div>
@@ -105,13 +112,13 @@ const Notification = () => {
                         <div
                             key={index}
                             onClick={() => handleNotificationClick(notification.type)}
-                            className="group relative bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden cursor-pointer active:scale-[0.99]"
+                            className="group relative bg-white rounded-xl p-4 sm:p-6 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden cursor-pointer active:scale-[0.99]"
                         >
                             {/* Teal Left Border */}
                             <div className="absolute left-0 top-0 bottom-0 w-3 bg-[#3A6D6C] rounded-l-xl"></div>
 
-                            <div className="flex justify-between items-start gap-4 pl-4">
-                                <div className="space-y-2 max-w-4xl">
+                            <div className="flex flex-col sm:flex-row justify-between items-start gap-4 pl-4">
+                                <div className="space-y-2 max-w-4xl w-full">
                                     <h3 className="text-gray-900 font-bold text-base">
                                         {notification.title}
                                     </h3>
@@ -120,11 +127,11 @@ const Notification = () => {
                                     </p>
                                 </div>
 
-                                <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                                <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-start w-full sm:w-auto gap-2 flex-shrink-0 border-t sm:border-t-0 border-gray-100 pt-3 sm:pt-0 mt-1 sm:mt-0">
                                     {notification.isNew && (
-                                        <span className="text-[#3A6D6C] text-xs font-bold animate-pulse">New</span>
+                                        <span className="text-[#3A6D6C] text-xs font-bold animate-pulse order-2 sm:order-1">New</span>
                                     )}
-                                    <div className="flex flex-col items-end text-right">
+                                    <div className="flex flex-col items-start sm:items-end text-right order-1 sm:order-2">
                                         <div className="text-gray-500 text-sm font-medium">
                                             {notification.date}
                                         </div>
