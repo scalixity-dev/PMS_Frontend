@@ -708,9 +708,9 @@ const LeadDetail = () => {
     };
 
     return (
-        <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit pb-10 transition-all duration-300`}>
-            {/* Breadcrumb */}
-            <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] ml-2">
+        <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit pb-10 transition-all duration-300 px-0.5 sm:px-0`}>
+            {/* Breadcrumb - Hide on very small screens or make more compact */}
+            <div className="inline-flex flex-wrap items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] mx-1">
                 <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>Dashboard</span>
                 <span className="text-gray-500 text-sm mx-1">/</span>
                 <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard/leasing/leads')}>Leads</span>
@@ -718,7 +718,7 @@ const LeadDetail = () => {
                 <span className="text-gray-600 text-sm font-semibold">{leadInfo.fullName}</span>
             </div>
 
-            <div className="p-6 bg-[#DFE5E3] min-h-screen rounded-[2.5rem] shadow-sm border border-[#E0E0E0] mx-2">
+            <div className="p-4 sm:p-6 bg-[#DFE5E3] min-h-screen rounded-[1.5rem] sm:rounded-[2.5rem] shadow-sm border border-[#E0E0E0] mx-1">
                 {isLoadingLead ? (
                     <div className="text-center py-12">
                         <p className="text-gray-500 text-lg">Loading lead details...</p>
@@ -737,120 +737,121 @@ const LeadDetail = () => {
                 ) : (
                     <>
                         {/* Header */}
-                        <div className="flex items-center justify-start gap-3 mb-6 ml-2">
+                        <div className="flex flex-wrap items-center justify-between gap-3 mb-6 ml-1">
                             <div className="flex items-center gap-2">
                                 <button onClick={() => navigate(-1)} className="p-1 hover:text-gray-600 transition-colors">
-                                    <ChevronLeft className="w-6 h-6 text-gray-800" />
+                                    <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-gray-800" />
                                 </button>
-                                <h1 className="text-2xl font-bold text-gray-900">{leadInfo.fullName}</h1>
+                                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate max-w-[150px] sm:max-w-none">{leadInfo.fullName}</h1>
                             </div>
 
-                            <div className={`${status === 'NEW' ? 'bg-blue-100 text-blue-700 border-blue-200' :
-                                status === 'WORKING' ? 'bg-[#82D95B]/20 text-[#2D6A4F] border-[#82D95B]/40' :
-                                    'bg-red-100 text-red-700 border-red-200'
-                                } h-9 px-4 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold border transition-colors`}>
-                                {getStatusLabel(status)} <Clock className="w-3.5 h-3.5" />
-                            </div>
+                            <div className="flex items-center gap-3">
+                                <div className={`${status === 'NEW' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                                    status === 'WORKING' ? 'bg-[#82D95B]/20 text-[#2D6A4F] border-[#82D95B]/40' :
+                                        'bg-red-100 text-red-700 border-red-200'
+                                    } h-8 sm:h-9 px-3 sm:px-4 rounded-xl flex items-center justify-center gap-1.5 text-[10px] sm:text-xs font-bold border transition-colors`}>
+                                    {getStatusLabel(status)} <Clock className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
+                                </div>
 
-                            <div className="relative">
-                                <button
-                                    onClick={() => setShowActionMenu(!showActionMenu)}
-                                    className="bg-[#3A6D6C] text-white w-10 h-8 flex items-center justify-center rounded-lg shadow-md hover:bg-[#2c5251] transition-all"
-                                >
-                                    <MoreHorizontal className="w-5 h-5" />
-                                </button>
-                                {showActionMenu && (
-                                    <>
-                                        <div
-                                            className="fixed inset-0 z-50"
-                                            onClick={() => setShowActionMenu(false)}
-                                        />
-                                        <div className="absolute top-full right-0 mt-2 w-44 bg-white rounded-[1.2rem] shadow-xl border border-gray-100 py-2 z-[60] overflow-hidden animate-in fade-in zoom-in-95 duration-200 font-outfit">
-                                            <button
-                                                onClick={() => id && navigate(`/dashboard/leasing/leads/edit/${id}`)}
-                                                className="w-full text-left px-5 py-2 hover:bg-gray-50 text-gray-700 font-bold flex items-center gap-2 transition-colors text-xs"
-                                            >
-                                                <Edit2 className="w-3.5 h-3.5" /> Edit Lead
-                                            </button>
-
-                                            <div className="h-[1px] bg-gray-100 my-1 mx-4" />
-
-                                            <h4 className="px-5 py-1 text-[9px] uppercase tracking-wider text-gray-400 font-black">Change Status</h4>
-
-                                            {(['NEW', 'WORKING', 'CLOSED'] as LeadStatus[]).map((s) => (
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setShowActionMenu(!showActionMenu)}
+                                        className="bg-[#3A6D6C] text-white w-9 sm:w-10 h-7 sm:h-8 flex items-center justify-center rounded-lg shadow-md hover:bg-[#2c5251] transition-all"
+                                    >
+                                        <MoreHorizontal className="w-4 sm:w-5 h-4 sm:h-5" />
+                                    </button>
+                                    {showActionMenu && (
+                                        <>
+                                            <div
+                                                className="fixed inset-0 z-50"
+                                                onClick={() => setShowActionMenu(false)}
+                                            />
+                                            <div className="absolute top-full right-0 mt-2 w-44 bg-white rounded-[1.2rem] shadow-xl border border-gray-100 py-2 z-[60] overflow-hidden animate-in fade-in zoom-in-95 duration-200 font-outfit">
                                                 <button
-                                                    key={s}
-                                                    onClick={async () => {
-                                                        if (id && s !== status) {
-                                                            try {
-                                                                const oldStatus = status;
-                                                                await updateLeadMutation.mutateAsync({
-                                                                    id,
-                                                                    data: { status: s }
-                                                                });
-                                                                setStatus(s);
-
-                                                                // Create activity for status change
-                                                                try {
-                                                                    console.log('Creating activity for status change:', id, oldStatus, s);
-                                                                    const activity = await createActivityMutation.mutateAsync({
-                                                                        leadId: id,
-                                                                        activityData: {
-                                                                            type: 'STATUS_CHANGE',
-                                                                            description: `Lead status changed from ${getStatusLabel(oldStatus)} to ${getStatusLabel(s)}`,
-                                                                            metadata: {
-                                                                                action: 'STATUS_CHANGED',
-                                                                                oldStatus: oldStatus,
-                                                                                newStatus: s
-                                                                            }
-                                                                        }
-                                                                    });
-                                                                    console.log('Activity created successfully for status change:', activity);
-                                                                } catch (activityError) {
-                                                                    console.error('Failed to create activity for status change:', activityError);
-                                                                    alert(`Warning: Status changed but failed to log activity: ${activityError instanceof Error ? activityError.message : 'Unknown error'}`);
-                                                                }
-                                                            } catch (error) {
-                                                                console.error('Failed to update lead status:', error);
-                                                            }
-                                                        }
-                                                        setShowActionMenu(false);
-                                                    }}
-                                                    className={`w-full text-left px-5 py-2 transition-colors text-xs flex items-center justify-between ${status === s
-                                                        ? 'bg-[#E7F0E5] text-[#2D6A4F] font-bold'
-                                                        : 'text-gray-600 font-medium hover:bg-gray-50'
-                                                        }`}
+                                                    onClick={() => id && navigate(`/dashboard/leasing/leads/edit/${id}`)}
+                                                    className="w-full text-left px-5 py-2 hover:bg-gray-50 text-gray-700 font-bold flex items-center gap-2 transition-colors text-xs"
                                                 >
-                                                    {getStatusLabel(s)}
-                                                    {status === s && <div className="w-1.5 h-1.5 rounded-full bg-[#2D6A4F]" />}
+                                                    <Edit2 className="w-3.5 h-3.5" /> Edit Lead
                                                 </button>
-                                            ))}
 
-                                            <div className="h-[1px] bg-gray-100 my-1 mx-4" />
+                                                <div className="h-[1px] bg-gray-100 my-1 mx-4" />
 
-                                            <button
-                                                onClick={() => {
-                                                    if (id && !isDeleting) {
-                                                        setIsDeleteModalOpen(true);
-                                                        setShowActionMenu(false); // Close menu
-                                                    }
-                                                }}
-                                                disabled={isDeleting}
-                                                className="w-full text-left px-5 py-2 hover:bg-red-50 text-red-500 font-bold flex items-center gap-2 transition-colors text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-                                            >
-                                                <Trash2 className="w-3.5 h-3.5" /> {isDeleting ? 'Deleting...' : 'Delete Lead'}
-                                            </button>
-                                        </div>
-                                    </>
-                                )}
+                                                <h4 className="px-5 py-1 text-[9px] uppercase tracking-wider text-gray-400 font-black">Change Status</h4>
+
+                                                {(['NEW', 'WORKING', 'CLOSED'] as LeadStatus[]).map((s) => (
+                                                    <button
+                                                        key={s}
+                                                        onClick={async () => {
+                                                            if (id && s !== status) {
+                                                                try {
+                                                                    const oldStatus = status;
+                                                                    await updateLeadMutation.mutateAsync({
+                                                                        id,
+                                                                        data: { status: s }
+                                                                    });
+                                                                    setStatus(s);
+
+                                                                    // Create activity for status change
+                                                                    try {
+                                                                        console.log('Creating activity for status change:', id, oldStatus, s);
+                                                                        await createActivityMutation.mutateAsync({
+                                                                            leadId: id,
+                                                                            activityData: {
+                                                                                type: 'STATUS_CHANGE',
+                                                                                description: `Lead status changed from ${getStatusLabel(oldStatus)} to ${getStatusLabel(s)}`,
+                                                                                metadata: {
+                                                                                    action: 'STATUS_CHANGED',
+                                                                                    oldStatus: oldStatus,
+                                                                                    newStatus: s
+                                                                                }
+                                                                            }
+                                                                        });
+                                                                    } catch (activityError) {
+                                                                        console.error('Failed to create activity for status change:', activityError);
+                                                                        alert(`Warning: Status changed but failed to log activity: ${activityError instanceof Error ? activityError.message : 'Unknown error'}`);
+                                                                    }
+                                                                } catch (error) {
+                                                                    console.error('Failed to update lead status:', error);
+                                                                }
+                                                            }
+                                                            setShowActionMenu(false);
+                                                        }}
+                                                        className={`w-full text-left px-5 py-2 transition-colors text-xs flex items-center justify-between ${status === s
+                                                            ? 'bg-[#E7F0E5] text-[#2D6A4F] font-bold'
+                                                            : 'text-gray-600 font-medium hover:bg-gray-50'
+                                                            }`}
+                                                    >
+                                                        {getStatusLabel(s)}
+                                                        {status === s && <div className="w-1.5 h-1.5 rounded-full bg-[#2D6A4F]" />}
+                                                    </button>
+                                                ))}
+
+                                                <div className="h-[1px] bg-gray-100 my-1 mx-4" />
+
+                                                <button
+                                                    onClick={() => {
+                                                        if (id && !isDeleting) {
+                                                            setIsDeleteModalOpen(true);
+                                                            setShowActionMenu(false); // Close menu
+                                                        }
+                                                    }}
+                                                    disabled={isDeleting}
+                                                    className="w-full text-left px-5 py-2 hover:bg-red-50 text-red-500 font-bold flex items-center gap-2 transition-colors text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" /> {isDeleting ? 'Deleting...' : 'Delete Lead'}
+                                                </button>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
                             </div>
                         </div>
 
                         {/* Top Section Card */}
-                        <div className="bg-[#F0F0F6] pt-4 px-6 pb-0 rounded-[2.5rem] border border-[#E0E0E0] shadow-sm mb-6">
-                            <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
+                        <div className="bg-[#F0F0F6] pt-4 px-4 sm:px-6 pb-0 rounded-[1.5rem] sm:rounded-[2.5rem] border border-[#E0E0E0] shadow-sm mb-6">
+                            <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4 sm:gap-6">
                                 {/* Profile Card */}
-                                <div className="bg-[#ECF3EA] p-4 rounded-[2rem] border border-[#E0E0E0] shadow-sm flex flex-col items-center mb-4">
+                                <div className="bg-[#ECF3EA] p-4 rounded-[1.5rem] sm:rounded-[2rem] border border-[#E0E0E0] shadow-sm flex flex-col items-center mb-4">
                                     <div className="w-16 h-16 bg-[#C9E5BC] rounded-[1.2rem] flex items-center justify-center mb-2.5 shadow-sm relative">
                                         <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-md">
                                             <User className="w-5 h-5 text-[#C9E5BC]" strokeWidth={2.5} />
@@ -883,7 +884,7 @@ const LeadDetail = () => {
                                 </div>
 
                                 {/* Activity Filter Section */}
-                                <div className="flex flex-col justify-between">
+                                <div className="flex flex-col justify-between gap-4 sm:gap-6">
                                     {/* Add Activity Controls */}
                                     <div className="bg-[#3E706F] p-4 rounded-[2rem] shadow-xl flex flex-col items-center justify-center gap-3 relative">
                                         <h3 className="text-white font-bold text-sm">Add Activity</h3>
@@ -940,13 +941,13 @@ const LeadDetail = () => {
                                     </div>
 
                                     {/* Filters */}
-                                    <div className="bg-[#C9E5BC] p-6 px-20 rounded-t-[2.2rem] flex gap-10 shadow-inner">
+                                    <div className="bg-[#C9E5BC] p-4 sm:p-6 px-4 sm:px-10 lg:px-20 rounded-t-[1.5rem] sm:rounded-t-[2.2rem] flex flex-wrap sm:flex-nowrap gap-2 sm:gap-4 lg:gap-10 shadow-inner">
                                         {['All', 'Notes', 'Tasks', 'Activity'].map((filter) => (
                                             <button
                                                 key={filter}
                                                 onClick={() => setActiveFilter(filter)}
                                                 style={activeFilter === filter ? { borderBottom: '3px solid #FFFFFF' } : {}}
-                                                className={`flex-1 py-2.5 px-1 rounded-full font-bold text-xs transition-all shadow-md ${activeFilter === filter
+                                                className={`flex-1 min-w-[70px] py-2 sm:py-2.5 px-1 rounded-full font-bold text-[10px] sm:text-xs transition-all shadow-md ${activeFilter === filter
                                                     ? 'bg-[#82D95B] text-white'
                                                     : 'bg-[#D9D9D9] text-[#222] hover:bg-gray-200'
                                                     }`}
@@ -960,7 +961,7 @@ const LeadDetail = () => {
                         </div>
 
                         {/* Timeline Section */}
-                        <div className="bg-[#F0F0F650] p-8 rounded-[2.5rem] border border-white shadow-sm">
+                        <div className="bg-[#F0F0F650] p-4 sm:p-8 rounded-[1.5rem] sm:rounded-[2.5rem] border border-white shadow-sm">
                             {/* Timeline */}
                             {(() => {
                                 const filteredActivities = transformedActivities.map(day => ({
@@ -997,7 +998,7 @@ const LeadDetail = () => {
                                 return filteredActivities.map((day) => (
                                     <div key={day.id} className="mb-10">
                                         {/* Date Badge - Attached to card */}
-                                        <div className="inline-block bg-gradient-to-r from-[#17D16A] to-[#8EE238] text-white px-8 py-2.5 rounded-t-[1.6rem] text-lg font-bold shadow-sm relative z-10 -mb-[1px]">
+                                        <div className="inline-block bg-gradient-to-r from-[#17D16A] to-[#8EE238] text-white px-5 sm:px-8 py-2 sm:py-2.5 rounded-t-[1.2rem] sm:rounded-t-[1.6rem] text-sm sm:text-lg font-bold shadow-sm relative z-10 -mb-[1px]">
                                             {day.date}
                                         </div>
 
@@ -1005,7 +1006,7 @@ const LeadDetail = () => {
                                             {day.items.map((item, index) => (
                                                 <div
                                                     key={item.id}
-                                                    className={`bg-white p-5 shadow-sm border border-gray-100 flex items-center gap-6 relative group ${index === 0 ? 'rounded-[2rem] rounded-tl-none' : 'rounded-[2rem]'
+                                                    className={`bg-white p-3 sm:p-5 shadow-sm border border-gray-100 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 relative group ${index === 0 ? 'rounded-[1.5rem] sm:rounded-[2rem] rounded-tl-none' : 'rounded-[1.5rem] sm:rounded-[2rem]'
                                                         }`}
                                                 >
                                                     {/* Left Info Group - Premium Box */}
@@ -1036,31 +1037,31 @@ const LeadDetail = () => {
 
                                                     {/* Activity Message Bubble */}
                                                     <div
-                                                        className="bg-[#E7F0E5]/60 px-4 py-2.5 rounded-full text-[#374151] font-normal text-xs border border-[#D1E2CF] shadow-inner backdrop-blur-[4.979720592498779px] w-fit"
+                                                        className="bg-[#E7F0E5]/60 px-3 sm:px-4 py-2 sm:2.5 rounded-xl sm:rounded-full text-[#374151] font-normal text-[11px] sm:text-xs border border-[#D1E2CF] shadow-inner backdrop-blur-[4.979720592498779px] w-full sm:w-fit"
                                                     >
                                                         {item.text}
                                                     </div>
 
                                                     {/* Action Icons - Not for activity*/}
                                                     {(item.type !== 'Activity') && (
-                                                        <div className="absolute top-3 right-5 flex items-center gap-2 opacity-100 group-hover:opacity-100 transition-opacity">
+                                                        <div className="absolute top-2 sm:top-3 right-3 sm:right-5 flex items-center gap-1 sm:gap-2 opacity-100 group-hover:opacity-100 transition-opacity">
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
                                                                     handleEditActivity(day.id, item);
                                                                 }}
-                                                                className="text-[#3E706F] hover:scale-110 transition-transform p-1.5 "
+                                                                className="text-[#3E706F] hover:scale-110 transition-transform p-1 sm:p-1.5 "
                                                             >
-                                                                <Edit2 className="w-4 h-4" />
+                                                                <Edit2 className="w-3.5 sm:w-4 h-3.5 sm:h-4" />
                                                             </button>
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
                                                                     handleDeleteActivity(day.id, item.id);
                                                                 }}
-                                                                className="text-red-500 hover:scale-110 transition-transform p-1.5 "
+                                                                className="text-red-500 hover:scale-110 transition-transform p-1 sm:p-1.5 "
                                                             >
-                                                                <Trash2 className="w-4 h-4" />
+                                                                <Trash2 className="w-3.5 sm:w-4 h-3.5 sm:h-4" />
                                                             </button>
                                                         </div>
                                                     )}
@@ -1134,7 +1135,6 @@ const LeadDetail = () => {
                 listings={listings}
             />
 
-            {/* Delete Confirmation Modal */}
             <DeleteConfirmationModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
@@ -1143,7 +1143,7 @@ const LeadDetail = () => {
                 message="Are you sure you want to delete this lead? This action cannot be undone."
                 itemName="this lead"
             />
-        </div >
+        </div>
     );
 };
 

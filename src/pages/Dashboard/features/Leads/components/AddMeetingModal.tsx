@@ -158,7 +158,7 @@ const AddMeetingModal: React.FC<AddMeetingModalProps> = ({ isOpen, onClose, onCr
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="meeting-modal-title"
-                className="bg-white rounded-3xl w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-300 overflow-visible mx-4"
+                className="bg-white rounded-3xl w-full max-w-[95%] sm:max-w-lg shadow-2xl animate-in zoom-in-95 duration-300 overflow-visible mx-4"
             >
                 {/* Header */}
                 <div className="bg-[#3E706F] px-5 py-3 flex items-center justify-between text-white relative rounded-t-3xl">
@@ -180,7 +180,7 @@ const AddMeetingModal: React.FC<AddMeetingModalProps> = ({ isOpen, onClose, onCr
                 </div>
 
                 {/* Body */}
-                <div className="p-6 bg-[#F8FAFC] rounded-b-3xl">
+                <div className="p-4 sm:p-6 bg-[#F8FAFC] rounded-b-3xl">
                     {/* Textarea */}
                     <div className="bg-white rounded-2xl border border-gray-200 p-3 shadow-sm min-h-[120px] flex flex-col mb-6">
                         <textarea
@@ -197,19 +197,19 @@ const AddMeetingModal: React.FC<AddMeetingModalProps> = ({ isOpen, onClose, onCr
                         {/* Date & Time */}
                         <div className="space-y-1.5">
                             <label className="block text-xs font-bold text-[#1A1A1A]">Select Date & Time *</label>
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className="flex flex-col sm:flex-row gap-2">
                                 <DatePicker
                                     value={selectedDate}
                                     onChange={setSelectedDate}
                                     placeholder="Select date"
-                                    className="w-full"
+                                    className="w-full sm:flex-1"
                                     popoverClassName="z-[110]"
                                 />
                                 <PreciseTimePicker
                                     value={selectedTime}
                                     onChange={setSelectedTime}
                                     placeholder="Select time"
-                                    className="w-full"
+                                    className="w-full sm:flex-1"
                                 />
                             </div>
                         </div>
@@ -232,7 +232,7 @@ const AddMeetingModal: React.FC<AddMeetingModalProps> = ({ isOpen, onClose, onCr
                                 </button>
                             </div>
                         )}
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-col sm:flex-row items-center gap-3">
                             <input
                                 type="file"
                                 ref={fileInputRef}
@@ -242,13 +242,13 @@ const AddMeetingModal: React.FC<AddMeetingModalProps> = ({ isOpen, onClose, onCr
                             />
                             <button
                                 onClick={() => fileInputRef.current?.click()}
-                                className="bg-[#4F5867] text-white px-6 py-2.5 rounded-lg font-bold shadow-lg hover:bg-[#3f4753] transition-all hover:scale-[1.02] active:scale-[0.98] text-sm"
+                                className="w-full sm:w-auto bg-[#4F5867] text-white px-6 py-2.5 rounded-lg font-bold shadow-lg hover:bg-[#3f4753] transition-all hover:scale-[1.02] active:scale-[0.98] text-sm"
                             >
                                 Upload File
                             </button>
                             <button
                                 onClick={handleCreate}
-                                className="bg-[#3E706F] text-white px-8 py-2.5 rounded-lg font-bold shadow-lg hover:bg-[#2c5251] transition-all hover:scale-[1.02] active:scale-[0.98] text-sm"
+                                className="w-full sm:w-auto bg-[#3E706F] text-white px-8 py-2.5 rounded-lg font-bold shadow-lg hover:bg-[#2c5251] transition-all hover:scale-[1.02] active:scale-[0.98] text-sm"
                             >
                                 {initialData ? 'Update' : 'Create'}
                             </button>

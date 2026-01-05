@@ -26,7 +26,7 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
 
     return (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200" onClick={(e) => e.target === e.currentTarget && onClose()}>
-            <div className="bg-white w-full max-w-sm rounded-xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="bg-white w-full max-w-[95%] sm:max-w-sm rounded-[1.5rem] sm:rounded-xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
                 {/* Header */}
                 <div className="bg-red-600 px-6 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -39,7 +39,7 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
                 </div>
 
                 {/* Body */}
-                <div className="p-6">
+                <div className="p-4 sm:p-6">
                     <p className="text-gray-600 mb-6 text-center">
                         {message || (
                             <>
@@ -50,16 +50,16 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
                     </p>
 
                     {/* Footer / Action */}
-                    <div className="flex gap-4">
+                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                         <button
                             onClick={onClose}
-                            className="flex-1 bg-gray-100 text-gray-700 px-4 py-2.5 rounded-lg font-bold hover:bg-gray-200 transition-colors"
+                            className="flex-1 bg-gray-100 text-gray-700 px-4 py-2.5 rounded-lg font-bold hover:bg-gray-200 transition-colors order-2 sm:order-1"
                         >
                             Cancel
                         </button>
                         <button
                             onClick={onConfirm}
-                            className={`flex-1 ${confirmButtonClass}`}
+                            className={`flex-1 ${confirmButtonClass} order-1 sm:order-2`}
                         >
                             {confirmText}
                         </button>
