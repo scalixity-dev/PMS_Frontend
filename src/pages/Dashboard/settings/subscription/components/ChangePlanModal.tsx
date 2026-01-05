@@ -63,7 +63,7 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
   const getMonthlyEquivalent = (annualText: string): string => {
     const match = annualText.match(/\$[\d,]+\.?\d*/);
     if (match) {
-      const annualPrice = parseFloat(match[0].replace('$', '').replace(',', ''));
+      const annualPrice = parseFloat(match[0].replace('$', '').replace(/,/g, ''));
       const monthlyPrice = (annualPrice / 12).toFixed(2);
       return `$${monthlyPrice} /m`;
     }
