@@ -177,7 +177,7 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
               const displaySubPrice = isYearly
                 ? isCustomPricing
                   ? "Contact us for annual pricing"
-                  : getMonthlyEquivalent(plan.annualBillingText) + " billed monthly"
+                  : getMonthlyEquivalent(plan.annualBillingText) + " per month"
                 : plan.annualBillingText;
 
               const cardBgClass = isSelected
