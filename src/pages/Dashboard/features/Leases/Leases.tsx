@@ -4,11 +4,20 @@ import { Trash2, ChevronLeft, Eye, ChevronDown, Edit } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
 import DeleteConfirmationModal from '../../components/DeleteConfirmationModal';
-import EditLeaseTermsModal from './components/EditLeaseTermsModal';
+import EditLeaseTermsModal, { type Lease } from './components/EditLeaseTermsModal';
 
+
+// Define LeaseItem matching usage in this file
+export interface LeaseItem extends Lease {
+    status: string;
+    duration: string;
+    rent: string;
+    tenant: string | { name: string; image?: string; email?: string; description?: string };
+    type: string;
+}
 
 // Mock Data
-export const MOCK_LEASES = [
+export const MOCK_LEASES: LeaseItem[] = [
     {
         id: 1,
         status: 'Draft',
@@ -63,8 +72,8 @@ const Leases: React.FC = () => {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isEndLeaseModalOpen, setIsEndLeaseModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [selectedLeaseId, setSelectedLeaseId] = useState<number | null>(null);
-    const [selectedLeaseData, setSelectedLeaseData] = useState<any>(null);
+    const [selectedLeaseId, setSelectedLeaseId] = useState<number | string | null>(null);
+    const [selectedLeaseData, setSelectedLeaseData] = useState<LeaseItem | null>(null);
 
     const filterOptions: Record<string, FilterOption[]> = {
         status: [
@@ -93,14 +102,19 @@ const Leases: React.FC = () => {
     const filteredLeases = useMemo(() => {
         return MOCK_LEASES.filter(lease => {
             // Search filter
+            // Normalize property to string for search
+            const propName = typeof lease.property === 'object' ? lease.property.name : lease.property;
+            const tenantName = typeof lease.tenant === 'object' ? lease.tenant?.name : lease.tenant;
+
             const matchesSearch = searchQuery === '' ||
-                lease.property.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                lease.tenant.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (propName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (tenantName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
                 lease.lease.toString().includes(searchQuery);
 
             // Status filter
+            const leaseStatus = (lease as any).status || ''; // access status safely if not in Lease interface (it is in index signature)
             const matchesStatus = !filters.status?.length ||
-                filters.status.includes(lease.status);
+                filters.status.includes(leaseStatus);
 
             // Occupancy filter (ignore placeholder value)
             const matchesOccupancy = !filters.occupancy?.length ||
@@ -132,25 +146,25 @@ const Leases: React.FC = () => {
         }
     };
 
-    const handleDeleteClick = (e: React.MouseEvent, id: number) => {
+    const handleDeleteClick = (e: React.MouseEvent, id: number | string) => {
         e.stopPropagation();
         setSelectedLeaseId(id);
         setIsDeleteModalOpen(true);
     };
 
-    const handleEndLeaseClick = (e: React.MouseEvent, id: number) => {
+    const handleEndLeaseClick = (e: React.MouseEvent, id: number | string) => {
         e.stopPropagation();
         setSelectedLeaseId(id);
         setIsEndLeaseModalOpen(true);
     };
 
-    const handleEditClick = (e: React.MouseEvent, item: any) => {
+    const handleEditClick = (e: React.MouseEvent, item: LeaseItem) => {
         e.stopPropagation();
         setSelectedLeaseData(item);
         setIsEditModalOpen(true);
     };
 
-    const handleUpdateLease = (updatedData: any) => {
+    const handleUpdateLease = (updatedData: Lease) => {
         console.log('Updating lease:', updatedData);
         // Implement update logic invoke API
         setIsEditModalOpen(false);
@@ -322,13 +336,17 @@ const Leases: React.FC = () => {
                                         </div>
                                     </div>
                                     <div>
-                                        <div className="text-[#2E6819] font-bold text-lg">{item.property}</div>
+                                        <div className="text-[#2E6819] font-bold text-lg">
+                                            {typeof item.property === 'object' ? item.property.name : item.property}
+                                        </div>
                                         <div className="text-gray-500 text-xs">Lease #{item.lease}</div>
                                     </div>
                                     <div className="grid grid-cols-2 gap-4 bg-gray-50 p-3 rounded-xl">
                                         <div>
                                             <p className="text-xs text-gray-400 mb-1">Tenant</p>
-                                            <p className="text-[#2E6819] font-semibold text-sm">{item.tenant}</p>
+                                            <p className="text-[#2E6819] font-semibold text-sm">
+                                                {typeof item.tenant === 'object' ? item.tenant.name : item.tenant}
+                                            </p>
                                         </div>
                                         <div>
                                             <p className="text-xs text-gray-400 mb-1">Rent</p>
@@ -344,8 +362,12 @@ const Leases: React.FC = () => {
                                 {/* Desktop View */}
                                 <div className="hidden md:block text-center"><span className={getStatusColor(item.status)}>{item.status}</span></div>
                                 <div className="hidden md:block text-gray-600 text-sm font-medium text-center">{item.lease}</div>
-                                <div className="hidden md:block text-[#2E6819] text-sm font-semibold text-center">{item.property}</div>
-                                <div className="hidden md:block text-[#2E6819] text-sm font-semibold text-center">{item.tenant}</div>
+                                <div className="hidden md:block text-[#2E6819] text-sm font-semibold text-center">
+                                    {typeof item.property === 'object' ? item.property.name : item.property}
+                                </div>
+                                <div className="hidden md:block text-[#2E6819] text-sm font-semibold text-center">
+                                    {typeof item.tenant === 'object' ? item.tenant.name : item.tenant}
+                                </div>
                                 <div className="hidden md:block text-[#2E6819] text-sm font-semibold text-center">{item.duration}</div>
                                 <div className="hidden md:block text-gray-600 text-sm font-medium text-center">{item.rent}</div>
                                 <div className="hidden md:flex items-center justify-center gap-2">
@@ -458,13 +480,17 @@ const Leases: React.FC = () => {
                                     </div>
                                 </div>
                                 <div>
-                                    <div className="text-[#2E6819] font-bold text-lg">{item.property}</div>
+                                    <div className="text-[#2E6819] font-bold text-lg">
+                                        {typeof item.property === 'object' ? item.property.name : item.property}
+                                    </div>
                                     <div className="text-gray-500 text-xs">Lease #{item.lease}</div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4 bg-gray-50 p-3 rounded-xl">
                                     <div>
                                         <p className="text-xs text-gray-400 mb-1">Tenant</p>
-                                        <p className="text-[#2E6819] font-semibold text-sm">{item.tenant}</p>
+                                        <p className="text-[#2E6819] font-semibold text-sm">
+                                            {typeof item.tenant === 'object' ? item.tenant.name : item.tenant}
+                                        </p>
                                     </div>
                                     <div>
                                         <p className="text-xs text-gray-400 mb-1">Rent</p>
@@ -480,10 +506,12 @@ const Leases: React.FC = () => {
                             {/* Desktop View */}
                             <div className="hidden md:block text-center"><span className={getStatusColor(item.status)}>{item.status}</span></div>
                             <div className="hidden md:block text-gray-600 text-sm font-medium text-center">{item.lease}</div>
-                            <div className="hidden md:block text-[#2E6819] text-sm font-semibold text-center">{item.property}</div>
-                            <div className="hidden md:block text-[#2E6819] text-sm font-semibold text-center">{item.tenant}</div>
-                            <div className="hidden md:block text-[#2E6819] text-sm font-semibold text-center">{item.duration}</div>
-                            <div className="hidden md:block text-gray-600 text-sm font-medium text-center">{item.rent}</div>
+                            <div className="hidden md:block text-[#2E6819] text-sm font-semibold text-center">
+                                {typeof item.property === 'object' ? item.property.name : item.property}
+                            </div>
+                            <div className="hidden md:block text-[#2E6819] text-sm font-semibold text-center">
+                                {typeof item.tenant === 'object' ? item.tenant.name : item.tenant}
+                            </div>
                             <div className="hidden md:flex items-center justify-center gap-2">
                                 <button
                                     className="px-3 py-1 bg-[#82D64D] text-white text-xs font-medium rounded-full hover:bg-[#72bd42] transition-colors"
@@ -550,7 +578,7 @@ const Leases: React.FC = () => {
             <EditLeaseTermsModal
                 isOpen={isEditModalOpen}
                 onClose={() => setIsEditModalOpen(false)}
-                initialData={selectedLeaseData}
+                initialData={selectedLeaseData || undefined}
                 onUpdate={handleUpdateLease}
             />
         </div >

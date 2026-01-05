@@ -582,7 +582,6 @@ const Transactions: React.FC = () => {
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
                                                                     setMoreMenuOpenId(null);
-                                                                    setMoreMenuOpenId(null);
                                                                     const dataToPass = {
                                                                         amount: `₹${item.total.toLocaleString()}`,
                                                                         user: item.contact,

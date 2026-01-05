@@ -4,11 +4,11 @@ import { ChevronLeft, FileText, ChevronDown, SquarePen, Upload, Edit, Trash2, Cl
 import DetailTabs from '../../components/DetailTabs';
 import CustomTextBox from '../../components/CustomTextBox';
 import DeleteConfirmationModal from '../../components/DeleteConfirmationModal';
-import EditLeaseTermsModal from './components/EditLeaseTermsModal';
+import EditLeaseTermsModal, { type Lease } from './components/EditLeaseTermsModal';
 
 
 // Mock Data for the view
-const MOCK_LEASE_DETAIL = {
+const MOCK_LEASE_DETAIL: Lease = {
     id: 5,
     property: {
         name: 'Luxury Apartment',
@@ -18,6 +18,7 @@ const MOCK_LEASE_DETAIL = {
         startDate: '25-Nov-2025',
         endDate: '25-Nov-2026'
     },
+    lease: 'Lease 5', // Added to satisfy Lease interface
     agreements: {
         requested: 'No'
     },
@@ -85,7 +86,7 @@ const LeaseDetail: React.FC = () => {
         setIsEndLeaseModalOpen(false);
     };
 
-    const handleUpdateLease = (data: any) => {
+    const handleUpdateLease = (data: Lease) => {
         console.log('Updating lease data:', data);
         // API call to update lease
         setIsEditModalOpen(false);
@@ -185,12 +186,12 @@ const LeaseDetail: React.FC = () => {
                     {/* Property Card */}
                     <div className="bg-white rounded-[2rem] p-4 shadow-sm">
                         <div className="flex gap-4">
-                            <img src={lease.property.image} alt={lease.property.name} className="w-24 h-24 rounded-2xl object-cover" />
+                            <img src={(lease.property as any).image} alt={(lease.property as any).name} className="w-24 h-24 rounded-2xl object-cover" />
                             <div className="flex flex-col gap-2 flex-1">
-                                <h3 className="font-bold text-gray-800 text-sm">{lease.property.name}</h3>
+                                <h3 className="font-bold text-gray-800 text-sm">{(lease.property as any).name}</h3>
                                 <div className="w-full min-w-0">
                                     <CustomTextBox
-                                        value={lease.property.address}
+                                        value={(lease.property as any).address}
                                         onChange={() => { }}
                                         label=""
                                         placeholder="Address"
@@ -201,15 +202,15 @@ const LeaseDetail: React.FC = () => {
                                 </div>
 
                                 <button
-                                    onClick={() => navigate(`/dashboard/properties/${lease.property.id}`)}
+                                    onClick={() => navigate(`/dashboard/properties/${(lease.property as any).id}`)}
                                     className="bg-[#3A6D6C] text-white text-xs py-1.5 px-4 rounded-full w-fit hover:bg-[#2c5251] transition-colors"
                                 >
                                     View Property
                                 </button>
                                 <div className="flex gap-2 text-[10px] text-white font-medium">
-                                    <div className="bg-[#3A6D6C] px-2 py-1 rounded-full">{lease.property.startDate}</div>
+                                    <div className="bg-[#3A6D6C] px-2 py-1 rounded-full">{(lease.property as any).startDate}</div>
                                     <span className="text-gray-400 py-1">to</span>
-                                    <div className="bg-[#3A6D6C] px-2 py-1 rounded-full">{lease.property.endDate}</div>
+                                    <div className="bg-[#3A6D6C] px-2 py-1 rounded-full">{(lease.property as any).endDate}</div>
                                 </div>
                             </div>
                         </div>
@@ -342,7 +343,7 @@ const LeaseDetail: React.FC = () => {
                                 </div>
                                 {/* Table Body */}
                                 <div className="p-2">
-                                    {lease.recurringRent.map((rent, index) => (
+                                    {lease.recurringRent.map((rent: any, index: number) => (
                                         <div key={index} className="bg-white rounded-xl px-6 py-4 shadow-sm mb-2 last:mb-0 block md:grid md:grid-cols-5 md:items-center md:text-center text-sm font-medium">
                                             {/* Mobile View */}
                                             <div className="md:hidden flex flex-col gap-2">
@@ -499,7 +500,11 @@ const LeaseDetail: React.FC = () => {
             <EditLeaseTermsModal
                 isOpen={isEditModalOpen}
                 onClose={() => setIsEditModalOpen(false)}
-                initialData={lease} // Pass current lease data
+                initialData={{
+                    ...lease,
+                    property: typeof lease.property === 'object' ? lease.property.name : lease.property,
+                    lease: lease.lease
+                }}
                 onUpdate={handleUpdateLease}
             />
         </div >

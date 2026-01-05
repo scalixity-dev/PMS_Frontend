@@ -3,11 +3,24 @@ import { X, ChevronLeft } from 'lucide-react';
 import CustomDropdown from '@/pages/Dashboard/components/CustomDropdown';
 import DatePicker from '@/components/ui/DatePicker';
 
+export interface Lease {
+    id: string | number;
+    property: string | { name: string;[key: string]: any }; // Handle both string and object structure
+    lease: string | number; // Represents lease name/number
+    leaseType?: string;
+    startDate?: Date | string; // Handle both Date objects and string formats
+    endDate?: Date | string;
+    rentAmount?: number | string;
+    tenantId?: string | number;
+    termNotes?: string;
+    [key: string]: any; // Allow other fields from mock data to pass through
+}
+
 interface EditLeaseTermsModalProps {
     isOpen: boolean;
     onClose: () => void;
-    initialData?: any;
-    onUpdate: (data: any) => void;
+    initialData?: Lease;
+    onUpdate: (data: Lease) => void;
 }
 
 const EditLeaseTermsModal: React.FC<EditLeaseTermsModalProps> = ({ isOpen, onClose, initialData, onUpdate }) => {
@@ -30,10 +43,34 @@ const EditLeaseTermsModal: React.FC<EditLeaseTermsModalProps> = ({ isOpen, onClo
 
     useEffect(() => {
         if (isOpen && initialData) {
-            setProperty(initialData.property || '');
-            setLeaseName(initialData.lease || '');
-            // setLeaseType... (mock data doesn't have local type, defaulting)
-            // Parse dates if available
+            // Handle property being string or object
+            const propVal = typeof initialData.property === 'object'
+                ? initialData.property.name
+                : initialData.property;
+            setProperty(propVal || '');
+
+            setLeaseName(initialData.lease?.toString() || '');
+
+            // Handle leaseType from initialData.type or initialData.leaseType
+            // map it to local leaseType value, handling nested objects or ids
+            let typeVal = initialData.type || initialData.leaseType || '';
+            if (typeof typeVal === 'object' && typeVal !== null) {
+                // If nested, try to extract name or label, otherwise stringify
+                typeVal = typeVal.name || typeVal.label || '';
+            }
+            // If it's technically an ID (number), convert to string
+            setLeaseType(String(typeVal) || 'Fixed'); // Default to 'Fixed' or '' as sensible default
+
+            // Helper to parse dates
+            const parseDate = (dateVal: string | Date | undefined) => {
+                if (!dateVal) return undefined;
+                if (dateVal instanceof Date) return dateVal;
+                const d = new Date(dateVal);
+                return isNaN(d.getTime()) ? undefined : d;
+            };
+
+            setStartDate(parseDate(initialData.startDate));
+            setEndDate(parseDate(initialData.endDate));
         } else {
             // Reset
             setProperty('');
@@ -41,19 +78,43 @@ const EditLeaseTermsModal: React.FC<EditLeaseTermsModalProps> = ({ isOpen, onClo
             setLeaseType('');
             setStartDate(undefined);
             setEndDate(undefined);
+            setErrors({});
         }
     }, [isOpen, initialData]);
+
+    const [errors, setErrors] = useState<Record<string, string>>({});
+
+    const validateForm = () => {
+        const newErrors: Record<string, string> = {};
+        if (!property) newErrors.property = 'Property is required';
+        if (!leaseName) newErrors.leaseName = 'Lease name is required';
+        if (!leaseType) newErrors.leaseType = 'Lease type is required';
+        if (!startDate) newErrors.startDate = 'Start date is required';
+        if (!endDate) newErrors.endDate = 'End date is required';
+
+        if (startDate && endDate && endDate < startDate) {
+            newErrors.endDate = 'End date cannot be before start date';
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
 
     if (!isOpen) return null;
 
     const handleUpdate = () => {
-        onUpdate({
-            property,
-            leaseName,
+        if (!initialData) return;
+        if (!validateForm()) return;
+
+        const updatedLease: Lease = {
+            ...initialData,
+            property: property, // Update with string value
+            lease: leaseName,
             leaseType,
             startDate,
             endDate
-        });
+        };
+        onUpdate(updatedLease);
         onClose();
     };
 
@@ -81,13 +142,17 @@ const EditLeaseTermsModal: React.FC<EditLeaseTermsModalProps> = ({ isOpen, onClo
                             <label className="text-[#374151] font-bold text-sm ml-1">Property *</label>
                             <CustomDropdown
                                 value={property}
-                                onChange={setProperty}
+                                onChange={(val) => {
+                                    setProperty(val);
+                                    if (errors.property) setErrors(prev => ({ ...prev, property: '' }));
+                                }}
                                 options={propertyOptions}
                                 placeholder="Choose Type"
-                                buttonClassName="bg-white border-none rounded-lg px-4 py-3 h-[50px] w-full text-left"
+                                buttonClassName={`bg-white border-none rounded-lg px-4 py-3 h-[50px] w-full text-left ${errors.property ? 'ring-2 ring-red-500' : ''}`}
                                 textClassName="text-gray-700 font-medium"
                                 dropdownClassName="rounded-lg mt-1 z-50"
                             />
+                            {errors.property && <span className="text-red-500 text-xs ml-1">{errors.property}</span>}
                         </div>
 
                         {/* Lease */}
@@ -96,10 +161,14 @@ const EditLeaseTermsModal: React.FC<EditLeaseTermsModalProps> = ({ isOpen, onClo
                             <input
                                 type="text"
                                 value={leaseName}
-                                onChange={(e) => setLeaseName(e.target.value)}
-                                className="bg-white rounded-lg px-4 py-3 h-[50px] w-full text-gray-700 font-medium outline-none focus:ring-2 focus:ring-[#3D7475]/20"
+                                onChange={(e) => {
+                                    setLeaseName(e.target.value);
+                                    if (errors.leaseName) setErrors(prev => ({ ...prev, leaseName: '' }));
+                                }}
+                                className={`bg-white rounded-lg px-4 py-3 h-[50px] w-full text-gray-700 font-medium outline-none focus:ring-2 focus:ring-[#3D7475]/20 ${errors.leaseName ? 'ring-2 ring-red-500' : ''}`}
                                 placeholder="Type here"
                             />
+                            {errors.leaseName && <span className="text-red-500 text-xs ml-1">{errors.leaseName}</span>}
                         </div>
 
                         {/* Lease Type */}
@@ -107,13 +176,17 @@ const EditLeaseTermsModal: React.FC<EditLeaseTermsModalProps> = ({ isOpen, onClo
                             <label className="text-[#374151] font-bold text-sm ml-1">Lease Type *</label>
                             <CustomDropdown
                                 value={leaseType}
-                                onChange={setLeaseType}
+                                onChange={(val) => {
+                                    setLeaseType(val);
+                                    if (errors.leaseType) setErrors(prev => ({ ...prev, leaseType: '' }));
+                                }}
                                 options={leaseTypeOptions}
                                 placeholder="Choose Type"
-                                buttonClassName="bg-white border-none rounded-lg px-4 py-3 h-[50px] w-full text-left"
+                                buttonClassName={`bg-white border-none rounded-lg px-4 py-3 h-[50px] w-full text-left ${errors.leaseType ? 'ring-2 ring-red-500' : ''}`}
                                 textClassName="text-gray-700 font-medium"
                                 dropdownClassName="rounded-lg mt-1 z-40"
                             />
+                            {errors.leaseType && <span className="text-red-500 text-xs ml-1">{errors.leaseType}</span>}
                         </div>
 
                         {/* Start Date */}
@@ -121,11 +194,15 @@ const EditLeaseTermsModal: React.FC<EditLeaseTermsModalProps> = ({ isOpen, onClo
                             <label className="text-[#374151] font-bold text-sm ml-1">Start Date*</label>
                             <DatePicker
                                 value={startDate}
-                                onChange={setStartDate}
-                                className="bg-white rounded-lg px-4 py-3 h-[50px] w-full text-gray-700 font-medium outline-none focus:ring-2 focus:ring-[#3D7475]/20 shadow-none border-none"
+                                onChange={(date) => {
+                                    setStartDate(date);
+                                    if (errors.startDate) setErrors(prev => ({ ...prev, startDate: '' }));
+                                }}
+                                className={`bg-white rounded-lg px-4 py-3 h-[50px] w-full text-gray-700 font-medium outline-none focus:ring-2 focus:ring-[#3D7475]/20 shadow-none border-none ${errors.startDate ? 'ring-2 ring-red-500' : ''}`}
                                 placeholder="DD/MM/YYYY"
                                 popoverClassName="z-[60]"
                             />
+                            {errors.startDate && <span className="text-red-500 text-xs ml-1">{errors.startDate}</span>}
                         </div>
 
                         {/* End Date */}
@@ -133,11 +210,15 @@ const EditLeaseTermsModal: React.FC<EditLeaseTermsModalProps> = ({ isOpen, onClo
                             <label className="text-[#374151] font-bold text-sm ml-1">End Date*</label>
                             <DatePicker
                                 value={endDate}
-                                onChange={setEndDate}
-                                className="bg-white rounded-lg px-4 py-3 h-[50px] w-full text-gray-700 font-medium outline-none focus:ring-2 focus:ring-[#3D7475]/20 shadow-none border-none"
+                                onChange={(date) => {
+                                    setEndDate(date);
+                                    if (errors.endDate) setErrors(prev => ({ ...prev, endDate: '' }));
+                                }}
+                                className={`bg-white rounded-lg px-4 py-3 h-[50px] w-full text-gray-700 font-medium outline-none focus:ring-2 focus:ring-[#3D7475]/20 shadow-none border-none ${errors.endDate ? 'ring-2 ring-red-500' : ''}`}
                                 placeholder="DD/MM/YYYY"
                                 popoverClassName="z-[60]"
                             />
+                            {errors.endDate && <span className="text-red-500 text-xs ml-1">{errors.endDate}</span>}
                         </div>
                     </div>
 

@@ -66,15 +66,23 @@ const Payments: React.FC = () => {
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
     const dropdownContainerRef = useRef<HTMLDivElement>(null);
     const [moreMenuOpenId, setMoreMenuOpenId] = useState<number | null>(null);
-    const moreMenuRef = useRef<HTMLDivElement>(null);
+    const moreMenuRefDesktop = useRef<HTMLDivElement>(null);
+    const moreMenuRefMobile = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (activeDropdown && dropdownContainerRef.current && !dropdownContainerRef.current.contains(event.target as Node)) {
                 setActiveDropdown(null);
             }
-            if (moreMenuOpenId !== null && moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
-                setMoreMenuOpenId(null);
+
+            const isOutsideDesktop = moreMenuRefDesktop.current && !moreMenuRefDesktop.current.contains(event.target as Node);
+            const isOutsideMobile = moreMenuRefMobile.current && !moreMenuRefMobile.current.contains(event.target as Node);
+
+            if (moreMenuOpenId !== null) {
+                // If checking click outside, we need to ensure it's not inside either menu if they exist
+                if ((!moreMenuRefDesktop.current || isOutsideDesktop) && (!moreMenuRefMobile.current || isOutsideMobile)) {
+                    setMoreMenuOpenId(null);
+                }
             }
         };
 
@@ -415,7 +423,7 @@ const Payments: React.FC = () => {
                                         </button>
                                         {moreMenuOpenId === item.id && (
                                             <div
-                                                ref={moreMenuRef}
+                                                ref={moreMenuRefMobile}
                                                 className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-[60] animate-in fade-in zoom-in-95 duration-100 overflow-hidden"
                                                 role="menu"
                                             >
@@ -512,7 +520,7 @@ const Payments: React.FC = () => {
                                 </button>
                                 {moreMenuOpenId === item.id && (
                                     <div
-                                        ref={moreMenuRef}
+                                        ref={moreMenuRefDesktop}
                                         className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-100 overflow-hidden"
                                         role="menu"
                                     >

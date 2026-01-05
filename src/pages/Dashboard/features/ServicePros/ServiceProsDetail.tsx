@@ -320,7 +320,7 @@ const ServiceProsDetail = () => {
                                 <div className="bg-[#3A6D6C] text-white p-4 rounded-[2rem] text-center shadow-md">
                                     <h2 className="font-bold text-xl mb-1 capitalize">{servicePro.name}</h2>
                                     <p className="text-sm opacity-90 mb-0.5">{servicePro.phone}</p>
-                                    <p className="text-sm opacity-90 break-all">{servicePro.email}</p>
+                                    <p className="text-sm opacity-90 break-words">{servicePro.email}</p>
                                     <div className="mt-2 text-xs bg-white/20 inline-block px-3 py-1 rounded-full">{servicePro.personalInfo.category}</div>
                                 </div>
 
