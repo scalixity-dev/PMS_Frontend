@@ -5,12 +5,19 @@ import { propertyService } from '../../../../../../services/property.service';
 
 interface MappingStepProps {
     fileHeaders?: string[];
+    onMappingChange?: (mappings: Record<string, string>) => void;
+    importFirstRow?: boolean;
+    onImportFirstRowChange?: (value: boolean) => void;
 }
 
-const MappingStep: React.FC<MappingStepProps> = ({ fileHeaders = [] }) => {
-    const [importFirstRow, setImportFirstRow] = useState(true);
+const MappingStep: React.FC<MappingStepProps> = ({ 
+    fileHeaders = [], 
+    onMappingChange,
+    importFirstRow = true,
+    onImportFirstRowChange
+}) => {
     const [isLoading, setIsLoading] = useState(true);
-    const [fields, setFields] = useState<Array<{ id: number; SmartTenantAILabel: string; fileLabel: string; required: boolean }>>([]);
+    const [fields, setFields] = useState<Array<{ id: number; SmartTenantAILabel: string; fileLabel: string; required: boolean; fieldKey: string }>>([]);
 
     // Fetch system fields from backend
     useEffect(() => {
@@ -44,14 +51,30 @@ const MappingStep: React.FC<MappingStepProps> = ({ fileHeaders = [] }) => {
                         SmartTenantAILabel: field.label,
                         fileLabel: mappedHeader || '',
                         required: field.required,
+                        fieldKey: field.key,
                     };
                 });
                 
                 setFields(mappedFields);
+                
+                // Notify parent of initial mappings when fields are loaded
+                if (onMappingChange) {
+                    const initialMappings: Record<string, string> = {};
+                    mappedFields.forEach(field => {
+                        if (field.fileLabel) {
+                            initialMappings[field.fieldKey] = field.fileLabel;
+                        }
+                    });
+                    onMappingChange(initialMappings);
+                }
             } catch (error) {
                 console.error('Failed to fetch system fields:', error);
                 // Fallback to empty fields
                 setFields([]);
+                // Notify parent of empty mappings on error
+                if (onMappingChange) {
+                    onMappingChange({});
+                }
             } finally {
                 setIsLoading(false);
             }
@@ -60,7 +83,7 @@ const MappingStep: React.FC<MappingStepProps> = ({ fileHeaders = [] }) => {
         if (fileHeaders.length > 0) {
             fetchSystemFields();
         }
-    }, [fileHeaders]);
+    }, [fileHeaders, onMappingChange]);
 
     // Use actual file headers
     const csvHeaders = fileHeaders.length > 0 ? fileHeaders : [];
@@ -69,9 +92,27 @@ const MappingStep: React.FC<MappingStepProps> = ({ fileHeaders = [] }) => {
     const csvOptions = csvHeaders.map(header => ({ value: header, label: header }));
 
     const handleMappingChange = (id: number, newValue: string) => {
-        setFields(fields.map(field =>
+        const updatedFields = fields.map(field =>
             field.id === id ? { ...field, fileLabel: newValue } : field
-        ));
+        );
+        setFields(updatedFields);
+        
+        // Notify parent component of mapping changes
+        if (onMappingChange) {
+            const mappings: Record<string, string> = {};
+            updatedFields.forEach(field => {
+                if (field.fileLabel) {
+                    mappings[field.fieldKey] = field.fileLabel;
+                }
+            });
+            onMappingChange(mappings);
+        }
+    };
+
+    const handleImportFirstRowChange = (value: boolean) => {
+        if (onImportFirstRowChange) {
+            onImportFirstRowChange(value);
+        }
     };
 
     // Get list of currently selected values (excluding the current field's value for the filter logic relative to itself)
@@ -109,7 +150,7 @@ const MappingStep: React.FC<MappingStepProps> = ({ fileHeaders = [] }) => {
                 <CustomCheckbox
                     label="Import the first row"
                     checked={importFirstRow}
-                    onChange={setImportFirstRow}
+                    onChange={handleImportFirstRowChange}
                 />
             </div>
 

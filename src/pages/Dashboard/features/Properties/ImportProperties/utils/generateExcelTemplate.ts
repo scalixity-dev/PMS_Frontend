@@ -3,6 +3,26 @@ import { utils, writeFile } from 'xlsx';
 /**
  * Generates an Excel template file with mock data for property import
  * Includes examples for both SINGLE and MULTI property types
+ * 
+ * @throws {Error} When worksheet construction fails (e.g., invalid data format, memory issues)
+ * @throws {Error} When workbook creation or sheet appending fails (e.g., invalid sheet name, workbook structure errors)
+ * @throws {Error} When file I/O operations fail during writeFile execution (e.g., insufficient disk space, 
+ *                 write permissions denied, file system errors, or if the target directory is inaccessible)
+ * 
+ * @example
+ * ```typescript
+ * try {
+ *   generatePropertyImportTemplate();
+ * } catch (error) {
+ *   console.error('Failed to generate template:', error);
+ *   // Handle error appropriately (e.g., show user notification)
+ * }
+ * ```
+ * 
+ * @remarks
+ * Callers should wrap calls to generatePropertyImportTemplate in try-catch blocks to handle
+ * potential worksheet construction failures, Excel writeFile/IO errors, and other exceptions
+ * that may occur during template generation.
  */
 export function generatePropertyImportTemplate(): void {
   // Define headers based on EXCEL_STRUCTURE.md
