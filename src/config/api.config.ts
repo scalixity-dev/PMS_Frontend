@@ -4,6 +4,7 @@ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localho
 export const API_ENDPOINTS = {
   AUTH: {
     REGISTER: `${API_BASE_URL}/auth/register`,
+    REGISTER_TENANT: `${API_BASE_URL}/auth/register/tenant`,
     LOGIN: `${API_BASE_URL}/auth/login`,
     CHECK_EMAIL: `${API_BASE_URL}/auth/check-email`,
     VERIFY_EMAIL: (userId: string) => `${API_BASE_URL}/auth/verify-email/${userId}`,
@@ -29,6 +30,7 @@ export const API_ENDPOINTS = {
     IMPORT_EXCEL: `${API_BASE_URL}/property/import-excel`,
     VALIDATE_EXCEL: `${API_BASE_URL}/property/validate-excel`,
     GET_IMPORT_FIELDS: `${API_BASE_URL}/property/import-fields`,
+    GET_PUBLIC_LISTINGS: `${API_BASE_URL}/property/public/listings`,
   },
   UNIT: {
     GET_ALL_BY_PROPERTY: (propertyId: string) => `${API_BASE_URL}/unit/property/${propertyId}`,
@@ -88,6 +90,8 @@ export const API_ENDPOINTS = {
     UPLOAD_DOCUMENT: (id: string) => `${API_BASE_URL}/tenant/${id}/documents`,
     GET_DOCUMENTS: (id: string) => `${API_BASE_URL}/tenant/${id}/documents`,
     DELETE_DOCUMENT: (documentId: string) => `${API_BASE_URL}/tenant/documents/${documentId}`,
+    SAVE_PREFERENCES: `${API_BASE_URL}/tenant/preferences`,
+    GET_PREFERENCES: `${API_BASE_URL}/tenant/preferences`,
   },
   APPLICATION: {
     GET_ALL: `${API_BASE_URL}/application`,

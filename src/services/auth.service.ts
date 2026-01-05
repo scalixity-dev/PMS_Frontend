@@ -84,6 +84,56 @@ export interface UpdateProfileRequest {
 
 class AuthService {
   /**
+   * Register a new tenant user
+   */
+  async registerTenant(data: { email: string; password: string; fullName: string }): Promise<RegisterResponse> {
+    const response = await fetch(API_ENDPOINTS.AUTH.REGISTER_TENANT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include', // Include cookies for JWT
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Registration failed';
+      
+      try {
+        const errorData = await response.json();
+        
+        // Handle NestJS validation errors (array format)
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join('. ');
+        } 
+        // Handle single error message
+        else if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+        // Handle error field
+        else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+        
+        // Log error for debugging
+        console.error('Tenant registration error:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+        });
+      } catch (parseError) {
+        // If JSON parsing fails, use status text
+        errorMessage = `Registration failed: ${response.statusText}`;
+        console.error('Failed to parse error response:', parseError);
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  }
+
+  /**
    * Register a new user
    */
   async register(data: RegisterRequest): Promise<RegisterResponse> {
