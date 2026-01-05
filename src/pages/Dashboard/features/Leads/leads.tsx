@@ -5,7 +5,7 @@ import { utils, writeFile } from 'xlsx';
 import { format } from 'date-fns';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import SearchableDropdown from '../../../../components/ui/SearchableDropdown';
-import DeleteConfirmationModal from '../../components/DeleteConfirmationModal';
+import DeleteConfirmationModal from '@/components/common/modals/DeleteConfirmationModal';
 import { useGetAllLeads, useUpdateLead, useDeleteLead } from '../../../../hooks/useLeadQueries';
 import { useGetAllListings } from '../../../../hooks/useListingQueries';
 import type { BackendLead, LeadStatus } from '../../../../services/lead.service';

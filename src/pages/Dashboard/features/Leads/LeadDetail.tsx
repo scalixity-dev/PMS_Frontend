@@ -6,7 +6,7 @@ import AddTaskModal from './components/AddleadsTaskModal';
 import AddLogModal from './components/AddLogModal';
 import AddMeetingModal from './components/AddMeetingModal';
 import InviteToApplyModal from './components/InviteToApplyModal';
-import DeleteConfirmationModal from '../../components/DeleteConfirmationModal';
+import DeleteConfirmationModal from '@/components/common/modals/DeleteConfirmationModal';
 import { useGetAllListings } from '../../../../hooks/useListingQueries';
 import {
     useGetLead,
