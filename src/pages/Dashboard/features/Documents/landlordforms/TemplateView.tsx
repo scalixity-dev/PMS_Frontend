@@ -106,39 +106,44 @@ const TemplateView: React.FC = () => {
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-10 print:max-w-none print:pb-0">
             {/* Breadcrumb */}
-            <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] print:hidden">
-                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>
-                    Dashboard
-                </span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span
-                    className="text-[#4ad1a6] text-sm font-semibold cursor-pointer"
-                    onClick={() => navigate('/documents/landlord-forms')}
-                >
-                    Landlord forms
-                </span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">{decodedTemplateName}</span>
+            {/* Breadcrumb */}
+            <div className="flex w-full overflow-x-auto pb-2 md:pb-0 mb-6 print:hidden scrollbar-hide">
+                <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] whitespace-nowrap">
+                    <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>
+                        Dashboard
+                    </span>
+                    <span className="text-gray-500 text-sm mx-1">/</span>
+                    <span
+                        className="text-[#4ad1a6] text-sm font-semibold cursor-pointer"
+                        onClick={() => navigate('/dashboard/documents/landlord-forms')}
+                    >
+                        Landlord forms
+                    </span>
+                    <span className="text-gray-500 text-sm mx-1">/</span>
+                    <span className="text-gray-600 text-sm font-semibold max-w-[150px] md:max-w-[300px] truncate block">{decodedTemplateName}</span>
+                </div>
             </div>
 
-            <div className="p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem] print:bg-white print:p-0">
+            <div className="p-4 md:p-6 bg-[#E0E8E7] min-h-screen rounded-2xl md:rounded-[2rem] print:bg-white print:p-0">
                 {/* Header with Title and Buttons */}
-                <div className="flex items-center gap-4 mb-6 print:hidden">
-                    <button onClick={() => navigate(-1)} className="p-1 hover:text-gray-600 transition-colors">
-                        <ChevronLeft className="w-6 h-6 text-gray-800" />
-                    </button>
-                    <h1 className="text-2xl font-bold text-gray-800">{decodedTemplateName}</h1>
-                    <div className="flex items-center gap-3">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 print:hidden">
+                    <div className="flex items-center gap-2 md:gap-4">
+                        <button onClick={() => navigate(-1)} className="p-1 hover:text-gray-600 transition-colors flex-shrink-0">
+                            <ChevronLeft className="w-6 h-6 text-gray-800" />
+                        </button>
+                        <h1 className="text-xl md:text-2xl font-bold text-gray-800 break-words line-clamp-2">{decodedTemplateName}</h1>
+                    </div>
+                    <div className="flex items-center gap-3 w-full md:w-auto">
                         <button
                             onClick={() => setIsUseTemplateModalOpen(true)}
-                            className="bg-[#3A6D6C] text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-[#2d5650] transition-colors"
+                            className="flex-1 md:flex-none bg-[#3A6D6C] text-white px-4 md:px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-[#2d5650] transition-colors whitespace-nowrap"
                         >
                             Use Template
                         </button>
                         <div className="relative" ref={actionsDropdownRef}>
                             <button
                                 onClick={() => setIsActionsDropdownOpen(!isActionsDropdownOpen)}
-                                className="bg-[#3A6D6C] text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-[#2d5650] transition-colors flex items-center gap-2"
+                                className="bg-[#3A6D6C] text-white px-4 md:px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-[#2d5650] transition-colors flex items-center gap-2 whitespace-nowrap"
                             >
                                 Actions
                                 <ChevronDown
@@ -147,7 +152,7 @@ const TemplateView: React.FC = () => {
                                 />
                             </button>
                             {isActionsDropdownOpen && (
-                                <div className="absolute left-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden">
+                                <div className="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden">
                                     <button
                                         onClick={handlePrint}
                                         className="w-full text-center px-4 py-3 text-base text-gray-700 hover:bg-gray-50 transition-colors"
@@ -170,18 +175,18 @@ const TemplateView: React.FC = () => {
 
 
                 {/* Content Area - Mock Document Preview */}
-                <div className="bg-white rounded-2xl shadow-sm h-[calc(100vh-140px)] flex flex-col print:h-auto print:shadow-none print:rounded-none">
+                <div className="bg-white rounded-2xl shadow-sm h-[calc(100vh-200px)] md:h-[calc(100vh-140px)] flex flex-col print:h-auto print:shadow-none print:rounded-none">
                     {/* Document Header - Fixed */}
-                    <div className="flex items-center gap-3 px-8 pt-6 pb-4 border-b border-gray-200 flex-shrink-0 print:hidden">
-                        <FileText className="w-6 h-6 text-[#3A6D6C]" />
-                        <h2 className="text-xl font-semibold text-gray-800">{decodedTemplateName}</h2>
+                    <div className="flex items-center gap-3 px-4 md:px-8 pt-4 md:pt-6 pb-3 md:pb-4 border-b border-gray-200 flex-shrink-0 print:hidden">
+                        <FileText className="w-5 h-5 md:w-6 md:h-6 text-[#3A6D6C]" />
+                        <h2 className="text-lg md:text-xl font-semibold text-gray-800 line-clamp-1">{decodedTemplateName}</h2>
                     </div>
 
                     {/* Scrollable Document Content */}
-                    <div className="flex-1 overflow-y-auto px-8 py-6 print:overflow-visible print:px-0">
+                    <div className="flex-1 overflow-y-auto px-4 md:px-8 py-4 md:py-6 print:overflow-visible print:px-0">
                         <div
                             ref={documentContentRef}
-                            className="max-w-4xl mx-auto space-y-6 text-gray-700"
+                            className="max-w-4xl mx-auto space-y-6 text-gray-700 text-sm md:text-base"
                             dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(getTemplateHTML(decodedTemplateName)) }}
                         />
                     </div>
@@ -190,19 +195,19 @@ const TemplateView: React.FC = () => {
 
             {/* Use Template Modal */}
             {isUseTemplateModalOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-800/50  animate-in fade-in duration-200 print:hidden">
-                    <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl overflow-visible mx-4 animate-in zoom-in-95 duration-200">
+                <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-gray-800/50 animate-in fade-in duration-200 print:hidden">
+                    <div className="bg-white rounded-t-2xl md:rounded-2xl w-full max-w-2xl shadow-2xl overflow-visible mx-0 md:mx-4 animate-in slide-in-from-bottom-10 md:zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
                         {/* Header - Dark Teal */}
-                        <div className="bg-[#3A6D6C] px-6 py-4 flex items-center justify-between rounded-t-2xl">
-                            <div className="flex items-center gap-3">
+                        <div className="bg-[#3A6D6C] px-4 md:px-6 py-4 flex items-center justify-between rounded-t-2xl sticky top-0 z-10">
+                            <div className="flex items-center gap-2 md:gap-3">
                                 <button
                                     onClick={() => setIsUseTemplateModalOpen(false)}
                                     className="hover:bg-white/10 p-1 rounded-full transition-colors"
                                 >
                                     <ChevronLeft size={24} className="text-white" />
                                 </button>
-                                <span className="text-white text-base font-medium">
-                                    Add Select a property and lease to proceed with this template
+                                <span className="text-white text-sm md:text-base font-medium line-clamp-1">
+                                    Select a property and lease
                                 </span>
                             </div>
                             <button
@@ -214,13 +219,13 @@ const TemplateView: React.FC = () => {
                         </div>
 
                         {/* Content Area - White */}
-                        <div className="p-8 overflow-visible">
+                        <div className="p-4 md:p-8 overflow-visible pb-safe">
                             <p className="text-gray-700 text-sm mb-6">
                                 Select a property and a lease below and proceed to creating a lease agreement and requesting signature
                             </p>
 
                             {/* Row 1: Property and Lease */}
-                            <div className="grid grid-cols-2 gap-4 mb-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                                 {/* Property Dropdown */}
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -231,10 +236,10 @@ const TemplateView: React.FC = () => {
                                             onClick={() => setIsPropertyDropdownOpen(!isPropertyDropdownOpen)}
                                             className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-700 hover:border-[#3A6D6C] transition-colors"
                                         >
-                                            <span>{selectedProperty}</span>
+                                            <span className="truncate">{selectedProperty}</span>
                                             <ChevronDown
                                                 size={18}
-                                                className={`text-gray-500 transition-transform ${isPropertyDropdownOpen ? 'rotate-180' : ''}`}
+                                                className={`text-gray-500 flex-shrink-0 transition-transform ${isPropertyDropdownOpen ? 'rotate-180' : ''}`}
                                             />
                                         </button>
                                         {isPropertyDropdownOpen && (
@@ -246,7 +251,7 @@ const TemplateView: React.FC = () => {
                                                             setSelectedProperty(property);
                                                             setIsPropertyDropdownOpen(false);
                                                         }}
-                                                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors truncate"
                                                     >
                                                         {property}
                                                     </button>
@@ -266,10 +271,10 @@ const TemplateView: React.FC = () => {
                                             onClick={() => setIsLeaseDropdownOpen(!isLeaseDropdownOpen)}
                                             className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-700 hover:border-[#3A6D6C] transition-colors"
                                         >
-                                            <span>{selectedLease}</span>
+                                            <span className="truncate">{selectedLease}</span>
                                             <ChevronDown
                                                 size={18}
-                                                className={`text-gray-500 transition-transform ${isLeaseDropdownOpen ? 'rotate-180' : ''}`}
+                                                className={`text-gray-500 flex-shrink-0 transition-transform ${isLeaseDropdownOpen ? 'rotate-180' : ''}`}
                                             />
                                         </button>
                                         {isLeaseDropdownOpen && (
@@ -281,7 +286,7 @@ const TemplateView: React.FC = () => {
                                                             setSelectedLease(lease);
                                                             setIsLeaseDropdownOpen(false);
                                                         }}
-                                                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors truncate"
                                                     >
                                                         {lease}
                                                     </button>
@@ -302,10 +307,10 @@ const TemplateView: React.FC = () => {
                                         onClick={() => setIsTenantsDropdownOpen(!isTenantsDropdownOpen)}
                                         className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-700 hover:border-[#3A6D6C] transition-colors"
                                     >
-                                        <span>{selectedTenants}</span>
+                                        <span className="truncate">{selectedTenants}</span>
                                         <ChevronDown
                                             size={18}
-                                            className={`text-gray-500 transition-transform ${isTenantsDropdownOpen ? 'rotate-180' : ''}`}
+                                            className={`text-gray-500 flex-shrink-0 transition-transform ${isTenantsDropdownOpen ? 'rotate-180' : ''}`}
                                         />
                                     </button>
                                     {isTenantsDropdownOpen && (
@@ -317,7 +322,7 @@ const TemplateView: React.FC = () => {
                                                         setSelectedTenants(tenant);
                                                         setIsTenantsDropdownOpen(false);
                                                     }}
-                                                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors truncate"
                                                 >
                                                     {tenant}
                                                 </button>
@@ -333,9 +338,9 @@ const TemplateView: React.FC = () => {
                                     onClick={() => {
                                         // Close modal and navigate to wizard page
                                         setIsUseTemplateModalOpen(false);
-                                        navigate(`/documents/landlord-forms/use-template/${encodeURIComponent(decodedTemplateName)}`);
+                                        navigate(`/dashboard/documents/landlord-forms/use-template/${encodeURIComponent(decodedTemplateName)}`);
                                     }}
-                                    className="bg-[#3A6D6C] text-white px-8 py-3 rounded-lg text-sm font-medium hover:bg-[#2d5650] transition-colors"
+                                    className="w-full md:w-auto bg-[#3A6D6C] text-white px-8 py-3 rounded-lg text-sm font-medium hover:bg-[#2d5650] transition-colors"
                                 >
                                     Use Template
                                 </button>

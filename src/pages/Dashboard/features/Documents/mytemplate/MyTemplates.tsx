@@ -85,33 +85,34 @@ const MyTemplates: React.FC = () => {
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-10">
             {/* Breadcrumb */}
-            <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>
-                    Dashboard
-                </span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">My Template</span>
+            {/* Breadcrumb */}
+            <div className="flex w-full overflow-x-auto pb-2 md:pb-0 mb-6 scrollbar-hide">
+                <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] whitespace-nowrap">
+                    <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>
+                        Dashboard
+                    </span>
+                    <span className="text-gray-500 text-sm mx-1">/</span>
+                    <span className="text-gray-600 text-sm font-semibold">My Template</span>
+                </div>
             </div>
 
-            <div className="p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem]">
+            <div className="p-4 md:p-6 bg-[#E0E8E7] min-h-screen rounded-2xl md:rounded-[2rem]">
                 {/* Header - Matching Leads structure */}
-                <div className="flex items-center justify-between mb-8">
-                    <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2">
-                            <button onClick={() => navigate(-1)} className="p-2 hover:text-gray-600 transition-colors">
-                                <ChevronLeft className="w-6 h-6 text-gray-800" />
-                            </button>
-                            <h1 className="text-2xl font-bold text-gray-800">My Template</h1>
-                        </div>
-
-                        <button
-                            onClick={() => navigate('/documents/my-templates/create-wizard')}
-                            className="flex items-center gap-2 bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-all shadow-sm"
-                        >
-                            Create new Template
-                            <Plus className="w-5 h-5 bg-white/20 rounded-full p-0.5" />
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                    <div className="flex items-center gap-2 md:gap-4">
+                        <button onClick={() => navigate(-1)} className="p-2 hover:text-gray-600 transition-colors bg-white/50 rounded-full md:bg-transparent md:rounded-none">
+                            <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-gray-800" />
                         </button>
+                        <h1 className="text-xl md:text-2xl font-bold text-gray-800">My Template</h1>
                     </div>
+
+                    <button
+                        onClick={() => navigate('/dashboard/documents/my-templates/create-wizard')}
+                        className="w-full md:w-auto flex items-center justify-center gap-2 bg-[#3A6D6C] text-white px-6 py-2.5 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-all shadow-sm"
+                    >
+                        Create new Template
+                        <Plus className="w-5 h-5 bg-white/20 rounded-full p-0.5" />
+                    </button>
                 </div>
 
                 {/* Filter Bar */}
@@ -124,22 +125,22 @@ const MyTemplates: React.FC = () => {
                 />
 
                 {/* Content Container */}
-                <div className="bg-[#F0F2F5] rounded-[2rem] p-8 min-h-screen shadow-sm">
+                <div className="bg-[#F0F2F5] rounded-2xl md:rounded-[2rem] p-4 md:p-8 min-h-screen shadow-sm mt-6">
                     {/* Templates Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6">
                         {filteredTemplates.map((template) => (
                             <div
                                 key={template.id}
-                                onClick={() => navigate(`/documents/my-templates/${template.id}`)}
-                                className="rounded-2xl p-0 relative group bg-[#7CD9470F] border-2 border-[#E5FFD7] shadow-[inset_0px_-1.42px_5.69px_0px_#E4E3E4,0px_2px_4px_0px_#17151540] cursor-pointer"
+                                onClick={() => navigate(`/dashboard/documents/my-templates/${template.id}`)}
+                                className="rounded-2xl p-0 relative group bg-[#7CD9470F] border-2 border-[#E5FFD7] shadow-[inset_0px_-1.42px_5.69px_0px_#E4E3E4,0px_2px_4px_0px_#17151540] cursor-pointer hover:shadow-md transition-shadow"
                             >
-                                <div className="absolute top-4 right-4 z-10" onClick={(e) => e.stopPropagation()}>
+                                <div className="absolute top-3 right-3 z-10" onClick={(e) => e.stopPropagation()}>
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             setActiveDropdownId(activeDropdownId === template.id ? null : template.id);
                                         }}
-                                        className="border-[0.97px] border-[#41B400] bg-[#dbece8] rounded-md px-1.5 py-0.5 hover:bg-[#cce5df] transition-colors shadow-[0px_4px_4px_0px_#00000040] flex gap-0.5"
+                                        className="bg-[#dbece8] hover:bg-[#cce5df] rounded-full p-1 transition-all shadow-sm border border-[#41B400]/20 flex gap-0.5 items-center justify-center w-8 h-4"
                                     >
                                         <div className="w-1 h-1 bg-[#3D7475] rounded-full"></div>
                                         <div className="w-1 h-1 bg-[#3D7475] rounded-full"></div>
@@ -150,7 +151,7 @@ const MyTemplates: React.FC = () => {
                                     {activeDropdownId === template.id && (
                                         <div
                                             ref={dropdownRef}
-                                            className="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-xl border border-gray-100 overflow-hidden animate-in fade-in zoom-in-95 duration-100"
+                                            className="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-xl border border-gray-100 overflow-hidden animate-in fade-in zoom-in-95 duration-100 z-50"
                                             onClick={(e) => e.stopPropagation()}
                                         >
                                             <button
@@ -174,9 +175,9 @@ const MyTemplates: React.FC = () => {
                                         </div>
                                     )}
                                 </div>
-                                <div className="flex flex-col items-center justify-center h-32 gap-1">
-                                    <h3 className="text-[#3D7475] text-lg font-bold mb-1">{template.title}</h3>
-                                    <p className="text-gray-900 text-[11px] font-semibold">{template.subtitle}</p>
+                                <div className="flex flex-col items-center justify-center h-32 gap-1 p-4 text-center">
+                                    <h3 className="text-[#3D7475] text-lg font-bold mb-1 line-clamp-1">{template.title}</h3>
+                                    <p className="text-gray-900 text-[11px] font-semibold line-clamp-1">{template.subtitle}</p>
                                 </div>
                             </div>
                         ))}

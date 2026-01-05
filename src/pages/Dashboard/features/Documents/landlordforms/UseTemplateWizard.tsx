@@ -172,7 +172,7 @@ const UseTemplateWizard: React.FC = () => {
     };
 
     const handleSendToReview = () => {
-        const returnPath = state?.returnPath || `/documents/landlord-forms/template/${templateName}`;
+        const returnPath = state?.returnPath || `/dashboard/documents/landlord-forms/template/${templateName}`;
         navigate(returnPath, {
             state: {
                 showSuccessPopup: true,
@@ -222,17 +222,17 @@ const UseTemplateWizard: React.FC = () => {
                 return (
                     <div className="w-full">
                         <div className="mb-6 text-left">
-                            <h1 className="text-2xl font-bold text-gray-800 mb-6">{templates[activeTemplateIndex]}</h1>
+                            <h1 className="text-xl md:text-2xl font-bold text-gray-800 mb-4 md:mb-6">{templates[activeTemplateIndex]}</h1>
 
                             {/* Dark Teal Header Bar */}
-                            <div className="bg-[#3A6D6C] rounded-full px-6 py-3 flex items-center justify-between mb-8">
-                                <div className="flex items-center gap-6">
+                            <div className="bg-[#3A6D6C] rounded-xl md:rounded-full px-4 md:px-6 py-3 flex flex-col md:flex-row items-start md:items-center justify-between mb-8 overflow-x-auto">
+                                <div className="flex items-center gap-2 md:gap-6 w-full overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
                                     {templates.map((template, index) => (
                                         <button
                                             key={index}
                                             onClick={() => setActiveTemplateIndex(index)}
-                                            className={`flex items-center gap-2 font-bold transition-all ${activeTemplateIndex === index
-                                                ? 'bg-[#82D64D] text-white px-5 py-2 rounded-full shadow-sm'
+                                            className={`flex-shrink-0 flex items-center gap-2 font-bold transition-all whitespace-nowrap ${activeTemplateIndex === index
+                                                ? 'bg-[#82D64D] text-white px-4 md:px-5 py-2 rounded-full shadow-sm'
                                                 : 'text-[#CCE0DF] hover:text-white px-2'
                                                 }`}
                                         >
@@ -248,7 +248,7 @@ const UseTemplateWizard: React.FC = () => {
                                     ))}
                                     <button
                                         onClick={handleAddTemplate}
-                                        className="text-[#CCE0DF] hover:text-white font-bold flex items-center gap-2 px-2 transition-all"
+                                        className="text-[#CCE0DF] hover:text-white font-bold flex items-center gap-2 px-2 transition-all flex-shrink-0"
                                     >
                                         <Plus size={18} className="border-2 border-[#CCE0DF] rounded-full p-0.5" />
                                         Add
@@ -273,16 +273,16 @@ const UseTemplateWizard: React.FC = () => {
                         </div>
 
                         {/* Final Action Buttons */}
-                        <div className="flex items-center gap-4 mt-10">
+                        <div className="flex flex-col-reverse md:flex-row items-center gap-4 mt-8 md:mt-10">
                             <PrimaryActionButton
                                 onClick={() => navigate(-1)}
                                 text="Save as Draft"
-                                className="!bg-white !text-gray-700 !px-10 !py-3.5 !font-bold shadow-[0px_4px_8px_0px_#00000030] hover:!bg-gray-50 transition-colors border border-gray-100"
+                                className="!bg-white !text-gray-700 !w-full md:!w-auto !px-10 !py-3.5 !font-bold shadow-[0px_4px_8px_0px_#00000030] hover:!bg-gray-50 transition-colors border border-gray-100"
                             />
                             <PrimaryActionButton
                                 onClick={handleSendToReview}
                                 text="Send to Review"
-                                className="!bg-[#3A6D6C] !px-10 !py-3.5 !font-bold shadow-[0px_4px_8px_0px_#00000030] hover:!bg-[#2d5650] transition-colors"
+                                className="!bg-[#3A6D6C] !w-full md:!w-auto !px-10 !py-3.5 !font-bold shadow-[0px_4px_8px_0px_#00000030] hover:!bg-[#2d5650] transition-colors"
                             />
                         </div>
                     </div>
@@ -293,21 +293,21 @@ const UseTemplateWizard: React.FC = () => {
     };
 
     return (
-        <div className="flex flex-col h-full w-full bg-[var(--color-background)] px-6 overflow-y-auto">
-            <div className="flex-1 flex items-start justify-center pt-8 pb-10">
-                <div className={`bg-[#DFE5E3] rounded-3xl shadow-lg w-full ${currentStep >= 3 ? 'max-w-5xl' : 'max-w-2xl'} min-h-[500px] p-12 transition-all duration-300`}>
+        <div className="flex flex-col h-full w-full bg-[var(--color-background)] px-2 md:px-6 overflow-y-auto">
+            <div className="flex-1 flex items-start justify-center pt-4 md:pt-8 pb-10">
+                <div className={`bg-[#DFE5E3] rounded-3xl shadow-lg w-full ${currentStep >= 3 ? 'max-w-5xl' : 'max-w-2xl'} min-h-[500px] p-4 md:p-12 transition-all duration-300`}>
 
                     {/* Back Button */}
                     <button
                         onClick={handleBack}
-                        className="flex items-center gap-2 text-[#20CC95] font-semibold text-sm mb-12 hover:text-[#1db885] transition-colors"
+                        className="flex items-center gap-2 text-[#20CC95] font-semibold text-sm mb-6 md:mb-12 hover:text-[#1db885] transition-colors"
                     >
                         <ChevronLeft size={18} />
                         BACK
                     </button>
 
                     {/* Step Indicators */}
-                    <div className="w-full max-w-3xl mx-auto mb-12">
+                    <div className="w-full max-w-3xl mx-auto mb-8 md:mb-12">
                         <div className="relative">
                             {/* Connecting Line */}
                             <div className="absolute top-4 left-[16.66%] right-[16.66%] h-[3px] bg-gray-200 -translate-y-1/2 z-0">
@@ -320,14 +320,14 @@ const UseTemplateWizard: React.FC = () => {
                             {/* Steps */}
                             <div className="grid grid-cols-3 relative z-10">
                                 {STEPS.map((step) => (
-                                    <div key={step.num} className="flex flex-col items-center gap-3">
+                                    <div key={step.num} className="flex flex-col items-center gap-2 md:gap-3">
                                         <div
                                             className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors duration-300 ${currentStep >= step.num ? 'bg-[#20CC95] text-white' : 'bg-[#6B7280] text-white'
                                                 }`}
                                         >
                                             {step.num}
                                         </div>
-                                        <span className={`text-sm font-medium text-center ${currentStep === step.num ? 'text-gray-900' : 'text-gray-500'}`}>
+                                        <span className={`text-xs md:text-sm font-medium text-center ${currentStep === step.num ? 'text-gray-900' : 'text-gray-500'}`}>
                                             {step.label}
                                         </span>
                                     </div>

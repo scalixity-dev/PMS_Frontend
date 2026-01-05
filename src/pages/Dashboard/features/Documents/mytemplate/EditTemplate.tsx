@@ -95,31 +95,33 @@ const EditTemplate: React.FC = () => {
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-10">
             {/* Breadcrumb */}
-            <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-8 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>
-                    Dashboard
-                </span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/documents/my-templates')}>
-                    Documents Template
-                </span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate(`/documents/my-templates/${id}`)}>
-                    {templateName}
-                </span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">Edit template</span>
+            <div className="flex w-full overflow-x-auto pb-2 md:pb-0 mb-8 scrollbar-hide">
+                <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] whitespace-nowrap">
+                    <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>
+                        Dashboard
+                    </span>
+                    <span className="text-gray-500 text-sm mx-1">/</span>
+                    <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard/documents/my-templates')}>
+                        Documents Template
+                    </span>
+                    <span className="text-gray-500 text-sm mx-1">/</span>
+                    <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate(`/dashboard/documents/my-templates/${id}`)}>
+                        {templateName}
+                    </span>
+                    <span className="text-gray-500 text-sm mx-1">/</span>
+                    <span className="text-gray-600 text-sm font-semibold">Edit template</span>
+                </div>
             </div>
 
             {/* Main Edit Container */}
-            <div className="bg-[#DFE5E3] p-10 rounded-[3rem] shadow-sm">
-                <h1 className="text-2xl font-bold text-gray-800 mb-8">Edit Template</h1>
+            <div className="bg-[#DFE5E3] p-4 md:p-10 rounded-3xl md:rounded-[3rem] shadow-sm">
+                <h1 className="text-xl md:text-2xl font-bold text-gray-800 mb-6 md:mb-8">Edit Template</h1>
 
                 {/* Header Inputs Section */}
-                <div className="bg-[#3A6D6C] p-6 rounded-[2.5rem] mb-10">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-[#3A6D6C] p-4 md:p-6 rounded-2xl md:rounded-[2.5rem] mb-6 md:mb-10">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                         {/* Documents Title */}
-                        <div className="bg-white/40 rounded-[1.5rem] p-4">
+                        <div className="bg-white/40 rounded-xl md:rounded-[1.5rem] p-4">
                             <label className="block text-gray-800 text-xs font-bold mb-2">Documents Title*</label>
                             <input
                                 type="text"
@@ -131,7 +133,7 @@ const EditTemplate: React.FC = () => {
                         </div>
 
                         {/* Documents Type */}
-                        <div className="bg-white/40 rounded-[1.5rem] p-4">
+                        <div className="bg-white/40 rounded-xl md:rounded-[1.5rem] p-4">
                             <label className="block text-gray-800 text-xs font-bold mb-2">Documents Type*</label>
                             <input
                                 type="text"
@@ -152,16 +154,16 @@ const EditTemplate: React.FC = () => {
                 />
 
                 {/* Footer Buttons Shifted Inside */}
-                <div className="flex items-center gap-6 mt-10">
+                <div className="flex flex-col-reverse md:flex-row items-center gap-4 md:gap-6 mt-8 md:mt-10">
                     <PrimaryActionButton
                         onClick={() => navigate(-1)}
                         text="Cancel"
-                        className="bg-white !text-gray-800 px-14 py-3.5 rounded-2xl font-bold text-lg shadow-[0_4px_15px_rgba(0,0,0,0.08)] border border-gray-100 hover:bg-gray-50 min-w-[180px]"
+                        className="bg-white !text-gray-800 w-full md:w-auto px-10 md:px-14 py-3.5 rounded-2xl font-bold text-lg shadow-[0_4px_15px_rgba(0,0,0,0.08)] border border-gray-100 hover:bg-gray-50 min-w-[180px]"
                     />
                     <PrimaryActionButton
                         onClick={handleUpdate}
                         text="Update"
-                        className="px-14 py-3.5 rounded-2xl font-bold text-lg shadow-[0_4px_15px_rgba(58,109,108,0.4)] min-w-[180px]"
+                        className="w-full md:w-auto px-10 md:px-14 py-3.5 rounded-2xl font-bold text-lg shadow-[0_4px_15px_rgba(58,109,108,0.4)] min-w-[180px]"
                     />
                 </div>
             </div>
