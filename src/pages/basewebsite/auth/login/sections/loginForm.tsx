@@ -123,52 +123,87 @@ const LoginForm: React.FC = () => {
                     return;
                 }
                 
+                // Wait a bit more to ensure cookie is fully propagated
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
                 // Check if user is a tenant and needs onboarding
                 const userRole = response.user?.role?.toUpperCase();
                 if (userRole === 'TENANT') {
                     // Check if tenant has preferences (onboarding completed)
-                    try {
-                        const preferencesResponse = await fetch(API_ENDPOINTS.TENANT.GET_PREFERENCES, {
-                            method: 'GET',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            credentials: 'include',
-                        });
-
-                        if (preferencesResponse.status === 404) {
-                            // No tenant profile or preferences found - redirect to onboarding flow
-                            console.log('No preferences found (404), redirecting to tenant onboarding flow');
-                            navigate('/signup/tenant-onboarding-flow', { replace: true });
-                        } else if (preferencesResponse.status === 401) {
-                            // Unauthorized - this shouldn't happen if auth is verified, but handle it
-                            console.log('Unauthorized when checking preferences, redirecting to tenant onboarding flow');
-                            navigate('/signup/tenant-onboarding-flow', { replace: true });
-                        } else if (preferencesResponse.ok) {
-                            // Check if preferences are null or empty
-                            const preferences = await preferencesResponse.json();
-                            const hasPreferences = preferences && (
-                                (preferences.location && preferences.location.country && preferences.location.state && preferences.location.city) ||
-                                (preferences.rentalTypes && preferences.rentalTypes.length > 0)
-                            );
-
-                            if (!hasPreferences) {
-                                // Preferences are null or empty - redirect to onboarding flow
-                                console.log('Preferences are null or empty, redirecting to tenant onboarding flow');
-                                navigate('/signup/tenant-onboarding-flow', { replace: true });
-                            } else {
-                                // Preferences exist - redirect to dashboard
-                                console.log('Preferences found, redirecting to tenant dashboard');
-                                navigate('/userdashboard', { replace: true });
+                    // Add retry logic in case cookie isn't ready yet
+                    let preferencesResponse: Response | null = null;
+                    let retryCount = 0;
+                    const maxRetries = 2;
+                    
+                    while (retryCount <= maxRetries) {
+                        try {
+                            preferencesResponse = await fetch(API_ENDPOINTS.TENANT.GET_PREFERENCES, {
+                                method: 'GET',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                credentials: 'include',
+                            });
+                            
+                            // If we get 401, wait a bit and retry (cookie might not be set yet)
+                            if (preferencesResponse.status === 401 && retryCount < maxRetries) {
+                                console.log(`Preferences check returned 401, retrying... (attempt ${retryCount + 1}/${maxRetries + 1})`);
+                                await new Promise(resolve => setTimeout(resolve, 500));
+                                retryCount++;
+                                continue;
                             }
-                        } else {
-                            // Error checking preferences - default to onboarding flow for safety
-                            console.log('Error checking preferences, defaulting to tenant onboarding flow');
+                            
+                            // Success or final attempt - break out of retry loop
+                            break;
+                        } catch (error) {
+                            if (retryCount < maxRetries) {
+                                console.log(`Preferences check failed, retrying... (attempt ${retryCount + 1}/${maxRetries + 1})`);
+                                await new Promise(resolve => setTimeout(resolve, 500));
+                                retryCount++;
+                                continue;
+                            }
+                            // Final attempt failed - default to onboarding
+                            console.error('Error checking preferences after retries:', error);
                             navigate('/signup/tenant-onboarding-flow', { replace: true });
+                            return;
                         }
-                    } catch (error) {
+                    }
+                    
+                    // Process the response
+                    if (!preferencesResponse) {
+                        console.log('No preferences response, redirecting to tenant onboarding flow');
+                        navigate('/signup/tenant-onboarding-flow', { replace: true });
+                        return;
+                    }
+
+                    if (preferencesResponse.status === 404) {
+                        // No tenant profile or preferences found - redirect to onboarding flow
+                        console.log('No preferences found (404), redirecting to tenant onboarding flow');
+                        navigate('/signup/tenant-onboarding-flow', { replace: true });
+                    } else if (preferencesResponse.status === 401) {
+                        // Unauthorized - even after retries, redirect to onboarding
+                        console.log('Unauthorized when checking preferences after retries, redirecting to tenant onboarding flow');
+                        navigate('/signup/tenant-onboarding-flow', { replace: true });
+                    } else if (preferencesResponse.ok) {
+                        // Check if preferences are null or empty
+                        const preferences = await preferencesResponse.json();
+                        const hasPreferences = preferences && (
+                            (preferences.location && preferences.location.country && preferences.location.state && preferences.location.city) ||
+                            (preferences.rentalTypes && preferences.rentalTypes.length > 0)
+                        );
+
+                        if (!hasPreferences) {
+                            // Preferences are null or empty - redirect to onboarding flow
+                            console.log('Preferences are null or empty, redirecting to tenant onboarding flow');
+                            navigate('/signup/tenant-onboarding-flow', { replace: true });
+                        } else {
+                            // Preferences exist - redirect to dashboard
+                            console.log('Preferences found, redirecting to tenant dashboard');
+                            navigate('/userdashboard', { replace: true });
+                        }
+                    } else {
                         // Error checking preferences - default to onboarding flow for safety
-                        console.error('Error checking preferences:', error);
+                        console.log('Error checking preferences, defaulting to tenant onboarding flow');
                         navigate('/signup/tenant-onboarding-flow', { replace: true });
                     }
                 } else {
