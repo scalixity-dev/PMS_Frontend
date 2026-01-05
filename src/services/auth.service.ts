@@ -55,6 +55,7 @@ export interface LoginResponse {
   };
   message?: string;
   requiresDeviceVerification?: boolean;
+  requiresEmailVerification?: boolean;
   token?: string;
 }
 
