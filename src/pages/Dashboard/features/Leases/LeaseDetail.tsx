@@ -46,6 +46,19 @@ const MOCK_LEASE_DETAIL: Lease = {
     ]
 };
 
+interface PropertyDetails {
+    name: string;
+    image?: string;
+    address?: string;
+    id?: string | number;
+    startDate?: string;
+    endDate?: string;
+}
+
+const isPropertyObject = (property: Lease['property']): property is PropertyDetails => {
+    return typeof property === 'object' && property !== null;
+};
+
 const LeaseDetail: React.FC = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
@@ -94,6 +107,8 @@ const LeaseDetail: React.FC = () => {
 
     // In a real app, use 'id' to fetch data
     const lease = MOCK_LEASE_DETAIL;
+    const propertyData = lease.property;
+    const propertyDetails = isPropertyObject(propertyData) ? propertyData : null;
 
     const tabs = [
         { id: 'tenants', label: 'Tenants' },
@@ -137,7 +152,6 @@ const LeaseDetail: React.FC = () => {
                                 <button
                                     onClick={() => {
                                         setIsActionDropdownOpen(false);
-                                        // navigate(`/dashboard/portfolio/leases/edit/${id}`);
                                         setIsEditModalOpen(true);
                                     }}
                                     className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-50"
@@ -148,7 +162,6 @@ const LeaseDetail: React.FC = () => {
                                 <button
                                     onClick={() => {
                                         setIsActionDropdownOpen(false);
-                                        // Handle inspection - Placeholder
                                         console.log('Move-out inspection clicked');
                                     }}
                                     className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-50"
@@ -186,12 +199,18 @@ const LeaseDetail: React.FC = () => {
                     {/* Property Card */}
                     <div className="bg-white rounded-[2rem] p-4 shadow-sm">
                         <div className="flex gap-4">
-                            <img src={(lease.property as any).image} alt={(lease.property as any).name} className="w-24 h-24 rounded-2xl object-cover" />
+                            <img
+                                src={propertyDetails && propertyDetails.image ? propertyDetails.image : 'https://images.unsplash.com/photo-1600596542815-2250c385528b?q=80&w=200&auto=format&fit=crop'}
+                                alt={propertyDetails ? propertyDetails.name : (typeof propertyData === 'string' ? propertyData : 'Property')}
+                                className="w-24 h-24 rounded-2xl object-cover"
+                            />
                             <div className="flex flex-col gap-2 flex-1">
-                                <h3 className="font-bold text-gray-800 text-sm">{(lease.property as any).name}</h3>
+                                <h3 className="font-bold text-gray-800 text-sm">
+                                    {propertyDetails ? propertyDetails.name : (propertyData as string)}
+                                </h3>
                                 <div className="w-full min-w-0">
                                     <CustomTextBox
-                                        value={(lease.property as any).address}
+                                        value={propertyDetails ? (propertyDetails.address || '') : ''}
                                         onChange={() => { }}
                                         label=""
                                         placeholder="Address"
@@ -202,15 +221,20 @@ const LeaseDetail: React.FC = () => {
                                 </div>
 
                                 <button
-                                    onClick={() => navigate(`/dashboard/properties/${(lease.property as any).id}`)}
-                                    className="bg-[#3A6D6C] text-white text-xs py-1.5 px-4 rounded-full w-fit hover:bg-[#2c5251] transition-colors"
+                                    onClick={() => propertyDetails && propertyDetails.id ? navigate(`/dashboard/properties/${propertyDetails.id}`) : null}
+                                    className={`bg-[#3A6D6C] text-white text-xs py-1.5 px-4 rounded-full w-fit hover:bg-[#2c5251] transition-colors ${(!propertyDetails || !propertyDetails.id) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    disabled={!propertyDetails || !propertyDetails.id}
                                 >
                                     View Property
                                 </button>
                                 <div className="flex gap-2 text-[10px] text-white font-medium">
-                                    <div className="bg-[#3A6D6C] px-2 py-1 rounded-full">{(lease.property as any).startDate}</div>
+                                    <div className="bg-[#3A6D6C] px-2 py-1 rounded-full">
+                                        {propertyDetails ? (propertyDetails.startDate || 'N/A') : 'N/A'}
+                                    </div>
                                     <span className="text-gray-400 py-1">to</span>
-                                    <div className="bg-[#3A6D6C] px-2 py-1 rounded-full">{(lease.property as any).endDate}</div>
+                                    <div className="bg-[#3A6D6C] px-2 py-1 rounded-full">
+                                        {propertyDetails ? (propertyDetails.endDate || 'N/A') : 'N/A'}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -297,7 +321,7 @@ const LeaseDetail: React.FC = () => {
                                 {/* Status Badge */}
                                 <div className="flex justify-center">
                                     <div className="bg-[#b5e39e] text-[#3D7475] text-xs font-bold px-5 py-3 rounded-full w-min">
-                                        Pendiings
+                                        Pending
                                     </div>
                                 </div>
                             </div>
