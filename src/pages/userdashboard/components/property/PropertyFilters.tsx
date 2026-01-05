@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Search, ChevronDown, Check } from "lucide-react";
 
-import type { FilterState } from "../types";
+import type { FilterState } from "../../utils/types";
 
 interface PropertyFiltersProps {
     isOpen: boolean;
@@ -91,7 +91,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({ isOpen, onClose, onAp
 
                     {/* Property Type */}
                     <section className="space-y-2">
-                        <h3 className="text-md font-semibold text-[#202020] px-1">Property type</h3>
+                        <h3 className="text-base font-semibold text-[#202020] px-1">Property type</h3>
                         <div className="bg-white rounded-md p-4 shadow-sm space-y-1.5">
                             {propertyTypes.map((type) => (
                                 <div
@@ -117,7 +117,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({ isOpen, onClose, onAp
 
                     {/* Region */}
                     <section className="space-y-2 pt-2 border-t border-gray-200">
-                        <h3 className="text-md font-semibold text-[#202020] px-1">Region</h3>
+                        <h3 className="text-base font-semibold text-[#202020] px-1">Region</h3>
                         <div className="relative">
                             <select
                                 value={region}
@@ -132,7 +132,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({ isOpen, onClose, onAp
 
                     {/* Price Range */}
                     <section className="space-y-2 pt-2 border-t border-gray-200">
-                        <h3 className="text-md font-semibold text-[#202020] px-1">Price Range</h3>
+                        <h3 className="text-base font-semibold text-[#202020] px-1">Price Range</h3>
                         <div className="flex items-center gap-4">
                             <div className="flex-1 flex items-center gap-2">
                                 <span className="text-[14px] font-semibold text-[#202020]">Min:</span>
@@ -201,7 +201,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({ isOpen, onClose, onAp
 
                     {/* Bed Rooms */}
                     <section className="space-y-2 pt-2 border-t border-gray-200">
-                        <h3 className="text-md font-semibold text-[#202020] px-1">Bed Rooms</h3>
+                        <h3 className="text-base font-semibold text-[#202020] px-1">Bed Rooms</h3>
                         <div className="flex gap-2">
                             {bedroomOptions.map((opt) => (
                                 <button
@@ -220,7 +220,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({ isOpen, onClose, onAp
 
                     {/* Availability */}
                     <section className="space-y-2 pt-2 border-t border-gray-200">
-                        <h3 className="text-md font-semibold text-[#202020] px-1">Availablity</h3>
+                        <h3 className="text-base font-semibold text-[#202020] px-1">Availablity</h3>
                         <div className="bg-white rounded-md p-2 shadow-sm space-y-1.5">
                             {availabilityOptions.map((opt) => (
                                 <div
@@ -246,7 +246,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({ isOpen, onClose, onAp
 
                     {/* Amenities */}
                     <section className="space-y-2 pt-2 border-t border-gray-200 text-center">
-                        <h3 className="text-md font-semibold text-[#202020] px-1 text-left">Amenities</h3>
+                        <h3 className="text-base font-semibold text-[#202020] px-1 text-left">Amenities</h3>
                         <div className="bg-white rounded-md p-2 shadow-sm space-y-1.5">
                             <div className="space-y-1.5 text-left">
                                 {commonAmenities.map((amenity) => (

@@ -41,7 +41,7 @@ const IncomeCard: React.FC<{ income: IncomeFormData & { id: string }; onDelete: 
             </div>
 
             {/* Top Section - Grayish */}
-            <div className="p-8 pb-10 flex flex-col items-center gap-8">
+            <div className="p-4 sm:p-8 sm:pb-10 flex flex-col items-center gap-6 sm:gap-8">
 
                 {/* Icon Box */}
                 <div className="bg-[#DDE5E3] w-48 h-32 rounded-3xl flex items-center justify-center relative">
@@ -232,12 +232,12 @@ const IncomeStep: React.FC<IncomeStepProps> = ({ onNext }) => {
                 </div>
             )}
 
-            <div className="bg-[#F0F0F6] rounded-full p-8 shadow-sm flex flex-col items-center justify-center gap-6 max-w-3xl mx-auto w-full">
-                <div className="flex gap-10">
+            <div className="bg-[#F0F0F6] rounded-[2rem] p-4 sm:p-8 shadow-sm flex flex-col items-center justify-center gap-6 max-w-3xl mx-auto w-full">
+                <div className="flex flex-col sm:flex-row gap-4 sm:gap-10 w-full sm:w-auto">
                     {incomes.length === 0 && (
                         <button
                             onClick={handleAddClick}
-                            className="bg-[#3A6D6C] text-white border border-white/20 px-6 py-3 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2"
+                            className="bg-[#3A6D6C] text-white border border-white/20 px-6 py-3 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"
                         >
                             Add Income
                             <Plus className="w-4 h-4 rounded-full border border-white p-0.5" />
@@ -247,7 +247,7 @@ const IncomeStep: React.FC<IncomeStepProps> = ({ onNext }) => {
                     <button
                         onClick={onNext}
                         disabled={incomes.length === 0}
-                        className={`bg-[#3A6D6C] text-white border border-white/20 px-16 py-3 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors ${incomes.length > 0 ? '' : 'opacity-50 cursor-not-allowed bg-gray-400 border-gray-400 hover:bg-gray-400'}`}
+                        className={`bg-[#3A6D6C] text-white border border-white/20 px-16 py-3 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors w-full sm:w-auto ${incomes.length > 0 ? '' : 'opacity-50 cursor-not-allowed bg-gray-400 border-gray-400 hover:bg-gray-400'}`}
                     >
                         Next
                     </button>

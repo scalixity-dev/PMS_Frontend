@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import PrimaryActionButton from '../../../../components/common/buttons/PrimaryActionButton';
-import { useCreateLead } from '../../../../hooks/useLeadQueries';
+import { useCreateLead, useCreateActivity } from '../../../../hooks/useLeadQueries';
 import type { LeadType } from '../../../../services/lead.service';
 
 const AddLead = () => {
     const navigate = useNavigate();
     const createLeadMutation = useCreateLead();
+    const createActivityMutation = useCreateActivity();
     const [leadType, setLeadType] = useState<LeadType>('HOT');
     const [formData, setFormData] = useState({
         fullName: '',
@@ -62,12 +63,34 @@ const AddLead = () => {
 
                 console.log('Lead created successfully:', newLead);
 
+                // Create activity for new lead creation
+                try {
+                    console.log('Creating activity for new lead:', newLead.id);
+                    const activity = await createActivityMutation.mutateAsync({
+                        leadId: newLead.id,
+                        activityData: {
+                            type: 'OTHER',
+                            description: `New lead created: ${formData.fullName} (${leadType})`,
+                            metadata: {
+                                action: 'LEAD_CREATED',
+                                leadName: formData.fullName,
+                                leadType: leadType
+                            }
+                        }
+                    });
+                    console.log('Activity created successfully:', activity);
+                } catch (activityError) {
+                    console.error('Failed to create activity for new lead:', activityError);
+                    alert(`Warning: Lead created but failed to log activity: ${activityError instanceof Error ? activityError.message : 'Unknown error'}`);
+                    // Don't block navigation if activity creation fails
+                }
+
                 // Navigate to the newly created lead's detail page
                 navigate(`/dashboard/leasing/leads/${newLead.id}`);
             } catch (error) {
                 console.error('Failed to create lead:', error);
-                setErrors({ 
-                    submit: error instanceof Error ? error.message : 'Failed to create lead. Please try again.' 
+                setErrors({
+                    submit: error instanceof Error ? error.message : 'Failed to create lead. Please try again.'
                 });
             } finally {
                 setIsSubmitting(false);
@@ -86,7 +109,7 @@ const AddLead = () => {
                 <span className="text-gray-600 text-sm font-semibold">Add Leads</span>
             </div>
 
-            <div className="p-6 bg-[#E0E8E7] min-h-[500px] rounded-[2rem] shadow-sm">
+            <div className="p-4 sm:p-6 bg-[#E0E8E7] min-h-[500px] rounded-[1.5rem] sm:rounded-[2rem] shadow-sm">
                 {/* Header */}
                 <div className="flex items-center gap-2 mb-6 ml-2">
                     <button onClick={() => navigate(-1)} className="p-1 hover:text-gray-600 transition-colors">
@@ -103,8 +126,8 @@ const AddLead = () => {
                     </div>
 
                     {/* Form Fields */}
-                    <div className="p-8">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                    <div className="p-4 sm:p-6 md:p-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-x-8">
                             {/* Full Name */}
                             <div className="space-y-2">
                                 <label className="block text-sm font-bold text-gray-800 ml-1">Full Name*</label>
@@ -177,7 +200,7 @@ const AddLead = () => {
                             <PrimaryActionButton
                                 onClick={handleCreate}
                                 text={isSubmitting ? 'Creating...' : 'Create'}
-                                className="px-8 py-2.5 rounded-lg font-bold text-base shadow-lg"
+                                className="w-full sm:w-auto px-8 py-2.5 rounded-lg font-bold text-base shadow-lg justify-center"
                                 disabled={isSubmitting}
                             />
                         </div>

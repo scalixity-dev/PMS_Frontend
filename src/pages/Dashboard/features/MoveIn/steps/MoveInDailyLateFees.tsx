@@ -37,7 +37,7 @@ const MoveInDailyLateFees: React.FC<MoveInDailyLateFeesProps> = ({ onNext, recur
                 <p className="text-[#6B7280]">Choose type of fee and specify maximum monthly balance.</p>
             </div>
 
-            <div className="grid grid-cols-[0.8fr_1.2fr] gap-x-8 gap-y-6 w-full max-w-2xl bg-transparent">
+            <div className="grid grid-cols-1 md:grid-cols-[0.8fr_1.2fr] gap-x-8 gap-y-6 w-full max-w-2xl bg-transparent">
                 {/* Type of fee */}
                 <div className="flex flex-col gap-2">
                     <label className="text-xs font-bold text-gray-700 ml-1">Type of fee *</label>
@@ -54,9 +54,9 @@ const MoveInDailyLateFees: React.FC<MoveInDailyLateFeesProps> = ({ onNext, recur
                 </div>
 
                 {/* Amount and Max Monthly Balance */}
-                <div className="flex flex-row gap-4">
+                <div className="flex flex-col md:flex-row gap-4">
                     {/* Amount */}
-                    <div className="flex flex-col gap-2 shrink-0 w-[140px]">
+                    <div className="flex flex-col gap-2 shrink-0 w-full md:w-[140px]">
                         <label className="text-xs font-bold text-gray-700 ml-1">Amount *</label>
                         <div className="relative">
                             <input
@@ -70,8 +70,8 @@ const MoveInDailyLateFees: React.FC<MoveInDailyLateFeesProps> = ({ onNext, recur
                     </div>
 
                     {/* Maximum monthly balance */}
-                    <div className="flex flex-col gap-2 flex-1">
-                        <label className="text-xs font-bold text-gray-700 ml-1 whitespace-nowrap">Maximum monthly balance *</label>
+                    <div className="flex flex-col gap-2 flex-1 w-full">
+                        <label className="text-xs font-bold text-gray-700 ml-1">Maximum monthly balance *</label>
                         <div className="relative">
                             <input
                                 type="text"
@@ -108,6 +108,7 @@ const MoveInDailyLateFees: React.FC<MoveInDailyLateFeesProps> = ({ onNext, recur
                             onChange={setTime}
                             className="w-full"
                             buttonClassName="bg-[#7BD747] text-white font-medium text-base px-6 py-3 rounded-[1.5rem] border-none outline-none h-[52px] hover:bg-[#7BD747] hover:opacity-90 placeholder:text-white/70"
+                            iconClassName="text-white"
                         />
                     </div>
                 </div>

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, useOutletContext } from 'react-router-dom';
 import {
     ChevronLeft,
     ChevronDown,
@@ -355,6 +355,7 @@ const PropertyDetail: React.FC = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const unitId = searchParams.get('unitId'); // Get unit ID from query parameter
+    const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
 
     // All hooks must be declared before any early returns
     const [activeTab, setActiveTab] = useState('profile');
@@ -389,10 +390,10 @@ const PropertyDetail: React.FC = () => {
 
     // Fetch property data from backend
     const { data: backendProperty, isLoading: isLoadingProperty, error: propertyError } = useGetProperty(id || null, !!id);
-    
+
     // Fetch full unit data if viewing a specific unit
     const { data: fullUnitData, isLoading: isLoadingUnit, error: unitError } = useGetUnit(unitId || null, !!unitId && !!id);
-    
+
     const isLoading = isLoadingProperty || isLoadingUnit;
     const error = propertyError || unitError;
 
@@ -680,7 +681,7 @@ const PropertyDetail: React.FC = () => {
             parking,
             laundry,
             airConditioning,
-            description: selectedUnit 
+            description: selectedUnit
                 ? `${backendProperty.propertyName} - ${selectedUnit.unitName || 'Unit'}. ${backendProperty.description || ''}`
                 : backendProperty.description || '',
             attachments: backendProperty.attachments || [],
@@ -712,7 +713,7 @@ const PropertyDetail: React.FC = () => {
     // Loading state
     if (isLoading) {
         return (
-            <div className="max-w-6xl mx-auto min-h-screen pb-10 flex items-center justify-center">
+            <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen pb-10 flex items-center justify-center transition-all duration-300`}>
                 <div className="text-center">
                     <Loader2 className="w-8 h-8 animate-spin text-[#3A6D6C] mx-auto mb-4" />
                     <p className="text-gray-600">Loading property details...</p>
@@ -724,7 +725,7 @@ const PropertyDetail: React.FC = () => {
     // Error state - only show error if both backend and mock data failed
     if ((error || !property) && !mockData) {
         return (
-            <div className="max-w-6xl mx-auto min-h-screen pb-10 flex items-center justify-center">
+            <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen pb-10 flex items-center justify-center transition-all duration-300`}>
                 <div className="text-center">
                     <p className="text-red-500 text-lg mb-4">
                         {error instanceof Error ? error.message : 'Failed to load property details'}
@@ -746,19 +747,19 @@ const PropertyDetail: React.FC = () => {
     }
 
     return (
-        <div className="max-w-6xl mx-auto min-h-screen pb-10">
+        <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen pb-10 transition-all duration-300`}>
             {/* Breadcrumb */}
-            <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>Dashboard</span>
+            <div className="inline-flex items-center px-3 md:px-4 py-2 bg-[#E0E8E7] rounded-full mb-4 md:mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
+                <span className="text-[#4ad1a6] text-xs md:text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>Dashboard</span>
                 <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard/properties')}>Properties</span>
+                <span className="text-[#4ad1a6] text-xs md:text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard/properties')}>Properties</span>
                 <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">{property?.name || 'Property'}</span>
+                <span className="text-gray-600 text-xs md:text-sm font-semibold truncate max-w-[120px] md:max-w-none">{property?.name || 'Property'}</span>
             </div>
 
-            <div className="bg-[#E0E8E7] rounded-[2rem] p-6 min-h-screen">
+            <div className="bg-[#E0E8E7] rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6 min-h-screen">
                 {/* Header */}
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <div className="flex items-center gap-4">
                         <button
                             onClick={() => navigate(-1)}
@@ -766,16 +767,16 @@ const PropertyDetail: React.FC = () => {
                         >
                             <ChevronLeft className="w-6 h-6 text-gray-700" />
                         </button>
-                        <h1 className="text-2xl font-bold text-gray-800">{property?.name || 'Property'}</h1>
+                        <h1 className="text-lg md:text-2xl font-bold text-gray-800 truncate">{property?.name || 'Property'}</h1>
                     </div>
-                    <div className="flex gap-3">
-                        <button className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5554] transition-colors">
+                    <div className="flex gap-2 md:gap-3 w-full sm:w-auto">
+                        <button className="flex-1 sm:flex-none bg-[#3A6D6C] text-white px-4 md:px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5554] transition-colors">
                             Move In
                         </button>
                         <div className="relative" ref={actionDropdownRef}>
                             <button
                                 onClick={() => setIsActionDropdownOpen(!isActionDropdownOpen)}
-                                className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5554] transition-colors flex items-center gap-2"
+                                className="flex-1 sm:flex-none bg-[#3A6D6C] text-white px-4 md:px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5554] transition-colors flex items-center justify-center gap-2"
                             >
                                 Action
                                 <ChevronDown className={`w-4 h-4 transition-transform ${isActionDropdownOpen ? 'rotate-180' : ''}`} />
@@ -810,10 +811,10 @@ const PropertyDetail: React.FC = () => {
                 </div>
 
                 {/* Hero Image & Property Info Section */}
-                <div className="mb-10 p-6 rounded-[2rem] shadow-lg">
+                <div className="mb-6 md:mb-10 p-4 md:p-6 rounded-[1.5rem] md:rounded-[2rem] shadow-lg">
                     {/* Hero Image Banner (Fixed Cover) */}
                     <div
-                        className="w-full h-[400px] rounded-[2rem] overflow-hidden mb-6 shadow-md relative group cursor-pointer"
+                        className="w-full h-[200px] sm:h-[300px] md:h-[400px] rounded-[1.5rem] md:rounded-[2rem] overflow-hidden mb-4 md:mb-6 shadow-md relative group cursor-pointer"
                         onClick={() => {
                             if (property.photos && property.photos.length > 0) {
                                 setGalleryStartIndex(0);
@@ -847,7 +848,7 @@ const PropertyDetail: React.FC = () => {
                     {/* Thumbnails Carousel */}
                     <div className="flex items-center justify-between mb-8">
                         {/* Scrollable thumbnails */}
-                        <div className="flex gap-4 overflow-x-auto scrollbar-hide py-2 w-full">
+                        <div className="flex gap-2 md:gap-4 overflow-x-auto scrollbar-hide py-2 w-full">
                             {property.photos && property.photos.slice(1).map((photo: string, index: number) => (
                                 <button
                                     key={index}
@@ -855,7 +856,7 @@ const PropertyDetail: React.FC = () => {
                                         setGalleryStartIndex(index + 1);
                                         setIsGalleryOpen(true);
                                     }}
-                                    className="relative flex-shrink-0 w-24 h-24 rounded-2xl overflow-hidden transition-all duration-300 opacity-90 hover:opacity-100 hover:scale-105 shadow-sm hover:shadow-md"
+                                    className="relative flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-lg sm:rounded-xl md:rounded-2xl overflow-hidden transition-all duration-300 opacity-90 hover:opacity-100 hover:scale-105 shadow-sm hover:shadow-md"
                                 >
                                     <img
                                         src={photo}
@@ -878,36 +879,36 @@ const PropertyDetail: React.FC = () => {
                         </div>
 
                         {/* Quick Stats Pills */}
-                        <div className="flex gap-4 mb-8 flex-wrap justify-center">
-                            <div className="flex items-center bg-white px-4 py-2 rounded-full border border-[#82D64D] shadow-sm">
-                                <div className="w-5 h-5 rounded-full bg-[#82D64D] text-white flex items-center justify-center text-xs font-bold mr-2">
+                        <div className="flex gap-2 md:gap-4 mb-6 md:mb-8 flex-wrap justify-center">
+                            <div className="flex items-center bg-white px-3 md:px-4 py-1.5 md:py-2 rounded-full border border-[#82D64D] shadow-sm">
+                                <div className="w-4 h-4 md:w-5 md:h-5 rounded-full bg-[#82D64D] text-white flex items-center justify-center text-[10px] md:text-xs font-bold mr-1.5 md:mr-2">
                                     {property.stats.equipment}
                                 </div>
-                                <span className="text-gray-700 text-sm font-medium">Equipment</span>
+                                <span className="text-gray-700 text-xs md:text-sm font-medium">Equipment</span>
                             </div>
-                            <div className="flex items-center bg-white px-4 py-2 rounded-full border border-[#82D64D] shadow-sm">
-                                <div className="w-5 h-5 rounded-full bg-[#82D64D] text-white flex items-center justify-center text-xs font-bold mr-2">
+                            <div className="flex items-center bg-white px-3 md:px-4 py-1.5 md:py-2 rounded-full border border-[#82D64D] shadow-sm">
+                                <div className="w-4 h-4 md:w-5 md:h-5 rounded-full bg-[#82D64D] text-white flex items-center justify-center text-[10px] md:text-xs font-bold mr-1.5 md:mr-2">
                                     {property.stats.recurringRequests}
                                 </div>
-                                <span className="text-gray-700 text-sm font-medium">Recurring Requests</span>
+                                <span className="text-gray-700 text-xs md:text-sm font-medium">Recurring</span>
                             </div>
-                            <div className="flex items-center bg-white px-4 py-2 rounded-full border border-[#82D64D] shadow-sm">
-                                <div className="w-5 h-5 rounded-full bg-[#82D64D] text-white flex items-center justify-center text-xs font-bold mr-2">
+                            <div className="flex items-center bg-white px-3 md:px-4 py-1.5 md:py-2 rounded-full border border-[#82D64D] shadow-sm">
+                                <div className="w-4 h-4 md:w-5 md:h-5 rounded-full bg-[#82D64D] text-white flex items-center justify-center text-[10px] md:text-xs font-bold mr-1.5 md:mr-2">
                                     {property.stats.tenants}
                                 </div>
-                                <span className="text-gray-700 text-sm font-medium">Tenants</span>
+                                <span className="text-gray-700 text-xs md:text-sm font-medium">Tenants</span>
                             </div>
-                            <div className="flex items-center bg-white px-4 py-2 rounded-full border border-[#82D64D] shadow-sm">
-                                <div className="w-5 h-5 rounded-full bg-[#82D64D] text-white flex items-center justify-center text-xs font-bold mr-2">
+                            <div className="flex items-center bg-white px-3 md:px-4 py-1.5 md:py-2 rounded-full border border-[#82D64D] shadow-sm">
+                                <div className="w-4 h-4 md:w-5 md:h-5 rounded-full bg-[#82D64D] text-white flex items-center justify-center text-[10px] md:text-xs font-bold mr-1.5 md:mr-2">
                                     {property.stats.maintenance}
                                 </div>
-                                <span className="text-gray-700 text-sm font-medium">Maintenance</span>
+                                <span className="text-gray-700 text-xs md:text-sm font-medium">Maintenance</span>
                             </div>
                         </div>
 
                         {/* Assigned Team & Bank */}
-                        <div className="flex flex-col md:flex-row gap-12 mt-5 w-full justify-center items-center">
-                            <div className="relative w-80">
+                        <div className="flex flex-col md:flex-row gap-8 md:gap-12 mt-5 w-full justify-center items-center">
+                            <div className="relative w-full max-w-xs md:w-80">
                                 <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#3d7475] text-white px-10 py-3 rounded-full flex items-center gap-2 font-bold shadow-sm z-10 whitespace-nowrap">
                                     <Users className="w-5 h-5" strokeWidth={2.5} />
                                     <span>Assigned Team</span>
@@ -919,7 +920,7 @@ const PropertyDetail: React.FC = () => {
                                     </button>
                                 </div>
                             </div>
-                            <div className="relative w-80">
+                            <div className="relative w-full max-w-xs md:w-80">
                                 <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#3d7475] text-white px-10 py-3 rounded-full flex items-center gap-2 font-bold shadow-sm z-10 whitespace-nowrap">
                                     <Landmark className="w-5 h-5" strokeWidth={2.5} />
                                     <span>Bank Account</span>
@@ -948,7 +949,7 @@ const PropertyDetail: React.FC = () => {
                     activeTab === 'profile' && (
                         <>
                             {/* Financials Chart Section */}
-                            <div className="bg-white rounded-[2rem] p-8 mb-8 shadow-sm">
+                            <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-8 mb-6 md:mb-8 shadow-sm">
                                 <div className="flex justify-between items-center mb-6">
                                     <h3 className="text-lg font-bold text-gray-800">Financials, {property?.financials?.currency || 'INR'}</h3>
                                     <button className="border border-gray-200 px-4 py-1.5 rounded-lg text-xs font-medium text-gray-600 flex items-center gap-2">
@@ -957,7 +958,7 @@ const PropertyDetail: React.FC = () => {
                                 </div>
 
                                 {/* Mock Chart Visualization */}
-                                <div className="relative h-48 flex items-end justify-between gap-4 px-4">
+                                <div className="relative h-40 md:h-48 flex items-end justify-between gap-2 md:gap-4 px-2 md:px-4">
                                     {/* Grid lines */}
                                     <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-8">
                                         {[1, 2, 3, 4].map(i => (
@@ -985,11 +986,11 @@ const PropertyDetail: React.FC = () => {
                             </div>
 
                             {/* Features & Amenities Row (Conditional for Multi Family) */}
-                            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6 mb-8">
+                            <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4 md:gap-6 mb-6 md:mb-8">
                                 {property.type === 'Multi Family' ? (
                                     <>
                                         {/* Column 1: Property Amenities (Replaces Features) */}
-                                        <div className="bg-white rounded-[2rem] p-6 shadow-sm flex flex-col">
+                                        <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6 shadow-sm flex flex-col">
                                             <div className="flex items-center gap-3 mb-4">
                                                 <h3 className="text-lg font-bold text-gray-800">Property amenities</h3>
                                                 <span className="bg-[#82D64D] text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full">
@@ -1010,10 +1011,10 @@ const PropertyDetail: React.FC = () => {
                                         </div>
 
                                         {/* Column 2: Units Occupancy Pie Chart (Replaces Amenities) */}
-                                        <div className="bg-white rounded-[2rem] p-6 shadow-sm flex flex-col w-[340px]">
+                                        <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6 shadow-sm flex flex-col w-full lg:w-[340px]">
                                             <div className="flex items-center justify-between mb-4">
                                                 <h3 className="text-lg font-bold text-gray-800">Units Occupancy</h3>
-                                                <button 
+                                                <button
                                                     type="button"
                                                     onClick={() => navigate('/dashboard/portfolio/units')}
                                                     className="bg-[#3A6D6C] text-white px-4 py-1.5 rounded-full text-xs font-medium hover:bg-[#2c5554] transition-colors"
@@ -1107,7 +1108,7 @@ const PropertyDetail: React.FC = () => {
                                 ) : (
                                     <>
                                         {/* Property Features */}
-                                        <div className="bg-white rounded-[2rem] p-6 shadow-sm flex flex-col">
+                                        <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6 shadow-sm flex flex-col">
                                             <div className="flex items-center gap-3 mb-4">
                                                 <h3 className="text-lg font-bold text-gray-800">Property features</h3>
                                                 <span className="bg-[#82D64D] text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full">
@@ -1128,7 +1129,7 @@ const PropertyDetail: React.FC = () => {
                                         </div>
 
                                         {/* Property Amenities */}
-                                        <div className="bg-white rounded-[2rem] p-6 shadow-sm flex flex-col">
+                                        <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6 shadow-sm flex flex-col">
                                             <div className="flex items-center gap-3 mb-4">
                                                 <h3 className="text-lg font-bold text-gray-800">Property amenities</h3>
                                                 <span className="bg-[#82D64D] text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full">
@@ -1153,9 +1154,9 @@ const PropertyDetail: React.FC = () => {
 
                             {/* General Information */}
                             <div className="mb-8">
-                                <h3 className="text-lg font-bold text-gray-800 mb-4">General information</h3>
-                                <div className="bg-[#E8E8EA] rounded-[2rem] p-6">
-                                    <div className="grid grid-cols-4 gap-6 mb-6">
+                                <h3 className="text-base md:text-lg font-bold text-gray-800 mb-4">General information</h3>
+                                <div className="bg-[#E8E8EA] rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6">
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-6">
                                         <div>
                                             <label className="block text-xs font-medium text-gray-600 mb-2">Property name</label>
                                             <div className="bg-white rounded-xl px-4 py-3 text-sm text-gray-700 shadow-sm">
@@ -1185,8 +1186,8 @@ const PropertyDetail: React.FC = () => {
                                     {/* Specifications Section - Only for Single Family Properties */}
                                     {property?.type === 'Single Family' && (
                                         <>
-                                            <h4 className="text-base font-bold text-gray-700 mb-4">{property?.type || 'Property'}</h4>
-                                            <div className="flex gap-4 mb-6">
+                                            <h4 className="text-sm md:text-base font-bold text-gray-700 mb-4">{property?.type || 'Property'}</h4>
+                                            <div className="flex flex-wrap gap-2 md:gap-4 mb-6">
                                                 <div className="bg-[#82D64D] text-white px-4 py-2 rounded-full flex items-center gap-2 text-sm font-medium">
                                                     <BedDouble className="w-4 h-4" />
                                                     Bedrooms
@@ -1204,7 +1205,7 @@ const PropertyDetail: React.FC = () => {
                                                 </div>
                                             </div>
 
-                                            <div className="bg-[#DCDCDF] rounded-2xl p-6 grid grid-cols-3 gap-6">
+                                            <div className="bg-[#DCDCDF] rounded-xl md:rounded-2xl p-4 md:p-6 grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
                                                 <div>
                                                     <label className="block text-xs font-medium text-gray-600 mb-2">Parking</label>
                                                     <div className="bg-white rounded-xl px-4 py-3 text-sm text-gray-700 shadow-sm">
@@ -1243,8 +1244,8 @@ const PropertyDetail: React.FC = () => {
 
                             {/* Details */}
                             <div className="mb-8">
-                                <h3 className="text-lg font-bold text-gray-800 mb-4">Details</h3>
-                                <div className="bg-[#E8E8EA] rounded-[2rem] p-6 min-h-[160px]">
+                                <h3 className="text-base md:text-lg font-bold text-gray-800 mb-4">Details</h3>
+                                <div className="bg-[#E8E8EA] rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6 min-h-[120px] md:min-h-[160px]">
                                     {property?.description ? (
                                         <p className="text-sm text-gray-700 whitespace-pre-wrap">{property.description}</p>
                                     ) : (
@@ -1255,8 +1256,8 @@ const PropertyDetail: React.FC = () => {
 
                             {/* Property Attachments */}
                             <div className="mb-8">
-                                <h3 className="text-lg font-bold text-gray-800 mb-4">Property attachments</h3>
-                                <div className="bg-[#E8E8EA] rounded-[2rem] p-6 min-h-[160px]">
+                                <h3 className="text-base md:text-lg font-bold text-gray-800 mb-4">Property attachments</h3>
+                                <div className="bg-[#E8E8EA] rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6 min-h-[120px] md:min-h-[160px]">
                                     {property?.attachments && property.attachments.length > 0 ? (
                                         <div className="flex flex-wrap gap-4">
                                             {property.attachments.map((attachment: any, index: number) => (

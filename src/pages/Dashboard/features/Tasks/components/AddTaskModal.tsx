@@ -20,10 +20,10 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
     const { formData, setFormData, updateFormData, resetForm } = useTaskStore();
     const createTaskMutation = useCreateTask();
     const updateTaskMutation = useUpdateTask();
-    
+
     // Fetch properties for dropdown
     const { data: properties = [], isLoading: isLoadingProperties } = useGetAllProperties();
-    
+
     const [showExitConfirmation, setShowExitConfirmation] = React.useState(false);
     const [formErrors, setFormErrors] = React.useState({ title: false, date: false, time: false, description: false });
     const [initialSnapshot, setInitialSnapshot] = React.useState(formData);
@@ -35,7 +35,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
         // Only run when modal opens or taskToEdit changes
         const isOpening = !prevIsOpenRef.current && isOpen;
         const taskChanged = prevTaskToEditRef.current?.id !== taskToEdit?.id;
-        
+
         if (isOpen && taskToEdit && (isOpening || taskChanged)) {
             // Populate form from taskToEdit
             const editDate = taskToEdit.date ? new Date(taskToEdit.date) : undefined;
@@ -47,7 +47,9 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
             const editIsRecurring = taskToEdit.isRecurring || false;
             const editFrequency = taskToEdit.frequency || '';
             const editEndDate = taskToEdit.endDate && taskToEdit.endDate !== 'Indefinite' ? new Date(taskToEdit.endDate) : undefined;
-            
+            const editIsAllDay = taskToEdit.isAllDay || false;
+
+
             const editFormData = {
                 title: taskToEdit.title || '',
                 description: taskToEdit.description || '',
@@ -57,9 +59,10 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
                 property: editProperty,
                 isRecurring: editIsRecurring,
                 frequency: editFrequency,
-                endDate: editEndDate
+                endDate: editEndDate,
+                isAllDay: editIsAllDay
             };
-            
+
             setFormData(editFormData);
             setInitialSnapshot(editFormData);
         } else if (isOpen && !taskToEdit && isOpening) {
@@ -73,7 +76,8 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
                 property: '',
                 isRecurring: false,
                 frequency: '',
-                endDate: undefined
+                endDate: undefined,
+                isAllDay: false
             };
             setFormData(emptyFormData);
             setInitialSnapshot(emptyFormData);
@@ -120,8 +124,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
         const errors = {
             title: !formData.title.trim(),
             date: !formData.date,
-            time: !formData.time.trim(),
-            description: formData.description ? formData.description.length > MAX_DESCRIPTION_LENGTH : false
+            time: !formData.isAllDay && !formData.time.trim()
         };
 
         setFormErrors(errors);
@@ -137,12 +140,13 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
                 title: formData.title,
                 description: formData.description || undefined,
                 date: formData.date ? formData.date.toISOString() : '',
-                time: formData.time,
+                time: formData.isAllDay ? '' : formData.time,
                 assignee: formData.assignee || undefined,
                 propertyId: formData.property || undefined,
                 isRecurring: formData.isRecurring,
                 frequency: formData.frequency ? (formData.frequency.toUpperCase() as 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY' | 'ONCE') : undefined,
                 endDate: formData.endDate ? formData.endDate.toISOString() : undefined,
+                isAllDay: formData.isAllDay,
             };
 
             if (taskToEdit) {
@@ -172,7 +176,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
 
     const handleCloseAttempt = () => {
         // Check if any field differs from initial snapshot (form is dirty)
-        const datesEqual = (a?: Date, b?: Date) => 
+        const datesEqual = (a?: Date, b?: Date) =>
             (!a && !b) || (a && b && a.getTime() === b.getTime());
 
         const isDirty =
@@ -184,7 +188,8 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
             formData.property !== initialSnapshot.property ||
             formData.isRecurring !== initialSnapshot.isRecurring ||
             formData.frequency !== initialSnapshot.frequency ||
-            !datesEqual(formData.endDate, initialSnapshot.endDate);
+            !datesEqual(formData.endDate, initialSnapshot.endDate) ||
+            formData.isAllDay !== initialSnapshot.isAllDay;
 
         if (isDirty) {
             setShowExitConfirmation(true);
@@ -264,7 +269,18 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
 
                     {/* Date & Time */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-700 mb-1">Date & Time *</label>
+                        <div className="flex items-center justify-between mb-1">
+                            <label className="block text-xs font-bold text-gray-700">Date & Time *</label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={formData.isAllDay}
+                                    onChange={(e) => updateFormData('isAllDay', e.target.checked)}
+                                    className="w-3 h-3 rounded border-gray-300 text-[#7BD747] focus:ring-[#7BD747] accent-[#7BD747]"
+                                />
+                                <span className="text-xs font-medium text-gray-600">All Day</span>
+                            </label>
+                        </div>
                         <div className="flex gap-2">
                             <div className="w-2/3">
                                 <DatePicker
@@ -276,7 +292,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
                                 />
                             </div>
                             <div className="w-1/3">
-                                <div className={isLoading ? 'opacity-50 pointer-events-none' : ''}>
+                                <div className={isLoading || formData.isAllDay ? 'opacity-50 pointer-events-none' : ''}>
                                     <TimePicker
                                         value={formData.time}
                                         onChange={(time) => updateFormData('time', time)}
@@ -337,29 +353,33 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
                         <span className="text-xs font-medium text-gray-700">Recurring</span>
                     </div>
 
-                    {/* Frequency */}
-                    <div>
-                        <label className="block text-xs font-bold text-gray-700 mb-1">Frequency</label>
-                        <CustomDropdown
-                            value={formData.frequency}
-                            onChange={(value) => updateFormData('frequency', value)}
-                            options={frequencyOptions}
-                            placeholder="Select Frequency"
-                            disabled={isLoading}
-                            buttonClassName={`w-full bg-white text-gray-800 px-3 py-2.5 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all shadow-sm text-sm border-none ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        />
-                    </div>
+                    {/* Frequency - Only shown when Recurring is enabled */}
+                    {formData.isRecurring && (
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-1">Frequency</label>
+                            <CustomDropdown
+                                value={formData.frequency}
+                                onChange={(value) => updateFormData('frequency', value)}
+                                options={frequencyOptions}
+                                placeholder="Select Frequency"
+                                disabled={isLoading}
+                                buttonClassName={`w-full bg-white text-gray-800 px-3 py-2.5 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all shadow-sm text-sm border-none ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            />
+                        </div>
+                    )}
 
-                    {/* End Date */}
-                    <div>
-                        <label className="block text-xs font-bold text-gray-700 mb-1">End Date</label>
-                        <DatePicker
-                            value={formData.endDate}
-                            onChange={(date) => updateFormData('endDate', date)}
-                            placeholder="Select End Date"
-                            disabled={isLoading}
-                        />
-                    </div>
+                    {/* End Date - Only shown when Recurring is enabled */}
+                    {formData.isRecurring && (
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-1">End Date</label>
+                            <DatePicker
+                                value={formData.endDate}
+                                onChange={(date) => updateFormData('endDate', date)}
+                                placeholder="Select End Date"
+                                disabled={isLoading}
+                            />
+                        </div>
+                    )}
 
                 </div>
 

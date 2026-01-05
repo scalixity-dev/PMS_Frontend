@@ -103,51 +103,56 @@ const MonthGrid: React.FC<MonthGridProps> = ({ month, reminders }) => {
                     return (
                         <div
                             key={dayItem.toString()}
-                            className={`min-h-[120px] border-b border-r border-gray-100 p-2 text-left transition-colors hover:bg-gray-50
-                 ${!isCurrentMonth ? 'bg-gray-50/50 text-gray-400' : 'bg-white text-gray-900'}
+                            className={`min-h-[80px] md:min-h-[120px] border-b border-r border-gray-100 p-1 md:p-2 text-left transition-colors
+                 ${!isCurrentMonth ? 'bg-gray-50/50' : 'bg-white hover:bg-gray-50'}
                  ${index % 7 === 6 ? 'border-r-0' : ''}
                  ${isDayToday ? 'today-cell' : ''}
                `}
                         >
-                            <span
-                                className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-sm font-medium
+                            {/* Only show content for current month dates */}
+                            {isCurrentMonth && (
+                                <>
+                                    <span
+                                        className={`inline-flex items-center justify-center w-6 h-6 md:w-7 md:h-7 rounded-full text-xs md:text-sm font-medium text-gray-900
                    ${isDayToday ? 'bg-green-500 text-white' : ''}
                  `}
-                            >
-                                {format(dayItem, 'd')}
-                            </span>
+                                    >
+                                        {format(dayItem, 'd')}
+                                    </span>
 
-                            {/* Reminders */}
-                            <div className="mt-1 space-y-1">
-                                {visibleReminders.map((reminder) => (
-                                    <div
-                                        key={reminder.id}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setSelectedReminder(reminder);
-                                            setIsDetailModalOpen(true);
-                                        }}
-                                        className={`px-1.5 py-0.5 rounded text-[10px] font-medium truncate border cursor-pointer hover:opacity-80 transition-opacity
+                                    {/* Reminders */}
+                                    <div className="mt-1 space-y-1">
+                                        {visibleReminders.map((reminder) => (
+                                            <div
+                                                key={reminder.id}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setSelectedReminder(reminder);
+                                                    setIsDetailModalOpen(true);
+                                                }}
+                                                className={`px-1 md:px-1.5 py-0.5 rounded text-[9px] md:text-[10px] font-medium truncate border cursor-pointer hover:opacity-80 transition-opacity
                                                 ${getReminderColor(reminder.id)}`}
-                                    >
-                                        {reminder.time} {reminder.title}
-                                    </div>
-                                ))}
+                                            >
+                                                {reminder.time} {reminder.title}
+                                            </div>
+                                        ))}
 
-                                {hiddenCount > 0 && (
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setSelectedDayDate(dayItem);
-                                            setDayReminders(daysReminders);
-                                            setIsDayDetailModalOpen(true);
-                                        }}
-                                        className="w-full px-1.5 py-0.5 rounded text-[10px] font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 border border-gray-200 transition-colors text-center"
-                                    >
-                                        +{hiddenCount} more
-                                    </button>
-                                )}
-                            </div>
+                                        {hiddenCount > 0 && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setSelectedDayDate(dayItem);
+                                                    setDayReminders(daysReminders);
+                                                    setIsDayDetailModalOpen(true);
+                                                }}
+                                                className="w-full px-1 md:px-1.5 py-0.5 rounded text-[9px] md:text-[10px] font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 border border-gray-200 transition-colors text-center"
+                                            >
+                                                +{hiddenCount} more
+                                            </button>
+                                        )}
+                                    </div>
+                                </>
+                            )}
                         </div>
                     );
                 })}

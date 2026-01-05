@@ -1,4 +1,4 @@
-import type { Lease } from "../types";
+import type { Lease } from "../../utils/types";
 import { LeaseCard } from "./LeaseCard";
 
 interface LeaseListProps {

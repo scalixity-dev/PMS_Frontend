@@ -6,6 +6,15 @@ import AddReminderModal from './components/AddReminderModal';
 import { useGetCalendarEvents } from '../../../../hooks/useCalendarQueries';
 import { Loader2 } from 'lucide-react';
 
+// Debounce helper
+const debounce = <T extends (...args: unknown[]) => void>(fn: T, delay: number): T => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    return ((...args: Parameters<T>) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => fn(...args), delay);
+    }) as T;
+};
+
 export interface Reminder {
     id: string;
     title: string;
@@ -16,6 +25,10 @@ export interface Reminder {
     propertyId?: string;
     details?: string;
     assigneeName?: string;
+    recurring?: boolean;
+    frequency?: string;
+    endDate?: string;
+    color?: string;
 }
 
 const Calendar: React.FC = () => {
@@ -46,12 +59,22 @@ const Calendar: React.FC = () => {
     }, [months]);
 
     // Fetch calendar events (tasks + reminders) from API
-    const { data: calendarEvents = [], isLoading: isLoadingEvents } = useGetCalendarEvents(
+    // Use separate flags for initial loading vs background refetching
+    const { data: calendarEvents = [], isLoading: isInitialLoading, isFetching } = useGetCalendarEvents(
         dateRange.startDate,
         dateRange.endDate,
         undefined, // No filters - show all tasks and reminders
         true // enabled
     );
+
+    // Track if we've ever loaded data - only show full loader on initial load
+    const hasLoadedOnce = useRef(false);
+    if (calendarEvents.length > 0 || !isInitialLoading) {
+        hasLoadedOnce.current = true;
+    }
+
+    // Only show full-screen loader on initial load, not on refetches
+    const showFullLoader = isInitialLoading && !hasLoadedOnce.current;
 
     // Parse date string "DD MMM, YYYY" to Date object
     const parseDate = (dateStr: string): Date => {
@@ -202,6 +225,10 @@ const Calendar: React.FC = () => {
                 propertyId: event.propertyId,
                 details: event.description,
                 assigneeName: event.assignee,
+                recurring: event.metadata?.recurring ?? false,
+                frequency: event.metadata?.frequency || '',
+                endDate: event.metadata?.endDate || '',
+                color: event.color,
             };
         });
     }, [calendarEvents]);
@@ -215,10 +242,40 @@ const Calendar: React.FC = () => {
     const [isPrepend, setIsPrepend] = useState(false);
     const previousScrollHeightRef = useRef(0);
 
+    // Debounced month loading to prevent rapid additions
+    const isLoadingMonths = useRef(false);
+    const loadPreviousMonth = useCallback(() => {
+        if (isLoadingMonths.current) return;
+        isLoadingMonths.current = true;
+        setIsPrepend(true);
+        previousScrollHeightRef.current = containerRef.current?.scrollHeight || 0;
+        setMonths((prev) => {
+            const firstMonth = prev[0];
+            return [subMonths(firstMonth, 1), ...prev];
+        });
+        // Reset loading flag after a short delay
+        setTimeout(() => {
+            isLoadingMonths.current = false;
+        }, 300);
+    }, []);
+
+    const loadNextMonth = useCallback(() => {
+        if (isLoadingMonths.current) return;
+        isLoadingMonths.current = true;
+        setMonths((prev) => {
+            const lastMonth = prev[prev.length - 1];
+            return [...prev, addMonths(lastMonth, 1)];
+        });
+        // Reset loading flag after a short delay
+        setTimeout(() => {
+            isLoadingMonths.current = false;
+        }, 300);
+    }, []);
+
     // Handle scroll for infinite loading
     const handleScroll = useCallback(() => {
         const container = containerRef.current;
-        if (!container) return;
+        if (!container || isLoadingMonths.current) return;
 
         const { scrollTop, scrollHeight, clientHeight } = container;
 
@@ -227,22 +284,14 @@ const Calendar: React.FC = () => {
 
         // Load previous month
         if (scrollTop < threshold) {
-            setIsPrepend(true);
-            previousScrollHeightRef.current = scrollHeight;
-            setMonths((prev) => {
-                const firstMonth = prev[0];
-                return [subMonths(firstMonth, 1), ...prev];
-            });
+            loadPreviousMonth();
         }
 
         // Load next month
         if (scrollTop + clientHeight > scrollHeight - threshold) {
-            setMonths((prev) => {
-                const lastMonth = prev[prev.length - 1];
-                return [...prev, addMonths(lastMonth, 1)];
-            });
+            loadNextMonth();
         }
-    }, []);
+    }, [loadPreviousMonth, loadNextMonth]);
 
     // Adjust scroll position after prepending
     useLayoutEffect(() => {
@@ -315,10 +364,18 @@ const Calendar: React.FC = () => {
         }
     };
 
+    // Debounced scroll handler to prevent too frequent updates
+    const debouncedScrollHandler = useMemo(
+        () => debounce(() => {
+            handleScroll();
+            handleScrollForHeader();
+        }, 50),
+        [handleScroll]
+    );
+
     const onScroll = () => {
-        handleScroll();
-        handleScrollForHeader();
-    }
+        debouncedScrollHandler();
+    };
 
     const handleDateChange = (newDate: Date) => {
         setCurrentDate(newDate);
@@ -364,13 +421,13 @@ const Calendar: React.FC = () => {
 
                 {/* Weekday Header - Aligned with the grid */}
                 <div className="flex">
-                    {/* Spacer for the side label column */}
-                    <div className="w-12 flex-none"></div>
+                    {/* Spacer for the side label column - Hidden on tablet/mobile */}
+                    <div className="hidden lg:block w-12 flex-none"></div>
 
                     {/* Weekdays */}
                     <div className="flex-1 grid grid-cols-7 mb-2 bg-[#43767c] text-white rounded-t-lg overflow-hidden shadow-md">
                         {weekDays.map((day) => (
-                            <div key={day} className="py-3 text-center text-sm font-semibold tracking-wider border-r border-[#54878d] last:border-r-0">
+                            <div key={day} className="py-2 md:py-3 text-center text-xs md:text-sm font-semibold tracking-wider border-r border-[#54878d] last:border-r-0">
                                 {day}
                             </div>
                         ))}
@@ -385,7 +442,7 @@ const Calendar: React.FC = () => {
                 className="flex-1 overflow-y-auto relative scrollbar-hide px-0 pb-6 scroll-smooth"
                 style={{ scrollBehavior: isPrepend ? 'auto' : 'smooth' }}
             >
-                {isLoadingEvents ? (
+                {showFullLoader ? (
                     <div className="flex items-center justify-center h-full">
                         <div className="text-center">
                             <Loader2 className="w-8 h-8 animate-spin text-[#3D7475] mx-auto mb-4" />
@@ -393,25 +450,40 @@ const Calendar: React.FC = () => {
                         </div>
                     </div>
                 ) : (
-                    months.map((month) => (
-                        <div
-                            key={month.toISOString()}
-                            data-date={month.toISOString()}
-                            className="month-section flex mb-4"
-                        >
-                            {/* Rotated Month Label */}
-                            <div className="w-12 flex-none flex items-center justify-center relative">
-                                <div className="absolute transform rotate-180 text-gray-700 font-bold tracking-widest text-sm uppercase" style={{ writingMode: 'vertical-rl' }}>
-                                    {format(month, 'MMMM yyyy')}
+                    <>
+                        {/* Show subtle loading indicator during background refetch */}
+                        {isFetching && (
+                            <div className="absolute top-2 right-2 z-10">
+                                <Loader2 className="w-5 h-5 animate-spin text-[#3D7475]" />
+                            </div>
+                        )}
+                        {months.map((month) => (
+                            <div
+                                key={month.toISOString()}
+                                data-date={month.toISOString()}
+                                className="month-section flex flex-col lg:flex-row mb-4"
+                            >
+                                {/* Mobile/Tablet Horizontal Month Label */}
+                                <div className="lg:hidden pb-2 pl-1 sticky top-0 bg-gray-50/95 backdrop-blur-sm z-10 py-2 border-b border-gray-100 mb-2">
+                                    <span className="text-[#3D7475] font-bold text-lg">
+                                        {format(month, 'MMMM yyyy')}
+                                    </span>
+                                </div>
+
+                                {/* Rotated Month Label - Desktop only */}
+                                <div className="hidden lg:flex w-12 flex-none items-center justify-center relative">
+                                    <div className="absolute transform rotate-180 text-gray-700 font-bold tracking-widest text-sm uppercase" style={{ writingMode: 'vertical-rl' }}>
+                                        {format(month, 'MMMM yyyy')}
+                                    </div>
+                                </div>
+
+                                {/* Month Grid */}
+                                <div className="flex-1">
+                                    <MonthGrid month={month} reminders={reminders} />
                                 </div>
                             </div>
-
-                            {/* Month Grid */}
-                            <div className="flex-1">
-                                <MonthGrid month={month} reminders={reminders} />
-                            </div>
-                        </div>
-                    ))
+                        ))}
+                    </>
                 )}
             </div>
             <AddReminderModal

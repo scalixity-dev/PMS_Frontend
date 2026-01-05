@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { ChevronLeft, Check, MoreHorizontal, Settings, ChevronDown } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import { useTransactionStore } from '../Transactions/store/transactionStore';
@@ -59,7 +59,8 @@ const MOCK_RECURRING = [
 
 const Recurring: React.FC = () => {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<'All' | 'Income' | 'Expense'>('All');
+    const context = useOutletContext<{ sidebarCollapsed?: boolean }>();
+    const sidebarCollapsed = context?.sidebarCollapsed ?? false; const [activeTab, setActiveTab] = useState<'All' | 'Income' | 'Expense'>('All');
     const [selectedItems, setSelectedItems] = useState<number[]>([]);
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
     const dropdownContainerRef = useRef<HTMLDivElement>(null);
@@ -202,7 +203,7 @@ const Recurring: React.FC = () => {
     };
 
     return (
-        <div className="max-w-7xl mx-auto min-h-screen font-outfit">
+        <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit transition-all duration-300`}>
             {/* Modals - Reused from Transactions */}
             <EditInvoiceModal />
             <DeleteTransactionModal
@@ -233,24 +234,24 @@ const Recurring: React.FC = () => {
 
             <div className="p-6 bg-[#DFE5E3] min-h-screen rounded-[2rem] overflow-visible">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                     <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-xl font-bold text-gray-800 hover:text-gray-600 transition-colors">
                         <ChevronLeft className="w-6 h-6" />
                         Recurring
                     </button>
 
-                    <div className="flex items-center gap-3" ref={dropdownContainerRef}>
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3" ref={dropdownContainerRef}>
                         {/* Money In */}
                         <div className="relative">
                             <button
                                 onClick={() => setActiveDropdown(activeDropdown === 'money_in' ? null : 'money_in')}
-                                className="px-6 py-2 bg-[#3A6D6C] text-white rounded-md text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-2"
+                                className="w-full sm:w-auto px-6 py-2 bg-[#3A6D6C] text-white rounded-md text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center justify-center gap-2"
                             >
                                 Money In
                                 <ChevronDown className="w-4 h-4" />
                             </button>
                             {activeDropdown === 'money_in' && (
-                                <div className="absolute top-full left-0 mt-2 bg-white rounded-md shadow-xl border border-gray-100 w-48 z-50 overflow-hidden">
+                                <div className="absolute top-full left-0 z-50 mt-2 w-full sm:w-48 overflow-hidden rounded-md border border-gray-100 bg-white shadow-xl">
                                     <button onClick={() => navigate('/dashboard/accounting/transactions/income/add')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Income invoice</button>
                                     <button onClick={() => navigate('/dashboard/accounting/transactions/income-payments')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Income payment</button>
                                     <button onClick={() => navigate('/dashboard/accounting/transactions/recurring-income/add')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Recurring income</button>
@@ -265,13 +266,13 @@ const Recurring: React.FC = () => {
                         <div className="relative">
                             <button
                                 onClick={() => setActiveDropdown(activeDropdown === 'money_out' ? null : 'money_out')}
-                                className="px-6 py-2 bg-[#1f2937] text-white rounded-md text-sm font-medium hover:bg-red-600 transition-colors shadow-sm flex items-center gap-2"
+                                className="w-full sm:w-auto px-6 py-2 bg-[#1f2937] text-white rounded-md text-sm font-medium hover:bg-red-600 transition-colors shadow-sm flex items-center justify-center gap-2"
                             >
                                 Money Out
                                 <ChevronDown className="w-4 h-4" />
                             </button>
                             {activeDropdown === 'money_out' && (
-                                <div className="absolute top-full left-0 mt-2 bg-white rounded-md shadow-xl border border-gray-100 w-48 z-50 overflow-hidden">
+                                <div className="absolute top-full left-0 z-50 mt-2 w-full sm:w-48 overflow-hidden rounded-md border border-gray-100 bg-white shadow-xl">
                                     <button onClick={() => navigate('/dashboard/accounting/transactions/expense/add')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Expense invoice</button>
                                     <button onClick={() => navigate('/dashboard/accounting/transactions/expense-payments')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Expense payment</button>
                                     <button onClick={() => navigate('/dashboard/accounting/transactions/recurring-expense/add')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100">Recurring expense</button>
@@ -283,7 +284,7 @@ const Recurring: React.FC = () => {
                         </div>
 
                         {/* Settings */}
-                        <button className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-2">
+                        <button className="w-full sm:w-auto px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center justify-center gap-2">
                             <Settings className="w-4 h-4" />
                             Settings
                         </button>
@@ -291,12 +292,12 @@ const Recurring: React.FC = () => {
                 </div>
 
                 {/* Tabs */}
-                <div className="flex gap-4 mb-8 bg-[#f1f3f2] rounded-full p-2 w-min">
+                <div className="flex flex-wrap md:flex-nowrap gap-2 md:gap-4 mb-8 bg-[#f1f3f2] rounded-3xl md:rounded-full p-2 w-full md:w-min overflow-x-auto">
                     {(['All', 'Income', 'Expense'] as const).map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
-                            className={`px-8 py-2 rounded-full text-sm font-medium transition-colors ${activeTab === tab
+                            className={`flex-1 md:flex-none whitespace-nowrap px-4 md:px-8 py-2 rounded-full text-sm font-medium transition-colors ${activeTab === tab
                                 ? 'bg-[#7BD747] text-white shadow-sm'
                                 : 'bg-[#DDDDDD] text-black hover:bg-gray-300'
                                 }`}
@@ -316,7 +317,7 @@ const Recurring: React.FC = () => {
                 />
 
                 {/* Table Header */}
-                <div className="bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm mt-8 pl-4 pr-6">
+                <div className="hidden md:block bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm mt-8 pl-4 pr-6">
                     <div className="text-white px-6 py-4 grid grid-cols-[40px_0.5fr_1fr_1fr_1.5fr_1fr_1fr_50px] gap-4 items-center text-sm font-medium">
                         <div className="flex items-center justify-center">
                             <button onClick={toggleAll} className="flex items-center justify-center">
@@ -338,95 +339,142 @@ const Recurring: React.FC = () => {
                 {/* Table Body */}
                 <div className="flex flex-col gap-3 bg-[#F0F0F6] p-4 rounded-b-[2rem] rounded-t min-h-[400px]">
                     {filteredRecurring.map((item) => (
-                        <div
-                            key={item.id}
-                            className="bg-white rounded-2xl px-6 py-4 grid grid-cols-[40px_0.5fr_1fr_1fr_1.5fr_1fr_1fr_50px] gap-4 items-center shadow-sm hover:shadow-md transition-shadow"
-                        >
-                            <div className="flex items-center justify-center">
-                                <button
-                                    onClick={() => toggleSelection(item.id)}
-                                    className="flex items-center justify-center"
-                                >
-                                    <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${selectedItems.includes(item.id) ? 'bg-[#7BD747]' : 'bg-gray-200'}`}>
-                                        {selectedItems.includes(item.id) && <Check className="w-3.5 h-3.5 text-white" />}
-                                    </div>
-                                </button>
-                            </div>
-
-                            {/* Status */}
-                            <div className="flex items-center gap-2">
-                                <span className={`text-sm font-medium ${getStatusTextColor(item.status)}`}>{item.status}</span>
-                            </div>
-
-                            {/* Next Date */}
-                            <div className="text-[#3A6D6C] text-sm font-medium">{item.nextDate}</div>
-
-                            {/* Type */}
-                            <div className="text-[#3A6D6C] text-sm font-medium truncate">{item.transactionType}</div>
-
-                            {/* Category & Property */}
-                            <div className="text-[#3A6D6C] text-sm font-medium">{item.property}</div>
-
-                            {/* Contact */}
-                            <div className="text-[#3A6D6C] text-sm font-medium">{item.contact}</div>
-
-                            {/* Amount */}
-                            <div className="text-gray-900 text-sm font-bold">₹ {item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-
-                            {/* Actions */}
-                            <div className="flex justify-end relative">
-                                <button
-                                    onClick={() => setMoreMenuOpenId(moreMenuOpenId === item.id ? null : item.id)}
-                                    className="text-gray-600 hover:text-gray-600"
-                                >
-                                    <MoreHorizontal className="w-10 h-6 bg-gray-200 rounded-full p-0.5" />
-                                </button>
-                                {moreMenuOpenId === item.id && (
-                                    <div
-                                        ref={moreMenuRef}
-                                        className="absolute top-full right-0 mt-2 bg-white rounded-md shadow-xl border border-gray-100 w-48 z-50 overflow-hidden"
+                        <div key={item.id} className="relative transition-shadow hover:shadow-md rounded-2xl bg-white shadow-sm">
+                            {/* Desktop View */}
+                            <div className="hidden md:grid px-6 py-4 grid-cols-[40px_0.5fr_1fr_1fr_1.5fr_1fr_1fr_50px] gap-4 items-center">
+                                <div className="flex items-center justify-center">
+                                    <button
+                                        onClick={() => toggleSelection(item.id)}
+                                        className="flex items-center justify-center"
                                     >
-                                        <button
-                                            onClick={() => {
-                                                setSelectedRecurringId(item.id);
-                                                setIsPostInvoiceModalOpen(true);
-                                                setMoreMenuOpenId(null);
-                                            }}
-                                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100"
-                                        >
-                                            Post next invoice
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                console.log('End', item.id);
-                                                setMoreMenuOpenId(null);
-                                            }}
-                                            className="w-full text-left px-4 py-2 text-sm text-[#3A6D6C] hover:bg-gray-50 border-b border-gray-100"
-                                        >
-                                            End
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                console.log('Clone', item.id);
-                                                setMoreMenuOpenId(null);
-                                            }}
-                                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100"
-                                        >
-                                            Clone
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                setSelectedTransactionId(item.id);
-                                                setDeleteTransactionOpen(true);
-                                                setMoreMenuOpenId(null);
-                                            }}
-                                            className="w-full text-left px-4 py-2 text-sm text-[#3A6D6C] hover:bg-gray-50"
-                                        >
-                                            Delete
-                                        </button>
-                                    </div>
-                                )}
+                                        <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${selectedItems.includes(item.id) ? 'bg-[#7BD747]' : 'bg-gray-200'}`}>
+                                            {selectedItems.includes(item.id) && <Check className="w-3.5 h-3.5 text-white" />}
+                                        </div>
+                                    </button>
+                                </div>
+
+                                {/* Status */}
+                                <div className="flex items-center gap-2">
+                                    <span className={`text-sm font-medium ${getStatusTextColor(item.status)}`}>{item.status}</span>
+                                </div>
+
+                                {/* Next Date */}
+                                <div className="text-[#3A6D6C] text-sm font-medium">{item.nextDate}</div>
+
+                                {/* Type */}
+                                <div className="text-[#3A6D6C] text-sm font-medium truncate">{item.transactionType}</div>
+
+                                {/* Category & Property */}
+                                <div className="text-[#3A6D6C] text-sm font-medium">{item.property}</div>
+
+                                {/* Contact */}
+                                <div className="text-[#3A6D6C] text-sm font-medium">{item.contact}</div>
+
+                                {/* Amount */}
+                                <div className="text-gray-900 text-sm font-bold">₹ {item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+
+                                {/* Actions */}
+                                <div className="flex justify-end relative">
+                                    <button
+                                        onClick={() => setMoreMenuOpenId(moreMenuOpenId === item.id ? null : item.id)}
+                                        className="text-gray-600 hover:text-gray-600"
+                                    >
+                                        <MoreHorizontal className="w-10 h-6 bg-gray-200 rounded-full p-0.5" />
+                                    </button>
+                                </div>
                             </div>
+
+                            {/* Mobile View */}
+                            <div className="flex flex-col p-4 gap-4 md:hidden">
+                                <div className="flex justify-between items-start">
+                                    <div className="flex items-center gap-3">
+                                        <button
+                                            onClick={() => toggleSelection(item.id)}
+                                            className="flex items-center justify-center"
+                                        >
+                                            <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${selectedItems.includes(item.id) ? 'bg-[#7BD747]' : 'bg-gray-200'}`}>
+                                                {selectedItems.includes(item.id) && <Check className="w-3.5 h-3.5 text-white" />}
+                                            </div>
+                                        </button>
+                                        <span className={`text-sm font-medium ${getStatusTextColor(item.status)}`}>
+                                            {item.status}
+                                        </span>
+                                    </div>
+                                    <button
+                                        onClick={() => setMoreMenuOpenId(moreMenuOpenId === item.id ? null : item.id)}
+                                        className="text-gray-600"
+                                    >
+                                        <MoreHorizontal className="w-8 h-8 bg-gray-100 rounded-full p-1.5" />
+                                    </button>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <div className="text-lg font-bold text-gray-800">{item.property}</div>
+                                    <div className="text-2xl font-bold text-gray-900">₹ {item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4 text-sm mt-2 pt-4 border-t border-gray-100">
+                                    <div>
+                                        <div className="text-gray-400 text-xs mb-1">Next Date</div>
+                                        <div className="font-medium text-[#3A6D6C]">{item.nextDate}</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-gray-400 text-xs mb-1">Type</div>
+                                        <div className="font-medium text-[#3A6D6C]">{item.transactionType}</div>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <div className="text-gray-400 text-xs mb-1">Contact</div>
+                                        <div className="font-medium text-[#3A6D6C]">{item.contact}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Shared Dropdown Menu */}
+                            {moreMenuOpenId === item.id && (
+                                <div
+                                    ref={moreMenuRef}
+                                    className="absolute right-4 top-14 md:top-12 z-50 mt-2 w-48 overflow-hidden rounded-md border border-gray-100 bg-white shadow-xl"
+                                >
+                                    <button
+                                        onClick={() => {
+                                            setSelectedRecurringId(item.id);
+                                            setIsPostInvoiceModalOpen(true);
+                                            setMoreMenuOpenId(null);
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100"
+                                    >
+                                        Post next invoice
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            console.log('End', item.id);
+                                            setMoreMenuOpenId(null);
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-sm text-[#3A6D6C] hover:bg-gray-50 border-b border-gray-100"
+                                    >
+                                        End
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            console.log('Clone', item.id);
+                                            setMoreMenuOpenId(null);
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100"
+                                    >
+                                        Clone
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setSelectedTransactionId(item.id);
+                                            setDeleteTransactionOpen(true);
+                                            setMoreMenuOpenId(null);
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-sm text-[#3A6D6C] hover:bg-gray-50"
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     ))}
                     {filteredRecurring.length === 0 && (

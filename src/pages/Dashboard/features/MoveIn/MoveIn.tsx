@@ -14,6 +14,7 @@ import MoveInLateFees from './steps/MoveInLateFees';
 import MoveInLateFeesType from './steps/MoveInLateFeesType';
 import MoveInOneTimeLateFees from './steps/MoveInOneTimeLateFees';
 import MoveInDailyLateFees from './steps/MoveInDailyLateFees';
+import MoveInBothLateFees from './steps/MoveInBothLateFees';
 import MoveInSuccessModal from './components/MoveInSuccessModal';
 
 interface MoveInScenarioCardProps {
@@ -33,7 +34,7 @@ const MoveInScenarioCard: React.FC<MoveInScenarioCardProps> = ({ type, selected,
         <div
             onClick={onClick}
             className={`
-        relative flex flex-col items-start p-8 rounded-3xl cursor-pointer transition-all duration-300 w-80 h-auto
+        relative flex flex-col items-start p-6 md:p-8 rounded-3xl cursor-pointer transition-all duration-300 w-full max-w-sm h-auto
         ${selected
                     ? 'bg-[#F0F2F5] border-2 border-[#7BD747] shadow-none'
                     : 'bg-white shadow-lg border-2 border-transparent hover:shadow-xl'
@@ -77,7 +78,7 @@ const MoveIn: React.FC = () => {
     const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
 
     const [recurringRentAmount, setRecurringRentAmount] = useState<string>('');
-    const [lateFeeType, setLateFeeType] = useState<'one-time' | 'daily'>('one-time');
+    const [lateFeeType, setLateFeeType] = useState<'one-time' | 'daily' | 'both'>('one-time');
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 
     const handleBack = () => {
@@ -151,7 +152,7 @@ const MoveIn: React.FC = () => {
         }
     }
 
-    const handleLateFeesTypeNext = (type: 'one-time' | 'daily') => {
+    const handleLateFeesTypeNext = (type: 'one-time' | 'daily' | 'both') => {
         setLateFeeType(type);
         // Proceed to Step 10 (One Time Late Fee or Daily Late Fee)
         setCurrentStep(10);
@@ -163,17 +164,17 @@ const MoveIn: React.FC = () => {
 
     return (
         <div className="flex flex-col h-full w-full bg-[var(--color-background)] px-6 overflow-y-auto">
-            <div className="flex-1 flex items-start justify-center pt-8">
-                <div className={`bg-[#DFE5E3] rounded-[2rem] p-12 flex flex-col items-center w-full shadow-sm min-h-[80vh] relative ${currentStep > 0 ? 'max-w-3xl' : 'max-w-5xl'}`}>
+            <div className="flex-1 flex items-start justify-center pt-4 md:pt-8 pb-8">
+                <div className={`bg-[#DFE5E3] rounded-[2rem] p-4 sm:p-8 md:p-12 flex flex-col items-center w-full shadow-sm min-h-[80vh] relative max-w-4xl`}>
 
                     {/* Back Button */}
-                    <div className="absolute top-8 left-8">
+                    <div className="absolute top-4 left-4 md:top-8 md:left-8 z-10">
                         <button
                             onClick={handleBack}
-                            className="flex items-center gap-2 text-[#3D7475] font-bold hover:opacity-80 transition-opacity uppercase tracking-wide"
+                            className="flex items-center gap-2 text-[#3D7475] font-bold hover:opacity-80 transition-opacity uppercase tracking-wide text-sm md:text-base bg-[#DFE5E3]/80 p-2 md:p-0 rounded md:bg-transparent backdrop-blur-sm md:backdrop-blur-none"
                         >
                             <ArrowLeft size={20} strokeWidth={2.5} />
-                            BACK
+                            <span className="hidden md:inline">BACK</span>
                         </button>
                     </div>
 
@@ -186,7 +187,7 @@ const MoveIn: React.FC = () => {
                                 <p className="text-gray-500">Move in your tenant(s) to the property and start collecting rent.</p>
                             </div>
 
-                            <div className="flex flex-col md:flex-row gap-8 mb-16">
+                            <div className="flex flex-col md:flex-row gap-8 mb-16 w-full justify-center items-center md:items-stretch">
                                 <MoveInScenarioCard
                                     type="easy"
                                     selected={selectedScenario?.type === 'easy'}
@@ -201,7 +202,7 @@ const MoveIn: React.FC = () => {
 
                             <GetStartedButton
                                 text="Get Started"
-                                widthClass="w-auto px-12"
+                                widthClass="w-full sm:w-auto px-12"
                                 onClick={handleGetStarted}
                                 disabled={!selectedScenario}
                             />
@@ -291,6 +292,14 @@ const MoveIn: React.FC = () => {
 
                                 {currentStep === 10 && lateFeeType === 'daily' && (
                                     <MoveInDailyLateFees
+                                        onNext={handleCompleteMoveIn}
+                                        onBack={handleBack}
+                                        recurringRentAmount={recurringRentAmount}
+                                    />
+                                )}
+
+                                {currentStep === 10 && lateFeeType === 'both' && (
+                                    <MoveInBothLateFees
                                         onNext={handleCompleteMoveIn}
                                         onBack={handleBack}
                                         recurringRentAmount={recurringRentAmount}

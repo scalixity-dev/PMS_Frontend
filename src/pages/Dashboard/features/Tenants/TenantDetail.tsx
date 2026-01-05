@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, Plus } from 'lucide-react';
+import { ChevronLeft, Plus, Loader2 } from 'lucide-react';
 import DetailTabs from '../../components/DetailTabs';
 import TenantProfileSection from './components/TenantProfileSection';
 import TenantLeasesSection from './components/TenantLeasesSection';
@@ -8,133 +8,62 @@ import TenantTransactionsSection from './components/TenantTransactionsSection';
 import TenantInsuranceSection from './components/TenantInsuranceSection';
 import TenantApplicationsSection from './components/TenantApplicationsSection';
 import TenantRequestsSection from './components/TenantRequestsSection';
+import { useGetTenant, useDeleteTenant } from '../../../../hooks/useTenantQueries';
+import type { BackendTenantProfile } from '../../../../services/tenant.service';
 
-// Mock Data - keyed by tenant ID
-const TENANT_DETAILS: Record<number, any> = {
-    1: {
-        id: 1,
-        name: 'Anjali Vyas',
-        phone: '+91 8569325417',
-        email: 'Anjli57474@gmail.com',
-        image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200&h=200',
-        outstanding: 45000,
-        deposits: 45000,
-        credits: 45000,
+// Transform backend tenant profile to detail page format
+const transformTenantForDetail = (backendTenant: BackendTenantProfile) => {
+    const email = backendTenant.user?.email || backendTenant.contactBookEntry?.email || 'N/A';
+    const phone = backendTenant.phoneNumber
+        ? `${backendTenant.phoneCountryCode || ''}${backendTenant.phoneNumber}`.trim()
+        : 'N/A';
+    const name = [backendTenant.firstName, backendTenant.middleName, backendTenant.lastName]
+        .filter(Boolean)
+        .join(' ');
+
+    return {
+        id: Number(backendTenant.id) || 0, // Convert string ID to number for compatibility
+        name,
+        phone,
+        email,
+        image: backendTenant.profilePhotoUrl || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200&h=200',
+        outstanding: 0, // TODO: Calculate from transactions
+        deposits: 0, // TODO: Calculate from deposits
+        credits: 0, // TODO: Calculate from credits
         personalInfo: {
-            firstName: 'Jay',
-            middleName: 'Kumar',
-            lastName: 'Rai',
-            email: '-',
-            additionalEmail: '-',
-            phone: '+91 78546 21026',
-            additionalPhone: '-',
-            companyName: 'Clever Monts',
-            dateOfBirth: 'dd/mm/yy',
+            firstName: backendTenant.firstName,
+            middleName: backendTenant.middleName || '',
+            lastName: backendTenant.lastName,
+            email: email,
+            additionalEmail: '-', // Not in backend model
+            phone: phone,
+            additionalPhone: '-', // Not in backend model
+            companyName: '-', // Not in backend model
+            dateOfBirth: '-', // Not in backend model
             companyName2: '-'
         },
-        forwardingAddress: 'Silicon City Main Rd, Indore Division, MP 452012',
-        emergencyContacts: [
-            { name: 'Jay', relationship: 'bro', email: '-', phone: '+91 78546 21026' }
-        ],
-        pets: [
-            { name: 'Tommy', type: 'Dog', weight: '5', breed: 'german' }
-        ],
-        vehicles: [
-            { type: 'Automobile', make: 'as', registeredIn: 'mp', year: '2021', color: 'red', license: '123641' }
-        ]
-    },
-    2: {
-        id: 2,
-        name: 'Rahul Sharma',
-        phone: '+91 9876543210',
-        email: 'rahul.sharma@example.com',
-        image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200&h=200',
-        outstanding: 32000,
-        deposits: 40000,
-        credits: 28000,
-        personalInfo: {
-            firstName: 'Rahul',
-            middleName: 'Kumar',
-            lastName: 'Sharma',
-            email: 'rahul.sharma@example.com',
-            additionalEmail: '-',
-            phone: '+91 9876543210',
-            additionalPhone: '-',
-            companyName: 'Tech Solutions',
-            dateOfBirth: '15/08/1990',
-            companyName2: '-'
-        },
-        forwardingAddress: 'Tech Park, Bangalore, Karnataka 560001',
-        emergencyContacts: [
-            { name: 'Priya Sharma', relationship: 'spouse', email: 'priya@example.com', phone: '+91 9876543211' }
-        ],
-        pets: [],
-        vehicles: [
-            { type: 'Car', make: 'Honda', registeredIn: 'KA', year: '2020', color: 'silver', license: 'KA01AB1234' }
-        ]
-    },
-    3: {
-        id: 3,
-        name: 'Priya Patel',
-        phone: '+91 7890123456',
-        email: 'priya.patel@example.com',
-        image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=200&h=200',
-        outstanding: 0,
-        deposits: 50000,
-        credits: 15000,
-        personalInfo: {
-            firstName: 'Priya',
-            middleName: '',
-            lastName: 'Patel',
-            email: 'priya.patel@example.com',
-            additionalEmail: 'priya.work@example.com',
-            phone: '+91 7890123456',
-            additionalPhone: '+91 7890123457',
-            companyName: 'Design Studio',
-            dateOfBirth: '22/03/1992',
-            companyName2: '-'
-        },
-        forwardingAddress: 'MG Road, Pune, Maharashtra 411001',
-        emergencyContacts: [
-            { name: 'Amit Patel', relationship: 'brother', email: 'amit@example.com', phone: '+91 7890123458' }
-        ],
-        pets: [
-            { name: 'Milo', type: 'Cat', weight: '3', breed: 'persian' }
-        ],
-        vehicles: []
-    },
-    4: {
-        id: 4,
-        name: 'Arjun Mehta',
-        phone: '+91 6543210987',
-        email: 'arjun.mehta@example.com',
-        image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200&h=200',
-        outstanding: 18000,
-        deposits: 35000,
-        credits: 22000,
-        personalInfo: {
-            firstName: 'Arjun',
-            middleName: 'Singh',
-            lastName: 'Mehta',
-            email: 'arjun.mehta@example.com',
-            additionalEmail: '-',
-            phone: '+91 6543210987',
-            additionalPhone: '-',
-            companyName: 'Finance Corp',
-            dateOfBirth: '10/12/1988',
-            companyName2: '-'
-        },
-        forwardingAddress: 'Connaught Place, New Delhi, Delhi 110001',
-        emergencyContacts: [
-            { name: 'Neha Mehta', relationship: 'sister', email: 'neha@example.com', phone: '+91 6543210988' }
-        ],
-        pets: [
-            { name: 'Max', type: 'Dog', weight: '8', breed: 'labrador' }
-        ],
-        vehicles: [
-            { type: 'Motorcycle', make: 'Royal Enfield', registeredIn: 'DL', year: '2019', color: 'black', license: 'DL02XY5678' }
-        ]
-    }
+        forwardingAddress: backendTenant.forwardingAddress || '-',
+        emergencyContacts: backendTenant.emergencyContacts.map(contact => ({
+            name: contact.name,
+            phone: contact.phoneNumber,
+            relationship: contact.relationship,
+            email: contact.email || '-'
+        })),
+        pets: backendTenant.pets.map(pet => ({
+            name: pet.name,
+            breed: pet.breed || '-',
+            type: pet.type,
+            weight: pet.weight ? String(pet.weight) : '-'
+        })),
+        vehicles: backendTenant.vehicles.map(vehicle => ({
+            type: vehicle.type,
+            year: vehicle.year ? String(vehicle.year) : '-',
+            make: vehicle.make,
+            color: vehicle.color || '-',
+            registeredIn: vehicle.registeredIn || '-',
+            license: vehicle.licensePlate
+        }))
+    };
 };
 
 const TenantDetail = () => {
@@ -143,6 +72,10 @@ const TenantDetail = () => {
     const [activeTab, setActiveTab] = useState('profile');
     const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
     const actionMenuRef = useRef<HTMLDivElement>(null);
+    const deleteTenantMutation = useDeleteTenant();
+
+    // Fetch tenant data using API
+    const { data: backendTenant, isLoading, error } = useGetTenant(id || null);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -160,6 +93,18 @@ const TenantDetail = () => {
         };
     }, [isActionMenuOpen]);
 
+    const handleDeleteTenant = async () => {
+        if (id && window.confirm('Are you sure you want to delete this tenant?')) {
+            try {
+                await deleteTenantMutation.mutateAsync(id);
+                navigate('/dashboard/contacts/tenants');
+            } catch (err) {
+                console.error('Failed to delete tenant:', err);
+                alert(`Failed to delete tenant: ${err instanceof Error ? err.message : 'Unknown error'}`);
+            }
+        }
+    };
+
     const menuItems = [
         { label: 'Edit', action: () => navigate(`/dashboard/contacts/tenants/edit/${id}`) },
         { label: 'Send connection', action: () => { } },
@@ -169,18 +114,16 @@ const TenantDetail = () => {
         { label: 'Archive', action: () => { } },
         {
             label: 'Delete',
-            action: () => {
-                if (window.confirm('Are you sure you want to delete this tenant?')) {
-                    console.log('Deleting tenant:', id);
-                    navigate('/dashboard/contacts/tenants');
-                }
-            },
+            action: handleDeleteTenant,
             isDestructive: true
         },
     ];
 
-    // Get tenant by ID from route param, fallback to tenant 1
-    const tenant = TENANT_DETAILS[Number(id)] || TENANT_DETAILS[1];
+    // Transform backend tenant to detail page format
+    const tenant = useMemo(() => {
+        if (!backendTenant) return null;
+        return transformTenantForDetail(backendTenant);
+    }, [backendTenant]);
 
     const tabs = [
         { id: 'profile', label: 'Profile' },
@@ -190,6 +133,37 @@ const TenantDetail = () => {
         { id: 'applications', label: 'Applications' },
         { id: 'requests', label: 'Requests' }
     ];
+
+    // Loading state
+    if (isLoading) {
+        return (
+            <div className="max-w-6xl mx-auto min-h-screen font-outfit pb-10 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="w-8 h-8 animate-spin text-[#3A6D6C]" />
+                    <p className="text-gray-600">Loading tenant details...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Error state
+    if (error || !tenant) {
+        return (
+            <div className="max-w-6xl mx-auto min-h-screen font-outfit pb-10">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                    <p className="text-red-800 text-sm">
+                        {error instanceof Error ? error.message : 'Failed to load tenant details. Please try again.'}
+                    </p>
+                    <button
+                        onClick={() => navigate('/dashboard/contacts/tenants')}
+                        className="mt-4 px-4 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors"
+                    >
+                        Back to Tenants
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-6xl mx-auto min-h-screen font-outfit pb-10">
@@ -202,16 +176,16 @@ const TenantDetail = () => {
                 <span className="text-gray-600 text-sm font-semibold">{tenant.name}</span>
             </div>
 
-            <div className="p-6 bg-[#E0E5E5] min-h-screen rounded-[2rem]">
+            <div className="p-4 sm:p-6 bg-[#E0E5E5] min-h-screen rounded-[1.5rem] sm:rounded-[2rem]">
                 {/* Header Actions */}
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <div className="flex items-center gap-2">
                         <button onClick={() => navigate(-1)} className="p-2 hover:bg-black/5 rounded-full transition-colors">
                             <ChevronLeft className="w-6 h-6 text-black" />
                         </button>
                         <h1 className="text-2xl font-bold text-black">Tenant</h1>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 w-full sm:w-auto flex-wrap sm:flex-nowrap">
                         <button
                             onClick={() => navigate('/dashboard/accounting/transactions/income/add', {
                                 state: {
@@ -223,7 +197,7 @@ const TenantDetail = () => {
                                     prefilledLease: 'Lease #101' // Mock lease for now
                                 }
                             })}
-                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2"
+                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2 whitespace-nowrap"
                         >
                             Add Invoice
                             <Plus className="w-4 h-4" />
@@ -231,7 +205,7 @@ const TenantDetail = () => {
                         <div className="relative" ref={actionMenuRef}>
                             <button
                                 onClick={() => setIsActionMenuOpen(!isActionMenuOpen)}
-                                className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors"
+                                className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors whitespace-nowrap"
                             >
                                 Action
                             </button>
@@ -259,21 +233,30 @@ const TenantDetail = () => {
                     </div>
                 </div>
 
-                <div className='shadow-lg rounded-[2rem] p-6 mb-8'>
+                <div className='shadow-lg rounded-[2rem] p-4 sm:p-6 mb-8 bg-white'>
                     {/* Top Card */}
-                    <div className="bg-[#F6F6F8] rounded-[2rem] shadow-lg p-6 mb-8">
-                        <div className="flex flex-col lg:flex-row gap-8">
+                    <div className="bg-[#F6F6F8] rounded-[1.5rem] sm:rounded-[2rem] shadow-lg p-4 sm:p-6 mb-8">
+                        <div className="flex flex-col xl:flex-row gap-8">
                             {/* Tenant Info */}
-                            <div className="flex gap-6 items-start">
+                            <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start w-full xl:w-auto">
                                 <img src={tenant.image} alt={tenant.name} className="w-32 h-32 rounded-2xl object-cover" />
-                                <div className="flex flex-col gap-3">
-                                    <div className="bg-[#3A6D6C] text-white p-4 rounded-xl text-center min-w-[200px]">
+                                <div className="flex flex-col gap-3 w-full sm:w-auto">
+                                    <div className="bg-[#3A6D6C] text-white p-4 rounded-xl text-center min-w-[200px] w-full sm:w-auto">
                                         <h2 className="font-bold text-lg">{tenant.name}</h2>
                                         <p className="text-xs opacity-90">{tenant.phone}</p>
                                         <p className="text-xs opacity-90">{tenant.email}</p>
                                     </div>
                                     <button
-                                        onClick={() => navigate(`/dashboard/contacts/tenants/${tenant.id}/profile`)}
+                                        onClick={() => {
+                                            setActiveTab('profile');
+                                            // Scroll to profile section after a brief delay to ensure tab is rendered
+                                            setTimeout(() => {
+                                                const profileSection = document.getElementById('profile-section');
+                                                if (profileSection) {
+                                                    profileSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                }
+                                            }, 100);
+                                        }}
                                         className="w-full bg-[#C8C8C8] text-gray-700 py-2 rounded-full text-sm font-medium hover:bg-[#b8b8b8] transition-colors shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]"
                                     >
                                         View Profile
@@ -282,49 +265,49 @@ const TenantDetail = () => {
                             </div>
 
                             {/* Stats & Reports */}
-                            <div className="flex-1 flex flex-col justify-between gap-4">
-                                <div className="grid grid-cols-3 gap-4">
-                                    <div className="bg-[#7BD747] rounded-full px-4 py-3 flex flex-col justify-between h-18 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">
+                            <div className="flex-1 flex flex-col justify-between gap-4 w-full">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="bg-[#7BD747] rounded-full px-6 py-3 flex flex-row md:flex-col justify-between items-center md:items-stretch h-auto md:h-24 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)] gap-2">
                                         <span className="text-xs font-semibold text-white">Outstanding</span>
-                                        <div className="flex justify-between items-center">
+                                        <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-2">
                                             <div className="bg-[#E8F5E9] px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">₹{tenant.outstanding.toLocaleString()}.00</div>
                                             <button className="bg-[#3A6D6C] text-white px-3 py-1 rounded-full text-[10px] font-medium uppercase shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">Received</button>
                                         </div>
                                     </div>
-                                    <div className="bg-[#7BD747] rounded-full px-4 py-3 flex flex-col justify-between h-18 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">
+                                    <div className="bg-[#7BD747] rounded-full px-6 py-3 flex flex-row md:flex-col justify-between items-center md:items-stretch h-auto md:h-24 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)] gap-2">
                                         <span className="text-xs font-semibold text-white">Deposits</span>
-                                        <div className="flex justify-between items-center">
+                                        <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-2">
                                             <div className="bg-[#E8F5E9] px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">₹{tenant.deposits.toLocaleString()}.00</div>
                                             <button className="bg-[#3A6D6C] text-white px-3 py-1 rounded-full text-[10px] font-medium uppercase shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">Action</button>
                                         </div>
                                     </div>
-                                    <div className="bg-[#7BD747] rounded-full px-4 py-3 flex flex-col justify-between h-18 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">
+                                    <div className="bg-[#7BD747] rounded-full px-6 py-3 flex flex-row md:flex-col justify-between items-center md:items-stretch h-auto md:h-24 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)] gap-2">
                                         <span className="text-xs font-semibold text-white">Credits</span>
-                                        <div className="flex justify-between items-center">
+                                        <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-2">
                                             <div className="bg-[#E8F5E9] px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">₹{tenant.credits.toLocaleString()}.00</div>
                                             <button className="bg-[#3A6D6C] text-white px-3 py-1 rounded-full text-[10px] font-medium uppercase shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">Action</button>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="bg-[#E4E4E4] rounded-[3.5rem] p-4 shadow-lg">
+                                <div className="bg-[#E4E4E4] rounded-[2rem] sm:rounded-[3.5rem] p-4 shadow-lg">
                                     <h3 className="text-gray-700 font-bold mb-2 ml-1">Reports</h3>
-                                    <div className="flex gap-4">
-                                        <div className="flex-1 bg-[#7BD747] rounded-full px-4 py-3 flex flex-col justify-between min-h-[5rem] shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">
+                                    <div className="flex flex-col md:flex-row gap-4">
+                                        <div className="flex-1 bg-[#7BD747] rounded-3xl sm:rounded-full px-4 py-4 flex flex-col justify-between min-h-[5rem] shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)] gap-2">
                                             <div className="flex flex-col">
                                                 <span className="text-xs font-bold text-white">Financial</span>
                                             </div>
-                                            <div className="flex justify-between items-center">
-                                                <div className="bg-[#E8F5E9] px-4 py-1 rounded-full text-xs text-gray-600 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)]">Tenant Statement</div>
+                                            <div className="flex justify-between items-center gap-2">
+                                                <div className="bg-[#E8F5E9] px-4 py-1 rounded-full text-xs text-gray-600 shadow-[inset_0_4px_1px_rgba(0,0,0,0.1)] whitespace-nowrap">Tenant Statement</div>
                                                 <button className="bg-[#3A6D6C] text-white px-4 py-1.5 rounded-full text-xs font-medium uppercase shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">View</button>
                                             </div>
                                         </div>
-                                        <div className="flex-1 bg-[#7BD747] rounded-full px-4 py-3 flex flex-col justify-between min-h-[5rem] shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
+                                        <div className="flex-1 bg-[#7BD747] rounded-3xl sm:rounded-full px-4 py-4 flex flex-col justify-between min-h-[5rem] shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] gap-2">
                                             <div className="flex flex-col">
                                                 <span className="text-xs font-bold text-white">Notice</span>
                                             </div>
-                                            <div className="flex justify-between items-center">
-                                                <div className="bg-[#E8F5E9] px-4 py-1 rounded-full text-xs text-gray-600 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">Tenant Notice</div>
+                                            <div className="flex justify-between items-center gap-2">
+                                                <div className="bg-[#E8F5E9] px-4 py-1 rounded-full text-xs text-gray-600 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] whitespace-nowrap">Tenant Notice</div>
                                                 <button className="bg-[#3A6D6C] text-white px-4 py-1.5 rounded-full text-xs font-medium uppercase shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">Send</button>
                                             </div>
                                         </div>
@@ -345,22 +328,24 @@ const TenantDetail = () => {
 
                 {/* Tab Content */}
                 {activeTab === 'profile' && (
-                    <TenantProfileSection tenant={tenant} />
+                    <div id="profile-section">
+                        <TenantProfileSection tenantId={id || ''} tenant={tenant} />
+                    </div>
                 )}
                 {activeTab === 'leases' && (
-                    <TenantLeasesSection tenant={tenant} />
+                    <TenantLeasesSection tenantId={id || ''} tenant={tenant} />
                 )}
                 {activeTab === 'transactions' && (
-                    <TenantTransactionsSection />
+                    <TenantTransactionsSection tenantId={id || ''} tenant={tenant} />
                 )}
                 {activeTab === 'insurance' && (
-                    <TenantInsuranceSection />
+                    <TenantInsuranceSection tenantId={id || ''} />
                 )}
                 {activeTab === 'applications' && (
-                    <TenantApplicationsSection />
+                    <TenantApplicationsSection tenantId={id || ''} tenantUserId={backendTenant?.userId || null} />
                 )}
                 {activeTab === 'requests' && (
-                    <TenantRequestsSection />
+                    <TenantRequestsSection tenantId={id || ''} />
                 )}
             </div>
         </div>

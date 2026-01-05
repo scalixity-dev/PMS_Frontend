@@ -15,7 +15,7 @@ interface Property {
     balance: number;
     image: string | null;
     type: string;
-    status: 'active' | 'archived' ;
+    status: 'active' | 'archived';
     occupancy: 'vacant' | 'occupied' | 'partially_occupied';
     propertyType: 'single_apartment' | 'multi_apartment';
     balanceCategory: 'low' | 'medium' | 'high';
@@ -26,6 +26,7 @@ interface Property {
 
 const Properties: React.FC = () => {
     const navigate = useNavigate();
+    const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 9;
@@ -53,7 +54,6 @@ const Properties: React.FC = () => {
 
     // Transform backend property to frontend format
     const transformProperty = (backendProperty: BackendProperty): Property => {
-        // Format address and extract country
         let address = 'Address not available';
         let country: string | undefined;
         if (backendProperty.address) {
@@ -71,14 +71,11 @@ const Properties: React.FC = () => {
             }
         }
 
-        // Get image - prioritize coverPhotoUrl, then primary photo, then first photo
-        // Use null if no image exists to prevent data leakage (sharing same default image)
         const image = backendProperty.coverPhotoUrl
             || backendProperty.photos?.find((p) => p.isPrimary)?.photoUrl
             || backendProperty.photos?.[0]?.photoUrl
             || null;
 
-        // Map status from backend to frontend
         const statusMap: Record<string, 'active' | 'archived'> = {
             'ACTIVE': 'active',
             'ARCHIVED': 'archived',
@@ -87,14 +84,12 @@ const Properties: React.FC = () => {
             ? statusMap[backendProperty.status] || 'archived'
             : 'archived';
 
-        // Map property type
         const propertyTypeMap: Record<string, 'single_apartment' | 'multi_apartment'> = {
             'SINGLE': 'single_apartment',
             'MULTI': 'multi_apartment',
         };
         const propertyType = propertyTypeMap[backendProperty.propertyType] || 'single_apartment';
 
-        // Determine occupancy from leasing data
         let occupancy: 'vacant' | 'occupied' | 'partially_occupied' = 'vacant';
         if (backendProperty.leasing?.occupancyStatus) {
             const occupancyMap: Record<string, 'vacant' | 'occupied' | 'partially_occupied'> = {
@@ -105,23 +100,17 @@ const Properties: React.FC = () => {
             occupancy = occupancyMap[backendProperty.leasing.occupancyStatus] || 'vacant';
         }
 
-        // Calculate balance from monthly rent (prioritize leasing monthlyRent, then marketRent)
         let monthlyRent = 0;
-
-        // First check if there's monthlyRent in leasing data
         if (backendProperty.leasing?.monthlyRent) {
             monthlyRent = typeof backendProperty.leasing.monthlyRent === 'string'
                 ? parseFloat(backendProperty.leasing.monthlyRent) || 0
                 : Number(backendProperty.leasing.monthlyRent) || 0;
-        }
-        // Fall back to marketRent from property
-        else if (backendProperty.marketRent) {
+        } else if (backendProperty.marketRent) {
             monthlyRent = typeof backendProperty.marketRent === 'string'
                 ? parseFloat(backendProperty.marketRent) || 0
                 : Number(backendProperty.marketRent) || 0;
         }
 
-        // Map country to currency (default to USD if country not found)
         const countryToCurrency: Record<string, string> = {
             'United States': 'USD',
             'USA': 'USD',
@@ -152,11 +141,7 @@ const Properties: React.FC = () => {
         };
         const currency = country ? (countryToCurrency[country] || 'USD') : 'USD';
 
-        // Determine balance category based on monthly rent and currency
-        // Use currency-agnostic percentiles or currency-specific thresholds
         let balanceCategory: 'low' | 'medium' | 'high' = 'medium';
-        
-        // Currency-specific thresholds (in base currency units)
         const currencyThresholds: Record<string, { low: number; high: number }> = {
             'USD': { low: 25000, high: 75000 },
             'CAD': { low: 33000, high: 100000 },
@@ -171,7 +156,7 @@ const Properties: React.FC = () => {
             'AED': { low: 92000, high: 275000 },
             'SAR': { low: 94000, high: 280000 },
         };
-        
+
         const thresholds = currencyThresholds[currency] || currencyThresholds['USD'];
         if (monthlyRent < thresholds.low) {
             balanceCategory = 'low';
@@ -179,27 +164,22 @@ const Properties: React.FC = () => {
             balanceCategory = 'high';
         }
 
-        // Determine marketing status from listings
         let marketingStatus: 'listed' | 'unlisted' | 'draft' = 'unlisted';
         if (backendProperty.listings && backendProperty.listings.length > 0) {
-            // Check if any listing is ACTIVE
             const hasActiveListing = backendProperty.listings.some(
                 listing => listing.listingStatus === 'ACTIVE'
             );
-            // Check if any listing is DRAFT
             const hasDraftListing = backendProperty.listings.some(
                 listing => listing.listingStatus === 'DRAFT'
             );
-            
+
             if (hasActiveListing) {
                 marketingStatus = 'listed';
             } else if (hasDraftListing) {
                 marketingStatus = 'draft';
             }
-            // Otherwise remains 'unlisted'
         }
 
-        // Get property type label for display
         const typeLabels: Record<string, string> = {
             'single_apartment': 'Single Apartment',
             'multi_apartment': 'Multi Apartment',
@@ -223,13 +203,12 @@ const Properties: React.FC = () => {
         };
     };
 
-    // Fetch properties from API (include listings to determine marketing status)
     useEffect(() => {
         const fetchProperties = async () => {
             try {
                 setLoading(true);
                 setError(null);
-                const backendProperties = await propertyService.getAll(true); // Include listings
+                const backendProperties = await propertyService.getAll(true);
                 const transformedProperties = backendProperties.map(transformProperty);
                 setProperties(transformedProperties);
             } catch (err) {
@@ -339,41 +318,35 @@ const Properties: React.FC = () => {
             { value: 'medium', label: 'Medium' },
             { value: 'high', label: 'High' },
         ]
-    };
+    }), []);
 
-    const filterLabels: Record<string, string> = {
+    const filterLabels: Record<string, string> = useMemo(() => ({
         status: 'Status',
         occupancy: 'Occupancy',
         propertyType: 'Property Type',
         marketingStatus: 'Marketing Status',
         balance: 'Balance'
-    };
+    }), []);
 
     const filteredProperties = useMemo(() => {
         return properties.filter(property => {
-            // Search filter
             const matchesSearch = searchQuery === '' ||
                 property.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 property.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 property.type.toLowerCase().includes(searchQuery.toLowerCase());
 
-            // Status filter
             const matchesStatus = filters.status.length === 0 ||
                 filters.status.includes(property.status);
 
-            // Occupancy filter
             const matchesOccupancy = filters.occupancy.length === 0 ||
                 filters.occupancy.includes(property.occupancy);
 
-            // Property Type filter
             const matchesPropertyType = filters.propertyType.length === 0 ||
                 filters.propertyType.includes(property.propertyType);
 
-            // Marketing Status filter
             const matchesMarketingStatus = filters.marketingStatus.length === 0 ||
                 filters.marketingStatus.includes(property.marketingStatus);
 
-            // Balance filter (currency-agnostic - uses relative categories)
             const matchesBalance = filters.balance.length === 0 ||
                 filters.balance.includes(property.balanceCategory);
 
@@ -381,7 +354,6 @@ const Properties: React.FC = () => {
         });
     }, [properties, searchQuery, filters]);
 
-    // Reset to first page when filters change
     useEffect(() => {
         setCurrentPage(1);
     }, [searchQuery, filters]);
@@ -399,14 +371,15 @@ const Properties: React.FC = () => {
     };
 
     return (
-        <div className="max-w-6xl mx-auto min-h-screen">
-            <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
+        <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen transition-all duration-300`}>
+            {/* Breadcrumb */}
+            <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-4 md:mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
                 <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
                 <span className="text-gray-500 text-sm mx-1">/</span>
                 <span className="text-gray-600 text-sm font-semibold">Properties</span>
             </div>
 
-            <div className="p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem] overflow-visible">
+            <div className="p-4 md:p-6 bg-[#E0E8E7] min-h-screen rounded-[1.5rem] md:rounded-[2rem] overflow-visible flex flex-col">
                 <PropertiesHeader onAddProperty={handleAddProperty} onImport={handleImport} />
 
                 {/* Selection Mode Controls */}
@@ -469,20 +442,22 @@ const Properties: React.FC = () => {
                     filterLabels={filterLabels}
                     onSearchChange={setSearchQuery}
                     onFiltersChange={(newFilters) => setFilters(newFilters as any)}
+                    searchPlaceholder="Search properties..."
                 />
 
                 {loading ? (
-                    <div className="text-center py-12 bg-white rounded-2xl">
+                    <div className="text-center py-12 bg-white rounded-2xl mt-4">
+                        <Loader2 className="w-8 h-8 animate-spin text-[#3A6D6C] mx-auto mb-4" />
                         <p className="text-gray-500 text-lg">Loading properties...</p>
                     </div>
                 ) : error ? (
-                    <div className="text-center py-12 bg-white rounded-2xl">
+                    <div className="text-center py-12 bg-white rounded-2xl mt-4">
                         <p className="text-red-500 text-lg">Error: {error}</p>
                         <p className="text-gray-400 text-sm mt-2">Please try refreshing the page</p>
                     </div>
                 ) : filteredProperties.length > 0 ? (
                     <>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8 mt-4">
                             {currentProperties.map((property) => (
                                 <PropertyCard
                                     key={property.id}
@@ -506,12 +481,22 @@ const Properties: React.FC = () => {
                             currentPage={currentPage}
                             totalPages={totalPages}
                             onPageChange={handlePageChange}
+                            className="mt-auto py-6"
                         />
                     </>
                 ) : (
-                    <div className="text-center py-12 bg-white rounded-2xl">
-                        <p className="text-gray-500 text-lg">No properties found matching your filters</p>
-                        <p className="text-gray-400 text-sm mt-2">Try adjusting your search or filters</p>
+                    <div className="text-center py-12 bg-white rounded-2xl mt-4">
+                        <div className="inline-flex items-center justify-center w-16 h-16 bg-[#F5F5DC] rounded-2xl mb-4">
+                            <Building2 className="w-8 h-8 text-[#8B8B4A]" />
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-800 mb-1">No properties yet</h3>
+                        <p className="text-gray-500 text-sm mb-4">Add your first property to get started</p>
+                        <button
+                            onClick={handleAddProperty}
+                            className="inline-flex items-center justify-center px-6 py-2.5 bg-[#7BD747] text-white font-medium rounded-full hover:bg-[#6bc93a] transition-colors"
+                        >
+                            Add Property
+                        </button>
                     </div>
                 )}
 

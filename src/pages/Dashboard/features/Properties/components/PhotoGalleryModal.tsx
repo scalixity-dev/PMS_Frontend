@@ -41,7 +41,7 @@ const PhotoGalleryModal: React.FC<PhotoGalleryModalProps> = ({
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 md:p-10 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 sm:p-4 md:p-10 animate-in fade-in duration-200">
             <style>{`
                 .modern-scrollbar::-webkit-scrollbar {
                     width: 6px;
@@ -60,15 +60,14 @@ const PhotoGalleryModal: React.FC<PhotoGalleryModalProps> = ({
 
             <button
                 onClick={onClose}
-                className="absolute top-4 right-4 z-50 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors backdrop-blur-md"
+                className="absolute top-2 right-2 sm:top-4 sm:right-4 z-50 p-2.5 sm:p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors backdrop-blur-md"
                 aria-label="Close gallery"
             >
-                <X className="w-6 h-6" />
-            </button>
+                <X className="w-5 h-5 sm:w-6 sm:h-6" />            </button>
 
-            <div className="w-full max-w-7xl h-full max-h-[85vh] bg-white rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-2xl">
-                {/* Main Image Area (Left) */}
-                <div className="relative flex-1 bg-gray-50 flex items-center justify-center p-4">
+            <div className="w-full max-w-7xl h-full max-h-[85vh] sm:max-h-[90vh] bg-white rounded-xl sm:rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-2xl">
+                {/* Main Image Area */}
+                <div className="relative flex-1 bg-gray-50 flex items-center justify-center p-2 sm:p-4 min-h-0">
                     <img
                         src={images[currentIndex]}
                         alt={`View ${currentIndex + 1}`}
@@ -80,39 +79,40 @@ const PhotoGalleryModal: React.FC<PhotoGalleryModalProps> = ({
                         <>
                             <button
                                 onClick={handlePrevious}
-                                className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-white/80 hover:bg-white text-gray-800 rounded-full transition-all hover:scale-110 active:scale-95 shadow-md border border-gray-100"
+                                className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-3 sm:p-3 bg-white/80 hover:bg-white text-gray-800 rounded-full transition-all hover:scale-110 active:scale-95 shadow-md border border-gray-100"
+                                aria-label="Previous image"
                             >
-                                <ChevronLeft className="w-6 h-6" />
+                                <ChevronLeft className="w-4 h-4 sm:w-6 sm:h-6" />
                             </button>
                             <button
                                 onClick={handleNext}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-white/80 hover:bg-white text-gray-800 rounded-full transition-all hover:scale-110 active:scale-95 shadow-md border border-gray-100"
+                                className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-3 sm:p-3 bg-white/80 hover:bg-white text-gray-800 rounded-full transition-all hover:scale-110 active:scale-95 shadow-md border border-gray-100"
+                                aria-label="Next image"
                             >
-                                <ChevronRight className="w-6 h-6" />
+                                <ChevronRight className="w-4 h-4 sm:w-6 sm:h-6" />
                             </button>
                         </>
                     )}
 
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/80 px-4 py-1.5 rounded-full text-gray-700 text-xs font-semibold backdrop-blur-md border border-gray-200 shadow-sm">
+                    <div className="absolute bottom-2 sm:bottom-4 left-1/2 -translate-x-1/2 bg-white/80 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-gray-700 text-[11px] sm:text-xs font-semibold backdrop-blur-md border border-gray-200 shadow-sm">
                         {currentIndex + 1} / {images.length}
-                    </div>
-                </div>
+                    </div>                </div>
 
-                {/* Vertical Thumbnail List (Right) */}
-                <div className="md:w-80 h-32 md:h-full bg-white border-l border-gray-100 flex flex-col">
-                    <div className="p-4 border-b border-gray-100">
+                {/* Thumbnail List - Horizontal on mobile/small, Vertical sidebar on tablet+ */}
+                <div className="h-20 sm:h-24 md:h-full md:w-48 lg:w-64 bg-white border-t md:border-t-0 md:border-l border-gray-100 flex flex-col">
+                    <div className="hidden md:block p-3 lg:p-4 border-b border-gray-100">
                         <h3 className="text-gray-900 font-bold text-sm">Gallery</h3>
                         <p className="text-gray-500 text-xs mt-1">{images.length} photos</p>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-4 space-y-3 modern-scrollbar">
+                    <div className="flex-1 overflow-x-auto md:overflow-x-hidden overflow-y-hidden md:overflow-y-auto p-2 md:p-3 lg:p-4 flex md:flex-col gap-2 md:gap-3 modern-scrollbar">
                         {images.map((img, idx) => (
                             <button
                                 key={idx}
                                 onClick={() => setCurrentIndex(idx)}
-                                className={`w-full relative group aspect-video rounded-lg overflow-hidden transition-all duration-200 ${currentIndex === idx
-                                        ? 'ring-2 ring-[#4ad1a6] ring-offset-2 ring-offset-white opacity-100 scale-[1.02] shadow-md'
-                                        : 'opacity-70 hover:opacity-100 hover:scale-[1.02] hover:shadow-sm'
+                                className={`flex-shrink-0 w-14 h-10 sm:w-16 sm:h-12 md:w-full md:h-auto relative group md:aspect-video rounded-md md:rounded-lg overflow-hidden transition-all duration-200 ${currentIndex === idx
+                                    ? 'ring-2 ring-[#4ad1a6] ring-offset-1 md:ring-offset-2 ring-offset-white opacity-100 scale-[1.02] shadow-md'
+                                    : 'opacity-70 hover:opacity-100 hover:scale-[1.02] hover:shadow-sm'
                                     }`}
                             >
                                 <img

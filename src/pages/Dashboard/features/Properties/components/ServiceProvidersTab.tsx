@@ -23,8 +23,8 @@ interface ServiceProviderCardProps {
 
 const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({ record }) => {
     return (
-        <div className="bg-[#F0F0F6] rounded-[2rem] p-6 mb-4">
-            <div className="flex items-center gap-4 mb-6">
+        <div className="bg-[#F0F0F6] rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6 mb-4">
+            <div className="flex items-center gap-3 md:gap-4 mb-4 md:mb-6">
                 <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm">
                     <img
                         src={record.avatar}
@@ -32,12 +32,12 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({ record }) => 
                         className="w-full h-full object-cover"
                     />
                 </div>
-                <div className="bg-[#82D64D] text-white px-6 py-2 rounded-full text-sm font-bold">
+                <div className="bg-[#82D64D] text-white px-4 md:px-6 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-bold">
                     {record.serviceType}
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-x-8 md:gap-y-4">
                 {record.details.map((detail, index) => (
                     <div key={index} className="flex items-center bg-[#E3EBDE] rounded-full px-4 py-2 shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.25)]">
                         <span className="text-xs font-medium text-gray-600 w-1/3 truncate" title={detail.label}>{detail.label}</span>
@@ -69,14 +69,14 @@ const ServiceProvidersTab: React.FC = () => {
     return (
         <div className="space-y-8">
             {/* Responsibility Section */}
-            <div className="bg-[#E9E9E9] shadow-lg rounded-[2rem] p-6">
+            <div className="bg-[#E9E9E9] shadow-lg rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6">
                 <SectionHeader
                     title="Responsibility"
                     count={0}
                     onAction={() => console.log('Add Responsibility')}
                     hideCount={true}
                 />
-                <div className="bg-[#F0F0F6] rounded-[2rem] p-10 flex flex-col items-center justify-center min-h-[160px]">
+                <div className="bg-[#F0F0F6] rounded-[1.5rem] md:rounded-[2rem] p-6 md:p-10 flex flex-col items-center justify-center min-h-[120px] md:min-h-[160px]">
                     <div className="bg-[#E3EBDE] p-4 rounded-2xl mb-3">
                         <RefreshCw className="w-8 h-8 text-[#3A6D6C]" />
                     </div>
@@ -85,7 +85,7 @@ const ServiceProvidersTab: React.FC = () => {
             </div>
 
             {/* Utility Providers Section */}
-            <div className="bg-[#E9E9E9] shadow-lg rounded-[2rem] p-6">
+            <div className="bg-[#E9E9E9] shadow-lg rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6">
                 <SectionHeader
                     title="Utility providers"
                     count={utilityProviders.length}

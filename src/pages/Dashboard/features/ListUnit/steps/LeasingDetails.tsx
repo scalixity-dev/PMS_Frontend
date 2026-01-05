@@ -1,5 +1,7 @@
 import React, { useMemo, useEffect, useRef } from 'react';
 import { Undo2 } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
+import DatePicker from '../../../../../components/ui/DatePicker';
 import CustomDropdown from '../../../components/CustomDropdown';
 import Toggle from '../../../../../components/Toggle';
 import { useGetProperty } from '../../../../../hooks/usePropertyQueries';
@@ -15,7 +17,7 @@ const LeasingDetails: React.FC<LeasingDetailsProps> = ({ propertyId, unitId }) =
   const { formData, updateFormData } = useListUnitStore();
   const previousPropertyIdRef = useRef<string | undefined>(propertyId);
   const previousUnitIdRef = useRef<string | undefined>(unitId);
-  
+
   // Use React Query to fetch property data
   const { data: property } = useGetProperty(propertyId || null, !!propertyId);
 
@@ -23,7 +25,7 @@ const LeasingDetails: React.FC<LeasingDetailsProps> = ({ propertyId, unitId }) =
   useEffect(() => {
     // Only clear if propertyId or unitId actually changed (not on initial mount with same property/unit)
     if ((previousPropertyIdRef.current !== undefined && previousPropertyIdRef.current !== propertyId) ||
-        (previousUnitIdRef.current !== undefined && previousUnitIdRef.current !== unitId)) {
+      (previousUnitIdRef.current !== undefined && previousUnitIdRef.current !== unitId)) {
       // Property or unit changed - clear all leasing fields to prevent showing data from previous property/unit
       updateFormData('rent', '');
       updateFormData('deposit', '');
@@ -37,7 +39,7 @@ const LeasingDetails: React.FC<LeasingDetailsProps> = ({ propertyId, unitId }) =
     previousPropertyIdRef.current = propertyId;
     previousUnitIdRef.current = unitId;
   }, [propertyId, unitId, updateFormData]);
-  
+
   const inputClass = "w-full p-3 bg-[#84CC16] text-white placeholder-white/70 border-none rounded-lg focus:ring-2 focus:ring-white/50 outline-none text-center font-medium";
   const labelClass = "block text-xs font-medium text-gray-700 mb-1 ml-1";
 
@@ -50,7 +52,7 @@ const LeasingDetails: React.FC<LeasingDetailsProps> = ({ propertyId, unitId }) =
   return (
     <div className="w-full flex flex-col gap-6">
       {/* Main Lease Details Card */}
-      <div className="bg-[#F3F4F6] p-8 rounded-[2rem] shadow-sm w-full">
+      <div className="bg-[#F3F4F6] p-4 md:p-8 rounded-[1.5rem] md:rounded-[2rem] shadow-sm w-full">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           {/* Monthly Rent */}
           <div>
@@ -113,17 +115,14 @@ const LeasingDetails: React.FC<LeasingDetailsProps> = ({ propertyId, unitId }) =
           <div>
             <label className={labelClass}>Date Available*</label>
             <div className="relative">
-              <input
-                type={formData.availableDate ? "date" : "text"}
-                className={`${inputClass} cursor-pointer mt-1`}
-                value={formData.availableDate || ''}
-                onChange={(e) => updateFormData('availableDate', e.target.value)}
-                onFocus={(e) => (e.target.type = "date")}
-                onBlur={(e) => {
-                  if (!e.target.value) e.target.type = "text";
-                }}
+              <DatePicker
+                value={formData.availableDate ? parseISO(formData.availableDate) : undefined}
+                onChange={(date) => updateFormData('availableDate', date ? format(date, 'yyyy-MM-dd') : '')}
                 placeholder="Select Date"
-                style={{ colorScheme: 'dark' }}
+                className="w-full my-3.5 py-3 px-4 bg-[#84CC16] text-white border-none rounded-lg focus:ring-2 focus:ring-white/50 outline-none font-medium hover:bg-[#84CC16] justify-between"
+                placeholderClassName="text-white/70"
+                iconClassName="text-white"
+                popoverClassName="z-50"
               />
             </div>
           </div>
@@ -177,7 +176,7 @@ const LeasingDetails: React.FC<LeasingDetailsProps> = ({ propertyId, unitId }) =
       {/* Description Card */}
       <div className="w-full bg-[#F3F4F6] rounded-4xl overflow-hidden shadow-sm border border-gray-200/50">
         {/* Header */}
-        <div className="bg-[#3D7475] px-6 py-4 flex items-center gap-3 text-white">
+        <div className="bg-[#3D7475] px-4 md:px-6 py-3 md:py-4 flex items-center gap-3 text-white">
           <Undo2 size={20} className="rotate-180" />
           <span className="font-medium text-lg">Description</span>
         </div>
@@ -188,9 +187,9 @@ const LeasingDetails: React.FC<LeasingDetailsProps> = ({ propertyId, unitId }) =
             value={formData.description || ''}
             onChange={(e) => updateFormData('description', e.target.value)}
             placeholder="Add the marketing description here."
-            className="w-full h-48 p-6 bg-[#F3F4F6] resize-none focus:outline-none text-gray-700 placeholder-gray-500"
+            className="w-full h-48 p-4 md:p-6 bg-[#F3F4F6] resize-none focus:outline-none text-gray-700 placeholder-gray-500"
           />
-          
+
         </div>
       </div>
     </div>

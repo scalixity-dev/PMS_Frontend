@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useOutletContext } from 'react-router-dom';
 import { ChevronLeft, Upload, Edit, Trash2, Loader2 } from 'lucide-react';
 import CustomDropdown from '../../components/CustomDropdown';
+import UnsavedChangesModal from '../../components/UnsavedChangesModal';
 import { useGetKey, useCreateKey, useUpdateKey } from '../../../../hooks/useKeysQueries';
 import { useGetAllProperties } from '../../../../hooks/usePropertyQueries';
 import { API_ENDPOINTS } from '../../../../config/api.config';
@@ -9,33 +10,34 @@ import type { KeyType } from '../../../../services/keys.service';
 
 // Map display key type to backend enum
 const mapKeyTypeToBackend = (displayType: string): KeyType => {
-  const typeMap: Record<string, KeyType> = {
-    'Main Door': 'DOOR',
-    'Mailbox': 'MAILBOX',
-    'Garage': 'GARAGE',
-    'Gate': 'GATE',
-    'Storage': 'STORAGE',
-    'Other': 'OTHER',
-  };
-  return typeMap[displayType] || 'OTHER';
+    const typeMap: Record<string, KeyType> = {
+        'Main Door': 'DOOR',
+        'Mailbox': 'MAILBOX',
+        'Garage': 'GARAGE',
+        'Gate': 'GATE',
+        'Storage': 'STORAGE',
+        'Other': 'OTHER',
+    };
+    return typeMap[displayType] || 'OTHER';
 };
 
 // Map backend enum to display format
 const mapKeyTypeToDisplay = (backendType: KeyType): string => {
-  const typeMap: Record<KeyType, string> = {
-    'DOOR': 'Main Door',
-    'MAILBOX': 'Mailbox',
-    'GARAGE': 'Garage',
-    'GATE': 'Gate',
-    'STORAGE': 'Storage',
-    'OTHER': 'Other',
-  };
-  return typeMap[backendType] || 'Other';
+    const typeMap: Record<KeyType, string> = {
+        'DOOR': 'Main Door',
+        'MAILBOX': 'Mailbox',
+        'GARAGE': 'Garage',
+        'GATE': 'Gate',
+        'STORAGE': 'Storage',
+        'OTHER': 'Other',
+    };
+    return typeMap[backendType] || 'Other';
 };
 
 const AddKey = () => {
     const navigate = useNavigate();
     const { id } = useParams();
+    const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
     const isEditMode = Boolean(id);
 
     // Fetch key data if in edit mode
@@ -54,6 +56,12 @@ const AddKey = () => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const imageUrlRef = useRef<string | null>(null);
     const uploadedFileRef = useRef<File | null>(null);
+    const isInitializingRef = useRef(true);
+
+    // Dirty state tracking for unsaved changes
+    const [isDirty, setIsDirty] = useState(false);
+    const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+    const [pendingNavigationPath, setPendingNavigationPath] = useState<string | null>(null);
 
     // Initialize form when key data is loaded
     useEffect(() => {
@@ -66,6 +74,17 @@ const AddKey = () => {
             setUploadedImageUrl(keyData.keyPhotoUrl || null);
         }
     }, [isEditMode, keyData]);
+
+    // Handle initialization complete
+    useEffect(() => {
+        if (!isLoadingKey && !isLoadingProperties) {
+            // Small delay to ensure state is settled before enabling dirty check
+            const timer = setTimeout(() => {
+                isInitializingRef.current = false;
+            }, 500);
+            return () => clearTimeout(timer);
+        }
+    }, [isLoadingKey, isLoadingProperties]);
 
     // Cleanup blob URL on component unmount
     useEffect(() => {
@@ -81,7 +100,7 @@ const AddKey = () => {
         if (file) {
             // Store the file for later upload
             uploadedFileRef.current = file;
-            
+
             // Revoke the previous blob URL to free up memory
             if (imageUrlRef.current) {
                 URL.revokeObjectURL(imageUrlRef.current);
@@ -90,6 +109,7 @@ const AddKey = () => {
             const imageUrl = URL.createObjectURL(file);
             imageUrlRef.current = imageUrl;
             setImage(imageUrl);
+            if (!isInitializingRef.current) setIsDirty(true);
 
             // Upload image to backend
             setIsUploading(true);
@@ -127,6 +147,7 @@ const AddKey = () => {
         }
         setImage(null);
         setUploadedImageUrl(null);
+        if (!isInitializingRef.current) setIsDirty(true);
         uploadedFileRef.current = null;
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
@@ -175,6 +196,9 @@ const AddKey = () => {
                 await createKeyMutation.mutateAsync(keyData);
             }
 
+            // navigate('/dashboard/portfolio/keys-locks');
+            // Force navigation success by resetting dirty state right before
+            setIsDirty(false);
             navigate('/dashboard/portfolio/keys-locks');
         } catch (error) {
             console.error('Error saving key:', error);
@@ -190,21 +214,58 @@ const AddKey = () => {
         );
     }
 
+    const handleNavigation = (path: string | number) => {
+        if (isDirty) {
+            // Store as string if possible, or null/special handling for number
+            // For now, assume number is -1 (back) or specific path string
+            if (typeof path === 'string') {
+                setPendingNavigationPath(path);
+            } else {
+                // If it's a number (like -1), we might need to handle it differently or resolve it
+                // For simplicity, let's treat it as 'BACK' marker or resolve it relative to current
+                // Actually, navigate(-1) is back. We can just store a special marker.
+                setPendingNavigationPath('__BACK__');
+            }
+            setShowUnsavedModal(true);
+        } else {
+            // @ts-ignore - navigate accepts number or string
+            navigate(path);
+        }
+    };
+
+    const handleConfirmNavigation = () => {
+        if (pendingNavigationPath === '__BACK__') {
+            navigate(-1);
+        } else if (pendingNavigationPath) {
+            navigate(pendingNavigationPath);
+        }
+        setShowUnsavedModal(false);
+    };
+
     return (
-        <div className="max-w-7xl mx-auto min-h-screen font-outfit">
+        <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit transition-all duration-300`}>
+            <UnsavedChangesModal
+                isOpen={showUnsavedModal}
+                onClose={() => {
+                    setShowUnsavedModal(false);
+                    setPendingNavigationPath(null);
+                }}
+                onConfirm={handleConfirmNavigation}
+            />
+
             {/* Breadcrumb */}
             <div className="inline-flex items-center px-4 py-2 bg-[#E0E5E5] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>Dashboard</span>
+                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => handleNavigation('/dashboard')}>Dashboard</span>
                 <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard/portfolio/keys-locks')}>Keys & Locks</span>
+                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => handleNavigation('/dashboard/portfolio/keys-locks')}>Keys & Locks</span>
                 <span className="text-gray-500 text-sm mx-1">/</span>
                 <span className="text-gray-600 text-sm font-semibold">{isEditMode ? 'Edit Key' : 'Add Key'}</span>
             </div>
 
-            <div className="p-6 bg-[#E0E5E5] min-h-screen rounded-[2rem]">
+            <div className="p-4 md:p-6 bg-[#E0E5E5] min-h-screen rounded-[1.5rem] md:rounded-[2rem]">
                 {/* Header */}
                 <div className="flex items-center gap-2 mb-6">
-                    <button onClick={() => navigate(-1)} className="p-2 hover:bg-black/5 rounded-full transition-colors">
+                    <button onClick={() => handleNavigation(-1)} className="p-2 hover:bg-black/5 rounded-full transition-colors">
                         <ChevronLeft className="w-6 h-6 text-black" />
                     </button>
                     <h1 className="text-2xl font-bold text-black">{isEditMode ? 'Edit Key' : 'Add Key'}</h1>
@@ -281,7 +342,7 @@ const AddKey = () => {
                 </div>
 
                 {/* Form Fields */}
-                <div className="grid grid-cols-2 gap-12 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 mb-8">
                     {/* Key Name Input */}
                     <div className="w-full">
                         <label className="block text-xs font-bold text-gray-600 mb-2">
@@ -290,7 +351,10 @@ const AddKey = () => {
                         <input
                             type="text"
                             value={keyName}
-                            onChange={(e) => setKeyName(e.target.value)}
+                            onChange={(e) => {
+                                setKeyName(e.target.value);
+                                if (!isInitializingRef.current) setIsDirty(true);
+                            }}
                             placeholder="Key Name"
                             className="w-full px-4 py-3 border-none rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#3A6D6C]/20 text-sm font-medium text-gray-700 placeholder-gray-400 shadow-sm"
                         />
@@ -301,7 +365,10 @@ const AddKey = () => {
                         <CustomDropdown
                             label="Key Type"
                             value={keyType}
-                            onChange={setKeyType}
+                            onChange={(val) => {
+                                setKeyType(val);
+                                if (!isInitializingRef.current) setIsDirty(true);
+                            }}
                             options={keyTypeOptions}
                             placeholder="Key Type"
                             buttonClassName="bg-white border-none rounded-lg py-3 px-4 h-[46px] shadow-sm"
@@ -321,7 +388,7 @@ const AddKey = () => {
                              [Key Name] [Key Type]
                              [Property Type] (Looks like it's taking up about 50% width, aligned with Key Name column)
                          */}
-                    <div className="w-[calc(50%-1.5rem)]">
+                    <div className="w-full md:w-[calc(50%-1.5rem)]">
                         {isLoadingProperties ? (
                             <div className="flex items-center gap-2">
                                 <Loader2 className="w-4 h-4 animate-spin text-[#3A6D6C]" />
@@ -331,7 +398,10 @@ const AddKey = () => {
                             <CustomDropdown
                                 label="Property"
                                 value={propertyId}
-                                onChange={setPropertyId}
+                                onChange={(val) => {
+                                    setPropertyId(val);
+                                    if (!isInitializingRef.current) setIsDirty(true);
+                                }}
                                 options={propertyOptions}
                                 placeholder="Select Property"
                                 buttonClassName="bg-white border-none rounded-lg py-3 px-4 h-[46px] shadow-sm"
@@ -350,7 +420,10 @@ const AddKey = () => {
                     <div className="bg-white rounded-3xl p-6 min-h-[200px] relative shadow-sm">
                         <textarea
                             value={details}
-                            onChange={(e) => setDetails(e.target.value)}
+                            onChange={(e) => {
+                                setDetails(e.target.value);
+                                if (!isInitializingRef.current) setIsDirty(true);
+                            }}
                             placeholder="Type Details here.."
                             className="w-full h-full min-h-[160px] resize-none outline-none text-sm text-gray-600 placeholder-gray-500 font-medium bg-transparent"
                         />
@@ -364,18 +437,18 @@ const AddKey = () => {
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-4">
+                <div className="flex flex-col md:flex-row gap-4">
                     <button
-                        onClick={() => navigate(-1)}
+                        onClick={() => handleNavigation(-1)}
                         disabled={createKeyMutation.isPending || updateKeyMutation.isPending}
-                        className="bg-white text-black px-10 py-3 rounded-2xl font-bold text-sm shadow-sm hover:bg-gray-50 transition-colors border border-transparent disabled:opacity-50"
+                        className="w-full md:w-auto bg-white text-black px-10 py-3 rounded-2xl font-bold text-sm shadow-sm hover:bg-gray-50 transition-colors border border-transparent disabled:opacity-50 text-center"
                     >
                         Cancel
                     </button>
                     <button
                         onClick={handleSubmit}
                         disabled={createKeyMutation.isPending || updateKeyMutation.isPending || isUploading}
-                        className="bg-[#3A6D6C] text-white px-10 py-3 rounded-2xl font-bold text-sm shadow-sm hover:bg-[#2c5251] transition-colors disabled:opacity-50 flex items-center gap-2"
+                        className="w-full md:w-auto bg-[#3A6D6C] text-white px-10 py-3 rounded-2xl font-bold text-sm shadow-sm hover:bg-[#2c5251] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                         {(createKeyMutation.isPending || updateKeyMutation.isPending) && (
                             <Loader2 className="w-4 h-4 animate-spin" />

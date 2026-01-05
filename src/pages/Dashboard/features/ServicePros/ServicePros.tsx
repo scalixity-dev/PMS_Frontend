@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import DashboardFilter from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
 import ServiceProCard from './components/ServiceProCard';
@@ -18,6 +18,8 @@ interface ServiceProCardData {
 
 const ServicePros = () => {
     const navigate = useNavigate();
+    const context = useOutletContext<{ sidebarCollapsed?: boolean }>();
+    const sidebarCollapsed = context?.sidebarCollapsed ?? false;
     const [, setFilters] = useState<Record<string, string[]>>({});
     const [servicePros, setServicePros] = useState<ServiceProCardData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -47,33 +49,33 @@ const ServicePros = () => {
     };
 
     // Fetch service providers from API
+    const fetchServiceProviders = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const data = await serviceProviderService.getAll(true); // Only fetch active service providers
+
+            // Transform backend data to card format
+            const transformedData: ServiceProCardData[] = data.map((provider: BackendServiceProvider) => ({
+                id: provider.id,
+                initials: getInitials(provider.firstName, provider.lastName),
+                name: `${provider.firstName}${provider.middleName ? ` ${provider.middleName}` : ''} ${provider.lastName}`.trim(),
+                phone: formatPhoneNumber(provider.phoneNumber, provider.phoneCountryCode),
+                category: formatCategory(provider.category, provider.subcategory),
+                bgColor: 'bg-[#4ad1a6]',
+                image: provider.photoUrl || undefined,
+            }));
+
+            setServicePros(transformedData);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to load service providers');
+            console.error('Error fetching service providers:', err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchServiceProviders = async () => {
-            setIsLoading(true);
-            setError(null);
-            try {
-                const data = await serviceProviderService.getAll(true); // Only fetch active service providers
-
-                // Transform backend data to card format
-                const transformedData: ServiceProCardData[] = data.map((provider: BackendServiceProvider) => ({
-                    id: provider.id,
-                    initials: getInitials(provider.firstName, provider.lastName),
-                    name: `${provider.firstName}${provider.middleName ? ` ${provider.middleName}` : ''} ${provider.lastName}`.trim(),
-                    phone: formatPhoneNumber(provider.phoneNumber, provider.phoneCountryCode),
-                    category: formatCategory(provider.category, provider.subcategory),
-                    bgColor: 'bg-[#4ad1a6]',
-                    image: provider.photoUrl || undefined,
-                }));
-
-                setServicePros(transformedData);
-            } catch (err) {
-                setError(err instanceof Error ? err.message : 'Failed to load service providers');
-                console.error('Error fetching service providers:', err);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
         fetchServiceProviders();
     }, []);
 
@@ -86,7 +88,7 @@ const ServicePros = () => {
         // TODO: Implement filter functionality
     };
 
-    const filterOptions = {
+    const filterOptions = useMemo(() => ({
         serviceProType: [
             { value: 'individual', label: 'Individual' },
             { value: 'company', label: 'Company' }
@@ -100,13 +102,13 @@ const ServicePros = () => {
             { value: 'connected', label: 'Connected' },
             { value: 'pending', label: 'Pending' }
         ]
-    };
+    }), []);
 
-    const filterLabels = {
+    const filterLabels = useMemo(() => ({
         serviceProType: 'Service Pro type',
         category: 'Category & Sub-category',
         connection: 'Connection'
-    };
+    }), []);
 
 
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -136,16 +138,16 @@ const ServicePros = () => {
     };
 
     return (
-        <div className="max-w-6xl mx-auto min-h-screen font-outfit">
+        <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit transition-all duration-300`}>
             <div className="inline-flex items-center px-4 py-2 bg-[#E0E5E5] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
                 <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
                 <span className="text-gray-500 text-sm mx-1">/</span>
                 <span className="text-gray-600 text-sm font-semibold">Service Pros</span>
             </div>
 
-            <div className="p-6 bg-[#E0E5E5] min-h-screen rounded-[2rem] flex flex-col">
+            <div className="p-4 sm:p-6 bg-[#E0E5E5] min-h-screen rounded-[1.5rem] sm:rounded-[2rem] flex flex-col">
                 {/* Header */}
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <div className="flex items-center gap-2">
                         {/* Adding Back button like Tenants page */}
                         <button onClick={() => navigate(-1)} className="p-2 hover:bg-black/5 rounded-full transition-colors text-black">
@@ -155,13 +157,13 @@ const ServicePros = () => {
                             Service Pros
                         </h1>
                     </div>
-                    <div className="flex gap-3">
-                        <button className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors">
+                    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                        <button className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors w-full sm:w-auto">
                             Import
                         </button>
                         <button
                             onClick={() => navigate('/dashboard/contacts/service-pros/add')}
-                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2"
+                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center justify-center gap-2 w-full sm:w-auto"
                         >
                             Add service pro
                             <Plus className="w-4 h-4" />
@@ -226,6 +228,7 @@ const ServicePros = () => {
                                     <ServiceProCard
                                         key={pro.id}
                                         {...pro}
+                                        onDeleteSuccess={fetchServiceProviders}
                                     />
                                 ))}
                             </div>

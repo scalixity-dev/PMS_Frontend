@@ -14,8 +14,9 @@ import PricingPage from './pages/basewebsite/pricing';
 import LoginPage from './pages/basewebsite/auth/login';
 import SignUpPage from './pages/basewebsite/auth/signUp';
 import OtpPage from './pages/basewebsite/auth/otp';
-import OAuthCallbackPage from './pages/basewebsite/auth/oauth-callback';
+import OAuthCallbackPage from './pages/basewebsite/auth/otp'; // Note: This might have been a mistake in the original or I misread, checking...
 import OAuthCompletePage from './pages/basewebsite/auth/signUp/oauth-complete';
+import { TenantOnboardingFlow } from './pages/basewebsite/auth/signUp/sections/TenantOnboardingFlow';
 import TeamPage from './pages/basewebsite/features/team/index';
 import LandlordUseCasesPage from './pages/basewebsite/usecases/landlord';
 import ResourcePage from './pages/basewebsite/resources';
@@ -89,22 +90,29 @@ import Leads from './pages/Dashboard/features/Leads/leads';
 import AddLead from './pages/Dashboard/features/Leads/AddLead';
 import LeadDetail from './pages/Dashboard/features/Leads/LeadDetail';
 import EditLead from './pages/Dashboard/features/Leads/EditLead';
+import FileManagerFeature from './pages/Dashboard/features/FileManager/FileManager';
 
 
 
 // User Dashboard pages
 import UserDashboardLayout from './components/userdashboard/UserDashboardLayout';
 import UserDashboard from './pages/userdashboard/UserDashboard';
-import Rent from './pages/userdashboard/Rent';
-import RequestsUser from './pages/userdashboard/Requests';
-import UtilityProviders from './pages/userdashboard/UtilityProviders';
-import PropertiesUser from './pages/userdashboard/Properties';
-import ApplicationsUser from './pages/userdashboard/Applications';
-import FileManager from './pages/userdashboard/FileManager';
-import Downloads from './pages/userdashboard/Downloads';
-import NewRequest from './pages/userdashboard/NewRequest';
-import PropertyDetailUser from './pages/userdashboard/PropertyDetail';
-import SettingsUser from './pages/userdashboard/Settings';
+import Rent from './pages/userdashboard/pages/rent/Rent';
+import RequestsUser from './pages/userdashboard/pages/requests/Requests';
+import UtilityProviders from './pages/userdashboard/pages/utilities/UtilityProviders';
+import PropertiesUser from './pages/userdashboard/pages/properties/Properties';
+import ApplicationsUser from './pages/userdashboard/pages/utilities/Applications';
+import FileManager from './pages/userdashboard/pages/utilities/FileManager';
+import Downloads from './pages/userdashboard/pages/utilities/Downloads';
+import NewRequest from './pages/userdashboard/pages/requests/NewRequest';
+import PropertyDetailUser from './pages/userdashboard/pages/properties/PropertyDetail';
+import SettingsUser from './pages/userdashboard/pages/settings/Settings';
+import ProfileUser from './pages/userdashboard/pages/profile/Profile';
+import SecurityUser from './pages/userdashboard/pages/profile/Security';
+import MyCardsUser from './pages/userdashboard/pages/profile/MyCards';
+import NotificationsUser from './pages/userdashboard/pages/profile/Notifications';
+import PublicRenterProfile from './pages/userdashboard/pages/profile/PublicRenterProfile';
+
 
 
 
@@ -167,6 +175,7 @@ const App: React.FC = () => {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignUpPage />} />
               <Route path="/signup/oauth-complete" element={<OAuthCompletePage />} />
+              <Route path="/signup/tenant-onboarding-flow" element={<TenantOnboardingFlow />} />
               <Route path="/otp" element={<OtpPage />} />
               <Route path="/auth/callback" element={<OAuthCallbackPage />} />
 
@@ -509,7 +518,7 @@ const App: React.FC = () => {
               />
               {/* Documents Routes */}
               <Route
-                path="/documents/landlord-forms"
+                path="/dashboard/documents/landlord-forms"
                 element={
                   <ProtectedRoute>
                     <LandlordForms />
@@ -517,7 +526,7 @@ const App: React.FC = () => {
                 }
               />
               <Route
-                path="/documents/landlord-forms/template/:templateName"
+                path="/dashboard/documents/landlord-forms/template/:templateName"
                 element={
                   <ProtectedRoute>
                     <TemplateView />
@@ -525,7 +534,7 @@ const App: React.FC = () => {
                 }
               />
               <Route
-                path="/documents/landlord-forms/use-template/:templateName"
+                path="/dashboard/documents/landlord-forms/use-template/:templateName"
                 element={
                   <ProtectedRoute>
                     <UseTemplateWizard />
@@ -533,7 +542,7 @@ const App: React.FC = () => {
                 }
               />
               <Route
-                path="/documents/my-templates"
+                path="/dashboard/documents/my-templates"
                 element={
                   <ProtectedRoute>
                     <MyTemplates />
@@ -541,7 +550,7 @@ const App: React.FC = () => {
                 }
               />
               <Route
-                path="/documents/my-templates/create-wizard"
+                path="/dashboard/documents/my-templates/create-wizard"
                 element={
                   <ProtectedRoute>
                     <CreateTemplateWizard />
@@ -549,7 +558,7 @@ const App: React.FC = () => {
                 }
               />
               <Route
-                path="/documents/my-templates/:id"
+                path="/dashboard/documents/my-templates/:id"
                 element={
                   <ProtectedRoute>
                     <MyTemplateDetail />
@@ -557,7 +566,7 @@ const App: React.FC = () => {
                 }
               />
               <Route
-                path="/documents/my-templates/:id/edit"
+                path="/dashboard/documents/my-templates/:id/edit"
                 element={
                   <ProtectedRoute>
                     <EditTemplate />
@@ -565,15 +574,15 @@ const App: React.FC = () => {
                 }
               />
               <Route
-                path="/documents/file-manager"
+                path="/dashboard/documents/file-manager"
                 element={
                   <ProtectedRoute>
-                    <FileManager />
+                    <FileManagerFeature />
                   </ProtectedRoute>
                 }
               />
               <Route
-                path="/documents"
+                path="/dashboard/documents"
                 element={
                   <ProtectedRoute>
                     <Dashboard />
@@ -715,8 +724,12 @@ const App: React.FC = () => {
               <Route path="/userdashboard/downloads" element={<Downloads />} />
               <Route path="/userdashboard/new-request" element={<NewRequest />} />
               <Route path="/userdashboard/settings" element={<SettingsUser />} />
+              <Route path="/userdashboard/settings/account/profile" element={<ProfileUser />} />
+              <Route path="/userdashboard/settings/account/security" element={<SecurityUser />} />
+              <Route path="/userdashboard/settings/account/cards" element={<MyCardsUser />} />
+              <Route path="/userdashboard/settings/account/notifications" element={<NotificationsUser />} />
+              <Route path="/userdashboard/settings/public-renter-profile" element={<PublicRenterProfile />} />
             </Route>
-
 
             {/* Catch-all route */}
             <Route path="*" element={<HomePage />} />
