@@ -1,8 +1,10 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect, useCallback } from "react";
 import { Filter, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 import PropertyFilters from "../../components/property/PropertyFilters";
-import type { Property } from "../../utils/types";
+import type { Property, FilterState } from "../../utils/types";
+import { API_ENDPOINTS } from "../../../../config/api.config";
+import { authService } from "../../../../services/auth.service";
 
 // --- Internal Components ---
 
@@ -73,58 +75,179 @@ const Properties: React.FC = () => {
     setIsPropertyFiltersOpen
   } = useUserDashboardStore();
 
-  const mockProperties: Property[] = [
-    {
-      id: 1,
-      title: "2 Bedroom Available",
-      address: "3042 Washington Blvd, Ogden, UT, 84401, us",
-      type: "Apartment",
-      price: "$1424",
-      tag: "$500 off move in!",
-      image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=1000",
-    },
-    {
-      id: 2,
-      title: "3 Bedroom Luxury Villa",
-      address: "123 Ocean View Los Angeles, CA, 90210, us",
-      type: "Villa",
-      price: "$8500",
-      tag: "Beachfront",
-      image: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=1000",
-    },
-    {
-      id: 3,
-      title: "1 Bedroom Modern Loft",
-      address: "789 Downtown Ave, New York, NY, 10001, us",
-      type: "Apartment",
-      price: "$3200",
-      tag: "High Floor",
-      image: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&q=80&w=1000",
-    },
-    {
-      id: 4,
-      title: "4 Bedroom Family Home",
-      address: "456 Suburban Way, Austin, TX, 78701, us",
-      type: "Builder Floor",
-      price: "$4500",
-      tag: "Family Friendly",
-      image: "https://images.unsplash.com/photo-1480074568708-e7b720bb3f09?auto=format&fit=crop&q=80&w=1000",
-    },
-    {
-      id: 5,
-      title: "Prime Commercial Plot",
-      address: "11 Business Hub, Chicago, IL, 60601, us",
-      type: "Plot",
-      price: "$12000",
-      tag: "Investment",
-      image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&q=80&w=1000",
-    },
-  ];
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [userPreferences, setUserPreferences] = useState<{
+    location?: { country: string; state: string; city: string };
+    rentalTypes?: string[];
+    criteria?: {
+      beds?: string | null;
+      baths?: string | null;
+      minPrice?: number;
+      maxPrice?: number;
+      petsAllowed?: boolean;
+    };
+  } | null>(null);
+
+  // Fetch user preferences on mount (only for authenticated tenants)
+  useEffect(() => {
+    const fetchPreferences = async () => {
+      try {
+        // First check if user is authenticated and is a tenant
+        const user = await authService.getCurrentUser();
+        
+        // Only fetch preferences if user is a tenant
+        if (user.role !== 'TENANT') {
+          return; // Not a tenant, skip preferences
+        }
+
+        const response = await fetch(API_ENDPOINTS.TENANT.GET_PREFERENCES, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        });
+
+        if (response.ok) {
+          const preferences = await response.json();
+          setUserPreferences(preferences);
+        } else if (response.status === 401) {
+          // User not authenticated or not a tenant - continue without preferences
+          console.log('User not authenticated or not a tenant, skipping preferences');
+        } else if (response.status === 404) {
+          // Preferences don't exist yet - continue without preferences
+          console.log('No preferences found for user');
+        }
+      } catch (err) {
+        // If getCurrentUser fails or preferences fetch fails, continue without preferences
+        console.log('Error fetching preferences (continuing without):', err);
+        // Continue without preferences - this is expected for non-authenticated users
+      }
+    };
+
+    fetchPreferences();
+  }, []);
+
+  // Fetch properties from API
+  useEffect(() => {
+    const fetchProperties = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        // Build query params from filters and user preferences
+        const params = new URLSearchParams();
+        
+        // Use filters if available, otherwise fall back to preferences
+        // Location: Use preferences if no explicit location filter is set
+        const location = userPreferences?.location;
+        if (location) {
+          if (location.country) params.append('country', location.country);
+          if (location.state) params.append('state', location.state);
+          if (location.city) params.append('city', location.city);
+        }
+
+        // Price filters: Use filters if set, otherwise use preferences
+        const minPrice = filters?.minPrice ?? userPreferences?.criteria?.minPrice;
+        const maxPrice = filters?.maxPrice ?? userPreferences?.criteria?.maxPrice;
+        if (minPrice !== undefined && minPrice !== null) {
+          params.append('minPrice', minPrice.toString());
+        }
+        if (maxPrice !== undefined && maxPrice !== null) {
+          params.append('maxPrice', maxPrice.toString());
+        }
+
+        // Beds filter: Use filters if set, otherwise use preferences
+        const bedsFilter = filters?.bedrooms && filters.bedrooms !== 'All' && filters.bedrooms !== 'Any'
+          ? filters.bedrooms === '4+' ? '4' : filters.bedrooms
+          : userPreferences?.criteria?.beds;
+        if (bedsFilter) {
+          params.append('beds', bedsFilter);
+        }
+
+        // Baths filter: Use preferences if available
+        if (userPreferences?.criteria?.baths) {
+          params.append('baths', userPreferences.criteria.baths);
+        }
+
+        // Pets allowed filter: Use preferences if available
+        if (userPreferences?.criteria?.petsAllowed !== undefined) {
+          params.append('petsAllowed', userPreferences.criteria.petsAllowed.toString());
+        }
+
+        // Property type filter (from filters only, not preferences)
+        if (filters?.propertyType && filters.propertyType !== 'All') {
+          params.append('propertyType', filters.propertyType);
+        }
+
+        const url = `${API_ENDPOINTS.PROPERTY.GET_PUBLIC_LISTINGS}${params.toString() ? `?${params.toString()}` : ''}`;
+        const response = await fetch(url, {
+          method: 'GET',
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch properties');
+        }
+
+        const data = await response.json();
+        
+        // Map backend response to Property type
+        const mappedProperties: Property[] = data.map((item: any) => {
+          const address = item.address;
+          const addressString = address
+            ? `${address.streetAddress || ''}, ${address.city || ''}, ${address.stateRegion || ''}, ${address.zipCode || ''}, ${address.country || ''}`
+            : '';
+
+          const price = item.listing?.monthlyRent
+            ? parseFloat(item.listing.monthlyRent)
+            : item.listing?.listingPrice
+              ? parseFloat(item.listing.listingPrice)
+              : item.marketRent
+                ? parseFloat(item.marketRent)
+                : 0;
+
+          const beds = item.singleUnitDetail?.beds ?? null;
+          const title = item.listing?.title || 
+            (beds !== null ? `${beds} Bedroom ${item.propertyType === 'SINGLE' ? 'Property' : 'Unit'}` : item.propertyName);
+
+          return {
+            id: item.id,
+            title: title,
+            address: addressString,
+            type: item.propertyType === 'SINGLE' ? 'Single Unit' : 'Multi Unit',
+            price: `$${price.toLocaleString()}`,
+            rent: price,
+            currency: '$',
+            tag: item.listing?.petsAllowed ? 'Pets Allowed' : null,
+            image: item.coverPhotoUrl || (item.photos?.[0]?.photoUrl ?? null),
+            images: item.photos?.map((p: any) => p.photoUrl) || [],
+          };
+        });
+
+        setProperties(mappedProperties);
+      } catch (err) {
+        console.error('Error fetching properties:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load properties');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProperties();
+  }, [
+    filters?.minPrice, 
+    filters?.maxPrice, 
+    filters?.propertyType, 
+    filters?.bedrooms,
+    userPreferences,
+  ]);
 
   const filteredProperties = useMemo(() => {
-    return mockProperties.filter(property => {
-      if (!filters) return true;
+    if (!filters) return properties;
 
+    return properties.filter(property => {
       const { search, propertyType, minPrice, maxPrice, bedrooms } = filters;
 
       // Search filter
@@ -140,10 +263,10 @@ const Properties: React.FC = () => {
       }
 
       // Price filter
-      const price = parseInt((property.price || "").replace(/[$,]/g, ""));
+      const price = property.rent || parseInt((property.price || "").replace(/[$,]/g, ""));
       if (!isNaN(price)) {
-        if (price < minPrice) return false;
-        if (price > maxPrice) return false;
+        if (minPrice && price < minPrice) return false;
+        if (maxPrice && price > maxPrice) return false;
       }
 
       // Bedrooms filter
@@ -160,14 +283,21 @@ const Properties: React.FC = () => {
 
       return true;
     });
-  }, [filters]);
+  }, [properties, filters]);
+
+  // Memoize the onApply callback to prevent unnecessary re-renders
+  const handleApplyFilters = useCallback((newFilters: FilterState) => {
+    setFilters(newFilters);
+  }, [setFilters]);
 
   return (
     <div className="relative h-[calc(100vh-64px)] bg-white overflow-hidden flex flex-col">
       <PropertyFilters
         isOpen={isPropertyFiltersOpen}
         onClose={() => setIsPropertyFiltersOpen(false)}
-        onApply={(newFilters) => setFilters(newFilters)}
+        onApply={handleApplyFilters}
+        userPreferences={userPreferences}
+        initialFilters={filters}
       />
 
       {/* Scrollable Content Area */}
@@ -183,7 +313,32 @@ const Properties: React.FC = () => {
               <li className="text-[#1A1A1A]  font-medium" aria-current="page">Properties</li>
             </ol>
           </nav>
-          <div className="flex justify-end">
+          <div className="flex justify-between items-center">
+            {userPreferences && (
+              <div className="text-sm text-gray-600">
+                <span className="font-medium">Showing properties based on your preferences</span>
+                {userPreferences.location && (
+                  <span className="ml-2">
+                    • {userPreferences.location.city || userPreferences.location.state || userPreferences.location.country || 'Location'}
+                  </span>
+                )}
+                {userPreferences.criteria && (
+                  <>
+                    {userPreferences.criteria.minPrice && userPreferences.criteria.maxPrice && (
+                      <span className="ml-2">
+                        • ${userPreferences.criteria.minPrice.toLocaleString()} - ${userPreferences.criteria.maxPrice.toLocaleString()}
+                      </span>
+                    )}
+                    {userPreferences.criteria.beds && (
+                      <span className="ml-2">• {userPreferences.criteria.beds} beds</span>
+                    )}
+                    {userPreferences.criteria.petsAllowed && (
+                      <span className="ml-2">• Pets allowed</span>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
             <button
               onClick={() => setIsPropertyFiltersOpen(true)}
               className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors bg-[#F7F7F7] border-[0.97px] border-white shadow-[0px_3.9px_3.9px_0px_#00000040]"
@@ -195,23 +350,39 @@ const Properties: React.FC = () => {
         </div>
 
         {/* Grid Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredProperties.length > 0 ? (
-            filteredProperties.map((property) => (
-              <PropertyCard key={property.id} property={property} />
-            ))
-          ) : (
-            <div className="col-span-full py-20 text-center">
-              <p className="text-gray-500 text-lg">No properties found matching your criteria.</p>
-              <button
-                onClick={() => setFilters(null)}
-                className="mt-4 text-[var(--dashboard-accent)] font-medium hover:underline"
-              >
-                Clear all filters
-              </button>
-            </div>
-          )}
-        </div>
+        {loading ? (
+          <div className="col-span-full py-20 text-center">
+            <p className="text-gray-500 text-lg">Loading properties...</p>
+          </div>
+        ) : error ? (
+          <div className="col-span-full py-20 text-center">
+            <p className="text-red-500 text-lg">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-4 text-[var(--dashboard-accent)] font-medium hover:underline"
+            >
+              Retry
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredProperties.length > 0 ? (
+              filteredProperties.map((property) => (
+                <PropertyCard key={property.id} property={property} />
+              ))
+            ) : (
+              <div className="col-span-full py-20 text-center">
+                <p className="text-gray-500 text-lg">No properties found matching your criteria.</p>
+                <button
+                  onClick={() => setFilters(null)}
+                  className="mt-4 text-[var(--dashboard-accent)] font-medium hover:underline"
+                >
+                  Clear all filters
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div >
   );

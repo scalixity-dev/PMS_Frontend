@@ -1,37 +1,131 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Search, ChevronDown, Check } from "lucide-react";
 
 import type { FilterState } from "../../utils/types";
+
+interface UserPreferences {
+    location?: { country: string; state: string; city: string };
+    rentalTypes?: string[];
+    criteria?: {
+        beds?: string | null;
+        baths?: string | null;
+        minPrice?: number;
+        maxPrice?: number;
+        petsAllowed?: boolean;
+    };
+}
 
 interface PropertyFiltersProps {
     isOpen: boolean;
     onClose: () => void;
     onApply: (filters: FilterState) => void;
+    userPreferences?: UserPreferences | null;
+    initialFilters?: FilterState | null;
 }
 
 
-const PropertyFilters: React.FC<PropertyFiltersProps> = ({ isOpen, onClose, onApply }) => {
-    const [search, setSearch] = useState("");
-    const [propertyType, setPropertyType] = useState("All");
-    const [region, setRegion] = useState("nearby locality");
-    const [minPrice, setMinPrice] = useState(0);
-    const [maxPrice, setMaxPrice] = useState(50000);
-    const [bedrooms, setBedrooms] = useState("All");
-    const [availability, setAvailability] = useState("All");
-    const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
+const PropertyFilters: React.FC<PropertyFiltersProps> = ({ 
+    isOpen, 
+    onClose, 
+    onApply, 
+    userPreferences,
+    initialFilters 
+}) => {
+    // Initialize state with preferences or initial filters
+    const getInitialMinPrice = () => {
+        if (initialFilters?.minPrice !== undefined) return initialFilters.minPrice;
+        if (userPreferences?.criteria?.minPrice !== undefined) return userPreferences.criteria.minPrice;
+        return 0;
+    };
+
+    const getInitialMaxPrice = () => {
+        if (initialFilters?.maxPrice !== undefined) return initialFilters.maxPrice;
+        if (userPreferences?.criteria?.maxPrice !== undefined) return userPreferences.criteria.maxPrice;
+        return 50000;
+    };
+
+    const getInitialBedrooms = () => {
+        if (initialFilters?.bedrooms && initialFilters.bedrooms !== 'All') return initialFilters.bedrooms;
+        if (userPreferences?.criteria?.beds && userPreferences.criteria.beds !== 'Any') {
+            return userPreferences.criteria.beds;
+        }
+        return "All";
+    };
+
+    const [search, setSearch] = useState(initialFilters?.search || "");
+    const [propertyType, setPropertyType] = useState(initialFilters?.propertyType || "All");
+    const [region, setRegion] = useState(initialFilters?.region || "nearby locality");
+    const [minPrice, setMinPrice] = useState(getInitialMinPrice());
+    const [maxPrice, setMaxPrice] = useState(getInitialMaxPrice());
+    const [bedrooms, setBedrooms] = useState(getInitialBedrooms());
+    const [availability, setAvailability] = useState(initialFilters?.availability || "All");
+    const [selectedAmenities, setSelectedAmenities] = useState(initialFilters?.selectedAmenities || []);
+
+    // Ref to track if we're syncing from props (to prevent infinite loop)
+    const isSyncingFromProps = useRef(false);
+    const prevInitialFiltersRef = useRef(initialFilters);
+
+    // Update state when initialFilters or userPreferences change
+    useEffect(() => {
+        // Only sync if initialFilters actually changed
+        const hasInitialFiltersChanged = prevInitialFiltersRef.current !== initialFilters;
+        
+        if (hasInitialFiltersChanged) {
+            isSyncingFromProps.current = true;
+            prevInitialFiltersRef.current = initialFilters;
+        }
+        
+        if (initialFilters && hasInitialFiltersChanged) {
+            setSearch(initialFilters.search || "");
+            setPropertyType(initialFilters.propertyType || "All");
+            setRegion(initialFilters.region || "nearby locality");
+            setMinPrice(initialFilters.minPrice ?? getInitialMinPrice());
+            setMaxPrice(initialFilters.maxPrice ?? getInitialMaxPrice());
+            setBedrooms(initialFilters.bedrooms || getInitialBedrooms());
+            setAvailability(initialFilters.availability || "All");
+            setSelectedAmenities(initialFilters.selectedAmenities || []);
+        } else if (userPreferences && !initialFilters) {
+            // If no initial filters but we have preferences, use preferences
+            if (userPreferences.criteria?.minPrice !== undefined) {
+                setMinPrice(userPreferences.criteria.minPrice);
+            }
+            if (userPreferences.criteria?.maxPrice !== undefined) {
+                setMaxPrice(userPreferences.criteria.maxPrice);
+            }
+            if (userPreferences.criteria?.beds && userPreferences.criteria.beds !== 'Any') {
+                setBedrooms(userPreferences.criteria.beds);
+            }
+        }
+        
+        // Reset the flag after a microtask to allow state updates to complete
+        if (hasInitialFiltersChanged) {
+            Promise.resolve().then(() => {
+                isSyncingFromProps.current = false;
+            });
+        }
+    }, [initialFilters, userPreferences]);
 
     const handleReset = () => {
         setSearch("");
         setPropertyType("All");
         setRegion("nearby locality");
-        setMinPrice(0);
-        setMaxPrice(50000);
-        setBedrooms("All");
+        // Reset to preferences if available, otherwise default values
+        setMinPrice(userPreferences?.criteria?.minPrice ?? 0);
+        setMaxPrice(userPreferences?.criteria?.maxPrice ?? 50000);
+        setBedrooms(userPreferences?.criteria?.beds && userPreferences.criteria.beds !== 'Any' 
+            ? userPreferences.criteria.beds 
+            : "All");
         setAvailability("All");
         setSelectedAmenities([]);
     };
 
+    // Update filters when they change (but not when syncing from props)
     useEffect(() => {
+        // Don't call onApply if we're syncing from props to prevent infinite loop
+        if (isSyncingFromProps.current) {
+            return;
+        }
+        
         onApply({
             search,
             propertyType,
@@ -42,6 +136,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({ isOpen, onClose, onAp
             availability,
             selectedAmenities
         });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [search, propertyType, region, minPrice, maxPrice, bedrooms, availability, selectedAmenities]);
 
     const propertyTypes = ["All", "Apartment", "Villa", "Plot", "Builder Floor"];
