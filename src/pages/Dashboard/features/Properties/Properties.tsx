@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Trash2, CheckSquare, Square } from 'lucide-react';
 import PropertiesHeader from './components/PropertiesHeader';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
@@ -31,6 +32,10 @@ const Properties: React.FC = () => {
     const [properties, setProperties] = useState<Property[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [selectionMode, setSelectionMode] = useState(false);
+    const [selectedProperties, setSelectedProperties] = useState<Set<string>>(new Set());
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     const [filters, setFilters] = useState<{
         status: string[];
@@ -247,6 +252,69 @@ const Properties: React.FC = () => {
         navigate('/dashboard/properties/import');
     };
 
+    const handleToggleSelectionMode = () => {
+        setSelectionMode(!selectionMode);
+        setSelectedProperties(new Set());
+    };
+
+    const handleSelectProperty = (id: string | number, selected: boolean) => {
+        const idString = String(id);
+        setSelectedProperties(prev => {
+            const newSet = new Set(prev);
+            if (selected) {
+                newSet.add(idString);
+            } else {
+                newSet.delete(idString);
+            }
+            return newSet;
+        });
+    };
+
+    const handleSelectAll = () => {
+        if (selectedProperties.size === filteredProperties.length) {
+            setSelectedProperties(new Set());
+        } else {
+            setSelectedProperties(new Set(filteredProperties.map(p => p.id)));
+        }
+    };
+
+    const handleBulkDelete = async () => {
+        if (selectedProperties.size === 0) return;
+
+        setIsDeleting(true);
+        setError(null);
+
+        try {
+            const propertyIds = Array.from(selectedProperties);
+            const result = await propertyService.bulkDelete(propertyIds);
+
+            if (result.errors.length > 0) {
+                const errorMessages = result.errors.map(e => `${e.id}: ${e.error}`).join(', ');
+                setError(`Some properties could not be deleted: ${errorMessages}`);
+            }
+
+            // Refresh properties list
+            const backendProperties = await propertyService.getAll(true);
+            const transformedProperties = backendProperties.map(transformProperty);
+            setProperties(transformedProperties);
+
+            // Clear selection
+            setSelectedProperties(new Set());
+            setSelectionMode(false);
+            setShowDeleteConfirm(false);
+
+            if (result.deleted > 0) {
+                // Show success message (you can add a toast notification here)
+                console.log(`Successfully deleted ${result.deleted} property(ies)`);
+            }
+        } catch (err) {
+            console.error('Error deleting properties:', err);
+            setError(err instanceof Error ? err.message : 'Failed to delete properties');
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     const filterOptions: Record<string, FilterOption[]> = {
         status: [
             { value: 'active', label: 'Active' },
@@ -341,6 +409,61 @@ const Properties: React.FC = () => {
             <div className="p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem] overflow-visible">
                 <PropertiesHeader onAddProperty={handleAddProperty} onImport={handleImport} />
 
+                {/* Selection Mode Controls */}
+                {selectionMode && (
+                    <div className="mb-4 bg-white rounded-2xl p-4 shadow-sm flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <button
+                                onClick={handleSelectAll}
+                                className="flex items-center gap-2 text-gray-700 hover:text-[#3A6D6C] transition-colors"
+                            >
+                                {selectedProperties.size === filteredProperties.length ? (
+                                    <CheckSquare className="w-5 h-5 text-[#82D64D]" />
+                                ) : (
+                                    <Square className="w-5 h-5" />
+                                )}
+                                <span className="text-sm font-medium">
+                                    {selectedProperties.size === filteredProperties.length 
+                                        ? 'Deselect All' 
+                                        : 'Select All'}
+                                </span>
+                            </button>
+                            <span className="text-sm text-gray-600">
+                                {selectedProperties.size} of {filteredProperties.length} selected
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={handleToggleSelectionMode}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => setShowDeleteConfirm(true)}
+                                disabled={selectedProperties.size === 0 || isDeleting}
+                                className="px-4 py-2 bg-red-500 text-white rounded-full text-sm font-medium hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                                Delete ({selectedProperties.size})
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Selection Mode Toggle Button */}
+                {!selectionMode && (
+                    <div className="mb-4 flex justify-end">
+                        <button
+                            onClick={handleToggleSelectionMode}
+                            className="px-4 py-2 bg-white text-gray-700 rounded-full text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-2 shadow-sm"
+                        >
+                            <CheckSquare className="w-4 h-4" />
+                            Select Properties
+                        </button>
+                    </div>
+                )}
+
                 <DashboardFilter
                     filterOptions={filterOptions}
                     filterLabels={filterLabels}
@@ -371,6 +494,9 @@ const Properties: React.FC = () => {
                                     type={property.type}
                                     country={property.country}
                                     propertyType={property.propertyType}
+                                    isSelected={selectedProperties.has(property.id)}
+                                    onSelect={handleSelectProperty}
+                                    selectionMode={selectionMode}
                                 />
                             ))}
                         </div>
@@ -386,6 +512,57 @@ const Properties: React.FC = () => {
                     <div className="text-center py-12 bg-white rounded-2xl">
                         <p className="text-gray-500 text-lg">No properties found matching your filters</p>
                         <p className="text-gray-400 text-sm mt-2">Try adjusting your search or filters</p>
+                    </div>
+                )}
+
+                {/* Delete Confirmation Modal */}
+                {showDeleteConfirm && (
+                    <div 
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+                        onClick={(e) => {
+                            if (e.target === e.currentTarget && !isDeleting) {
+                                setShowDeleteConfirm(false);
+                            }
+                        }}
+                    >
+                        <div 
+                            className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <h3 className="text-xl font-bold text-gray-800 mb-2">
+                                Delete Properties?
+                            </h3>
+                            <p className="text-gray-600 mb-6">
+                                Are you sure you want to delete {selectedProperties.size} property(ies)? 
+                                This action cannot be undone.
+                            </p>
+                            <div className="flex gap-3 justify-end">
+                                <button
+                                    onClick={() => setShowDeleteConfirm(false)}
+                                    disabled={isDeleting}
+                                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-full text-sm font-medium hover:bg-gray-200 transition-colors disabled:opacity-50"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleBulkDelete}
+                                    disabled={isDeleting}
+                                    className="px-4 py-2 bg-red-500 text-white rounded-full text-sm font-medium hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                >
+                                    {isDeleting ? (
+                                        <>
+                                            <span className="animate-spin">⏳</span>
+                                            Deleting...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Trash2 className="w-4 h-4" />
+                                            Delete
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 )}
             </div >

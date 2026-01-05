@@ -24,7 +24,11 @@ export const API_ENDPOINTS = {
     CREATE: `${API_BASE_URL}/property`,
     UPDATE: (id: string) => `${API_BASE_URL}/property/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/property/${id}`,
+    BULK_DELETE: `${API_BASE_URL}/property/bulk/delete`,
     GET_ALL_UNITS: `${API_BASE_URL}/property/units/all`,
+    IMPORT_EXCEL: `${API_BASE_URL}/property/import-excel`,
+    VALIDATE_EXCEL: `${API_BASE_URL}/property/validate-excel`,
+    GET_IMPORT_FIELDS: `${API_BASE_URL}/property/import-fields`,
   },
   UNIT: {
     GET_ALL_BY_PROPERTY: (propertyId: string) => `${API_BASE_URL}/unit/property/${propertyId}`,
@@ -127,6 +131,13 @@ export const API_ENDPOINTS = {
     CREATE: `${API_BASE_URL}/leads`,
     UPDATE: (id: string) => `${API_BASE_URL}/leads/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/leads/${id}`,
+  },
+  SUBSCRIPTION: {
+    GET_CURRENT: `${API_BASE_URL}/subscription/current`,
+    UPDATE: `${API_BASE_URL}/subscription/update`,
+    CHANGE_PLAN: `${API_BASE_URL}/subscription/change-plan`,
+    RENEW: `${API_BASE_URL}/subscription/renew`,
+    BILLING_HISTORY: `${API_BASE_URL}/subscription/billing-history`,
   },
 };
 

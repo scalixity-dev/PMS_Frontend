@@ -1,36 +1,72 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CustomCheckbox from '../../../../../../components/ui/CustomCheckbox';
 import CustomDropdown from '../../../../components/CustomDropdown';
+import { propertyService } from '../../../../../../services/property.service';
 
-const MappingStep: React.FC = () => {
+interface MappingStepProps {
+    fileHeaders?: string[];
+}
+
+const MappingStep: React.FC<MappingStepProps> = ({ fileHeaders = [] }) => {
     const [importFirstRow, setImportFirstRow] = useState(true);
+    const [isLoading, setIsLoading] = useState(true);
+    const [fields, setFields] = useState<Array<{ id: number; SmartTenantAILabel: string; fileLabel: string; required: boolean }>>([]);
 
-    // Mock CSV headers that might come from an uploaded file
-    const mockCsvHeaders = [
-        'Property Name',
-        'Street Address',
-        'City',
-        'State',
-        'Zip Code',
-        'Country',
-        'Year Built',
-        'Number of Units'
-    ];
+    // Fetch system fields from backend
+    useEffect(() => {
+        const fetchSystemFields = async () => {
+            try {
+                setIsLoading(true);
+                const response = await propertyService.getImportFields();
+                
+                // Auto-map fields based on exact match or similar names
+                const mappedFields = response.fields.map((field, index) => {
+                    // Try to find exact match first
+                    let mappedHeader = fileHeaders.find(h => 
+                        h.toLowerCase() === field.key.toLowerCase() ||
+                        h.toLowerCase() === field.label.toLowerCase()
+                    );
+                    
+                    // If no exact match, try partial match for common fields
+                    if (!mappedHeader) {
+                        const keyLower = field.key.toLowerCase();
+                        if (keyLower.includes('street') || keyLower.includes('address')) {
+                            mappedHeader = fileHeaders.find(h => h.toLowerCase().includes('address') || h.toLowerCase().includes('street'));
+                        } else if (keyLower.includes('zip') || keyLower.includes('postal')) {
+                            mappedHeader = fileHeaders.find(h => h.toLowerCase().includes('zip') || h.toLowerCase().includes('postal'));
+                        } else if (keyLower.includes('state') || keyLower.includes('region')) {
+                            mappedHeader = fileHeaders.find(h => h.toLowerCase().includes('state') || h.toLowerCase().includes('region'));
+                        }
+                    }
+                    
+                    return {
+                        id: index + 1,
+                        SmartTenantAILabel: field.label,
+                        fileLabel: mappedHeader || '',
+                        required: field.required,
+                    };
+                });
+                
+                setFields(mappedFields);
+            } catch (error) {
+                console.error('Failed to fetch system fields:', error);
+                // Fallback to empty fields
+                setFields([]);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        if (fileHeaders.length > 0) {
+            fetchSystemFields();
+        }
+    }, [fileHeaders]);
+
+    // Use actual file headers
+    const csvHeaders = fileHeaders.length > 0 ? fileHeaders : [];
 
     // Convert to FilterOption format for CustomDropdown
-    const csvOptions = mockCsvHeaders.map(header => ({ value: header, label: header }));
-
-    // Mock initial mapping state
-    const [fields, setFields] = useState([
-        { id: 1, SmartTenantAILabel: 'Property Name', fileLabel: 'Property Name' },
-        { id: 2, SmartTenantAILabel: 'Address', fileLabel: 'Street Address' },
-        { id: 3, SmartTenantAILabel: 'City', fileLabel: 'City' },
-        { id: 4, SmartTenantAILabel: 'State/Region', fileLabel: 'State' },
-        { id: 5, SmartTenantAILabel: 'Zip/Postal Code', fileLabel: 'Zip Code' },
-        { id: 6, SmartTenantAILabel: 'Country', fileLabel: 'Country' },
-        { id: 7, SmartTenantAILabel: 'Property Type', fileLabel: '' }, // Unmapped example
-        { id: 8, SmartTenantAILabel: 'Units', fileLabel: 'Number of Units' },
-    ]);
+    const csvOptions = csvHeaders.map(header => ({ value: header, label: header }));
 
     const handleMappingChange = (id: number, newValue: string) => {
         setFields(fields.map(field =>
@@ -40,6 +76,26 @@ const MappingStep: React.FC = () => {
 
     // Get list of currently selected values (excluding the current field's value for the filter logic relative to itself)
     const getAllSelectedValues = () => fields.map(f => f.fileLabel).filter(v => v !== '');
+
+    if (isLoading) {
+        return (
+            <div className="w-full max-w-4xl mx-auto px-4">
+                <div className="text-center py-8">
+                    <p className="text-gray-600">Loading field definitions...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (csvHeaders.length === 0) {
+        return (
+            <div className="w-full max-w-4xl mx-auto px-4">
+                <div className="text-center py-8">
+                    <p className="text-red-600">No file headers found. Please upload a valid Excel file.</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="w-full max-w-4xl mx-auto px-4">
@@ -63,7 +119,7 @@ const MappingStep: React.FC = () => {
                     <h3 className="text-lg font-semibold text-white">Uploaded File Header</h3>
                 </div>
 
-                <div className="p-8 bg-[#F3F4F6]">
+                <div className="p-8 bg-[#F3F4F6] max-h-[600px] overflow-y-auto">
                     <div className="grid grid-cols-[1fr_20px_1fr] gap-4 w-full items-end">
                         {fields.map((field) => {
                             // Calculate options available for this specific field
@@ -75,7 +131,7 @@ const MappingStep: React.FC = () => {
                                 <React.Fragment key={field.id}>
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                            {field.SmartTenantAILabel} *
+                                            {field.SmartTenantAILabel} {field.required && <span className="text-red-500">*</span>}
                                         </label>
                                         <div className="w-full px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-600 h-[46px] flex items-center">
                                             {field.SmartTenantAILabel}

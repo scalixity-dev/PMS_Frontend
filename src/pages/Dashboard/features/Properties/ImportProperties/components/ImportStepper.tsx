@@ -8,8 +8,8 @@ interface ImportStepperProps {
 const steps = [
     { id: 1, label: 'Template' },
     { id: 2, label: 'Upload File' },
-    { id: 3, label: 'Fields Mapping' },
-    { id: 4, label: 'Validations' },
+    { id: 3, label: 'Validation' },
+    { id: 4, label: 'Mapping' },
 ];
 
 const ImportStepper: React.FC<ImportStepperProps> = ({ currentStep }) => {

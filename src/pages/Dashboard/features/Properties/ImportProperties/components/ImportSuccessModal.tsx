@@ -10,6 +10,8 @@ interface ImportSuccessModalProps {
     onClose: () => void;
     successCount: number;
     failureCount: number;
+    total?: number;
+    jobId?: string | null;
 }
 
 const ImportSuccessModal: React.FC<ImportSuccessModalProps> = ({
@@ -17,6 +19,8 @@ const ImportSuccessModal: React.FC<ImportSuccessModalProps> = ({
     onClose,
     successCount,
     failureCount,
+    total,
+    jobId,
 }) => {
 
     return (
@@ -75,9 +79,17 @@ const ImportSuccessModal: React.FC<ImportSuccessModalProps> = ({
                                         Well Done !
                                     </Dialog.Title>
 
-                                    <p className="text-gray-600 font-medium mb-8">
-                                        Your Properties were successfully imported
+                                    <p className="text-gray-600 font-medium mb-4">
+                                        {jobId 
+                                            ? 'Your import job has been queued and will be processed in the background.'
+                                            : 'Your Properties were successfully imported'
+                                        }
                                     </p>
+                                    {total !== undefined && (
+                                        <p className="text-sm text-gray-500 mb-8">
+                                            Total rows: {total}
+                                        </p>
+                                    )}
 
                                     {/* Stats Card */}
                                     <div className="w-full border border-gray-200 rounded-xl p-4 mb-6 shadow-sm">
