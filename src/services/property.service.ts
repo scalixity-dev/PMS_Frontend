@@ -571,7 +571,11 @@ class PropertyService {
   /**
    * Import properties from Excel file
    */
-  async importFromExcel(file: File): Promise<{
+  async importFromExcel(
+    file: File,
+    fieldMappings?: Record<string, string>,
+    importFirstRow: boolean = true
+  ): Promise<{
     total: number;
     successful: number;
     failed: number;
@@ -581,6 +585,14 @@ class PropertyService {
   }> {
     const formData = new FormData();
     formData.append('file', file);
+    
+    // Add field mappings if provided
+    if (fieldMappings && Object.keys(fieldMappings).length > 0) {
+      formData.append('fieldMappings', JSON.stringify(fieldMappings));
+    }
+    
+    // Add importFirstRow option
+    formData.append('importFirstRow', String(importFirstRow));
 
     const response = await fetch(API_ENDPOINTS.PROPERTY.IMPORT_EXCEL, {
       method: 'POST',

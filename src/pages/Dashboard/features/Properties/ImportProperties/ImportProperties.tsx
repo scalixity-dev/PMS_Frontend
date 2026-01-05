@@ -34,6 +34,8 @@ const ImportProperties: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [fileHeaders, setFileHeaders] = useState<string[]>([]);
     const [isValidating, setIsValidating] = useState(false);
+    const [fieldMappings, setFieldMappings] = useState<Record<string, string>>({});
+    const [importFirstRow, setImportFirstRow] = useState(true);
 
     const handleNext = async () => {
         if (currentStep === 2 && file) {
@@ -109,7 +111,8 @@ const ImportProperties: React.FC = () => {
 
         try {
             // Now actually import the properties (this will validate and queue)
-            const result = await propertyService.importFromExcel(file);
+            // Pass field mappings and importFirstRow option
+            const result = await propertyService.importFromExcel(file, fieldMappings, importFirstRow);
             setImportResult(result);
             
             // Update validation errors with any new errors from import
@@ -176,7 +179,14 @@ const ImportProperties: React.FC = () => {
             case 3:
                 return <ValidationStep errors={validationErrors} importResult={importResult} />;
             case 4:
-                return <MappingStep fileHeaders={fileHeaders} />;
+                return (
+                    <MappingStep 
+                        fileHeaders={fileHeaders} 
+                        onMappingChange={setFieldMappings}
+                        importFirstRow={importFirstRow}
+                        onImportFirstRowChange={setImportFirstRow}
+                    />
+                );
             default:
                 return null;
         }

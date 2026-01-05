@@ -294,7 +294,7 @@ const Properties: React.FC = () => {
         }
     };
 
-    const filterOptions: Record<string, FilterOption[]> = {
+    const filterOptions: Record<string, FilterOption[]> = useMemo(() => ({
         status: [
             { value: 'active', label: 'Active' },
             { value: 'archived', label: 'Archived' },
