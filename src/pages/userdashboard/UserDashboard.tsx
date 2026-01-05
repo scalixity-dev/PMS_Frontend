@@ -1,16 +1,19 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useUserDashboardStore } from "./store/userDashboardStore";
+import { useDashboardStore } from "./store/dashboardStore";
 import { Sidebar } from "./components/layout/Sidebar";
-import { TransactionTable } from "./components/transaction/TransactionTable";
-import { LeaseList } from "./components/lease/LeaseList";
+import { TransactionTable } from "./features/Transactions/components/TransactionTable";
+import { LeaseList } from "./features/Leases/components/LeaseList";
 import { mockTransactions, mockLeases, tabs, mockUserInfo, mockFinances } from "./utils/mockData";
 import type { TabType } from "./utils/types";
 import PrimaryActionButton from "../../components/common/buttons/PrimaryActionButton";
 
+import { useAuthStore } from "./features/Profile/store/authStore";
+
 const UserDashboard = () => {
     const navigate = useNavigate();
-    const { activeTab, setActiveTab, setUserInfo, setFinances, userInfo } = useUserDashboardStore();
+    const { activeTab, setActiveTab, setFinances } = useDashboardStore();
+    const { userInfo, setUserInfo } = useAuthStore();
 
     // Load mock data on mount if store is empty
     useEffect(() => {

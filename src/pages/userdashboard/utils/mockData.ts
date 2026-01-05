@@ -100,6 +100,29 @@ export const mockLeases: Lease[] = [
                 phone: "+1 (888) 888 8888",
                 avatarSeed: "Atul"
             }
+        ],
+        attachments: [
+            {
+                id: 1,
+                name: "Lease Agreement.pdf",
+                size: "2.4 MB",
+                type: "PDF",
+                url: "/documents/lease-agreement.pdf"
+            },
+            {
+                id: 2,
+                name: "Move-in Notice.pdf",
+                size: "0.5 MB",
+                type: "PDF",
+                url: "/documents/move-in-notice.pdf"
+            },
+            {
+                id: 3,
+                name: "Property Rules.pdf",
+                size: "1.2 MB",
+                type: "PDF",
+                url: "/documents/property-rules.pdf"
+            }
         ]
     },
     {
