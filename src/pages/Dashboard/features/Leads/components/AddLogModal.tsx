@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ChevronLeft, ChevronDown, Paperclip } from 'lucide-react';
+import { X, ChevronLeft, Paperclip } from 'lucide-react';
+import { format } from 'date-fns';
+import DatePicker from '@/components/ui/DatePicker';
+import PreciseTimePicker from '@/components/ui/PreciseTimePicker';
+import SearchableDropdown from '@/components/ui/SearchableDropdown';
 
 interface AddLogModalProps {
     isOpen: boolean;
@@ -9,10 +13,37 @@ interface AddLogModalProps {
     initialData?: { details: string; date: string; results: string; image?: string | null };
 }
 
+const RESULT_MAPPING: Record<string, string> = {
+    'Answered': 'ANSWERED',
+    'No Answer': 'NO_ANSWER',
+    'Voicemail': 'VOICEMAIL',
+    'Busy': 'BUSY',
+    'Failed': 'FAILED',
+    'Other': 'OTHER'
+};
+
+const REVERSE_RESULT_MAPPING: Record<string, string> = Object.entries(RESULT_MAPPING).reduce((acc, [key, value]) => {
+    acc[value] = key;
+    return acc;
+}, {} as Record<string, string>);
+
+const RESULT_OPTIONS = Object.keys(RESULT_MAPPING);
+
 const AddLogModal: React.FC<AddLogModalProps> = ({ isOpen, onClose, onCreate, initialData }) => {
     const [details, setDetails] = useState(initialData?.details || '');
-    const [date, setDate] = useState(initialData?.date || '');
-    const [results, setResults] = useState(initialData?.results || '');
+    const [selectedDate, setSelectedDate] = useState<Date | undefined>(
+        initialData?.date ? new Date(initialData.date) : undefined
+    );
+    const [selectedTime, setSelectedTime] = useState(
+        initialData?.date && !isNaN(new Date(initialData.date).getTime())
+            ? format(new Date(initialData.date), 'h:mm a')
+            : ''
+    );
+    // State stores the Display Value (e.g. "Answered")
+    const [results, setResults] = useState(
+        initialData?.results ? (REVERSE_RESULT_MAPPING[initialData.results] || initialData.results) : ''
+    );
+
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [existingFileUrl, setExistingFileUrl] = useState<string | null>(initialData?.image || null);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -56,13 +87,22 @@ const AddLogModal: React.FC<AddLogModalProps> = ({ isOpen, onClose, onCreate, in
 
             if (initialData) {
                 setDetails(initialData.details);
-                setDate(initialData.date);
-                setResults(initialData.results);
+                const dateObj = new Date(initialData.date);
+                if (!isNaN(dateObj.getTime())) {
+                    setSelectedDate(dateObj);
+                    setSelectedTime(format(dateObj, 'h:mm a'));
+                } else {
+                    setSelectedDate(undefined);
+                    setSelectedTime('');
+                }
+                // Map initialData result (likely UPPERCASE) to Display Value
+                setResults(REVERSE_RESULT_MAPPING[initialData.results] || initialData.results || '');
                 setExistingFileUrl(initialData.image || null);
                 setSelectedFile(null);
             } else {
                 setDetails('');
-                setDate('');
+                setSelectedDate(undefined);
+                setSelectedTime('');
                 setResults('');
                 setExistingFileUrl(null);
                 setSelectedFile(null);
@@ -83,6 +123,60 @@ const AddLogModal: React.FC<AddLogModalProps> = ({ isOpen, onClose, onCreate, in
         }
     };
 
+    const handleCreate = () => {
+        if (!selectedDate || !selectedTime) {
+            alert('Please select both date and time');
+            return;
+        }
+
+        if (!results) {
+            alert('Please select a result');
+            return;
+        }
+
+        // Combine Date and Time into ISO-like string (YYYY-MM-DDTHH:mm)
+        try {
+            const timeParts = selectedTime.match(/(\d+):(\d+)\s?(AM|PM)/i);
+            if (!timeParts) {
+                throw new Error('Invalid time format');
+            }
+
+            let hours = parseInt(timeParts[1], 10);
+            const minutes = parseInt(timeParts[2], 10);
+            const modifier = timeParts[3].toUpperCase();
+
+            if (hours === 12 && modifier === 'AM') {
+                hours = 0;
+            } else if (hours !== 12 && modifier === 'PM') {
+                hours += 12;
+            }
+
+            const yyyy = selectedDate.getFullYear();
+            const mm = String(selectedDate.getMonth() + 1).padStart(2, '0');
+            const dd = String(selectedDate.getDate()).padStart(2, '0');
+            const hh = String(hours).padStart(2, '0');
+            const min = String(minutes).padStart(2, '0');
+
+            const dateString = `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+
+            // Map Display Value back to Backend Value (UPPERCASE)
+            const backendResult = RESULT_MAPPING[results] || results;
+
+            onCreate({ details, date: dateString, results: backendResult }, selectedFile);
+
+            // Clear form
+            setDetails('');
+            setSelectedDate(undefined);
+            setSelectedTime('');
+            setResults('');
+            setSelectedFile(null);
+            onClose();
+        } catch (error) {
+            console.error('Error processing date/time:', error);
+            alert('Invalid date or time');
+        }
+    };
+
     return createPortal(
         <div
             className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 animate-in fade-in duration-300"
@@ -95,10 +189,10 @@ const AddLogModal: React.FC<AddLogModalProps> = ({ isOpen, onClose, onCreate, in
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="log-modal-title"
-                className="bg-white rounded-3xl w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-300 overflow-hidden mx-4"
+                className="bg-white rounded-3xl w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh] mx-4"
             >
                 {/* Header */}
-                <div className="bg-[#3E706F] px-5 py-3 flex items-center justify-between text-white relative">
+                <div className="bg-[#3E706F] px-5 py-3 flex items-center justify-between text-white relative rounded-t-3xl shrink-0">
                     <button
                         onClick={onClose}
                         aria-label="Back"
@@ -117,7 +211,7 @@ const AddLogModal: React.FC<AddLogModalProps> = ({ isOpen, onClose, onCreate, in
                 </div>
 
                 {/* Body */}
-                <div className="p-6 bg-[#F8FAFC]">
+                <div className="p-6 bg-[#F8FAFC] rounded-b-3xl overflow-y-auto">
                     {/* Textarea */}
                     <div className="bg-white rounded-2xl border border-gray-200 p-3 shadow-sm min-h-[120px] flex flex-col mb-6">
                         <textarea
@@ -132,37 +226,37 @@ const AddLogModal: React.FC<AddLogModalProps> = ({ isOpen, onClose, onCreate, in
                     {/* Inputs Row */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                         {/* Date & Time */}
-                        <div className="space-y-1.5">
+                        <div className="space-y-1.5 col-span-1 md:col-span-2">
                             <label className="block text-xs font-bold text-[#1A1A1A]">Select Date & Time *</label>
-                            <div className="relative">
-                                <input
-                                    type="datetime-local"
-                                    value={date}
-                                    onChange={(e) => setDate(e.target.value)}
-                                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-[#3E706F] transition-colors text-gray-700 text-sm font-medium placeholder-gray-400 cursor-text [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                            <div className="grid grid-cols-2 gap-2">
+                                <DatePicker
+                                    value={selectedDate}
+                                    onChange={setSelectedDate}
+                                    placeholder="Select date"
+                                    className="w-full"
+                                    popoverClassName="z-[110]"
+                                />
+                                <PreciseTimePicker
+                                    value={selectedTime}
+                                    onChange={setSelectedTime}
+                                    placeholder="Select time"
+                                    className="w-full"
                                 />
                             </div>
                         </div>
 
                         {/* Call Results */}
-                        <div className="space-y-1.5">
-                            <label className="block text-xs font-bold text-[#1A1A1A]">Call Results *</label>
-                            <div className="relative">
-                                <select
-                                    value={results}
-                                    onChange={(e) => setResults(e.target.value)}
-                                    className="w-full bg-white border border-gray-100 rounded-xl px-4 py-2.5 pr-10 outline-none focus:border-[#3E706F] transition-colors text-gray-700 text-sm font-medium appearance-none cursor-pointer"
-                                >
-                                    <option value="">Select result</option>
-                                    <option value="ANSWERED">Answered</option>
-                                    <option value="NO_ANSWER">No Answer</option>
-                                    <option value="VOICEMAIL">Voicemail</option>
-                                    <option value="BUSY">Busy</option>
-                                    <option value="FAILED">Failed</option>
-                                    <option value="OTHER">Other</option>
-                                </select>
-                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
-                            </div>
+                        <div className="space-y-1.5 col-span-1 md:col-span-2">
+                            <SearchableDropdown
+                                label="Call Results *"
+                                value={results}
+                                onChange={setResults}
+                                options={RESULT_OPTIONS}
+                                placeholder="Select result"
+                                className="w-full"
+                                buttonClassName="w-full flex items-center justify-between bg-white border border-gray-200 px-4 py-3 rounded-md text-sm text-gray-700 shadow-sm focus:ring-2 focus:ring-[#84CC16]/20"
+                                dropUp={false}
+                            />
                         </div>
                     </div>
 
@@ -198,14 +292,7 @@ const AddLogModal: React.FC<AddLogModalProps> = ({ isOpen, onClose, onCreate, in
                                 Upload File
                             </button>
                             <button
-                                onClick={() => {
-                                    onCreate({ details, date, results }, selectedFile);
-                                    setDetails('');
-                                    setDate('');
-                                    setResults('');
-                                    setSelectedFile(null);
-                                    onClose();
-                                }}
+                                onClick={handleCreate}
                                 className="bg-[#3E706F] text-white px-8 py-2.5 rounded-lg font-bold shadow-lg hover:bg-[#2c5251] transition-all hover:scale-[1.02] active:scale-[0.98] text-sm"
                             >
                                 {initialData ? 'Update' : 'Create'}
