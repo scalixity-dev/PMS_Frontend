@@ -69,7 +69,7 @@ const SubCategorySelection: React.FC<SubCategorySelectionProps> = ({ selectedSub
                 <p className="text-gray-500">Select the sub-category of the issue below.</p>
             </div>
 
-            <div className="bg-[#F0F0F6] p-10 rounded-[2rem] min-h-[300px] flex flex-wrap content-start gap-4">
+            <div className="bg-[#F0F0F6] p-4 md:p-10 rounded-[2rem] min-h-[300px] flex flex-wrap content-start gap-3 md:gap-4 justify-center md:justify-start">
                 {items.map((item) => {
                     const isSelected = selectedSubCategory === item.id;
 

@@ -22,7 +22,7 @@ const PrioritySelection: React.FC<PrioritySelectionProps> = ({ selectedPriority,
                 <p className="text-gray-500">How urgent the issue is?</p>
             </div>
 
-            <div className="w-full bg-[#F0F2F5] rounded-[2rem] p-8 space-y-4 mb-12">
+            <div className="w-full bg-[#F0F2F5] rounded-[2rem] p-4 md:p-8 space-y-4 mb-8 md:mb-12">
                 {priorities.map((priority) => (
                     <button
                         key={priority.id}
@@ -49,7 +49,7 @@ const PrioritySelection: React.FC<PrioritySelectionProps> = ({ selectedPriority,
                 onClick={onSubmit}
                 disabled={!selectedPriority}
                 className={`
-                    bg-[#3D7475] text-white px-12 py-3.5 rounded-lg font-bold text-lg transition-all shadow-lg
+                    bg-[#3D7475] text-white w-full md:w-auto px-12 py-3.5 rounded-lg font-bold text-lg transition-all shadow-lg
                     ${!selectedPriority ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'}
                 `}
             >

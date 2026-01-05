@@ -279,41 +279,43 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                     Pick the tenant from the table below. If your tenant is connected with you, the request will be automatically shared with them and posted on their SmartTenantAI Portal.
                 </p>
 
-                <div className="bg-[#F0F2F5] rounded-[3rem] p-6">
-                    <div className="bg-[#3D7475] text-white rounded-t-xl grid grid-cols-3 px-8 py-4 font-bold">
-                        <div>Name</div>
-                        <div>Status</div>
-                        <div>Share</div>
-                    </div>
-                    <div className="bg-white rounded-b-xl overflow-hidden">
-                        {tenantList.map((tenant: TenantListItem, index: number) => (
-                            <div key={tenant.id} className={`grid grid-cols-3 px-8 py-4 items-center ${index !== tenantList.length - 1 ? 'border-b border-gray-100' : ''}`}>
-                                <div className="flex items-center gap-4">
-                                    <button
-                                        onClick={() => toggleTenantSelection(tenant.id)}
-                                        className="flex items-center justify-center border border-gray-200 transition-colors cursor-pointer"
-                                    >
-                                        <div className={`w-5 h-5 border-2 rounded-sm flex items-center justify-center transition-colors ${tenant.selected ? 'bg-[#7BD747] border-[#7BD747]' : 'border-gray-400 bg-white'}`}>
-                                            {tenant.selected && (
-                                                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                                </svg>
-                                            )}
-                                        </div>
-                                    </button>
-                                    <span className="font-medium text-gray-700">{tenant.name}</span>
+                <div className="bg-[#F0F2F5] rounded-[2rem] md:rounded-[3rem] p-4 md:p-6 overflow-x-auto">
+                    <div className="min-w-[600px]">
+                        <div className="bg-[#3D7475] text-white rounded-t-xl grid grid-cols-3 px-8 py-4 font-bold">
+                            <div>Name</div>
+                            <div>Status</div>
+                            <div>Share</div>
+                        </div>
+                        <div className="bg-white rounded-b-xl overflow-hidden">
+                            {tenantList.map((tenant: TenantListItem, index: number) => (
+                                <div key={tenant.id} className={`grid grid-cols-3 px-8 py-4 items-center ${index !== tenantList.length - 1 ? 'border-b border-gray-100' : ''}`}>
+                                    <div className="flex items-center gap-4">
+                                        <button
+                                            onClick={() => toggleTenantSelection(tenant.id)}
+                                            className="flex items-center justify-center border border-gray-200 transition-colors cursor-pointer"
+                                        >
+                                            <div className={`w-5 h-5 border-2 rounded-sm flex items-center justify-center transition-colors ${tenant.selected ? 'bg-[#7BD747] border-[#7BD747]' : 'border-gray-400 bg-white'}`}>
+                                                {tenant.selected && (
+                                                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                )}
+                                            </div>
+                                        </button>
+                                        <span className="font-medium text-gray-700">{tenant.name}</span>
+                                    </div>
+                                    <div className="text-[#2E6819] font-bold">{tenant.status}</div>
+                                    <div>
+                                        <Toggle
+                                            checked={tenant.share}
+                                            onChange={() => { }}
+                                            size="small"
+                                            disabled={true}
+                                        />
+                                    </div>
                                 </div>
-                                <div className="text-[#2E6819] font-bold">{tenant.status}</div>
-                                <div>
-                                    <Toggle
-                                        checked={tenant.share}
-                                        onChange={() => { }}
-                                        size="small"
-                                        disabled={true}
-                                    />
-                                </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -326,27 +328,27 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                 </p>
 
                 {/* Add Date Button and Authorization Toggle Row */}
-                <div className="flex items-center gap-4 mb-8">
+                <div className="flex flex-col md:flex-row items-center md:items-center gap-4 mb-8">
                     <button
                         onClick={handleAddDate}
-                        className="flex items-center gap-2 px-6 py-3 rounded-full bg-[#3D7475] text-white font-bold hover:opacity-90 transition-opacity"
+                        className="flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#3D7475] text-white font-bold hover:opacity-90 transition-opacity w-full md:w-auto"
                     >
                         Add Date
                         <Plus size={18} className="bg-white text-[#3D7475] rounded-full p-0.5" />
                     </button>
 
-                    <div className="flex items-center gap-3 px-6 py-2 bg-[#3D7475] rounded-full">
+                    <div className="flex items-center gap-3 px-6 py-2 bg-[#3D7475] rounded-full w-full md:w-auto">
                         <Toggle
                             checked={tenantAuthorization}
                             onChange={setTenantAuthorization}
                             labelClassName="font-medium text-white"
                         />
-                        <span className="text-white font-medium">Authorization to enter their tenant space</span>
+                        <span className="text-white font-medium text-sm md:text-base">Authorization to enter their tenant space</span>
                     </div>
                 </div>
 
                 {/* Date Options List */}
-                <div className="space-y-4 mb-8 w-1/2">
+                <div className="space-y-4 mb-8 w-full md:w-1/2">
                     {dateOptions.map((option, index) => (
                         <div key={option.id} className="bg-white rounded-lg border border-gray-200 p-4">
                             <div className="flex items-center justify-between mb-3">
@@ -406,37 +408,37 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                     ))}
                 </div>
 
-                {/* Code Dropdown */}
-                <div className="mb-6 w-1/2">
-                    <CustomDropdown
-                        label="Code*"
-                        value={accessCode}
-                        onChange={setAccessCode}
-                        options={[
-                            { value: 'code1', label: '**********' },
-                            { value: 'code2', label: '**********' },
-                            { value: 'code3', label: '**********' }
-                        ]}
-                        placeholder="**********"
-                        required
-                        buttonClassName="!bg-white !border-none !rounded-md !py-3"
-                    />
-                </div>
-
-                {/* Pets in Residence Dropdown */}
-                <div className="mb-6 w-1/2">
-                    <CustomDropdown
-                        label="Pets in residence*"
-                        value={petsInResidence}
-                        onChange={setPetsInResidence}
-                        options={[
-                            { value: 'yes', label: 'Yes' },
-                            { value: 'no', label: 'No' }
-                        ]}
-                        placeholder="Yes/No"
-                        required
-                        buttonClassName="!bg-white !border-none !rounded-md !py-3"
-                    />
+                {/* Code & Pets Dropdowns */}
+                <div className="flex flex-col md:flex-row gap-6 mb-6">
+                    <div className="w-full md:w-1/2">
+                        <CustomDropdown
+                            label="Code*"
+                            value={accessCode}
+                            onChange={setAccessCode}
+                            options={[
+                                { value: 'code1', label: '**********' },
+                                { value: 'code2', label: '**********' },
+                                { value: 'code3', label: '**********' }
+                            ]}
+                            placeholder="**********"
+                            required
+                            buttonClassName="!bg-white !border-none !rounded-md !py-3"
+                        />
+                    </div>
+                    <div className="w-full md:w-1/2">
+                        <CustomDropdown
+                            label="Pets in residence*"
+                            value={petsInResidence}
+                            onChange={setPetsInResidence}
+                            options={[
+                                { value: 'yes', label: 'Yes' },
+                                { value: 'no', label: 'No' }
+                            ]}
+                            placeholder="Yes/No"
+                            required
+                            buttonClassName="!bg-white !border-none !rounded-md !py-3"
+                        />
+                    </div>
                 </div>
 
                 {/* Pet Type Checkboxes */}
@@ -469,16 +471,16 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
             </div>
 
             {/* Footer Buttons */}
-            <div className="flex gap-4">
+            <div className="flex flex-col md:flex-row gap-4">
                 <button
                     onClick={onBack}
-                    className="px-12 py-3 rounded-lg bg-white border border-gray-200 text-black font-bold hover:bg-gray-50 transition-colors shadow-sm"
+                    className="flex-1 md:flex-none px-12 py-3 rounded-lg bg-white border border-gray-200 text-black font-bold hover:bg-gray-50 transition-colors shadow-sm"
                 >
                     Back
                 </button>
                 <button
                     onClick={onNext}
-                    className="px-12 py-3 rounded-lg bg-[#3D7475] text-white font-bold hover:opacity-90 transition-opacity shadow-md"
+                    className="flex-1 md:flex-none px-12 py-3 rounded-lg bg-[#3D7475] text-white font-bold hover:opacity-90 transition-opacity shadow-md"
                 >
                     Continue
                 </button>
@@ -526,7 +528,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                             />
 
                             {/* Equipment Brand and Model */}
-                            <div className="grid grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label className="block text-sm font-bold text-gray-700 mb-2">Equipment Brand *</label>
                                     <input
@@ -552,7 +554,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                             </div>
 
                             {/* Serial */}
-                            <div className="w-1/2">
+                            <div className="w-full md:w-1/2">
                                 <label className="block text-sm font-bold text-gray-700 mb-2">Serial*</label>
                                 <input
                                     type="text"

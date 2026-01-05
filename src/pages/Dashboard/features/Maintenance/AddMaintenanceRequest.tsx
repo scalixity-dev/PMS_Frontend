@@ -35,24 +35,24 @@ const RequestTypeCard: React.FC<RequestTypeCardProps> = ({ type, selected, onCli
         <div
             onClick={onClick}
             className={`
-        relative flex flex-col items-start p-8 rounded-3xl cursor-pointer transition-all duration-300 w-80 h-auto
+        relative flex flex-col items-start p-6 md:p-8 rounded-[2rem] cursor-pointer transition-all duration-300 w-full md:w-80 h-full
         ${selected
-                    ? 'bg-[#F0F2F5] border-2 border-[#7BD747] shadow-none'
-                    : 'bg-white shadow-lg border-2 border-transparent hover:shadow-xl'
+                    ? 'bg-[#F0F2F5] border-2 border-[#7BD747] shadow-none ring-1 ring-[#7BD747]/50'
+                    : 'bg-white shadow-md border-2 border-transparent hover:shadow-lg hover:-translate-y-1'
                 }
       `}
         >
             {/* Pill Badge */}
             <div className={`
-        flex items-center gap-2 px-6 py-2 rounded-full mb-8
+        flex items-center gap-2 px-4 py-1.5 rounded-full mb-6
         ${selected ? 'bg-[#7BD747] text-white' : 'bg-[#7BD747] text-white'}
       `}>
                 <div className={`
-          w-4 h-4 rounded-full border-2 border-white flex items-center justify-center
+          w-3 h-3 rounded-full border-[1.5px] border-white flex items-center justify-center
         `}>
-                    {selected && <div className="w-2 h-2 bg-white rounded-full" />}
+                    {selected && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
                 </div>
-                <span className="font-bold text-lg">{title}</span>
+                <span className="font-bold text-sm md:text-base">{title}</span>
             </div>
 
             {/* Description */}
@@ -67,7 +67,7 @@ const AddMaintenanceRequest: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const isEditMode = location.state?.editMode;
-   
+
 
     const targetSection = location.state?.targetSection;
 
@@ -281,10 +281,10 @@ const AddMaintenanceRequest: React.FC = () => {
     return (
         <div className="flex flex-col h-full w-full bg-[var(--color-background)] px-6 overflow-y-auto">
             <div className="flex-1 flex items-start justify-center pt-8">
-                <div className={`bg-[#DFE5E3] rounded-[2rem] p-12 flex flex-col items-center w-full shadow-sm min-h-[80vh] relative ${selectedType === 'advanced' && mainStep >= 1 ? 'max-w-6xl' : 'max-w-3xl'}`}>
+                <div className={`bg-[#DFE5E3] rounded-[2rem] p-6 md:p-12 flex flex-col items-center w-full shadow-sm min-h-[80vh] relative ${selectedType === 'advanced' && mainStep >= 1 ? 'max-w-6xl' : 'max-w-3xl'}`}>
 
                     {/* Back Button */}
-                    <div className="absolute top-8 left-8">
+                    <div className="w-full md:w-auto relative mb-4 md:mb-0 md:absolute md:top-8 md:left-8">
                         <button
                             onClick={handleBack}
                             className="flex items-center gap-2 text-[#3D7475] font-bold hover:opacity-80 transition-opacity uppercase tracking-wide"
@@ -307,13 +307,12 @@ const AddMaintenanceRequest: React.FC = () => {
                     {/* Step 0: Request Type Selection */}
                     {mainStep === 0 && (
                         <div className="flex flex-col items-center w-full mt-8">
-                            <div className="text-center mb-12">
-                                <h1 className="text-3xl font-semibold text-gray-800 mb-2">Maintenance request</h1>
-                                <h2 className="text-xl text-gray-700 mb-2">Select the request type</h2>
-                                <p className="text-gray-500">Create a request, assign Service Pro and track the progress.</p>
+                            <div className="text-center mb-8 md:mb-10 max-w-lg">
+                                <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">Maintenance request</h1>
+                                <p className="text-gray-500 text-sm md:text-base">Select the request type to get started.</p>
                             </div>
 
-                            <div className="flex flex-col md:flex-row gap-8 mb-16">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-12 w-full max-w-2xl">
                                 <RequestTypeCard
                                     type="basic"
                                     selected={selectedType === 'basic'}

@@ -319,28 +319,28 @@ const Requests: React.FC = () => {
 
             <div className="p-6 bg-[#DFE5E3] min-h-screen rounded-[2rem] overflow-visible">
                 {/* Header */}
-                <div className="flex items-center gap-6 mb-6">
+                <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 mb-6">
                     <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-xl font-bold text-gray-800 hover:text-gray-600 transition-colors">
                         <ChevronLeft className="w-6 h-6" />
                         Requests
                     </button>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2 md:gap-3 w-full md:w-auto">
                         <button
                             onClick={() => navigate('/dashboard/maintenance/request')}
-                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-2"
+                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-2 flex-grow md:flex-grow-0 justify-center"
                         >
                             Add Requests
                             <Plus className="w-4 h-4" />
                         </button>
                         <button
-                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-2"
+                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-2 flex-grow md:flex-grow-0 justify-center"
                         >
                             Money In
                         </button>
                         <button
                             onClick={() => navigate('/dashboard/settings/request-settings/request-settings')}
-                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-2"
+                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-2 flex-grow md:flex-grow-0 justify-center"
                         >
                             Settings
                         </button>
@@ -369,9 +369,9 @@ const Requests: React.FC = () => {
                             </div>
 
                             {/* Table Section */}
-                            <div className="bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm pl-4">
-                                {/* Table Header */}
-                                <div className="text-white px-6 py-4 grid grid-cols-[60px_1fr_1fr_2fr_1fr_1fr_120px] gap-4 items-center text-sm font-medium">
+                            <div className="hidden md:block bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm pl-4">
+                                {/* Table Header - Desktop Only */}
+                                <div className="hidden md:grid text-white px-6 py-4 grid-cols-[60px_1fr_1fr_2fr_1fr_1fr_120px] gap-4 items-center text-sm font-medium">
                                     <div className="flex items-center justify-center">
                                         <button onClick={() => toggleAllForProperty(requests)} className="flex items-center justify-center">
                                             <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${requests.every(r => selectedItems.includes(r.id)) ? 'bg-[#7BD747]' : 'bg-white/20 border border-white/50'}`}>
@@ -389,61 +389,143 @@ const Requests: React.FC = () => {
                             </div>
 
                             {/* Table Body */}
-                            <div className="flex flex-col gap-3 bg-[#F0F0F6] p-4 rounded-[2rem] rounded-t min-h-[100px]">
+                            <div className="flex flex-col gap-3 bg-[#F0F0F6] p-4 rounded-[2rem] md:rounded-t min-h-[100px]">
                                 {requests.map((item) => (
-                                    <div
-                                        key={item.id}
-                                        onClick={() => navigate(`/dashboard/maintenance/requests/${item.id}`)}
-                                        className="bg-white rounded-2xl px-6 py-4 grid grid-cols-[60px_1fr_1fr_2fr_1fr_1fr_120px] gap-4 items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    toggleSelection(item.id);
-                                                }}
-                                                className="flex items-center justify-center"
-                                            >
-                                                <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${selectedItems.includes(item.id) ? 'bg-[#7BD747]' : 'bg-gray-200'}`}>
-                                                    {selectedItems.includes(item.id) && <Check className="w-3.5 h-3.5 text-white" />}
+                                    <div key={item.id} className="contents">
+                                        {/* Mobile Card View */}
+                                        <div
+                                            onClick={() => navigate(`/dashboard/maintenance/requests/${item.id}`)}
+                                            className="block md:hidden bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                                        >
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div className="flex items-center gap-3">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            toggleSelection(item.id);
+                                                        }}
+                                                        className="flex items-center justify-center"
+                                                    >
+                                                        <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${selectedItems.includes(item.id) ? 'bg-[#7BD747]' : 'bg-gray-200'}`}>
+                                                            {selectedItems.includes(item.id) && <Check className="w-3.5 h-3.5 text-white" />}
+                                                        </div>
+                                                    </button>
+                                                    <span className="font-bold text-gray-800 text-sm">#{item.index}</span>
                                                 </div>
-                                            </button>
-                                            <span className="font-bold text-gray-800 text-sm">{item.index}</span>
+                                                <div className="text-[#3A6D6C] text-xs font-semibold bg-[#3A6D6C]/10 px-2 py-1 rounded-lg">
+                                                    {item.status}
+                                                </div>
+                                            </div>
+
+                                            <div className="mb-3">
+                                                <div className="text-base font-bold text-[#3A6D6C]">
+                                                    {item.category}
+                                                </div>
+                                                <div className="text-sm text-gray-500">
+                                                    {item.subCategory}
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
+                                                <div>
+                                                    <span className="text-gray-400 block text-xs">Priority</span>
+                                                    <span className="font-semibold text-[#3A6D6C]">{item.priority}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-gray-400 block text-xs">Date</span>
+                                                    <span className="font-semibold text-gray-800">{item.date}</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-gray-400 text-xs">Assignee:</span>
+                                                    <span className="text-[#4ad1a6] text-sm font-semibold">{item.assignee}</span>
+                                                </div>
+                                                <div className="flex items-center justify-end gap-3">
+                                                    <button
+                                                        className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        <MessageSquare className="w-5 h-5" />
+                                                    </button>
+                                                    <div className="relative">
+                                                        <button
+                                                            className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setOpenDropdownId(openDropdownId === item.id ? null : item.id);
+                                                            }}
+                                                        >
+                                                            <MoreHorizontal className="w-5 h-5" />
+                                                        </button>
+                                                        <RowActionDropdown
+                                                            isOpen={openDropdownId === item.id}
+                                                            onClose={() => setOpenDropdownId(null)}
+                                                            onEdit={() => handleEdit(item.id)}
+                                                            onMakeRecurring={() => handleMakeRecurring(item.id)}
+                                                            onPrint={() => handlePrint(item.id)}
+                                                            onDelete={() => handleDeleteClick(item.id)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
 
-                                        <div className="text-[#3A6D6C] text-sm font-semibold">{item.status}</div>
-                                        <div className="text-gray-800 text-sm font-semibold text-[#3A6D6C]">{item.date}</div>
-                                        <div className="text-sm font-semibold text-[#3A6D6C]">
-                                            {item.category} <span className="text-gray-400">/</span>{item.subCategory}
-                                        </div>
-                                        <div className="text-[#3A6D6C] text-sm font-semibold">{item.priority}</div>
-                                        <div className="text-[#4ad1a6] text-sm font-semibold">{item.assignee}</div>
-
-                                        <div className="flex items-center justify-end gap-3">
-                                            <button
-                                                className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
-                                                onClick={(e) => e.stopPropagation()}
-                                            >
-                                                <MessageSquare className="w-5 h-5" />
-                                            </button>
-                                            <div className="relative">
+                                        {/* Desktop Table Row */}
+                                        <div
+                                            onClick={() => navigate(`/dashboard/maintenance/requests/${item.id}`)}
+                                            className="hidden md:grid bg-white rounded-2xl px-6 py-4 grid-cols-[60px_1fr_1fr_2fr_1fr_1fr_120px] gap-4 items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                                        >
+                                            <div className="flex items-center gap-3">
                                                 <button
-                                                    className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        setOpenDropdownId(openDropdownId === item.id ? null : item.id);
+                                                        toggleSelection(item.id);
                                                     }}
+                                                    className="flex items-center justify-center"
                                                 >
-                                                    <MoreHorizontal className="w-5 h-5" />
+                                                    <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${selectedItems.includes(item.id) ? 'bg-[#7BD747]' : 'bg-gray-200'}`}>
+                                                        {selectedItems.includes(item.id) && <Check className="w-3.5 h-3.5 text-white" />}
+                                                    </div>
                                                 </button>
-                                                <RowActionDropdown
-                                                    isOpen={openDropdownId === item.id}
-                                                    onClose={() => setOpenDropdownId(null)}
-                                                    onEdit={() => handleEdit(item.id)}
-                                                    onMakeRecurring={() => handleMakeRecurring(item.id)}
-                                                    onPrint={() => handlePrint(item.id)}
-                                                    onDelete={() => handleDeleteClick(item.id)}
-                                                />
+                                                <span className="font-bold text-gray-800 text-sm">{item.index}</span>
+                                            </div>
+
+                                            <div className="text-[#3A6D6C] text-sm font-semibold">{item.status}</div>
+                                            <div className="text-gray-800 text-sm font-semibold text-[#3A6D6C]">{item.date}</div>
+                                            <div className="text-sm font-semibold text-[#3A6D6C]">
+                                                {item.category} <span className="text-gray-400">/</span>{item.subCategory}
+                                            </div>
+                                            <div className="text-[#3A6D6C] text-sm font-semibold">{item.priority}</div>
+                                            <div className="text-[#4ad1a6] text-sm font-semibold">{item.assignee}</div>
+
+                                            <div className="flex items-center justify-end gap-3">
+                                                <button
+                                                    className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <MessageSquare className="w-5 h-5" />
+                                                </button>
+                                                <div className="relative">
+                                                    <button
+                                                        className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setOpenDropdownId(openDropdownId === item.id ? null : item.id);
+                                                        }}
+                                                    >
+                                                        <MoreHorizontal className="w-5 h-5" />
+                                                    </button>
+                                                    <RowActionDropdown
+                                                        isOpen={openDropdownId === item.id}
+                                                        onClose={() => setOpenDropdownId(null)}
+                                                        onEdit={() => handleEdit(item.id)}
+                                                        onMakeRecurring={() => handleMakeRecurring(item.id)}
+                                                        onPrint={() => handlePrint(item.id)}
+                                                        onDelete={() => handleDeleteClick(item.id)}
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

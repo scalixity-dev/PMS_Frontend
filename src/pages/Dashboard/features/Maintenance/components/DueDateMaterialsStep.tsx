@@ -121,8 +121,8 @@ const DueDateMaterialsStep: React.FC<DueDateMaterialsStepProps> = ({ onNext, onB
                     <div className="space-y-4">
                         {materials.map((material) => (
                             <div key={material.id} className="bg-[#E9E9E9] rounded-[2rem] p-6 shadow-sm">
-                                <div className="flex items-end justify-between gap-4">
-                                    <div className="flex-1 max-w-md">
+                                <div className="flex flex-col md:flex-row items-stretch md:items-end justify-between gap-4">
+                                    <div className="flex-1 w-full md:max-w-md">
                                         <label className="block text-sm font-bold text-gray-700 mb-2">Item*</label>
                                         <input
                                             type="text"
@@ -133,31 +133,33 @@ const DueDateMaterialsStep: React.FC<DueDateMaterialsStepProps> = ({ onNext, onB
                                         />
                                     </div>
 
-                                    {/* Quantity Selector */}
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={() => handleQuantityChange(material.id, -1)}
-                                            className="w-10 h-10 rounded-md bg-white border-2 border-[var(--color-primary)] flex items-center justify-center text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white transition-colors"
-                                        >
-                                            <Minus size={18} />
-                                        </button>
-                                        <div className="w-14 h-10 bg-white border-2 border-gray-300 rounded-md flex items-center justify-center font-semibold text-gray-800">
-                                            {material.quantity}
+                                    {/* Quantity Selector & Delete */}
+                                    <div className="flex items-center justify-between md:justify-start gap-4 w-full md:w-auto">
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => handleQuantityChange(material.id, -1)}
+                                                className="w-10 h-10 rounded-md bg-white border-2 border-[var(--color-primary)] flex items-center justify-center text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white transition-colors"
+                                            >
+                                                <Minus size={18} />
+                                            </button>
+                                            <div className="w-14 h-10 bg-white border-2 border-gray-300 rounded-md flex items-center justify-center font-semibold text-gray-800">
+                                                {material.quantity}
+                                            </div>
+                                            <button
+                                                onClick={() => handleQuantityChange(material.id, 1)}
+                                                className="w-10 h-10 rounded-md bg-white border-2 border-[var(--color-primary)] flex items-center justify-center text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white transition-colors"
+                                            >
+                                                <Plus size={18} />
+                                            </button>
                                         </div>
+
                                         <button
-                                            onClick={() => handleQuantityChange(material.id, 1)}
-                                            className="w-10 h-10 rounded-md bg-white border-2 border-[var(--color-primary)] flex items-center justify-center text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white transition-colors"
+                                            onClick={() => handleDeleteMaterial(material.id)}
+                                            className="p-2 text-red-500 hover:bg-red-50 rounded-md transition-colors mb-0.5"
                                         >
-                                            <Plus size={18} />
+                                            <Trash2 size={22} />
                                         </button>
                                     </div>
-
-                                    <button
-                                        onClick={() => handleDeleteMaterial(material.id)}
-                                        className="p-2 text-red-500 hover:bg-red-50 rounded-md transition-colors mb-0.5"
-                                    >
-                                        <Trash2 size={22} />
-                                    </button>
                                 </div>
                             </div>
                         ))}
@@ -167,18 +169,21 @@ const DueDateMaterialsStep: React.FC<DueDateMaterialsStepProps> = ({ onNext, onB
 
             {/* Footer Buttons */}
             <div className="flex gap-4">
-                <button
-                    onClick={onBack}
-                    className="px-12 py-3 rounded-lg bg-white border border-gray-200 text-black font-bold hover:bg-gray-50 transition-colors shadow-sm"
-                >
-                    Back
-                </button>
-                <button
-                    onClick={() => onNext({ dateInitiated, dateDue, priority, materials })}
-                    className="px-12 py-3 rounded-lg bg-[#3D7475] text-white font-bold hover:opacity-90 transition-opacity shadow-md"
-                >
-                    Create Request
-                </button>
+                {/* Footer Buttons */}
+                <div className="flex flex-col md:flex-row gap-4">
+                    <button
+                        onClick={onBack}
+                        className="flex-1 md:flex-none px-12 py-3 rounded-lg bg-white border border-gray-200 text-black font-bold hover:bg-gray-50 transition-colors shadow-sm"
+                    >
+                        Back
+                    </button>
+                    <button
+                        onClick={() => onNext({ dateInitiated, dateDue, priority, materials })}
+                        className="flex-1 md:flex-none px-12 py-3 rounded-lg bg-[#3D7475] text-white font-bold hover:opacity-90 transition-opacity shadow-md"
+                    >
+                        Create Request
+                    </button>
+                </div>
             </div>
         </div>
     );
