@@ -82,6 +82,8 @@ const MappingStep: React.FC<MappingStepProps> = ({
 
         if (fileHeaders.length > 0) {
             fetchSystemFields();
+        } else {
+            setIsLoading(false);
         }
     }, [fileHeaders, onMappingChange]);
 

@@ -1,5 +1,5 @@
-import type { Transaction } from "../types";
-import { StatusPill } from "./StatusPill";
+import type { Transaction } from "../../utils/types";
+import { StatusPill } from "../lease/StatusPill";
 
 interface TransactionRowProps {
     transaction: Transaction;

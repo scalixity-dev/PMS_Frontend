@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { useQueries } from '@tanstack/react-query';
 import ListingHeader from './components/ListingHeader';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
@@ -19,6 +19,8 @@ interface ListingCardData {
     address: string;
     price: number | null;
     status: 'listed' | 'unlisted';
+    daysListed?: number; // Days since listing was created
+    isSyndicated?: boolean; // Whether listing is syndicated
     bathrooms: number;
     bedrooms: number;
     image: string;
@@ -29,15 +31,20 @@ interface ListingCardData {
 
 const Listing: React.FC = () => {
     const navigate = useNavigate();
+    const { sidebarCollapsed = false } = useOutletContext<{ sidebarCollapsed: boolean }>() ?? {};
     const [searchQuery, setSearchQuery] = useState('');
     const [filters, setFilters] = useState<{
         status: string[];
         daysListed: string[];
         syndication: string[];
+        bedrooms: string[];
+        bathrooms: string[];
     }>({
         status: [],
         daysListed: [],
-        syndication: []
+        syndication: [],
+        bedrooms: [],
+        bathrooms: []
     });
 
     const [currentPage, setCurrentPage] = useState(1);
@@ -85,13 +92,28 @@ const Listing: React.FC = () => {
         syndication: [
             { value: 'yes', label: 'Yes' },
             { value: 'no', label: 'No' },
+        ],
+        bedrooms: [
+            { value: '1', label: '1' },
+            { value: '2', label: '2' },
+            { value: '3', label: '3' },
+            { value: '4', label: '4' },
+            { value: '5+', label: '5+' },
+        ],
+        bathrooms: [
+            { value: '1', label: '1' },
+            { value: '2', label: '2' },
+            { value: '3', label: '3' },
+            { value: '4+', label: '4+' },
         ]
     };
 
     const filterLabels: Record<string, string> = {
-        status: 'Status',
+        status: 'Listing Status',
         daysListed: 'Days Listed',
-        syndication: 'Syndication'
+        syndication: 'Syndication',
+        bedrooms: 'Bedrooms',
+        bathrooms: 'Bathrooms'
     };
 
     // Transform listings and properties into ListingCardData
@@ -100,7 +122,7 @@ const Listing: React.FC = () => {
         const activeListingsMap = new Map<string, BackendListing>();
         // Create a map of unitId -> active listing (for units)
         const activeUnitListingsMap = new Map<string, BackendListing>();
-        
+
         listings.forEach((listing: BackendListing) => {
             if (listing.listingStatus === 'ACTIVE' && listing.isActive) {
                 // Check if listing is for a unit or property
@@ -138,7 +160,7 @@ const Listing: React.FC = () => {
         backendProperties.forEach((backendProperty: BackendProperty) => {
             if (backendProperty.propertyType === 'MULTI') {
                 const units = unitsByPropertyId.get(backendProperty.id) || [];
-                
+
                 // Format address for the property
                 let propertyAddress = 'Address not available';
                 let country: string | undefined;
@@ -151,7 +173,7 @@ const Listing: React.FC = () => {
                         backendProperty.address.zipCode,
                         backendProperty.address.country,
                     ].filter(part => part && part.trim() !== '');
-                    
+
                     if (addressParts.length > 0) {
                         propertyAddress = addressParts.join(', ');
                     }
@@ -162,16 +184,28 @@ const Listing: React.FC = () => {
                     const activeListing = activeUnitListingsMap.get(unit.id);
                     const hasActiveListing = !!activeListing;
 
+                    // Calculate days listed
+                    let daysListed: number | undefined;
+                    if (activeListing && activeListing.listedAt) {
+                        const listedDate = new Date(activeListing.listedAt);
+                        const today = new Date();
+                        const diffTime = today.getTime() - listedDate.getTime();
+                        daysListed = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                    }
+
+                    // Check if listing is syndicated (has external listing URL)
+                    const isSyndicated = activeListing ? !!(activeListing.externalListingUrl) : false;
+
                     // Get price from unit listing, unit leasing, or unit rent
                     let price: number | null = null;
                     if (hasActiveListing && activeListing) {
                         if (activeListing.listingPrice !== null && activeListing.listingPrice !== undefined) {
-                            price = typeof activeListing.listingPrice === 'string' 
-                                ? parseFloat(activeListing.listingPrice) 
+                            price = typeof activeListing.listingPrice === 'string'
+                                ? parseFloat(activeListing.listingPrice)
                                 : Number(activeListing.listingPrice);
                         } else if (activeListing.monthlyRent !== null && activeListing.monthlyRent !== undefined) {
-                            price = typeof activeListing.monthlyRent === 'string' 
-                                ? parseFloat(activeListing.monthlyRent) 
+                            price = typeof activeListing.monthlyRent === 'string'
+                                ? parseFloat(activeListing.monthlyRent)
                                 : Number(activeListing.monthlyRent);
                         }
                     } else if (unit.leasing?.monthlyRent) {
@@ -214,6 +248,8 @@ const Listing: React.FC = () => {
                         address: propertyAddress,
                         price,
                         status: hasActiveListing ? 'listed' : 'unlisted',
+                        daysListed,
+                        isSyndicated,
                         bathrooms,
                         bedrooms,
                         image,
@@ -231,6 +267,18 @@ const Listing: React.FC = () => {
                 const hasActiveListing = listedPropertyIds.has(backendProperty.id);
                 const activeListing = activeListingsMap.get(backendProperty.id);
 
+                // Calculate days listed
+                let daysListed: number | undefined;
+                if (activeListing && activeListing.listedAt) {
+                    const listedDate = new Date(activeListing.listedAt);
+                    const today = new Date();
+                    const diffTime = today.getTime() - listedDate.getTime();
+                    daysListed = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                }
+
+                // Check if listing is syndicated (has external listing URL)
+                const isSyndicated = activeListing ? !!(activeListing.externalListingUrl) : false;
+
                 // Format address
                 let address = 'Address not available';
                 let country: string | undefined;
@@ -243,7 +291,7 @@ const Listing: React.FC = () => {
                         backendProperty.address.zipCode,
                         backendProperty.address.country,
                     ].filter(part => part && part.trim() !== '');
-                    
+
                     if (addressParts.length > 0) {
                         address = addressParts.join(', ');
                     }
@@ -254,12 +302,12 @@ const Listing: React.FC = () => {
                 if (hasActiveListing && activeListing) {
                     // Prefer listingPrice, fallback to monthlyRent
                     if (activeListing.listingPrice !== null && activeListing.listingPrice !== undefined) {
-                        price = typeof activeListing.listingPrice === 'string' 
-                            ? parseFloat(activeListing.listingPrice) 
+                        price = typeof activeListing.listingPrice === 'string'
+                            ? parseFloat(activeListing.listingPrice)
                             : Number(activeListing.listingPrice);
                     } else if (activeListing.monthlyRent !== null && activeListing.monthlyRent !== undefined) {
-                        price = typeof activeListing.monthlyRent === 'string' 
-                            ? parseFloat(activeListing.monthlyRent) 
+                        price = typeof activeListing.monthlyRent === 'string'
+                            ? parseFloat(activeListing.monthlyRent)
                             : Number(activeListing.monthlyRent);
                     }
                 } else if (backendProperty.marketRent) {
@@ -278,9 +326,9 @@ const Listing: React.FC = () => {
                     : 0;
 
                 // Get image
-                const image = backendProperty.coverPhotoUrl 
-                    || backendProperty.photos?.find((p) => p.isPrimary)?.photoUrl 
-                    || backendProperty.photos?.[0]?.photoUrl 
+                const image = backendProperty.coverPhotoUrl
+                    || backendProperty.photos?.find((p) => p.isPrimary)?.photoUrl
+                    || backendProperty.photos?.[0]?.photoUrl
                     || '';
 
                 transformed.push({
@@ -289,6 +337,8 @@ const Listing: React.FC = () => {
                     address,
                     price,
                     status: hasActiveListing ? 'listed' : 'unlisted',
+                    daysListed,
+                    isSyndicated,
                     bathrooms,
                     bedrooms,
                     image,
@@ -310,17 +360,45 @@ const Listing: React.FC = () => {
                 listing.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 listing.address.toLowerCase().includes(searchQuery.toLowerCase());
 
-            // Status filter
-            const matchesStatus = filters.status.length === 0 ||
+            // Status filter (listing status: listed/unlisted)
+            const matchesStatus = !filters.status?.length ||
                 filters.status.includes(listing.status);
 
-            // Days listed filter (mock for now - would need listing date)
-            const matchesDaysListed = true;
+            // Days listed filter (only applies to listed items with a listing date)
+            // If no filter selected, show all. If filter selected, only show items that match
+            const matchesDaysListed = !filters.daysListed?.length || 
+                (listing.daysListed !== undefined && (
+                    (filters.daysListed.includes('new') && listing.daysListed < 7) ||
+                    (filters.daysListed.includes('recent') && listing.daysListed >= 7 && listing.daysListed <= 30) ||
+                    (filters.daysListed.includes('old') && listing.daysListed > 30)
+                ));
 
-            // Syndication filter (mock for now)
-            const matchesSyndication = true;
+            // Syndication filter
+            const matchesSyndication = !filters.syndication?.length ||
+                (filters.syndication.includes('yes') && listing.isSyndicated) ||
+                (filters.syndication.includes('no') && !listing.isSyndicated);
 
-            return matchesSearch && matchesStatus && matchesDaysListed && matchesSyndication;
+            // Bedrooms filter
+            const matchesBedrooms = !filters.bedrooms?.length ||
+                filters.bedrooms.some(filterValue => {
+                    if (filterValue === '5+') {
+                        return listing.bedrooms >= 5;
+                    }
+                    const filterBedrooms = parseInt(filterValue, 10);
+                    return listing.bedrooms === filterBedrooms;
+                });
+
+            // Bathrooms filter
+            const matchesBathrooms = !filters.bathrooms?.length ||
+                filters.bathrooms.some(filterValue => {
+                    if (filterValue === '4+') {
+                        return listing.bathrooms >= 4;
+                    }
+                    const filterBathrooms = parseInt(filterValue, 10);
+                    return listing.bathrooms === filterBathrooms;
+                });
+
+            return matchesSearch && matchesStatus && matchesDaysListed && matchesSyndication && matchesBedrooms && matchesBathrooms;
         });
     }, [allListingsData, searchQuery, filters]);
 
@@ -348,14 +426,14 @@ const Listing: React.FC = () => {
     const error = listingsError || propertiesError || unitsError;
 
     return (
-        <div className="max-w-7xl mx-auto min-h-screen">
-            <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
+        <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen transition-all duration-300`}>
+            <div className="inline-flex items-center px-3 md:px-4 py-2 bg-[#E0E8E7] rounded-full mb-4 md:mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
+                <span className="text-[#4ad1a6] text-xs md:text-sm font-semibold">Dashboard</span>
                 <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">Listings</span>
+                <span className="text-gray-600 text-xs md:text-sm font-semibold">Listings</span>
             </div>
 
-            <div className="p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem] overflow-visible">
+            <div className="p-4 md:p-6 bg-[#E0E8E7] rounded-[1.5rem] md:rounded-[2rem] overflow-visible flex flex-col">
                 <ListingHeader onAddListing={handleAddListing} />
 
                 <DashboardFilter
@@ -363,55 +441,61 @@ const Listing: React.FC = () => {
                     filterLabels={filterLabels}
                     onSearchChange={setSearchQuery}
                     onFiltersChange={(newFilters) => setFilters(newFilters as any)}
+                    initialFilters={filters}
                     showMoreFilters={false}
+                    showClearAll={true}
                 />
 
-                {isLoading ? (
-                    <div className="text-center py-12 bg-white rounded-2xl">
-                        <p className="text-gray-500 text-lg">Loading listings...</p>
-                    </div>
-                ) : error ? (
-                    <div className="text-center py-12 bg-white rounded-2xl">
-                        <p className="text-red-500 text-lg">Error loading listings</p>
-                        <p className="text-gray-400 text-sm mt-2">
-                            {error instanceof Error ? error.message : 'An unexpected error occurred'}
-                        </p>
-                    </div>
-                ) : filteredListings.length > 0 ? (
-                    <>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-                            {currentListings.map((listing) => (
-                                <ListingCard
-                                    key={listing.id}
-                                    id={listing.id}
-                                    name={listing.name}
-                                    address={listing.address}
-                                    price={listing.price}
-                                    status={listing.status}
-                                    bathrooms={listing.bathrooms}
-                                    bedrooms={listing.bedrooms}
-                                    image={listing.image}
-                                    country={listing.country}
-                                    listingId={listing.listingId}
-                                    propertyId={listing.propertyId}
-                                />
-                            ))}
+                <div className="flex-1 flex flex-col">
+                    {isLoading ? (
+                        <div className="text-center py-12 bg-white rounded-2xl">
+                            <p className="text-gray-500 text-lg">Loading listings...</p>
                         </div>
+                    ) : error ? (
+                        <div className="text-center py-12 bg-white rounded-2xl">
+                            <p className="text-red-500 text-lg">Error loading listings</p>
+                            <p className="text-gray-400 text-sm mt-2">
+                                {error instanceof Error ? error.message : 'An unexpected error occurred'}
+                            </p>
+                        </div>
+                    ) : filteredListings.length > 0 ? (
+                        <>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+                                {currentListings.map((listing) => (
+                                    <ListingCard
+                                        key={listing.id}
+                                        id={listing.id}
+                                        name={listing.name}
+                                        address={listing.address}
+                                        price={listing.price}
+                                        status={listing.status}
+                                        bathrooms={listing.bathrooms}
+                                        bedrooms={listing.bedrooms}
+                                        image={listing.image}
+                                        country={listing.country}
+                                        listingId={listing.listingId}
+                                        propertyId={listing.propertyId}
+                                    />
+                                ))}
+                            </div>
 
-                        {/* Pagination */}
-                        <Pagination
-                            currentPage={currentPage}
-                            totalPages={totalPages}
-                            onPageChange={handlePageChange}
-                            className="pb-8"
-                        />
-                    </>
-                ) : (
-                    <div className="text-center py-12 bg-white rounded-2xl">
-                        <p className="text-gray-500 text-lg">No listings found matching your filters</p>
-                        <p className="text-gray-400 text-sm mt-2">Try adjusting your search or filters</p>
-                    </div>
-                )}
+                            {/* Pagination */}
+                            <div className="mt-auto">
+                                <Pagination
+                                    currentPage={currentPage}
+                                    totalPages={totalPages}
+                                    onPageChange={handlePageChange}
+                                    className="pb-8"
+                                />
+                            </div>
+                        </>
+                    ) : (
+                        <div className="text-center py-12 bg-white rounded-2xl">
+                            <p className="text-gray-500 text-lg">No listings found matching your filters</p>
+                            <p className="text-gray-400 text-sm mt-2">Try adjusting your search or filters</p>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

@@ -11,9 +11,29 @@ const steps = [
 ];
 
 const MoveInStepper: React.FC<MoveInStepperProps> = ({ currentStep }) => {
+    const currentStepLabel = steps.find(s => s.id === currentStep)?.label || '';
+
     return (
-        <div className="w-full max-w-3xl mx-auto mb-12">
-            <div className="relative">
+        <div className="w-full max-w-3xl mx-auto mb-8 md:mb-12">
+            {/* Mobile View: Simplified Step Indicator */}
+            <div className="md:hidden w-full flex flex-col items-center gap-2">
+                <div className="text-sm font-bold text-[#3D7475] uppercase tracking-wide">
+                    Step {currentStep} of {steps.length}
+                </div>
+                <div className="text-lg font-bold text-gray-800">
+                    {currentStepLabel}
+                </div>
+                {/* Simple Progress Bar */}
+                <div className="w-full max-w-[200px] h-1.5 bg-gray-200 rounded-full mt-2 overflow-hidden">
+                    <div
+                        className="h-full bg-[#10B981] transition-all duration-300 ease-in-out"
+                        style={{ width: `${(currentStep / steps.length) * 100}%` }}
+                    />
+                </div>
+            </div>
+
+            {/* Desktop View: Full Stepper */}
+            <div className="hidden md:block relative">
                 {/* Connecting Line */}
                 <div className="absolute top-4 left-12 right-12 h-[3px] bg-gray-200 -translate-y-1/2 z-0">
                     <div

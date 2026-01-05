@@ -183,7 +183,7 @@ const AddReferenceModal: React.FC<AddReferenceModalProps> = ({ isOpen, onClose, 
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200">
-            <div className="bg-[#EAEAEA] rounded-[2rem] overflow-hidden w-full max-w-4xl shadow-2xl animate-slide-in-from-right relative max-h-[90vh] flex flex-col font-sans">
+            <div className="bg-[#EAEAEA] rounded-[2rem] overflow-hidden w-[95%] sm:w-full max-w-4xl shadow-2xl animate-slide-in-from-right relative max-h-[90vh] flex flex-col font-sans">
 
                 {/* Header */}
                 <div className="bg-[#3A6D6C] p-4 flex items-center justify-between text-white rounded-t-[2rem] shrink-0">
@@ -238,8 +238,8 @@ const AddReferenceModal: React.FC<AddReferenceModalProps> = ({ isOpen, onClose, 
                             <div>
                                 <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Contact Number *</label>
                                 <div className={`flex border rounded-xl transition-all ${touched.contactNumber && errors.contactNumber
-                                        ? 'border-red-500 border-2'
-                                        : 'border-gray-200 focus-within:ring-2 focus-within:ring-[#3A6D6C] focus-within:border-[#3A6D6C]'
+                                    ? 'border-red-500 border-2'
+                                    : 'border-gray-200 focus-within:ring-2 focus-within:ring-[#3A6D6C] focus-within:border-[#3A6D6C]'
                                     }`}>
                                     {/* Phone Code Selector */}
                                     <div className="relative" ref={phoneCodeRef}>
@@ -247,8 +247,8 @@ const AddReferenceModal: React.FC<AddReferenceModalProps> = ({ isOpen, onClose, 
                                             type="button"
                                             onClick={() => setIsPhoneCodeOpen(!isPhoneCodeOpen)}
                                             className={`flex items-center gap-1 px-3 py-2.5 border-r bg-white rounded-l-xl focus:outline-none text-sm min-w-[100px] hover:bg-gray-50 transition-colors ${touched.contactNumber && errors.contactNumber
-                                                    ? 'border-red-500'
-                                                    : 'border-gray-200'
+                                                ? 'border-red-500'
+                                                : 'border-gray-200'
                                                 }`}
                                         >
                                             <span className="text-sm font-medium">

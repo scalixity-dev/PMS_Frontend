@@ -10,6 +10,7 @@ export interface TaskFormData {
   isRecurring: boolean;
   frequency: string;
   endDate: Date | undefined;
+  isAllDay: boolean;
 }
 
 export interface TaskState {
@@ -32,6 +33,7 @@ const initialFormData: TaskFormData = {
   isRecurring: false,
   frequency: '',
   endDate: undefined,
+  isAllDay: false,
 };
 
 export const useTaskStore = create<TaskState>((set) => ({

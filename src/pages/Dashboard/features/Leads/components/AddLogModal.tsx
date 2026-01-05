@@ -139,11 +139,8 @@ const AddLogModal: React.FC<AddLogModalProps> = ({ isOpen, onClose, onCreate, in
                                     type="datetime-local"
                                     value={date}
                                     onChange={(e) => setDate(e.target.value)}
-                                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-[#3E706F] transition-colors text-gray-700 text-sm font-medium placeholder-gray-400 appearance-none cursor-pointer [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-[#3E706F] transition-colors text-gray-700 text-sm font-medium placeholder-gray-400 cursor-text [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                                 />
-                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-calendar"><rect width="18" height="18" x="3" y="4" rx="2" ry="2" /><line x1="16" x2="16" y1="2" y2="6" /><line x1="8" x2="8" y1="2" y2="6" /><line x1="3" x2="21" y1="10" y2="10" /></svg>
-                                </div>
                             </div>
                         </div>
 
@@ -151,16 +148,20 @@ const AddLogModal: React.FC<AddLogModalProps> = ({ isOpen, onClose, onCreate, in
                         <div className="space-y-1.5">
                             <label className="block text-xs font-bold text-[#1A1A1A]">Call Results *</label>
                             <div className="relative">
-                                <div className="flex items-center">
-                                    <input
-                                        type="text"
-                                        placeholder="Type here"
-                                        value={results}
-                                        onChange={(e) => setResults(e.target.value)}
-                                        className="w-full bg-white border border-gray-100 rounded-xl px-4 py-2.5 outline-none focus:border-[#3E706F] transition-colors text-gray-700 text-sm font-medium placeholder-gray-400"
-                                    />
-                                    <ChevronDown className="absolute right-4 text-gray-400 pointer-events-none" size={16} />
-                                </div>
+                                <select
+                                    value={results}
+                                    onChange={(e) => setResults(e.target.value)}
+                                    className="w-full bg-white border border-gray-100 rounded-xl px-4 py-2.5 pr-10 outline-none focus:border-[#3E706F] transition-colors text-gray-700 text-sm font-medium appearance-none cursor-pointer"
+                                >
+                                    <option value="">Select result</option>
+                                    <option value="ANSWERED">Answered</option>
+                                    <option value="NO_ANSWER">No Answer</option>
+                                    <option value="VOICEMAIL">Voicemail</option>
+                                    <option value="BUSY">Busy</option>
+                                    <option value="FAILED">Failed</option>
+                                    <option value="OTHER">Other</option>
+                                </select>
+                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
                             </div>
                         </div>
                     </div>
@@ -207,7 +208,7 @@ const AddLogModal: React.FC<AddLogModalProps> = ({ isOpen, onClose, onCreate, in
                                 }}
                                 className="bg-[#3E706F] text-white px-8 py-2.5 rounded-lg font-bold shadow-lg hover:bg-[#2c5251] transition-all hover:scale-[1.02] active:scale-[0.98] text-sm"
                             >
-                                Create
+                                {initialData ? 'Update' : 'Create'}
                             </button>
                         </div>
                     </div>

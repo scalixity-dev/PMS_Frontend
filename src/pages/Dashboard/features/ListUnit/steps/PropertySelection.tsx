@@ -25,23 +25,23 @@ const getNextIncompleteStep = (property: BackendProperty): number | null => {
   }
 
   // Step 3: BasicAmenities - needs amenities with parking, laundry, airConditioning
-  if (!property.amenities || 
-      !property.amenities.parking || 
-      !property.amenities.laundry || 
-      !property.amenities.airConditioning) {
+  if (!property.amenities ||
+    !property.amenities.parking ||
+    !property.amenities.laundry ||
+    !property.amenities.airConditioning) {
     return 3;
   }
 
-  // Step 4: PropertyFeatures - needs propertyFeatures array (can be empty but should exist)
-  if (!property.amenities.propertyFeatures) {
-    return 4;
-  }
+  // Step 4: PropertyFeatures - Optional, proceed if missing
+  // if (!property.amenities.propertyFeatures) {
+  //   return 4;
+  // }
 
   // Step 5: PropertyPhotos - needs coverPhotoUrl and at least one gallery photo (non-primary)
   if (!property.coverPhotoUrl) {
     return 5;
   }
-  // Check for gallery photos (non-primary photos)
+  // Check for gallery photos
   const galleryPhotos = property.photos?.filter(p => !p.isPrimary) || [];
   if (galleryPhotos.length === 0) {
     return 5;
@@ -65,7 +65,7 @@ const checkHasActiveListing = async (property: BackendProperty, listingsCache: M
     );
     return hasActive;
   }
-  
+
   // Otherwise, check cache first
   const cachedListings = listingsCache.get(property.id);
   if (cachedListings !== undefined) {
@@ -73,12 +73,12 @@ const checkHasActiveListing = async (property: BackendProperty, listingsCache: M
       (listing: any) => listing.listingStatus === 'ACTIVE' && listing.isActive === true && !listing.unitId
     );
   }
-  
+
   // Lazy load listings for this property
   try {
     const listings = await listingService.getByPropertyId(property.id);
     listingsCache.set(property.id, listings);
-    
+
     return listings.some(
       (listing: any) => listing.listingStatus === 'ACTIVE' && listing.isActive === true && !listing.unitId
     );
@@ -124,17 +124,17 @@ const isPropertyListingComplete = (property: BackendProperty): boolean => {
 
     // Check leasing data (already included in BackendProperty)
     const leasing = property.leasing;
-    
+
     // If leasing doesn't exist (null), property is incomplete
     if (!leasing) {
       return false;
     }
-    
+
     // Check all required leasing fields
-    const monthlyRent = typeof leasing.monthlyRent === 'string' 
-      ? parseFloat(leasing.monthlyRent) 
+    const monthlyRent = typeof leasing.monthlyRent === 'string'
+      ? parseFloat(leasing.monthlyRent)
       : Number(leasing.monthlyRent);
-    
+
     const hasLeasingData = !!(
       leasing.monthlyRent &&
       monthlyRent > 0 &&
@@ -162,14 +162,14 @@ const isPropertyListingComplete = (property: BackendProperty): boolean => {
         leasing.petDescription &&
         leasing.petDescription.trim() !== ''
       );
-      
+
       if (!hasPetDetails) {
         return false;
       }
     }
 
     // Check application settings - must be explicitly set (not null/undefined)
-    const hasApplicationSettings = 
+    const hasApplicationSettings =
       leasing.onlineRentalApplication !== null &&
       leasing.onlineRentalApplication !== undefined;
 
@@ -182,13 +182,13 @@ const isPropertyListingComplete = (property: BackendProperty): boolean => {
       const applicationFee = typeof leasing.applicationFee === 'string'
         ? parseFloat(leasing.applicationFee)
         : Number(leasing.applicationFee);
-      
-      const hasApplicationFee = 
-        leasing.applicationFee !== null && 
+
+      const hasApplicationFee =
+        leasing.applicationFee !== null &&
         leasing.applicationFee !== undefined &&
         !isNaN(applicationFee) &&
         applicationFee > 0;
-      
+
       if (!hasApplicationFee) {
         return false;
       }
@@ -240,12 +240,12 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
 
   // Use React Query to fetch all properties WITHOUT listings for better performance
   // Listings will be lazy loaded only when checking active status
-  const { 
-    data: allBackendProperties = [], 
-    isLoading: loading, 
+  const {
+    data: allBackendProperties = [],
+    isLoading: loading,
     error: queryError,
   } = useGetAllProperties(true, false); // enabled=true, includeListings=false
-  
+
   // Get all MULTI properties to fetch their units
   const multiProperties = useMemo(() => {
     return allBackendProperties.filter(p => p.propertyType === 'MULTI') || [];
@@ -264,7 +264,7 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
   });
 
   // Use React Query to fetch full property data when selected
-  const { 
+  const {
     data: fullPropertyData
   } = useGetProperty(formData.property || null, !!formData.property);
 
@@ -272,7 +272,7 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
   const selectedUnitId = formData.unit || null;
   const { data: selectedUnitData } = useGetUnit(selectedUnitId, !!selectedUnitId);
 
-  
+
   // Helper: shallow compare arrays of objects by id (order-insensitive)
   const areSameById = (a: { id: string }[] = [], b: { id: string }[] = []) => {
     if (a.length !== b.length) return false;
@@ -321,10 +321,10 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
           allBackendProperties.map(async (backendProperty) => {
             const transformedProperty = propertyService.transformProperty(backendProperty);
             const isComplete = isPropertyListingComplete(backendProperty);
-            
+
             // Check for active property-level listings (not unit-level)
             const hasActive = await checkHasActiveListing(backendProperty, listingsCacheRef.current);
-            
+
             return {
               property: transformedProperty,
               backendProperty,
@@ -407,10 +407,10 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
             );
 
             if (!hasActiveUnitListing) {
-              const unitImage = unit.photos?.find((p: any) => p.isPrimary)?.photoUrl 
-                || unit.photos?.[0]?.photoUrl 
-                || unit.coverPhotoUrl 
-                || result.backendProperty.coverPhotoUrl 
+              const unitImage = unit.photos?.find((p: any) => p.isPrimary)?.photoUrl
+                || unit.photos?.[0]?.photoUrl
+                || unit.coverPhotoUrl
+                || result.backendProperty.coverPhotoUrl
                 || '';
 
               items.push({
@@ -435,7 +435,14 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
 
         // Update selectable items
         if (mounted) {
-          setSelectableItems(items);
+          setSelectableItems(prev => {
+            // Simple JSON comparison to avoid infinite loop if data hasn't changed
+            // This works because SelectableItem is a simple object
+            if (JSON.stringify(prev) === JSON.stringify(items)) {
+              return prev;
+            }
+            return items;
+          });
         }
       } catch (err) {
         // optionally handle/log error
@@ -462,8 +469,8 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
     }
 
     // If selected property/unit is not in the selectable list, clear it
-    const isInList = selectableItems.some(item => 
-      item.propertyId === currentPropertyId && 
+    const isInList = selectableItems.some(item =>
+      item.propertyId === currentPropertyId &&
       (item.type === 'property' || item.unitId === currentUnitId)
     );
 
@@ -480,7 +487,7 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
     }
     return item.type === 'property' && item.propertyId === formData.property;
   });
-  
+
   // For backward compatibility, also check incompleteProperties
   const selectedProperty = incompleteProperties.find(p => p.id === formData.property);
   const error = queryError ? (queryError instanceof Error ? queryError.message : 'Failed to load properties') : null;
@@ -508,7 +515,7 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
     }
 
     const nextStep = getNextIncompleteStep(fullPropertyData);
-    
+
     if (nextStep !== null) {
       // Property has incomplete steps, open edit mode
       if (onEditProperty) {
@@ -542,7 +549,7 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
 
   if (loading) {
     return (
-      <div className="bg-transparent p-8 rounded-lg w-full flex flex-col items-center justify-center min-h-[200px]">
+      <div className="bg-transparent p-4 rounded-lg w-full flex flex-col items-center justify-center min-h-[200px]">
         <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)]" />
         <p className="mt-4 text-gray-600">Loading properties...</p>
       </div>
@@ -563,11 +570,11 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
   const propertyImage = selectedUnitData?.photos?.find((p: any) => p.isPrimary)?.photoUrl
     || selectedUnitData?.photos?.[0]?.photoUrl
     || selectedUnitData?.coverPhotoUrl
-    || fullPropertyData?.coverPhotoUrl 
-    || fullPropertyData?.photos?.find((p) => p.isPrimary)?.photoUrl 
-    || fullPropertyData?.photos?.[0]?.photoUrl 
+    || fullPropertyData?.coverPhotoUrl
+    || fullPropertyData?.photos?.find((p) => p.isPrimary)?.photoUrl
+    || fullPropertyData?.photos?.[0]?.photoUrl
     || selectedItem?.image
-    || selectedProperty?.image 
+    || selectedProperty?.image
     || '';
 
   // Get display name
@@ -577,12 +584,12 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
   const address = selectedItem?.address || selectedProperty?.address || '';
 
   // Get price, bedrooms, bathrooms from unit or property
-  const price = selectedUnitData?.rent 
+  const price = selectedUnitData?.rent
     ? (typeof selectedUnitData.rent === 'string' ? parseFloat(selectedUnitData.rent) : Number(selectedUnitData.rent))
-    : (fullPropertyData?.marketRent 
+    : (fullPropertyData?.marketRent
       ? (typeof fullPropertyData.marketRent === 'string' ? parseFloat(fullPropertyData.marketRent) : Number(fullPropertyData.marketRent))
       : 0);
-  
+
   const bedrooms = selectedUnitData?.beds || fullPropertyData?.singleUnitDetails?.beds || 0;
   const bathrooms = selectedUnitData?.baths
     ? (typeof selectedUnitData.baths === 'string' ? parseFloat(selectedUnitData.baths) : Number(selectedUnitData.baths))
@@ -594,7 +601,7 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
   const country = fullPropertyData?.address?.country || (selectedItem?.address ? selectedItem.address.split(', ').pop() : undefined);
 
   return (
-    <div className="bg-transparent p-8 rounded-lg w-full flex flex-col items-center">
+    <div className="bg-transparent p-0 md:p-4 rounded-lg w-full flex flex-col items-center">
       {selectedItem || selectedProperty ? (
         // Show Property Card when selected
         <PropertyCard
@@ -648,9 +655,8 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ onCreateProperty,
                       className="w-full flex items-center justify-between p-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0"
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                          item.type === 'unit' ? 'bg-green-50 text-green-600' : 'bg-blue-50 text-blue-600'
-                        }`}>
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${item.type === 'unit' ? 'bg-green-50 text-green-600' : 'bg-blue-50 text-blue-600'
+                          }`}>
                           <Building size={16} />
                         </div>
                         <div className="text-left flex-1">

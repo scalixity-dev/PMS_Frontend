@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import DashboardFilter from '../../components/DashboardFilter';
+import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import Pagination from '../../components/Pagination';
 import ApplicationCard from './components/ApplicationCard';
 import { Plus, ChevronLeft, Loader2 } from 'lucide-react';
@@ -34,6 +34,18 @@ const transformApplicationToCard = (app: BackendApplication) => {
     };
     const status = statusMap[app.status] || 'Pending';
 
+    // Get property and unit info
+    const property = app.leasing?.property;
+    const unit = app.leasing?.unit;
+    let propertyUnit = '-';
+    if (property?.propertyName) {
+        if (property.propertyType === 'MULTI' && unit?.unitName) {
+            propertyUnit = `${property.propertyName} - ${unit.unitName}`;
+        } else {
+            propertyUnit = property.propertyName;
+        }
+    }
+
     // Get image from application or use empty string
     const image = app.imageUrl || '';
 
@@ -43,11 +55,16 @@ const transformApplicationToCard = (app: BackendApplication) => {
         image,
         appliedDate,
         status,
+        backendStatus: app.status,
+        propertyUnit,
+        propertyId: property?.id,
+        unitId: unit?.id,
     };
 };
 
 const Application = () => {
     const navigate = useNavigate();
+    const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
     const [filters, setFilters] = useState<Record<string, string[]>>({});
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
     const [currentPage, setCurrentPage] = useState(1);
@@ -68,31 +85,46 @@ const Application = () => {
         setCurrentPage(1); // Reset to first page on filter change
     };
 
-    const filterOptions = {
-        status: [
+    // Get unique property/units for filters
+    const uniquePropertyUnits = useMemo(() => {
+        const propertyUnits = new Set(
+            applications
+                .map(app => {
+                    const property = app.leasing?.property;
+                    const unit = app.leasing?.unit;
+                    if (property?.propertyName) {
+                        if (property.propertyType === 'MULTI' && unit?.unitName) {
+                            return `${property.propertyName} - ${unit.unitName}`;
+                        }
+                        return property.propertyName;
+                    }
+                    return null;
+                })
+                .filter((pu): pu is string => pu !== null)
+        );
+        return Array.from(propertyUnits).map(pu => ({
+            value: pu,
+            label: pu,
+        }));
+    }, [applications]);
+
+    const filterOptions: Record<string, FilterOption[]> = {
+        screeningStatus: [
             { value: 'approved', label: 'Approved' },
             { value: 'pending', label: 'Pending' },
             { value: 'rejected', label: 'Rejected' },
         ],
-        propertyUnits: [
-            { value: 'unit1', label: 'Unit 1' },
-            { value: 'unit2', label: 'Unit 2' }
-        ],
-        screeningStatus: [
-            { value: 'completed', label: 'Completed' },
-            { value: 'in_progress', label: 'In Progress' },
-            { value: 'pending', label: 'Pending' }
+        propertyUnits: uniquePropertyUnits.length > 0 ? uniquePropertyUnits : [
+            { value: '__no_items__', label: 'No properties available' }
         ],
         applicationType: [
-            { value: 'individual', label: 'Individual' },
-            { value: 'cosigner', label: 'Co-signer' }
+            { value: '__no_items__', label: 'No application types available' }
         ]
     };
 
-    const filterLabels = {
-        status: 'Status',
-        propertyUnits: 'Property & Units',
+    const filterLabels: Record<string, string> = {
         screeningStatus: 'Screening Status',
+        propertyUnits: 'Property & Units',
         applicationType: 'Application Type'
     };
 
@@ -109,19 +141,33 @@ const Application = () => {
             const query = searchQuery.toLowerCase();
             filtered = filtered.filter(app =>
                 app.name.toLowerCase().includes(query) ||
-                app.appliedDate.toLowerCase().includes(query)
+                app.appliedDate.toLowerCase().includes(query) ||
+                app.propertyUnit.toLowerCase().includes(query)
             );
         }
 
-        // Apply status filter
-        if (filters.status && filters.status.length > 0) {
+        // Apply screening status filter
+        if (filters.screeningStatus && filters.screeningStatus.length > 0) {
             filtered = filtered.filter(app => {
                 const appStatus = app.status.toLowerCase();
-                return filters.status.some(filterStatus =>
+                return filters.screeningStatus.some(filterStatus =>
                     appStatus === filterStatus.toLowerCase()
                 );
             });
         }
+
+        // Apply property/unit filter (ignore placeholder value)
+        if (filters.propertyUnits && filters.propertyUnits.length > 0) {
+            const validFilters = filters.propertyUnits.filter(v => v !== '__no_items__');
+            if (validFilters.length > 0) {
+                filtered = filtered.filter(app =>
+                    validFilters.includes(app.propertyUnit)
+                );
+            }
+        }
+
+        // Screening status and application type filters are placeholders for now
+        // They will be ignored if only placeholder is selected
 
         return filtered;
     }, [applications, searchQuery, filters]);
@@ -147,7 +193,7 @@ const Application = () => {
     };
 
     return (
-        <div className="max-w-6xl mx-auto min-h-screen font-outfit">
+        <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit transition-all duration-300`}>
             <div className="inline-flex items-center px-4 py-2 bg-[#E0E5E5] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
                 <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
                 <span className="text-gray-500 text-sm mx-1">/</span>
@@ -156,23 +202,23 @@ const Application = () => {
 
             <div className="p-6 bg-[#E0E5E5] min-h-screen rounded-[2rem] flex flex-col">
                 {/* Header */}
-                <div className="flex items-center mb-6 gap-6">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
                     <div className="flex items-center gap-2">
                         <button onClick={() => navigate(-1)} className="p-2 hover:bg-black/5 rounded-full transition-colors">
                             <ChevronLeft className="w-6 h-6 text-black" />
                         </button>
                         <h1 className="text-2xl font-bold text-black">Application</h1>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap gap-3 w-full md:w-auto">
                         <button
                             onClick={() => setIsInviteModalOpen(true)}
-                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors"
+                            className="flex-1 md:flex-none px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors text-center"
                         >
                             Invite to apply
                         </button>
                         <button
                             onClick={() => navigate('/dashboard/application/new')} // Check route if needed
-                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center gap-2"
+                            className="flex-1 md:flex-none px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex items-center justify-center gap-2"
                         >
                             New Application
                             <Plus className="w-4 h-4" />
@@ -186,7 +232,9 @@ const Application = () => {
                     filterLabels={filterLabels}
                     onSearchChange={handleSearchChange}
                     onFiltersChange={handleFiltersChange}
+                    initialFilters={filters}
                     showMoreFilters={false}
+                    showClearAll={true}
                 />
 
                 {/* Sort and Count */}

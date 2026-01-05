@@ -128,7 +128,7 @@ const OtpForm: React.FC<OtpFormProps> = ({
     };
 
     return (
-        <div className="w-full p-2 sm:p-10 lg:p-6 flex flex-col justify-center">
+        <div className="w-full sm:p-10 lg:p-6 flex flex-col justify-center">
             <div className="text-left mb-8">
                 <h2 className="text-xl font-heading font-semibold text-gray-900 mb-2">
                     {otpType === 'device' ? 'Verify New Device' : 'Enter your code'}

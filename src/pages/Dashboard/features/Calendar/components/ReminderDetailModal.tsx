@@ -105,11 +105,11 @@ const ReminderDetailModal: React.FC<ReminderDetailModalProps> = ({ isOpen, onClo
         >
             <div
                 ref={modalRef}
-                className="bg-white rounded-[2rem] w-full max-w-xl shadow-2xl animate-in zoom-in-95 duration-200 relative overflow-hidden"
+                className="bg-white rounded-[2rem] w-[95%] max-w-lg md:max-w-xl shadow-2xl animate-in zoom-in-95 duration-200 relative overflow-hidden flex flex-col max-h-[90vh]"
             >
                 {/* Header */}
-                <div className="bg-[#3A6D6C] p-6 flex items-center justify-between text-white">
-                    <h2 id="reminder-modal-title" className="text-xl font-bold truncate pr-4">Reminder details</h2>
+                <div className="bg-[#3A6D6C] p-4 md:p-6 flex items-center justify-between text-white flex-shrink-0">
+                    <h2 id="reminder-modal-title" className="text-lg md:text-xl font-bold truncate pr-4">Reminder details</h2>
                     <button
                         onClick={onClose}
                         className="hover:bg-white/10 p-2 rounded-full transition-colors flex-shrink-0"
@@ -119,17 +119,17 @@ const ReminderDetailModal: React.FC<ReminderDetailModalProps> = ({ isOpen, onClo
                     </button>
                 </div>
 
-                {/* Body */}
-                <div className="p-8 space-y-6">
+                {/* Scrollable Body */}
+                <div className="p-5 md:p-8 overflow-y-auto flex-1 custom-scrollbar">
                     <div className="space-y-4">
                         {/* Title */}
                         <div>
                             <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1 block">Title</label>
-                            <p className="text-xl font-bold text-gray-800 leading-tight">{reminder.title}</p>
+                            <p className="text-lg md:text-xl font-bold text-gray-800 leading-tight">{reminder.title}</p>
                         </div>
 
                         {/* Date */}
-                        <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                        <div className="flex items-start gap-3 p-3 md:p-4 bg-gray-50 rounded-xl border border-gray-100">
                             <div className="p-2 bg-white rounded-lg shadow-sm text-[#3A6D6C]">
                                 <Calendar size={20} aria-hidden="true" />
                             </div>
@@ -142,8 +142,8 @@ const ReminderDetailModal: React.FC<ReminderDetailModalProps> = ({ isOpen, onClo
                         </div>
 
                         {/* Time & Assignee Grid */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="flex items-start gap-3 p-3 md:p-4 bg-gray-50 rounded-xl border border-gray-100">
                                 <div className="p-2 bg-white rounded-lg shadow-sm text-[#3A6D6C]">
                                     <Clock size={20} aria-hidden="true" />
                                 </div>
@@ -153,7 +153,7 @@ const ReminderDetailModal: React.FC<ReminderDetailModalProps> = ({ isOpen, onClo
                                 </div>
                             </div>
 
-                            <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                            <div className="flex items-start gap-3 p-3 md:p-4 bg-gray-50 rounded-xl border border-gray-100">
                                 <div className="p-2 bg-white rounded-lg shadow-sm text-[#3A6D6C]">
                                     <User size={20} aria-hidden="true" />
                                 </div>
@@ -165,7 +165,7 @@ const ReminderDetailModal: React.FC<ReminderDetailModalProps> = ({ isOpen, onClo
                         </div>
 
                         {/* Property */}
-                        <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                        <div className="flex items-start gap-3 p-3 md:p-4 bg-gray-50 rounded-xl border border-gray-100">
                             <div className="p-2 bg-white rounded-lg shadow-sm text-[#3A6D6C]">
                                 <Building2 size={20} aria-hidden="true" />
                             </div>
@@ -176,18 +176,21 @@ const ReminderDetailModal: React.FC<ReminderDetailModalProps> = ({ isOpen, onClo
                         </div>
 
                         {/* Details */}
-                        <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                        <div className="flex items-start gap-3 p-3 md:p-4 bg-gray-50 rounded-xl border border-gray-100">
                             <div className="p-2 bg-white rounded-lg shadow-sm text-[#3A6D6C]">
                                 <FileText size={20} aria-hidden="true" />
                             </div>
                             <div className="flex-1">
                                 <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Details</label>
-                                <p className="font-semibold text-gray-700 whitespace-pre-wrap">{reminder.details || 'No details provided'}</p>
+                                <p className="font-semibold text-gray-700 whitespace-pre-wrap text-sm md:text-base">{reminder.details || 'No details provided'}</p>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <div className="pt-2 flex gap-3">
+                {/* Footer Buttons */}
+                <div className="p-4 md:p-8 md:pt-4 flex flex-col sm:flex-row gap-3 flex-shrink-0 bg-white border-t border-gray-100">
+                    <div className="flex gap-3 flex-1">
                         <button
                             onClick={() => {
                                 if (onEdit && reminder) {
@@ -212,14 +215,14 @@ const ReminderDetailModal: React.FC<ReminderDetailModalProps> = ({ isOpen, onClo
                             <Trash2 size={16} />
                             Delete
                         </button>
-                        <button
-                            onClick={onClose}
-                            className="flex-1 bg-[#3A6D6C] text-white py-3 rounded-xl font-bold text-sm hover:bg-[#2c5251] transition-colors shadow-lg"
-                            aria-label="Close reminder details"
-                        >
-                            Close
-                        </button>
                     </div>
+                    <button
+                        onClick={onClose}
+                        className="w-full sm:w-auto sm:flex-1 bg-[#3A6D6C] text-white py-3 rounded-xl font-bold text-sm hover:bg-[#2c5251] transition-colors shadow-lg"
+                        aria-label="Close reminder details"
+                    >
+                        Close
+                    </button>
                 </div>
             </div>
         </div>

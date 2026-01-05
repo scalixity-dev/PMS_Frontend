@@ -24,7 +24,7 @@ const TaskDetailSideModal: React.FC<TaskDetailSideModalProps> = ({ isOpen, onClo
     ): 'OPEN' | 'IN_PROGRESS' | 'ON_HOLD' | 'RESOLVED' | 'COMPLETED' | 'CANCELLED' => {
         // Normalize frontend status (case-insensitive, trimmed)
         const normalizedStatus = frontendStatus.trim();
-        
+
         // Active status group: OPEN, IN_PROGRESS, ON_HOLD
         if (normalizedStatus === 'Active' || normalizedStatus === 'Open' || normalizedStatus === 'In Progress' || normalizedStatus === 'On Hold') {
             // If we have current backend status and it's already in the Active group, preserve it
@@ -47,7 +47,7 @@ const TaskDetailSideModal: React.FC<TaskDetailSideModalProps> = ({ isOpen, onClo
             // Default 'Active' -> 'OPEN'
             return 'OPEN';
         }
-        
+
         // Resolved status group: RESOLVED, COMPLETED, CANCELLED
         if (normalizedStatus === 'Resolved' || normalizedStatus === 'Completed' || normalizedStatus === 'Cancelled') {
             // If we have current backend status and it's already in the Resolved group, preserve it
@@ -67,7 +67,7 @@ const TaskDetailSideModal: React.FC<TaskDetailSideModalProps> = ({ isOpen, onClo
             // Default 'Resolved' -> 'RESOLVED'
             return 'RESOLVED';
         }
-        
+
         // Fallback: if status doesn't match known values, try to preserve current or default to OPEN
         if (currentBackendStatus) {
             const current = currentBackendStatus.toUpperCase();
@@ -75,7 +75,7 @@ const TaskDetailSideModal: React.FC<TaskDetailSideModalProps> = ({ isOpen, onClo
                 return current as 'OPEN' | 'IN_PROGRESS' | 'ON_HOLD' | 'RESOLVED' | 'COMPLETED' | 'CANCELLED';
             }
         }
-        
+
         // Ultimate fallback
         console.warn(`[TaskDetailSideModal] Unknown frontend status "${frontendStatus}", defaulting to OPEN`);
         return 'OPEN';
@@ -84,11 +84,11 @@ const TaskDetailSideModal: React.FC<TaskDetailSideModalProps> = ({ isOpen, onClo
     // Handle status change
     const handleStatusChange = async (newStatus: 'Active' | 'Resolved') => {
         if (!task) return;
-        
+
         try {
             const taskId = typeof task.id === 'number' ? task.id.toString() : task.id;
             const backendStatus = mapStatusToBackend(newStatus);
-            
+
             await updateTaskMutation.mutateAsync({
                 id: taskId,
                 updateData: {
@@ -135,15 +135,14 @@ const TaskDetailSideModal: React.FC<TaskDetailSideModalProps> = ({ isOpen, onClo
                                 value={task.status}
                                 onChange={(e) => handleStatusChange(e.target.value as 'Active' | 'Resolved')}
                                 disabled={updateTaskMutation.isPending}
-                                className={`appearance-none px-3 py-1 rounded-full text-xs font-medium cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 pr-6 bg-white/20 text-white border border-white/30 ${
-                                    updateTaskMutation.isPending ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/30'
-                                }`}
+                                className={`appearance-none px-3 py-1 rounded-full text-xs font-medium cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 pr-6 bg-white/20 text-white border border-white/30 ${updateTaskMutation.isPending ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/30'
+                                    }`}
                             >
                                 <option value="Active" className="text-gray-800">Active</option>
                                 <option value="Resolved" className="text-gray-800">Resolved</option>
                             </select>
-                            <ChevronDown 
-                                className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none text-white" 
+                            <ChevronDown
+                                className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none text-white"
                             />
                         </div>
                     </div>
@@ -186,7 +185,11 @@ const TaskDetailSideModal: React.FC<TaskDetailSideModalProps> = ({ isOpen, onClo
                             <div>
                                 <p className="text-xs font-bold text-gray-500 uppercase">Due Date</p>
                                 <p className="font-semibold text-gray-800 mt-1">{task.date}</p>
-                                {task.time && <p className="text-sm text-gray-500">{task.time}</p>}
+                                {task.isAllDay ? (
+                                    <p className="text-sm text-gray-500">All Day</p>
+                                ) : (
+                                    task.time && <p className="text-sm text-gray-500">{task.time}</p>
+                                )}
                             </div>
                         </div>
 

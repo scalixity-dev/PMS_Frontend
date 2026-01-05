@@ -9,16 +9,15 @@ import { useRegister, useUpdateProfile, useGetCurrentUser } from '../../../../..
 
 // Helper function to apply consistent styling to inputs/selects
 const inputClasses = (hasValue: boolean = true) =>
-  `w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm transition-all ${
-    hasValue ? 'text-gray-900' : 'text-gray-400'
+  `w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm transition-all ${hasValue ? 'text-gray-900' : 'text-gray-400'
   } placeholder-gray-400 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed`;
 
 const labelClasses = "block text-xs font-medium text-gray-700 mb-1";
 
 export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignup: propIsOAuthSignup, userId: propUserId }) => {
   // Get state from Zustand store
-  const { 
-    formData, 
+  const {
+    formData,
     updateFormData,
     isOAuthSignup: storeIsOAuthSignup,
     userId: storeUserId,
@@ -90,7 +89,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
   const filteredPhoneCodes = useMemo(() => {
     if (!phoneCodeSearch) return phoneCountryCodes;
     const searchLower = phoneCodeSearch.toLowerCase();
-    return phoneCountryCodes.filter(code => 
+    return phoneCountryCodes.filter(code =>
       code.name.toLowerCase().includes(searchLower) ||
       code.phonecode.includes(searchLower) ||
       code.isoCode.toLowerCase().includes(searchLower)
@@ -121,34 +120,34 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
   // Validate password strength
   const validatePasswordStrength = (password: string): string | undefined => {
     if (!password) return undefined;
-    
+
     if (password.length < 8) {
       return 'Password must be at least 8 characters long';
     }
-    
+
     if (!/[a-z]/.test(password)) {
       return 'Password must contain at least one lowercase letter';
     }
-    
+
     if (!/[A-Z]/.test(password)) {
       return 'Password must contain at least one uppercase letter';
     }
-    
+
     if (!/\d/.test(password)) {
       return 'Password must contain at least one number';
     }
-    
+
     return undefined;
   };
 
   // Validate password match
   const validatePasswordMatch = (password: string, confirmPassword: string): string | undefined => {
     if (!confirmPassword) return undefined;
-    
+
     if (password !== confirmPassword) {
       return 'Passwords do not match';
     }
-    
+
     return undefined;
   };
 
@@ -156,10 +155,10 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
   const handlePasswordChange = (value: string) => {
     updateFormData('password', value);
     const strengthError = validatePasswordStrength(value);
-    const matchError = formData.confirmPassword 
+    const matchError = formData.confirmPassword
       ? validatePasswordMatch(value, formData.confirmPassword)
       : undefined;
-    
+
     setPasswordErrors({
       strength: strengthError,
       match: matchError,
@@ -170,7 +169,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
   const handleConfirmPasswordChange = (value: string) => {
     updateFormData('confirmPassword', value);
     const matchError = validatePasswordMatch(formData.password || '', value);
-    
+
     setPasswordErrors(prev => ({
       ...prev,
       match: matchError,
@@ -213,7 +212,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
 
       try {
         // Extract phone country code and number
-        const [phoneCountryCode, phoneNumber] = formData.phoneCountryCode 
+        const [phoneCountryCode, phoneNumber] = formData.phoneCountryCode
           ? formData.phoneCountryCode.split('|')
           : [undefined, formData.phone];
 
@@ -229,13 +228,26 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
         // Profile update successful - get current user and redirect
         const userData = await refetchCurrentUser();
         const user = userData.data || currentUser;
-        
-        if (userId) {
-          // Use provided userId
-          navigate(`/pricing?userId=${userId}&email=${encodeURIComponent(user?.email || '')}&newAccount=true&oauth=true`, { replace: true });
-        } else if (user) {
-          // Fallback: get userId from current user
-          navigate(`/pricing?userId=${user.userId}&email=${encodeURIComponent(user.email)}&newAccount=true&oauth=true`, { replace: true });
+
+        // Redirect based on account type
+        if (formData.accountType === 'manage') {
+          // Property managers go to pricing page to select a plan
+          if (userId) {
+            // Use provided userId
+            navigate(`/pricing?userId=${userId}&email=${encodeURIComponent(user?.email || '')}&newAccount=true&oauth=true`, { replace: true });
+          } else if (user) {
+            // Fallback: get userId from current user
+            navigate(`/pricing?userId=${user.userId}&email=${encodeURIComponent(user.email)}&newAccount=true&oauth=true`, { replace: true });
+          }
+        } else {
+          // Tenants and Service Pros have free accounts - redirect to dashboard or login
+          navigate('/login', { 
+            state: { 
+              message: 'Account created successfully! Please log in to continue.',
+              email: user?.email 
+            },
+            replace: true 
+          });
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to update profile. Please try again.');
@@ -266,7 +278,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
 
     try {
       // Extract phone country code and number
-      const [phoneCountryCode, phoneNumber] = formData.phoneCountryCode 
+      const [phoneCountryCode, phoneNumber] = formData.phoneCountryCode
         ? formData.phoneCountryCode.split('|')
         : [undefined, formData.phone];
 
@@ -282,22 +294,69 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
         address: formData.address,
       });
 
-      // Registration successful - redirect to pricing page to select plan
-      navigate(`/pricing?userId=${response.id}&email=${encodeURIComponent(formData.email!)}&newAccount=true`);
+      // Registration successful - redirect based on account type
+      if (formData.accountType === 'manage') {
+        // Property managers go to pricing page to select a plan
+        navigate(`/pricing?userId=${response.id}&email=${encodeURIComponent(formData.email!)}&newAccount=true`);
+      } else {
+        // Tenants and Service Pros have free accounts - redirect to dashboard or login
+        navigate('/login', { 
+          state: { 
+            message: 'Account created successfully! Please log in to continue.',
+            email: formData.email 
+          },
+          replace: true 
+        });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
     }
   };
+
+  // Get heading and subtitle based on account type
+  const getHeadingAndSubtitle = () => {
+    if (isOAuthSignup) {
+      return {
+        heading: 'Complete your profile',
+        subtitle: 'Please provide a few more details to complete your registration.'
+      };
+    }
+    
+    switch (formData.accountType) {
+      case 'manage':
+        return {
+          heading: 'Start your free 14-day trial',
+          subtitle: 'Enter your details to continue.'
+        };
+      case 'renting':
+        return {
+          heading: 'Create your tenant account',
+          subtitle: 'Enter your details to get started.'
+        };
+      case 'fix':
+        return {
+          heading: 'Create your service pro account',
+          subtitle: 'Enter your details to get started.'
+        };
+      default:
+        return {
+          heading: 'Complete your registration',
+          subtitle: 'Enter your details to continue.'
+        };
+    }
+  };
+
+  const { heading, subtitle } = getHeadingAndSubtitle();
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4 sm:p-6 md:p-8">
       <div className="w-full max-w-xl p-6 sm:p-8 md:p-10 bg-white rounded-xl sm:rounded-2xl border border-gray-100 shadow-xl">
         <div className="space-y-2 sm:space-y-3 mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            {isOAuthSignup ? 'Complete your profile' : 'Start your free 14-day trial'}
+            {heading}
           </h1>
           <p className="text-sm sm:text-base text-gray-600">
-            {isOAuthSignup ? 'Please provide a few more details to complete your registration.' : 'Enter your details to continue.'}
+            {subtitle}
           </p>
         </div>
 
@@ -348,7 +407,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
                   {isPhoneCodeOpen && (
                     <div className="absolute left-0 top-full mt-1 w-80 bg-white border border-gray-300 rounded-md shadow-lg z-50 max-h-80 overflow-hidden flex flex-col">
                       {/* Search Input */}
-                      <div className="p-2 border-b border-gray-200">
+                      <div className=" border-b border-gray-200">
                         <div className="relative">
                           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                           <input
@@ -376,9 +435,8 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
                                 setIsPhoneCodeOpen(false);
                                 setPhoneCodeSearch('');
                               }}
-                              className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-teal-50 transition-colors text-left ${
-                                formData.phoneCountryCode === code.value ? 'bg-teal-50' : ''
-                              }`}
+                              className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-teal-50 transition-colors text-left ${formData.phoneCountryCode === code.value ? 'bg-teal-50' : ''
+                                }`}
                             >
                               <span className="text-xl">{code.flag}</span>
                               <span className="flex-1 text-sm font-medium text-gray-900">{code.name}</span>
@@ -558,16 +616,20 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
               className="py-3 px-12 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all font-semibold transform hover:scale-[1.02] active:scale-[0.98]"
             >
               {(registerMutation.isPending || updateProfileMutation.isPending)
-                ? (isOAuthSignup ? 'Updating profile...' : 'Creating account...') 
-                : (isOAuthSignup ? 'Complete registration' : 'Start my free trial')
+                ? (isOAuthSignup ? 'Updating profile...' : 'Creating account...')
+                : (isOAuthSignup 
+                    ? 'Complete registration' 
+                    : formData.accountType === 'manage' 
+                      ? 'Start my free trial' 
+                      : 'Create account')
               }
             </button>
           </div>
           <div className="mb-8 text-center text-sm sm:text-base text-gray-600 pt-2">
-              Already have an account?{' '}
-              <Link to="/login" className="font-semibold text-teal-600 hover:text-teal-700 hover:underline transition-colors">
-                Sign In
-              </Link>
+            Already have an account?{' '}
+            <Link to="/login" className="font-semibold text-teal-600 hover:text-teal-700 hover:underline transition-colors">
+              Sign In
+            </Link>
           </div>
         </div>
       </div>

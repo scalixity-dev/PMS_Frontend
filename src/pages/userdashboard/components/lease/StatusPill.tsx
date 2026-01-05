@@ -1,4 +1,4 @@
-import type { Transaction, Lease } from "../types";
+import type { Transaction, Lease } from "../../utils/types";
 
 type StatusType = Transaction['status'] | Lease['status'];
 
