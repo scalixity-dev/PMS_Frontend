@@ -78,9 +78,9 @@ export default function PropertyPermissions() {
                             key={property.id}
                             className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
                         >
-                            <div className="flex gap-6 p-6 ">
+                            <div className="flex flex-col sm:flex-row gap-6 p-6 ">
                                 {/* Property Image */}
-                                <div className="w-36 h-32 rounded-lg shrink-0 overflow-hidden">
+                                <div className="w-full h-48 sm:w-36 sm:h-32 rounded-lg shrink-0 overflow-hidden">
                                     <img
                                         src={property.image}
                                         alt={property.name}
@@ -104,7 +104,7 @@ export default function PropertyPermissions() {
                                         <button
                                             type="button"
                                             onClick={() => handleAddTeamMember(property.id)}
-                                            className="px-5 py-2 bg-[#4A9B8E] text-white text-sm font-medium rounded-lg hover:bg-[#3d8275] transition-colors"
+                                            className="w-full sm:w-auto px-5 py-2 bg-[#4A9B8E] text-white text-sm font-medium rounded-lg hover:bg-[#3d8275] transition-colors"
                                         >
                                             Add Team member
                                         </button>
