@@ -1,6 +1,7 @@
 import { PiUserCircleFill } from "react-icons/pi";
 import { Link } from "react-router-dom";
-import { useUserDashboardStore } from "../../store/userDashboardStore";
+import { useDashboardStore } from "../../store/dashboardStore";
+import { useAuthStore } from "../../features/Profile/store/authStore";
 
 const FinancialCard = ({ title, amount, currency, action }: { title: string; amount: string; currency: string; action?: string }) => (
     <div className="bg-white rounded-lg px-3 py-1 shadow-sm border border-gray-50">
@@ -20,7 +21,8 @@ const FinancialCard = ({ title, amount, currency, action }: { title: string; amo
 );
 
 export const Sidebar = () => {
-    const { userInfo, finances } = useUserDashboardStore();
+    const { finances } = useDashboardStore();
+    const { userInfo } = useAuthStore();
     const userName = `${userInfo.firstName} ${userInfo.lastName}`;
     const userEmail = userInfo.email;
     const { outstanding, deposits, credits } = finances;

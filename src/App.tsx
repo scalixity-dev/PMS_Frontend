@@ -98,22 +98,23 @@ import FileManagerFeature from './pages/Dashboard/features/FileManager/FileManag
 // User Dashboard pages
 import UserDashboardLayout from './components/userdashboard/UserDashboardLayout';
 import UserDashboard from './pages/userdashboard/UserDashboard';
-import Rent from './pages/userdashboard/pages/rent/Rent';
-import RequestsUser from './pages/userdashboard/pages/requests/Requests';
-import UtilityProviders from './pages/userdashboard/pages/utilities/UtilityProviders';
-import PropertiesUser from './pages/userdashboard/pages/properties/Properties';
-import ApplicationsUser from './pages/userdashboard/pages/utilities/Applications';
-import FileManager from './pages/userdashboard/pages/utilities/FileManager';
-import Downloads from './pages/userdashboard/pages/utilities/Downloads';
-import NewRequest from './pages/userdashboard/pages/requests/NewRequest';
-import PropertyDetailUser from './pages/userdashboard/pages/properties/PropertyDetail';
-import SettingsUser from './pages/userdashboard/pages/settings/Settings';
-import ProfileUser from './pages/userdashboard/pages/profile/Profile';
-import SecurityUser from './pages/userdashboard/pages/profile/Security';
-import MyCardsUser from './pages/userdashboard/pages/profile/MyCards';
-import NotificationsUser from './pages/userdashboard/pages/profile/Notifications';
-import PublicRenterProfile from './pages/userdashboard/pages/profile/PublicRenterProfile';
-import LeaseDetails from './pages/userdashboard/pages/lease/LeaseDetails';
+import Rent from './pages/userdashboard/features/Rent/Rent';
+import RequestsUser from './pages/userdashboard/features/Requests/Requests';
+import UtilityProviders from './pages/userdashboard/features/Utilities/UtilityProviders';
+import PropertiesUser from './pages/userdashboard/features/Properties/Properties';
+import ApplicationsUser from './pages/userdashboard/features/Utilities/Applications';
+import FileManager from './pages/userdashboard/features/Utilities/FileManager';
+import Downloads from './pages/userdashboard/features/Utilities/Downloads';
+import NewRequest from './pages/userdashboard/features/Requests/NewRequest';
+import PropertyDetailUser from './pages/userdashboard/features/Properties/PropertyDetail';
+import SettingsUser from './pages/userdashboard/features/Settings/Settings';
+import ProfileUser from './pages/userdashboard/features/Profile/Profile';
+import SecurityUser from './pages/userdashboard/features/Profile/Security';
+import MyCardsUser from './pages/userdashboard/features/Profile/MyCards';
+import NotificationsUser from './pages/userdashboard/features/Profile/Notifications';
+import PublicRenterProfile from './pages/userdashboard/features/Profile/PublicRenterProfile';
+import LeaseDetails from './pages/userdashboard/features/Leases/LeaseDetails';
+import TransactionDetails from './pages/userdashboard/features/Transactions/TransactionDetails';
 
 
 
@@ -727,6 +728,7 @@ const App: React.FC = () => {
               <Route path="/userdashboard/settings/account/notifications" element={<NotificationsUser />} />
               <Route path="/userdashboard/settings/public-renter-profile" element={<PublicRenterProfile />} />
               <Route path="/userdashboard/leases/:id" element={<LeaseDetails />} />
+              <Route path="/userdashboard/transactions/:id" element={<TransactionDetails />} />
             </Route>
 
             {/* Catch-all route */}

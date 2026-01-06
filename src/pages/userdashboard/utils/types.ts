@@ -42,6 +42,13 @@ export interface Lease {
     property: PropertySummary;
     landlord: LandlordSummary;
     tenants: TenantSummary[];
+    attachments?: {
+        id: number;
+        name: string;
+        size: string;
+        type: 'PDF' | 'Image' | 'Document' | 'Video';
+        url?: string;
+    }[];
 }
 
 export type TabType = "Outstanding" | "Leases" | "Service providers" | "Inspections";
