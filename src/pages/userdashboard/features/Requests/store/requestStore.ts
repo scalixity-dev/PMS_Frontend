@@ -47,7 +47,7 @@ interface SerializedServiceRequest extends Omit<ServiceRequest, 'attachments' | 
 }
 
 // Save requests to localStorage
-const saveRequests = (requests: ServiceRequest[]) => {
+const saveRequests = (requests: ServiceRequest[]): boolean => {
     try {
         // Convert File objects to data URLs for persistence
         const serializableRequests: SerializedServiceRequest[] = requests.map((req) => {
@@ -60,13 +60,17 @@ const saveRequests = (requests: ServiceRequest[]) => {
                 // Use pre-converted data URLs
                 attachmentUrls.push(...requestWithDataUrls.attachmentDataUrls);
             } else if (req.attachments && req.attachments.length > 0) {
-                // Convert File objects to data URLs (synchronous fallback - stores file names)
+                // Handle existing attachments (strings/data URLs from loaded requests)
                 req.attachments.forEach((file) => {
-                    if (file instanceof File) {
-                        // Store file metadata - actual conversion happens in useNewRequestForm
-                        attachmentUrls.push(file.name);
-                    } else if (typeof file === 'string') {
+                    if (typeof file === 'string') {
+                        // Already a data URL or filename from previous storage
                         attachmentUrls.push(file);
+                    } else if (file instanceof File) {
+                        // File objects should have been converted before reaching the store
+                        // This is a fallback that should not normally execute
+                        console.warn('File object reached store without conversion. This may result in data loss:', file.name);
+                        // Store filename as placeholder to avoid complete data loss
+                        attachmentUrls.push(`[Unsaved File] ${file.name}`);
                     }
                 });
             }
@@ -75,7 +79,9 @@ const saveRequests = (requests: ServiceRequest[]) => {
             if (requestWithDataUrls.videoDataUrl) {
                 videoUrl = requestWithDataUrls.videoDataUrl;
             } else if (req.video instanceof File) {
-                videoUrl = req.video.name;
+                // File objects should have been converted before reaching the store
+                console.warn('Video File object reached store without conversion. This may result in data loss:', req.video.name);
+                videoUrl = `[Unsaved Video] ${req.video.name}`;
             } else if (typeof req.video === 'string') {
                 videoUrl = req.video;
             }
@@ -88,9 +94,45 @@ const saveRequests = (requests: ServiceRequest[]) => {
                 videoDataUrl: requestWithDataUrls.videoDataUrl,
             };
         });
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(serializableRequests));
+        
+        const serializedData = JSON.stringify(serializableRequests);
+        localStorage.setItem(STORAGE_KEY, serializedData);
+        return true;
     } catch (error) {
+        // Handle QuotaExceededError specifically
+        if (error instanceof DOMException && (
+            error.name === 'QuotaExceededError' ||
+            error.name === 'NS_ERROR_DOM_QUOTA_REACHED'
+        )) {
+            console.error('localStorage quota exceeded. Unable to save requests with attachments.');
+            
+            // Attempt to save without attachments/videos as fallback
+            try {
+                const requestsWithoutMedia: SerializedServiceRequest[] = requests.map((req) => ({
+                    ...req,
+                    attachments: [],
+                    video: null,
+                    attachmentDataUrls: undefined,
+                    videoDataUrl: null,
+                }));
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(requestsWithoutMedia));
+                console.warn('Saved requests without media files due to storage quota limits.');
+                
+                // Notify user through a custom event that can be caught by components
+                window.dispatchEvent(new CustomEvent('storage-quota-exceeded', {
+                    detail: {
+                        message: 'Storage quota exceeded. Your request was saved but attachments and videos could not be stored locally. Please reduce file sizes or clear browser storage.'
+                    }
+                }));
+                return false;
+            } catch (fallbackError) {
+                console.error('Failed to save even without media:', fallbackError);
+                return false;
+            }
+        }
+        
         console.error('Error saving requests to localStorage:', error);
+        return false;
     }
 };
 
@@ -118,7 +160,12 @@ export const useRequestStore = create<RequestState>((set) => ({
     addRequest: (request) =>
         set((state) => {
             const updatedRequests = [request, ...state.requests];
-            saveRequests(updatedRequests);
+            const saved = saveRequests(updatedRequests);
+            
+            if (!saved) {
+                console.warn('Request added to state but failed to persist to localStorage');
+            }
+            
             return { requests: updatedRequests };
         }),
     updateRequestStatus: (id, status) =>
@@ -126,7 +173,12 @@ export const useRequestStore = create<RequestState>((set) => ({
             const updatedRequests = state.requests.map((req) =>
                 req.id === id ? { ...req, status } : req
             );
-            saveRequests(updatedRequests);
+            const saved = saveRequests(updatedRequests);
+            
+            if (!saved) {
+                console.warn('Request status updated in state but failed to persist to localStorage');
+            }
+            
             return { requests: updatedRequests };
         }),
 }));

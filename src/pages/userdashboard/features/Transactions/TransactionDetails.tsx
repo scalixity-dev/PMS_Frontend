@@ -184,7 +184,7 @@ const TransactionDetails = () => {
                                 <p className="text-lg font-semibold text-gray-900">{transaction.property}</p>
                             </div>
                             <div className="space-y-1">
-                                <p className="text-gray-400 font-normal text-sm ">Transection ID</p>
+                                <p className="text-gray-400 font-normal text-sm ">Transaction ID</p>
                                 <p className="text-lg font-semibold text-gray-900">{transaction.invoiceNumber}</p>
                             </div>
                             <div className="space-y-1">

@@ -4,10 +4,11 @@ import { formatMoney } from "../../../../../utils/currency.utils";
 
 /**
  * Transaction Interface for type safety
+ * Status values are aligned with StatusPill component expectations
  */
 interface LeaseTransaction {
     id: string;
-    status: "Active" | "Pending" | "Overdue" | "Open" | "New" | "Critical" | "Normal" | "Expired";
+    status: "Active" | "Pending" | "Overdue" | "Open" | "Expired" | "Paid" | "Partial";
     firstInvoice: string;
     category: string;
     nextInvoice: string;
@@ -54,7 +55,7 @@ export const LeaseTransactionsTable = () => {
                         className={`flex items-center px-8 py-6 ${index !== transactions.length - 1 ? 'border-b border-gray-100' : ''} hover:bg-gray-50/30 transition-all cursor-pointer`}
                     >
                         <div className="flex-1">
-                            <StatusPill status={item.status as any} />
+                            <StatusPill status={item.status} />
                         </div>
                         <div className="flex-1 text-center text-[var(--dashboard-text-main)] font-semibold text-sm">
                             {item.firstInvoice}

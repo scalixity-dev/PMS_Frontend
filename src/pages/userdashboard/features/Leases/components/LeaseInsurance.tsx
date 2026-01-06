@@ -119,7 +119,6 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
         
         // Save to state - this persists the data
         setInsuranceData(updatedData);
-        console.log('Insurance Data Saved:', updatedData);
         
         // Close modal
         setIsModalOpen(false);
