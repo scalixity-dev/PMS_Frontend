@@ -5,12 +5,12 @@ import { TanStackDevtools } from '@tanstack/react-devtools';
 import AppLayout from './components/layout/AppLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import DashboardLayout from './components/dashboardlayout/DashboardLayout';
-import ScrollToTop from './components/ScrollToTop';
 import HomePage from './pages/basewebsite/home';
 import ScreeningPage from './pages/basewebsite/features/screening/index';
 import LeasePage from './pages/basewebsite/features/lease/index';
 import FinancePage from './pages/basewebsite/features/finance/index';
 import LeadsPage from './pages/basewebsite/features/leads/index';
+import { RentalApplicationSettingsLayout } from './components/common/RentalApplicationSettingsLayout';
 import PricingPage from './pages/basewebsite/pricing';
 import LoginPage from './pages/basewebsite/auth/login';
 import SignUpPage from './pages/basewebsite/auth/signUp';
@@ -417,30 +417,15 @@ const App: React.FC = () => {
               />
 
               {/* Rental Application Settings */}
-              <Route
-                path="/dashboard/settings/rental-application/online-application"
-                element={
-                  <ProtectedRoute>
-                    <OnlineApplication />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/settings/rental-application/form-configuration"
-                element={
-                  <ProtectedRoute>
-                    <FormConfiguration />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/settings/rental-application/terms-signature"
-                element={
-                  <ProtectedRoute>
-                    <TermsSignature />
-                  </ProtectedRoute>
-                }
-              />
+              <Route path="/dashboard/settings/rental-application" element={
+                <ProtectedRoute>
+                  <RentalApplicationSettingsLayout />
+                </ProtectedRoute>
+              }>
+                <Route path="online-application" element={<OnlineApplication />} />
+                <Route path="form-configuration" element={<FormConfiguration />} />
+                <Route path="terms-signature" element={<TermsSignature />} />
+              </Route>
 
               {/* Team Management Settings */}
               <Route

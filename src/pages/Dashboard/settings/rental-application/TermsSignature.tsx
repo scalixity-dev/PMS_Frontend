@@ -1,6 +1,5 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
-import { RentalApplicationSettingsLayout } from "../../../../components/common/RentalApplicationSettingsLayout";
 import Toggle from "../../../../components/Toggle";
 
 interface SectionConfig {
@@ -25,7 +24,7 @@ const SettingSection = ({ config, isFirst = false, toggleState, onToggleChange }
         if (config.actionType === "button" && config.buttonText) {
             return (
                 <div className="mt-4">
-                    <button 
+                    <button
                         onClick={config.buttonAction}
                         className="bg-[#327B6E] text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-[#2a6a5f] transition-colors border border-white shadow-md"
                     >
@@ -34,7 +33,7 @@ const SettingSection = ({ config, isFirst = false, toggleState, onToggleChange }
                 </div>
             );
         }
-        
+
         if (config.actionType === "toggle" && toggleState !== undefined && onToggleChange) {
             return (
                 <div className="mt-4 flex items-center gap-3">
@@ -45,7 +44,7 @@ const SettingSection = ({ config, isFirst = false, toggleState, onToggleChange }
                 </div>
             );
         }
-        
+
         return null;
     };
 
@@ -53,7 +52,7 @@ const SettingSection = ({ config, isFirst = false, toggleState, onToggleChange }
         <div className={`py-6 ${!isFirst ? 'border-t-[0.5px] border-t-[#201F23]' : ''}`}>
             <h2 className="text-lg font-bold text-gray-900">{config.title}</h2>
             <p className="text-gray-600 text-sm mt-1 max-w-3xl">{config.description}</p>
-            <button 
+            <button
                 onClick={config.linkAction}
                 className="text-[#327B6E] text-sm font-medium mt-1 hover:underline"
             >
@@ -105,18 +104,16 @@ export default function TermsSignature() {
     ];
 
     return (
-        <RentalApplicationSettingsLayout activeTab="terms-signature">
-            <div className="space-y-0">
-                {sections.map((section, index) => (
-                    <SettingSection
-                        key={section.title}
-                        config={section}
-                        isFirst={index === 0}
-                        toggleState={section.actionType === "toggle" ? eSignEnabled : undefined}
-                        onToggleChange={section.actionType === "toggle" ? setESignEnabled : undefined}
-                    />
-                ))}
-            </div>
-        </RentalApplicationSettingsLayout>
+        <div className="space-y-0">
+            {sections.map((section, index) => (
+                <SettingSection
+                    key={section.title}
+                    config={section}
+                    isFirst={index === 0}
+                    toggleState={section.actionType === "toggle" ? eSignEnabled : undefined}
+                    onToggleChange={section.actionType === "toggle" ? setESignEnabled : undefined}
+                />
+            ))}
+        </div>
     );
 }
