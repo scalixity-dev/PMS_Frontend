@@ -9,6 +9,7 @@ interface Step12Props {
     setIsPriorityDropdownOpen: (val: boolean) => void;
     onSelect: (val: "Low" | "Normal" | "Critical") => void;
     onSubmit: () => void;
+    isSubmitting?: boolean;
 }
 
 const Step12Priority: React.FC<Step12Props> = ({
@@ -17,7 +18,8 @@ const Step12Priority: React.FC<Step12Props> = ({
     priorityDropdownRef,
     setIsPriorityDropdownOpen,
     onSelect,
-    onSubmit
+    onSubmit,
+    isSubmitting = false
 }) => {
     return (
         <div className="text-center py-10">
@@ -59,10 +61,10 @@ const Step12Priority: React.FC<Step12Props> = ({
 
             <div className="flex justify-center gap-4">
                 <PrimaryActionButton
-                    disabled={!priority}
+                    disabled={!priority || isSubmitting}
                     onClick={onSubmit}
-                    text="Create a request"
-                    className={!priority ? "!bg-gray-100 !text-gray-400 cursor-not-allowed uppercase shadow-none px-12" : "bg-[#7ED957] hover:bg-[#6BC847] shadow-lg shadow-[#7ED957]/30 px-12"}
+                    text={isSubmitting ? "Creating..." : "Create a request"}
+                    className={!priority || isSubmitting ? "!bg-gray-100 !text-gray-400 cursor-not-allowed uppercase shadow-none px-12" : "bg-[#7ED957] hover:bg-[#6BC847] shadow-lg shadow-[#7ED957]/30 px-12"}
                 />
             </div>
         </div>

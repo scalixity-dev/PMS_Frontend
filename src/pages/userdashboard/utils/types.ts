@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 export interface Transaction {
     id: string;
-    status: 'Open' | 'Overdue' | 'Active' | 'New' | 'Critical' | 'Normal';
+    status: 'Open' | 'Overdue' | 'Paid' | 'Partial';
     dueDate: string;
     category: string;
     contact: {
@@ -11,6 +11,7 @@ export interface Transaction {
         avatarColor: string;
     };
     amount: number;
+    paidAmount?: number;
     currency: string;
 }
 
@@ -139,12 +140,13 @@ export interface ServiceRequest {
     assignee: string;
     subCategory?: string;
     problem?: string;
+    description?: string;
     authorizationToEnter?: string;
     authorizationCode?: string;
     setUpDateTime?: string;
     availability?: AvailabilityOption[];
     createdAt: string;
-    attachments?: File[];
-    video?: File | null;
+    attachments?: (File | string)[]; // Can be File objects or data URL strings
+    video?: File | string | null; // Can be File object or data URL string
     pets?: string[];
 }

@@ -1,28 +1,20 @@
 import { useNavigate } from "react-router-dom";
 import { StatusPill } from "./StatusPill";
+import { formatMoney } from "../../../../../utils/currency.utils";
 
 /**
  * Transaction Interface for type safety
+ * Status values are aligned with StatusPill component expectations
  */
 interface LeaseTransaction {
     id: string;
-    status: "Active" | "Pending" | "Overdue" | "Open" | "New" | "Critical" | "Normal" | "Expired";
+    status: "Active" | "Pending" | "Overdue" | "Open" | "Expired" | "Paid" | "Partial";
     firstInvoice: string;
     category: string;
     nextInvoice: string;
     amount: number;
     currency: string;
 }
-
-/**
- * Utility to format currency
- */
-const formatCurrency = (amount: number) => {
-    return Math.abs(amount).toLocaleString('en-IN', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    });
-};
 
 /**
  * LeaseTransactionsTable
@@ -77,10 +69,10 @@ export const LeaseTransactionsTable = () => {
                         <div className="flex-[1.5] flex justify-end items-center gap-4">
                             <div className="flex flex-col items-end">
                                 <span className="text-[var(--dashboard-text-main)] font-medium text-base">
-                                    {item.amount < 0 ? '-' : ''} ₹{formatCurrency(item.amount)}
+                                    {item.amount < 0 ? '-' : ''} {formatMoney(Math.abs(item.amount), item.currency)}
                                 </span>
                                 <span className="text-[#FF2D55] font-semibold text-xs">
-                                    ₹{formatCurrency(item.amount)}
+                                    {formatMoney(Math.abs(item.amount), item.currency)}
                                 </span>
                             </div>
                             <span className="text-gray-400 font-bold text-xs tracking-widest min-w-[30px]">{item.currency}</span>
