@@ -80,7 +80,7 @@ const InvoiceSettings: React.FC = () => {
           Learn more
         </button>
 
-        <div className="flex gap-4 mb-6 mt-2">
+        <div className="flex flex-col sm:flex-row gap-4 mb-6 mt-2">
           {/* Grace period days dropdown - same style as recurring invoice settings */}
           <div className="relative max-w-[200px] w-full">
             <select
