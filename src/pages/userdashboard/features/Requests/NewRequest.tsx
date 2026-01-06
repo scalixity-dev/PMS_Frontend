@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { ChevronLeft } from "lucide-react";
+import { useLocation, useNavigate, UNSAFE_NavigationContext } from "react-router-dom";
 import { useNewRequestForm } from "./hooks/useNewRequestForm";
 import Stepper from "./components/new-request/Stepper";
 import Step1Category from "./components/new-request/Step1Category";
@@ -14,8 +15,15 @@ import Step9AuthDetails from "./components/new-request/Step9AuthDetails";
 import Step10DateTimeChoice from "./components/new-request/Step10DateTimeChoice";
 import Step11Availability from "./components/new-request/Step11Availability";
 import Step12Priority from "./components/new-request/Step12Priority";
+import UnsavedChangesModal from "../../../Dashboard/components/UnsavedChangesModal";
 
 const NewRequest: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [shouldAllowNavigation, setShouldAllowNavigation] = useState(false);
+  const [nextLocation, setNextLocation] = useState<string | null>(null);
+
   const {
     currentStep,
     prevStep,
@@ -40,7 +48,7 @@ const NewRequest: React.FC = () => {
     setTitle,
     description,
     setDescription,
-    location,
+    location: locationField,
     setLocation,
     authorization,
     setAuthorization,
@@ -60,8 +68,90 @@ const NewRequest: React.FC = () => {
     isPriorityDropdownOpen,
     setIsPriorityDropdownOpen,
     priorityDropdownRef,
-    handleSubmit
+    handleSubmit,
+    hasFormData
   } = useNewRequestForm();
+
+  // Access the navigation context to intercept navigation
+  const navigationContext = React.useContext(UNSAFE_NavigationContext);
+  
+  // Block navigation when form has unsaved changes
+  useEffect(() => {
+    if (!hasFormData || shouldAllowNavigation) return;
+
+    const { navigator } = navigationContext;
+    const originalPush = navigator.push;
+    const originalReplace = navigator.replace;
+
+    // Intercept push navigation
+    navigator.push = (...args: Parameters<typeof originalPush>) => {
+      const [to] = args;
+      const targetPath = typeof to === 'string' ? to : to.pathname;
+      
+      if (targetPath !== location.pathname) {
+        setNextLocation(targetPath || '');
+        setIsModalOpen(true);
+      } else {
+        originalPush(...args);
+      }
+    };
+
+    // Intercept replace navigation
+    navigator.replace = (...args: Parameters<typeof originalReplace>) => {
+      const [to] = args;
+      const targetPath = typeof to === 'string' ? to : to.pathname;
+      
+      if (targetPath !== location.pathname) {
+        setNextLocation(targetPath || '');
+        setIsModalOpen(true);
+      } else {
+        originalReplace(...args);
+      }
+    };
+
+    // Cleanup
+    return () => {
+      navigator.push = originalPush;
+      navigator.replace = originalReplace;
+    };
+  }, [hasFormData, shouldAllowNavigation, location.pathname, navigationContext]);
+
+  // Handle browser navigation (refresh, close tab, etc.)
+  useEffect(() => {
+    if (!hasFormData || shouldAllowNavigation) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+      return '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasFormData, shouldAllowNavigation]);
+
+  const handleConfirmLeave = useCallback(() => {
+    setIsModalOpen(false);
+    setShouldAllowNavigation(true);
+    
+    // Navigate to the target location
+    if (nextLocation) {
+      setTimeout(() => {
+        navigate(nextLocation);
+      }, 0);
+    }
+  }, [nextLocation, navigate]);
+
+  const handleCancelLeave = useCallback(() => {
+    setIsModalOpen(false);
+    setNextLocation(null);
+  }, []);
+
+  // Wrap handleSubmit to allow navigation after successful submission
+  const handleFormSubmit = async () => {
+    setShouldAllowNavigation(true);
+    await handleSubmit();
+  };
 
   const renderStep = () => {
     switch (currentStep) {
@@ -153,7 +243,7 @@ const NewRequest: React.FC = () => {
       case 7:
         return (
           <Step7Location
-            location={location}
+            location={locationField}
             onLocationChange={setLocation}
             onNext={() => nextStep(8)}
           />
@@ -203,7 +293,7 @@ const NewRequest: React.FC = () => {
             priorityDropdownRef={priorityDropdownRef}
             setIsPriorityDropdownOpen={setIsPriorityDropdownOpen}
             onSelect={setPriority}
-            onSubmit={handleSubmit}
+            onSubmit={handleFormSubmit}
           />
         );
       default:
@@ -212,7 +302,7 @@ const NewRequest: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] p-4 md:p-10">
+    <div className="min-h-screen bg-[#F9FAFB] p-4 md:p-10 relative">
       <div className="max-w-2xl mx-auto">
         <div className="bg-[#F5F5F5] rounded-xl shadow-[0px_3.9px_3.9px_0px_#00000040] border border-gray-100 p-8 md:p-8 relative">
           <button
@@ -230,6 +320,25 @@ const NewRequest: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal positioned relative to content area */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={handleCancelLeave} />
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-xl animate-in zoom-in-95 duration-200 overflow-hidden relative z-10">
+            <UnsavedChangesModal
+              isOpen={isModalOpen}
+              onClose={handleCancelLeave}
+              onConfirm={handleConfirmLeave}
+              title="You're about to leave"
+              message="Are you sure you want to leave without saving? You will lose any changes made."
+              cancelText="No"
+              confirmText="Yes, I'm sure"
+              noBlur={true}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

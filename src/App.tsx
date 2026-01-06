@@ -115,6 +115,7 @@ import NotificationsUser from './pages/userdashboard/features/Profile/Notificati
 import PublicRenterProfile from './pages/userdashboard/features/Profile/PublicRenterProfile';
 import LeaseDetails from './pages/userdashboard/features/Leases/LeaseDetails';
 import TransactionDetails from './pages/userdashboard/features/Transactions/TransactionDetails';
+import RequestDetails from './pages/userdashboard/features/Requests/RequestDetails';
 
 
 
@@ -714,6 +715,7 @@ const App: React.FC = () => {
               <Route path="/userdashboard" element={<UserDashboard />} />
               <Route path="/userdashboard/rent" element={<Rent />} />
               <Route path="/userdashboard/requests" element={<RequestsUser />} />
+              <Route path="/userdashboard/requests/:id" element={<RequestDetails />} />
               <Route path="/userdashboard/utility-providers" element={<UtilityProviders />} />
               <Route path="/userdashboard/properties" element={<PropertiesUser />} />
               <Route path="/userdashboard/properties/:id" element={<PropertyDetailUser />} />

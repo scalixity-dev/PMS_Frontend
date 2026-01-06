@@ -133,7 +133,8 @@ const Rent: React.FC = () => {
             value={statusFilter}
             onSelect={(val) => setRentFilters({ status: val })}
             options={[
-              { label: "Active", value: "Active" },
+              { label: "Paid", value: "Paid" },
+              { label: "Partial", value: "Partial" },
               { label: "Open", value: "Open" },
               { label: "Overdue", value: "Overdue" },
             ]}

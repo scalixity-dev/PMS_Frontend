@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRequestStore } from "../store/requestStore";
 import type { AvailabilityOption, ServiceRequest } from "../../../utils/types";
@@ -31,6 +31,41 @@ export const useNewRequestForm = () => {
     const [pets, setPets] = useState<string[]>([]);
     const attachmentsInputRef = useRef<HTMLInputElement>(null);
     const videoInputRef = useRef<HTMLInputElement>(null);
+    
+    // Track if form has been modified
+    const hasFormData = useMemo(() => {
+        return (
+            selectedCategory !== null ||
+            selectedSubCategory !== null ||
+            selectedProblem !== null ||
+            finalDetail !== null ||
+            title !== "" ||
+            description !== "" ||
+            authorization !== null ||
+            authCode !== "" ||
+            setUpDateTime !== null ||
+            attachments.length > 0 ||
+            video !== null ||
+            pets.length > 0 ||
+            priority !== null ||
+            availability.some(item => item.date !== "" || item.timeSlots.length > 0)
+        );
+    }, [
+        selectedCategory,
+        selectedSubCategory,
+        selectedProblem,
+        finalDetail,
+        title,
+        description,
+        authorization,
+        authCode,
+        setUpDateTime,
+        attachments.length,
+        video,
+        pets.length,
+        priority,
+        availability
+    ]);
 
     const handleTogglePet = (pet: string) => {
         setPets((prev) =>
@@ -91,19 +126,54 @@ export const useNewRequestForm = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!selectedCategory || !priority) return;
 
-        const newRequest: ServiceRequest = {
+        // Convert File objects to data URLs for persistence
+        const convertFileToDataURL = (file: File): Promise<string> => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result as string);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        };
+
+        // Convert attachments to data URLs
+        const attachmentDataUrls: string[] = [];
+        if (attachments && attachments.length > 0) {
+            try {
+                const dataUrlPromises = attachments.map(file => convertFileToDataURL(file));
+                const dataUrls = await Promise.all(dataUrlPromises);
+                attachmentDataUrls.push(...dataUrls);
+            } catch (error) {
+                console.error('Error converting attachments to data URLs:', error);
+            }
+        }
+
+        // Convert video to data URL
+        let videoDataUrl: string | null = null;
+        if (video) {
+            try {
+                videoDataUrl = await convertFileToDataURL(video);
+            } catch (error) {
+                console.error('Error converting video to data URL:', error);
+            }
+        }
+
+        // Create request - we'll store data URLs in a way that works with the store
+        // The store will handle converting these properly
+        const newRequest: ServiceRequest & { attachmentDataUrls?: string[]; videoDataUrl?: string | null } = {
             id: Date.now(),
             requestId: `REQ-${Math.floor(1000 + Math.random() * 9000)}`,
             status: "New",
             category: categories.find(c => c.id === selectedCategory)?.name || selectedCategory,
             subCategory: selectedSubCategory || "",
             problem: selectedProblem || "",
+            description: description || "",
             property: "Main Street Apartment",
             priority: priority,
-            authorizationToEnter: authorization || "No",
+            authorizationToEnter: authorization ? (authorization === "yes" ? "Yes" : "No") : "No",
             authorizationCode: authCode,
             setUpDateTime: setUpDateTime || "No",
             availability: availability,
@@ -112,6 +182,9 @@ export const useNewRequestForm = () => {
             attachments: attachments,
             video: video,
             pets: pets,
+            // Store data URLs separately for persistence
+            attachmentDataUrls: attachmentDataUrls.length > 0 ? attachmentDataUrls : undefined,
+            videoDataUrl: videoDataUrl,
         };
 
         addRequest(newRequest);
@@ -124,6 +197,21 @@ export const useNewRequestForm = () => {
     };
 
     const nextStep = (step?: number) => {
+        const targetStep = step || (currentStep + 1);
+        
+        // When reaching step 6, set default title if empty
+        if (targetStep === 6 && !title) {
+            const categoryName = categories.find(c => c.id === selectedCategory)?.name || selectedCategory || "";
+            const subCategoryName = selectedSubCategory || "";
+            const problemName = selectedProblem || "";
+            
+            // Build title in format: category/subcategory/problem
+            const parts = [categoryName, subCategoryName, problemName].filter(Boolean);
+            if (parts.length > 0) {
+                setTitle(parts.join(" / "));
+            }
+        }
+        
         if (step) {
             setCurrentStep(step);
         } else {
@@ -193,5 +281,6 @@ export const useNewRequestForm = () => {
         handleSubmit,
         nextStep,
         prevStep,
+        hasFormData,
     };
 };

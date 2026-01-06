@@ -5,7 +5,7 @@
  */
 export const getCurrencySymbol = (countryCode?: string): string => {
   if (!countryCode) return '$'; // Default to USD
-  
+
   const currencyMap: Record<string, string> = {
     // Major currencies
     'US': '$',      // United States - USD
@@ -63,7 +63,19 @@ export const getCurrencySymbol = (countryCode?: string): string => {
     'TR': '₺',      // Turkey - TRY
     'IL': '₪',      // Israel - ILS
   };
-  
+
   return currencyMap[countryCode] || '$'; // Default to USD if country not found
 };
 
+
+/**
+ * Format amount with currency
+ * @param amount - The numeric amount to format
+ * @param currency - The currency code (e.g. 'USD', 'INR', 'EUR')
+ * @returns Formatted money string
+ */
+export const formatMoney = (amount: number, currency: string) =>
+  new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency,
+  }).format(amount);

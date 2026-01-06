@@ -80,11 +80,10 @@ const matchesTimeFilter = (dateStr: string, filter: string): boolean => {
 
 export const TransactionTable = ({ transactions }: TransactionTableProps) => {
     const navigate = useNavigate();
-    const [selectedTimeFilter, setSelectedTimeFilter] = useState<string | null>("all_time");
+    const [selectedTimeFilter, setSelectedTimeFilter] = useState<string | null>(null);
 
     const handleTimeFilterChange = (value: string | null) => {
-        // If user clears the filter (null), reset to "all_time"
-        setSelectedTimeFilter(value || "all_time");
+        setSelectedTimeFilter(value);
     };
 
     // Filter transactions based on selected time period
@@ -99,7 +98,9 @@ export const TransactionTable = ({ transactions }: TransactionTableProps) => {
     }, [transactions, selectedTimeFilter]);
 
     // Get the display label for the current selection
-    const selectedLabel = TIME_FILTER_OPTIONS.find(opt => opt.value === selectedTimeFilter)?.label || "All Time";
+    const selectedLabel = selectedTimeFilter 
+        ? TIME_FILTER_OPTIONS.find(opt => opt.value === selectedTimeFilter)?.label || "All Time"
+        : "All Time";
 
     return (
         <div className="bg-white rounded-[1rem] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] border border-gray-200 flex flex-col">
