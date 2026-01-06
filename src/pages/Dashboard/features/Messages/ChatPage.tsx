@@ -57,7 +57,7 @@ const INITIAL_CHATS: Chat[] = [
 ];
 
 interface DashboardContext {
-  sidebarOpen: boolean;
+  sidebarCollapsed: boolean;
 }
 
 const ChatPage: React.FC = () => {
@@ -68,13 +68,9 @@ const ChatPage: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Safe context access
-  let sidebarOpen = true;
-  try {
-    const context = useOutletContext<DashboardContext>();
-    if (context) sidebarOpen = context.sidebarOpen;
-  } catch (e) {
-    // Fallback if context is missing
-  }
+  const context = useOutletContext<DashboardContext>();
+  const sidebarCollapsed = context?.sidebarCollapsed ?? false;
+  const sidebarOpen = !sidebarCollapsed;
 
   const activeChat = useMemo(() =>
     chats.find(c => c.id === activeChatId) || chats[0],

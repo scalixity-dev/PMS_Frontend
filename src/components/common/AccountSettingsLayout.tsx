@@ -9,7 +9,7 @@ interface AccountSettingsLayoutProps {
 }
 
 interface DashboardContext {
-  sidebarOpen: boolean;
+  sidebarCollapsed: boolean;
 }
 
 const primaryColor = "#7CD947";
@@ -18,14 +18,8 @@ export function AccountSettingsLayout(props: AccountSettingsLayoutProps) {
   const { activeTab, children } = props;
   const navigate = useNavigate();
 
-  // Safe context access
-  let sidebarOpen = true;
-  try {
-    const context = useOutletContext<DashboardContext>();
-    if (context) sidebarOpen = context.sidebarOpen;
-  } catch (e) {
-    // Fallback
-  }
+  const context = useOutletContext<DashboardContext>();
+  const sidebarCollapsed = context?.sidebarCollapsed ?? false;
 
   const getTabLabel = (tab: AccountSettingsTab) => {
     if (tab === "profile") {
@@ -53,7 +47,7 @@ export function AccountSettingsLayout(props: AccountSettingsLayoutProps) {
   };
 
   return (
-    <div className={`min-h-screen bg-[#f5f5f5] px-1 transition-all duration-300 mx-auto ${sidebarOpen ? 'max-w-7xl' : 'max-w-full'}`}>
+    <div className={`min-h-screen bg-[#f5f5f5] px-1 transition-all duration-300 mx-auto ${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'}`}>
       <div className="space-y-5">
         <div className="text-sm text-gray-700 font-medium">
           <span

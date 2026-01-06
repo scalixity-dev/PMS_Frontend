@@ -2,12 +2,12 @@ import { Archive, ChevronLeft, Settings } from 'lucide-react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 
 interface DashboardContext {
-    sidebarOpen: boolean;
+    sidebarCollapsed: boolean;
 }
 
 const Notification = () => {
     const navigate = useNavigate();
-    const { sidebarOpen } = useOutletContext<DashboardContext>();
+    const { sidebarCollapsed } = useOutletContext<DashboardContext>() || { sidebarCollapsed: false };
 
     const notifications = [
         {
@@ -64,9 +64,9 @@ const Notification = () => {
         }
     };
 
-    
+
     return (
-        <div className={`mx-auto min-h-screen font-outfit transition-all duration-300 ${sidebarOpen ? 'max-w-7xl' : 'max-w-full'}`}>
+        <div className={`mx-auto min-h-screen font-outfit transition-all duration-300 ${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'}`}>
             {/* Breadcrumb Feed */}
             <div className="inline-flex items-center px-4 py-2 bg-[#E0E5E5] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
                 <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>

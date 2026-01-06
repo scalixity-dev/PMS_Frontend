@@ -71,7 +71,8 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
       const container = containerRef.current;
       // Get the width of a single card (assumes all are same width)
       // For the first card, we can just take the container width since items are w-full
-      const cardWidth = container.offsetWidth;
+      const cardElement = container.querySelector('[data-plan-card]') as HTMLElement;
+      const cardWidth = cardElement ? cardElement.offsetWidth : container.offsetWidth;
       const gap = 16; // gap-4 is 16px (1rem)
 
       container.scrollTo({
@@ -251,6 +252,7 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
                 <div
                   key={plan.plan}
                   onClick={() => setSelectedPlan(planId)}
+                  data-plan-card
                   className={`relative flex flex-col p-5 rounded-2xl transition-all duration-300 ${cardBgClass} h-full cursor-pointer ${isCurrentPlan ? "ring-2 ring-[#7BD747]" : ""
                     } w-full shrink-0 sm:w-auto sm:min-w-[280px] md:min-w-0 md:shrink md:w-auto snap-center`}
                 >

@@ -55,7 +55,8 @@ const UseTemplateModal: React.FC<UseTemplateModalProps> = ({ isOpen, onClose, te
         navigate(`/dashboard/documents/landlord-forms/use-template/${encodeURIComponent(templateName)}`, {
             state: {
                 returnPath: `/dashboard/documents/my-templates/${templateId}`,
-                selectedProperty
+                selectedProperty,
+                selectedLease
             }
         });
     };

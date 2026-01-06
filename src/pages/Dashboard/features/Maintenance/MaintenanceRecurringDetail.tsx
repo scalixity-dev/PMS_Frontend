@@ -126,13 +126,13 @@ const MaintenanceRecurringDetail: React.FC = () => {
                 <div className="bg-[#f0f0f6] rounded-[2rem] md:rounded-[3rem] p-4 flex flex-col md:flex-row flex-wrap gap-4 items-stretch md:items-center mb-6 shadow-sm">
                     <div className="bg-[#7BD747] text-white px-4 py-3 md:px-6 rounded-[2rem] flex flex-col sm:flex-row items-center justify-between gap-2 md:gap-4 md:min-w-[300px]">
                         <span className="font-bold text-sm">ID- 1331896</span>
-                        <div className="bg-white/90 text-[#3A6D6C] text-[10px] px-2 py-0.5 rounded-full font-bold text-center">
+                        <div className="bg-white/90 text-[#3A6D6C] text-xs px-2 py-0.5 rounded-full font-bold text-center">
                             Electrical / Lights / Smoke Detectors / Beeping
                         </div>
                     </div>
                     <div className="bg-[#7BD747] text-white px-4 py-3 md:px-6 rounded-[2rem] flex items-center justify-between gap-4 md:min-w-[200px]">
                         <span className="font-bold text-sm">Property</span>
-                        <div className="bg-white/90 text-[#3A6D6C] text-[10px] px-3 py-0.5 rounded-full font-bold">
+                        <div className="bg-white/90 text-[#3A6D6C] text-xs px-3 py-0.5 rounded-full font-bold">
                             Luxury
                         </div>
                     </div>

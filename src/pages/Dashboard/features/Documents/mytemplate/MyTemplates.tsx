@@ -73,7 +73,7 @@ const MyTemplates: React.FC = () => {
     const handlePreview = (e: React.MouseEvent, templateId: number) => {
         e.stopPropagation();
         // Navigate to template detail page for preview
-        navigate(`/documents/my-templates/${templateId}`);
+        navigate(`/dashboard/documents/my-templates/${templateId}`);
         setActiveDropdownId(null);
     };
 

@@ -89,7 +89,7 @@ const EditTemplate: React.FC = () => {
         }
 
         localStorage.setItem('myTemplates', JSON.stringify(templates));
-        navigate(`/documents/my-templates/${numericId}`);
+        navigate(`/dashboard/documents/my-templates/${numericId}`);
     };
 
     return (

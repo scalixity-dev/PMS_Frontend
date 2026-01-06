@@ -19,7 +19,10 @@ const GeneralReportSettings: React.FC = () => {
         { label: "Portrait", value: "Portrait" },
     ];
     const rotationOptions = [
-        { label: "Auto set rotation from", value: "Auto set rotation from" },
+        { label: "0°", value: "0" },
+        { label: "90°", value: "90" },
+        { label: "180°", value: "180" },
+        { label: "270°", value: "270" },
     ];
     const scalingOptions = [
         { label: "N/A", value: "N/A" },

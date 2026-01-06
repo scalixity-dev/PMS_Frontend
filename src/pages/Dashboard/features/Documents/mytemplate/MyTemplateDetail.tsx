@@ -254,7 +254,7 @@ const MyTemplateDetail: React.FC = () => {
                                         <button
                                             key={t.id}
                                             onClick={() => {
-                                                navigate(`/documents/my-templates/${t.id}`);
+                                                navigate(`/dashboard/documents/my-templates/${t.id}`);
                                                 setIsDropdownOpen(false);
                                             }}
                                             className={`block w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors border-b last:border-b-0 border-gray-50 line-clamp-1 ${t.id.toString() === id ? 'bg-gray-50 text-[#3A6D6C] font-semibold' : 'text-gray-700'
@@ -267,7 +267,7 @@ const MyTemplateDetail: React.FC = () => {
                             )}
                         </div>
                         <button
-                            onClick={() => navigate(`/documents/my-templates/${id}/edit`)}
+                            onClick={() => navigate(`/dashboard/documents/my-templates/${id}/edit`)}
                             className="w-full sm:w-auto bg-[#4CD9A4] text-white px-8 py-2 rounded-full text-sm font-medium hover:bg-[#42bd93] transition-colors shadow-sm whitespace-nowrap"
                         >
                             Edit

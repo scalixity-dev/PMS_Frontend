@@ -26,7 +26,7 @@ interface SettingCardData {
 }
 
 interface DashboardContext {
-  sidebarOpen: boolean;
+  sidebarCollapsed: boolean;
 }
 
 const SETTING_CARDS: SettingCardData[] = [
@@ -170,13 +170,9 @@ export default function Settings() {
   const [openCardTitle, setOpenCardTitle] = useState<string | null>(null);
 
   // Safe context access
-  let sidebarOpen = true;
-  try {
-    const context = useOutletContext<DashboardContext>();
-    if (context) sidebarOpen = context.sidebarOpen;
-  } catch (e) {
-    // Fallback
-  }
+  const context = useOutletContext<DashboardContext>();
+  const sidebarCollapsed = context?.sidebarCollapsed ?? false;
+  const sidebarOpen = !sidebarCollapsed;
 
   const toggleCard = (title: string) => {
     setOpenCardTitle((prev) => (prev === title ? null : title));
