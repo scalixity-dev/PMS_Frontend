@@ -1397,7 +1397,7 @@ const AddProperty: React.FC = () => {
                         key={feature}
                         type="button"
                         onClick={() => toggleFeature(feature)}
-                        className="px-4 py-1.5 rounded-full text-xs font-medium border transition-colors flex items-center gap-2 bg-[#84CC16] text-black border-[#84CC16]"
+                        className="px-4 py-1.5 rounded-full text-xs font-medium border transition-colors flex items-center gap-2 bg-[#84CC16] text-white border-[#84CC16]"
                       >
                         {feature}
                         <X size={12} className="ml-1" onClick={(e) => { e.stopPropagation(); toggleFeature(feature); }} />
@@ -1661,7 +1661,7 @@ const AddProperty: React.FC = () => {
                   onClick={() => toggleAmenity(amenity)}
                   className={`px-4 py-1.5 rounded-full text-xs font-medium border transition-colors flex items-center gap-2 ${formData.amenities.includes(amenity)
                     ? 'bg-[#84CC16] text-white border-[#84CC16]'
-                    : 'bg-[#84CC16] text-white border-[#84CC16] hover:opacity-90'
+                    : 'bg-white text-gray-600 border-gray-300 hover:border-[#84CC16]'
                     }`}
                 >
                   {amenity}
@@ -1676,7 +1676,7 @@ const AddProperty: React.FC = () => {
                     key={amenity}
                     type="button"
                     onClick={() => toggleAmenity(amenity)}
-                    className="px-4 py-1.5 rounded-full text-xs font-medium border transition-colors flex items-center gap-2 bg-[#84CC16] text-black border-[#84CC16]"
+                    className="px-4 py-1.5 rounded-full text-xs font-medium border transition-colors flex items-center gap-2 bg-[#84CC16] text-white border-[#84CC16]"
                   >
                     {amenity}
                     <Check size={12} className="ml-1" />

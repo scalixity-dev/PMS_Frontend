@@ -21,6 +21,8 @@ interface CustomDropdownProps {
   optionClassName?: string;
   iconClassName?: string;
   searchable?: boolean;
+  error?: string | boolean;
+  className?: string;
 }
 
 const CustomDropdown: React.FC<CustomDropdownProps> = ({
@@ -36,7 +38,9 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
   dropdownClassName = '',
   optionClassName = '',
   iconClassName = '',
-  searchable = false
+  searchable = false,
+  error,
+  className,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -89,7 +93,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
   };
 
   return (
-    <div className="w-full relative" ref={dropdownRef}>
+    <div className={cn("w-full relative", className)} ref={dropdownRef}>
       {label && (
         <label className="block text-sm font-medium text-gray-700 mb-2">
           {label}{required && '*'}
@@ -102,8 +106,9 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
         onClick={handleOpen}
         disabled={disabled}
         className={cn(
-          "w-full flex items-center justify-between px-4 py-2.5 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all",
-          disabled ? 'opacity-50 cursor-not-allowed' : 'hover:border-[var(--color-primary)] cursor-pointer',
+          "w-full flex items-center justify-between px-4 py-2.5 border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all",
+          error ? "border-red-500 focus:border-red-500 focus:ring-red-500/20" : "border-gray-300 hover:border-[var(--color-primary)]",
+          disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
           buttonClassName
         )}
       >
@@ -117,50 +122,52 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
       </button>
 
       {/* Dropdown Menu */}
-      {isOpen && !disabled && (
-        <div className={`absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden animate-in fade-in zoom-in-95 duration-100 ${dropdownClassName}`}>
-          {/* Search Input */}
-          {searchable && (
-            <div className="p-2 border-b border-gray-200">
-              <div className="relative">
-                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search..."
-                  className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] text-sm"
-                  onClick={(e) => e.stopPropagation()}
-                />
-              </div>
+      <div className={cn(
+        "absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden transition-all duration-300 ease-in-out",
+        isOpen && !disabled ? "max-h-60 opacity-100 mt-2 visible" : "max-h-0 opacity-0 mt-0 invisible border-none",
+        dropdownClassName
+      )}>
+        {/* Search Input */}
+        {searchable && (
+          <div className="p-2 border-b border-gray-200">
+            <div className="relative">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search..."
+                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20 focus:border-[var(--color-primary)] text-sm"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Options List */}
+        <div className="max-h-60 overflow-y-auto">
+          {filteredOptions.length > 0 ? (
+            filteredOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => handleSelect(option.value)}
+                className={`w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 text-left ${optionClassName}`}
+              >
+                <span className="text-sm text-gray-900">{option.label}</span>
+                {value === option.value && (
+                  <Check size={16} className="text-[var(--color-primary)]" />
+                )}
+              </button>
+            ))
+          ) : (
+            <div className="px-4 py-3 text-sm text-gray-500 text-center">
+              No results found
             </div>
           )}
-
-          {/* Options List */}
-          <div className="max-h-60 overflow-y-auto">
-            {filteredOptions.length > 0 ? (
-              filteredOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => handleSelect(option.value)}
-                  className={`w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 text-left ${optionClassName}`}
-                >
-                  <span className="text-sm text-gray-900">{option.label}</span>
-                  {value === option.value && (
-                    <Check size={16} className="text-[var(--color-primary)]" />
-                  )}
-                </button>
-              ))
-            ) : (
-              <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                No results found
-              </div>
-            )}
-          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

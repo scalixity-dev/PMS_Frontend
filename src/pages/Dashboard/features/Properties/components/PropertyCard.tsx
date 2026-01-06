@@ -49,21 +49,20 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
     };
 
     return (
-        <div 
+        <div
             className={`bg-[#F6F6F8] rounded-[2rem] p-4 shadow-sm relative flex flex-col h-full ${selectionMode ? 'cursor-pointer hover:shadow-md transition-shadow' : ''} ${isSelected ? 'ring-2 ring-[#82D64D] ring-offset-2' : ''}`}
             onClick={handleCardClick}
         >
             {/* Selection Checkbox */}
             {selectionMode && (
-                <div 
+                <div
                     className="absolute top-4 left-4 z-10"
                     onClick={handleCheckboxChange}
                 >
-                    <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors ${
-                        isSelected 
-                            ? 'bg-[#82D64D] border-[#82D64D]' 
+                    <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors ${isSelected
+                            ? 'bg-[#82D64D] border-[#82D64D]'
                             : 'bg-white border-gray-300'
-                    }`}>
+                        }`}>
                         {isSelected && (
                             <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -90,7 +89,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
                         }}
                     />
                 ) : null}
-                <div 
+                <div
                     className={`w-full h-full rounded-2xl ${image ? 'hidden' : 'flex'} items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300`}
                 >
                     <div className="text-center">
@@ -131,17 +130,35 @@ const PropertyCard: React.FC<PropertyCardProps> = ({
 
             {/* Action Buttons */}
             <div className="flex gap-2 justify-between mt-auto bg-white shadow-sm px-3 py-3 rounded-2xl overflow-x-auto">
-                <button className="flex items-center justify-center gap-1.5 bg-[#82D64D] text-white px-3 py-2 rounded-full text-[10px] font-medium hover:bg-[#72c042] transition-colors flex-1 whitespace-nowrap">
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        navigate('/dashboard/accounting/transactions', { state: { preSelectedProperty: name } });
+                    }}
+                    className="flex items-center justify-center gap-1.5 bg-[#82D64D] text-white px-3 py-2 rounded-full text-[10px] font-medium hover:bg-[#72c042] transition-colors flex-1 whitespace-nowrap"
+                >
                     <div className="p-0.5 border border-white rounded-full">
                         <DollarSign className="w-2.5 h-2.5" />
                     </div>
                     Accounting
                 </button>
-                <button className="flex items-center justify-center gap-1.5 bg-[#82D64D] text-white px-3 py-2 rounded-full text-[10px] font-medium hover:bg-[#72c042] transition-colors flex-1 whitespace-nowrap">
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        navigate('/dashboard/maintenance/requests', { state: { preSelectedProperty: name } });
+                    }}
+                    className="flex items-center justify-center gap-1.5 bg-[#82D64D] text-white px-3 py-2 rounded-full text-[10px] font-medium hover:bg-[#72c042] transition-colors flex-1 whitespace-nowrap"
+                >
                     <Wrench className="w-3 h-3" />
                     Requests
                 </button>
-                <button className="flex items-center justify-center gap-1.5 bg-[#82D64D] text-white px-3 py-2 rounded-full text-[10px] font-medium hover:bg-[#72c042] transition-colors flex-1 whitespace-nowrap">
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        navigate('/dashboard/contacts/tenants', { state: { preSelectedProperty: name } });
+                    }}
+                    className="flex items-center justify-center gap-1.5 bg-[#82D64D] text-white px-3 py-2 rounded-full text-[10px] font-medium hover:bg-[#72c042] transition-colors flex-1 whitespace-nowrap"
+                >
                     <User className="w-3 h-3" />
                     Tenants
                 </button>

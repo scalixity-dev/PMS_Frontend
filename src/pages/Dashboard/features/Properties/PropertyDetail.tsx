@@ -770,7 +770,10 @@ const PropertyDetail: React.FC = () => {
                         <h1 className="text-lg md:text-2xl font-bold text-gray-800 truncate">{property?.name || 'Property'}</h1>
                     </div>
                     <div className="flex gap-2 md:gap-3 w-full sm:w-auto">
-                        <button className="flex-1 sm:flex-none bg-[#3A6D6C] text-white px-4 md:px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5554] transition-colors">
+                        <button
+                            onClick={() => navigate('/dashboard/movein', { state: { preSelectedPropertyId: id } })}
+                            className="flex-1 sm:flex-none bg-[#3A6D6C] text-white px-4 md:px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5554] transition-colors"
+                        >
                             Move In
                         </button>
                         <div className="relative" ref={actionDropdownRef}>

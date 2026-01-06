@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useOutletContext, useLocation } from 'react-router-dom';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
 import TenantCard from './components/TenantCard';
@@ -12,6 +12,20 @@ const Tenants = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [filters, setFilters] = useState<Record<string, string[]>>({});
     const [currentPage, setCurrentPage] = useState(1);
+    const location = useLocation();
+
+    // Handle pre-selected property from navigation state
+    useEffect(() => {
+        const state = location.state as { preSelectedProperty?: string };
+        if (state?.preSelectedProperty) {
+            setFilters(prev => ({
+                ...prev,
+                propertyUnits: [state.preSelectedProperty!]
+            }));
+            // Clear state to prevent reapplying on refresh/navigation
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state]);
     const itemsPerPage = 9;
 
     // Fetch tenants using React Query

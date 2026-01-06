@@ -239,6 +239,31 @@ const EditProperty: React.FC = () => {
 
 
   // Options
+  const bedsOptions = [
+    { value: '0', label: 'Studio' },
+    { value: '1', label: '1' },
+    { value: '2', label: '2' },
+    { value: '3', label: '3' },
+    { value: '4', label: '4' },
+    { value: '5', label: '5' },
+    { value: '6', label: '6' },
+    { value: '7', label: '7' },
+    { value: '8', label: '8' },
+    { value: '9', label: '9' },
+    { value: '10', label: '10+' },
+  ];
+
+  const bathsOptions = [
+    { value: '', label: 'None' },
+    { value: '1', label: '1' },
+    { value: '2', label: '2' },
+    { value: '3', label: '3' },
+    { value: '4', label: '4' },
+    { value: '5', label: '5' },
+    { value: '6', label: '6' },
+    { value: '7', label: '7+' },
+  ];
+
   const parkingOptions = [
     { value: 'garage', label: 'Garage' },
     { value: 'street', label: 'Street Parking' },
@@ -1190,75 +1215,44 @@ const EditProperty: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                   <div>
                     <label className="block text-xs font-medium mb-1 ml-1">Beds*</label>
-                    <div className="relative">
-                      <select
-                        className={`w-full rounded-lg border bg-white px-3 py-2 text-gray-700 outline-none appearance-none ${validationErrors.beds ? 'border-red-500' : 'border-gray-200'}`}
-                        value={formData.beds}
-                        onChange={(e) => {
-                          updateFormData('beds', e.target.value);
-                          if (validationErrors.beds) {
-                            setValidationErrors(prev => {
-                              const newErrors = { ...prev };
-                              delete newErrors.beds;
-                              return newErrors;
-                            });
-                          }
-                        }}
-                      >
-                        <option value="0">Studio</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                        <option value="6">6</option>
-                        <option value="7">7</option>
-                        <option value="8">8</option>
-                        <option value="9">9</option>
-                        <option value="10">10+</option>
-                      </select>
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                        <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M1 1L5 5L9 1" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </div>
-                    </div>
+                    <CustomDropdown
+                      value={formData.beds}
+                      onChange={(value) => {
+                        updateFormData('beds', value);
+                        if (validationErrors.beds) {
+                          setValidationErrors(prev => {
+                            const newErrors = { ...prev };
+                            delete newErrors.beds;
+                            return newErrors;
+                          });
+                        }
+                      }}
+                      options={bedsOptions}
+                      placeholder="Select beds"
+                      buttonClassName={`bg-white border-gray-200 ${validationErrors.beds ? 'border-red-500' : ''}`}
+                    />
                     {validationErrors.beds && (
                       <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.beds}</p>
                     )}
                   </div>
                   <div>
                     <label className="block text-xs font-medium mb-1 ml-1">Baths*</label>
-                    <div className="relative">
-                      <select
-                        className={`w-full rounded-lg border bg-white px-3 py-2 text-gray-700 outline-none appearance-none ${validationErrors.baths ? 'border-red-500' : 'border-gray-200'}`}
-                        value={formData.baths}
-                        onChange={(e) => {
-                          updateFormData('baths', e.target.value);
-                          if (validationErrors.baths) {
-                            setValidationErrors(prev => {
-                              const newErrors = { ...prev };
-                              delete newErrors.baths;
-                              return newErrors;
-                            });
-                          }
-                        }}
-                      >
-                        <option value="">None</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                        <option value="6">6</option>
-                        <option value="7">7+</option>
-                      </select>
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                        <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M1 1L5 5L9 1" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </div>
-                    </div>
+                    <CustomDropdown
+                      value={formData.baths}
+                      onChange={(value) => {
+                        updateFormData('baths', value);
+                        if (validationErrors.baths) {
+                          setValidationErrors(prev => {
+                            const newErrors = { ...prev };
+                            delete newErrors.baths;
+                            return newErrors;
+                          });
+                        }
+                      }}
+                      options={bathsOptions}
+                      placeholder="None"
+                      buttonClassName={`bg-white border-gray-200 ${validationErrors.baths ? 'border-red-500' : ''}`}
+                    />
                     {validationErrors.baths && (
                       <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.baths}</p>
                     )}
@@ -1353,90 +1347,66 @@ const EditProperty: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
                     <label className="block text-xs font-medium mb-1 ml-1">Parking*</label>
-                    <div className="relative">
-                      <select
-                        className={`w-full rounded-lg border bg-white px-3 py-2 text-gray-700 outline-none appearance-none ${validationErrors.parking ? 'border-red-500' : 'border-gray-200'}`}
-                        value={formData.parking}
-                        onChange={(e) => {
-                          updateFormData('parking', e.target.value);
-                          if (validationErrors.parking) {
-                            setValidationErrors(prev => {
-                              const newErrors = { ...prev };
-                              delete newErrors.parking;
-                              return newErrors;
-                            });
-                          }
-                        }}
-                      >
-                        <option value="">Search</option>
-                        {parkingOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                      </select>
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                        <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M1 1L5 5L9 1" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </div>
-                    </div>
+                    <CustomDropdown
+                      value={formData.parking}
+                      onChange={(value) => {
+                        updateFormData('parking', value);
+                        if (validationErrors.parking) {
+                          setValidationErrors(prev => {
+                            const newErrors = { ...prev };
+                            delete newErrors.parking;
+                            return newErrors;
+                          });
+                        }
+                      }}
+                      options={parkingOptions}
+                      placeholder="Search"
+                      buttonClassName={`bg-white border-gray-200 ${validationErrors.parking ? 'border-red-500' : ''}`}
+                    />
                     {validationErrors.parking && (
                       <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.parking}</p>
                     )}
                   </div>
                   <div>
                     <label className="block text-xs font-medium mb-1 ml-1">Laundry*</label>
-                    <div className="relative">
-                      <select
-                        className={`w-full rounded-lg border bg-white px-3 py-2 text-gray-700 outline-none appearance-none ${validationErrors.laundry ? 'border-red-500' : 'border-gray-200'}`}
-                        value={formData.laundry}
-                        onChange={(e) => {
-                          updateFormData('laundry', e.target.value);
-                          if (validationErrors.laundry) {
-                            setValidationErrors(prev => {
-                              const newErrors = { ...prev };
-                              delete newErrors.laundry;
-                              return newErrors;
-                            });
-                          }
-                        }}
-                      >
-                        <option value="">Search</option>
-                        {laundryOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                      </select>
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                        <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M1 1L5 5L9 1" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </div>
-                    </div>
+                    <CustomDropdown
+                      value={formData.laundry}
+                      onChange={(value) => {
+                        updateFormData('laundry', value);
+                        if (validationErrors.laundry) {
+                          setValidationErrors(prev => {
+                            const newErrors = { ...prev };
+                            delete newErrors.laundry;
+                            return newErrors;
+                          });
+                        }
+                      }}
+                      options={laundryOptions}
+                      placeholder="Search"
+                      buttonClassName={`bg-white border-gray-200 ${validationErrors.laundry ? 'border-red-500' : ''}`}
+                    />
                     {validationErrors.laundry && (
                       <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.laundry}</p>
                     )}
                   </div>
                   <div>
                     <label className="block text-xs font-medium mb-1 ml-1">Air Conditioning*</label>
-                    <div className="relative">
-                      <select
-                        className={`w-full rounded-lg border bg-white px-3 py-2 text-gray-700 outline-none appearance-none ${validationErrors.ac ? 'border-red-500' : 'border-gray-200'}`}
-                        value={formData.ac}
-                        onChange={(e) => {
-                          updateFormData('ac', e.target.value);
-                          if (validationErrors.ac) {
-                            setValidationErrors(prev => {
-                              const newErrors = { ...prev };
-                              delete newErrors.ac;
-                              return newErrors;
-                            });
-                          }
-                        }}
-                      >
-                        <option value="">Search</option>
-                        {acOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                      </select>
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                        <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M1 1L5 5L9 1" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </div>
-                    </div>
+                    <CustomDropdown
+                      value={formData.ac}
+                      onChange={(value) => {
+                        updateFormData('ac', value);
+                        if (validationErrors.ac) {
+                          setValidationErrors(prev => {
+                            const newErrors = { ...prev };
+                            delete newErrors.ac;
+                            return newErrors;
+                          });
+                        }
+                      }}
+                      options={acOptions}
+                      placeholder="Search"
+                      buttonClassName={`bg-white border-gray-200 ${validationErrors.ac ? 'border-red-500' : ''}`}
+                    />
                     {validationErrors.ac && (
                       <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors.ac}</p>
                     )}
@@ -1472,7 +1442,7 @@ const EditProperty: React.FC = () => {
                         key={feature}
                         type="button"
                         onClick={() => toggleFeature(feature)}
-                        className="px-4 py-1.5 rounded-full text-xs font-medium border transition-colors flex items-center gap-2 bg-[#84CC16] text-black border-[#84CC16]"
+                        className="px-4 py-1.5 rounded-full text-xs font-medium border transition-colors flex items-center gap-2 bg-[#84CC16] text-white border-[#84CC16]"
                       >
                         {feature}
                         <X size={12} className="ml-1" onClick={(e) => { e.stopPropagation(); toggleFeature(feature); }} />
@@ -1555,33 +1525,23 @@ const EditProperty: React.FC = () => {
                       </div>
                       <div>
                         <label className="block text-xs font-medium mb-1 ml-1">unit type*</label>
-                        <div className="relative">
-                          <select
-                            className={`w-full rounded-lg border bg-white px-3 py-2 text-gray-700 outline-none appearance-none ${validationErrors[`unit_${index}_unitType`] ? 'border-red-500' : 'border-gray-200'}`}
-                            value={unit.unitType}
-                            onChange={(e) => {
-                              updateUnit(index, 'unitType', e.target.value);
-                              const errorKey = `unit_${index}_unitType`;
-                              if (validationErrors[errorKey]) {
-                                setValidationErrors(prev => {
-                                  const newErrors = { ...prev };
-                                  delete newErrors[errorKey];
-                                  return newErrors;
-                                });
-                              }
-                            }}
-                          >
-                            <option value="">Select unit type</option>
-                            {unitTypeOptions.map(opt => (
-                              <option key={opt.value} value={opt.value}>{opt.label}</option>
-                            ))}
-                          </select>
-                          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                            <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M1 1L5 5L9 1" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          </div>
-                        </div>
+                        <CustomDropdown
+                          value={unit.unitType}
+                          onChange={(value) => {
+                            updateUnit(index, 'unitType', value);
+                            const errorKey = `unit_${index}_unitType`;
+                            if (validationErrors[errorKey]) {
+                              setValidationErrors(prev => {
+                                const newErrors = { ...prev };
+                                delete newErrors[errorKey];
+                                return newErrors;
+                              });
+                            }
+                          }}
+                          options={unitTypeOptions}
+                          placeholder="Select unit type"
+                          buttonClassName={`bg-white border-gray-200 ${validationErrors[`unit_${index}_unitType`] ? 'border-red-500' : ''}`}
+                        />
                         {validationErrors[`unit_${index}_unitType`] && (
                           <p className="text-red-500 text-xs mt-1 ml-1">{validationErrors[`unit_${index}_unitType`]}</p>
                         )}
@@ -1745,7 +1705,7 @@ const EditProperty: React.FC = () => {
                   onClick={() => toggleAmenity(amenity)}
                   className={`px-4 py-1.5 rounded-full text-xs font-medium border transition-colors flex items-center gap-2 ${formData.amenities.includes(amenity)
                     ? 'bg-[#84CC16] text-white border-[#84CC16]'
-                    : 'bg-[#84CC16] text-white border-[#84CC16] hover:opacity-90'
+                    : 'bg-white text-gray-600 border-gray-300 hover:border-[#84CC16]'
                     }`}
                 >
                   {amenity}
@@ -1760,7 +1720,7 @@ const EditProperty: React.FC = () => {
                     key={amenity}
                     type="button"
                     onClick={() => toggleAmenity(amenity)}
-                    className="px-4 py-1.5 rounded-full text-xs font-medium border transition-colors flex items-center gap-2 bg-[#84CC16] text-black border-[#84CC16]"
+                    className="px-4 py-1.5 rounded-full text-xs font-medium border transition-colors flex items-center gap-2 bg-[#84CC16] text-white border-[#84CC16]"
                   >
                     {amenity}
                     <Check size={12} className="ml-1" />

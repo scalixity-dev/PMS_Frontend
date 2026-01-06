@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useNavigate, useOutletContext, useLocation } from 'react-router-dom';
 import { ChevronLeft, Plus, Check, MessageSquare, MoreHorizontal } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import ConfirmationModal from '../KeysLocks/ConfirmationModal';
@@ -204,6 +204,21 @@ const Requests: React.FC = () => {
         assignee: [],
         property: [],
     });
+
+    const location = useLocation();
+
+    // Handle pre-selected property from navigation state
+    useEffect(() => {
+        const state = location.state as { preSelectedProperty?: string };
+        if (state?.preSelectedProperty) {
+            setFilters(prev => ({
+                ...prev,
+                property: [state.preSelectedProperty!]
+            }));
+            // Clear state to prevent reapplying on refresh/navigation
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state]);
 
     const handleDeleteClick = (id: string) => {
         setRequestToDelete(id);
