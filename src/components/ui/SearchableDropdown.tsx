@@ -53,7 +53,7 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
                     onClick={() => setIsOpen(!isOpen)}
                     className={buttonClassName || "w-full flex items-center justify-between text-white bg-[#7BD747] px-4 py-3 rounded-xl font-medium shadow-sm hover:opacity-90 transition-opacity"}
                 >
-                    <span className={buttonClassName ? "" : "text-white"}>{value || 'Select'}</span>
+                    <span className={buttonClassName ? "" : "text-white"}>{value || placeholder || 'Select'}</span>
                     <ChevronDown size={20} className={`${buttonClassName ? "" : "text-white"} transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                 </button>
 
