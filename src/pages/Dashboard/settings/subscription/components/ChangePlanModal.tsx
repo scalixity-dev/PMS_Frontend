@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { X, Check } from "lucide-react";
 import { pricingPlans } from "../../../../../pages/basewebsite/pricing/sections/PricingAndTableData";
 import { subscriptionService } from "../../../../../services/subscription.service";
@@ -38,6 +38,48 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
   const [isYearly, setIsYearly] = useState(false);
   const [isChanging, setIsChanging] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if ((isLeftSwipe || isRightSwipe) && containerRef.current) {
+      const direction = isLeftSwipe ? 1 : -1;
+      const nextIndex = Math.min(
+        Math.max(activeSlide + direction, 0),
+        pricingPlans.length - 1
+      );
+
+      const container = containerRef.current;
+      // Get the width of a single card (assumes all are same width)
+      // For the first card, we can just take the container width since items are w-full
+      const cardWidth = container.offsetWidth;
+      const gap = 16; // gap-4 is 16px (1rem)
+
+      container.scrollTo({
+        left: nextIndex * (cardWidth + gap),
+        behavior: 'smooth'
+      });
+    }
+  };
 
   // Initialize with current subscription if available
   React.useEffect(() => {
@@ -111,7 +153,7 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-white w-full max-w-6xl rounded-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 my-8">
+      <div className="bg-white w-full max-w-6xl rounded-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 my-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="bg-[#486370] px-6 py-4 flex items-center justify-between">
           <h2 className="text-xl font-bold text-white">Change Subscription Plan</h2>
@@ -124,27 +166,25 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
         </div>
 
         {/* Body */}
-        <div className="p-6">
+        <div className="p-4 md:p-5">
           {/* Billing Toggle */}
           <div className="flex justify-center mb-6">
             <div className="bg-gray-100 rounded-lg p-1 flex gap-2">
               <button
                 onClick={() => setIsYearly(false)}
-                className={`px-6 py-2 rounded-md font-medium transition-colors ${
-                  !isYearly
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
+                className={`px-6 py-2 rounded-md font-medium transition-colors ${!isYearly
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
+                  }`}
               >
                 Monthly
               </button>
               <button
                 onClick={() => setIsYearly(true)}
-                className={`px-6 py-2 rounded-md font-medium transition-colors ${
-                  isYearly
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
+                className={`px-6 py-2 rounded-md font-medium transition-colors ${isYearly
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
+                  }`}
               >
                 Yearly
               </button>
@@ -159,7 +199,20 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
           )}
 
           {/* Plans Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div
+            ref={containerRef}
+            className="flex overflow-x-auto pb-4 gap-4 mb-6 md:grid md:grid-cols-2 lg:grid-cols-4 md:pb-0 md:overflow-visible snap-x scrollbar-hide"
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+            onScroll={(e) => {
+              const container = e.currentTarget;
+              const scrollPosition = container.scrollLeft;
+              const cardWidth = container.offsetWidth;
+              const newActiveSlide = Math.round(scrollPosition / cardWidth);
+              setActiveSlide(newActiveSlide);
+            }}
+          >
             {pricingPlans.map((plan) => {
               const planId = plan.plan.toLowerCase();
               const isSelected = selectedPlan?.toLowerCase() === planId;
@@ -185,8 +238,8 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
                   ? "bg-[#20CC95] text-white border-3 border-[#486370] shadow-md shadow-[#20CC95]"
                   : "bg-[#D7FFF2] border-3 border-[#486370] shadow-md"
                 : isDark
-                ? "bg-[#20CC95] text-white border-3 border-white shadow-md shadow-[#20CC95] hover:bg-[#006B49]"
-                : "bg-[#D7FFF2] hover:shadow-md hover:shadow-[#20CC95] border-2 border-transparent";
+                  ? "bg-[#20CC95] text-white border-3 border-white shadow-md shadow-[#20CC95] hover:bg-[#006B49]"
+                  : "bg-[#D7FFF2] hover:shadow-md hover:shadow-[#20CC95] border-2 border-transparent";
 
               const textColorClass = isDark ? "text-white" : "text-gray-800";
               const descColorClass = isDark ? "text-white opacity-80" : "text-gray-600";
@@ -198,9 +251,8 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
                 <div
                   key={plan.plan}
                   onClick={() => setSelectedPlan(planId)}
-                  className={`relative flex flex-col p-6 rounded-2xl transition-all duration-300 ${cardBgClass} h-full cursor-pointer ${
-                    isCurrentPlan ? "ring-2 ring-[#7BD747]" : ""
-                  }`}
+                  className={`relative flex flex-col p-5 rounded-2xl transition-all duration-300 ${cardBgClass} h-full cursor-pointer ${isCurrentPlan ? "ring-2 ring-[#7BD747]" : ""
+                    } w-full shrink-0 sm:w-auto sm:min-w-[280px] md:min-w-0 md:shrink md:w-auto snap-center`}
                 >
                   {isCurrentPlan && (
                     <div className="absolute top-2 right-2 bg-[#7BD747] text-white text-xs px-2 py-1 rounded-full font-semibold">
@@ -216,7 +268,7 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
                     </div>
                   )}
 
-                  <div className="min-h-28">
+                  <div className="min-h-24">
                     <div className="flex items-start justify-between">
                       <h3 className={`text-xl font-bold mb-2 ${textColorClass}`}>
                         {plan.plan}
@@ -231,7 +283,7 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
                     <p className={`text-sm ${descColorClass}`}>{plan.description}</p>
                   </div>
 
-                  <div className="min-h-20 mb-4">
+                  <div className="min-h-16 mb-4">
                     <p className={`text-2xl font-bold ${priceColorClass} mb-1`}>
                       {displayPrice}
                     </p>
@@ -259,19 +311,30 @@ const ChangePlanModal: React.FC<ChangePlanModalProps> = ({
             })}
           </div>
 
+          {/* Navigation Dots (Mobile Only) */}
+          <div className="flex justify-center gap-2 mb-6 md:hidden">
+            {pricingPlans.map((_, index) => (
+              <div
+                key={index}
+                className={`w-2 h-2 rounded-full transition-colors duration-200 ${activeSlide === index ? "bg-[#486370]" : "bg-gray-300"
+                  }`}
+              />
+            ))}
+          </div>
+
           {/* Footer */}
-          <div className="flex gap-4 justify-end pt-4 border-t">
+          <div className="flex flex-col-reverse sm:flex-row gap-4 justify-end pt-4 border-t">
             <button
               onClick={onClose}
               disabled={isChanging}
-              className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
             >
               Cancel
             </button>
             <button
               onClick={handlePlanChange}
               disabled={isChanging || !selectedPlan}
-              className="px-6 py-2 bg-[#486370] text-white rounded-lg font-medium hover:bg-[#3a505b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-6 py-2 bg-[#486370] text-white rounded-lg font-medium hover:bg-[#3a505b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 w-full sm:w-auto"
             >
               {isChanging && (
                 <svg
