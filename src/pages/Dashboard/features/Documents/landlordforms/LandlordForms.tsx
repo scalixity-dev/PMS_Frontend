@@ -95,7 +95,7 @@ const LandlordForms: React.FC = () => {
         // Find the form by id and navigate to template view
         const form = MOCK_FORMS.find(f => f.id === id);
         if (form) {
-            navigate(`/documents/landlord-forms/template/${encodeURIComponent(form.template)}`);
+            navigate(`/dashboard/documents/landlord-forms/template/${encodeURIComponent(form.template)}`);
         }
     };
 
@@ -125,10 +125,10 @@ const LandlordForms: React.FC = () => {
                 <span className="text-gray-600 text-sm font-semibold">Landlord forms</span>
             </div>
 
-            <div className="p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem]">
+            <div className="p-4 md:p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem]">
                 {/* Header */}
                 <div className="mb-6">
-                    <h1 className="text-2xl font-bold text-gray-800 mb-6">Landlord forms</h1>
+                    <h1 className="text-xl md:text-2xl font-bold text-gray-800 mb-4 md:mb-6">Landlord forms</h1>
 
                     <DashboardFilter
                         filterOptions={filterOptions}
@@ -155,7 +155,8 @@ const LandlordForms: React.FC = () => {
                 {/* Forms Table */}
                 <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
                     {/* Table Header */}
-                    <div className="bg-[#3A6D6C] text-white px-6 py-4 grid grid-cols-[2fr_1fr_1fr_0.5fr] gap-4 items-center text-sm font-medium">
+                    {/* Table Header - Hidden on Mobile */}
+                    <div className="hidden md:grid bg-[#3A6D6C] text-white px-6 py-4 grid-cols-[2fr_1fr_1fr_0.5fr] gap-4 items-center text-sm font-medium">
                         <div>Template</div>
                         <div>Type</div>
                         <div>State</div>
@@ -168,19 +169,28 @@ const LandlordForms: React.FC = () => {
                             filteredForms.map((form) => (
                                 <div
                                     key={form.id}
-                                    className="px-6 py-4 grid grid-cols-[2fr_1fr_1fr_0.5fr] gap-4 items-center hover:bg-gray-50 transition-colors"
+                                    className="px-4 py-4 md:px-6 md:py-4 grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_0.5fr] gap-3 md:gap-4 items-start md:items-center hover:bg-gray-50 transition-colors"
                                 >
-                                    <div>
+                                    <div className="w-full">
                                         <button
                                             style={{ background: 'linear-gradient(90deg, #3A4E33 0%, #85B474 100%)' }}
-                                            className="text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity whitespace-nowrap"
+                                            className="text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity whitespace-normal md:whitespace-nowrap text-left w-full md:w-auto"
                                         >
                                             {form.template}
                                         </button>
                                     </div>
-                                    <div className="text-gray-800 text-sm font-medium">{form.type}</div>
-                                    <div className="text-[#6CBF6C] text-sm font-medium">{form.state}</div>
-                                    <div className="flex items-center justify-center gap-4">
+
+                                    <div className="flex justify-between md:block">
+                                        <span className="md:hidden text-gray-500 text-sm font-medium">Type:</span>
+                                        <span className="text-gray-800 text-sm font-medium">{form.type}</span>
+                                    </div>
+
+                                    <div className="flex justify-between md:block">
+                                        <span className="md:hidden text-gray-500 text-sm font-medium">State:</span>
+                                        <span className="text-[#6CBF6C] text-sm font-medium">{form.state}</span>
+                                    </div>
+
+                                    <div className="flex items-center justify-end md:justify-center gap-4 mt-2 md:mt-0 pt-2 md:pt-0 border-t md:border-t-0 border-gray-100">
                                         <button
                                             onClick={() => handleView(form.id)}
                                             className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors p-1"

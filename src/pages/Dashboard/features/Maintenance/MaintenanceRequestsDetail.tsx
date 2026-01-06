@@ -13,7 +13,7 @@ const CollapsibleSection = ({ title, children, defaultOpen = false, action }: { 
 
     return (
         <div className="mb-6">
-            <div className="flex items-center gap-4 mb-4">
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                 <button
                     onClick={() => setIsOpen(!isOpen)}
                     className="flex items-center gap-2 group"
@@ -87,17 +87,17 @@ const MaintenanceRequestsDetail: React.FC = () => {
                 <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard/maintenance/requests')}>Requests</span>
             </div>
 
-            <div className="p-6 bg-[#DFE5E3] min-h-screen rounded-[2rem] overflow-visible">
+            <div className="p-4 md:p-6 bg-[#DFE5E3] min-h-screen rounded-[2rem] overflow-visible">
 
                 {/* Header */}
-                <div className="flex items-center gap-8 mb-8">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-8 mb-8">
                     <div className="flex items-center gap-4">
                         <button onClick={() => navigate(-1)} className="flex items-center justify-center">
                             <ChevronLeft className="w-6 h-6 text-gray-800" />
                         </button>
-                        <h1 className="text-2xl font-bold text-gray-800">Maintenance request</h1>
+                        <h1 className="text-xl md:text-2xl font-bold text-gray-800">Maintenance request</h1>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 w-full md:w-auto flex-wrap">
                         <button
                             onClick={() => setIsStatusModalOpen(true)}
                             className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm"
@@ -170,14 +170,14 @@ const MaintenanceRequestsDetail: React.FC = () => {
                 </div>
 
                 {/* ID and Property Card */}
-                <div className="bg-[#f0f0f6] rounded-[3rem] p-4 flex flex-wrap gap-4 items-center mb-8 shadow-sm">
-                    <div className="bg-[#7BD747] text-white px-6 py-3 rounded-full flex items-center gap-4 min-w-[300px]">
-                        <span className="font-bold text-sm">ID - {id || '1331895'}</span>
-                        <div className="bg-white/90 text-[#3A6D6C] text-[10px] px-2 py-0.5 rounded-full font-bold">
+                <div className="bg-[#f0f0f6] rounded-[2rem] md:rounded-[3rem] p-4 flex flex-col md:flex-row flex-wrap gap-4 items-stretch md:items-center mb-8 shadow-sm">
+                    <div className="bg-[#7BD747] text-white px-6 py-3 rounded-full flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full md:w-auto md:min-w-[300px]">
+                        <span className="font-bold text-sm whitespace-nowrap">ID - {id || '1331895'}</span>
+                        <div className="bg-white/90 text-[#3A6D6C] text-[10px] px-2 py-0.5 rounded-full font-bold break-words whitespace-normal text-left">
                             Exterior / Gates / Fences /Awning / landscape
                         </div>
                     </div>
-                    <div className="bg-[#7BD747] text-white px-6 py-3 rounded-full flex items-center gap-4 min-w-[200px]">
+                    <div className="bg-[#7BD747] text-white px-6 py-3 rounded-full flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto md:min-w-[200px]">
                         <span className="font-bold text-sm">Property</span>
                         <div className="bg-white/90 text-[#3A6D6C] text-[10px] px-3 py-0.5 rounded-full font-bold">
                             ABC
@@ -225,9 +225,9 @@ const MaintenanceRequestsDetail: React.FC = () => {
                         </button>
                     }
                 >
-                    <div className="flex flex-col md:flex-row gap-6 bg-[#f0f0f6] p-6 rounded-xl">
+                    <div className="flex flex-col xl:flex-row gap-6 bg-[#f0f0f6] p-4 md:p-6 rounded-xl">
                         {/* Profile Card */}
-                        <div className="bg-[#F0F0F6] rounded-3xl p-6 w-full md:w-80 flex flex-col items-center justify-center shadow-sm">
+                        <div className="bg-[#F0F0F6] rounded-3xl p-6 w-full xl:w-80 flex flex-col items-center justify-center shadow-sm">
                             <div className="w-32 h-32 rounded-2xl overflow-hidden mb-4 bg-gray-200">
                                 <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200" alt="Profile" className="w-full h-full object-cover" />
                             </div>
@@ -235,7 +235,7 @@ const MaintenanceRequestsDetail: React.FC = () => {
                             <div className="bg-[#3A6D6C] text-white text-center py-2 px-6 rounded-xl w-full mb-4">
                                 <h3 className="font-bold text-sm">{assignee}</h3>
                                 <p className="text-[10px] opacity-90">+91 9876543210</p>
-                                <p className="text-[10px] opacity-90">{assignee.toLowerCase().replace(' ', '')}@gmail.com</p>
+                                <p className="text-[10px] opacity-90 break-all">{assignee.toLowerCase().replace(' ', '')}@gmail.com</p>
                             </div>
 
                             <button className="bg-[#D1D1D1] text-gray-700 text-xs font-bold py-2 px-8 rounded-full hover:bg-gray-300 transition-colors">
@@ -244,7 +244,7 @@ const MaintenanceRequestsDetail: React.FC = () => {
                         </div>
 
                         {/* Details Grid */}
-                        <div className="flex-1 bg-[#7BD747] rounded-3xl p-8 grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 shadow-sm">
+                        <div className="flex-1 bg-[#7BD747] rounded-3xl p-4 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-x-4 md:gap-x-12 gap-y-4 shadow-sm">
                             <div className="space-y-4">
                                 <div className="bg-white rounded-full px-4 py-2 flex items-center justify-between shadow-sm">
                                     <span className="text-gray-500 text-xs font-medium">Type</span>
@@ -289,7 +289,7 @@ const MaintenanceRequestsDetail: React.FC = () => {
                 {/* Tenant Information */}
                 <CollapsibleSection title="SmartTenantAI information" defaultOpen={true}>
                     <div className="bg-[#f0f0f6] p-6 rounded-xl shadow-sm">
-                        <div className="bg-[#7BD747] rounded-3xl p-8 grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 shadow-sm max-w-4xl">
+                        <div className="bg-[#7BD747] rounded-3xl p-4 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-x-4 md:gap-x-12 gap-y-4 shadow-sm max-w-4xl">
                             <div className="space-y-4">
                                 <div className="bg-white rounded-full px-4 py-2 flex items-center justify-between shadow-sm">
                                     <span className="text-gray-500 text-xs font-medium">Authorization</span>
@@ -345,31 +345,60 @@ const MaintenanceRequestsDetail: React.FC = () => {
                     }
                 >
                     <div className="bg-[#F0F0F6] rounded-3xl p-4 shadow-sm overflow-hidden">
-                        {/* Table Header */}
-                        <div className="bg-[#3A6D6C] text-white rounded-t-xl px-6 py-3 grid grid-cols-[1fr_1fr_100px] text-xs font-bold">
-                            <div>Item</div>
-                            <div>Quantity</div>
-                            <div className="text-right">Actions</div>
+                        {/* Desktop Table View */}
+                        <div className="hidden md:block overflow-x-auto">
+                            {/* Table Header */}
+                            <div className="bg-[#3A6D6C] text-white rounded-t-xl px-6 py-3 grid grid-cols-[1fr_1fr_100px] text-xs font-bold min-w-[500px]">
+                                <div>Item</div>
+                                <div>Quantity</div>
+                                <div className="text-right">Actions</div>
+                            </div>
+
+                            {/* Table Body */}
+                            <div className="bg-white rounded-b-xl px-6 py-2 min-w-[500px]">
+                                {materials.map((m) => (
+                                    <div key={m.id} className="grid grid-cols-[1fr_1fr_100px] items-center py-3 border-b border-gray-50 last:border-0">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-sm font-semibold text-gray-800">{m.item}</span>
+                                        </div>
+                                        <div className="text-sm font-medium text-black pl-1">{m.quantity}</div>
+                                        <div className="flex justify-end gap-3">
+                                            <button
+                                                className="text-[#3A6D6C] hover:text-[#2c5251]"
+                                                onClick={() => navigate('/dashboard/maintenance/request', { state: { editMode: true, id, targetSection: 'materials' } })}
+                                            >
+                                                <Edit className="w-4 h-4" />
+                                            </button>
+                                            <button className="text-red-500 hover:text-red-600">
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
 
-                        {/* Table Body */}
-                        <div className="bg-white rounded-b-xl px-6 py-2">
+                        {/* Mobile Card View */}
+                        <div className="md:hidden space-y-4">
                             {materials.map((m) => (
-                                <div key={m.id} className="grid grid-cols-[1fr_1fr_100px] items-center py-3 border-b border-gray-50 last:border-0">
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-sm font-semibold text-gray-800">{m.item}</span>
+                                <div key={m.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <span className="text-sm font-bold text-gray-800">{m.item}</span>
+                                        <div className="flex gap-2">
+                                            <button
+                                                className="text-[#3A6D6C] p-1.5 hover:bg-gray-50 rounded-full"
+                                                onClick={() => navigate('/dashboard/maintenance/request', { state: { editMode: true, id, targetSection: 'materials' } })}
+                                            >
+                                                <Edit className="w-4 h-4" />
+                                            </button>
+                                            <button className="text-red-500 p-1.5 hover:bg-red-50 rounded-full">
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div className="text-sm font-medium text-black pl-1">{m.quantity}</div>
-                                    <div className="flex justify-end gap-3">
-                                        <button
-                                            className="text-[#3A6D6C] hover:text-[#2c5251]"
-                                            onClick={() => navigate('/dashboard/maintenance/request', { state: { editMode: true, id, targetSection: 'materials' } })}
-                                        >
-                                            <Edit className="w-4 h-4" />
-                                        </button>
-                                        <button className="text-red-500 hover:text-red-600">
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
+                                    <div className="flex items-center justify-between text-xs text-gray-500">
+                                        <span>Quantity:</span>
+                                        <span className="font-semibold text-gray-800 text-sm">{m.quantity}</span>
                                     </div>
                                 </div>
                             ))}
@@ -389,7 +418,7 @@ const MaintenanceRequestsDetail: React.FC = () => {
                     title="Transactions"
                     defaultOpen={false}
                     action={
-                        <div className="flex gap-4">
+                        <div className="flex flex-wrap gap-4">
                             <button className="px-5 py-1.5 bg-[#3A6D6C] text-white rounded-full text-xs font-bold hover:bg-[#2c5251] transition-colors">
                                 Money out
                             </button>

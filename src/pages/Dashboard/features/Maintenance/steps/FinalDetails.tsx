@@ -35,7 +35,7 @@ const FinalDetails: React.FC<FinalDetailsProps> = ({ selectedDetail, onSelect, i
                 <p className="text-gray-500">Please select the option below.</p>
             </div>
 
-            <div className="bg-[#F0F0F6] p-10 rounded-[2rem] min-h-[300px] flex flex-wrap content-start gap-4">
+            <div className="bg-[#F0F0F6] p-4 md:p-10 rounded-[2rem] min-h-[300px] flex flex-wrap content-start gap-3 md:gap-4 justify-center md:justify-start">
                 {items.map((item) => {
                     const isSelected = selectedDetail === item.id;
 

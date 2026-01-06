@@ -37,24 +37,24 @@ const CreateTemplateWizard: React.FC = () => {
         localStorage.setItem('myTemplates', JSON.stringify(updatedTemplates));
 
         // Navigate back to list
-        navigate('/documents/my-templates');
+        navigate('/dashboard/documents/my-templates');
     };
 
     return (
-        <div className="flex flex-col h-full w-full bg-[var(--color-background)] px-6 overflow-y-auto">
-            <div className="flex-1 flex items-start justify-center pt-8">
-                <div className={`bg-[#DFE5E3] rounded-3xl shadow-lg w-full min-h-[500px] p-12 transition-all duration-300 ${currentStep === 3 ? 'max-w-7xl' : 'max-w-2xl'}`}>
+        <div className="flex flex-col h-full w-full bg-[var(--color-background)] px-2 md:px-6 overflow-y-auto">
+            <div className="flex-1 flex items-start justify-center pt-4 md:pt-8 bg-transparent">
+                <div className={`bg-[#DFE5E3] rounded-3xl shadow-lg w-full min-h-[500px] p-4 md:p-12 transition-all duration-300 ${currentStep === 3 ? 'max-w-7xl' : 'max-w-2xl'}`}>
                     {/* Back Button */}
                     <button
                         onClick={handleBack}
-                        className="flex items-center gap-2 text-[#20CC95] font-semibold text-sm mb-12 hover:text-[#1db885] transition-colors"
+                        className="flex items-center gap-2 text-[#20CC95] font-semibold text-sm mb-6 md:mb-12 hover:text-[#1db885] transition-colors"
                     >
                         <ChevronLeft size={18} />
                         BACK
                     </button>
 
                     {/* Step Indicators */}
-                    <div className="w-full max-w-3xl mx-auto mb-12">
+                    <div className="w-full max-w-3xl mx-auto mb-8 md:mb-12">
                         <div className="relative">
                             {/* Connecting Line */}
                             <div className="absolute top-4 left-[16.666%] right-[16.666%] h-[3px] bg-gray-200 -translate-y-1/2 z-0">
@@ -71,7 +71,7 @@ const CreateTemplateWizard: React.FC = () => {
                                     { num: 2, label: 'Template Builder' },
                                     { num: 3, label: 'Attachments & Initials' }
                                 ].map((step) => (
-                                    <div key={step.num} className="flex flex-col items-center gap-3">
+                                    <div key={step.num} className="flex flex-col items-center gap-2 md:gap-3">
                                         <div
                                             className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors duration-300 ${currentStep >= step.num
                                                 ? 'bg-[#20CC95] text-white'
@@ -81,7 +81,7 @@ const CreateTemplateWizard: React.FC = () => {
                                             {step.num}
                                         </div>
                                         <span
-                                            className={`text-sm font-medium text-center ${currentStep === step.num ? 'text-gray-900' : 'text-gray-500'
+                                            className={`text-xs md:text-sm font-medium text-center ${currentStep === step.num ? 'text-gray-900' : 'text-gray-500'
                                                 }`}
                                         >
                                             {step.label}
@@ -96,8 +96,8 @@ const CreateTemplateWizard: React.FC = () => {
                     <div className="flex flex-col items-center justify-start w-full">
                         {currentStep === 1 && (
                             <div className="w-full flex flex-col items-center">
-                                <div className="text-center mb-8">
-                                    <h2 className="text-2xl font-bold mb-2 text-[#111827]">Template title</h2>
+                                <div className="text-center mb-6 md:mb-8">
+                                    <h2 className="text-xl md:text-2xl font-bold mb-2 text-[#111827]">Template title</h2>
                                     <p className="text-sm text-[#374151]">
                                         Add the document template name.
                                     </p>
@@ -131,18 +131,18 @@ const CreateTemplateWizard: React.FC = () => {
 
                         {currentStep === 2 && (
                             <div className="w-full flex flex-col items-center">
-                                <div className="text-center mb-8">
-                                    <h2 className="text-2xl font-bold mb-2 text-[#111827]">What is the template type?</h2>
+                                <div className="text-center mb-6 md:mb-8">
+                                    <h2 className="text-xl md:text-2xl font-bold mb-2 text-[#111827]">What is the template type?</h2>
                                     <p className="text-sm text-[#374151]">
                                         Select the type to display the template on the appropriate page.
                                     </p>
                                 </div>
 
-                                <div className="flex gap-8 mb-12">
+                                <div className="flex flex-row gap-4 sm:gap-8 mb-8 md:mb-12 w-full justify-center">
                                     {/* Tenant Agreement Card */}
                                     <button
                                         onClick={() => setTemplateType('agreement')}
-                                        className={`relative w-48 h-48 rounded-2xl bg-white border-2 transition-all duration-300 flex flex-col items-center justify-center gap-4 group hover:shadow-md ${templateType === 'agreement'
+                                        className={`relative flex-1 sm:flex-none w-full sm:w-48 h-auto sm:h-48 py-6 sm:py-0 rounded-2xl bg-white border-2 transition-all duration-300 flex flex-col items-center justify-center gap-4 group hover:shadow-md ${templateType === 'agreement'
                                             ? 'border-[#20CC95] shadow-md'
                                             : 'border-transparent hover:border-gray-200'
                                             }`}
@@ -169,7 +169,7 @@ const CreateTemplateWizard: React.FC = () => {
                                     {/* Tenant Notice Card */}
                                     <button
                                         onClick={() => setTemplateType('notice')}
-                                        className={`relative w-48 h-48 rounded-2xl bg-white border-2 transition-all duration-300 flex flex-col items-center justify-center gap-4 group hover:shadow-md ${templateType === 'notice'
+                                        className={`relative flex-1 sm:flex-none w-full sm:w-48 h-auto sm:h-48 py-6 sm:py-0 rounded-2xl bg-white border-2 transition-all duration-300 flex flex-col items-center justify-center gap-4 group hover:shadow-md ${templateType === 'notice'
                                             ? 'border-[#20CC95] shadow-md'
                                             : 'border-transparent hover:border-gray-200'
                                             }`}
@@ -199,7 +199,7 @@ const CreateTemplateWizard: React.FC = () => {
                                     <div className="bg-yellow-100 p-1.5 rounded-full mt-0.5">
                                         <Lightbulb size={16} className="text-yellow-600" />
                                     </div>
-                                    <p className="text-sm text-gray-600 leading-relaxed">
+                                    <p className="text-sm text-gray-600 leading-relaxed text-left">
                                         Notice template type displays on the "Notice" page. Lease Agreement displays on the "Move in" page.
                                     </p>
                                 </div>
@@ -217,8 +217,8 @@ const CreateTemplateWizard: React.FC = () => {
 
                         {currentStep === 3 && (
                             <div className="w-full flex flex-col items-center">
-                                <div className="text-center mb-8">
-                                    <h2 className="text-2xl font-bold mb-2 text-[#111827]">Attachments & Initials</h2>
+                                <div className="text-center mb-6 md:mb-8">
+                                    <h2 className="text-xl md:text-2xl font-bold mb-2 text-[#111827]">Attachments & Initials</h2>
                                     <p className="text-sm text-[#374151]">
                                         Configure attachments and signature requirements.
                                     </p>

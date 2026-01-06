@@ -239,34 +239,36 @@ const ProviderStatement = () => {
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-10">
             {/* Breadcrumb */}
-            <div className="inline-flex items-center px-4 py-2 bg-[#E0E5E5] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>Dashboard</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">Reports</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">Statement</span>
+            <div className="flex w-full overflow-x-auto pb-2 md:pb-0 mb-6 scrollbar-hide">
+                <div className="inline-flex items-center px-4 py-2 bg-[#E0E5E5] rounded-full shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] whitespace-nowrap">
+                    <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>Dashboard</span>
+                    <span className="text-gray-500 text-sm mx-1">/</span>
+                    <span className="text-gray-600 text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard/reports')}>Reports</span>
+                    <span className="text-gray-500 text-sm mx-1">/</span>
+                    <span className="text-gray-600 text-sm font-semibold">Statement</span>
+                </div>
             </div>
 
             <div className="p-6 bg-[#E0E5E5] min-h-screen rounded-[2rem]">
                 {/* Header Actions */}
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                     <div className="flex items-center gap-2">
                         <button onClick={() => navigate(-1)} className="p-2 hover:bg-black/5 rounded-full transition-colors">
                             <ChevronLeft className="w-6 h-6 text-black" />
                         </button>
                         <h1 className="text-2xl font-bold text-black">Provider Statement</h1>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap gap-3 w-full md:w-auto">
                         <button
                             onClick={() => setIsColumnModalOpen(true)}
-                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors"
+                            className="flex-1 md:flex-none px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors"
                         >
                             Column
                         </button>
                         <button
                             onClick={handleDownload}
                             disabled={isDownloading}
-                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
+                            className="flex-1 md:flex-none px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
                             {isDownloading ? (
                                 <>
@@ -301,7 +303,7 @@ const ProviderStatement = () => {
                 {/* Table Container */}
                 <div>
                     {/* Table Header */}
-                    <div className="bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm">
+                    <div className="bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm hidden md:block">
                         <div
                             className="text-white px-6 py-4 grid gap-4 items-center text-sm font-medium"
                             style={{ gridTemplateColumns }}
@@ -321,12 +323,18 @@ const ProviderStatement = () => {
                             filteredStatements.map(item => (
                                 <div
                                     key={item.id}
-                                    className="bg-white rounded-2xl px-6 py-4 grid gap-4 items-center shadow-sm hover:shadow-md transition-shadow"
-                                    style={{ gridTemplateColumns }}
+                                    className="bg-white rounded-2xl px-6 py-4 flex flex-col md:grid gap-4 md:items-center shadow-sm hover:shadow-md transition-shadow"
+                                    style={{
+                                        // On mobile (flex), gridTemplateColumns is ignored. On desktop (grid), it applies.
+                                        gridTemplateColumns
+                                    }}
                                 >
                                     {activeColumns.map(col => (
-                                        <div key={col.id} className="text-sm">
-                                            {renderCellContent(item, col.id)}
+                                        <div key={col.id} className="flex justify-between md:block text-sm border-b md:border-none border-gray-100 pb-2 md:pb-0 last:border-0 last:pb-0">
+                                            <span className="md:hidden font-semibold text-gray-500 mb-1">{col.label}</span>
+                                            <div className="text-right md:text-left">
+                                                {renderCellContent(item, col.id)}
+                                            </div>
                                         </div>
                                     ))}
                                 </div>

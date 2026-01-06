@@ -49,7 +49,7 @@ const MyCardSettings: React.FC = () => {
   const handleDeleteCard = (cardId: number) => {
     const cardToDelete = savedCards.find((card) => card.id === cardId);
     const remainingCards = savedCards.filter((card) => card.id !== cardId);
-    
+
     // If deleting the default card and there are remaining cards, set the first one as default
     if (cardToDelete?.isDefault && remainingCards.length > 0) {
       setSavedCards(
@@ -134,11 +134,11 @@ const MyCardSettings: React.FC = () => {
     <SubscriptionSettingsLayout activeTab="my-card">
       {/* Saved Cards Section */}
       <section className="border border-[#E8E8E8] rounded-2xl bg-[#FBFBFB] px-6 py-5 space-y-4">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h2 className="text-lg font-semibold text-gray-900">Saved Cards</h2>
           {!showAddCard && (
             <Button
-              className="bg-[#486370] hover:bg-[#3a505b] text-white px-5 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2"
+              className="bg-[#486370] hover:bg-[#3a505b] text-white px-5 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 w-full sm:w-auto justify-center"
               onClick={() => setShowAddCard(true)}
             >
               <Plus size={16} />
@@ -153,10 +153,10 @@ const MyCardSettings: React.FC = () => {
             {savedCards.map((card) => (
               <div
                 key={card.id}
-                className="border border-[#E8E8E8] rounded-xl bg-white p-5 flex items-center justify-between"
+                className="border border-[#E8E8E8] rounded-xl bg-white p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[#7CD947] to-[#6bc238] flex items-center justify-center">
+                  <div className="w-12 h-12 shrink-0 rounded-lg bg-gradient-to-br from-[#7CD947] to-[#6bc238] flex items-center justify-center">
                     <CreditCard className="text-white" size={24} />
                   </div>
                   <div>
@@ -175,7 +175,7 @@ const MyCardSettings: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 w-full sm:w-auto justify-end sm:justify-start">
                   {!card.isDefault && (
                     <Button
                       variant="ghost"
@@ -255,7 +255,7 @@ const MyCardSettings: React.FC = () => {
               />
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="col-span-1">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Month

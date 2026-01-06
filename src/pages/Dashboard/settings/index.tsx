@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import {
   BarChart2,
   ChevronDown,
@@ -23,6 +23,10 @@ interface SettingCardData {
   description: string;
   icon: LucideIcon;
   links: SettingLink[];
+}
+
+interface DashboardContext {
+  sidebarCollapsed: boolean;
 }
 
 const SETTING_CARDS: SettingCardData[] = [
@@ -165,13 +169,18 @@ const SettingCard = ({
 export default function Settings() {
   const [openCardTitle, setOpenCardTitle] = useState<string | null>(null);
 
+  // Safe context access
+  const context = useOutletContext<DashboardContext>();
+  const sidebarCollapsed = context?.sidebarCollapsed ?? false;
+  const sidebarOpen = !sidebarCollapsed;
+
   const toggleCard = (title: string) => {
     setOpenCardTitle((prev) => (prev === title ? null : title));
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5] px-4 py-6">
-      <div className="max-w-6xl mx-auto space-y-5">
+    <div className={`min-h-screen bg-[#f5f5f5] transition-all duration-300 mx-auto ${sidebarOpen ? 'max-w-7xl' : 'max-w-full'}`}>
+      <div className="space-y-5">
         <div className="text-sm text-gray-700 font-medium">
           <span className="text-[#7BD747]">Dashboard</span> / <span>Settings</span>
         </div>

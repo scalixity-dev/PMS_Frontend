@@ -33,10 +33,10 @@ export default function SecuritySettings() {
   return (
     <AccountSettingsLayout activeTab="security">
       {/* ID Verification Section */}
-      <section className="border border-[#E8E8E8] rounded-2xl bg-[#FBFBFB] px-6 py-5">
-        <div className="flex items-start justify-between gap-4">
+      <section className="border border-[#E8E8E8] rounded-2xl bg-[#FBFBFB] px-4 sm:px-6 py-5">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="flex-1 space-y-2">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-lg font-semibold text-gray-900">ID Verification</h2>
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold text-[#7CD947] bg-[#F0FAE8] border border-[#D7F0C2]">
                 In progress
@@ -53,7 +53,7 @@ export default function SecuritySettings() {
           <Button
             type="button"
             variant="primary"
-            className="whitespace-nowrap bg-[#3D7475] border-none"
+            className="w-full sm:w-auto whitespace-nowrap bg-[#3D7475] border-none"
           >
             Continue
           </Button>
@@ -61,8 +61,8 @@ export default function SecuritySettings() {
       </section>
 
       {/* Export Data Section */}
-      <section className="border border-[#E8E8E8] rounded-2xl bg-[#FBFBFB] px-6 py-5">
-        <div className="flex items-start justify-between gap-4">
+      <section className="border border-[#E8E8E8] rounded-2xl bg-[#FBFBFB] px-4 sm:px-6 py-5">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="flex-1 space-y-2">
             <h2 className="text-lg font-semibold text-gray-900">Export Data</h2>
             <p className="text-xs text-gray-600">
@@ -76,7 +76,7 @@ export default function SecuritySettings() {
           <Button
             type="button"
             variant="primary"
-            className="whitespace-nowrap bg-[#3D7475] border-none"
+            className="w-full sm:w-auto whitespace-nowrap bg-[#3D7475] border-none"
           >
             Export
           </Button>
@@ -84,8 +84,8 @@ export default function SecuritySettings() {
       </section>
 
       {/* Two Steps Authentication Section */}
-      <section className="border border-[#E8E8E8] rounded-2xl bg-[#FBFBFB] px-6 py-5">
-        <div className="flex items-start justify-between gap-4">
+      <section className="border border-[#E8E8E8] rounded-2xl bg-[#FBFBFB] px-4 sm:px-6 py-5">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="flex-1 space-y-2">
             <h2 className="text-lg font-semibold text-gray-900">Two Steps Authentication</h2>
             <p className="text-xs text-gray-600">
@@ -99,7 +99,7 @@ export default function SecuritySettings() {
           <Button
             type="button"
             variant="primary"
-            className="whitespace-nowrap bg-[#3D7475] border-none"
+            className="w-full sm:w-auto whitespace-nowrap bg-[#3D7475] border-none"
           >
             Enable
           </Button>

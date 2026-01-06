@@ -1,17 +1,37 @@
 import React, { useState } from "react";
 import { ReportSettingsLayout } from "../../../../components/common/ReportSettingsLayout";
 import Toggle from "../../../../components/Toggle";
-import { ChevronDown, User } from "lucide-react";
+import { User } from "lucide-react";
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
+import CustomDropdown from "../../components/CustomDropdown";
 
 const GeneralReportSettings: React.FC = () => {
-    const [orientation, setOrientation] = useState("Orientation");
-    const [autoSetRotation, setAutoSetRotation] = useState("Auto set rotation from");
-    const [scaling, setScaling] = useState("N/A");
+    const [orientation, setOrientation] = useState("");
+    const [autoSetRotation, setAutoSetRotation] = useState("");
+    const [scaling, setScaling] = useState("");
     const [displayGridlines, setDisplayGridlines] = useState(true);
     const [repeatHeadings, setRepeatHeadings] = useState(false);
     const [displayStriped, setDisplayStriped] = useState(false);
     const [displayEveryProperty, setDisplayEveryProperty] = useState(false);
+
+    const orientationOptions = [
+        { label: "Landscape", value: "Landscape" },
+        { label: "Portrait", value: "Portrait" },
+    ];
+    const rotationOptions = [
+        { label: "0°", value: "0" },
+        { label: "90°", value: "90" },
+        { label: "180°", value: "180" },
+        { label: "270°", value: "270" },
+    ];
+    const scalingOptions = [
+        { label: "N/A", value: "N/A" },
+        { label: "Small", value: "Small" },
+        { label: "Medium", value: "Medium" },
+        { label: "Large", value: "Large" },
+    ];
+
+    const dropdownButtonClass = "w-full flex items-center justify-between bg-white border border-[#E8E8E8] text-gray-500 text-sm rounded-lg px-4 py-2.5 hover:border-gray-400 focus:ring-2 focus:ring-[#7BD747] transition-all";
 
     return (
         <ReportSettingsLayout activeTab="general">
@@ -49,29 +69,25 @@ const GeneralReportSettings: React.FC = () => {
                     </button>
                 </div>
 
-                <div className="flex gap-4">
-                    <div className="relative w-[200px]">
-                        <select
+                <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="w-full sm:w-[200px]">
+                        <CustomDropdown
                             value={orientation}
-                            onChange={(e) => setOrientation(e.target.value)}
-                            className="w-full appearance-none bg-white border border-[#E8E8E8] text-gray-500 text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#7BD747]"
-                        >
-                            <option>Orientation</option>
-                            <option>Landscape</option>
-                            <option>Portrait</option>
-                        </select>
-                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                            onChange={setOrientation}
+                            options={orientationOptions}
+                            placeholder="Orientation"
+                            buttonClassName={dropdownButtonClass}
+                        />
                     </div>
 
-                    <div className="relative w-[200px]">
-                        <select
+                    <div className="w-full sm:w-[200px]">
+                        <CustomDropdown
                             value={autoSetRotation}
-                            onChange={(e) => setAutoSetRotation(e.target.value)}
-                            className="w-full appearance-none bg-white border border-[#E8E8E8] text-gray-500 text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#7BD747]"
-                        >
-                            <option>Auto set rotation from</option>
-                        </select>
-                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                            onChange={setAutoSetRotation}
+                            options={rotationOptions}
+                            placeholder="Auto set rotation from"
+                            buttonClassName={dropdownButtonClass}
+                        />
                     </div>
                 </div>
 
@@ -87,18 +103,14 @@ const GeneralReportSettings: React.FC = () => {
                     </p>
                 </div>
 
-                <div className="relative w-[200px]">
-                    <select
+                <div className="w-full sm:w-[200px]">
+                    <CustomDropdown
                         value={scaling}
-                        onChange={(e) => setScaling(e.target.value)}
-                        className="w-full appearance-none bg-white border border-[#E8E8E8] text-gray-500 text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#7BD747]"
-                    >
-                        <option>N/A</option>
-                        <option>Small</option>
-                        <option>Medium</option>
-                        <option>Large</option>
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                        onChange={setScaling}
+                        options={scalingOptions}
+                        placeholder="N/A"
+                        buttonClassName={dropdownButtonClass}
+                    />
                 </div>
 
                 <PrimaryActionButton text="Update" />
@@ -116,7 +128,7 @@ const GeneralReportSettings: React.FC = () => {
                     </button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-x-8 gap-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
                     <div className="flex items-center gap-3">
                         <Toggle checked={displayGridlines} onChange={setDisplayGridlines} />
                         <span className="text-sm font-medium text-gray-700">Display Gridlines</span>

@@ -122,16 +122,17 @@ const MaintenanceRecurringDetail: React.FC = () => {
 
                 {/* ID & Property Section */}
                 {/* ID & Property Section */}
-                <div className="bg-[#f0f0f6] rounded-[3rem] p-4 flex flex-wrap gap-4 items-center mb-6 shadow-sm">
-                    <div className="bg-[#7BD747] text-white px-6 py-3 rounded-full flex items-center gap-4 min-w-[300px]">
+                {/* ID & Property Section */}
+                <div className="bg-[#f0f0f6] rounded-[2rem] md:rounded-[3rem] p-4 flex flex-col md:flex-row flex-wrap gap-4 items-stretch md:items-center mb-6 shadow-sm">
+                    <div className="bg-[#7BD747] text-white px-4 py-3 md:px-6 rounded-[2rem] flex flex-col sm:flex-row items-center justify-between gap-2 md:gap-4 md:min-w-[300px]">
                         <span className="font-bold text-sm">ID- 1331896</span>
-                        <div className="bg-white/90 text-[#3A6D6C] text-[10px] px-2 py-0.5 rounded-full font-bold">
+                        <div className="bg-white/90 text-[#3A6D6C] text-xs px-2 py-0.5 rounded-full font-bold text-center">
                             Electrical / Lights / Smoke Detectors / Beeping
                         </div>
                     </div>
-                    <div className="bg-[#7BD747] text-white px-6 py-3 rounded-full flex items-center gap-4 min-w-[200px]">
+                    <div className="bg-[#7BD747] text-white px-4 py-3 md:px-6 rounded-[2rem] flex items-center justify-between gap-4 md:min-w-[200px]">
                         <span className="font-bold text-sm">Property</span>
-                        <div className="bg-white/90 text-[#3A6D6C] text-[10px] px-3 py-0.5 rounded-full font-bold">
+                        <div className="bg-white/90 text-[#3A6D6C] text-xs px-3 py-0.5 rounded-full font-bold">
                             Luxury
                         </div>
                     </div>
@@ -156,8 +157,8 @@ const MaintenanceRecurringDetail: React.FC = () => {
                     </div>
 
                     {!isGeneralInfoCollapsed && (
-                        <div className="bg-[#F0F0F6] rounded-[2rem] p-8 shadow-sm">
-                            <div className="grid grid-cols-2 gap-x-12 gap-y-6">
+                        <div className="bg-[#F0F0F6] rounded-[2rem] p-4 md:p-8 shadow-sm">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
                                 {/* Left Column */}
                                 <div className="space-y-4">
                                     <CustomTextBox
@@ -218,7 +219,8 @@ const MaintenanceRecurringDetail: React.FC = () => {
                     {!isRelatedRequestCollapsed && (
                         <div>
                             {/* Table Header */}
-                            <div className="bg-[#3A6D6C] text-white px-6 py-4 rounded-t-[1.5rem] mt-4 grid grid-cols-[1fr_1fr_2fr_1.5fr_1fr] gap-4 text-sm font-medium">
+                            {/* Desktop Table Header */}
+                            <div className="hidden md:grid bg-[#3A6D6C] text-white px-6 py-4 rounded-t-[1.5rem] mt-4 grid-cols-[1fr_1fr_2fr_1.5fr_1fr] gap-4 text-sm font-medium">
                                 <div>Status</div>
                                 <div>Request</div>
                                 <div>Title & Property</div>
@@ -227,23 +229,37 @@ const MaintenanceRecurringDetail: React.FC = () => {
                             </div>
 
                             {/* Table Body */}
-                            <div className="bg-[#F0F0F6] rounded-b-[2rem] p-4 flex flex-col gap-3 min-h-[100px]">
+                            <div className="bg-[#F0F0F6] rounded-[2rem] md:rounded-b-[2rem] md:rounded-t-none p-4 flex flex-col gap-3 min-h-[100px] mt-4 md:mt-0">
                                 {MOCK_RELATED_REQUESTS.map((request) => (
                                     <div
                                         key={request.id}
-                                        className="bg-white rounded-2xl px-6 py-4 grid grid-cols-[1fr_1fr_2fr_1.5fr_1fr] gap-4 items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                                        className="bg-white rounded-2xl p-4 md:px-6 md:py-4 grid grid-cols-1 md:grid-cols-[1fr_1fr_2fr_1.5fr_1fr] gap-2 md:gap-4 items-start md:items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer"
                                     >
-                                        <div className="flex items-center gap-2">
-                                            <div
-                                                className="w-2.5 h-2.5 rounded-full"
-                                                style={{ backgroundColor: request.statusColor }}
-                                            ></div>
-                                            <span className="font-medium text-gray-800 text-sm">{request.status}</span>
+                                        <div className="flex items-center justify-between md:justify-start gap-2">
+                                            <div className="flex items-center gap-2">
+                                                <div
+                                                    className="w-2.5 h-2.5 rounded-full"
+                                                    style={{ backgroundColor: request.statusColor }}
+                                                ></div>
+                                                <span className="font-medium text-gray-800 text-sm">{request.status}</span>
+                                            </div>
+                                            {/* Mobile: Request ID shown here */}
+                                            <div className="md:hidden font-bold text-gray-800 text-sm">#{request.requestId}</div>
                                         </div>
-                                        <div className="font-bold text-gray-800 text-sm">{request.requestId}</div>
-                                        <div className="font-medium text-gray-800 text-sm">{request.title}</div>
-                                        <div className="text-[#3A6D6C] font-medium text-sm">{request.dateInitiated}</div>
-                                        <div>
+
+                                        <div className="hidden md:block font-bold text-gray-800 text-sm">{request.requestId}</div>
+
+                                        <div className="font-medium text-gray-800 text-sm">
+                                            <span className="md:hidden text-gray-500 block text-xs mb-1">Title & Property:</span>
+                                            {request.title}
+                                        </div>
+
+                                        <div className="text-[#3A6D6C] font-medium text-sm">
+                                            <span className="md:hidden text-gray-500 block text-xs mb-1">Date:</span>
+                                            {request.dateInitiated}
+                                        </div>
+
+                                        <div className="flex md:block justify-start mt-2 md:mt-0">
                                             <span className={`px-4 py-1 rounded-full text-xs font-medium ${request.assigneeType === 'unassigned'
                                                 ? 'bg-[#caecca] text-gray-700'
                                                 : 'bg-[#3A6D6C] text-white'

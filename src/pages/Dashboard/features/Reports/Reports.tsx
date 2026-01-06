@@ -89,24 +89,26 @@ const Reports: React.FC = () => {
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit">
             {/* Breadcrumb */}
-            <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">Reports</span>
+            <div className="flex w-full overflow-x-auto pb-2 md:pb-0 mb-6 scrollbar-hide">
+                <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] whitespace-nowrap">
+                    <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
+                    <span className="text-gray-500 text-sm mx-1">/</span>
+                    <span className="text-gray-600 text-sm font-semibold">Reports</span>
+                </div>
             </div>
 
             <div className="p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem] overflow-visible">
                 {/* Header */}
-                <div className="flex justify-between items-center mb-8">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                     <h1 className="text-2xl font-bold text-gray-800">Reports</h1>
-                    <button className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-lg shadow-[#3A6D6C]/20">
+                    <button className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-lg shadow-[#3A6D6C]/20 w-full md:w-auto">
                         Settings
                     </button>
                 </div>
 
                 {/* Search Bar */}
                 <div className="bg-[#3A6D6C] rounded-full p-2 mb-8 shadow-md">
-                    <div className="bg-white rounded-full flex items-center px-4 py-2 w-full max-w-sm">
+                    <div className="bg-white rounded-full flex items-center px-4 py-2 w-full">
                         <input
                             type="text"
                             placeholder="Search Here..."
@@ -145,7 +147,7 @@ const Reports: React.FC = () => {
                                 </div>
 
                                 {/* Cards Grid */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                                     {section.items.map((item, index) => (
                                         <ReportCard
                                             key={index}

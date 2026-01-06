@@ -164,7 +164,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="task-modal-title"
-                className="bg-white rounded-3xl w-full max-w-[95%] sm:max-w-lg shadow-2xl animate-in zoom-in-95 duration-300 overflow-visible mx-4"
+                className="bg-white rounded-3xl w-full max-w-[95%] sm:max-w-2xl shadow-2xl animate-in zoom-in-95 duration-300 overflow-visible mx-4"
             >
                 {/* Header */}
                 <div className="bg-[#3E706F] px-5 py-3 flex items-center justify-between text-white relative rounded-t-3xl">
@@ -203,19 +203,19 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
                         {/* Date & Time */}
                         <div className="space-y-1.5 col-span-1 md:col-span-2">
                             <label className="block text-xs font-bold text-[#1A1A1A]">Select Date & Time *</label>
-                            <div className="flex flex-col sm:flex-row gap-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <DatePicker
                                     value={selectedDate}
                                     onChange={setSelectedDate}
                                     placeholder="Select date"
-                                    className="w-full sm:flex-1"
+                                    className="w-full"
                                     popoverClassName="z-[110]"
                                 />
                                 <PreciseTimePicker
                                     value={selectedTime}
                                     onChange={setSelectedTime}
                                     placeholder="Select time"
-                                    className="w-full sm:flex-1"
+                                    className="w-full"
                                 />
                             </div>
                         </div>

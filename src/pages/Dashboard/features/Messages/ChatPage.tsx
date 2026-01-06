@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { type Chat, type Message, CURRENT_USER_ID } from './types';
 import ChatSidebar from './components/ChatSidebar';
 import ChatHeader from './components/ChatHeader';
@@ -55,11 +56,21 @@ const INITIAL_CHATS: Chat[] = [
   }
 ];
 
+interface DashboardContext {
+  sidebarCollapsed: boolean;
+}
+
 const ChatPage: React.FC = () => {
   const [chats, setChats] = useState<Chat[]>(INITIAL_CHATS);
   const [activeChatId, setActiveChatId] = useState('1');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showMobileChat, setShowMobileChat] = useState(false); // Mobile view routing state
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Safe context access
+  const context = useOutletContext<DashboardContext>();
+  const sidebarCollapsed = context?.sidebarCollapsed ?? false;
+  const sidebarOpen = !sidebarCollapsed;
 
   const activeChat = useMemo(() =>
     chats.find(c => c.id === activeChatId) || chats[0],
@@ -88,8 +99,21 @@ const ChatPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [activeChat.messages, scrollToBottom]);
+    if (showMobileChat) {
+      scrollToBottom();
+    }
+  }, [activeChat.messages, scrollToBottom, showMobileChat]);
+
+  // Handle chat selection
+  const handleChatSelect = useCallback((id: string) => {
+    setActiveChatId(id);
+    setShowMobileChat(true); // Switch to chat view on mobile
+  }, []);
+
+  // Handle back to sidebar
+  const handleBackToSidebar = useCallback(() => {
+    setShowMobileChat(false);
+  }, []);
 
   const handleSendMessage = useCallback((text: string, file: File | null) => {
     let finalMessageText = text;
@@ -129,9 +153,13 @@ const ChatPage: React.FC = () => {
         const remainingChats = prevChats.filter(chat => chat.id !== activeChatId);
         if (remainingChats.length > 0) {
           setActiveChatId(remainingChats[0].id);
+        } else {
+          // Handle case where all chats are deleted if needed
         }
         return remainingChats;
       });
+      // On mobile, go back to list if current chat deleted
+      setShowMobileChat(false);
     }
   }, [activeChat.name, activeChatId]);
 
@@ -147,7 +175,7 @@ const ChatPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="w-full h-full bg-white flex overflow-hidden print:h-auto print:block">
+    <div className={`mx-auto h-[calc(100vh-theme(spacing.20))] bg-white flex overflow-hidden print:h-auto print:block transition-all duration-300 ${sidebarOpen ? 'max-w-7xl' : 'max-w-full'}`}>
       <style dangerouslySetInnerHTML={{
         __html: `
         @media print {
@@ -157,22 +185,27 @@ const ChatPage: React.FC = () => {
         }
       `}} />
 
-      <ChatSidebar
-        chats={sortedChats}
-        activeChatId={activeChatId}
-        onSelectChat={setActiveChatId}
-        onTogglePin={togglePinChat}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-      />
+      {/* Sidebar - Hidden on mobile if chat is active */}
+      <div className={`${showMobileChat ? 'hidden md:flex' : 'flex'} w-full md:w-auto flex-col h-full`}>
+        <ChatSidebar
+          chats={sortedChats}
+          activeChatId={activeChatId}
+          onSelectChat={handleChatSelect}
+          onTogglePin={togglePinChat}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+        />
+      </div>
 
-      <div className="flex-1 flex flex-col bg-white">
+      {/* Main Chat Area - Hidden on mobile if no chat active */}
+      <div className={`flex-1 flex flex-col bg-white ${showMobileChat ? 'flex' : 'hidden md:flex'}`}>
         {activeChat ? (
           <>
             <ChatHeader
               activeChat={activeChat}
               onPrint={handlePrint}
               onDelete={handleDeleteChat}
+              onBack={handleBackToSidebar}
             />
 
             <MessageList

@@ -93,7 +93,7 @@ const MaintenanceSuccessModal: React.FC<MaintenanceSuccessModalProps> = ({
                             leaveFrom="opacity-100 scale-100"
                             leaveTo="opacity-0 scale-95"
                         >
-                            <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-xl transition-all">
+                            <Dialog.Panel className="w-full max-w-[90%] md:max-w-md transform overflow-hidden rounded-[2rem] md:rounded-2xl bg-white text-left align-middle shadow-xl transition-all">
                                 {/* Header */}
                                 <div className="bg-[#3D7475] p-4 flex justify-end">
                                     <button
@@ -110,12 +110,12 @@ const MaintenanceSuccessModal: React.FC<MaintenanceSuccessModalProps> = ({
                                 </div>
 
                                 {/* Content */}
-                                <div className="p-8 flex flex-col items-center text-center relative overflow-hidden">
+                                <div className="p-6 md:p-8 flex flex-col items-center text-center relative overflow-hidden">
                                     {/* Main Content */}
                                     <div className="relative z-10 flex flex-col items-center w-full">
                                         {/* Success Icon */}
                                         <div className="mb-2 relative flex items-center justify-center">
-                                            <div className="w-40 h-40 pointer-events-none">
+                                            <div className="w-32 h-32 md:w-40 md:h-40 pointer-events-none">
                                                 <DotLottieReact
                                                     {...(animationData instanceof ArrayBuffer
                                                         ? { data: animationData }
@@ -130,14 +130,14 @@ const MaintenanceSuccessModal: React.FC<MaintenanceSuccessModalProps> = ({
 
                                         <Dialog.Title
                                             as="h3"
-                                            className="text-2xl font-bold leading-6 text-gray-900 mb-2"
+                                            className="text-xl md:text-2xl font-bold leading-6 text-gray-900 mb-2"
                                         >
                                             Well Done !
                                         </Dialog.Title>
 
                                         <div className="mb-2">
-                                            <p className="text-gray-600 font-medium text-lg leading-relaxed">
-                                                You have created a new Maintenance request <span className="font-bold text-gray-800">#{requestId}</span> for <span className="font-bold text-gray-800">{propertyName}</span>
+                                            <p className="text-gray-600 font-medium text-base md:text-lg leading-relaxed">
+                                                You have created a new Maintenance request <span className="font-bold text-gray-800 break-all">#{requestId}</span> for <span className="font-bold text-gray-800">{propertyName}</span>
                                             </p>
                                         </div>
 
@@ -159,17 +159,17 @@ const MaintenanceSuccessModal: React.FC<MaintenanceSuccessModalProps> = ({
                                         </div>
 
                                         {/* Buttons */}
-                                        <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
+                                        <div className="flex flex-col sm:flex-row gap-3 md:gap-4 w-full justify-center">
                                             <button
                                                 type="button"
-                                                className="flex-1 justify-center rounded-lg border border-transparent bg-[#4A5568] px-6 py-3 text-sm font-medium text-white hover:bg-[#2D3748] focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
+                                                className="w-full sm:flex-1 justify-center rounded-lg border border-transparent bg-[#4A5568] px-6 py-3 text-sm font-medium text-white hover:bg-[#2D3748] focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2 shadow-md"
                                                 onClick={() => animateAndThen(onBackToList)}
                                             >
                                                 Back to list
                                             </button>
                                             <button
                                                 type="button"
-                                                className="flex-1 justify-center rounded-lg border border-transparent bg-[#3D7475] px-6 py-3 text-sm font-medium text-white hover:bg-[#2c5556] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3D7475] focus-visible:ring-offset-2"
+                                                className="w-full sm:flex-1 justify-center rounded-lg border border-transparent bg-[#3D7475] px-6 py-3 text-sm font-medium text-white hover:bg-[#2c5556] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3D7475] focus-visible:ring-offset-2 shadow-md"
                                                 onClick={() => animateAndThen(onAssignPro)}
                                             >
                                                 Assign Service Pro

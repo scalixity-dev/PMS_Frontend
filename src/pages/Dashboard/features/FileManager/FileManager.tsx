@@ -265,7 +265,7 @@ const FileManager: React.FC = () => {
         { label: 'All files', usage: '26.57 MB/1 GB Used', color: '#82D64D', percent: 25 },
         { label: 'Images', usage: '26.57 MB/1 GB Used', color: '#82D64D', percent: 15 },
         { label: 'Documents', usage: '26.57 MB/1 GB Used', color: '#82D64D', percent: 10 },
-        { label: 'All files', usage: '26.57 MB/1 GB Used', color: '#82D64D', percent: 25 }, // Repeated in screenshot?
+        { label: 'Videos', usage: '26.57 MB/1 GB Used', color: '#82D64D', percent: 25 },
     ];
 
     const toggleSelection = (id: number) => {
@@ -346,19 +346,21 @@ const FileManager: React.FC = () => {
     return (
         <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit transition-all duration-300`}>
             {/* Breadcrumb */}
-            <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">File manager</span>
+            <div className="flex w-full overflow-x-auto pb-2 md:pb-0 mb-6 scrollbar-hide">
+                <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] whitespace-nowrap">
+                    <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
+                    <span className="text-gray-500 text-sm mx-1">/</span>
+                    <span className="text-gray-600 text-sm font-semibold">File manager</span>
+                </div>
             </div>
 
             <div className="p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem] overflow-visible">
                 <h1 className="text-2xl font-bold text-gray-800 mb-6">File manager</h1>
 
                 {/* Stats Header */}
-                <div className="bg-[#F0F0F6] p-2 flex overflow-x-auto gap-4 rounded-full shadow-md mb-8 items-center no-scrollbar">
+                <div className="bg-[#F0F0F6] p-4 lg:p-2 grid grid-cols-1 sm:grid-cols-2 lg:flex lg:overflow-x-auto gap-4 rounded-3xl lg:rounded-full shadow-md mb-8 items-stretch lg:items-center scrollbar-hide">
                     {stats.map((stat, index) => (
-                        <div key={index} className="bg-[#82D64D] rounded-full p-2.5 px-4 flex items-center justify-between shadow-sm flex-1 min-w-[200px] relative">
+                        <div key={index} className="bg-[#82D64D] rounded-2xl lg:rounded-full p-4 lg:p-2.5 lg:px-4 flex items-center justify-between shadow-sm w-full lg:flex-1 lg:min-w-[200px] relative">
                             <div className="flex flex-col justify-center gap-2 z-10 w-full">
                                 <div className="flex justify-between items-center w-full">
                                     <span className="text-white text-sm font-bold">{stat.label}</span>
@@ -424,7 +426,7 @@ const FileManager: React.FC = () => {
                                 </div>
 
                                 {/* Table Header */}
-                                <div className="bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm">
+                                <div className="hidden md:block bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm">
                                     <div className="text-white px-6 py-4 grid grid-cols-[50px_1.5fr_1fr_1fr_1fr_50px] gap-4 items-center text-sm font-medium">
                                         <div className="text-center">
                                             <div className={`w-5 h-5 rounded border border-white/50 flex items-center justify-center cursor-pointer ${isGroupSelected ? 'bg-[#82D64D] border-transparent' : ''}`}
@@ -448,11 +450,121 @@ const FileManager: React.FC = () => {
                                         return (
                                             <div
                                                 key={file.id}
-                                                className={`bg-white rounded-2xl px-6 py-4 grid grid-cols-[50px_1.5fr_1fr_1fr_1fr_50px] gap-4 items-center shadow-sm hover:shadow-md transition-shadow ${isSelected ? 'ring-2 ring-[#82D64D]' : ''}`}
+                                                className={`bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow ${isSelected ? 'ring-2 ring-[#82D64D]' : ''}`}
                                             >
-                                                <div className="text-center flex justify-center">
+                                                {/* Desktop View */}
+                                                <div className="hidden md:grid px-6 py-4 grid-cols-[50px_1.5fr_1fr_1fr_1fr_50px] gap-4 items-center">
+                                                    <div className="text-center flex justify-center">
+                                                        <div
+                                                            className={`w-5 h-5 rounded border border-gray-300 flex items-center justify-center cursor-pointer transition-colors ${isSelected ? 'bg-[#82D64D] border-transparent' : ''}`}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                toggleSelection(file.id);
+                                                            }}
+                                                        >
+                                                            {isSelected && <Check className="w-3 h-3 text-white" />}
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-gray-700 text-sm font-medium truncate">{file.name}</div>
+                                                    <div className="text-gray-600 text-sm">{file.type}</div>
+                                                    <div className="">
+                                                        {file.type === 'pdf' ? (
+                                                            <div
+                                                                className="w-12 h-12 rounded-lg bg-red-100 flex items-center justify-center cursor-pointer hover:bg-red-200 transition-colors"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setPreviewFile(file);
+                                                                }}
+                                                            >
+                                                                <FileText className="w-6 h-6 text-red-500" />
+                                                            </div>
+                                                        ) : file.preview ? (
+                                                            <img
+                                                                src={file.preview}
+                                                                alt="preview"
+                                                                className="w-12 h-12 rounded-lg object-cover bg-gray-100 cursor-pointer hover:opacity-80 transition-opacity"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setPreviewFile(file);
+                                                                }}
+                                                            />
+                                                        ) : (
+                                                            <div className="w-12 h-12 rounded-lg bg-gray-200 flex items-center justify-center text-xs text-gray-500">
+                                                                N/A
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="bg-[#D9F99D] px-3 py-1 rounded-full text-center">
+                                                            <span className="text-[#365E32] text-xs font-medium">{file.date}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="text-center flex justify-center relative">
+                                                        <button
+                                                            className="p-1 hover:bg-gray-100 rounded-full text-gray-500 transition-colors"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setActiveActionMenu(activeActionMenu === file.id ? null : file.id);
+                                                            }}
+                                                        >
+                                                            <MoreHorizontal className="w-5 h-5" />
+                                                        </button>
+
+                                                        {activeActionMenu === file.id && (
+                                                            <div
+                                                                className="absolute right-0 top-full mt-2 w-40 bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.15)] z-50 overflow-hidden"
+                                                                onClick={(e) => e.stopPropagation()}
+                                                            >
+                                                                <div className="flex flex-col text-sm font-medium text-gray-700">
+                                                                    <button
+                                                                        className="px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 text-left"
+                                                                        onClick={() => {
+                                                                            setActiveActionMenu(null);
+                                                                            handleDownload(file);
+                                                                        }}
+                                                                    >
+                                                                        Download
+                                                                    </button>
+                                                                    <button
+                                                                        className="px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 text-left"
+                                                                        onClick={() => {
+                                                                            setActiveActionMenu(null);
+                                                                            setEditingFile(file);
+                                                                        }}
+                                                                    >
+                                                                        Edit name
+                                                                    </button>
+                                                                    <button
+                                                                        className="px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 text-left"
+                                                                        onClick={() => {
+                                                                            setActiveActionMenu(null);
+                                                                            setPreviewFile(file);
+                                                                        }}
+                                                                    >
+                                                                        Preview
+                                                                    </button>
+                                                                    <button
+                                                                        className="px-4 py-3 hover:bg-red-50 text-red-500 transition-colors text-left font-semibold"
+                                                                        onClick={() => {
+                                                                            setActiveActionMenu(null);
+                                                                            setDeletingFile(file);
+                                                                        }}
+                                                                    >
+                                                                        Delete
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Mobile View */}
+                                                <div className="md:hidden p-4 flex items-center gap-3">
+                                                    {/* Checkbox */}
                                                     <div
-                                                        className={`w-5 h-5 rounded border border-gray-300 flex items-center justify-center cursor-pointer transition-colors ${isSelected ? 'bg-[#82D64D] border-transparent' : ''}`}
+                                                        className={`w-5 h-5 flex-shrink-0 rounded border border-gray-300 flex items-center justify-center cursor-pointer transition-colors ${isSelected ? 'bg-[#82D64D] border-transparent' : ''}`}
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             toggleSelection(file.id);
@@ -460,99 +572,104 @@ const FileManager: React.FC = () => {
                                                     >
                                                         {isSelected && <Check className="w-3 h-3 text-white" />}
                                                     </div>
-                                                </div>
-                                                <div className="text-gray-700 text-sm font-medium truncate">{file.name}</div>
-                                                <div className="text-gray-600 text-sm">{file.type}</div>
-                                                <div className="">
-                                                    {file.type === 'pdf' ? (
-                                                        <div
-                                                            className="w-12 h-12 rounded-lg bg-red-100 flex items-center justify-center cursor-pointer hover:bg-red-200 transition-colors"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setPreviewFile(file);
-                                                            }}
-                                                        >
-                                                            <FileText className="w-6 h-6 text-red-500" />
-                                                        </div>
-                                                    ) : file.preview ? (
-                                                        <img
-                                                            src={file.preview}
-                                                            alt="preview"
-                                                            className="w-12 h-12 rounded-lg object-cover bg-gray-100 cursor-pointer hover:opacity-80 transition-opacity"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setPreviewFile(file);
-                                                            }}
-                                                        />
-                                                    ) : (
-                                                        <div className="w-12 h-12 rounded-lg bg-gray-200 flex items-center justify-center text-xs text-gray-500">
-                                                            N/A
-                                                        </div>
-                                                    )}
-                                                </div>
 
-                                                <div className="flex items-center gap-2">
-                                                    <div className="bg-[#D9F99D] px-3 py-1 rounded-full text-center">
-                                                        <span className="text-[#365E32] text-xs font-medium">{file.date}</span>
-                                                    </div>
-                                                </div>
-
-                                                <div className="text-center flex justify-center relative">
-                                                    <button
-                                                        className="p-1 hover:bg-gray-100 rounded-full text-gray-500 transition-colors"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setActiveActionMenu(activeActionMenu === file.id ? null : file.id);
-                                                        }}
-                                                    >
-                                                        <MoreHorizontal className="w-5 h-5" />
-                                                    </button>
-
-                                                    {activeActionMenu === file.id && (
-                                                        <div
-                                                            className="absolute right-0 top-full mt-2 w-40 bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.15)] z-50 overflow-hidden"
-                                                            onClick={(e) => e.stopPropagation()}
-                                                        >
-                                                            <div className="flex flex-col text-sm font-medium text-gray-700">
-                                                                <button
-                                                                    className="px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 text-left"
-                                                                    onClick={() => {
-                                                                        setActiveActionMenu(null);
-                                                                        handleDownload(file);
-                                                                    }}
-                                                                >
-                                                                    Download
-                                                                </button>
-                                                                <button
-                                                                    className="px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 text-left"
-                                                                    onClick={() => {
-                                                                        setActiveActionMenu(null);
-                                                                        setEditingFile(file);
-                                                                    }}
-                                                                >
-                                                                    Edit name
-                                                                </button>
-                                                                <button
-                                                                    className="px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 text-left"
-                                                                    onClick={() => {
-                                                                        setActiveActionMenu(null);
-                                                                        setPreviewFile(file);
-                                                                    }}
-                                                                >
-                                                                    Preview
-                                                                </button>
-                                                                <button
-                                                                    className="px-4 py-3 hover:bg-red-50 text-red-500 transition-colors text-left font-semibold"
-                                                                    onClick={() => {
-                                                                        setActiveActionMenu(null);
-                                                                        setDeletingFile(file);
-                                                                    }}
-                                                                >
-                                                                    Delete
-                                                                </button>
+                                                    {/* Preview Thumbnail */}
+                                                    <div className="flex-shrink-0">
+                                                        {file.type === 'pdf' ? (
+                                                            <div
+                                                                className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center cursor-pointer"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setPreviewFile(file);
+                                                                }}
+                                                            >
+                                                                <FileText className="w-5 h-5 text-red-500" />
                                                             </div>
+                                                        ) : file.preview ? (
+                                                            <img
+                                                                src={file.preview}
+                                                                alt="preview"
+                                                                className="w-10 h-10 rounded-lg object-cover bg-gray-100 cursor-pointer"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setPreviewFile(file);
+                                                                }}
+                                                            />
+                                                        ) : (
+                                                            <div className="w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center text-[10px] text-gray-500">
+                                                                N/A
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Info */}
+                                                    <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+                                                        <span className="text-gray-800 text-sm font-semibold truncate">{file.name}</span>
+                                                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                                                            <span className="uppercase">{file.type}</span>
+                                                            <span>•</span>
+                                                            <span>{file.date}</span>
                                                         </div>
-                                                    )}
+                                                    </div>
+
+                                                    {/* Actions */}
+                                                    <div className="relative">
+                                                        <button
+                                                            className="p-1 hover:bg-gray-100 rounded-full text-gray-500 transition-colors"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setActiveActionMenu(activeActionMenu === file.id ? null : file.id);
+                                                            }}
+                                                        >
+                                                            <MoreHorizontal className="w-5 h-5" />
+                                                        </button>
+
+                                                        {activeActionMenu === file.id && (
+                                                            <div
+                                                                className="absolute right-0 top-full mt-2 w-40 bg-white rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.15)] z-50 overflow-hidden"
+                                                                onClick={(e) => e.stopPropagation()}
+                                                            >
+                                                                <div className="flex flex-col text-sm font-medium text-gray-700">
+                                                                    <button
+                                                                        className="px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 text-left"
+                                                                        onClick={() => {
+                                                                            setActiveActionMenu(null);
+                                                                            handleDownload(file);
+                                                                        }}
+                                                                    >
+                                                                        Download
+                                                                    </button>
+                                                                    <button
+                                                                        className="px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 text-left"
+                                                                        onClick={() => {
+                                                                            setActiveActionMenu(null);
+                                                                            setEditingFile(file);
+                                                                        }}
+                                                                    >
+                                                                        Edit name
+                                                                    </button>
+                                                                    <button
+                                                                        className="px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 text-left"
+                                                                        onClick={() => {
+                                                                            setActiveActionMenu(null);
+                                                                            setPreviewFile(file);
+                                                                        }}
+                                                                    >
+                                                                        Preview
+                                                                    </button>
+                                                                    <button
+                                                                        className="px-4 py-3 hover:bg-red-50 text-red-500 transition-colors text-left font-semibold"
+                                                                        onClick={() => {
+                                                                            setActiveActionMenu(null);
+                                                                            setDeletingFile(file);
+                                                                        }}
+                                                                    >
+                                                                        Delete
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         );

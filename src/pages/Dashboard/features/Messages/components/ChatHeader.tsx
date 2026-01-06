@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Printer, Trash2 } from 'lucide-react';
+import { Printer, Trash2, ChevronLeft } from 'lucide-react';
 import type { Chat } from '../types';
 import Avatar from './Avatar';
 
@@ -7,12 +7,21 @@ interface ChatHeaderProps {
     activeChat: Chat;
     onPrint: () => void;
     onDelete: () => void;
+    onBack?: () => void;
 }
 
-const ChatHeader: React.FC<ChatHeaderProps> = ({ activeChat, onPrint, onDelete }) => {
+const ChatHeader: React.FC<ChatHeaderProps> = ({ activeChat, onPrint, onDelete, onBack }) => {
     return (
-        <div className="flex items-center justify-between px-6 py-3 border-b border-gray-100">
-            <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-gray-100">
+            <div className="flex items-center gap-3 sm:gap-4">
+                {onBack && (
+                    <button
+                        onClick={onBack}
+                        className="md:hidden p-1 -ml-2 rounded-full hover:bg-gray-100 text-gray-500"
+                    >
+                        <ChevronLeft size={24} />
+                    </button>
+                )}
                 <div className="relative group cursor-pointer">
                     <Avatar
                         name={activeChat.name}

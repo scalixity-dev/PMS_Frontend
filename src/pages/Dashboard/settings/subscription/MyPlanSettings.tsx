@@ -5,6 +5,8 @@ import { SubscriptionSettingsLayout } from "../../../../components/common/Subscr
 import { subscriptionService, type Subscription, type BillingHistoryItem } from "../../../../services/subscription.service";
 import ChangePlanModal from "./components/ChangePlanModal";
 
+import DatePicker from "../../../../components/ui/DatePicker";
+
 const MyPlanSettings: React.FC = () => {
   const [accountMode, setAccountMode] = useState<"Landlord" | "Property Manager">("Landlord");
   const [subscription, setSubscription] = useState<Subscription | null>(null);
@@ -13,7 +15,10 @@ const MyPlanSettings: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isRenewing, setIsRenewing] = useState(false);
-  const [dateRange, setDateRange] = useState({ startDate: "", endDate: "" });
+  const [dateRange, setDateRange] = useState<{ startDate: Date | undefined; endDate: Date | undefined }>({
+    startDate: undefined,
+    endDate: undefined,
+  });
   const [isChangePlanModalOpen, setIsChangePlanModalOpen] = useState(false);
 
   // Format date for display
@@ -21,6 +26,15 @@ const MyPlanSettings: React.FC = () => {
     if (!dateString) return "";
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  };
+
+  // Format date for API (YYYY-MM-DD)
+  const formatDateForApi = (date: Date | undefined): string | undefined => {
+    if (!date) return undefined;
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   // Check if subscription is expired
@@ -61,8 +75,8 @@ const MyPlanSettings: React.FC = () => {
     setIsLoading(true);
     try {
       const billingData = await subscriptionService.getBillingHistory(
-        dateRange.startDate || undefined,
-        dateRange.endDate || undefined
+        formatDateForApi(dateRange.startDate),
+        formatDateForApi(dateRange.endDate)
       );
       setBillingHistory(billingData.items);
     } catch (err) {
@@ -150,7 +164,7 @@ const MyPlanSettings: React.FC = () => {
         ) : error ? (
           <div className="text-red-500 py-4">{error}</div>
         ) : subscription ? (
-          <div className="flex justify-between items-start">
+          <div className="flex flex-col md:flex-row justify-between items-start gap-6">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
                 <h2 className="text-xl font-bold text-gray-900">{subscription.planName}</h2>
@@ -195,7 +209,7 @@ const MyPlanSettings: React.FC = () => {
                 )}
               </p>
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 w-full md:w-auto">
               {isSubscriptionExpired(subscription) ? (
                 <Button
                   onClick={handleRenew}
@@ -243,7 +257,7 @@ const MyPlanSettings: React.FC = () => {
             onClick={() => setAccountMode("Landlord")}
           >
             <div className="flex gap-4">
-              <div className={`mt-1 h-6 w-6 rounded flex items-center justify-center transition-colors ${accountMode === "Landlord" ? "bg-[#7BD747]" : "border-2 border-gray-500"
+              <div className={`mt-1 h-6 w-6 shrink-0 rounded flex items-center justify-center transition-colors ${accountMode === "Landlord" ? "bg-[#7BD747]" : "border-2 border-gray-500"
                 }`}>
                 {accountMode === "Landlord" && <Check className="w-4 h-4 text-white" strokeWidth={3} />}
               </div>
@@ -265,7 +279,7 @@ const MyPlanSettings: React.FC = () => {
             onClick={() => setAccountMode("Property Manager")}
           >
             <div className="flex gap-4">
-              <div className={`mt-1 h-6 w-6 rounded flex items-center justify-center transition-colors ${accountMode === "Property Manager" ? "bg-[#7BD747]" : "border-2 border-gray-500"
+              <div className={`mt-1 h-6 w-6 shrink-0 rounded flex items-center justify-center transition-colors ${accountMode === "Property Manager" ? "bg-[#7BD747]" : "border-2 border-gray-500"
                 }`}>
                 {accountMode === "Property Manager" && <Check className="w-4 h-4 text-white" strokeWidth={3} />}
               </div>
@@ -288,28 +302,33 @@ const MyPlanSettings: React.FC = () => {
 
       {/* Billing History Section */}
       <section className="border border-[#E8E8E8] rounded-2xl bg-[#FBFBFB] px-6 py-5 space-y-4">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h2 className="text-lg font-semibold text-gray-900">Billing history</h2>
-          <div className="flex items-center gap-3 bg-white px-3 py-1.5 rounded-lg border border-gray-200">
-            <input
-              type="date"
-              value={dateRange.startDate}
-              onChange={(e) => setDateRange({ ...dateRange, startDate: e.target.value })}
-              className="text-sm font-medium text-gray-700 border-none outline-none bg-transparent"
-              placeholder="Start date"
-            />
-            <span className="text-gray-400">⇄</span>
-            <input
-              type="date"
-              value={dateRange.endDate}
-              onChange={(e) => setDateRange({ ...dateRange, endDate: e.target.value })}
-              className="text-sm font-medium text-gray-700 border-none outline-none bg-transparent"
-              placeholder="End date"
-            />
+          <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+            <div className="w-full sm:w-40">
+              <DatePicker
+                placeholder="Start date"
+                value={dateRange.startDate}
+                onChange={(date) => setDateRange({ ...dateRange, startDate: date })}
+                className="w-full border border-gray-200 shadow-sm"
+                popoverClassName="min-w-[300px]"
+              />
+            </div>
+            <span className="text-gray-400 rotate-90 sm:rotate-0">⇄</span>
+            <div className="w-full sm:w-40">
+              <DatePicker
+                placeholder="End date"
+                value={dateRange.endDate}
+                onChange={(date) => setDateRange({ ...dateRange, endDate: date })}
+                className="w-full border border-gray-200 shadow-sm"
+                popoverClassName="min-w-[300px] right-0"
+              />
+            </div>
+
             {(dateRange.startDate || dateRange.endDate) && (
               <button
                 onClick={handleDateFilter}
-                className="text-[#486370] text-sm font-medium hover:underline ml-2"
+                className="text-[#486370] text-sm font-medium hover:underline sm:ml-2 mt-2 sm:mt-0"
               >
                 Filter
               </button>
@@ -323,7 +342,7 @@ const MyPlanSettings: React.FC = () => {
           ) : billingHistory.length === 0 ? (
             <div className="text-center py-8 text-gray-500">No billing history found</div>
           ) : (
-            <table className="w-full">
+            <table className="w-full min-w-[700px]">
               <thead>
                 <tr className="bg-[#7CD947] text-white">
                   <th className="py-3 px-4 text-left font-semibold text-sm">Status</th>
@@ -337,11 +356,10 @@ const MyPlanSettings: React.FC = () => {
               <tbody className="divide-y divide-gray-100 bg-white">
                 {billingHistory.map((row) => (
                   <tr key={row.id} className="hover:bg-gray-50 transition-colors">
-                    <td className={`py-4 px-4 text-sm font-medium ${
-                      row.status === "Paid" || row.status === "Trial" 
-                        ? "text-green-600" 
-                        : "text-red-500"
-                    }`}>
+                    <td className={`py-4 px-4 text-sm font-medium ${row.status === "Paid" || row.status === "Trial"
+                      ? "text-green-600"
+                      : "text-red-500"
+                      }`}>
                       {row.status}
                     </td>
                     <td className="py-4 px-4 text-sm text-gray-600">{formatDate(row.date)}</td>

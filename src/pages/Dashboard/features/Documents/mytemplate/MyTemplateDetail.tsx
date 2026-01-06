@@ -5,6 +5,7 @@ import DOMPurify from 'dompurify';
 import ReviewSuccessModal from '../landlordforms/components/ReviewSuccessModal';
 import DocumentPreviewModal from '../components/DocumentPreviewModal';
 import { handleDocumentPrint } from '../utils/printPreviewUtils';
+import UseTemplateModal from './components/UseTemplateModal';
 
 interface MyLocationState {
     showSuccessPopup?: boolean;
@@ -29,25 +30,11 @@ const MyTemplateDetail: React.FC = () => {
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
     const [successData, setSuccessData] = useState({ leaseName: '', propertyName: '' });
 
-    const [selectedProperty, setSelectedProperty] = useState('Luxury Property');
-    const [selectedLease, setSelectedLease] = useState('Lease 1');
-    const [selectedTenants, setSelectedTenants] = useState('Luxury Property');
-
-    const [isPropertyDropdownOpen, setIsPropertyDropdownOpen] = useState(false);
-    const [isLeaseDropdownOpen, setIsLeaseDropdownOpen] = useState(false);
-    const [isTenantsDropdownOpen, setIsTenantsDropdownOpen] = useState(false);
-
-    const propertyDropdownRef = useRef<HTMLDivElement>(null);
-    const leaseDropdownRef = useRef<HTMLDivElement>(null);
-    const tenantsDropdownRef = useRef<HTMLDivElement>(null);
     const actionsDropdownRef = useRef<HTMLDivElement>(null);
     const documentContentRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Mock constants for the modal
-    const MOCK_PROPERTIES = ['Luxury Property', 'Downtown Apartment', 'Beach House', 'Mountain Villa'];
-    const MOCK_TENANTS = ['Luxury Property', 'John Doe', 'Jane Smith', 'Bob Johnson'];
-    const MOCK_LEASES = ['Lease 1', 'Lease 2', 'Lease 3', 'Lease 4'];
+    // Mock constants for the modal will be handled inside UseTemplateModal
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -83,15 +70,6 @@ const MyTemplateDetail: React.FC = () => {
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (propertyDropdownRef.current && !propertyDropdownRef.current.contains(event.target as Node)) {
-                setIsPropertyDropdownOpen(false);
-            }
-            if (leaseDropdownRef.current && !leaseDropdownRef.current.contains(event.target as Node)) {
-                setIsLeaseDropdownOpen(false);
-            }
-            if (tenantsDropdownRef.current && !tenantsDropdownRef.current.contains(event.target as Node)) {
-                setIsTenantsDropdownOpen(false);
-            }
             if (actionsDropdownRef.current && !actionsDropdownRef.current.contains(event.target as Node)) {
                 setIsActionsDropdownOpen(false);
             }
@@ -197,29 +175,31 @@ const MyTemplateDetail: React.FC = () => {
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-10">
             {/* Breadcrumb */}
-            <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>
-                    Dashboard
-                </span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold cursor-pointer" onClick={() => navigate('/documents/my-templates')}>
-                    Documents Template
-                </span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">{templateName}</span>
+            <div className="flex w-full overflow-x-auto pb-2 md:pb-0 mb-6 scrollbar-hide">
+                <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] whitespace-nowrap">
+                    <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>
+                        Dashboard
+                    </span>
+                    <span className="text-gray-500 text-sm mx-1">/</span>
+                    <span className="text-gray-600 text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard/documents/my-templates')}>
+                        Documents Template
+                    </span>
+                    <span className="text-gray-500 text-sm mx-1">/</span>
+                    <span className="text-gray-600 text-sm font-semibold max-w-[150px] md:max-w-xs truncate block">{templateName}</span>
+                </div>
             </div>
 
-            <div className="p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem]">
+            <div className="p-4 md:p-6 bg-[#E0E8E7] min-h-screen rounded-2xl md:rounded-[2rem]">
                 {/* Header */}
-                <div className="flex items-center gap-6 mb-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                     <div className="flex flex-col">
-                        <h1 className="text-2xl font-bold text-gray-800">{templateName}</h1>
+                        <h1 className="text-xl md:text-2xl font-bold text-gray-800 break-words">{templateName}</h1>
                         <p className="text-gray-500 font-medium text-sm mt-1">{templateSubtitle}</p>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 w-full md:w-auto">
                         <button
                             onClick={() => setIsUseTemplateModalOpen(true)}
-                            className="flex items-center gap-2 bg-[#3A6D6C] text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-[#2d5650] transition-colors shadow-sm"
+                            className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-[#3A6D6C] text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-[#2d5650] transition-colors shadow-sm whitespace-nowrap"
                         >
                             Use Template
                             <Plus size={16} className="bg-white/20 rounded-full p-0.5" />
@@ -227,7 +207,7 @@ const MyTemplateDetail: React.FC = () => {
                         <div className="relative" ref={actionsDropdownRef}>
                             <button
                                 onClick={() => setIsActionsDropdownOpen(!isActionsDropdownOpen)}
-                                className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2d5650] transition-colors shadow-sm flex items-center gap-2"
+                                className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2d5650] transition-colors shadow-sm flex items-center gap-2 whitespace-nowrap"
                             >
                                 Actions
                                 <ChevronDown
@@ -236,7 +216,7 @@ const MyTemplateDetail: React.FC = () => {
                                 />
                             </button>
                             {isActionsDropdownOpen && (
-                                <div className="absolute left-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden">
+                                <div className="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden">
                                     <button
                                         onClick={handlePrint}
                                         className="w-full text-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
@@ -257,27 +237,27 @@ const MyTemplateDetail: React.FC = () => {
                 </div>
 
                 {/* Main Content Card */}
-                <div className="bg-[#F0F2F5] rounded-[2rem] overflow-hidden shadow-sm mb-6 pb-20">
+                <div className="bg-[#F0F2F5] rounded-2xl md:rounded-[2rem] overflow-hidden shadow-sm mb-6 pb-20">
                     {/* Dark Teal Header Band */}
-                    <div className="bg-[#3A6D6C] mx-6 mt-6 rounded-[2rem] px-6 py-4 flex items-center justify-center gap-4 relative">
-                        <div className="relative">
+                    <div className="bg-[#3A6D6C] mx-3 md:mx-6 mt-4 md:mt-6 rounded-2xl md:rounded-[2rem] px-4 md:px-6 py-4 flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4 relative">
+                        <div className="relative w-full sm:w-auto">
                             <button
                                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                className="bg-white text-[#3A6D6C] px-6 py-2 rounded-full text-sm font-bold flex items-center gap-2 min-w-[140px] justify-between shadow-sm"
+                                className="w-full sm:w-auto bg-white text-[#3A6D6C] px-6 py-2 rounded-full text-sm font-bold flex items-center gap-2 min-w-[140px] justify-between shadow-sm"
                             >
-                                Template
+                                <span className="truncate">Template</span>
                                 <ChevronDown size={16} />
                             </button>
                             {isDropdownOpen && (
-                                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-100 z-10 max-h-60 overflow-y-auto custom-scrollbar">
+                                <div className="absolute top-full left-0 sm:left-1/2 sm:-translate-x-1/2 mt-2 w-full sm:w-64 bg-white rounded-lg shadow-lg border border-gray-100 z-10 max-h-60 overflow-y-auto custom-scrollbar">
                                     {allTemplates.map((t: any) => (
                                         <button
                                             key={t.id}
                                             onClick={() => {
-                                                navigate(`/documents/my-templates/${t.id}`);
+                                                navigate(`/dashboard/documents/my-templates/${t.id}`);
                                                 setIsDropdownOpen(false);
                                             }}
-                                            className={`block w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors border-b last:border-b-0 border-gray-50 ${t.id.toString() === id ? 'bg-gray-50 text-[#3A6D6C] font-semibold' : 'text-gray-700'
+                                            className={`block w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors border-b last:border-b-0 border-gray-50 line-clamp-1 ${t.id.toString() === id ? 'bg-gray-50 text-[#3A6D6C] font-semibold' : 'text-gray-700'
                                                 }`}
                                         >
                                             {t.title}
@@ -287,17 +267,17 @@ const MyTemplateDetail: React.FC = () => {
                             )}
                         </div>
                         <button
-                            onClick={() => navigate(`/documents/my-templates/${id}/edit`)}
-                            className="bg-[#4CD9A4] text-white px-8 py-2 rounded-full text-sm font-medium hover:bg-[#42bd93] transition-colors shadow-sm"
+                            onClick={() => navigate(`/dashboard/documents/my-templates/${id}/edit`)}
+                            className="w-full sm:w-auto bg-[#4CD9A4] text-white px-8 py-2 rounded-full text-sm font-medium hover:bg-[#42bd93] transition-colors shadow-sm whitespace-nowrap"
                         >
                             Edit
                         </button>
                     </div>
 
                     {/* Content Placeholder */}
-                    <div className="px-12 py-8 min-h-[300px]" ref={documentContentRef}>
+                    <div className="px-4 md:px-12 py-6 md:py-8 min-h-[300px]" ref={documentContentRef}>
                         {sanitizedHtml ? (
-                            <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />
+                            <div className="prose max-w-none text-sm md:text-base text-gray-800" dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />
                         ) : (
                             <p className="text-gray-400 text-sm">| Type here</p>
                         )}
@@ -305,8 +285,8 @@ const MyTemplateDetail: React.FC = () => {
                 </div>
 
                 {/* Attachments Section */}
-                <div className="bg-[#F0F2F5] rounded-[2rem] p-6 shadow-sm">
-                    <div className="flex items-center gap-4 mb-4">
+                <div className="bg-[#F0F2F5] rounded-2xl md:rounded-[2rem] p-4 md:p-6 shadow-sm">
+                    <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
                             <h2 className="text-lg font-bold text-gray-800">Attachments</h2>
                             <ChevronDown size={16} className="text-gray-800" />
@@ -324,9 +304,9 @@ const MyTemplateDetail: React.FC = () => {
                         </button>
                     </div>
 
-                    <div className="bg-white rounded-[2rem] p-12 border border-gray-100 shadow-inner min-h-[160px]">
+                    <div className="bg-white rounded-2xl md:rounded-[2rem] p-4 md:p-12 border border-gray-100 shadow-inner min-h-[160px]">
                         {attachments.length === 0 ? (
-                            <div className="h-full flex items-center justify-center">
+                            <div className="h-full flex items-center justify-center py-8">
                                 <p className="text-gray-500 font-medium text-sm">No attachments yet</p>
                             </div>
                         ) : (
@@ -334,14 +314,14 @@ const MyTemplateDetail: React.FC = () => {
                                 {attachments.map((file) => (
                                     <div
                                         key={`${file.name}-${file.size}`}
-                                        className="flex items-center justify-between bg-white/50 px-4 py-2 rounded-xl border border-gray-100"
+                                        className="flex items-center justify-between bg-white/50 px-3 md:px-4 py-2 rounded-xl border border-gray-100"
                                     >
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-1.5 bg-[#3A6D6C]/10 rounded-lg">
+                                        <div className="flex items-center gap-3 overflow-hidden">
+                                            <div className="p-1.5 bg-[#3A6D6C]/10 rounded-lg flex-shrink-0">
                                                 <UploadCloud size={16} className="text-[#3A6D6C]" />
                                             </div>
-                                            <div className="flex flex-col">
-                                                <span className="text-sm font-semibold text-gray-700 truncate max-w-[300px]">
+                                            <div className="flex flex-col overflow-hidden">
+                                                <span className="text-sm font-semibold text-gray-700 truncate max-w-[200px] md:max-w-[300px]">
                                                     {file.name}
                                                 </span>
                                                 <span className="text-[10px] text-gray-400">
@@ -466,165 +446,12 @@ const MyTemplateDetail: React.FC = () => {
             )}
 
             {/* Use Template Modal */}
-            {isUseTemplateModalOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-800/50  animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl overflow-visible mx-4 animate-in zoom-in-95 duration-200">
-                        {/* Header - Dark Teal */}
-                        <div className="bg-[#3A6D6C] px-6 py-4 flex items-center justify-between rounded-t-2xl text-white">
-                            <div className="flex items-center gap-3">
-                                <button
-                                    onClick={() => setIsUseTemplateModalOpen(false)}
-                                    className="hover:bg-white/10 p-1 rounded-full transition-colors"
-                                >
-                                    <ChevronLeft size={24} />
-                                </button>
-                                <span className="text-base font-medium">
-                                    Add Select a property and lease to proceed with this template
-                                </span>
-                            </div>
-                            <button
-                                onClick={() => setIsUseTemplateModalOpen(false)}
-                                className="hover:bg-white/10 p-1 rounded-full transition-colors"
-                            >
-                                <X size={24} />
-                            </button>
-                        </div>
-
-                        {/* Content Area - White */}
-                        <div className="p-8 overflow-visible">
-                            <p className="text-gray-700 text-sm mb-6">
-                                Select a property and a lease below and proceed to creating a lease agreement and requesting signature
-                            </p>
-
-                            {/* Row 1: Property and Lease */}
-                            <div className="grid grid-cols-2 gap-4 mb-6">
-                                {/* Property Dropdown */}
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                        Property<span className="text-red-500">*</span>
-                                    </label>
-                                    <div className="relative" ref={propertyDropdownRef}>
-                                        <button
-                                            onClick={() => setIsPropertyDropdownOpen(!isPropertyDropdownOpen)}
-                                            className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-700 hover:border-[#3A6D6C] transition-colors"
-                                        >
-                                            <span>{selectedProperty}</span>
-                                            <ChevronDown
-                                                size={18}
-                                                className={`text-gray-500 transition-transform ${isPropertyDropdownOpen ? 'rotate-180' : ''}`}
-                                            />
-                                        </button>
-                                        {isPropertyDropdownOpen && (
-                                            <div className="absolute z-[200] w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                                                {MOCK_PROPERTIES.map((property) => (
-                                                    <button
-                                                        key={property}
-                                                        onClick={() => {
-                                                            setSelectedProperty(property);
-                                                            setIsPropertyDropdownOpen(false);
-                                                        }}
-                                                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                                                    >
-                                                        {property}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Lease Dropdown */}
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                        Lease<span className="text-red-500">*</span>
-                                    </label>
-                                    <div className="relative" ref={leaseDropdownRef}>
-                                        <button
-                                            onClick={() => setIsLeaseDropdownOpen(!isLeaseDropdownOpen)}
-                                            className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-700 hover:border-[#3A6D6C] transition-colors"
-                                        >
-                                            <span>{selectedLease}</span>
-                                            <ChevronDown
-                                                size={18}
-                                                className={`text-gray-500 transition-transform ${isLeaseDropdownOpen ? 'rotate-180' : ''}`}
-                                            />
-                                        </button>
-                                        {isLeaseDropdownOpen && (
-                                            <div className="absolute z-[200] w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                                                {MOCK_LEASES.map((lease) => (
-                                                    <button
-                                                        key={lease}
-                                                        onClick={() => {
-                                                            setSelectedLease(lease);
-                                                            setIsLeaseDropdownOpen(false);
-                                                        }}
-                                                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                                                    >
-                                                        {lease}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Row 2: Tenants Dropdown */}
-                            <div className="mb-8">
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    Tenants<span className="text-red-500">*</span>
-                                </label>
-                                <div className="relative" ref={tenantsDropdownRef}>
-                                    <button
-                                        onClick={() => setIsTenantsDropdownOpen(!isTenantsDropdownOpen)}
-                                        className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-700 hover:border-[#3A6D6C] transition-colors"
-                                    >
-                                        <span>{selectedTenants}</span>
-                                        <ChevronDown
-                                            size={18}
-                                            className={`text-gray-500 transition-transform ${isTenantsDropdownOpen ? 'rotate-180' : ''}`}
-                                        />
-                                    </button>
-                                    {isTenantsDropdownOpen && (
-                                        <div className="absolute z-[200] w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                                            {MOCK_TENANTS.map((tenant) => (
-                                                <button
-                                                    key={tenant}
-                                                    onClick={() => {
-                                                        setSelectedTenants(tenant);
-                                                        setIsTenantsDropdownOpen(false);
-                                                    }}
-                                                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                                                >
-                                                    {tenant}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Use Template Button */}
-                            <div className="flex justify-center">
-                                <button
-                                    onClick={() => {
-                                        setIsUseTemplateModalOpen(false);
-                                        navigate(`/documents/landlord-forms/use-template/${encodeURIComponent(templateName)}`, {
-                                            state: {
-                                                returnPath: `/documents/my-templates/${id}`,
-                                                selectedProperty
-                                            }
-                                        });
-                                    }}
-                                    className="bg-[#3A6D6C] text-white px-8 py-3 rounded-lg text-sm font-medium hover:bg-[#2d5650] transition-colors"
-                                >
-                                    Use Template
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <UseTemplateModal
+                isOpen={isUseTemplateModalOpen}
+                onClose={() => setIsUseTemplateModalOpen(false)}
+                templateName={templateName}
+                templateId={id}
+            />
 
             <ReviewSuccessModal
                 isOpen={isSuccessModalOpen}

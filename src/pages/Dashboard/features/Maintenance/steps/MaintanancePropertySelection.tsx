@@ -51,7 +51,7 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ selectedProperty,
                 <p className="text-gray-500">Select the property and a unit (if applicable) from the list below.</p>
             </div>
 
-            <div className="w-full flex items-end gap-4">
+            <div className="w-full flex flex-col md:flex-row items-stretch md:items-end gap-4">
                 <div className="flex-1 relative" ref={dropdownRef}>
                     <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">Property</label>
 
@@ -63,18 +63,18 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ selectedProperty,
                         <div className="flex items-center gap-3">
                             {selectedPropDetails ? (
                                 <>
-                                    <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                                    <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
                                         <Building size={16} />
                                     </div>
-                                    <div className="text-left">
-                                        <p className="text-sm font-medium text-gray-900">{selectedPropDetails.name}</p>
+                                    <div className="text-left overflow-hidden">
+                                        <p className="text-sm font-medium text-gray-900 truncate">{selectedPropDetails.name}</p>
                                     </div>
                                 </>
                             ) : (
                                 <span className="text-gray-400">Search a property</span>
                             )}
                         </div>
-                        <ChevronDown size={20} className={`text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                        <ChevronDown size={20} className={`text-gray-400 transition-transform shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
                     </button>
 
                     {/* Dropdown Menu */}
@@ -87,13 +87,13 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ selectedProperty,
                                         onClick={() => handleSelect(property.id)}
                                         className="w-full flex items-center justify-between p-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0"
                                     >
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                                        <div className="flex items-center gap-3 w-full">
+                                            <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
                                                 <Building size={16} />
                                             </div>
-                                            <div className="text-left">
-                                                <p className="text-sm font-medium text-gray-900">{property.name}</p>
-                                                <p className="text-xs text-gray-500">{property.unit}</p>
+                                            <div className="text-left min-w-0 flex-1">
+                                                <p className="text-sm font-medium text-gray-900 truncate">{property.name}</p>
+                                                <p className="text-xs text-gray-500 truncate">{property.unit}</p>
                                             </div>
                                         </div>
                                     </button>
@@ -105,7 +105,7 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ selectedProperty,
                                 onClick={onCreateProperty}
                                 className="w-full flex items-center gap-3 p-3 bg-gray-50 hover:bg-gray-100 text-[#3D7475] font-medium border-t border-gray-200 transition-colors"
                             >
-                                <div className="w-8 h-8 rounded-full bg-[#3D7475]/10 flex items-center justify-center">
+                                <div className="w-8 h-8 rounded-full bg-[#3D7475]/10 flex items-center justify-center shrink-0">
                                     <Plus size={16} />
                                 </div>
                                 Create New Property
@@ -118,7 +118,7 @@ const PropertySelection: React.FC<PropertySelectionProps> = ({ selectedProperty,
                     onClick={onNext}
                     disabled={!selectedProperty}
                     className={`
-                        bg-[#3D7475] text-white px-8 py-3.5 rounded-lg font-medium transition-all shadow-md h-[50px] flex items-center
+                        bg-[#3D7475] text-white px-8 py-3.5 rounded-lg font-medium transition-all shadow-md h-[50px] flex items-center justify-center w-full md:w-auto
                         ${!selectedProperty ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'}
                     `}
                 >

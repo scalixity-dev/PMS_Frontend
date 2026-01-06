@@ -10,6 +10,7 @@ import ScreeningPage from './pages/basewebsite/features/screening/index';
 import LeasePage from './pages/basewebsite/features/lease/index';
 import FinancePage from './pages/basewebsite/features/finance/index';
 import LeadsPage from './pages/basewebsite/features/leads/index';
+import { RentalApplicationSettingsLayout } from './components/common/RentalApplicationSettingsLayout';
 import PricingPage from './pages/basewebsite/pricing';
 import LoginPage from './pages/basewebsite/auth/login';
 import SignUpPage from './pages/basewebsite/auth/signUp';
@@ -150,6 +151,7 @@ import GeneralExpenses from './pages/Dashboard/features/Reports/GeneralExpenses'
 import GeneralIncome from './pages/Dashboard/features/Reports/GeneralIncome';
 import PropertyExpenses from './pages/Dashboard/features/Reports/PropertyExpenses';
 import PropertyStatement from './pages/Dashboard/features/Reports/PropertyStatement';
+import Notification from './pages/Dashboard/features/Notification/Notification';
 
 // Create a QueryClient instance
 const queryClient = new QueryClient({
@@ -308,6 +310,15 @@ const App: React.FC = () => {
                 }
               />
 
+              <Route
+                path="/dashboard/notifications"
+                element={
+                  <ProtectedRoute>
+                    <Notification />
+                  </ProtectedRoute>
+                }
+              />
+
               {/* Settings Routes */}
               <Route
                 path="/dashboard/settings"
@@ -407,30 +418,15 @@ const App: React.FC = () => {
               />
 
               {/* Rental Application Settings */}
-              <Route
-                path="/dashboard/settings/rental-application/online-application"
-                element={
-                  <ProtectedRoute>
-                    <OnlineApplication />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/settings/rental-application/form-configuration"
-                element={
-                  <ProtectedRoute>
-                    <FormConfiguration />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/settings/rental-application/terms-signature"
-                element={
-                  <ProtectedRoute>
-                    <TermsSignature />
-                  </ProtectedRoute>
-                }
-              />
+              <Route path="/dashboard/settings/rental-application" element={
+                <ProtectedRoute>
+                  <RentalApplicationSettingsLayout />
+                </ProtectedRoute>
+              }>
+                <Route path="online-application" element={<OnlineApplication />} />
+                <Route path="form-configuration" element={<FormConfiguration />} />
+                <Route path="terms-signature" element={<TermsSignature />} />
+              </Route>
 
               {/* Team Management Settings */}
               <Route

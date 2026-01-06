@@ -47,7 +47,7 @@ const IssueDescription: React.FC<IssueDescriptionProps> = ({ defaultTitle, onCon
             <div className="mt-12">
                 <button
                     onClick={() => onContinue(title, description)}
-                    className="bg-[#3D7475] text-white px-16 py-3 rounded-lg font-medium hover:opacity-90 transition-all shadow-lg"
+                    className="bg-[#3D7475] text-white w-full md:w-auto px-16 py-3 rounded-lg font-medium hover:opacity-90 transition-all shadow-lg"
                 >
                     Continue
                 </button>

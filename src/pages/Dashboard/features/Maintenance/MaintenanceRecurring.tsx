@@ -193,7 +193,7 @@ const MaintenanceRecurring: React.FC = () => {
 
             <div className="p-6 bg-[#DFE5E3] min-h-screen rounded-[2rem] overflow-visible">
                 {/* Header */}
-                <div className="flex items-center gap-6 mb-6">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-6 mb-6">
                     <button
                         onClick={() => navigate(-1)}
                         className="flex items-center gap-2 text-xl font-bold text-gray-800 hover:text-gray-600 transition-colors"
@@ -202,17 +202,17 @@ const MaintenanceRecurring: React.FC = () => {
                         Recurring
                     </button>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
                         <button
                             onClick={() => setShowAddModal(true)}
-                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-2"
+                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center justify-center gap-2"
                         >
                             Add Recurring Request
                             <Plus className="w-4 h-4" />
                         </button>
                         <button
                             onClick={() => navigate('/dashboard/settings/request-settings/request-settings')}
-                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm"
+                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm text-center"
                         >
                             Settings
                         </button>
@@ -230,8 +230,8 @@ const MaintenanceRecurring: React.FC = () => {
 
                 {/* Table Section */}
                 <div className="mt-8">
-                    {/* Table Header */}
-                    <div className="bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm">
+                    {/* Desktop Table Header */}
+                    <div className="hidden md:block bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm">
                         <div className="text-white px-6 py-4 grid grid-cols-[60px_1.5fr_2fr_2fr_60px] gap-4 items-center text-sm font-medium">
                             <div className="flex items-center justify-center">
                                 <button onClick={toggleAll} className="flex items-center justify-center">
@@ -248,7 +248,7 @@ const MaintenanceRecurring: React.FC = () => {
                     </div>
 
                     {/* Table Body */}
-                    <div className="flex flex-col gap-3 bg-[#F0F0F6] p-4 rounded-b-[2rem] min-h-[100px]">
+                    <div className="flex flex-col gap-3 bg-[#F0F0F6] p-4 rounded-[2rem] md:rounded-b-[2rem] md:rounded-t-none min-h-[100px]">
                         {filteredRequests.length === 0 ? (
                             <div className="text-center py-12 text-gray-500">
                                 No recurring maintenance requests found.
@@ -258,9 +258,37 @@ const MaintenanceRecurring: React.FC = () => {
                                 <div
                                     key={item.id}
                                     onClick={() => navigate(`/dashboard/maintenance/recurring/${item.id}`)}
-                                    className="bg-white rounded-2xl px-6 py-4 grid grid-cols-[60px_1.5fr_2fr_2fr_60px] gap-4 items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                                    className="bg-white rounded-2xl p-4 md:px-6 md:py-4 grid grid-cols-1 md:grid-cols-[60px_1.5fr_2fr_2fr_60px] gap-4 items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer relative"
                                 >
-                                    <div className="flex items-center gap-3">
+                                    {/* Mobile: Top Row with Selection, Index, and Delete */}
+                                    <div className="flex md:hidden items-center justify-between mb-2">
+                                        <div className="flex items-center gap-3">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    toggleSelection(item.id);
+                                                }}
+                                                className="flex items-center justify-center"
+                                            >
+                                                <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${selectedItems.includes(item.id) ? 'bg-[#7BD747]' : 'bg-gray-200'}`}>
+                                                    {selectedItems.includes(item.id) && <Check className="w-3.5 h-3.5 text-white" />}
+                                                </div>
+                                            </button>
+                                            <span className="font-bold text-gray-800 text-sm">#{item.index}</span>
+                                        </div>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDeleteClick(item.id);
+                                            }}
+                                            className="text-red-500 hover:text-red-600 transition-colors p-1"
+                                        >
+                                            <Trash2 className="w-5 h-5" />
+                                        </button>
+                                    </div>
+
+                                    {/* Desktop: Checkbox & Index */}
+                                    <div className="hidden md:flex items-center gap-3">
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
@@ -275,17 +303,26 @@ const MaintenanceRecurring: React.FC = () => {
                                         <span className="font-bold text-gray-800 text-sm">{item.index}</span>
                                     </div>
 
-                                    <div className="text-[#3A6D6C] text-sm font-semibold">{item.status}</div>
-
-                                    <div className="text-sm font-semibold text-[#3A6D6C]">
-                                        {item.category} <span className="text-gray-400">/</span>{item.subCategory}
+                                    {/* Status */}
+                                    <div className="flex justify-between md:justify-start">
+                                        <span className="md:hidden text-gray-500 text-sm">Status:</span>
+                                        <div className="text-[#3A6D6C] text-sm font-semibold">{item.status}</div>
                                     </div>
 
+                                    {/* Category & Property */}
+                                    <div className="text-sm font-semibold text-[#3A6D6C] break-words">
+                                        <span className="md:hidden text-gray-800 block mb-1">Category Details:</span>
+                                        {item.category} <span className="text-gray-400">/</span> {item.subCategory}
+                                    </div>
+
+                                    {/* Duration */}
                                     <div className="text-[#3A6D6C] text-sm font-semibold">
+                                        <span className="md:hidden text-gray-500 block mb-1">Duration:</span>
                                         {item.startDate} - {item.endDate}
                                     </div>
 
-                                    <div className="flex items-center justify-end">
+                                    {/* Desktop: Delete Action */}
+                                    <div className="hidden md:flex items-center justify-end">
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
