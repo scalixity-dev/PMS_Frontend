@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, ChevronLeft, Paperclip } from 'lucide-react';
+import { format } from 'date-fns';
+import DatePicker from '@/components/ui/DatePicker';
+import PreciseTimePicker from '@/components/ui/PreciseTimePicker';
 
 interface AddMeetingModalProps {
     isOpen: boolean;
@@ -11,7 +14,16 @@ interface AddMeetingModalProps {
 
 const AddMeetingModal: React.FC<AddMeetingModalProps> = ({ isOpen, onClose, onCreate, initialData }) => {
     const [details, setDetails] = useState(initialData?.details || '');
-    const [date, setDate] = useState(initialData?.date || '');
+    const [selectedDate, setSelectedDate] = useState<Date | undefined>(() => {
+        if (!initialData?.date) return undefined;
+        const dateObj = new Date(initialData.date);
+        return !isNaN(dateObj.getTime()) ? dateObj : undefined;
+    });
+    const [selectedTime, setSelectedTime] = useState(
+        initialData?.date && !isNaN(new Date(initialData.date).getTime())
+            ? format(new Date(initialData.date), 'h:mm a')
+            : ''
+    );
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [existingFileUrl, setExistingFileUrl] = useState<string | null>(initialData?.image || null);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -55,12 +67,20 @@ const AddMeetingModal: React.FC<AddMeetingModalProps> = ({ isOpen, onClose, onCr
 
             if (initialData) {
                 setDetails(initialData.details);
-                setDate(initialData.date);
+                const dateObj = new Date(initialData.date);
+                if (!isNaN(dateObj.getTime())) {
+                    setSelectedDate(dateObj);
+                    setSelectedTime(format(dateObj, 'h:mm a'));
+                } else {
+                    setSelectedDate(undefined);
+                    setSelectedTime('');
+                }
                 setExistingFileUrl(initialData.image || null);
                 setSelectedFile(null);
             } else {
                 setDetails('');
-                setDate('');
+                setSelectedDate(undefined);
+                setSelectedTime('');
                 setExistingFileUrl(null);
                 setSelectedFile(null);
             }
@@ -80,6 +100,52 @@ const AddMeetingModal: React.FC<AddMeetingModalProps> = ({ isOpen, onClose, onCr
         }
     };
 
+    const handleCreate = () => {
+        if (!details.trim() || !selectedDate || !selectedTime) {
+            alert('Please provide details, date, and time');
+            return;
+        }
+
+        // Combine Date and Time into ISO-like string (YYYY-MM-DDTHH:mm)
+        try {
+            const timeParts = selectedTime.match(/(\d+):(\d+)\s?(AM|PM)/i);
+            if (!timeParts) {
+                throw new Error('Invalid time format');
+            }
+
+            let hours = parseInt(timeParts[1], 10);
+            const minutes = parseInt(timeParts[2], 10);
+            const modifier = timeParts[3].toUpperCase();
+
+            if (hours === 12 && modifier === 'AM') {
+                hours = 0;
+            } else if (hours !== 12 && modifier === 'PM') {
+                hours += 12;
+            }
+
+            // Create a date object with the correct time
+            const dateTime = new Date(selectedDate);
+            dateTime.setHours(hours);
+            dateTime.setMinutes(minutes);
+            dateTime.setSeconds(0);
+
+            // Format with timezone offset explicitly
+            const dateString = format(dateTime, "yyyy-MM-dd'T'HH:mm:ssXXX");
+
+            onCreate({ details, date: dateString }, selectedFile);
+
+            // Clear form
+            setDetails('');
+            setSelectedDate(undefined);
+            setSelectedTime('');
+            setSelectedFile(null);
+            onClose();
+        } catch (error) {
+            console.error('Error processing date/time:', error);
+            alert('Invalid date or time');
+        }
+    };
+
     return createPortal(
         <div
             className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 animate-in fade-in duration-300"
@@ -92,10 +158,10 @@ const AddMeetingModal: React.FC<AddMeetingModalProps> = ({ isOpen, onClose, onCr
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="meeting-modal-title"
-                className="bg-white rounded-3xl w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-300 overflow-hidden mx-4"
+                className="bg-white rounded-3xl w-full max-w-[95%] sm:max-w-2xl shadow-2xl animate-in zoom-in-95 duration-300 overflow-visible mx-4"
             >
                 {/* Header */}
-                <div className="bg-[#3E706F] px-5 py-3 flex items-center justify-between text-white relative">
+                <div className="bg-[#3E706F] px-5 py-3 flex items-center justify-between text-white relative rounded-t-3xl">
                     <button
                         onClick={onClose}
                         aria-label="Back"
@@ -114,7 +180,7 @@ const AddMeetingModal: React.FC<AddMeetingModalProps> = ({ isOpen, onClose, onCr
                 </div>
 
                 {/* Body */}
-                <div className="p-6 bg-[#F8FAFC]">
+                <div className="p-4 sm:p-6 bg-[#F8FAFC] rounded-b-3xl">
                     {/* Textarea */}
                     <div className="bg-white rounded-2xl border border-gray-200 p-3 shadow-sm min-h-[120px] flex flex-col mb-6">
                         <textarea
@@ -131,12 +197,19 @@ const AddMeetingModal: React.FC<AddMeetingModalProps> = ({ isOpen, onClose, onCr
                         {/* Date & Time */}
                         <div className="space-y-1.5">
                             <label className="block text-xs font-bold text-[#1A1A1A]">Select Date & Time *</label>
-                            <div className="relative">
-                                <input
-                                    type="datetime-local"
-                                    value={date}
-                                    onChange={(e) => setDate(e.target.value)}
-                                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-[#3E706F] transition-colors text-gray-700 text-sm font-medium placeholder-gray-400 cursor-text [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <DatePicker
+                                    value={selectedDate}
+                                    onChange={setSelectedDate}
+                                    placeholder="Select date"
+                                    className="w-full"
+                                    popoverClassName="z-[110]"
+                                />
+                                <PreciseTimePicker
+                                    value={selectedTime}
+                                    onChange={setSelectedTime}
+                                    placeholder="Select time"
+                                    className="w-full"
                                 />
                             </div>
                         </div>
@@ -159,7 +232,7 @@ const AddMeetingModal: React.FC<AddMeetingModalProps> = ({ isOpen, onClose, onCr
                                 </button>
                             </div>
                         )}
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-col sm:flex-row items-center gap-3">
                             <input
                                 type="file"
                                 ref={fileInputRef}
@@ -169,19 +242,13 @@ const AddMeetingModal: React.FC<AddMeetingModalProps> = ({ isOpen, onClose, onCr
                             />
                             <button
                                 onClick={() => fileInputRef.current?.click()}
-                                className="bg-[#4F5867] text-white px-6 py-2.5 rounded-lg font-bold shadow-lg hover:bg-[#3f4753] transition-all hover:scale-[1.02] active:scale-[0.98] text-sm"
+                                className="w-full sm:w-auto bg-[#4F5867] text-white px-6 py-2.5 rounded-lg font-bold shadow-lg hover:bg-[#3f4753] transition-all hover:scale-[1.02] active:scale-[0.98] text-sm"
                             >
                                 Upload File
                             </button>
                             <button
-                                onClick={() => {
-                                    onCreate({ details, date }, selectedFile);
-                                    setDetails('');
-                                    setDate('');
-                                    setSelectedFile(null);
-                                    onClose();
-                                }}
-                                className="bg-[#3E706F] text-white px-8 py-2.5 rounded-lg font-bold shadow-lg hover:bg-[#2c5251] transition-all hover:scale-[1.02] active:scale-[0.98] text-sm"
+                                onClick={handleCreate}
+                                className="w-full sm:w-auto bg-[#3E706F] text-white px-8 py-2.5 rounded-lg font-bold shadow-lg hover:bg-[#2c5251] transition-all hover:scale-[1.02] active:scale-[0.98] text-sm"
                             >
                                 {initialData ? 'Update' : 'Create'}
                             </button>

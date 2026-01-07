@@ -124,7 +124,8 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
         const errors = {
             title: !formData.title.trim(),
             date: !formData.date,
-            time: !formData.isAllDay && !formData.time.trim()
+            time: !formData.isAllDay && !formData.time.trim(),
+            description: formData.description ? formData.description.length > MAX_DESCRIPTION_LENGTH : false
         };
 
         setFormErrors(errors);
@@ -254,11 +255,10 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
                             rows={2}
                             disabled={isLoading}
                             maxLength={MAX_DESCRIPTION_LENGTH}
-                            className={`w-full bg-[#F0F2F5] text-gray-800 placeholder-gray-400 px-3 py-2 rounded-md outline-none focus:ring-2 transition-all resize-none shadow-sm text-sm ${
-                                formErrors.description 
-                                    ? 'ring-2 ring-red-500 focus:ring-red-500' 
+                            className={`w-full bg-[#F0F2F5] text-gray-800 placeholder-gray-400 px-3 py-2 rounded-md outline-none focus:ring-2 transition-all resize-none shadow-sm text-sm ${formErrors.description
+                                    ? 'ring-2 ring-red-500 focus:ring-red-500'
                                     : 'focus:ring-[#3D7475]/20'
-                            } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                         />
                         {formErrors.description && (
                             <p className="text-red-500 text-xs mt-1">

@@ -1,8 +1,12 @@
+import { useState } from "react";
 import { OnlinePaymentsSettingsLayout } from "../../../../components/common/OnlinePaymentsSettingsLayout";
-import { ChevronDown } from "lucide-react";
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
+import SearchableDropdown from "../../../../components/ui/SearchableDropdown";
 
 export default function Configurations() {
+    const [country, setCountry] = useState("");
+    const countries = ["United States", "Canada", "United Kingdom"];
+
     return (
         <OnlinePaymentsSettingsLayout>
             <div className="min-h-[600px]">
@@ -33,18 +37,13 @@ export default function Configurations() {
                         {/* Country Dropdown */}
                         <div className="space-y-2">
                             <div className="relative">
-                                <select
-                                    className="w-full appearance-none bg-white border border-gray-200 rounded-lg h-[50px] px-4 pr-10 text-gray-600 text-sm focus:outline-none focus:border-[#5AB049] focus:ring-1 focus:ring-[#5AB049] transition-all"
-                                    defaultValue=""
-                                >
-                                    <option value="" disabled hidden>
-                                        Where are you based
-                                    </option>
-                                    <option value="US">United States</option>
-                                    <option value="CA">Canada</option>
-                                    <option value="UK">United Kingdom</option>
-                                </select>
-                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                                <SearchableDropdown
+                                    value={country}
+                                    onChange={setCountry}
+                                    options={countries}
+                                    placeholder="Where are you based"
+                                    buttonClassName="w-full bg-white border border-gray-200 rounded-lg h-[50px] px-4 text-left flex items-center justify-between text-gray-600 text-sm focus:outline-none focus:border-[#5AB049] focus:ring-1 focus:ring-[#5AB049] transition-all"
+                                />
                             </div>
                             <a href="#" className="block text-[#4B8F77] text-xs hover:underline">
                                 Don't see your country?

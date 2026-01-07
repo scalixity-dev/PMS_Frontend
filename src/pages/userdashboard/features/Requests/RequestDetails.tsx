@@ -1,0 +1,532 @@
+import { useState, useEffect } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import {
+    ChevronLeft, MessageSquare, Printer, Tag,
+    ImageIcon, ChevronDown, ChevronUp, User,
+    DollarSign, Paperclip,
+    FileText, Download, XCircle, X
+} from 'lucide-react';
+import { useRequestStore } from './store/requestStore';
+
+const RequestDetails = () => {
+    const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
+    const { requests } = useRequestStore();
+    const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
+    const [selectedMedia, setSelectedMedia] = useState<{ type: string; url: string; name: string } | null>(null);
+
+    // Find the request from the store - try matching by both id and requestId
+    // Handle both string and number ID comparisons
+    const foundRequest = requests.find(r => {
+        const requestIdStr = String(r.id);
+        const requestIdNum = Number(r.id);
+        const urlIdNum = Number(id);
+        return (
+            requestIdStr === id || 
+            requestIdNum === urlIdNum || 
+            r.requestId === id
+        );
+    });
+
+    // Debug logging
+    useEffect(() => {
+        console.log('RequestDetails - URL id:', id);
+        console.log('RequestDetails - Total requests:', requests.length);
+        console.log('RequestDetails - Request IDs:', requests.map(r => ({ id: r.id, requestId: r.requestId })));
+        console.log('RequestDetails - Found request:', foundRequest);
+    }, [id, requests, foundRequest]);
+
+    // Determine if sections have content for initial state
+    const hasMedia = foundRequest?.attachments?.length || foundRequest?.video;
+    const hasTransactions = false; // Transactions array is currently always empty
+    const hasAttachments = foundRequest?.attachments?.length;
+
+    // Initial state for collapsibles - open only if has content
+    const [expandedSections, setExpandedSections] = useState({
+        media: !!hasMedia,
+        transactions: !!hasTransactions,
+        attachments: !!hasAttachments
+    });
+
+    const toggleSection = (section: keyof typeof expandedSections) => {
+        setExpandedSections(prev => ({
+            ...prev,
+            [section]: !prev[section]
+        }));
+    };
+
+    if (!foundRequest) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Request Not Found</h2>
+                <button
+                    onClick={() => navigate(-1)}
+                    className="text-[#7ED957] hover:underline"
+                >
+                    Go Back
+                </button>
+            </div>
+        );
+    }
+
+    // Use actual request data, with fallbacks for missing fields
+    const request = {
+        ...foundRequest,
+        // Use actual fields from the request
+        subCategory: foundRequest.subCategory || "",
+        problem: foundRequest.problem || "",
+        description: foundRequest.description || "No description provided",
+        // Convert attachments and video to media array for display
+        media: (() => {
+            const mediaItems: Array<{ id: number; type: string; url: string; name: string }> = [];
+            
+            // Add attachments as images
+            if (foundRequest.attachments && foundRequest.attachments.length > 0) {
+                foundRequest.attachments.forEach((file, index) => {
+                    if (file instanceof File) {
+                        mediaItems.push({
+                            id: index + 1,
+                            type: file.type.startsWith('video/') ? "video" : "image",
+                            url: URL.createObjectURL(file),
+                            name: file.name
+                        });
+                    } else if (typeof file === 'string') {
+                        // It's a data URL (stored from localStorage)
+                        const isVideoFile = file.startsWith('data:video/');
+                        mediaItems.push({
+                            id: index + 1,
+                            type: isVideoFile ? "video" : "image",
+                            url: file,
+                            name: `attachment-${index + 1}${isVideoFile ? '.mp4' : '.jpg'}`
+                        });
+                    }
+                });
+            }
+            
+            // Add video if present
+            if (foundRequest.video) {
+                if (foundRequest.video instanceof File) {
+                    mediaItems.push({
+                        id: mediaItems.length + 1,
+                        type: "video",
+                        url: URL.createObjectURL(foundRequest.video),
+                        name: foundRequest.video.name
+                    });
+                } else if (typeof foundRequest.video === 'string') {
+                    // It's a data URL (stored from localStorage)
+                    mediaItems.push({
+                        id: mediaItems.length + 1,
+                        type: "video",
+                        url: foundRequest.video,
+                        name: "video.mp4"
+                    });
+                }
+            }
+            
+            return mediaItems;
+        })(),
+        assigneeInfo: {
+            name: foundRequest.assignee || "Not Assigned",
+            email: "",
+            avatarSeed: foundRequest.assignee || "User",
+            type: "One Time",
+            dateInitiated: foundRequest.createdAt ? new Date(foundRequest.createdAt).toLocaleDateString() : "-",
+            dateDue: "-"
+        },
+        transactions: [],
+        attachments: foundRequest.attachments || []
+    };
+
+    const getPriorityColor = (priority: string) => {
+        switch (priority) {
+            case "Critical": return "bg-red-100 text-red-600";
+            case "Normal": return "bg-[#DCFCE7] text-[#16A34A]"; // Matching image green
+            case "Low": return "bg-blue-100 text-blue-600";
+            default: return "bg-gray-100 text-gray-600";
+        }
+    };
+
+    return (
+        <div className="flex flex-col gap-6 w-full min-h-screen bg-white p-4 lg:p-8">
+            {/* Breadcrumbs */}
+            <nav aria-label="Breadcrumb">
+                <ol className="flex items-center gap-2 text-base font-medium">
+                    <li>
+                        <Link to="/userdashboard" className="text-[var(--dashboard-accent)] font-medium hover:opacity-80 transition-opacity">Dashboard</Link>
+                    </li>
+                    <li aria-hidden="true" className="text-[#1A1A1A] font-semibold">/</li>
+                    <li>
+                        <Link to="/userdashboard/requests" className="text-[var(--dashboard-accent)] font-medium hover:opacity-80 transition-opacity">Request</Link>
+                    </li>
+                    <li aria-hidden="true" className="text-[#1A1A1A] font-semibold">/</li>
+                    <li className="text-[#1A1A1A] font-medium" aria-current="page">Details</li>
+                </ol>
+            </nav>
+
+            <div className="max-w-7xl mx-auto w-full space-y-6">
+
+                {/* Header / Main Info Card */}
+                <div className="bg-[#F4F4F4] rounded-2xl border border-gray-200 shadow-[0px_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+                    <div className="px-4 py-3 border-b border-[#E5E7EB] flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => navigate(-1)}
+                                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                            >
+                                <ChevronLeft size={24} className="text-gray-900" />
+                            </button>
+                            <h1 className="text-xl font-semibold text-gray-900">Maintenance request</h1>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <button className="p-2 bg-white rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">
+                                <MessageSquare size={20} />
+                            </button>
+                            <div className="relative">
+                                <button
+                                    onClick={() => setIsActionMenuOpen(!isActionMenuOpen)}
+                                    className="bg-[#7ED957] hover:bg-[#6BC847] text-white px-6 py-2 rounded-xl text-sm font-semibold transition-colors"
+                                >
+                                    Action
+                                </button>
+                                {isActionMenuOpen && (
+                                    <>
+                                        <div className="fixed inset-0 z-10" onClick={() => setIsActionMenuOpen(false)}></div>
+                                        <div className="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-100 z-20 py-1">
+                                            <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                                <Printer size={14} /> Print
+                                            </button>
+                                            <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                                                <XCircle size={14} /> Cancel
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="p-6 md:p-8">
+                        <div className="flex gap-4">
+                            {/* Icon */}
+                            <div className="pt-1">
+                                <Tag size={20} className="text-gray-500" />
+                            </div>
+                            
+                            {/* Content */}
+                            <div className="flex-1 space-y-4">
+                                {/* Request ID & Title */}
+                                <div className="space-y-2">
+                                    <div className="text-gray-900 font-medium">
+                                        No. {request.requestId.replace('REQ-', '')}
+                                    </div>
+                                    <h2 className="text-2xl font-medium text-gray-900">
+                                        {request.category} / {request.subCategory} / {request.problem}
+                                    </h2>
+                                </div>
+
+                                {/* Property */}
+                                <div className="flex gap-4">
+                                    
+                                    <div className="flex-1 space-y-1">
+                                        <p className="text-gray-500 text-sm font-medium">Property</p>
+                                        <p className="text-xl font-medium text-gray-900">{request.property}</p>
+                                    </div>
+                                </div>
+
+                                {/* Description */}
+                                <div className="space-y-1">
+                                    <p className="text-gray-500 text-sm font-medium">Description</p>
+                                    <p className="text-gray-900 font-medium text-xl">{request.description}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Media Section */}
+                <div className="bg-[#F4F4F4] rounded-2xl border border-gray-200 shadow-[0px_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+                    <button
+                        onClick={() => toggleSection('media')}
+                        className="w-full px-6 py-4 flex items-center justify-between transition-colors"
+                    >
+                        <div className="flex items-center gap-2 text-xl font-semibold text-gray-900">
+                            <ImageIcon size={20} />
+                            <span>Media</span>
+                        </div>
+                        {expandedSections.media ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                    </button>
+                    {expandedSections.media && (
+                        <div className="p-6 border-t border-gray-200">
+                            {request.media.length > 0 ? (
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    {request.media.map((item) => (
+                                        <div 
+                                            key={item.id} 
+                                            className="aspect-square rounded-xl overflow-hidden bg-gray-100 border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity"
+                                            onClick={() => setSelectedMedia(item)}
+                                        >
+                                            {item.type === "video" ? (
+                                                <video src={item.url} className="w-full h-full object-cover pointer-events-none">
+                                                    Your browser does not support the video tag.
+                                                </video>
+                                            ) : (
+                                                <img src={item.url} alt={item.name} className="w-full h-full object-cover" />
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-gray-500 italic">No media files uploaded.</p>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {/* Info Grid (Assignee & Tenant) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Assignee Information */}
+                    <div className="bg-[#F4F4F4] rounded-2xl border border-gray-200 shadow-[0px_4px_12px_rgba(0,0,0,0.05)] p-6 space-y-6">
+                        <div className="flex items-center gap-2 text-xl font-semibold text-gray-900">
+                            <User size={20} />
+                            <span>Assignee Information</span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-y-6">
+                            <div>
+                                <p className="text-gray-500 text-sm font-medium mb-1">Type</p>
+                                <p className="text-gray-900 font-medium">{request.assigneeInfo.type}</p>
+                            </div>
+                            {/* Profile Card */}
+                            <div className="row-span-3">
+                                <div className="bg-white rounded-xl p-4 border border-gray-100 text-center shadow-sm">
+                                    <div className="w-20 h-20 mx-auto rounded-full overflow-hidden bg-red-100 mb-3">
+                                        <img
+                                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${request.assigneeInfo.avatarSeed}`}
+                                            alt={request.assigneeInfo.name}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    </div>
+                                    <h3 className="font-semibold text-gray-900">{request.assigneeInfo.name}</h3>
+                                    <p className="text-xs text-gray-400 mt-1 truncate" title={request.assigneeInfo.email}>{request.assigneeInfo.email}</p>
+                                </div>
+                            </div>
+
+                            <div>
+                                <p className="text-gray-500 text-sm font-medium mb-1">Priority</p>
+                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${getPriorityColor(request.priority)}`}>
+                                    <div className="w-1.5 h-1.5 bg-current rounded-full"></div>
+                                    {request.priority}
+                                </span>
+                            </div>
+
+                            <div>
+                                <p className="text-gray-500 text-sm font-medium mb-1">Date Initiated</p>
+                                <p className="text-gray-900 font-medium">{request.assigneeInfo.dateInitiated}</p>
+                            </div>
+
+                            <div>
+                                <p className="text-gray-500 text-sm font-medium mb-1">Date Due</p>
+                                <p className="text-gray-900 font-medium">{request.assigneeInfo.dateDue}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Tenant Information */}
+                    <div className="bg-[#F4F4F4] rounded-2xl border border-gray-200 shadow-[0px_4px_12px_rgba(0,0,0,0.05)] p-6 space-y-6">
+                        <div className="flex items-center gap-2 text-xl font-semibold text-gray-900">
+                            <div className="rotate-90"><div className="rotate-180"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18" /><path d="M18 17V9" /><path d="M13 17V5" /><path d="M8 17v-3" /></svg></div></div>
+                            <span>Tenant Information</span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-y-6">
+                            <div>
+                                <p className="text-gray-500 text-sm font-medium mb-1">Authorization to Enter</p>
+                                <p className="text-gray-900 font-medium">
+                                    {foundRequest.authorizationToEnter 
+                                        ? (foundRequest.authorizationToEnter.toLowerCase() === "yes" 
+                                            ? "Yes" 
+                                            : foundRequest.authorizationToEnter.toLowerCase() === "no" 
+                                                ? "No" 
+                                                : foundRequest.authorizationToEnter)
+                                        : "Not specified"}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-gray-500 text-sm font-medium mb-1">Authorization Code</p>
+                                <p className="text-gray-900 font-medium">{foundRequest.authorizationCode || "N/A"}</p>
+                            </div>
+                            <div>
+                                <p className="text-gray-500 text-sm font-medium mb-1">Pets</p>
+                                <p className="text-gray-900 font-medium">
+                                    {foundRequest.pets && foundRequest.pets.length > 0 
+                                        ? foundRequest.pets.join(", ") 
+                                        : "No pets"}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-gray-500 text-sm font-medium mb-1">Set Up Date/Time</p>
+                                <p className="text-gray-900 font-medium">{foundRequest.setUpDateTime || "Not specified"}</p>
+                            </div>
+                            {foundRequest.availability && foundRequest.availability.length > 0 && (
+                                <>
+                                    {foundRequest.availability.map((slot, index) => (
+                                        <div key={slot.id || index} className="col-span-2">
+                                            <p className="text-gray-500 text-sm font-medium mb-1">
+                                                Availability {index + 1 > 0 ? `(${index + 1})` : ""}
+                                            </p>
+                                            <div className="text-gray-900 font-medium">
+                                                {slot.date && (
+                                                    <p>Date: {new Date(slot.date).toLocaleDateString()}</p>
+                                                )}
+                                                {slot.timeSlots && slot.timeSlots.length > 0 && (
+                                                    <p>Time: {slot.timeSlots.join(", ")}</p>
+                                                )}
+                                                {!slot.date && (!slot.timeSlots || slot.timeSlots.length === 0) && (
+                                                    <p className="text-gray-400">Not specified</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </>
+                            )}
+                            {(!foundRequest.availability || foundRequest.availability.length === 0) && (
+                                <div className="col-span-2">
+                                    <p className="text-gray-500 text-sm font-medium mb-1">Availability</p>
+                                    <p className="text-gray-900 font-medium">Not specified</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Transactions Section */}
+                <div className="bg-[#F4F4F4] rounded-2xl border border-gray-200 shadow-[0px_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+                    <button
+                        onClick={() => toggleSection('transactions')}
+                        className="w-full px-6 py-4 flex items-center justify-between  transition-colors"
+                    >
+                        <div className="flex items-center gap-2 text-xl font-semibold text-gray-900">
+                            <DollarSign size={20} />
+                            <span>Transactions</span>
+                        </div>
+                        {expandedSections.transactions ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                    </button>
+                    {expandedSections.transactions && (
+                        <div className="p-6 border-t border-gray-200">
+                            {request.transactions.length > 0 ? (
+                                <div>{/* Transaction list would go here */}</div>
+                            ) : (
+                                <p className="text-gray-500 italic">No transactions recorded.</p>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {/* Attachments Section */}
+                <div className="bg-[#F4F4F4] rounded-2xl border border-gray-200 shadow-[0px_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+                    <button
+                        onClick={() => toggleSection('attachments')}
+                        className="w-full px-6 py-4 flex items-center justify-between  transition-colors"
+                    >
+                        <div className="flex items-center gap-2 text-xl font-semibold text-gray-900">
+                            <Paperclip size={20} />
+                            <span>Attachments</span>
+                        </div>
+                        {expandedSections.attachments ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                    </button>
+                    {expandedSections.attachments && (
+                        <div className="p-6 border-t border-gray-200">
+                            {request.attachments && request.attachments.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    {request.attachments.map((file: File | string, index: number) => {
+                                        const fileName = file instanceof File ? file.name : `attachment-${index + 1}`;
+                                        const fileSize = file instanceof File ? `${(file.size / 1024).toFixed(2)} KB` : 'N/A';
+                                        const fileType = file instanceof File ? file.type : 'unknown';
+                                        
+                                        return (
+                                            <div key={index} className="bg-white rounded-xl border border-gray-200 p-4 flex items-center justify-between hover:shadow-md transition-shadow group">
+                                                <div className="flex items-center gap-3 overflow-hidden">
+                                                    <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center shrink-0 text-gray-500 group-hover:bg-[#f0fdf4] group-hover:text-[#166534] transition-colors">
+                                                        <FileText size={20} />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-sm font-semibold text-gray-900 truncate" title={fileName}>{fileName}</p>
+                                                        <p className="text-xs text-gray-500">{fileSize} • {fileType}</p>
+                                                    </div>
+                                                </div>
+                                                <button 
+                                                    className="p-2 text-gray-400 hover:text-[#7ED957] hover:bg-gray-50 rounded-lg transition-colors shrink-0" 
+                                                    title="Download"
+                                                    onClick={() => {
+                                                        if (file instanceof File) {
+                                                            const url = URL.createObjectURL(file);
+                                                            const a = document.createElement('a');
+                                                            a.href = url;
+                                                            a.download = file.name;
+                                                            a.click();
+                                                            URL.revokeObjectURL(url);
+                                                        } else if (typeof file === 'string') {
+                                                            const a = document.createElement('a');
+                                                            a.href = file;
+                                                            a.download = fileName;
+                                                            a.click();
+                                                        }
+                                                    }}
+                                                >
+                                                    <Download size={20} />
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <p className="text-gray-500 italic">No attachments found.</p>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+            </div>
+
+            {/* Media Modal */}
+            {selectedMedia && (
+                <div 
+                    className="fixed inset-0 bg-black/40 bg-opacity-75 z-50 flex items-center justify-center p-28"
+                    onClick={() => setSelectedMedia(null)}
+                >
+                    {/* Media Content */}
+                    <div className="relative max-w-7xl max-h-[90vh] w-full h-full flex items-center justify-center">
+                        {/* Close Button - positioned on top-right of content */}
+                        <button
+                            onClick={() => setSelectedMedia(null)}
+                            className="absolute -top-8 -right-12 bg-white rounded-full p-3 hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl z-50"
+                            aria-label="Close"
+                        >
+                            <X size={24} className="text-gray-700" strokeWidth={2.5} />
+                        </button>
+                        
+                        {selectedMedia.type === "video" ? (
+                            <video 
+                                src={selectedMedia.url} 
+                                controls 
+                                className="max-w-full max-h-full rounded-lg shadow-2xl"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                Your browser does not support the video tag.
+                            </video>
+                        ) : (
+                            <img 
+                                src={selectedMedia.url} 
+                                alt={selectedMedia.name} 
+                                className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                                onClick={(e) => e.stopPropagation()}
+                            />
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default RequestDetails;

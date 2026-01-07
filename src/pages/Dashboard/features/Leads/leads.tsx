@@ -2,8 +2,10 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Plus, ChevronLeft, Download, MoreHorizontal, Edit2, Trash2, Check, X } from 'lucide-react';
 import { utils, writeFile } from 'xlsx';
+import { format } from 'date-fns';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import SearchableDropdown from '../../../../components/ui/SearchableDropdown';
+import DeleteConfirmationModal from '@/components/common/modals/DeleteConfirmationModal';
 import { useGetAllLeads, useUpdateLead, useDeleteLead } from '../../../../hooks/useLeadQueries';
 import { useGetAllListings } from '../../../../hooks/useListingQueries';
 import type { BackendLead, LeadStatus } from '../../../../services/lead.service';
@@ -60,7 +62,12 @@ const Leads = () => {
     const { data: listings = [] } = useGetAllListings();
     const updateLeadMutation = useUpdateLead();
     const deleteLeadMutation = useDeleteLead();
-    const [deletingLeadId, setDeletingLeadId] = useState<string | null>(null);
+    const [deletingLeadIds, setDeletingLeadIds] = useState<string[]>([]);
+
+    // Delete Confirmation State
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [deleteConfig, setDeleteConfig] = useState<{ type: 'single' | 'bulk'; ids: string[] }>({ type: 'single', ids: [] });
+
 
     // Helper function to convert status enum to display label
     const getStatusLabel = (status: string): string => {
@@ -79,7 +86,7 @@ const Leads = () => {
             phone: lead.phoneNumber || '',
             email: lead.email || '',
             source: lead.source || 'OTHER',
-            lastUpdate: '₹ 0', // This might need to come from backend
+            lastUpdate: lead.updatedAt ? format(new Date(lead.updatedAt), 'MMM dd, yyyy') : '-',
         }));
     }, [backendLeads]);
 
@@ -283,16 +290,26 @@ const Leads = () => {
         writeFile(wb, fileName);
     };
 
-    const handleBulkDelete = async () => {
-        if (selectedLeads.length === 0) return;
+    const initiateDelete = (type: 'single' | 'bulk', ids: string[]) => {
+        setDeleteConfig({ type, ids });
+        setIsDeleteModalOpen(true);
+    };
 
-        const deletingIds = [...selectedLeads];
-        setDeletingLeadId(deletingIds[0]); // Show loading state for first item
+    const handleDeleteConfirm = async () => {
+        const { type, ids } = deleteConfig;
+
+        if (ids.length === 0) {
+            setIsDeleteModalOpen(false);
+            return;
+        }
+
+        // Set loading state
+        setDeletingLeadIds(ids);
 
         try {
             // Delete all selected leads
             const results = await Promise.allSettled(
-                deletingIds.map(id => deleteLeadMutation.mutateAsync(id))
+                ids.map(id => deleteLeadMutation.mutateAsync(id))
             );
 
             // Check for failures (excluding "not found" which is treated as success)
@@ -309,7 +326,7 @@ const Leads = () => {
             if (failures.length > 0) {
                 console.error('Some leads failed to delete:', failures);
                 const errorMessages = failures.map((failure) => {
-                    const id = deletingIds[results.indexOf(failure)];
+                    const id = ids[results.indexOf(failure)];
                     const reason = failure.status === 'rejected' ? failure.reason : 'Unknown error';
                     return `Lead ${id}: ${reason instanceof Error ? reason.message : String(reason)}`;
                 });
@@ -319,13 +336,21 @@ const Leads = () => {
                 console.log('All selected leads deleted successfully');
             }
 
-            // Clear selection after deletion attempts
-            setSelectedLeads([]);
+            // Clear selection after deletion attempts if it was a bulk delete
+            if (type === 'bulk') {
+                setSelectedLeads([]);
+            } else {
+                // If single delete, remove from selection if exists
+                setSelectedLeads(prev => prev.filter(id => !ids.includes(id)));
+            }
+
         } catch (error) {
             console.error('Failed to delete leads:', error);
             alert(`Failed to delete leads: ${error instanceof Error ? error.message : 'Unknown error'}`);
         } finally {
-            setDeletingLeadId(null);
+            setDeletingLeadIds([]);
+            setIsDeleteModalOpen(false);
+            setDeleteConfig({ type: 'single', ids: [] });
         }
     };
 
@@ -350,8 +375,8 @@ const Leads = () => {
                     <div className="flex flex-wrap gap-3 w-full sm:w-auto">
                         {selectedLeads.length > 0 && (
                             <button
-                                onClick={handleBulkDelete}
-                                disabled={deletingLeadId !== null}
+                                onClick={() => initiateDelete('bulk', selectedLeads)}
+                                disabled={deletingLeadIds.length > 0}
                                 className="flex items-center gap-2 bg-red-500 text-white px-4 sm:px-6 py-2 rounded-full text-sm font-medium hover:bg-red-600 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex-1 sm:flex-none justify-center"
                             >
                                 <Trash2 className="w-5 h-5" />
@@ -500,19 +525,10 @@ const Leads = () => {
                                                         <Download className="w-4 h-4" /> Invite
                                                     </button>
                                                     <button
-                                                        onClick={async (e) => {
+                                                        onClick={(e) => {
                                                             e.stopPropagation();
-                                                            // Delete logic
-                                                            setDeletingLeadId(lead.id);
-                                                            try {
-                                                                await deleteLeadMutation.mutateAsync(lead.id);
-                                                                setSelectedLeads(prev => prev.filter(id => id !== lead.id));
-                                                            } catch (err) {
-                                                                console.error(err);
-                                                            } finally {
-                                                                setDeletingLeadId(null);
-                                                                setOpenMenuId(null);
-                                                            }
+                                                            initiateDelete('single', [lead.id]);
+                                                            setOpenMenuId(null);
                                                         }}
                                                         className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 border-t border-gray-100"
                                                     >
@@ -582,29 +598,11 @@ const Leads = () => {
                                                 <Edit2 className="w-4 h-4 stroke-[3]" />
                                             </button>
                                             <button
-                                                onClick={async (e) => {
+                                                onClick={(e) => {
                                                     e.stopPropagation();
-                                                    setDeletingLeadId(lead.id);
-                                                    try {
-                                                        await deleteLeadMutation.mutateAsync(lead.id);
-                                                        // Remove from selected leads if it was selected
-                                                        setSelectedLeads(prev => prev.filter(id => id !== lead.id));
-                                                        console.log('Lead deleted successfully:', lead.id);
-                                                    } catch (error) {
-                                                        console.error('Failed to delete lead:', error);
-                                                        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-                                                        // If lead is not found, it's already deleted - treat as success
-                                                        if (errorMessage.includes('not found') || errorMessage.includes('Not Found')) {
-                                                            console.log('Lead already deleted, removing from list');
-                                                            setSelectedLeads(prev => prev.filter(id => id !== lead.id));
-                                                        } else {
-                                                            alert(`Failed to delete lead: ${errorMessage}`);
-                                                        }
-                                                    } finally {
-                                                        setDeletingLeadId(null);
-                                                    }
+                                                    initiateDelete('single', [lead.id]);
                                                 }}
-                                                disabled={deletingLeadId === lead.id}
+                                                disabled={deletingLeadIds.includes(lead.id)}
                                                 className="text-red-500 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                                 title="Delete lead"
                                             >
@@ -758,6 +756,19 @@ const Leads = () => {
                     </div>
                 </div>
             )}
+
+            {/* Delete Confirmation Modal */}
+            <DeleteConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={handleDeleteConfirm}
+                title={deleteConfig.type === 'bulk' ? 'Delete Leads' : 'Delete Lead'}
+                message={deleteConfig.type === 'bulk'
+                    ? `Are you sure you want to delete ${deleteConfig.ids.length} selected lead(s)? This action cannot be undone.`
+                    : 'Are you sure you want to delete this lead? This action cannot be undone.'
+                }
+                itemName={deleteConfig.type === 'bulk' ? `${deleteConfig.ids.length} leads` : 'this lead'}
+            />
         </div>
     );
 };

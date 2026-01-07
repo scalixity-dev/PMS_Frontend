@@ -102,7 +102,7 @@ const ApplyDepositAndCredit: React.FC = () => {
                 </div>
 
                 {/* Table Section */}
-                <div className="bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm mt-8 pl-4">
+                <div className="bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm mt-8 pl-4 hidden md:block">
                     {/* Table Header */}
                     <div className="text-white px-6 py-4 grid grid-cols-7 gap-4 items-center text-sm font-medium">
                         <div>Invoice</div>
@@ -115,18 +115,56 @@ const ApplyDepositAndCredit: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Table Body */}
                 <div className="flex flex-col gap-3 bg-[#F0F0F6] p-4 rounded-[2rem] rounded-t min-h-[300px]">
                     {tableData.length > 0 ? (
-                        tableData.map((item, index) => (
-                            <div key={index} className="bg-white rounded-2xl px-6 py-4 grid grid-cols-7 gap-4 items-center shadow-sm hover:shadow-md transition-shadow">
-                                <div className="font-semibold text-gray-800 text-sm">{item.id}</div>
-                                <div className="text-gray-800 text-sm font-semibold">{item.dueDate}</div>
-                                <div className="text-gray-800 text-sm font-semibold">{item.applyTo}</div>
-                                <div className="text-gray-800 text-sm font-semibold">{item.subCategory}</div>
-                                <div className="text-gray-800 text-sm font-semibold">{item.applyFrom}</div>
-                                <div className="text-[#7BD747] text-sm font-bold text-right">{item.dueOn}</div>
-                                <div className="text-[#7BD747] text-sm font-bold text-right">{item.amountOwed}</div>
+                        tableData.map((item) => (
+                            <div key={item.id}>
+                                {/* Desktop View */}
+                                <div className="hidden md:grid bg-white rounded-2xl px-6 py-4 grid-cols-7 gap-4 items-center shadow-sm hover:shadow-md transition-shadow">
+                                    <div className="font-semibold text-gray-800 text-sm">{item.id}</div>
+                                    <div className="text-gray-800 text-sm font-semibold">{item.dueDate}</div>
+                                    <div className="text-gray-800 text-sm font-semibold">{item.applyTo}</div>
+                                    <div className="text-gray-800 text-sm font-semibold">{item.subCategory}</div>
+                                    <div className="text-gray-800 text-sm font-semibold">{item.applyFrom}</div>
+                                    <div className="text-[#7BD747] text-sm font-bold text-right">{item.dueOn}</div>
+                                    <div className="text-[#7BD747] text-sm font-bold text-right">{item.amountOwed}</div>
+                                </div>
+
+                                {/* Mobile Card View */}
+                                <div className="md:hidden bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex flex-col gap-3">
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex flex-col">
+                                            <span className="font-bold text-gray-800 text-base">{item.id}</span>
+                                            <span className="text-gray-500 text-xs text-nowrap">Due: {item.dueDate}</span>
+                                        </div>
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-xs text-gray-500">Owed</span>
+                                            <span className="text-[#7BD747] font-bold text-base">{item.amountOwed}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3 text-sm border-t border-gray-100 pt-3 mt-1">
+                                        <div className="flex flex-col">
+                                            <span className="text-gray-500 text-xs">Apply To</span>
+                                            <span className="text-gray-800 font-medium">{item.applyTo}</span>
+                                        </div>
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-gray-500 text-xs">Apply From</span>
+                                            <span className="text-gray-800 font-medium">{item.applyFrom}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3 text-sm border-t border-gray-100 pt-3">
+                                        <div className="flex flex-col">
+                                            <span className="text-gray-500 text-xs">Sub-category</span>
+                                            <span className="text-gray-800 font-medium">{item.subCategory}</span>
+                                        </div>
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-gray-500 text-xs">Due On</span>
+                                            <span className="text-[#7BD747] font-medium">{item.dueOn}</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         ))
                     ) : (

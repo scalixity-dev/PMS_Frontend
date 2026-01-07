@@ -103,7 +103,7 @@ const AccountingTagsSettings: FC = () => {
       activeTab="tags"
       headerActions={
         <Button
-          className="bg-[#7BD747] hover:bg-[#6bc03d] text-white px-6 py-2 rounded-lg font-medium text-sm transition-colors"
+          className="bg-[#7BD747] hover:bg-[#6bc03d] text-white px-6 py-2 rounded-lg font-medium text-sm transition-colors w-full sm:w-auto"
           onClick={handleOpenModal}
         >
           Add Tag

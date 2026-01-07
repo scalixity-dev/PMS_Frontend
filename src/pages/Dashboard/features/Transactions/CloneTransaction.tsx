@@ -49,8 +49,8 @@ const CloneTransaction: React.FC = () => {
     const labelClasses = "block text-xs font-bold text-gray-700 mb-2 ml-1";
 
     return (
-        <div className="p-6 max-w-6xl mx-auto font-['Urbanist']">
-            <div className="bg-[#E7ECEB] rounded-[2rem] p-8 shadow-sm min-h-auto">
+        <div className="max-w-7xl mx-auto min-h-screen font-outfit">
+            <div className="bg-[#E7ECEB] rounded-[2rem] p-4 sm:p-6 lg:p-8 shadow-sm min-h-auto">
                 {/* Header */}
                 <div className="flex items-center mb-8">
                     <button
@@ -63,7 +63,7 @@ const CloneTransaction: React.FC = () => {
                 </div>
 
                 {/* Form Fields */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 mb-8">
                     {/* Category */}
                     <div>
                         <label className={labelClasses}>Category & subcategory*</label>
@@ -150,7 +150,7 @@ const CloneTransaction: React.FC = () => {
                 {/* Tags */}
                 <div className="mb-8">
                     <label className={labelClasses}>Tags *</label>
-                    <div className="w-1/2 pr-4"> {/* Constraining width closer to screenshot */}
+                    <div className="w-full md:w-1/2 pr-0 md:pr-4"> {/* Constraining width closer to screenshot */}
                         <CustomDropdown
                             value={tags}
                             onChange={setTags}
@@ -177,7 +177,7 @@ const CloneTransaction: React.FC = () => {
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-4">
                     <button className="bg-[#84CC16] text-white px-8 py-3 rounded-md font-semibold shadow-lg shadow-[#84CC16]/20 hover:bg-[#65a30d] transition-all duration-200">
                         Upload File
                     </button>

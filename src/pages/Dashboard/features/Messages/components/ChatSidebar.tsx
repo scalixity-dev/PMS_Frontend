@@ -21,7 +21,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
     onSearchChange,
 }) => {
     return (
-        <div className="w-80 border-r border-gray-300 flex flex-col bg-white print:hidden">
+        <div className="w-full md:w-80 border-r border-gray-300 flex flex-col bg-white print:hidden">
             <div className="px-5 py-4 border-b border-gray-50">
                 <div className="flex items-center justify-between mb-3">
                     <h1 className="text-lg font-bold text-gray-900">Messages</h1>

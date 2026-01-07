@@ -93,7 +93,7 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onCancel, onCre
                         </div>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">Unit #*</label>
                             <input
@@ -154,7 +154,7 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onCancel, onCre
                 </div>
 
                 {/* City & State */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">City*</label>
                         <input
@@ -180,7 +180,7 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onCancel, onCre
                 </div>
 
                 {/* Country & Zip */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <CustomDropdown
                             label="Country"
@@ -211,8 +211,8 @@ const CreatePropertyForm: React.FC<CreatePropertyFormProps> = ({ onCancel, onCre
             </div>
 
             {/* Footer Buttons */}
-            <div className="grid grid-cols-2 gap-4 mt-12 w-full">
-                <div className="flex gap-4">
+            <div className="mt-12 w-full">
+                <div className="flex flex-col md:flex-row gap-4 w-full">
                     <button
                         onClick={onCancel}
                         className="flex-1 py-2 rounded-md border-2 border-white bg-white text-black text-lg font-bold hover:bg-gray-50 transition-colors shadow-lg"

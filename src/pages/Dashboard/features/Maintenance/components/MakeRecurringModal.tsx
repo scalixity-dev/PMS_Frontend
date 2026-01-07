@@ -122,7 +122,7 @@ const MakeRecurringModal: React.FC<MakeRecurringModalProps> = ({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="bg-white w-full max-w-2xl rounded-2xl md:rounded-3xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
                 {/* Header */}
                 <div className="bg-[#355F5E] px-6 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -213,7 +213,7 @@ const MakeRecurringModal: React.FC<MakeRecurringModalProps> = ({
                 </div>
 
                 {/* Footer */}
-                <div className="px-8 py-6 bg-white border-t border-gray-100 flex gap-4">
+                <div className="px-4 py-4 md:px-8 md:py-6 bg-white border-t border-gray-100 flex flex-col md:flex-row gap-3 md:gap-4">
                     <button
                         onClick={onClose}
                         className="flex-1 bg-[#535D68] text-white px-6 py-3 rounded-lg font-medium shadow-sm hover:bg-[#434b54] transition-colors"

@@ -1,17 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ChevronLeft, ChevronDown, Paperclip } from 'lucide-react';
+import { X, ChevronLeft, Paperclip } from 'lucide-react';
+import { format, parse } from 'date-fns';
+import DatePicker from '@/components/ui/DatePicker';
+import PreciseTimePicker from '@/components/ui/PreciseTimePicker';
+import SearchableDropdown from '@/components/ui/SearchableDropdown';
 
 interface AddTaskModalProps {
     isOpen: boolean;
     onClose: () => void;
     onCreate: (data: { details: string; date: string; assignee: string }, file?: File | null) => void;
     initialData?: { details: string; date: string; assignee: string; image?: string | null };
+    assignees?: string[];
 }
 
-const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onCreate, initialData }) => {
+const AddTaskModal: React.FC<AddTaskModalProps> = ({
+    isOpen,
+    onClose,
+    onCreate,
+    initialData,
+    assignees = ['Admin', 'Manager', 'Staff', 'Maintenance']
+}) => {
     const [details, setDetails] = useState(initialData?.details || '');
-    const [date, setDate] = useState(initialData?.date || '');
+    const [selectedDate, setSelectedDate] = useState<Date | undefined>(
+        initialData?.date ? new Date(initialData.date) : undefined
+    );
+    const [selectedTime, setSelectedTime] = useState(
+        initialData?.date && !isNaN(new Date(initialData.date).getTime())
+            ? format(new Date(initialData.date), 'h:mm a')
+            : ''
+    );
+
     const [assignee, setAssignee] = useState(initialData?.assignee || '');
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [existingFileUrl, setExistingFileUrl] = useState<string | null>(initialData?.image || null);
@@ -21,26 +40,34 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onCreate, 
     const returnFocusRef = React.useRef<HTMLElement | null>(null);
 
     // Effect 1: Initialize form data when modal opens
-    React.useEffect(() => {
+    useEffect(() => {
         if (isOpen) {
             if (initialData) {
                 setDetails(initialData.details);
-                setDate(initialData.date);
+                const dateObj = new Date(initialData.date);
+                if (!isNaN(dateObj.getTime())) {
+                    setSelectedDate(dateObj);
+                    setSelectedTime(format(dateObj, 'h:mm a'));
+                } else {
+                    setSelectedDate(undefined);
+                    setSelectedTime('');
+                }
                 setAssignee(initialData.assignee);
                 setExistingFileUrl(initialData.image || null);
                 setSelectedFile(null);
             } else {
                 setDetails('');
-                setDate('');
+                setSelectedDate(undefined);
+                setSelectedTime('');
                 setAssignee('');
                 setExistingFileUrl(null);
                 setSelectedFile(null);
             }
         }
-    }, [isOpen]); // Only run when modal opens/closes, not when initialData changes
+    }, [isOpen, initialData?.details, initialData?.date, initialData?.assignee, initialData?.image]);
 
     // Effect 2: Handle keyboard events and focus management
-    React.useEffect(() => {
+    useEffect(() => {
         if (!isOpen) return;
 
         // Save the element that had focus before modal opened
@@ -84,13 +111,44 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onCreate, 
             // Restore focus to the element that had focus before modal opened
             returnFocusRef.current?.focus();
         };
-    }, [isOpen, onClose]); // onClose is stable, won't cause unnecessary re-runs
+    }, [isOpen, onClose]);
 
     if (!isOpen) return null;
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             setSelectedFile(e.target.files[0]);
+        }
+    };
+
+    const handleCreate = () => {
+        if (!selectedDate || !selectedTime) {
+            alert('Please select both date and time');
+            return;
+        }
+
+        if (!assignee) {
+            alert('Please select an assignee');
+            return;
+        }
+
+        try {
+            // Parse time string and combine with date
+            const timeDate = parse(selectedTime, 'h:mm a', selectedDate);
+            const dateString = format(timeDate, "yyyy-MM-dd'T'HH:mm");
+
+            onCreate({ details, date: dateString, assignee }, selectedFile);
+
+            // Clear form
+            setDetails('');
+            setSelectedDate(undefined);
+            setSelectedTime('');
+            setAssignee('');
+            setSelectedFile(null);
+            onClose();
+        } catch (error) {
+            console.error('Error processing date/time:', error);
+            alert('Invalid date or time');
         }
     };
 
@@ -106,10 +164,10 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onCreate, 
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="task-modal-title"
-                className="bg-white rounded-3xl w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-300 overflow-hidden mx-4"
+                className="bg-white rounded-3xl w-full max-w-[95%] sm:max-w-2xl shadow-2xl animate-in zoom-in-95 duration-300 overflow-visible mx-4"
             >
                 {/* Header */}
-                <div className="bg-[#3E706F] px-5 py-3 flex items-center justify-between text-white relative">
+                <div className="bg-[#3E706F] px-5 py-3 flex items-center justify-between text-white relative rounded-t-3xl">
                     <button
                         onClick={onClose}
                         aria-label="Back"
@@ -128,7 +186,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onCreate, 
                 </div>
 
                 {/* Body */}
-                <div className="p-6 bg-[#F8FAFC]">
+                <div className="p-4 sm:p-6 bg-[#F8FAFC] rounded-b-3xl">
                     {/* Textarea */}
                     <div className="bg-white rounded-2xl border border-gray-200 p-3 shadow-sm min-h-[120px] flex flex-col mb-6">
                         <textarea
@@ -143,33 +201,36 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onCreate, 
                     {/* Inputs Row */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                         {/* Date & Time */}
-                        <div className="space-y-1.5">
+                        <div className="space-y-1.5 col-span-1 md:col-span-2">
                             <label className="block text-xs font-bold text-[#1A1A1A]">Select Date & Time *</label>
-                            <div className="relative">
-                                <input
-                                    type="datetime-local"
-                                    value={date}
-                                    onChange={(e) => setDate(e.target.value)}
-                                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-[#3E706F] transition-colors text-gray-700 text-sm font-medium placeholder-gray-400 cursor-text"
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <DatePicker
+                                    value={selectedDate}
+                                    onChange={setSelectedDate}
+                                    placeholder="Select date"
+                                    className="w-full"
+                                    popoverClassName="z-[110]"
+                                />
+                                <PreciseTimePicker
+                                    value={selectedTime}
+                                    onChange={setSelectedTime}
+                                    placeholder="Select time"
+                                    className="w-full"
                                 />
                             </div>
                         </div>
 
                         {/* Assign to */}
-                        <div className="space-y-1.5">
-                            <label className="block text-xs font-bold text-[#1A1A1A]">Assign to *</label>
-                            <div className="relative">
-                                <div className="flex items-center">
-                                    <input
-                                        type="text"
-                                        placeholder="Type here"
-                                        value={assignee}
-                                        onChange={(e) => setAssignee(e.target.value)}
-                                        className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-[#3E706F] transition-colors text-gray-700 text-sm font-medium placeholder-gray-400"
-                                    />
-                                    <ChevronDown className="absolute right-4 text-gray-400 pointer-events-none" size={16} />
-                                </div>
-                            </div>
+                        <div className="space-y-1.5 col-span-1 md:col-span-2">
+                            <SearchableDropdown
+                                label="Assign to *"
+                                value={assignee}
+                                onChange={setAssignee}
+                                options={assignees}
+                                placeholder="Search user..."
+                                className="w-full"
+                                buttonClassName="w-full flex items-center justify-between bg-white border border-gray-200 px-4 py-3 rounded-md text-sm text-gray-700 shadow-sm focus:ring-2 focus:ring-[#84CC16]/20"
+                            />
                         </div>
                     </div>
 
@@ -190,7 +251,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onCreate, 
                                 </button>
                             </div>
                         )}
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-col sm:flex-row items-center gap-3">
                             <input
                                 type="file"
                                 ref={fileInputRef}
@@ -200,20 +261,13 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onCreate, 
                             />
                             <button
                                 onClick={() => fileInputRef.current?.click()}
-                                className="bg-[#4F5867] text-white px-6 py-2.5 rounded-lg font-bold shadow-lg hover:bg-[#3f4753] transition-all hover:scale-[1.02] active:scale-[0.98] text-sm"
+                                className="w-full sm:w-auto bg-[#4F5867] text-white px-6 py-2.5 rounded-lg font-bold shadow-lg hover:bg-[#3f4753] transition-all hover:scale-[1.02] active:scale-[0.98] text-sm"
                             >
                                 Upload File
                             </button>
                             <button
-                                onClick={() => {
-                                    onCreate({ details, date, assignee }, selectedFile);
-                                    setDetails('');
-                                    setDate('');
-                                    setAssignee('');
-                                    setSelectedFile(null);
-                                    onClose();
-                                }}
-                                className="bg-[#3E706F] text-white px-8 py-2.5 rounded-lg font-bold shadow-lg hover:bg-[#2c5251] transition-all hover:scale-[1.02] active:scale-[0.98] text-sm"
+                                onClick={handleCreate}
+                                className="w-full sm:w-auto bg-[#3E706F] text-white px-8 py-2.5 rounded-lg font-bold shadow-lg hover:bg-[#2c5251] transition-all hover:scale-[1.02] active:scale-[0.98] text-sm"
                             >
                                 {initialData ? 'Update' : 'Create'}
                             </button>

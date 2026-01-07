@@ -21,7 +21,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ onFileSelect }) => {
 
             <div className="flex flex-col md:flex-row gap-12 justify-center items-center">
                 {/* Attachments Card */}
-                <div className="relative w-80">
+                <div className="relative w-full md:w-80 max-w-[20rem] md:max-w-none">
                     <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#7BD747] text-white px-10 py-3 rounded-full flex items-center gap-2 font-bold shadow-sm z-10 whitespace-nowrap">
                         <Upload size={20} strokeWidth={2.5} />
                         <span>Attachments</span>
@@ -41,7 +41,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ onFileSelect }) => {
                 </div>
 
                 {/* Video Card */}
-                <div className="relative w-80">
+                <div className="relative w-full md:w-80 max-w-[20rem] md:max-w-none">
                     <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#7BD747] text-white px-10 py-3 rounded-full flex items-center gap-2 font-bold shadow-sm z-10 whitespace-nowrap">
                         <Video size={20} strokeWidth={2.5} />
                         <span>Video</span>

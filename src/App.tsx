@@ -10,6 +10,7 @@ import ScreeningPage from './pages/basewebsite/features/screening/index';
 import LeasePage from './pages/basewebsite/features/lease/index';
 import FinancePage from './pages/basewebsite/features/finance/index';
 import LeadsPage from './pages/basewebsite/features/leads/index';
+import { RentalApplicationSettingsLayout } from './components/common/RentalApplicationSettingsLayout';
 import PricingPage from './pages/basewebsite/pricing';
 import LoginPage from './pages/basewebsite/auth/login';
 import SignUpPage from './pages/basewebsite/auth/signUp';
@@ -97,22 +98,24 @@ import FileManagerFeature from './pages/Dashboard/features/FileManager/FileManag
 // User Dashboard pages
 import UserDashboardLayout from './components/userdashboard/UserDashboardLayout';
 import UserDashboard from './pages/userdashboard/UserDashboard';
-import Rent from './pages/userdashboard/pages/rent/Rent';
-import RequestsUser from './pages/userdashboard/pages/requests/Requests';
-import UtilityProviders from './pages/userdashboard/pages/utilities/UtilityProviders';
-import PropertiesUser from './pages/userdashboard/pages/properties/Properties';
-import ApplicationsUser from './pages/userdashboard/pages/utilities/Applications';
-import FileManager from './pages/userdashboard/pages/utilities/FileManager';
-import Downloads from './pages/userdashboard/pages/utilities/Downloads';
-import NewRequest from './pages/userdashboard/pages/requests/NewRequest';
-import PropertyDetailUser from './pages/userdashboard/pages/properties/PropertyDetail';
-import SettingsUser from './pages/userdashboard/pages/settings/Settings';
-import ProfileUser from './pages/userdashboard/pages/profile/Profile';
-import SecurityUser from './pages/userdashboard/pages/profile/Security';
-import MyCardsUser from './pages/userdashboard/pages/profile/MyCards';
-import NotificationsUser from './pages/userdashboard/pages/profile/Notifications';
-import PublicRenterProfile from './pages/userdashboard/pages/profile/PublicRenterProfile';
-import LeaseDetails from './pages/userdashboard/pages/lease/LeaseDetails';
+import Rent from './pages/userdashboard/features/Rent/Rent';
+import RequestsUser from './pages/userdashboard/features/Requests/Requests';
+import UtilityProviders from './pages/userdashboard/features/Utilities/UtilityProviders';
+import PropertiesUser from './pages/userdashboard/features/Properties/Properties';
+import ApplicationsUser from './pages/userdashboard/features/Utilities/Applications';
+import FileManager from './pages/userdashboard/features/Utilities/FileManager';
+import Downloads from './pages/userdashboard/features/Utilities/Downloads';
+import NewRequest from './pages/userdashboard/features/Requests/NewRequest';
+import PropertyDetailUser from './pages/userdashboard/features/Properties/PropertyDetail';
+import SettingsUser from './pages/userdashboard/features/Settings/Settings';
+import ProfileUser from './pages/userdashboard/features/Profile/Profile';
+import SecurityUser from './pages/userdashboard/features/Profile/Security';
+import MyCardsUser from './pages/userdashboard/features/Profile/MyCards';
+import NotificationsUser from './pages/userdashboard/features/Profile/Notifications';
+import PublicRenterProfile from './pages/userdashboard/features/Profile/PublicRenterProfile';
+import LeaseDetails from './pages/userdashboard/features/Leases/LeaseDetails';
+import TransactionDetails from './pages/userdashboard/features/Transactions/TransactionDetails';
+import RequestDetails from './pages/userdashboard/features/Requests/RequestDetails';
 
 
 
@@ -149,6 +152,7 @@ import GeneralExpenses from './pages/Dashboard/features/Reports/GeneralExpenses'
 import GeneralIncome from './pages/Dashboard/features/Reports/GeneralIncome';
 import PropertyExpenses from './pages/Dashboard/features/Reports/PropertyExpenses';
 import PropertyStatement from './pages/Dashboard/features/Reports/PropertyStatement';
+import Notification from './pages/Dashboard/features/Notification/Notification';
 
 // Create a QueryClient instance
 const queryClient = new QueryClient({
@@ -307,6 +311,15 @@ const App: React.FC = () => {
                 }
               />
 
+              <Route
+                path="/dashboard/notifications"
+                element={
+                  <ProtectedRoute>
+                    <Notification />
+                  </ProtectedRoute>
+                }
+              />
+
               {/* Settings Routes */}
               <Route
                 path="/dashboard/settings"
@@ -406,30 +419,15 @@ const App: React.FC = () => {
               />
 
               {/* Rental Application Settings */}
-              <Route
-                path="/dashboard/settings/rental-application/online-application"
-                element={
-                  <ProtectedRoute>
-                    <OnlineApplication />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/settings/rental-application/form-configuration"
-                element={
-                  <ProtectedRoute>
-                    <FormConfiguration />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/settings/rental-application/terms-signature"
-                element={
-                  <ProtectedRoute>
-                    <TermsSignature />
-                  </ProtectedRoute>
-                }
-              />
+              <Route path="/dashboard/settings/rental-application" element={
+                <ProtectedRoute>
+                  <RentalApplicationSettingsLayout />
+                </ProtectedRoute>
+              }>
+                <Route path="online-application" element={<OnlineApplication />} />
+                <Route path="form-configuration" element={<FormConfiguration />} />
+                <Route path="terms-signature" element={<TermsSignature />} />
+              </Route>
 
               {/* Team Management Settings */}
               <Route
@@ -717,6 +715,7 @@ const App: React.FC = () => {
               <Route path="/userdashboard" element={<UserDashboard />} />
               <Route path="/userdashboard/rent" element={<Rent />} />
               <Route path="/userdashboard/requests" element={<RequestsUser />} />
+              <Route path="/userdashboard/requests/:id" element={<RequestDetails />} />
               <Route path="/userdashboard/utility-providers" element={<UtilityProviders />} />
               <Route path="/userdashboard/properties" element={<PropertiesUser />} />
               <Route path="/userdashboard/properties/:id" element={<PropertyDetailUser />} />
@@ -731,6 +730,7 @@ const App: React.FC = () => {
               <Route path="/userdashboard/settings/account/notifications" element={<NotificationsUser />} />
               <Route path="/userdashboard/settings/public-renter-profile" element={<PublicRenterProfile />} />
               <Route path="/userdashboard/leases/:id" element={<LeaseDetails />} />
+              <Route path="/userdashboard/transactions/:id" element={<TransactionDetails />} />
             </Route>
 
             {/* Catch-all route */}

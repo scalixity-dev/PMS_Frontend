@@ -17,7 +17,7 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
         title: initialData?.title || '',
         details: initialData?.details || ''
     });
-    
+
     // Track if user has edited the form to avoid clobbering their changes
     const formTouchedRef = useRef(false);
 
@@ -133,7 +133,7 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
     const handleChange = (field: string, value: string) => {
         // Mark form as touched when user makes any change
         formTouchedRef.current = true;
-        
+
         setFormData(prev => {
             const updated = { ...prev, [field]: value };
 
@@ -264,7 +264,7 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
             {/* Attachments */}
             <div className="flex flex-col md:flex-row gap-12 items-center mb-12">
                 {/* Attachments Card */}
-                <div className="relative w-80">
+                <div className="relative w-full md:w-80 max-w-[20rem] md:max-w-none">
                     <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#7BD747] text-white px-10 py-3 rounded-full flex items-center gap-2 font-bold shadow-sm z-10 whitespace-nowrap">
                         <Upload size={20} strokeWidth={2.5} />
                         <span>Attachments</span>
@@ -288,7 +288,7 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
                 </div>
 
                 {/* Video Card */}
-                <div className="relative w-80">
+                <div className="relative w-full md:w-80 max-w-[20rem] md:max-w-none">
                     <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#7BD747] text-white px-10 py-3 rounded-full flex items-center gap-2 font-bold shadow-sm z-10 whitespace-nowrap">
                         <Video size={20} strokeWidth={2.5} />
                         <span>Video</span>
@@ -313,16 +313,16 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
             </div>
 
             {/* Footer Buttons */}
-            <div className="flex gap-4">
+            <div className="flex flex-col md:flex-row gap-4">
                 <button
                     onClick={onDiscard}
-                    className="px-8 py-3 rounded-lg bg-white border border-gray-200 text-black font-bold hover:bg-gray-50 transition-colors shadow-sm"
+                    className="flex-1 md:flex-none px-8 py-3 rounded-lg bg-white border border-gray-200 text-black font-bold hover:bg-gray-50 transition-colors shadow-sm"
                 >
                     Discard
                 </button>
                 <button
                     onClick={() => onNext(formData)}
-                    className="px-8 py-3 rounded-lg bg-[#3D7475] text-white font-bold hover:opacity-90 transition-opacity shadow-md"
+                    className="flex-1 md:flex-none px-8 py-3 rounded-lg bg-[#3D7475] text-white font-bold hover:opacity-90 transition-opacity shadow-md"
                 >
                     Continue
                 </button>

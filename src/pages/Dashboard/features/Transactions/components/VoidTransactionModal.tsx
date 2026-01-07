@@ -47,8 +47,8 @@ const VoidTransactionModal: React.FC<VoidTransactionModalProps> = ({ onConfirm }
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200">
-            <div className="bg-white rounded-[1.5rem] w-full max-w-2xl shadow-2xl animate-in slide-in-from-bottom-4 duration-300 relative overflow-hidden flex flex-col mx-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200 p-4">
+            <div className="bg-white rounded-[1.5rem] w-full max-w-2xl shadow-2xl animate-in slide-in-from-bottom-4 duration-300 relative overflow-hidden flex flex-col">
 
                 {/* Header */}
                 <div className="bg-[#3A6D6C] p-5 flex items-center justify-between text-white">
@@ -62,7 +62,7 @@ const VoidTransactionModal: React.FC<VoidTransactionModalProps> = ({ onConfirm }
                 </div>
 
                 {/* Body */}
-                <div className="p-8">
+                <div className="p-4 sm:p-8">
                     <p className="text-lg text-[#2c3e50] mb-6">
                         Are you sure you want to void this transaction? Enter the reason if necessary.
                     </p>
@@ -88,10 +88,10 @@ const VoidTransactionModal: React.FC<VoidTransactionModalProps> = ({ onConfirm }
                         Voiding a transaction does not delete the invoice or initiate a refund, but it will remove it from your financial statements.
                     </p>
 
-                    <div className="border-t border-gray-100 -mx-8 px-8 pt-6">
+                    <div className="border-t border-gray-100 -mx-4 px-4 sm:-mx-8 sm:px-8 pt-6 flex justify-end">
                         <button
                             onClick={handleConfirm}
-                            className="bg-[#3A6D6C] text-white px-10 py-3 rounded-lg font-medium hover:bg-[#2c5251] transition-colors shadow-lg"
+                            className="w-full sm:w-auto bg-[#3A6D6C] text-white px-10 py-3 rounded-lg font-medium hover:bg-[#2c5251] transition-colors shadow-lg"
                         >
                             Confirm
                         </button>

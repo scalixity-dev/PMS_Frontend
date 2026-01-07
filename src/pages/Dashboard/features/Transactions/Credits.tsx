@@ -161,7 +161,7 @@ const Credits: React.FC = () => {
                 </div>
 
                 {/* Footer Buttons */}
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-4">
                     <button className="bg-[#7BD747] text-white px-8 py-3 rounded-lg font-semibold shadow-md hover:bg-[#6cc73d] hover:shadow-lg transition-all duration-200">
                         Upload File
                     </button>

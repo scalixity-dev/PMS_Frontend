@@ -190,7 +190,7 @@ export default function RolesPermissions() {
         <button
             type="button"
             onClick={handleOpenModal}
-            className="px-5 py-2.5 rounded-lg text-white font-medium text-sm bg-[#7CD947] border border-white shadow-md hover:shadow-lg transition-shadow"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-lg text-white font-medium text-sm bg-[#7CD947] border border-white shadow-md hover:shadow-lg transition-shadow"
         >
             Invite Team member
         </button>
@@ -206,8 +206,8 @@ export default function RolesPermissions() {
                 onInvite={handleInvite}
             />
 
-            <TeamManagementSettingsLayout 
-                activeTab="roles-permissions" 
+            <TeamManagementSettingsLayout
+                activeTab="roles-permissions"
                 headerActions={headerActions}
                 onSearchChange={handleSearchChange}
             >

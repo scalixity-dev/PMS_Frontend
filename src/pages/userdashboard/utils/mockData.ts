@@ -3,7 +3,7 @@ import type { Transaction, Lease } from "./types";
 export const mockTransactions: Transaction[] = [
     {
         id: "1",
-        status: "Open",
+        status: "Paid",
         dueDate: "02 Jan, 2026", // Today
         category: "Rent",
         contact: {
@@ -55,7 +55,7 @@ export const mockTransactions: Transaction[] = [
     },
     {
         id: "5",
-        status: "Active",
+        status: "Partial",
         dueDate: "01 Jan, 2026", // This week
         category: "Utility Bill",
         contact: {
@@ -63,7 +63,8 @@ export const mockTransactions: Transaction[] = [
             initials: "SW",
             avatarColor: "#4ECDC4"
         },
-        amount: -1500.00,
+        amount: -750.00,
+        paidAmount: 250.00,
         currency: "INR"
     }
 ];
@@ -100,6 +101,29 @@ export const mockLeases: Lease[] = [
                 phone: "+1 (888) 888 8888",
                 avatarSeed: "Atul"
             }
+        ],
+        attachments: [
+            {
+                id: 1,
+                name: "Lease Agreement.pdf",
+                size: "2.4 MB",
+                type: "PDF",
+                url: "/documents/lease-agreement.pdf"
+            },
+            {
+                id: 2,
+                name: "Move-in Notice.pdf",
+                size: "0.5 MB",
+                type: "PDF",
+                url: "/documents/move-in-notice.pdf"
+            },
+            {
+                id: 3,
+                name: "Property Rules.pdf",
+                size: "1.2 MB",
+                type: "PDF",
+                url: "/documents/property-rules.pdf"
+            }
         ]
     },
     {
@@ -129,7 +153,7 @@ export const mockLeases: Lease[] = [
     }
 ];
 
-export const tabs = ["Outstanding", "Leases", "Service providers", "Inspections"];
+export const tabs = ["Outstanding", "Leases", "Service providers"];
 
 export const mockUserInfo = {
     firstName: "Rishabh",

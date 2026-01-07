@@ -43,21 +43,21 @@ const ReviewSuccessModal: React.FC<ReviewSuccessModalProps> = ({
                             leaveFrom="opacity-100 scale-100"
                             leaveTo="opacity-0 scale-95"
                         >
-                            <Dialog.Panel className="w-full max-w-[440px] transform overflow-hidden rounded-[24px] bg-white text-left align-middle shadow-2xl transition-all font-outfit">
+                            <Dialog.Panel className="w-full max-w-sm md:max-w-[440px] transform overflow-hidden rounded-[20px] md:rounded-[24px] bg-white text-left align-middle shadow-2xl transition-all font-outfit mx-4 md:mx-0">
                                 {/* Header - Teal */}
-                                <div className="bg-[#3D7475] h-[110px] flex items-start justify-end p-5">
+                                <div className="bg-[#3D7475] h-[90px] md:h-[110px] flex items-start justify-end p-4 md:p-5">
                                     <button
                                         onClick={onClose}
                                         className="text-white hover:opacity-80 transition-opacity"
                                     >
-                                        <X size={32} strokeWidth={2.5} />
+                                        <X size={24} className="md:w-8 md:h-8" strokeWidth={2.5} />
                                     </button>
                                 </div>
 
                                 {/* Content */}
-                                <div className="px-6 pb-14 flex flex-col items-center">
+                                <div className="px-4 md:px-6 pb-10 md:pb-14 flex flex-col items-center">
                                     {/* Success Icon Container - Overlapping */}
-                                    <div className="relative w-40 h-40 -mt-20 flex items-center justify-center">
+                                    <div className="relative w-32 h-32 md:w-40 md:h-40 -mt-16 md:-mt-20 flex items-center justify-center">
                                         <DotLottieReact
                                             src={successAnimationUrl}
                                             loop
@@ -67,12 +67,12 @@ const ReviewSuccessModal: React.FC<ReviewSuccessModalProps> = ({
                                     </div>
 
                                     {/* Title */}
-                                    <h3 className="text-[32px] font-bold text-[#111827] mt-2 mb-6 tracking-tight">
+                                    <h3 className="text-2xl md:text-[32px] font-bold text-[#111827] mt-2 mb-4 md:mb-6 tracking-tight text-center">
                                         Well Done !
                                     </h3>
 
                                     {/* Message */}
-                                    <p className="text-[20px] text-center text-[#111827] leading-[1.4] font-medium px-4">
+                                    <p className="text-base md:text-[20px] text-center text-[#111827] leading-[1.4] font-medium px-2 md:px-4">
                                         You have sent an invitation to sign the notice(s) to your tenant(s) for {leaseName} at {propertyName}
                                     </p>
                                 </div>

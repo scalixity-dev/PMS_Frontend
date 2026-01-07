@@ -152,8 +152,8 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
     };
 
     return (
-        <div className="bg-[#F0F0F6] rounded-[1.5rem] p-8 mb-10 shadow-[0px_2px_4px_0px_#17151540,inset_0px_-1.42px_5.69px_0px_#E4E3E4]">
-            <div className="mb-10">
+        <div className="bg-[#F0F0F6] rounded-[1.5rem] p-4 md:p-8 mb-10 shadow-[0px_2px_4px_0px_#17151540,inset_0px_-1.42px_5.69px_0px_#E4E3E4]">
+            <div className="mb-6 md:mb-10">
                 <TiptapEditor
                     content={editorContent}
                     onChange={handleEditorChange}
@@ -164,25 +164,25 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
             </div>
 
             {/* Fields Section Card */}
-            <div className="bg-white  rounded-[1rem] shadow-[0_4px_20px_rgba(0,0,0,0.05)] p-0 overflow-hidden mb-12">
+            <div className="bg-white rounded-[1rem] shadow-[0_4px_20px_rgba(0,0,0,0.05)] p-0 overflow-hidden mb-8 md:mb-12">
                 {/* Tabs */}
-                <div className="flex items-center gap-2 px-10 pt-5" style={{ borderBottom: '0.5px solid #201F23' }}>
+                <div className="flex items-center gap-1 md:gap-2 px-2 md:px-10 pt-3 md:pt-5 overflow-x-auto" style={{ borderBottom: '0.5px solid #201F23' }}>
                     <button
                         onClick={() => setActiveTab('fields')}
-                        className={`${activeTab === 'fields' ? 'bg-[#88D94C] text-white shadow-sm' : 'text-gray-400'} px-10 py-3 rounded-t-2xl font-bold text-lg relative z-10 transition-all`}
+                        className={`${activeTab === 'fields' ? 'bg-[#88D94C] text-white shadow-sm' : 'text-gray-400'} px-4 md:px-10 py-2 md:py-3 rounded-t-xl md:rounded-t-2xl font-bold text-sm md:text-lg relative z-10 transition-all whitespace-nowrap`}
                     >
                         Fields
                     </button>
                     <button
                         onClick={() => setActiveTab('autoFill')}
-                        className={`${activeTab === 'autoFill' ? 'bg-[#88D94C] text-white shadow-sm' : 'text-gray-400'} px-10 py-3 rounded-t-2xl font-bold text-lg relative z-10 transition-all`}
+                        className={`${activeTab === 'autoFill' ? 'bg-[#88D94C] text-white shadow-sm' : 'text-gray-400'} px-4 md:px-10 py-2 md:py-3 rounded-t-xl md:rounded-t-2xl font-bold text-sm md:text-lg relative z-10 transition-all whitespace-nowrap`}
                     >
                         Auto Fill Elements
                     </button>
                 </div>
 
                 {/* Tab Content */}
-                <div className="p-10">
+                <div className="p-4 md:p-10">
                     {activeTab === 'fields' ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                             {/* Signature */}
