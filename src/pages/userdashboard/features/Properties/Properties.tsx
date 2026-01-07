@@ -299,11 +299,6 @@ const Properties: React.FC = () => {
 
         const url = `${API_ENDPOINTS.PROPERTY.GET_PUBLIC_LISTINGS}${params.toString() ? `?${params.toString()}` : ''}`;
         
-        // Debug: Log the request URL and params
-        console.log('Fetching properties with URL:', url);
-        console.log('Query params:', params.toString());
-        console.log('Active filters:', filters);
-        
         const response = await fetch(url, {
           method: 'GET',
           credentials: 'include',
@@ -314,10 +309,6 @@ const Properties: React.FC = () => {
         }
 
         const data = await response.json();
-        
-        // Debug: Log the response
-        console.log('Backend returned properties count:', data.length);
-        console.log('Properties data:', data);
 
         // Map backend response to Property type
         const mappedProperties: Property[] = data.map((item: BackendProperty, index: number) => {

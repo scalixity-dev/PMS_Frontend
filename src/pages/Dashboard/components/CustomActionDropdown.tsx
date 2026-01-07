@@ -75,7 +75,7 @@ const CustomActionDropdown: React.FC<CustomActionDropdownProps> = ({
       {/* Dropdown Menu */}
       {isOpen && !disabled && (
         <div className={cn(
-          "absolute top-full right-0 mt-2 w-56 bg-white border border-gray-100 rounded-lg shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-2 duration-200",
+          "absolute top-full right-0 mt-2 w-56 bg-white border border-gray-100 rounded-lg shadow-xl z-40 py-1 animate-in fade-in slide-in-from-top-2 duration-200",
           dropdownClassName
         )}>
           <div className="max-h-60 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden p-1">

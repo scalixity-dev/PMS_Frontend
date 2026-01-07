@@ -120,7 +120,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
 
       {/* Dropdown Menu */}
       {isOpen && !disabled && (
-        <div className={`absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden animate-in fade-in zoom-in-95 duration-100 ${dropdownClassName}`}>
+        <div className={`absolute z-40 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden animate-in fade-in zoom-in-95 duration-100 ${dropdownClassName}`}>
           {/* Search Input */}
           {searchable && (
             <div className="p-2 border-b border-gray-200">
