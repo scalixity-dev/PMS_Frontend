@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect, useCallback } from "react";
-import { Filter, Heart } from "lucide-react";
+import { Filter, Heart, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import PropertyFilters from "./components/PropertyFilters";
 import type { Property, FilterState } from "../../utils/types";
@@ -78,6 +78,7 @@ const Properties: React.FC = () => {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [usePreferences, setUsePreferences] = useState(true); // Toggle for preferences
   const [userPreferences, setUserPreferences] = useState<{
     location?: { country: string; state: string; city: string };
     rentalTypes?: string[];
@@ -139,18 +140,42 @@ const Properties: React.FC = () => {
         // Build query params from filters and user preferences
         const params = new URLSearchParams();
 
-        // Use filters if available, otherwise fall back to preferences
-        // Location: Use preferences if no explicit location filter is set
-        const location = userPreferences?.location;
-        if (location) {
-          if (location.country) params.append('country', location.country);
-          if (location.state) params.append('state', location.state);
-          if (location.city) params.append('city', location.city);
+        
+        const mapPropertyType = (type: string): string | null => {
+          if (!type || type === 'All') return null;
+         
+          if (type === 'SINGLE' || type === 'MULTI') {
+            return type;
+          }
+          return null; // Don't send invalid property types
+        };
+
+        // Use preferences only if enabled and no explicit filters are set
+        const shouldUsePreferences = usePreferences && userPreferences;
+
+        // Location: Always apply preferences if enabled (location is a hard filter)
+        if (shouldUsePreferences && userPreferences?.location) {
+          const location = userPreferences.location;
+          // Always apply location filters from preferences when enabled
+          if (location.country) {
+            params.append('country', location.country);
+          }
+          if (location.state) {
+            params.append('state', location.state);
+          }
+          if (location.city) {
+            params.append('city', location.city);
+          }
         }
 
-        // Price filters: Use filters if set, otherwise use preferences
-        const minPrice = filters?.minPrice ?? userPreferences?.criteria?.minPrice;
-        const maxPrice = filters?.maxPrice ?? userPreferences?.criteria?.maxPrice;
+        // Price filters: Use filters if set, otherwise use preferences if enabled
+        const minPrice = filters?.minPrice !== undefined && filters.minPrice !== null
+          ? filters.minPrice
+          : (shouldUsePreferences ? userPreferences?.criteria?.minPrice : undefined);
+        const maxPrice = filters?.maxPrice !== undefined && filters.maxPrice !== null
+          ? filters.maxPrice
+          : (shouldUsePreferences ? userPreferences?.criteria?.maxPrice : undefined);
+        
         if (minPrice !== undefined && minPrice !== null) {
           params.append('minPrice', minPrice.toString());
         }
@@ -158,27 +183,32 @@ const Properties: React.FC = () => {
           params.append('maxPrice', maxPrice.toString());
         }
 
-        // Beds filter: Use filters if set, otherwise use preferences
-        const bedsFilter = filters?.bedrooms && filters.bedrooms !== 'All' && filters.bedrooms !== 'Any'
-          ? filters.bedrooms === '4+' ? '4' : filters.bedrooms
-          : userPreferences?.criteria?.beds;
+        // Beds filter: Use filters if set, otherwise use preferences if enabled
+        let bedsFilter: string | undefined;
+        if (filters?.bedrooms && filters.bedrooms !== 'All' && filters.bedrooms !== 'Any') {
+          bedsFilter = filters.bedrooms === '4+' ? '4' : filters.bedrooms;
+        } else if (shouldUsePreferences && userPreferences?.criteria?.beds && userPreferences.criteria.beds !== 'Any') {
+          bedsFilter = userPreferences.criteria.beds;
+        }
+        
         if (bedsFilter) {
           params.append('beds', bedsFilter);
         }
 
-        // Baths filter: Use preferences if available
-        if (userPreferences?.criteria?.baths) {
+        // Baths filter: Use preferences if enabled
+        if (shouldUsePreferences && userPreferences?.criteria?.baths) {
           params.append('baths', userPreferences.criteria.baths);
         }
 
-        // Pets allowed filter: Use preferences if available
-        if (userPreferences?.criteria?.petsAllowed !== undefined) {
+        // Pets allowed filter: Use preferences if enabled
+        if (shouldUsePreferences && userPreferences?.criteria?.petsAllowed !== undefined) {
           params.append('petsAllowed', userPreferences.criteria.petsAllowed.toString());
         }
 
         // Property type filter (from filters only, not preferences)
-        if (filters?.propertyType && filters.propertyType !== 'All') {
-          params.append('propertyType', filters.propertyType);
+        const propertyType = mapPropertyType(filters?.propertyType || '');
+        if (propertyType) {
+          params.append('propertyType', propertyType);
         }
 
         const url = `${API_ENDPOINTS.PROPERTY.GET_PUBLIC_LISTINGS}${params.toString() ? `?${params.toString()}` : ''}`;
@@ -194,7 +224,7 @@ const Properties: React.FC = () => {
         const data = await response.json();
 
         // Map backend response to Property type
-        const mappedProperties: Property[] = data.map((item: any) => {
+        const mappedProperties: Property[] = data.map((item: any, index: number) => {
           const address = item.address;
           const addressString = address
             ? `${address.streetAddress || ''}, ${address.city || ''}, ${address.stateRegion || ''}, ${address.zipCode || ''}, ${address.country || ''}`
@@ -212,8 +242,11 @@ const Properties: React.FC = () => {
           const title = item.listing?.title ||
             (beds !== null ? `${beds} Bedroom ${item.propertyType === 'SINGLE' ? 'Property' : 'Unit'}` : item.propertyName);
 
+          // Use listing.id if available, otherwise use property.id with index to ensure uniqueness
+          const uniqueId = item.listing?.id ? `${item.id}-${item.listing.id}` : `${item.id}-${index}`;
+
           return {
-            id: item.id,
+            id: uniqueId,
             title: title,
             address: addressString,
             type: item.propertyType === 'SINGLE' ? 'Single Unit' : 'Multi Unit',
@@ -226,7 +259,19 @@ const Properties: React.FC = () => {
           };
         });
 
-        setProperties(mappedProperties);
+        // Deduplicate properties by property ID (keep first occurrence)
+        const seen = new Set<string>();
+        const deduplicatedProperties = mappedProperties.filter((property) => {
+          // Extract base property ID (before the dash)
+          const baseId = String(property.id).split('-')[0];
+          if (seen.has(baseId)) {
+            return false; // Skip duplicate
+          }
+          seen.add(baseId);
+          return true;
+        });
+
+        setProperties(deduplicatedProperties);
       } catch (err) {
         console.error('Error fetching properties:', err);
         setError(err instanceof Error ? err.message : 'Failed to load properties');
@@ -242,6 +287,7 @@ const Properties: React.FC = () => {
     filters?.propertyType,
     filters?.bedrooms,
     userPreferences,
+    usePreferences,
   ]);
 
   const filteredProperties = useMemo(() => {
@@ -313,39 +359,64 @@ const Properties: React.FC = () => {
               <li className="text-[#1A1A1A]  font-medium" aria-current="page">Properties</li>
             </ol>
           </nav>
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col gap-3">
+            {/* Preferences Toggle and Info */}
             {userPreferences && (
-              <div className="text-sm text-gray-600">
-                <span className="font-medium">Showing properties based on your preferences</span>
-                {userPreferences.location && (
-                  <span className="ml-2">
-                    • {userPreferences.location.city || userPreferences.location.state || userPreferences.location.country || 'Location'}
-                  </span>
-                )}
-                {userPreferences.criteria && (
-                  <>
-                    {userPreferences.criteria.minPrice && userPreferences.criteria.maxPrice && (
-                      <span className="ml-2">
-                        • ${userPreferences.criteria.minPrice.toLocaleString()} - ${userPreferences.criteria.maxPrice.toLocaleString()}
-                      </span>
-                    )}
-                    {userPreferences.criteria.beds && (
-                      <span className="ml-2">• {userPreferences.criteria.beds} beds</span>
-                    )}
-                    {userPreferences.criteria.petsAllowed && (
-                      <span className="ml-2">• Pets allowed</span>
-                    )}
-                  </>
+              <div className="flex items-center justify-between p-3 bg-[#F0F9FF] border border-[#8CD74B] rounded-lg">
+                <div className="flex items-center gap-3 flex-1">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={usePreferences}
+                      onChange={(e) => setUsePreferences(e.target.checked)}
+                      className="w-4 h-4 text-[#8CD74B] border-gray-300 rounded focus:ring-[#8CD74B]"
+                    />
+                    <span className="text-sm font-medium text-gray-700">
+                      Use my preferences
+                    </span>
+                  </label>
+                  {usePreferences && (
+                    <div className="flex items-center gap-2 text-xs text-gray-600 ml-4">
+                      <span className="font-medium">Active filters:</span>
+                      {userPreferences.location?.city && (
+                        <span className="px-2 py-1 bg-white rounded">📍 {userPreferences.location.city}</span>
+                      )}
+                      {userPreferences.criteria?.minPrice && userPreferences.criteria?.maxPrice && (
+                        <span className="px-2 py-1 bg-white rounded">
+                          💰 ${userPreferences.criteria.minPrice.toLocaleString()} - ${userPreferences.criteria.maxPrice.toLocaleString()}
+                        </span>
+                      )}
+                      {userPreferences.criteria?.beds && userPreferences.criteria.beds !== 'Any' && (
+                        <span className="px-2 py-1 bg-white rounded">🛏️ {userPreferences.criteria.beds} beds</span>
+                      )}
+                      {userPreferences.criteria?.petsAllowed && (
+                        <span className="px-2 py-1 bg-white rounded">🐾 Pets allowed</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {usePreferences && (
+                  <button
+                    onClick={() => setUsePreferences(false)}
+                    className="ml-2 text-gray-400 hover:text-gray-600 transition-colors"
+                    title="Disable preferences"
+                  >
+                    <X size={16} />
+                  </button>
                 )}
               </div>
             )}
-            <button
-              onClick={() => setIsPropertyFiltersOpen(true)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors bg-[#F7F7F7] border-[0.97px] border-white shadow-[0px_3.9px_3.9px_0px_#00000040]"
-            >
-              <Filter size={18} />
-              <span>Filter</span>
-            </button>
+            
+            {/* Filter Button */}
+            <div className="flex justify-end">
+              <button
+                onClick={() => setIsPropertyFiltersOpen(true)}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors bg-[#F7F7F7] border-[0.97px] border-white shadow-[0px_3.9px_3.9px_0px_#00000040]"
+              >
+                <Filter size={18} />
+                <span>Filter</span>
+              </button>
+            </div>
           </div>
         </div>
 
