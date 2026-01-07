@@ -3,7 +3,6 @@ import type { RegistrationFormProps } from './signUpProps';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { useSignUpStore } from '../store/signUpStore';
-import { useRegister } from '../../../../../hooks/useAuthQueries';
 import { authService } from '../../../../../services/auth.service';
 
 // Helper function to apply consistent styling to inputs/selects
@@ -24,9 +23,7 @@ export const TenantRegistrationForm: React.FC<RegistrationFormProps> = () => {
     match?: string;
   }>({});
   const [error, setError] = useState<string | null>(null);
-
-  // React Query hooks
-  const registerMutation = useRegister();
+  const [isLoading, setIsLoading] = useState(false);
 
   // Validate password strength
   const validatePasswordStrength = (password: string): string | undefined => {
@@ -101,6 +98,9 @@ export const TenantRegistrationForm: React.FC<RegistrationFormProps> = () => {
 
   // Handle registration
   const handleRegistration = async () => {
+    // Prevent double submission
+    if (isLoading) return;
+
     // Validate all fields
     if (!formData.email || !formData.password || !formData.fullName) {
       setError('Please fill in all required fields');
@@ -127,6 +127,7 @@ export const TenantRegistrationForm: React.FC<RegistrationFormProps> = () => {
     }
 
     setError(null);
+    setIsLoading(true);
 
     try {
       // Use tenant-specific registration endpoint
@@ -147,6 +148,7 @@ export const TenantRegistrationForm: React.FC<RegistrationFormProps> = () => {
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
+      setIsLoading(false);
     }
   };
 
@@ -268,10 +270,10 @@ export const TenantRegistrationForm: React.FC<RegistrationFormProps> = () => {
           <div className="flex justify-center pt-2">
             <button
               onClick={handleRegistration}
-              disabled={!isFormValid || registerMutation.isPending}
+              disabled={!isFormValid || isLoading}
               className="py-3 px-12 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all font-semibold transform hover:scale-[1.02] active:scale-[0.98]"
             >
-              {registerMutation.isPending ? 'Creating account...' : 'Create account'}
+              {isLoading ? 'Creating account...' : 'Create account'}
             </button>
           </div>
 

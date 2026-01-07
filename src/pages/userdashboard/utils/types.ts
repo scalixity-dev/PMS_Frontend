@@ -82,15 +82,26 @@ export interface Property {
     tag?: string; // Support both for now
 }
 
+export interface LocationFilter {
+    displayText: string; // For display purposes
+    type: 'city' | 'nearby' | 'radius' | 'state' | 'all';
+    city?: string;
+    state?: string;
+    radius?: number; // in km
+}
+
 export interface FilterState {
     search: string;
     propertyType: string;
-    region: string;
+    region: string; // Kept for backward compatibility - display text
+    locationFilter?: LocationFilter; // New structured location data
     minPrice: number;
     maxPrice: number;
+    priceModified?: boolean; // Track if user has interacted with price controls
     bedrooms: string;
     availability: string;
     selectedAmenities: string[];
+    petsAllowed: string;
 }
 export interface UserInfo {
     firstName: string;

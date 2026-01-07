@@ -21,6 +21,7 @@ interface CustomDropdownProps {
   optionClassName?: string;
   iconClassName?: string;
   searchable?: boolean;
+  maxHeight?: string;
 }
 
 const CustomDropdown: React.FC<CustomDropdownProps> = ({
@@ -36,7 +37,8 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
   dropdownClassName = '',
   optionClassName = '',
   iconClassName = '',
-  searchable = false
+  searchable = false,
+  maxHeight = 'max-h-60'
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -118,7 +120,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
 
       {/* Dropdown Menu */}
       {isOpen && !disabled && (
-        <div className={`absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden animate-in fade-in zoom-in-95 duration-100 ${dropdownClassName}`}>
+        <div className={`absolute z-40 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden animate-in fade-in zoom-in-95 duration-100 ${dropdownClassName}`}>
           {/* Search Input */}
           {searchable && (
             <div className="p-2 border-b border-gray-200">
@@ -138,7 +140,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
           )}
 
           {/* Options List */}
-          <div className="max-h-60 overflow-y-auto">
+          <div className={`${maxHeight} overflow-y-auto`}>
             {filteredOptions.length > 0 ? (
               filteredOptions.map((option) => (
                 <button
