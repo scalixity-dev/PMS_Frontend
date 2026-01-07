@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Search, Check } from "lucide-react";
 import CustomDropdown from "../../../../../pages/Dashboard/components/CustomDropdown";
 
-import type { FilterState } from "../../../utils/types";
+import type { FilterState, LocationFilter } from "../../../utils/types";
 
 interface UserPreferences {
     location?: { country: string; state: string; city: string };
@@ -117,6 +117,52 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
         // Local state will be synced via the useEffect when initialFilters changes
     };
 
+    // Helper function to parse region display text into structured LocationFilter
+    const parseRegionToLocationFilter = (regionText: string): LocationFilter | undefined => {
+        if (!regionText || regionText === 'All Locations') {
+            return { displayText: regionText, type: 'all' };
+        }
+
+        // Extract radius from region string (e.g., "Within 5km of Bhopal")
+        const radiusMatch = regionText.match(/Within (\d+)km of (.+)/);
+        if (radiusMatch) {
+            return {
+                displayText: regionText,
+                type: 'radius',
+                city: radiusMatch[2],
+                radius: parseInt(radiusMatch[1], 10)
+            };
+        }
+
+        // Handle "City & Nearby Areas" (default 10km radius)
+        if (regionText.includes(' & Nearby Areas')) {
+            const city = regionText.replace(' & Nearby Areas', '');
+            return {
+                displayText: regionText,
+                type: 'nearby',
+                city,
+                radius: 10 // Default radius for nearby areas
+            };
+        }
+
+        // Handle "All State" (e.g., "All Madhya Pradesh")
+        if (regionText.startsWith('All ')) {
+            const state = regionText.replace('All ', '');
+            return {
+                displayText: regionText,
+                type: 'state',
+                state
+            };
+        }
+
+        // Handle direct city name or other formats
+        return {
+            displayText: regionText,
+            type: 'city',
+            city: regionText
+        };
+    };
+
     // Update filters when they change (but not when syncing from props)
     useEffect(() => {
         // Don't call onApply if we're syncing from props to prevent infinite loop
@@ -124,10 +170,13 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
             return;
         }
         
+        const locationFilter = parseRegionToLocationFilter(region);
+        
         onApply({
             search,
             propertyType,
             region,
+            locationFilter,
             minPrice,
             maxPrice,
             bedrooms,

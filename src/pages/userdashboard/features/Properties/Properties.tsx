@@ -268,32 +268,40 @@ const Properties: React.FC = () => {
           params.append('petsAllowed', (filters.petsAllowed === 'Yes').toString());
         }
 
-        // Region/Location filter - Parse and send appropriate params
-        if (filters.region && filters.region !== 'All Locations') {
-          const region = filters.region;
-          
-          // Extract radius from region string (e.g., "Within 5km of Bhopal")
-          const radiusMatch = region.match(/Within (\d+)km of (.+)/);
-          if (radiusMatch) {
-            const radius = radiusMatch[1];
-            const city = radiusMatch[2];
-            params.append('city', city);
-            params.append('radius', radius);
-          } 
-          // Handle "City & Nearby Areas" (default 10km radius)
-          else if (region.includes('& Nearby Areas')) {
-            const city = region.replace(' & Nearby Areas', '');
-            params.append('city', city);
-            params.append('radius', '10'); // Default 10km for "nearby areas"
-          }
-          // Handle "All State" (e.g., "All Madhya Pradesh")
-          else if (region.startsWith('All ')) {
-            const state = region.replace('All ', '');
-            params.append('state', state);
-          }
-          // Handle direct city name or other formats
-          else {
-            params.append('region', region);
+        // Region/Location filter - Use structured location data
+        if (filters.locationFilter && filters.locationFilter.type !== 'all') {
+          const location = filters.locationFilter;
+
+          switch (location.type) {
+            case 'radius':
+              // Specific radius filter (e.g., "Within 5km of Bhopal")
+              if (location.city && location.radius) {
+                params.append('city', location.city);
+                params.append('radius', location.radius.toString());
+              }
+              break;
+            
+            case 'nearby':
+              // City & Nearby Areas (uses default radius)
+              if (location.city && location.radius) {
+                params.append('city', location.city);
+                params.append('radius', location.radius.toString());
+              }
+              break;
+            
+            case 'state':
+              // State-wide filter (e.g., "All Madhya Pradesh")
+              if (location.state) {
+                params.append('state', location.state);
+              }
+              break;
+            
+            case 'city':
+              // Direct city name
+              if (location.city) {
+                params.append('city', location.city);
+              }
+              break;
           }
         }
 
