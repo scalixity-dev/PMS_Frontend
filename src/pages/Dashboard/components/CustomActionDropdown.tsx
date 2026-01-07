@@ -85,7 +85,7 @@ const CustomActionDropdown: React.FC<CustomActionDropdownProps> = ({
                 type="button"
                 onClick={() => handleOptionClick(option)}
                 className={cn(
-                  "w-full text-left px-4 py-2.5 text-sm transition-all rounded-lg hover:bg-gray-50 text-gray-700 font-medium hover:text-[var(--dashboard-accent)] flex items-center gap-2",
+                  "w-full text-left px-4 py-2.5 text-sm transition-all rounded-lg hover:bg-gray-50 text-gray-700 font-medium flex items-center gap-2",
                   optionClassName
                 )}
               >

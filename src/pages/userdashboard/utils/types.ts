@@ -91,6 +91,7 @@ export interface FilterState {
     bedrooms: string;
     availability: string;
     selectedAmenities: string[];
+    petsAllowed: string;
 }
 export interface UserInfo {
     firstName: string;

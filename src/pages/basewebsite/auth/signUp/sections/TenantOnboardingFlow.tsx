@@ -341,7 +341,7 @@ export const TenantOnboardingFlow: React.FC = () => {
     <div className="min-h-screen bg-[#F9FAFB] p-4 md:p-10">
       <div className="max-w-3xl mx-auto">
         {/* Main Card */}
-        <div className="bg-[#F5F5F5] rounded-xl shadow-[0px_3.9px_3.9px_0px_#00000040] border border-gray-100 p-8 md:p-8 relative overflow-hidden">
+        <div className="bg-[#F5F5F5] rounded-xl shadow-[0px_3.9px_3.9px_0px_#00000040] border border-gray-100 p-8 md:p-8 mb-20 relative">
           {/* Back Button */}
           <button
             onClick={handleBack}
@@ -417,6 +417,7 @@ export const TenantOnboardingFlow: React.FC = () => {
                     required
                     searchable={true}
                     buttonClassName="bg-white border-2 border-gray-400 px-4 py-3 rounded-lg focus:ring-2 focus:ring-[#3D7475]"
+                    maxHeight="max-h-32"
                   />
                 </div>
 
@@ -432,6 +433,7 @@ export const TenantOnboardingFlow: React.FC = () => {
                     disabled={!country || stateOptions.length === 0}
                     searchable={true}
                     buttonClassName="bg-white border-2 border-gray-400 px-4 py-3 rounded-lg focus:ring-2 focus:ring-[#3D7475]"
+                    maxHeight="max-h-32"
                   />
                 </div>
 
@@ -447,6 +449,7 @@ export const TenantOnboardingFlow: React.FC = () => {
                     disabled={!stateRegion || cityOptions.length === 0}
                     searchable={true}
                     buttonClassName="bg-white border-2 border-gray-400 px-4 py-3 rounded-lg focus:ring-2 focus:ring-[#3D7475]"
+                    maxHeight="max-h-32"
                   />
                 </div>
               </div>

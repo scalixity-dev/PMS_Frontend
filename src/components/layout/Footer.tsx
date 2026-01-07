@@ -7,9 +7,10 @@ const Footer: React.FC = () => {
   const location = useLocation();
   const pathname = location.pathname;
 
-  // no footer for login or signup pages
+  // no footer for login, signup, or onboarding pages
   if (pathname === '/login') return null;
   if (pathname === '/signup') return null;
+  if (pathname === '/signup/tenant-onboarding-flow') return null;
 
   return (
     <footer className="w-full  bg-white text-sm">
