@@ -5,8 +5,8 @@ import { Country, State, City } from 'country-state-city';
 import type { ICountry, IState, ICity } from 'country-state-city';
 import PrimaryActionButton from '../../../../../components/common/buttons/PrimaryActionButton';
 import CustomDropdown from '../../../../Dashboard/components/CustomDropdown';
-import { useSignUpStore } from '../store/signUpStore';
 import { API_ENDPOINTS } from '../../../../../config/api.config';
+import { authService } from '../../../../../services/auth.service';
 
 const RENTAL_TYPES = [
   'Room',
@@ -53,9 +53,10 @@ const STEPS = [
 
 export const TenantOnboardingFlow: React.FC = () => {
   const navigate = useNavigate();
-  const { userId } = useSignUpStore();
+  const [userId, setUserId] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Location data
   const [countries, setCountries] = useState<ICountry[]>([]);
@@ -76,6 +77,29 @@ export const TenantOnboardingFlow: React.FC = () => {
   const [minPrice, setMinPrice] = useState<number>(0);
   const [maxPrice, setMaxPrice] = useState<number>(10000);
   const [petsAllowed, setPetsAllowed] = useState<boolean>(false);
+
+  // Get authenticated user ID on mount
+  useEffect(() => {
+    const fetchUserId = async () => {
+      try {
+        const user = await authService.getCurrentUser();
+        if (user && user.userId) {
+          setUserId(user.userId);
+        } else {
+          // Not authenticated, redirect to login
+          navigate('/login', { replace: true });
+        }
+      } catch (error) {
+        console.error('Error fetching user:', error);
+        // Not authenticated, redirect to login
+        navigate('/login', { replace: true });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserId();
+  }, [navigate]);
 
   // Load all countries on mount
   useEffect(() => {
@@ -161,8 +185,20 @@ export const TenantOnboardingFlow: React.FC = () => {
   const handleStep3Finish = async () => {
     if (!userId) {
       console.error('User ID not found');
-      navigate('/userdashboard');
-      return;
+      // Try to get user ID from authenticated user
+      try {
+        const user = await authService.getCurrentUser();
+        if (user && user.userId) {
+          setUserId(user.userId);
+        } else {
+          navigate('/login', { replace: true });
+          return;
+        }
+      } catch (error) {
+        console.error('Error getting user ID:', error);
+        navigate('/login', { replace: true });
+        return;
+      }
     }
 
     // Validate required fields before proceeding
@@ -283,6 +319,23 @@ export const TenantOnboardingFlow: React.FC = () => {
   const handleMaxPriceChange = (value: number) => {
     if (value >= minPrice) setMaxPrice(value);
   };
+
+  // Show loading state while fetching user ID
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F9FAFB]">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#3D7475]"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render if no userId (will redirect to login)
+  if (!userId) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] p-4 md:p-10">

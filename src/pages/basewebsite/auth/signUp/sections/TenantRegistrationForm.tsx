@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import type { RegistrationFormProps } from './signUpProps';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { useSignUpStore } from '../store/signUpStore';
 import { useRegister } from '../../../../../hooks/useAuthQueries';
@@ -14,7 +14,8 @@ const labelClasses = "block text-xs font-medium text-gray-700 mb-1";
 
 export const TenantRegistrationForm: React.FC<RegistrationFormProps> = () => {
   // Get state from Zustand store
-  const { formData, updateFormData, nextStep, setUserId } = useSignUpStore();
+  const { formData, updateFormData } = useSignUpStore();
+  const navigate = useNavigate();
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -129,17 +130,21 @@ export const TenantRegistrationForm: React.FC<RegistrationFormProps> = () => {
 
     try {
       // Use tenant-specific registration endpoint
-      const response = await authService.registerTenant({
+      await authService.registerTenant({
         email: formData.email!,
         password: formData.password!,
         fullName: formData.fullName!,
       });
 
-      // Store user ID in store for onboarding
-      setUserId(response.id);
-
-      // Registration successful - go to onboarding step
-      nextStep();
+      // Registration successful - redirect to login
+      // User needs to login first, then they'll be redirected to onboarding if needed
+      navigate('/login', { 
+        state: { 
+          email: formData.email,
+          message: 'Registration successful! Please log in to continue.' 
+        },
+        replace: true 
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
     }
