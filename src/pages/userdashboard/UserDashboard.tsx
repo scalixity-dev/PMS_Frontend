@@ -8,12 +8,12 @@ import { mockTransactions, mockLeases, tabs, mockUserInfo, mockFinances } from "
 import type { TabType } from "./utils/types";
 import PrimaryActionButton from "../../components/common/buttons/PrimaryActionButton";
 import { authService } from "../../services/auth.service";
-
 import { useAuthStore } from "./features/Profile/store/authStore";
 
 const UserDashboard = () => {
     const navigate = useNavigate();
-    const { activeTab, setActiveTab, setUserInfo, setFinances, userInfo } = useUserDashboardStore();
+    const { activeTab, setActiveTab, setFinances } = useDashboardStore();
+    const { userInfo, setUserInfo } = useAuthStore();
     const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
