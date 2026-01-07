@@ -97,6 +97,7 @@ export interface FilterState {
     locationFilter?: LocationFilter; // New structured location data
     minPrice: number;
     maxPrice: number;
+    priceModified?: boolean; // Track if user has interacted with price controls
     bedrooms: string;
     availability: string;
     selectedAmenities: string[];

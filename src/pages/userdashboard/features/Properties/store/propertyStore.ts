@@ -7,6 +7,7 @@ const defaultFilters: FilterState = {
     region: "All Locations",
     minPrice: 0,
     maxPrice: 50000,
+    priceModified: false,
     bedrooms: "All",
     availability: "All",
     selectedAmenities: [],

@@ -5,43 +5,10 @@ import PropertyFilters from "./components/PropertyFilters";
 import type { Property, FilterState } from "../../utils/types";
 import { API_ENDPOINTS } from "../../../../config/api.config";
 import { authService } from "../../../../services/auth.service";
-
-// Backend API response types
-interface PropertyPhoto {
-  photoUrl: string;
-}
-
-interface PropertyAddress {
-  streetAddress?: string;
-  city?: string;
-  stateRegion?: string;
-  zipCode?: string;
-  country?: string;
-}
-
-interface PropertyListing {
-  id?: string;
-  title?: string;
-  monthlyRent?: string;
-  listingPrice?: string;
-  petsAllowed?: boolean;
-}
-
-interface SingleUnitDetail {
-  beds?: number | null;
-}
-
-interface BackendProperty {
-  id: string;
-  propertyName?: string;
-  propertyType?: string;
-  address?: PropertyAddress;
-  listing?: PropertyListing;
-  singleUnitDetail?: SingleUnitDetail;
-  marketRent?: string;
-  coverPhotoUrl?: string;
-  photos?: PropertyPhoto[];
-}
+import type { 
+  PublicListingProperty,
+  PublicListingPhoto 
+} from "../../../../services/property.service";
 
 // --- Internal Components ---
 
@@ -209,20 +176,17 @@ const Properties: React.FC = () => {
           }
         }
 
-        // Price filters: Use filters if set, otherwise use preferences if enabled
-        // Only skip price filters if both are at default values (0 and 50000)
-        const isPriceAtDefaults = filters.minPrice === 0 && filters.maxPrice === 50000;
-        
+        // Price filters: Use filters if user has modified them, otherwise use preferences if enabled
         let minPrice: number | undefined;
         let maxPrice: number | undefined;
         
-        if (!isPriceAtDefaults && filters.minPrice !== undefined && filters.minPrice !== null) {
+        if (filters.priceModified && filters.minPrice !== undefined && filters.minPrice !== null) {
           minPrice = filters.minPrice;
         } else if (shouldUsePreferences && userPreferences?.criteria?.minPrice !== undefined) {
           minPrice = userPreferences.criteria.minPrice;
         }
         
-        if (!isPriceAtDefaults && filters.maxPrice !== undefined && filters.maxPrice !== null) {
+        if (filters.priceModified && filters.maxPrice !== undefined && filters.maxPrice !== null) {
           maxPrice = filters.maxPrice;
         } else if (shouldUsePreferences && userPreferences?.criteria?.maxPrice !== undefined) {
           maxPrice = userPreferences.criteria.maxPrice;
@@ -319,7 +283,7 @@ const Properties: React.FC = () => {
         const data = await response.json();
 
         // Map backend response to Property type
-        const mappedProperties: Property[] = data.map((item: BackendProperty, index: number) => {
+        const mappedProperties: Property[] = data.map((item: PublicListingProperty, index: number) => {
           const address = item.address;
           const addressString = address
             ? `${address.streetAddress || ''}, ${address.city || ''}, ${address.stateRegion || ''}, ${address.zipCode || ''}, ${address.country || ''}`
@@ -350,7 +314,7 @@ const Properties: React.FC = () => {
             currency: '$',
             tag: item.listing?.petsAllowed ? 'Pets Allowed' : null,
             image: item.coverPhotoUrl || (item.photos?.[0]?.photoUrl ?? null),
-            images: item.photos?.map((p: PropertyPhoto) => p.photoUrl) || [],
+            images: item.photos?.map((p: PublicListingPhoto) => p.photoUrl) || [],
           };
         });
 
@@ -376,13 +340,14 @@ const Properties: React.FC = () => {
     };
 
     fetchProperties();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     filters.minPrice,
     filters.maxPrice,
+    filters.priceModified,
     filters.propertyType,
     filters.bedrooms,
     filters.region,
+    filters.locationFilter,
     filters.petsAllowed,
     userPreferences,
     usePreferences,

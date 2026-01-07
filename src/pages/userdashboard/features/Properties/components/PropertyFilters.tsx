@@ -60,6 +60,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
     const [region, setRegion] = useState(initialFilters.region || (userPreferences?.location?.city ? userPreferences.location.city : "All Locations"));
     const [minPrice, setMinPrice] = useState(getInitialMinPrice());
     const [maxPrice, setMaxPrice] = useState(getInitialMaxPrice());
+    const [priceModified, setPriceModified] = useState(initialFilters.priceModified || false);
     const [bedrooms, setBedrooms] = useState(getInitialBedrooms());
     const [availability, setAvailability] = useState(initialFilters.availability || "All");
     const [selectedAmenities, setSelectedAmenities] = useState(initialFilters.selectedAmenities || []);
@@ -96,6 +97,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
             setRegion(initialFilters.region || (userPreferences?.location?.city ? userPreferences.location.city : "All Locations"));
             setMinPrice(initialFilters.minPrice ?? getInitialMinPrice());
             setMaxPrice(initialFilters.maxPrice ?? getInitialMaxPrice());
+            setPriceModified(initialFilters.priceModified || false);
             setBedrooms(initialFilters.bedrooms || getInitialBedrooms());
             setAvailability(initialFilters.availability || "All");
             setSelectedAmenities(initialFilters.selectedAmenities || []);
@@ -179,13 +181,14 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
             locationFilter,
             minPrice,
             maxPrice,
+            priceModified,
             bedrooms,
             availability,
             selectedAmenities,
             petsAllowed
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [search, propertyType, region, minPrice, maxPrice, bedrooms, availability, selectedAmenities, petsAllowed]);
+    }, [search, propertyType, region, minPrice, maxPrice, priceModified, bedrooms, availability, selectedAmenities, petsAllowed]);
 
     // Generate region options based on user's location from preferences
     const getRegionOptions = () => {
@@ -332,7 +335,10 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                                 <input
                                     type="text"
                                     value={minPrice}
-                                    onChange={(e) => setMinPrice(Math.min(maxPrice, Number(e.target.value) || 0))}
+                                    onChange={(e) => {
+                                        setMinPrice(Math.min(maxPrice, Number(e.target.value) || 0));
+                                        setPriceModified(true);
+                                    }}
                                     className="w-full bg-white border border-gray-200 rounded-md px-2 py-1.5 text-center text-[#8CD74B] font-semibold text-base focus:outline-none"
                                 />
                             </div>
@@ -341,7 +347,10 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                                 <input
                                     type="text"
                                     value={maxPrice}
-                                    onChange={(e) => setMaxPrice(Math.max(minPrice, Number(e.target.value) || 0))}
+                                    onChange={(e) => {
+                                        setMaxPrice(Math.max(minPrice, Number(e.target.value) || 0));
+                                        setPriceModified(true);
+                                    }}
                                     className="w-full bg-white border border-gray-200 rounded-md px-2 py-1.5 text-center text-[#8CD74B] font-semibold text-base focus:outline-none"
                                 />
                             </div>
@@ -362,6 +371,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                                         } else {
                                             setMaxPrice(Math.max(val, minPrice));
                                         }
+                                        setPriceModified(true);
                                     };
                                     updatePrice(e.clientX);
                                     const onMouseMove = (moveEvent: MouseEvent) => updatePrice(moveEvent.clientX);
