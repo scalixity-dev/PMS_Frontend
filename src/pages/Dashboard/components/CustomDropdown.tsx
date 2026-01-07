@@ -23,6 +23,8 @@ interface CustomDropdownProps {
   searchable?: boolean;
   error?: string | boolean;
   className?: string;
+  onToggle?: (isOpen: boolean) => void;
+  isOpen?: boolean;
 }
 
 const CustomDropdown: React.FC<CustomDropdownProps> = ({
@@ -41,8 +43,13 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
   searchable = false,
   error,
   className,
+  onToggle,
+  isOpen: controlledIsOpen,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const isControlled = controlledIsOpen !== undefined;
+  const isOpen = isControlled ? controlledIsOpen : internalIsOpen;
+
   const [searchQuery, setSearchQuery] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -59,8 +66,9 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+        if (!isControlled) setInternalIsOpen(false);
         setSearchQuery('');
+        onToggle?.(false);
       }
     };
 
@@ -79,14 +87,17 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
 
   const handleSelect = (optionValue: string) => {
     onChange(optionValue);
-    setIsOpen(false);
+    if (!isControlled) setInternalIsOpen(false);
     setSearchQuery('');
+    onToggle?.(false);
   };
 
   const handleOpen = () => {
     if (!disabled) {
-      setIsOpen(!isOpen);
-      if (!isOpen) {
+      const newState = !isOpen;
+      if (!isControlled) setInternalIsOpen(newState);
+      onToggle?.(newState);
+      if (!newState) {
         setSearchQuery('');
       }
     }
@@ -155,7 +166,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
                 onClick={() => handleSelect(option.value)}
                 className={`w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 text-left ${optionClassName}`}
               >
-                <span className="text-sm text-gray-900">{option.label}</span>
+                <span className="text-base sm:text-sm text-gray-900">{option.label}</span>
                 {value === option.value && (
                   <Check size={16} className="text-[var(--color-primary)]" />
                 )}
