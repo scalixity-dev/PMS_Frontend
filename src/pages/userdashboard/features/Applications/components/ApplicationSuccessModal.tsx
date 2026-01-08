@@ -9,11 +9,15 @@ import PrimaryActionButton from '@/components/common/buttons/PrimaryActionButton
 interface ApplicationSuccessModalProps {
     isOpen: boolean;
     onClose: () => void;
+    message?: string;
+    isWarning?: boolean;
 }
 
 const ApplicationSuccessModal: React.FC<ApplicationSuccessModalProps> = ({
     isOpen,
     onClose,
+    message,
+    isWarning = false,
 }) => {
     const navigate = useNavigate();
     const [isClosing, setIsClosing] = useState(false);
@@ -83,9 +87,11 @@ const ApplicationSuccessModal: React.FC<ApplicationSuccessModalProps> = ({
                                     </div>
                                 </div>
 
-                                <h3 className="text-2xl font-bold text-[#1A1A1A] mb-2">Well Done!</h3>
+                                <h3 className={`text-2xl font-bold mb-2 ${isWarning ? 'text-[#F57C00]' : 'text-[#1A1A1A]'}`}>
+                                    {isWarning ? 'Saved Locally' : 'Well Done!'}
+                                </h3>
                                 <p className="text-[#ADADAD] text-sm mb-8 font-medium leading-relaxed">
-                                    Your application has been submitted successfully. We'll notify you once it's reviewed.
+                                    {message || "Your application has been submitted successfully. We'll notify you once it's reviewed."}
                                 </p>
 
                                 <div className="flex flex-col gap-3">

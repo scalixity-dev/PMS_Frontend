@@ -41,5 +41,6 @@ export interface ChatStore {
     sendMessage: (chatId: string, message: Omit<Message, 'id' | 'timestamp'>) => void;
     markAsRead: (chatId: string) => void;
     togglePin: (chatId: string) => void;
+    addChat: (chat: Chat) => void;
 }
 

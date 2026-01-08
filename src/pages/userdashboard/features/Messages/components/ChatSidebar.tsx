@@ -1,7 +1,6 @@
-import { Search, Lightbulb, Microwave, Trees, AlertCircle, Wrench } from 'lucide-react';
+import { Search, Lightbulb, Microwave, Trees, AlertCircle, Wrench, ListPlus } from 'lucide-react';
 import type { Chat } from '../types';
 import type { ServiceRequest, Publication } from '../../../utils/types';
-import { ListPlus } from 'lucide-react';
 
 interface ChatSidebarProps {
     chats: Chat[];

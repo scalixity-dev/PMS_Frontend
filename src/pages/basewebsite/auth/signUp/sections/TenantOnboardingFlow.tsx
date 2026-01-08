@@ -318,12 +318,8 @@ export const TenantOnboardingFlow: React.FC = () => {
       return;
     }
     const numValue = Number(value);
-    if (!isNaN(numValue)) {
+    if (!isNaN(numValue) && numValue >= 0) {
       setMinPrice(numValue);
-      // If min exceeds max, push max up to match min
-      if (maxPrice !== '' && numValue > Number(maxPrice)) {
-        setMaxPrice(numValue);
-      }
     }
   };
 
@@ -333,24 +329,22 @@ export const TenantOnboardingFlow: React.FC = () => {
       return;
     }
     const numValue = Number(value);
-    if (!isNaN(numValue)) {
+    if (!isNaN(numValue) && numValue >= 0) {
       setMaxPrice(numValue);
-      // If max is less than min, push min down to match max
-      if (minPrice !== '' && numValue < Number(minPrice)) {
-        setMinPrice(numValue);
-      }
     }
   };
 
   const handleInputBlur = () => {
-    // Ensure values are within bounds and valid on blur
+    // Ensure values are valid numbers and min <= max on blur
     const min = Number(minPrice) || 0;
     const max = Number(maxPrice) || 0;
 
     if (min > max) {
+      // If min exceeds max, swap them
       setMinPrice(max);
       setMaxPrice(min);
     } else {
+      // Ensure both are valid numbers
       setMinPrice(min);
       setMaxPrice(max);
     }

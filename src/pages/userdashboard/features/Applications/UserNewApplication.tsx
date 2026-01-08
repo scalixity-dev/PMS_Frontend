@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { ChevronLeft } from "lucide-react";
-import { useNavigate, useLocation, UNSAFE_NavigationContext } from "react-router-dom";
+import { useNavigate, useLocation, useBlocker } from "react-router-dom";
 import ApplicationStepper from "./components/ApplicationStepper";
 import ApplicantInfoStep from "./steps/ApplicantInfoStep";
 import OccupantsStep from "./steps/OccupantsStep";
@@ -25,7 +25,6 @@ const UserNewApplication: React.FC = () => {
     const location = useLocation();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [shouldAllowNavigation, setShouldAllowNavigation] = useState(false);
-    const [nextLocation, setNextLocation] = useState<string | null>(null);
 
     const {
         formData,
@@ -39,6 +38,8 @@ const UserNewApplication: React.FC = () => {
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [errorMessages, setErrorMessages] = useState<string[]>([]);
+    const [successMessage, setSuccessMessage] = useState<string | undefined>(undefined);
+    const [isWarning, setIsWarning] = useState(false);
 
     // Auto-select property if passed in state
     useEffect(() => {
@@ -53,9 +54,6 @@ const UserNewApplication: React.FC = () => {
             setIsPropertySelected(true);
         }
     }, [location.state, updateFormData, setIsPropertySelected]);
-
-    // Access the navigation context to intercept navigation
-    const navigationContext = React.useContext(UNSAFE_NavigationContext);
 
     const isFormDirty = React.useMemo(() => {
         return (
@@ -72,40 +70,20 @@ const UserNewApplication: React.FC = () => {
     }, [formData]);
 
     // Block navigation when form has unsaved changes
+    const blocker = useBlocker(
+        ({ currentLocation, nextLocation }) =>
+            isFormDirty &&
+            !shouldAllowNavigation &&
+            currentLocation.pathname !== nextLocation.pathname
+    );
+
     useEffect(() => {
-        if (!isFormDirty || shouldAllowNavigation) return;
-
-        const { navigator } = navigationContext;
-        const originalPush = navigator.push;
-        const originalReplace = navigator.replace;
-
-        navigator.push = (...args: Parameters<typeof originalPush>) => {
-            const [to] = args;
-            const targetPath = typeof to === 'string' ? to : to.pathname;
-            if (targetPath !== location.pathname) {
-                setNextLocation(targetPath || '');
-                setIsModalOpen(true);
-            } else {
-                originalPush(...args);
-            }
-        };
-
-        navigator.replace = (...args: Parameters<typeof originalReplace>) => {
-            const [to] = args;
-            const targetPath = typeof to === 'string' ? to : to.pathname;
-            if (targetPath !== location.pathname) {
-                setNextLocation(targetPath || '');
-                setIsModalOpen(true);
-            } else {
-                originalReplace(...args);
-            }
-        };
-
-        return () => {
-            navigator.push = originalPush;
-            navigator.replace = originalReplace;
-        };
-    }, [isFormDirty, shouldAllowNavigation, location.pathname, navigationContext]);
+        if (blocker.state === "blocked") {
+            setIsModalOpen(true);
+        } else {
+            setIsModalOpen(false);
+        }
+    }, [blocker.state]);
 
     const saveDraft = useCallback(() => {
         if (!isFormDirty) return;
@@ -120,8 +98,8 @@ const UserNewApplication: React.FC = () => {
             address: 'In Progress...'
         };
 
-        const existingApps = JSON.parse(localStorage.getItem('user_applications') || '[]');
-        const filteredApps = existingApps.filter((app: any) => app.id !== 'draft_active');
+        const existingApps = JSON.parse(localStorage.getItem('user_applications') || '[]') as Array<{ id: string | number }>;
+        const filteredApps = existingApps.filter((app) => app.id !== 'draft_active');
         localStorage.setItem('user_applications', JSON.stringify([newDraft, ...filteredApps]));
     }, [formData, isFormDirty]);
 
@@ -134,19 +112,18 @@ const UserNewApplication: React.FC = () => {
 
     const handleConfirmLeave = useCallback(() => {
         saveDraft();
-        setIsModalOpen(false);
-        setShouldAllowNavigation(true);
-        if (nextLocation) {
-            setTimeout(() => {
-                navigate(nextLocation);
-            }, 0);
+        if (blocker.state === "blocked") {
+            blocker.proceed();
         }
-    }, [nextLocation, navigate, saveDraft]);
+        setIsModalOpen(false);
+    }, [blocker, saveDraft]);
 
     const handleCancelLeave = useCallback(() => {
+        if (blocker.state === "blocked") {
+            blocker.reset();
+        }
         setIsModalOpen(false);
-        setNextLocation(null);
-    }, []);
+    }, [blocker]);
 
     const handleBack = () => {
         if (currentStep === 1) {
@@ -172,20 +149,23 @@ const UserNewApplication: React.FC = () => {
                         address = `${addr.streetAddress}, ${addr.city}, ${addr.stateRegion} ${addr.zipCode}, ${addr.country}`;
                     }
                 }
-            } catch (err) {
+            } catch {
                 console.warn('Leasing fetch failed, using mock data');
             }
 
-            // Create application (will probably work if backend is mocked or use fallback)
+            // Track whether API submission was successful
+            let apiSubmissionSuccessful = false;
             try {
                 await applicationService.create(formData, leasingId);
+                apiSubmissionSuccessful = true;
             } catch (err) {
-                console.warn('API submission failed, persisting locally for demo');
+                console.warn('API submission failed, persisting locally for demo', err);
+                apiSubmissionSuccessful = false;
             }
 
             // Persist locally so it shows up in the Applications list
-            const existingApps = JSON.parse(localStorage.getItem('user_applications') || '[]');
-            const filteredApps = existingApps.filter((app: any) => app.id !== 'draft_active');
+            const existingApps = JSON.parse(localStorage.getItem('user_applications') || '[]') as Array<{ id: string | number }>;
+            const filteredApps = existingApps.filter((app) => app.id !== 'draft_active');
 
             const newApp = {
                 id: Date.now(),
@@ -200,6 +180,15 @@ const UserNewApplication: React.FC = () => {
 
             resetForm();
             setShouldAllowNavigation(true);
+
+            // Show appropriate message based on API submission status
+            if (apiSubmissionSuccessful) {
+                setSuccessMessage(undefined);
+                setIsWarning(false);
+            } else {
+                setSuccessMessage("Your application has been saved locally. We couldn't connect to the server, so it will be submitted when you're back online. Please check your connection and try again later.");
+                setIsWarning(true);
+            }
             setShowSuccessModal(true);
         } catch (error) {
             console.error('Failed to submit application:', error);
@@ -265,6 +254,8 @@ const UserNewApplication: React.FC = () => {
                     setShowSuccessModal(false);
                     navigate('/userdashboard/applications');
                 }}
+                message={successMessage}
+                isWarning={isWarning}
             />
 
             <ApplicationErrorModal

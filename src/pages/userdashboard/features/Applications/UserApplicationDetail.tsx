@@ -555,34 +555,45 @@ const ApplicationDetail: React.FC = () => {
                                                             </div>
 
                                                             {/* Circular Progress */}
-                                                            <div className="relative w-24 h-24">
-                                                                <svg className="w-24 h-24 transform -rotate-90">
-                                                                    <circle
-                                                                        cx="48"
-                                                                        cy="48"
-                                                                        r="40"
-                                                                        stroke="#E5E7EB"
-                                                                        strokeWidth="8"
-                                                                        fill="none"
-                                                                    />
-                                                                    <circle
-                                                                        cx="48"
-                                                                        cy="48"
-                                                                        r="40"
-                                                                        stroke="#7ED957"
-                                                                        strokeWidth="8"
-                                                                        fill="none"
-                                                                        strokeDasharray={`${2 * Math.PI * 40}`}
-                                                                        strokeDashoffset={`${2 * Math.PI * 40 * (1 - (application.applicantInfo.rentPerMonth / application.applicantInfo.householdIncome))}`}
-                                                                        strokeLinecap="round"
-                                                                    />
-                                                                </svg>
-                                                                <div className="absolute inset-0 flex items-center justify-center">
-                                                                    <span className="text-xl font-bold text-[#7ED957]">
-                                                                        {Math.round((application.applicantInfo.rentPerMonth / application.applicantInfo.householdIncome) * 100)}%
-                                                                    </span>
-                                                                </div>
-                                                            </div>
+                                                            {(() => {
+                                                                const rentIncomeRatio = application.applicantInfo.householdIncome > 0
+                                                                    ? application.applicantInfo.rentPerMonth / application.applicantInfo.householdIncome
+                                                                    : 0;
+                                                                const percentage = Math.round(rentIncomeRatio * 100);
+                                                                const circumference = 2 * Math.PI * 40;
+                                                                const strokeDashoffset = circumference * (1 - rentIncomeRatio);
+
+                                                                return (
+                                                                    <div className="relative w-24 h-24">
+                                                                        <svg className="w-24 h-24 transform -rotate-90">
+                                                                            <circle
+                                                                                cx="48"
+                                                                                cy="48"
+                                                                                r="40"
+                                                                                stroke="#E5E7EB"
+                                                                                strokeWidth="8"
+                                                                                fill="none"
+                                                                            />
+                                                                            <circle
+                                                                                cx="48"
+                                                                                cy="48"
+                                                                                r="40"
+                                                                                stroke="#7ED957"
+                                                                                strokeWidth="8"
+                                                                                fill="none"
+                                                                                strokeDasharray={circumference}
+                                                                                strokeDashoffset={strokeDashoffset}
+                                                                                strokeLinecap="round"
+                                                                            />
+                                                                        </svg>
+                                                                        <div className="absolute inset-0 flex items-center justify-center">
+                                                                            <span className="text-xl font-bold text-[#7ED957]">
+                                                                                {application.applicantInfo.householdIncome > 0 ? `${percentage}%` : 'N/A'}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })()}
                                                         </div>
                                                     </div>
                                                 </div>

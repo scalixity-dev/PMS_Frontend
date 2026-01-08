@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { Phone, Video, MoreVertical, Info, ArrowLeft } from 'lucide-react';
 import type { ServiceRequest } from '../../../utils/types';
 import ChatInput from './ChatInput';
 import MessageBubble from './MessageBubble';
+import { useMessagesStore } from '../store/messagesStore';
+
+import { useAuthStore } from '../../Profile/store/authStore';
 
 interface MaintenanceRequestViewProps {
     request: ServiceRequest;
@@ -10,36 +13,57 @@ interface MaintenanceRequestViewProps {
 }
 
 const MaintenanceRequestView = ({ request, onBack }: MaintenanceRequestViewProps) => {
-    // Mocking messages for the MR conversation
-    const [messages, setMessages] = useState([
-        {
-            id: '1',
-            senderId: 'user',
-            senderName: 'Siddak Bagga',
-            text: `${request.category} / ${request.subCategory} / ${request.problem}\n\nDescription: ${request.description || 'No description provided.'}`,
-            timestamp: request.createdAt,
-            isRead: true,
-        },
-        {
-            id: '2',
-            senderId: 'ashendra',
-            senderName: request.assignee,
-            text: 'I have received your request and will look into it shortly.',
-            timestamp: new Date(new Date(request.createdAt).getTime() + 3600000).toISOString(),
-            isRead: true,
+    const { chats, addChat, sendMessage } = useMessagesStore();
+    const { userInfo } = useAuthStore();
+
+    const chatId = request.requestId.toString();
+    const chat = chats.find((c) => c.id === chatId);
+    const messages = chat?.messages || [];
+
+    useEffect(() => {
+        if (!chat) {
+            const initialMessages = [
+                {
+                    id: '1',
+                    senderId: userInfo.email,
+                    senderName: `${userInfo.firstName} ${userInfo.lastName}`,
+                    text: `${request.category} / ${request.subCategory} / ${request.problem}\n\nDescription: ${request.description || 'No description provided.'}`,
+                    timestamp: request.createdAt,
+                    isRead: true,
+                },
+                {
+                    id: '2',
+                    senderId: request.assignee || 'system',
+                    senderName: request.assignee || 'System',
+                    text: 'I have received your request and will look into it shortly.',
+                    timestamp: new Date(new Date(request.createdAt).getTime() + 3600000).toISOString(),
+                    isRead: true,
+                },
+            ];
+
+            addChat({
+                id: chatId,
+                contactName: request.assignee || 'System',
+                contactRole: 'Maintenance',
+                contactEmail: '',
+                contactAvatar: `https://api.dicebear.com/7.x/initials/svg?seed=${request.assignee || 'System'}`,
+                lastMessage: initialMessages[1].text,
+                lastMessageTime: initialMessages[1].timestamp,
+                unreadCount: 0,
+                isOnline: false,
+                messages: initialMessages,
+                propertyAddress: request.property,
+            });
         }
-    ]);
+    }, [chat, chatId, request, addChat, userInfo]);
 
     const handleSendMessage = (text: string) => {
-        const newMessage = {
-            id: Date.now().toString(),
-            senderId: 'user',
-            senderName: 'You',
+        sendMessage(chatId, {
+            senderId: userInfo.email,
+            senderName: `${userInfo.firstName} ${userInfo.lastName}`,
             text: text,
-            timestamp: new Date().toISOString(),
             isRead: true,
-        };
-        setMessages([...messages, newMessage]);
+        });
     };
 
     return (
@@ -58,10 +82,12 @@ const MaintenanceRequestView = ({ request, onBack }: MaintenanceRequestViewProps
                         )}
                         <div className="flex -space-x-2">
                             <div className="w-10 h-10 rounded-full bg-emerald-400 border-2 border-white flex items-center justify-center text-xs text-white font-bold ring-2 ring-emerald-50">
-                                SB
+                                {userInfo.firstName?.[0]}{userInfo.lastName?.[0]}
                             </div>
                             <div className="w-10 h-10 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center text-xs text-white font-bold ring-2 ring-emerald-50">
-                                AS
+                                {request.assignee ?
+                                    request.assignee.split(' ').map(n => n[0]).join('').substring(0, 2)
+                                    : 'SY'}
                             </div>
                         </div>
                         <div>
@@ -111,7 +137,7 @@ const MaintenanceRequestView = ({ request, onBack }: MaintenanceRequestViewProps
                         <MessageBubble
                             key={message.id}
                             message={message}
-                            isOwnMessage={message.senderId === 'user'}
+                            isOwnMessage={message.senderId === userInfo.email}
                             contactName={message.senderName}
                             contactAvatar={`https://api.dicebear.com/7.x/initials/svg?seed=${message.senderName}`}
                         />
