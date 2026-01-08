@@ -26,7 +26,7 @@ export const TransactionRow = ({ transaction, isLast, onClick }: TransactionRowP
     const outstandingAmount = Math.max(0, totalAmount - paidAmount);
 
     // Determine if the transaction is recurring
-    const isRecurring = ["Rent", "Utility Bill"].includes(category) || category.includes("Monthly");
+    const isRecurring = transaction.schedule === "Monthly";
 
     return (
         <div

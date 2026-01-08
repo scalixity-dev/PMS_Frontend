@@ -58,7 +58,7 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({ value, options, onSelec
 
             {isOpen && (
                 <div className="absolute top-full mt-2 w-48 bg-white border border-gray-100 rounded-lg shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <div className="max-h-60 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden p-1">
+                    <div className="max-h-60 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden p-1.5 space-y-0.5">
                         {options.map((option) => (
                             <button
                                 key={option.value}
@@ -66,7 +66,7 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({ value, options, onSelec
                                     onSelect(option.value);
                                     setIsOpen(false);
                                 }}
-                                className={`w-full text-left px-4 py-2.5 text-sm transition-all rounded-lg hover:bg-gray-50 ${value === option.value ? "text-[#7ED957] font-semibold bg-green-50" : "text-gray-700"
+                                className={`w-full text-left px-4 py-2.5 text-sm transition-all rounded-xl hover:bg-gray-50 ${value === option.value ? "text-[#7ED957] font-semibold bg-green-50" : "text-gray-700"
                                     }`}
                             >
                                 {option.label}

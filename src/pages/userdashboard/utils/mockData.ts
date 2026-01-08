@@ -1,4 +1,4 @@
-import type { Transaction, Lease } from "./types";
+import type { Transaction, Lease, ServiceRequest } from "./types";
 
 export const mockTransactions: Transaction[] = [
     {
@@ -12,7 +12,8 @@ export const mockTransactions: Transaction[] = [
             avatarColor: "#52D3A2"
         },
         amount: -2611.00,
-        currency: "INR"
+        currency: "INR",
+        schedule: "Monthly"
     },
     {
         id: "2",
@@ -25,7 +26,8 @@ export const mockTransactions: Transaction[] = [
             avatarColor: "#52D3A2"
         },
         amount: -45000.00,
-        currency: "INR"
+        currency: "INR",
+        schedule: "Monthly"
     },
     {
         id: "3",
@@ -38,7 +40,8 @@ export const mockTransactions: Transaction[] = [
             avatarColor: "#52D3A2"
         },
         amount: -26111.00,
-        currency: "INR"
+        currency: "INR",
+        schedule: "One-time"
     },
     {
         id: "4",
@@ -51,7 +54,8 @@ export const mockTransactions: Transaction[] = [
             avatarColor: "#FF6B6B"
         },
         amount: -5000.00,
-        currency: "INR"
+        currency: "INR",
+        schedule: "One-time"
     },
     {
         id: "5",
@@ -65,7 +69,8 @@ export const mockTransactions: Transaction[] = [
         },
         amount: -750.00,
         paidAmount: 250.00,
-        currency: "INR"
+        currency: "INR",
+        schedule: "Monthly"
     }
 ];
 
@@ -108,21 +113,21 @@ export const mockLeases: Lease[] = [
                 name: "Lease Agreement.pdf",
                 size: "2.4 MB",
                 type: "PDF",
-                url: "/documents/lease-agreement.pdf"
+                url: "https://pdfobject.com/pdf/sample.pdf"
             },
             {
                 id: 2,
                 name: "Move-in Notice.pdf",
                 size: "0.5 MB",
                 type: "PDF",
-                url: "/documents/move-in-notice.pdf"
+                url: "https://pdfobject.com/pdf/sample.pdf"
             },
             {
                 id: 3,
                 name: "Property Rules.pdf",
                 size: "1.2 MB",
                 type: "PDF",
-                url: "/documents/property-rules.pdf"
+                url: "https://pdfobject.com/pdf/sample.pdf"
             }
         ]
     },
@@ -173,26 +178,79 @@ export const mockFinances = {
     credits: "0.00",
 };
 
-export const mockRequests = [
+export const mockRequests: ServiceRequest[] = [
     {
         id: 1,
         status: "New",
-        requestId: "REQ-001",
-        category: "Appliances",
-        property: "Sunset Boulevard 123",
+        requestId: "1359452",
+        category: "Electrical",
+        subCategory: "Lights",
+        property: "bhbh",
+        problem: "Interior / Light switch problems",
         priority: "Critical",
-        assignee: "",
-        createdAt: new Date().toISOString(),
+        assignee: "Ashendra Sharma",
+        description: "testinggg",
+        createdAt: "2026-01-06T03:59:00Z",
     },
     {
         id: 2,
-        status: "New",
-        requestId: "REQ-002",
+        status: "In Progress",
+        requestId: "1359453",
         category: "Electrical",
-        property: "Harbor View Apt 4B",
+        subCategory: "Outlets",
+        property: "Grand Villa",
+        problem: "Interior / Sparkling",
+        priority: "Normal",
+        assignee: "Siddak Bagga",
+        createdAt: "2026-01-05T23:17:00Z",
+    },
+    {
+        id: 3,
+        status: "New",
+        requestId: "1359454",
+        category: "Electrical",
+        subCategory: "Ceiling Fan",
+        property: "Grand Villa",
+        problem: "Smoke Detectors / Beeping",
+        priority: "Low",
+        assignee: "",
+        createdAt: "2026-01-03T07:02:00Z",
+    },
+    {
+        id: 4,
+        status: "Completed",
+        requestId: "1359455",
+        category: "Electrical",
+        subCategory: "Outlets",
+        property: "bhbh",
+        problem: "Interior / Sparkling",
         priority: "Normal",
         assignee: "",
-        createdAt: new Date().toISOString(),
+        createdAt: "2026-01-03T04:45:00Z",
     },
+    {
+        id: 5,
+        status: "New",
+        requestId: "1359456",
+        category: "Appliances",
+        subCategory: "Refrigerator",
+        property: "bhbh",
+        problem: "Temperature / Too cold",
+        priority: "Critical",
+        assignee: "",
+        createdAt: "2025-12-22T05:04:00Z",
+    },
+    {
+        id: 6,
+        status: "New",
+        requestId: "1359457",
+        category: "Outdoors",
+        subCategory: "Fencing & Roof",
+        property: "Grand Villa",
+        problem: "Installation / Wood fence",
+        priority: "Normal",
+        assignee: "",
+        createdAt: "2025-12-22T05:03:00Z",
+    }
 ];
 

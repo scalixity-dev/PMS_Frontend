@@ -13,6 +13,7 @@ export interface Transaction {
     amount: number;
     paidAmount?: number;
     currency: string;
+    schedule: 'Monthly' | 'One-time';
 }
 
 export interface TenantSummary {
@@ -160,4 +161,12 @@ export interface ServiceRequest {
     attachments?: (File | string)[]; // Can be File objects or data URL strings
     video?: File | string | null; // Can be File object or data URL string
     pets?: string[];
+}
+
+export interface Publication {
+    id: string;
+    title: string;
+    content: string;
+    date: string;
+    author: string;
 }

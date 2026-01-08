@@ -12,9 +12,16 @@ export const LeaseAgreementsNotices = ({ lease }: LeaseAgreementsNoticesProps) =
     const attachments = lease.attachments || [];
 
     const handleDownload = (attachment: typeof attachments[0]) => {
+        if (!attachment.url || attachment.url === '#') {
+            console.warn('No valid URL for attachment:', attachment.name);
+            // For mock data, we can simulate a download or show an alert
+            alert(`File "${attachment.name}" is not available for download in this mock version.`);
+            return;
+        }
+
         // Create a temporary anchor element to trigger download
         const link = document.createElement('a');
-        link.href = attachment.url || '#';
+        link.href = attachment.url;
         link.download = attachment.name;
         link.target = '_blank';
 

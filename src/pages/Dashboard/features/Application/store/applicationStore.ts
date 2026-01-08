@@ -32,22 +32,24 @@ export interface ApplicationFormData {
   middleName: string;
   lastName: string;
   email: string;
-  phoneNumber: string;  
+  phoneNumber: string;
   phoneCountryCode?: string;
   dob: Date | undefined;
   shortBio: string;
   moveInDate: Date | undefined;
-  
+
   // Step 2: Occupants
   occupants: Array<OccupantFormData & { id: string }>;
   pets: Array<PetFormData & { id: string }>;
-  photo: File | null; 
-  vehicles: Array<VehicleFormData & { id: string }>; 
+  photo: File | null;
+  vehicles: Array<VehicleFormData & { id: string }>;
   residences: Array<ResidenceFormData & { id: string }>;
   incomes: Array<IncomeFormData & { id: string }>;
   additionalResidenceInfo: string;
   additionalIncomeInfo: string;
   emergencyContacts: Array<EmergencyContactFormData & { id: string }>;
+  backgroundQuestions: Record<string, boolean | null>;
+  backgroundExplanations: Record<string, string>;
   documents: FileMetadata[];
   // Runtime-only: actual File objects (not persisted to localStorage)
   documentFiles?: File[];
@@ -60,7 +62,7 @@ export interface ApplicationState {
 
   // Step management
   currentStep: number;
-  
+
   // Internal state for Step 1 partial navigation
   isPropertySelected: boolean;
 
@@ -92,6 +94,8 @@ const initialFormData: ApplicationFormData = {
   additionalResidenceInfo: '',
   additionalIncomeInfo: '',
   emergencyContacts: [],
+  backgroundQuestions: {},
+  backgroundExplanations: {},
   documents: []
 };
 
