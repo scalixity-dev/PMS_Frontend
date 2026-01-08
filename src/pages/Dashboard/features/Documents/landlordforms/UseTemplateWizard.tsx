@@ -4,11 +4,29 @@ import { ChevronDown, ChevronLeft, Plus, X } from 'lucide-react';
 import PrimaryActionButton from '../../../../../components/common/buttons/PrimaryActionButton';
 import TemplateEditor from '../components/TemplateEditor';
 import { getTemplateHTML } from './utils/templateUtils';
+import { Dialog, Transition } from '@headlessui/react';
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+// Correct relative path from Documents/landlordforms to features/ListUnit
+import successAnimationUrl from '../../ListUnit/Success.lottie?url';
 
 // --- Constants & Types ---
 
 const MOCK_TENANTS = ['Luxury Property', 'John Doe', 'Jane Smith', 'Bob Johnson'];
 const MOCK_LEASES = ['Lease Agreement 001', 'Lease Agreement 002', 'Lease Agreement 003'];
+
+const MOCK_NOTICE_TEMPLATES = [
+    { id: '1', name: 'Notice to Vacate', type: 'Notice', states: 'All States' },
+    { id: '2', name: 'Late Rent Notice', type: 'Notice', states: 'All States' },
+    { id: '3', name: 'Lease Violation Notice', type: 'Warning', states: 'All States' },
+    { id: '4', name: 'Notice of Entry', type: 'Notice', states: 'CA, NY, TX' },
+];
+
+const MOCK_AGREEMENT_TEMPLATES = [
+    { id: '1', name: 'Residential Lease Agreement', type: 'Agreement', states: 'All States' },
+    { id: '2', name: 'Commercial Lease Agreement', type: 'Agreement', states: 'All States' },
+    { id: '3', name: 'Month-to-Month Rental Agreement', type: 'Agreement', states: 'All States' },
+    { id: '4', name: 'Sublease Agreement', type: 'Agreement', states: 'All States' },
+];
 
 const STEPS = [
     { num: 1, label: 'Lease' },
@@ -137,6 +155,99 @@ const WizardDropdown: React.FC<WizardDropdownProps> = ({
     </div>
 );
 
+
+
+interface SuccessModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    title: string;
+    description: string;
+}
+
+const SuccessModal: React.FC<SuccessModalProps> = ({
+    isOpen,
+    onClose,
+    title,
+    description,
+}) => {
+    return (
+        <Transition appear show={isOpen} as={React.Fragment}>
+            <Dialog as="div" className="relative z-[300]" onClose={onClose}>
+                <Transition.Child
+                    as={React.Fragment}
+                    enter="ease-out duration-300"
+                    enterFrom="opacity-0"
+                    enterTo="opacity-100"
+                    leave="ease-in duration-200"
+                    leaveFrom="opacity-100"
+                    leaveTo="opacity-0"
+                >
+                    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity" />
+                </Transition.Child>
+
+                <div className="fixed inset-0 overflow-y-auto">
+                    <div className="flex min-h-full items-center justify-center p-4 text-center">
+                        <Transition.Child
+                            as={React.Fragment}
+                            enter="ease-out duration-300"
+                            enterFrom="opacity-0 scale-95"
+                            enterTo="opacity-100 scale-100"
+                            leave="ease-in duration-200"
+                            leaveFrom="opacity-100 scale-100"
+                            leaveTo="opacity-0 scale-95"
+                        >
+                            <Dialog.Panel className="w-full max-w-sm transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-xl transition-all">
+                                {/* Header */}
+                                <div className="bg-[#3A6D6C] p-3 flex justify-end">
+                                    <button
+                                        onClick={onClose}
+                                        className="text-white hover:text-gray-200 transition-colors focus:outline-none"
+                                    >
+                                        <X size={20} />
+                                    </button>
+                                </div>
+
+                                {/* Content */}
+                                <div className="p-6 flex flex-col items-center text-center">
+                                    {/* Animation */}
+                                    <div className="w-40 h-40 mb-4">
+                                        <DotLottieReact
+                                            src={successAnimationUrl}
+                                            loop
+                                            autoplay
+                                            style={{ width: '100%', height: '100%' }}
+                                        />
+                                    </div>
+
+                                    <Dialog.Title
+                                        as="h3"
+                                        className="text-xl font-bold text-gray-900 mb-2"
+                                    >
+                                        {title}
+                                    </Dialog.Title>
+
+                                    <p className="text-gray-600 font-medium mb-8">
+                                        {description}
+                                    </p>
+
+                                    {/* Done Button */}
+                                    <button
+                                        type="button"
+                                        className="w-full max-w-[200px] justify-center rounded-lg bg-[#3A6D6C] px-4 py-2 text-sm font-medium text-white hover:bg-[#2c5251] focus:outline-none focus:ring-2 focus:ring-[#3A6D6C] focus:ring-offset-2 transition-colors"
+                                        onClick={onClose}
+                                    >
+                                        Done
+                                    </button>
+                                </div>
+                            </Dialog.Panel>
+                        </Transition.Child>
+                    </div>
+                </div>
+            </Dialog>
+        </Transition>
+    );
+};
+
 interface LocationState {
     returnPath?: string;
     selectedProperty?: string;
@@ -150,6 +261,10 @@ const UseTemplateWizard: React.FC = () => {
     const state = location.state as LocationState;
     const { templateName, id } = useParams<{ templateName?: string; id?: string }>();
 
+    const isAgreement = location.pathname.includes('send-agreement');
+    const docTypeLabel = isAgreement ? 'Agreements' : 'Notices';
+    const templatesList = isAgreement ? MOCK_AGREEMENT_TEMPLATES : MOCK_NOTICE_TEMPLATES;
+
     const [currentStep, setCurrentStep] = useState<StepNumber>(1);
     const [selectedLease, setSelectedLease] = useState(id ? `Lease ${id}` : '');
 
@@ -157,11 +272,15 @@ const UseTemplateWizard: React.FC = () => {
     const [templates, setTemplates] = useState(['Template 1', 'Template 2', 'Template 3']);
     const [activeTemplateIndex, setActiveTemplateIndex] = useState(0);
     const [templateContents, setTemplateContents] = useState<string[]>(() => {
-        const initialContent = templateName ? getTemplateHTML(decodeURIComponent(templateName)) : '<p>Start typing your notice here...</p>';
+        const initialContent = templateName ? getTemplateHTML(decodeURIComponent(templateName)) : '';
         return [initialContent, '', ''];
     });
+    // If templateName param exists, we start in editor mode; otherwise selection mode
+    const [isEditorMode, setIsEditorMode] = useState<boolean>(!!templateName);
+
     const [isLeaseDropdownOpen, setIsLeaseDropdownOpen] = useState(false);
     const [isTenantsDropdownOpen, setIsTenantsDropdownOpen] = useState(false);
+    const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 
     const leaseDropdownRef = useRef<HTMLDivElement>(null);
     const tenantsDropdownRef = useRef<HTMLDivElement>(null);
@@ -211,13 +330,35 @@ const UseTemplateWizard: React.FC = () => {
         }
     };
 
+    const handleUseTemplate = (name: string) => {
+        // Mock loading content based on ID
+        const mockContent = getTemplateHTML(name);
+        setTemplates([name]);
+        setTemplateContents([mockContent]);
+        setActiveTemplateIndex(0);
+        setIsEditorMode(true);
+    };
+
+    const handleCreateNewTemplate = () => {
+        setTemplates(['New Template']);
+        setTemplateContents(['<p>Start typing your notice...</p>']);
+        setActiveTemplateIndex(0);
+        setIsEditorMode(true);
+    };
+
     const handleSendToReview = () => {
+        setIsSuccessModalOpen(true);
+    };
+
+    const handleCloseSuccessModal = () => {
+        setIsSuccessModalOpen(false);
         const returnPath = state?.returnPath || (id ? `/dashboard/portfolio/leases/${id}` : `/dashboard/documents/landlord-forms/template/${templateName}`);
         navigate(returnPath, {
+            // We pass state still, just in case checking for it elsewhere
             state: {
-                showSuccessPopup: true,
+                showSuccessPopup: true, // Legacy, kept for compatibility
                 leaseName: selectedLease,
-                propertyName: 'abc' // Placeholder property name
+                propertyName: 'abc'
             }
         });
     };
@@ -270,70 +411,133 @@ const UseTemplateWizard: React.FC = () => {
             case 3:
                 return (
                     <div className="w-full">
-                        <div className="mb-6 text-left">
-                            <h1 className="text-xl md:text-2xl font-bold text-gray-800 mb-4 md:mb-6">{templates[activeTemplateIndex]}</h1>
+                        {!isEditorMode ? (
+                            // --- TEMPLATE SELECTION VIEW ---
+                            <div className="w-full max-w-4xl mx-auto">
+                                <div className="text-left mb-8">
+                                    <h1 className="text-2xl font-bold text-gray-800 mb-2">{docTypeLabel} Templates</h1>
+                                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                        <p className="text-sm text-gray-600 max-w-2xl">
+                                            Select a {isAgreement ? 'lease agreement' : 'notice'} template from the available options, or copy and paste your text using the "+ Create New Template" button
+                                        </p>
+                                        <PrimaryActionButton
+                                            onClick={handleCreateNewTemplate}
+                                            text="+ Create New Template"
+                                            className="!bg-[#3D7475] whitespace-nowrap"
+                                        />
+                                    </div>
+                                </div>
 
-                            {/* Dark Teal Header Bar */}
-                            <div className="bg-[#3A6D6C] rounded-xl md:rounded-full px-4 md:px-6 py-3 flex flex-col md:flex-row items-start md:items-center justify-between mb-8 overflow-x-auto">
-                                <div className="flex items-center gap-2 md:gap-6 w-full overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
-                                    {templates.map((template, index) => (
-                                        <button
-                                            key={index}
-                                            onClick={() => setActiveTemplateIndex(index)}
-                                            className={`flex-shrink-0 flex items-center gap-2 font-bold transition-all whitespace-nowrap ${activeTemplateIndex === index
-                                                ? 'bg-[#82D64D] text-white px-4 md:px-5 py-2 rounded-full shadow-sm'
-                                                : 'text-[#CCE0DF] hover:text-white px-2'
-                                                }`}
-                                        >
-                                            {activeTemplateIndex === index ? template : index + 1}
-                                            {activeTemplateIndex === index && (
-                                                <X
-                                                    size={16}
-                                                    className="hover:bg-black/20 rounded-full p-0.5 transition-colors"
-                                                    onClick={(e) => handleDeleteTemplate(index, e)}
-                                                />
-                                            )}
-                                        </button>
-                                    ))}
-                                    <button
-                                        onClick={handleAddTemplate}
-                                        className="text-[#CCE0DF] hover:text-white font-bold flex items-center gap-2 px-2 transition-all flex-shrink-0"
-                                    >
-                                        <Plus size={18} className="border-2 border-[#CCE0DF] rounded-full p-0.5" />
-                                        Add
-                                    </button>
+                                {/* Templates Table */}
+                                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm text-left">
+                                            <thead className="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-100">
+                                                <tr>
+                                                    <th className="px-6 py-4 font-semibold">Template</th>
+                                                    <th className="px-6 py-4 font-semibold">Type</th>
+                                                    <th className="px-6 py-4 font-semibold">States</th>
+                                                    <th className="px-6 py-4 font-semibold text-right">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-100">
+                                                {templatesList.map((tmpl) => (
+                                                    <tr key={tmpl.id} className="hover:bg-gray-50 transition-colors">
+                                                        <td className="px-6 py-4 font-medium text-gray-900">{tmpl.name}</td>
+                                                        <td className="px-6 py-4 text-gray-600">{tmpl.type}</td>
+                                                        <td className="px-6 py-4 text-gray-600">{tmpl.states}</td>
+                                                        <td className="px-6 py-4 text-right">
+                                                            <button
+                                                                onClick={() => handleUseTemplate(tmpl.name)}
+                                                                className="text-[#20CC95] hover:text-[#1db885] font-semibold text-sm border border-[#20CC95] hover:bg-[#20CC95] hover:text-white px-4 py-1.5 rounded-full transition-all"
+                                                            >
+                                                                Use template
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
+                        ) : (
+                            // --- EDITOR VIEW (Existing) ---
+                            <>
+                                <div className="mb-6 text-left">
+                                    <div className="flex items-center justify-between mb-4 md:mb-6">
+                                        <h1 className="text-xl md:text-2xl font-bold text-gray-800">{templates[activeTemplateIndex]}</h1>
+                                        <button
+                                            onClick={() => setIsEditorMode(false)}
+                                            className="text-sm text-[#20CC95] hover:text-[#1db885] underline"
+                                        >
+                                            Change Template
+                                        </button>
+                                    </div>
 
-                            {/* Reusing TemplateEditor */}
-                            <TemplateEditor
-                                key={activeTemplateIndex}
-                                initialEditorContent={templateContents[activeTemplateIndex]}
-                                onEditorContentChange={(content) => {
-                                    setTemplateContents(prev => {
-                                        const next = [...prev];
-                                        next[activeTemplateIndex] = content;
-                                        return next;
-                                    });
-                                }}
-                                showPreviewButton={true}
-                                showSignatureSection={true}
-                            />
-                        </div>
+                                    {/* Dark Teal Header Bar */}
+                                    <div className="bg-[#3A6D6C] rounded-xl md:rounded-full px-4 md:px-6 py-3 flex flex-col md:flex-row items-start md:items-center justify-between mb-8 overflow-x-auto">
+                                        <div className="flex items-center gap-2 md:gap-6 w-full overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
+                                            {templates.map((template, index) => (
+                                                <button
+                                                    key={index}
+                                                    onClick={() => setActiveTemplateIndex(index)}
+                                                    className={`flex-shrink-0 flex items-center gap-2 font-bold transition-all whitespace-nowrap ${activeTemplateIndex === index
+                                                        ? 'bg-[#82D64D] text-white px-4 md:px-5 py-2 rounded-full shadow-sm'
+                                                        : 'text-[#CCE0DF] hover:text-white px-2'
+                                                        }`}
+                                                >
+                                                    {activeTemplateIndex === index ? template : index + 1}
+                                                    {activeTemplateIndex === index && (
+                                                        <X
+                                                            size={16}
+                                                            className="hover:bg-black/20 rounded-full p-0.5 transition-colors"
+                                                            onClick={(e) => handleDeleteTemplate(index, e)}
+                                                        />
+                                                    )}
+                                                </button>
+                                            ))}
+                                            <button
+                                                onClick={handleAddTemplate}
+                                                className="text-[#CCE0DF] hover:text-white font-bold flex items-center gap-2 px-2 transition-all flex-shrink-0"
+                                            >
+                                                <Plus size={18} className="border-2 border-[#CCE0DF] rounded-full p-0.5" />
+                                                Add
+                                            </button>
+                                        </div>
+                                    </div>
 
-                        {/* Final Action Buttons */}
-                        <div className="flex flex-col-reverse md:flex-row items-center gap-4 mt-8 md:mt-10">
-                            <PrimaryActionButton
-                                onClick={() => navigate(-1)}
-                                text="Save as Draft"
-                                className="!bg-white !text-gray-700 !w-full md:!w-auto !px-10 !py-3.5 !font-bold shadow-[0px_4px_8px_0px_#00000030] hover:!bg-gray-50 transition-colors border border-gray-100"
-                            />
-                            <PrimaryActionButton
-                                onClick={handleSendToReview}
-                                text="Send to Review"
-                                className="!bg-[#3A6D6C] !w-full md:!w-auto !px-10 !py-3.5 !font-bold shadow-[0px_4px_8px_0px_#00000030] hover:!bg-[#2d5650] transition-colors"
-                            />
-                        </div>
+                                    {/* Reusing TemplateEditor */}
+                                    <TemplateEditor
+                                        key={activeTemplateIndex}
+                                        initialEditorContent={templateContents[activeTemplateIndex]}
+                                        onEditorContentChange={(content) => {
+                                            setTemplateContents(prev => {
+                                                const next = [...prev];
+                                                next[activeTemplateIndex] = content;
+                                                return next;
+                                            });
+                                        }}
+                                        showPreviewButton={true}
+                                        showSignatureSection={true}
+                                    />
+                                </div>
+
+                                {/* Final Action Buttons */}
+                                <div className="flex flex-col-reverse md:flex-row items-center gap-4 mt-8 md:mt-10">
+                                    <PrimaryActionButton
+                                        onClick={() => navigate(-1)}
+                                        text="Save as Draft"
+                                        className="!bg-white !text-gray-700 !w-full md:!w-auto !px-10 !py-3.5 !font-bold shadow-[0px_4px_8px_0px_#00000030] hover:!bg-gray-50 transition-colors border border-gray-100"
+                                    />
+                                    <PrimaryActionButton
+                                        onClick={handleSendToReview}
+                                        text="Send to Review"
+                                        className="!bg-[#3A6D6C] !w-full md:!w-auto !px-10 !py-3.5 !font-bold shadow-[0px_4px_8px_0px_#00000030] hover:!bg-[#2d5650] transition-colors"
+                                    />
+                                </div>
+                            </>
+                        )}
                     </div>
                 );
             default:
@@ -391,6 +595,13 @@ const UseTemplateWizard: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            <SuccessModal
+                isOpen={isSuccessModalOpen}
+                onClose={handleCloseSuccessModal}
+                title="Well Done !"
+                description={isAgreement ? 'Your lease agreement request has been sent successfully.' : 'Your notice has been sent successfully.'}
+            />
         </div>
     );
 };
