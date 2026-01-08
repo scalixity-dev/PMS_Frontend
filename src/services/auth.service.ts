@@ -55,6 +55,7 @@ export interface LoginResponse {
   };
   message?: string;
   requiresDeviceVerification?: boolean;
+  requiresEmailVerification?: boolean;
   token?: string;
 }
 
@@ -384,6 +385,7 @@ class AuthService {
     
     console.log('Attempting login to:', API_ENDPOINTS.AUTH.LOGIN);
     
+   
     const response = await fetch(API_ENDPOINTS.AUTH.LOGIN, {
       method: 'POST',
       headers: {

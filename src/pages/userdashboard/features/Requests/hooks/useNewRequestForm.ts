@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRequestStore } from "../store/requestStore";
 import type { AvailabilityOption, ServiceRequest } from "../../../utils/types";
@@ -29,8 +29,45 @@ export const useNewRequestForm = () => {
     const [attachments, setAttachments] = useState<File[]>([]);
     const [video, setVideo] = useState<File | null>(null);
     const [pets, setPets] = useState<string[]>([]);
+    const [submissionError, setSubmissionError] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const attachmentsInputRef = useRef<HTMLInputElement>(null);
     const videoInputRef = useRef<HTMLInputElement>(null);
+    
+    // Track if form has been modified
+    const hasFormData = useMemo(() => {
+        return (
+            selectedCategory !== null ||
+            selectedSubCategory !== null ||
+            selectedProblem !== null ||
+            finalDetail !== null ||
+            title !== "" ||
+            description !== "" ||
+            authorization !== null ||
+            authCode !== "" ||
+            setUpDateTime !== null ||
+            attachments.length > 0 ||
+            video !== null ||
+            pets.length > 0 ||
+            priority !== null ||
+            availability.some(item => item.date !== "" || item.timeSlots.length > 0)
+        );
+    }, [
+        selectedCategory,
+        selectedSubCategory,
+        selectedProblem,
+        finalDetail,
+        title,
+        description,
+        authorization,
+        authCode,
+        setUpDateTime,
+        attachments.length,
+        video,
+        pets.length,
+        priority,
+        availability
+    ]);
 
     const handleTogglePet = (pet: string) => {
         setPets((prev) =>
@@ -91,39 +128,132 @@ export const useNewRequestForm = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const handleSubmit = () => {
-        if (!selectedCategory || !priority) return;
-
-        const newRequest: ServiceRequest = {
-            id: Date.now(),
-            requestId: `REQ-${Math.floor(1000 + Math.random() * 9000)}`,
-            status: "New",
-            category: categories.find(c => c.id === selectedCategory)?.name || selectedCategory,
-            subCategory: selectedSubCategory || "",
-            problem: selectedProblem || "",
-            property: "Main Street Apartment",
-            priority: priority,
-            authorizationToEnter: authorization || "No",
-            authorizationCode: authCode,
-            setUpDateTime: setUpDateTime || "No",
-            availability: availability,
-            assignee: "",
-            createdAt: new Date().toISOString(),
-            attachments: attachments,
-            video: video,
-            pets: pets,
-        };
-
-        addRequest(newRequest);
-        navigate("/userdashboard/requests", {
-            state: {
-                showSuccess: true,
-                requestId: newRequest.requestId
+    // Listen for storage quota exceeded events
+    useEffect(() => {
+        const handleStorageQuotaExceeded = (event: Event) => {
+            const customEvent = event as CustomEvent<{ message: string }>;
+            if (customEvent.detail?.message) {
+                setSubmissionError(customEvent.detail.message);
             }
-        });
+        };
+        
+        window.addEventListener('storage-quota-exceeded', handleStorageQuotaExceeded);
+        return () => window.removeEventListener('storage-quota-exceeded', handleStorageQuotaExceeded);
+    }, []);
+
+    const handleSubmit = async () => {
+        if (!selectedCategory || !priority) return;
+        
+        // Clear any previous errors and set submitting state
+        setSubmissionError(null);
+        setIsSubmitting(true);
+
+        try {
+            // Convert File objects to data URLs for persistence
+            const convertFileToDataURL = (file: File): Promise<string> => {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        if (reader.result) {
+                            resolve(reader.result as string);
+                        } else {
+                            reject(new Error(`Failed to read file: ${file.name}`));
+                        }
+                    };
+                    reader.onerror = () => reject(new Error(`Error reading file: ${file.name}`));
+                    reader.readAsDataURL(file);
+                });
+            };
+
+            // Convert attachments to data URLs
+            const attachmentDataUrls: string[] = [];
+            if (attachments && attachments.length > 0) {
+                try {
+                    const dataUrlPromises = attachments.map(file => convertFileToDataURL(file));
+                    const dataUrls = await Promise.all(dataUrlPromises);
+                    attachmentDataUrls.push(...dataUrls);
+                } catch (error) {
+                    const errorMessage = `Failed to process attachments: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again or remove the problematic files.`;
+                    console.error('Error converting attachments to data URLs:', error);
+                    setSubmissionError(errorMessage);
+                    setIsSubmitting(false);
+                    return; // Prevent form submission
+                }
+            }
+
+            // Convert video to data URL
+            let videoDataUrl: string | null = null;
+            if (video) {
+                try {
+                    videoDataUrl = await convertFileToDataURL(video);
+                } catch (error) {
+                    const errorMessage = `Failed to process video: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again or remove the video.`;
+                    console.error('Error converting video to data URL:', error);
+                    setSubmissionError(errorMessage);
+                    setIsSubmitting(false);
+                    return; // Prevent form submission
+                }
+            }
+
+            // Create request - we'll store data URLs in a way that works with the store
+            // The store will handle converting these properly
+            const newRequest: ServiceRequest & { attachmentDataUrls?: string[]; videoDataUrl?: string | null } = {
+                id: Date.now(),
+                requestId: `REQ-${Math.floor(1000 + Math.random() * 9000)}`,
+                status: "New",
+                category: categories.find(c => c.id === selectedCategory)?.name || selectedCategory,
+                subCategory: selectedSubCategory || "",
+                problem: selectedProblem || "",
+                description: description || "",
+                property: "Main Street Apartment",
+                priority: priority,
+                authorizationToEnter: authorization ? (authorization === "yes" ? "Yes" : "No") : "No",
+                authorizationCode: authCode,
+                setUpDateTime: setUpDateTime || "No",
+                availability: availability,
+                assignee: "",
+                createdAt: new Date().toISOString(),
+                attachments: attachments,
+                video: video,
+                pets: pets,
+                // Store data URLs separately for persistence
+                attachmentDataUrls: attachmentDataUrls.length > 0 ? attachmentDataUrls : undefined,
+                videoDataUrl: videoDataUrl,
+            };
+
+            addRequest(newRequest);
+            setIsSubmitting(false);
+            navigate("/userdashboard/requests", {
+                state: {
+                    showSuccess: true,
+                    requestId: newRequest.requestId
+                }
+            });
+        } catch (error) {
+            // Catch any unexpected errors during submission
+            const errorMessage = `Failed to submit request: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`;
+            console.error('Unexpected error during request submission:', error);
+            setSubmissionError(errorMessage);
+            setIsSubmitting(false);
+        }
     };
 
     const nextStep = (step?: number) => {
+        const targetStep = step || (currentStep + 1);
+        
+        // When reaching step 6, set default title if empty
+        if (targetStep === 6 && !title) {
+            const categoryName = categories.find(c => c.id === selectedCategory)?.name || selectedCategory || "";
+            const subCategoryName = selectedSubCategory || "";
+            const problemName = selectedProblem || "";
+            
+            // Build title in format: category/subcategory/problem
+            const parts = [categoryName, subCategoryName, problemName].filter(Boolean);
+            if (parts.length > 0) {
+                setTitle(parts.join(" / "));
+            }
+        }
+        
         if (step) {
             setCurrentStep(step);
         } else {
@@ -181,6 +311,9 @@ export const useNewRequestForm = () => {
         setVideo,
         pets,
         setPets,
+        submissionError,
+        setSubmissionError,
+        isSubmitting,
         attachmentsInputRef,
         videoInputRef,
         handleTogglePet,
@@ -193,5 +326,6 @@ export const useNewRequestForm = () => {
         handleSubmit,
         nextStep,
         prevStep,
+        hasFormData,
     };
 };

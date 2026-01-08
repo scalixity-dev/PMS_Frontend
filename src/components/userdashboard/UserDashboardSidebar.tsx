@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { SquarePen, ChevronLeft, ChevronRight } from "lucide-react";
+import { SquarePen, ChevronLeft, ChevronRight, ListPlus } from "lucide-react";
 import {
     PiChartLineUpFill,
     PiCurrencyDollarFill,
@@ -27,21 +27,44 @@ interface SidebarProps {
 
 interface SidebarLinkProps {
     label: string;
-    to: string;
+    to?: string;
     icon: React.ReactNode;
-    isCurrentPath: (path: string) => boolean;
+    isCurrentPath?: (path: string) => boolean;
+    onClick?: () => void;
+    linkRef?: React.RefObject<any>;
 }
 
-function SidebarLink({ label, to, icon, isCurrentPath }: SidebarLinkProps) {
-    const isActive = isCurrentPath(to);
+function SidebarLink({ label, to, icon, isCurrentPath, onClick, linkRef }: SidebarLinkProps) {
+    const isActive = to && isCurrentPath ? isCurrentPath(to) : false;
     const { collapsed } = React.useContext(SidebarContext);
+
+    const commonClasses = `flex items-center px-3 py-2.5 rounded-md transition-colors cursor-pointer
+            ${isActive ? "bg-gray-100 font-semibold text-black" : "text-gray-700 hover:bg-gray-100 group"}
+            ${collapsed ? "justify-center" : "justify-start"}`;
+
+    if (onClick) {
+        return (
+            <button
+                ref={linkRef}
+                onClick={onClick}
+                className={`${commonClasses} w-full`}
+            >
+                <span className={`${isActive ? "text-green-600" : "text-black group-hover:text-black"} ${collapsed ? "" : "mr-3"}`}>
+                    {icon}
+                </span>
+                {!collapsed && (
+                    <span className={`${isActive ? "text-green-600" : "text-black group-hover:text-black"} text-sm font-medium`}>
+                        {label}
+                    </span>
+                )}
+            </button>
+        );
+    }
 
     return (
         <Link
-            to={to}
-            className={`flex items-center px-3 py-2.5 rounded-md transition-colors cursor-pointer
-            ${isActive ? "bg-gray-100 font-semibold text-black" : "text-gray-700 hover:bg-gray-100 group"}
-            ${collapsed ? "justify-center" : "justify-start"}`}
+            to={to!}
+            className={commonClasses}
         >
             <span className={`${isActive ? "text-green-600" : "text-black group-hover:text-black"} ${collapsed ? "" : "mr-3"}`}>
                 {icon}
@@ -55,13 +78,66 @@ function SidebarLink({ label, to, icon, isCurrentPath }: SidebarLinkProps) {
     );
 }
 
+interface DownloadPopupProps {
+    isOpen: boolean;
+    onClose: () => void;
+    position: { top: number; left: number } | null;
+    popupRef: React.RefObject<HTMLDivElement | null>;
+}
+
+const DownloadPopup: React.FC<DownloadPopupProps> = ({ isOpen, onClose, position, popupRef }) => {
+    if (!isOpen || !position) return null;
+
+    return createPortal(
+        <div
+            ref={popupRef}
+            className="fixed z-[9999] bg-white rounded-lg shadow-[0px_4px_24px_rgba(0,0,0,0.12)] border border-gray-100 w-[450px] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+            style={{
+                top: position.top,
+                left: position.left,
+            }}
+        >
+            <div className="p-4 border-b border-gray-100 flex justify-between items-center">
+                <h3 className="text-base font-bold text-[#111827]">Downloads</h3>
+
+            </div>
+            <div className="p-8 flex flex-col items-center justify-center text-center space-y-4 min-h-[250px]">
+                <div className="mb-2 p-4 bg-gray-50 rounded-full">
+                    <ListPlus size={40} className="text-[#566573]" />
+                </div>
+                <div>
+                    <h4 className="text-lg font-bold text-[#111827] mb-2">No files downloaded yet</h4>
+                    <p className="text-sm text-[#7F8C8D] leading-relaxed max-w-[280px] mx-auto">
+                        There are no downloaded files. Once you export some files, they will appear here.
+                    </p>
+                </div>
+            </div>
+            <div className="p-3 border-t border-gray-100 flex justify-end">
+                <button
+                    onClick={onClose}
+                    className="px-6 py-2 bg-[#4CAF50] hover:bg-[#45a049] text-white text-xs font-semibold rounded-lg transition-colors shadow-sm"
+                >
+                    Close
+                </button>
+            </div>
+        </div>,
+        document.body
+    );
+};
+
 export default function UserDashboardSidebar({ open, setOpen, collapsed, setCollapsed }: SidebarProps) {
     const location = useLocation();
     const navigate = useNavigate();
     const [isCreateNewOpen, setIsCreateNewOpen] = useState(false);
+    const [isDownloadPopupOpen, setIsDownloadPopupOpen] = useState(false);
+
     const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+    const [downloadPopupPosition, setDownloadPopupPosition] = useState({ top: 0, left: 0 });
+
     const createNewRef = useRef<HTMLDivElement>(null);
     const menuRef = useRef<HTMLDivElement>(null);
+    const downloadButtonRef = useRef<HTMLButtonElement>(null);
+    const downloadPopupRef = useRef<HTMLDivElement>(null);
 
     const toggleCreateNew = () => {
         if (!isCreateNewOpen && createNewRef.current) {
@@ -70,19 +146,44 @@ export default function UserDashboardSidebar({ open, setOpen, collapsed, setColl
                 top: rect.top + 14,
                 left: rect.right + 10
             });
+            setIsDownloadPopupOpen(false);
         }
         setIsCreateNewOpen(!isCreateNewOpen);
     };
 
+    const toggleDownloads = () => {
+        if (!isDownloadPopupOpen && downloadButtonRef.current) {
+            const rect = downloadButtonRef.current.getBoundingClientRect();
+            setDownloadPopupPosition({
+                top: rect.top - 150,
+                left: rect.right + 15
+            });
+            setIsCreateNewOpen(false);
+        }
+        setIsDownloadPopupOpen(!isDownloadPopupOpen);
+    }
+
+
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as Node;
+
             if (
                 createNewRef.current &&
-                !createNewRef.current.contains(event.target as Node) &&
+                !createNewRef.current.contains(target) &&
                 menuRef.current &&
-                !menuRef.current.contains(event.target as Node)
+                !menuRef.current.contains(target)
             ) {
                 setIsCreateNewOpen(false);
+            }
+
+            if (
+                downloadButtonRef.current &&
+                !downloadButtonRef.current.contains(target) &&
+                downloadPopupRef.current &&
+                !downloadPopupRef.current.contains(target)
+            ) {
+                setIsDownloadPopupOpen(false);
             }
         };
 
@@ -92,6 +193,13 @@ export default function UserDashboardSidebar({ open, setOpen, collapsed, setColl
                 setMenuPosition({
                     top: rect.top + 20,
                     left: rect.right + 10
+                });
+            }
+            if (isDownloadPopupOpen && downloadButtonRef.current) {
+                const rect = downloadButtonRef.current.getBoundingClientRect();
+                setDownloadPopupPosition({
+                    top: rect.top - 150,
+                    left: rect.right + 15
                 });
             }
         }
@@ -105,7 +213,7 @@ export default function UserDashboardSidebar({ open, setOpen, collapsed, setColl
             window.removeEventListener('scroll', handleScroll, true);
             window.removeEventListener('resize', handleScroll);
         };
-    }, [isCreateNewOpen]);
+    }, [isCreateNewOpen, isDownloadPopupOpen]);
 
     const isCurrentPath = (path: string) => location.pathname === path;
 
@@ -225,11 +333,15 @@ export default function UserDashboardSidebar({ open, setOpen, collapsed, setColl
                                 icon={<PiFolderSimpleFill size={22} />}
                                 isCurrentPath={isCurrentPath}
                             />
+
+                            {/* Separator line */}
+                            <div className={`my-2 border-t border-gray-200 ${collapsed ? 'mx-2' : 'mx-3'}`} />
+
                             <SidebarLink
+                                linkRef={downloadButtonRef}
                                 label="Downloads"
-                                to="/userdashboard/downloads"
+                                onClick={toggleDownloads}
                                 icon={<PiCloudArrowDownFill size={22} />}
-                                isCurrentPath={isCurrentPath}
                             />
                         </nav>
                     </div>
@@ -243,6 +355,12 @@ export default function UserDashboardSidebar({ open, setOpen, collapsed, setColl
                     </div>
                 </div>
             </aside >
+            <DownloadPopup
+                isOpen={isDownloadPopupOpen}
+                onClose={() => setIsDownloadPopupOpen(false)}
+                position={downloadPopupPosition}
+                popupRef={downloadPopupRef}
+            />
         </SidebarContext.Provider>
     );
 }

@@ -4,6 +4,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import logo from '../../../../../assets/images/logo.png';
 import { AppleIcon, FacebookIcon, GoogleIcon } from '../../../../../components/AuthIcons';
 import { authService } from '../../../../../services/auth.service';
+import { API_ENDPOINTS } from '../../../../../config/api.config';
 
 const LoginForm: React.FC = () => {
     const location = useLocation();
@@ -74,17 +75,142 @@ const LoginForm: React.FC = () => {
                 user: response.user
             });
 
+            // Check if email verification is required
+            if (response.requiresEmailVerification) {
+                // Redirect to OTP page for email verification
+                console.log('Email verification required, redirecting to OTP');
+                navigate(`/otp?userId=${response.user.id}&email=${encodeURIComponent(response.user.email)}&type=email&role=${response.user.role?.toUpperCase() || 'TENANT'}`, { replace: true });
+            }
             // Check if device verification is required
-            if (response.requiresDeviceVerification) {
+            else if (response.requiresDeviceVerification) {
                 // Redirect to OTP page for device verification
                 console.log('Device verification required, redirecting to OTP');
-                navigate(`/otp?userId=${response.user.id}&email=${response.user.email}&type=device`, { replace: true });
+                navigate(`/otp?userId=${response.user.id}&email=${encodeURIComponent(response.user.email)}&type=device&role=${response.user.role?.toUpperCase() || 'PROPERTY_MANAGER'}`, { replace: true });
             } else {
-                // Wait a moment to ensure cookie is set before navigation
+                // Wait to ensure JWT cookie is set and available
                 console.log('Login successful, waiting for cookie to be set...');
-                await new Promise(resolve => setTimeout(resolve, 200));
-                console.log('Navigating to dashboard');
-                navigate('/dashboard', { replace: true });
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Verify authentication by getting current user (this ensures cookie is set)
+                let isAuthenticated = false;
+                let retryCount = 0;
+                const maxAuthRetries = 3;
+                
+                while (retryCount <= maxAuthRetries && !isAuthenticated) {
+                    try {
+                        const currentUser = await authService.getCurrentUser();
+                        if (currentUser && currentUser.userId) {
+                            isAuthenticated = true;
+                            console.log('Authentication verified, cookie is set');
+                        }
+                    } catch (error) {
+                        if (retryCount < maxAuthRetries) {
+                            console.log(`Auth check failed, retrying... (attempt ${retryCount + 1}/${maxAuthRetries + 1})`);
+                            await new Promise(resolve => setTimeout(resolve, 500));
+                            retryCount++;
+                        } else {
+                            console.error('Failed to verify authentication after retries:', error);
+                            // If we can't verify auth, redirect to login
+                            setError('Authentication failed. Please try logging in again.');
+                            return;
+                        }
+                    }
+                }
+                
+                if (!isAuthenticated) {
+                    console.error('Could not verify authentication');
+                    setError('Authentication failed. Please try logging in again.');
+                    return;
+                }
+                
+                // Wait a bit more to ensure cookie is fully propagated
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Check if user is a tenant and needs onboarding
+                const userRole = response.user?.role?.toUpperCase();
+                if (userRole === 'TENANT') {
+                    // Check if tenant has preferences (onboarding completed)
+                    // Add retry logic in case cookie isn't ready yet
+                    let preferencesResponse: Response | null = null;
+                    let retryCount = 0;
+                    const maxRetries = 2;
+                    
+                    while (retryCount <= maxRetries) {
+                        try {
+                            preferencesResponse = await fetch(API_ENDPOINTS.TENANT.GET_PREFERENCES, {
+                                method: 'GET',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                credentials: 'include',
+                            });
+                            
+                            // If we get 401, wait a bit and retry (cookie might not be set yet)
+                            if (preferencesResponse.status === 401 && retryCount < maxRetries) {
+                                console.log(`Preferences check returned 401, retrying... (attempt ${retryCount + 1}/${maxRetries + 1})`);
+                                await new Promise(resolve => setTimeout(resolve, 500));
+                                retryCount++;
+                                continue;
+                            }
+                            
+                            // Success or final attempt - break out of retry loop
+                            break;
+                        } catch (error) {
+                            if (retryCount < maxRetries) {
+                                console.log(`Preferences check failed, retrying... (attempt ${retryCount + 1}/${maxRetries + 1})`);
+                                await new Promise(resolve => setTimeout(resolve, 500));
+                                retryCount++;
+                                continue;
+                            }
+                            // Final attempt failed - default to onboarding
+                            console.error('Error checking preferences after retries:', error);
+                            navigate('/signup/tenant-onboarding-flow', { replace: true });
+                            return;
+                        }
+                    }
+                    
+                    // Process the response
+                    if (!preferencesResponse) {
+                        console.log('No preferences response, redirecting to tenant onboarding flow');
+                        navigate('/signup/tenant-onboarding-flow', { replace: true });
+                        return;
+                    }
+
+                    if (preferencesResponse.status === 404) {
+                        // No tenant profile or preferences found - redirect to onboarding flow
+                        console.log('No preferences found (404), redirecting to tenant onboarding flow');
+                        navigate('/signup/tenant-onboarding-flow', { replace: true });
+                    } else if (preferencesResponse.status === 401) {
+                        // Unauthorized - even after retries, redirect to onboarding
+                        console.log('Unauthorized when checking preferences after retries, redirecting to tenant onboarding flow');
+                        navigate('/signup/tenant-onboarding-flow', { replace: true });
+                    } else if (preferencesResponse.ok) {
+                        // Check if preferences are null or empty
+                        const preferences = await preferencesResponse.json();
+                        const hasPreferences = preferences && (
+                            (preferences.location && preferences.location.country && preferences.location.state && preferences.location.city) ||
+                            (preferences.rentalTypes && preferences.rentalTypes.length > 0)
+                        );
+
+                        if (!hasPreferences) {
+                            // Preferences are null or empty - redirect to onboarding flow
+                            console.log('Preferences are null or empty, redirecting to tenant onboarding flow');
+                            navigate('/signup/tenant-onboarding-flow', { replace: true });
+                        } else {
+                            // Preferences exist - redirect to dashboard
+                            console.log('Preferences found, redirecting to tenant dashboard');
+                            navigate('/userdashboard', { replace: true });
+                        }
+                    } else {
+                        // Error checking preferences - default to onboarding flow for safety
+                        console.log('Error checking preferences, defaulting to tenant onboarding flow');
+                        navigate('/signup/tenant-onboarding-flow', { replace: true });
+                    }
+                } else {
+                    // Property manager or other role - redirect to property manager dashboard
+                    console.log('Navigating to property manager dashboard');
+                    navigate('/dashboard', { replace: true });
+                }
             }
         } catch (err) {
             console.error('Login error:', err);

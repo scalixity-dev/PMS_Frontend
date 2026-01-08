@@ -9,6 +9,7 @@ interface UnsavedChangesModalProps {
     message?: string;
     confirmText?: string;
     cancelText?: string;
+    noBlur?: boolean;
 }
 
 const UnsavedChangesModal: React.FC<UnsavedChangesModalProps> = ({
@@ -18,12 +19,13 @@ const UnsavedChangesModal: React.FC<UnsavedChangesModalProps> = ({
     title = "Unsaved Changes",
     message = "You have unsaved changes. Are you sure you want to leave? Your changes will be lost.",
     confirmText = "Leave without saving",
-    cancelText = "Keep editing"
+    cancelText = "Keep editing",
+    noBlur = false
 }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-in fade-in duration-200 ${noBlur ? '' : 'backdrop-blur-sm'}`}>
             <div className="bg-white rounded-2xl w-full max-w-md shadow-xl animate-in zoom-in-95 duration-200 overflow-hidden">
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-[var(--color-primary)]">

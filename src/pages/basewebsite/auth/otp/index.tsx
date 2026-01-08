@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { LeftIcon, RightCircle } from './sections/otpBackgroundIcons';
 import OtpForm from './sections/OtpForm';
 import { authService } from '../../../../services/auth.service';
+import { API_ENDPOINTS } from '../../../../config/api.config';
 
 const OtpPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -34,8 +35,53 @@ const OtpPage: React.FC = () => {
       } else {
         // Verify email OTP
         await authService.verifyEmail(userId, otpCode);
-        // After successful email verification, redirect to dashboard
-        navigate('/dashboard', { replace: true });
+        // Wait a moment to ensure cookies are set
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Check user role from URL params
+        const userRole = (searchParams.get('role') || 'TENANT').toUpperCase();
+        
+        if (userRole === 'TENANT') {
+          // Check if tenant has preferences (onboarding completed)
+          try {
+            const preferencesResponse = await fetch(API_ENDPOINTS.TENANT.GET_PREFERENCES, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              credentials: 'include',
+            });
+
+            if (preferencesResponse.status === 404 || !preferencesResponse.ok) {
+              // No preferences found - redirect to tenant onboarding flow
+              console.log('No preferences found after email verification, redirecting to tenant onboarding flow');
+              navigate('/signup/tenant-onboarding-flow', { replace: true });
+            } else {
+              const preferences = await preferencesResponse.json();
+              const hasPreferences = preferences && (
+                (preferences.location && preferences.location.country && preferences.location.state && preferences.location.city) ||
+                (preferences.rentalTypes && preferences.rentalTypes.length > 0)
+              );
+
+              if (!hasPreferences) {
+                // Preferences are null or empty - redirect to tenant onboarding flow
+                console.log('Preferences are null or empty after email verification, redirecting to tenant onboarding flow');
+                navigate('/signup/tenant-onboarding-flow', { replace: true });
+              } else {
+                // Preferences exist - redirect to dashboard
+                console.log('Preferences found after email verification, redirecting to tenant dashboard');
+                navigate('/userdashboard', { replace: true });
+              }
+            }
+          } catch (error) {
+            // Error checking preferences - default to tenant onboarding flow for safety
+            console.error('Error checking preferences after email verification:', error);
+            navigate('/signup/tenant-onboarding-flow', { replace: true });
+          }
+        } else {
+          // Property manager - redirect to property manager dashboard
+          navigate('/dashboard', { replace: true });
+        }
       }
     } catch (error) {
       console.error('OTP verification error:', error);

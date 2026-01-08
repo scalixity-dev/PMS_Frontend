@@ -21,6 +21,7 @@ interface CustomDropdownProps {
   optionClassName?: string;
   iconClassName?: string;
   searchable?: boolean;
+  maxHeight?: string;
   error?: string | boolean;
   className?: string;
   onToggle?: (isOpen: boolean) => void;
@@ -41,6 +42,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
   optionClassName = '',
   iconClassName = '',
   searchable = false,
+  maxHeight = 'max-h-60',
   error,
   className,
   onToggle,
@@ -134,7 +136,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
 
       {/* Dropdown Menu */}
       <div className={cn(
-        "absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden transition-all duration-300 ease-in-out",
+        "absolute z-40 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden transition-all duration-300 ease-in-out",
         isOpen && !disabled ? "max-h-60 opacity-100 mt-2 visible" : "max-h-0 opacity-0 mt-0 invisible border-none",
         dropdownClassName
       )}>
@@ -157,7 +159,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
         )}
 
         {/* Options List */}
-        <div className="max-h-60 overflow-y-auto">
+        <div className={`${maxHeight} overflow-y-auto`}>
           {filteredOptions.length > 0 ? (
             filteredOptions.map((option) => (
               <button

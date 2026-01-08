@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDashboardStore } from "./store/dashboardStore";
 import { Sidebar } from "./components/layout/Sidebar";
@@ -7,21 +7,84 @@ import { LeaseList } from "./features/Leases/components/LeaseList";
 import { mockTransactions, mockLeases, tabs, mockUserInfo, mockFinances } from "./utils/mockData";
 import type { TabType } from "./utils/types";
 import PrimaryActionButton from "../../components/common/buttons/PrimaryActionButton";
-
+import { authService } from "../../services/auth.service";
 import { useAuthStore } from "./features/Profile/store/authStore";
 
 const UserDashboard = () => {
     const navigate = useNavigate();
     const { activeTab, setActiveTab, setFinances } = useDashboardStore();
     const { userInfo, setUserInfo } = useAuthStore();
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Load mock data on mount if store is empty
+    // Check authentication and tenant role on mount
     useEffect(() => {
-        if (!userInfo.firstName) {
+        let isMounted = true;
+        
+        const checkAuth = async () => {
+            try {
+                const user = await authService.getCurrentUser();
+                
+                if (!isMounted) return;
+                
+                // Verify user is a tenant
+                const isTenant = user.role && (
+                    user.role.toUpperCase() === 'TENANT' ||
+                    user.role.toLowerCase() === 'tenant' ||
+                    user.role === 'tenant'
+                );
+                
+                // User must be a tenant and account must be active
+                if (isTenant && user.isActive) {
+                    setIsAuthenticated(true);
+                    setIsLoading(false);
+                } else {
+                    console.warn('UserDashboard: Access denied - user is not a tenant or account not active');
+                    setIsAuthenticated(false);
+                    setIsLoading(false);
+                }
+            } catch (error) {
+                if (!isMounted) return;
+                
+                console.error('UserDashboard: Authentication check failed:', error);
+                setIsAuthenticated(false);
+                setIsLoading(false);
+            }
+        };
+
+        checkAuth();
+        
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    // Load mock data on mount if store is empty (only after authentication)
+    useEffect(() => {
+        if (isAuthenticated && !userInfo.firstName) {
             setUserInfo(mockUserInfo);
             setFinances(mockFinances);
         }
-    }, [setUserInfo, setFinances, userInfo.firstName]);
+    }, [setUserInfo, setFinances, userInfo.firstName, isAuthenticated]);
+
+    // Show loading state while checking authentication
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-white">
+                <div className="text-center">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--dashboard-accent)]"></div>
+                    <p className="mt-4 text-gray-600">Loading...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Redirect if not authenticated or not a tenant
+    if (!isAuthenticated) {
+        console.log('UserDashboard: Redirecting to login - user not authenticated or not a tenant');
+        navigate("/login", { replace: true });
+        return null;
+    }
 
     return (
         <div className="flex flex-col lg:flex-row gap-8 min-h-screen bg-white p-4 lg:p-8 ">

@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 export const LeaseCard = ({ lease }: { lease: Lease }) => {
     const navigate = useNavigate();
     return (
-        <div className="bg-[#F7F7F7] rounded-[1.25rem] p-5 flex items-center justify-between shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] border border-[#F1F1F1] hover:shadow-lg transition-all duration-300 w-full">
+        <div className="bg-[#F7F7F7] rounded-[1.25rem] p-5 flex items-center justify-between shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] border border-[#F1F1F1] transition-all duration-300 w-full">
             <div className="flex flex-col gap-1.5">
                 <h3 className="text-[22px] font-medium text-[#1A1A1A]">Lease #{lease.number}</h3>
                 <p className="text-[#4B5563] text-[15px] font-medium leading-none">
@@ -29,7 +29,7 @@ export const LeaseCard = ({ lease }: { lease: Lease }) => {
                 {/* View Button */}
                 <button
                     onClick={() => navigate(`/userdashboard/leases/${lease.id}`)}
-                    className="text-[var(--dashboard-accent)] font-semibold text-base hover:opacity-80 transition-opacity pl-4 pr-2"
+                    className="text-[var(--dashboard-accent)] font-medium text-base hover:opacity-80 transition-opacity pl-4 pr-2"
                 >
                     View
                 </button>

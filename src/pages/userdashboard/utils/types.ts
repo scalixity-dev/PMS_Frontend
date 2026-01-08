@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 export interface Transaction {
     id: string;
-    status: 'Open' | 'Overdue' | 'Active' | 'New' | 'Critical' | 'Normal';
+    status: 'Open' | 'Overdue' | 'Paid' | 'Partial';
     dueDate: string;
     category: string;
     contact: {
@@ -11,7 +11,9 @@ export interface Transaction {
         avatarColor: string;
     };
     amount: number;
+    paidAmount?: number;
     currency: string;
+    schedule: 'Monthly' | 'One-time';
 }
 
 export interface TenantSummary {
@@ -81,15 +83,26 @@ export interface Property {
     tag?: string; // Support both for now
 }
 
+export interface LocationFilter {
+    displayText: string; // For display purposes
+    type: 'city' | 'nearby' | 'radius' | 'state' | 'all';
+    city?: string;
+    state?: string;
+    radius?: number; // in km
+}
+
 export interface FilterState {
     search: string;
     propertyType: string;
-    region: string;
+    region: string; // Kept for backward compatibility - display text
+    locationFilter?: LocationFilter; // New structured location data
     minPrice: number;
     maxPrice: number;
+    priceModified?: boolean; // Track if user has interacted with price controls
     bedrooms: string;
     availability: string;
     selectedAmenities: string[];
+    petsAllowed: string;
 }
 export interface UserInfo {
     firstName: string;
@@ -139,12 +152,21 @@ export interface ServiceRequest {
     assignee: string;
     subCategory?: string;
     problem?: string;
+    description?: string;
     authorizationToEnter?: string;
     authorizationCode?: string;
     setUpDateTime?: string;
     availability?: AvailabilityOption[];
     createdAt: string;
-    attachments?: File[];
-    video?: File | null;
+    attachments?: (File | string)[]; // Can be File objects or data URL strings
+    video?: File | string | null; // Can be File object or data URL string
     pets?: string[];
+}
+
+export interface Publication {
+    id: string;
+    title: string;
+    content: string;
+    date: string;
+    author: string;
 }

@@ -1,5 +1,42 @@
 import { API_ENDPOINTS } from '../config/api.config';
 
+// Public Listings API Response Types (used by GET_PUBLIC_LISTINGS endpoint)
+export interface PublicListingPhoto {
+  photoUrl: string;
+}
+
+export interface PublicListingAddress {
+  streetAddress?: string;
+  city?: string;
+  stateRegion?: string;
+  zipCode?: string;
+  country?: string;
+}
+
+export interface PublicListingDetails {
+  id?: string;
+  title?: string;
+  monthlyRent?: string;
+  listingPrice?: string;
+  petsAllowed?: boolean;
+}
+
+export interface PublicSingleUnitDetail {
+  beds?: number | null;
+}
+
+export interface PublicListingProperty {
+  id: string;
+  propertyName?: string;
+  propertyType?: string;
+  address?: PublicListingAddress;
+  listing?: PublicListingDetails;
+  singleUnitDetail?: PublicSingleUnitDetail;
+  marketRent?: string;
+  coverPhotoUrl?: string;
+  photos?: PublicListingPhoto[];
+}
+
 // Type definitions for units
 export type DetailedUnitsArray = Array<{
   id: string;

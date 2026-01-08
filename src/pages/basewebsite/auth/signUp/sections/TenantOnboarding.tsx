@@ -1,12 +1,36 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
+import { authService } from '../../../../../services/auth.service';
 
 export const TenantOnboarding: React.FC = () => {
   const [selectedOption, setSelectedOption] = useState<'yes' | 'no' | null>(null);
   const [showLandlordConnect, setShowLandlordConnect] = useState(false);
   const [landlordEmail, setLandlordEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+
+  // Check authentication on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const user = await authService.getCurrentUser();
+        // Verify user is a tenant
+        if (user && user.role?.toUpperCase() === 'TENANT') {
+          setIsLoading(false);
+        } else {
+          // Not a tenant, redirect to login
+          navigate('/login', { replace: true });
+        }
+      } catch (error) {
+        console.error('Authentication check failed:', error);
+        // Not authenticated, redirect to login
+        navigate('/login', { replace: true });
+      }
+    };
+
+    checkAuth();
+  }, [navigate]);
 
   const handleSelection = (option: 'yes' | 'no') => {
     setSelectedOption(option);
@@ -15,7 +39,7 @@ export const TenantOnboarding: React.FC = () => {
     setTimeout(() => {
       if (option === 'yes') {
         // Navigate to the onboarding flow
-        navigate('/signup/tenant-onboarding-flow');
+        navigate('/signup/tenant-onboarding-flow', { replace: true });
       } else {
         // Show landlord connect form
         setShowLandlordConnect(true);
@@ -43,6 +67,18 @@ export const TenantOnboarding: React.FC = () => {
     setShowLandlordConnect(false);
     setSelectedOption(null);
   };
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-white">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#3D7475]"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className=" -m-2 min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center  relative overflow-hidden">

@@ -135,6 +135,7 @@ export default function UserDashboardNavbar({ sidebarOpen, setSidebarOpen }: Nav
                 <div className="flex items-center gap-2 ml-auto">
                     <button
                         aria-label="Property"
+                        onClick={() => navigate('/userdashboard/properties')}
                         className="w-8 h-8 rounded-full bg-white flex items-center justify-center hover:bg-gray-100 shadow-[0_3px_0_rgba(93,111,108)]"
                     >
                         <Building2 size={18} className="text-gray-800" />
@@ -142,10 +143,11 @@ export default function UserDashboardNavbar({ sidebarOpen, setSidebarOpen }: Nav
 
                     <button
                         aria-label="Messages"
-                        className="w-8 h-8 rounded-full bg-white flex items-center justify-center hover:bg-gray-100 shadow-[0_3px_0_rgba(93,111,108)] relative"
+                        onClick={() => navigate('/userdashboard/messages')}
+                        className="w-8 h-8 rounded-full bg-white flex items-center justify-center hover:bg-gray-100 shadow-[0_3px_0_rgba(93,111,108)] relative transition-transform"
                     >
                         <MessageSquare size={18} className="text-gray-800" />
-                        <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border border-white" />
+                        <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border border-white animate-pulse" />
                     </button>
 
                     <button
@@ -157,6 +159,7 @@ export default function UserDashboardNavbar({ sidebarOpen, setSidebarOpen }: Nav
 
                     <button
                         aria-label="Notifications"
+                        onClick={() => navigate('/userdashboard/settings/account/notifications')}
                         className="w-8 h-8 md:mr-6 rounded-full bg-white flex items-center justify-center hover:bg-gray-100 shadow-[0_3px_0_rgba(93,111,108)]"
                     >
                         <Bell size={18} className="text-gray-800" />

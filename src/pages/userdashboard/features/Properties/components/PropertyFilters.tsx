@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search, ChevronDown, Check } from "lucide-react";
+import { Search, Check } from "lucide-react";
+import CustomDropdown from "../../../../../pages/Dashboard/components/CustomDropdown";
 
-import type { FilterState } from "../../../utils/types";
+import type { FilterState, LocationFilter } from "../../../utils/types";
 
 interface UserPreferences {
     location?: { country: string; state: string; city: string };
@@ -19,51 +20,66 @@ interface PropertyFiltersProps {
     isOpen: boolean;
     onClose: () => void;
     onApply: (filters: FilterState) => void;
+    onReset: () => void;
     userPreferences?: UserPreferences | null;
-    initialFilters?: FilterState | null;
+    initialFilters: FilterState;
 }
 
 
 const PropertyFilters: React.FC<PropertyFiltersProps> = ({ 
     isOpen, 
     onClose, 
-    onApply, 
+    onApply,
+    onReset,
     userPreferences,
     initialFilters 
 }) => {
     // Initialize state with preferences or initial filters
     const getInitialMinPrice = () => {
-        if (initialFilters?.minPrice !== undefined) return initialFilters.minPrice;
+        if (initialFilters.minPrice !== undefined) return initialFilters.minPrice;
         if (userPreferences?.criteria?.minPrice !== undefined) return userPreferences.criteria.minPrice;
         return 0;
     };
 
     const getInitialMaxPrice = () => {
-        if (initialFilters?.maxPrice !== undefined) return initialFilters.maxPrice;
+        if (initialFilters.maxPrice !== undefined) return initialFilters.maxPrice;
         if (userPreferences?.criteria?.maxPrice !== undefined) return userPreferences.criteria.maxPrice;
         return 50000;
     };
 
     const getInitialBedrooms = () => {
-        if (initialFilters?.bedrooms && initialFilters.bedrooms !== 'All') return initialFilters.bedrooms;
+        if (initialFilters.bedrooms && initialFilters.bedrooms !== 'All') return initialFilters.bedrooms;
         if (userPreferences?.criteria?.beds && userPreferences.criteria.beds !== 'Any') {
             return userPreferences.criteria.beds;
         }
         return "All";
     };
 
-    const [search, setSearch] = useState(initialFilters?.search || "");
-    const [propertyType, setPropertyType] = useState(initialFilters?.propertyType || "All");
-    const [region, setRegion] = useState(initialFilters?.region || "nearby locality");
+    const [search, setSearch] = useState(initialFilters.search || "");
+    const [propertyType, setPropertyType] = useState(initialFilters.propertyType || "All");
+    const [region, setRegion] = useState(initialFilters.region || (userPreferences?.location?.city ? userPreferences.location.city : "All Locations"));
     const [minPrice, setMinPrice] = useState(getInitialMinPrice());
     const [maxPrice, setMaxPrice] = useState(getInitialMaxPrice());
+    const [priceModified, setPriceModified] = useState(initialFilters.priceModified || false);
     const [bedrooms, setBedrooms] = useState(getInitialBedrooms());
-    const [availability, setAvailability] = useState(initialFilters?.availability || "All");
-    const [selectedAmenities, setSelectedAmenities] = useState(initialFilters?.selectedAmenities || []);
+    const [availability, setAvailability] = useState(initialFilters.availability || "All");
+    const [selectedAmenities, setSelectedAmenities] = useState(initialFilters.selectedAmenities || []);
+    const [petsAllowed, setPetsAllowed] = useState(initialFilters.petsAllowed || "All");
+    const [showAllAmenities, setShowAllAmenities] = useState(false);
 
     // Ref to track if we're syncing from props (to prevent infinite loop)
     const isSyncingFromProps = useRef(false);
     const prevInitialFiltersRef = useRef(initialFilters);
+    
+    // Ref for the sidebar content container
+    const sidebarRef = useRef<HTMLDivElement>(null);
+
+    // Scroll sidebar to top when it opens
+    useEffect(() => {
+        if (isOpen && sidebarRef.current) {
+            sidebarRef.current.scrollTop = 0;
+        }
+    }, [isOpen]);
 
     // Update state when initialFilters or userPreferences change
     useEffect(() => {
@@ -75,26 +91,17 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
             prevInitialFiltersRef.current = initialFilters;
         }
         
-        if (initialFilters && hasInitialFiltersChanged) {
+        if (hasInitialFiltersChanged) {
             setSearch(initialFilters.search || "");
             setPropertyType(initialFilters.propertyType || "All");
-            setRegion(initialFilters.region || "nearby locality");
+            setRegion(initialFilters.region || (userPreferences?.location?.city ? userPreferences.location.city : "All Locations"));
             setMinPrice(initialFilters.minPrice ?? getInitialMinPrice());
             setMaxPrice(initialFilters.maxPrice ?? getInitialMaxPrice());
+            setPriceModified(initialFilters.priceModified || false);
             setBedrooms(initialFilters.bedrooms || getInitialBedrooms());
             setAvailability(initialFilters.availability || "All");
             setSelectedAmenities(initialFilters.selectedAmenities || []);
-        } else if (userPreferences && !initialFilters) {
-            // If no initial filters but we have preferences, use preferences
-            if (userPreferences.criteria?.minPrice !== undefined) {
-                setMinPrice(userPreferences.criteria.minPrice);
-            }
-            if (userPreferences.criteria?.maxPrice !== undefined) {
-                setMaxPrice(userPreferences.criteria.maxPrice);
-            }
-            if (userPreferences.criteria?.beds && userPreferences.criteria.beds !== 'Any') {
-                setBedrooms(userPreferences.criteria.beds);
-            }
+            setPetsAllowed(initialFilters.petsAllowed || "All");
         }
         
         // Reset the flag after a microtask to allow state updates to complete
@@ -103,20 +110,59 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                 isSyncingFromProps.current = false;
             });
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [initialFilters, userPreferences]);
 
     const handleReset = () => {
-        setSearch("");
-        setPropertyType("All");
-        setRegion("nearby locality");
-        // Reset to preferences if available, otherwise default values
-        setMinPrice(userPreferences?.criteria?.minPrice ?? 0);
-        setMaxPrice(userPreferences?.criteria?.maxPrice ?? 50000);
-        setBedrooms(userPreferences?.criteria?.beds && userPreferences.criteria.beds !== 'Any' 
-            ? userPreferences.criteria.beds 
-            : "All");
-        setAvailability("All");
-        setSelectedAmenities([]);
+        // Call the store's reset function to ensure consistency
+        onReset();
+        // Local state will be synced via the useEffect when initialFilters changes
+    };
+
+    // Helper function to parse region display text into structured LocationFilter
+    const parseRegionToLocationFilter = (regionText: string): LocationFilter | undefined => {
+        if (!regionText || regionText === 'All Locations') {
+            return { displayText: regionText, type: 'all' };
+        }
+
+        // Extract radius from region string (e.g., "Within 5km of Bhopal")
+        const radiusMatch = regionText.match(/Within (\d+)km of (.+)/);
+        if (radiusMatch) {
+            return {
+                displayText: regionText,
+                type: 'radius',
+                city: radiusMatch[2],
+                radius: parseInt(radiusMatch[1], 10)
+            };
+        }
+
+        // Handle "City & Nearby Areas" (default 10km radius)
+        if (regionText.includes(' & Nearby Areas')) {
+            const city = regionText.replace(' & Nearby Areas', '');
+            return {
+                displayText: regionText,
+                type: 'nearby',
+                city,
+                radius: 10 // Default radius for nearby areas
+            };
+        }
+
+        // Handle "All State" (e.g., "All Madhya Pradesh")
+        if (regionText.startsWith('All ')) {
+            const state = regionText.replace('All ', '');
+            return {
+                displayText: regionText,
+                type: 'state',
+                state
+            };
+        }
+
+        // Handle direct city name or other formats
+        return {
+            displayText: regionText,
+            type: 'city',
+            city: regionText
+        };
     };
 
     // Update filters when they change (but not when syncing from props)
@@ -126,20 +172,57 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
             return;
         }
         
+        const locationFilter = parseRegionToLocationFilter(region);
+        
         onApply({
             search,
             propertyType,
             region,
+            locationFilter,
             minPrice,
             maxPrice,
+            priceModified,
             bedrooms,
             availability,
-            selectedAmenities
+            selectedAmenities,
+            petsAllowed
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [search, propertyType, region, minPrice, maxPrice, bedrooms, availability, selectedAmenities]);
+    }, [search, propertyType, region, minPrice, maxPrice, priceModified, bedrooms, availability, selectedAmenities, petsAllowed]);
 
-    const propertyTypes = ["All", "Apartment", "Villa", "Plot", "Builder Floor"];
+    // Generate region options based on user's location from preferences
+    const getRegionOptions = () => {
+        const options: { value: string; label: string }[] = [
+            { value: "All Locations", label: "All Locations" }
+        ];
+        
+        if (userPreferences?.location) {
+            const { city, state } = userPreferences.location;
+            
+            // Add user's city as primary option
+            if (city) {
+                options.push({ value: `${city} & Nearby Areas`, label: `${city} & Nearby Areas` });
+            }
+            
+            // Add nearby/surrounding areas option
+            if (city) {
+                options.push({ value: `Within 5km of ${city}`, label: `Within 5km of ${city}` });
+                options.push({ value: `Within 10km of ${city}`, label: `Within 10km of ${city}` });
+                options.push({ value: `Within 25km of ${city}`, label: `Within 25km of ${city}` });
+            }
+            if (state && city !== state) {
+                options.push({ value: `All ${state}`, label: `All ${state}` });
+            }
+        } else {
+            // Default options if no user location
+            options.push({ value: "Nearby Locality", label: "Nearby Locality" });
+        }
+        
+        return options;
+    };
+
+    const regionOptions = getRegionOptions();
+    const propertyTypes = ["All", "Single Unit", "Multi Unit"];
     const bedroomOptions = ["All", "1", "2", "3", "4", "4+"];
     const availabilityOptions = [
         "All",
@@ -148,15 +231,34 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
         "With in 1 year",
         "More than one year",
     ];
-    const commonAmenities = ["Ready to move", "with in 6 months"];
+    const allAmenities = [
+        "Air Conditioning",
+        "Heating",
+        "Dishwasher",
+        "Washer/Dryer",
+        "Parking",
+        "Swimming Pool",
+        "Fitness Center",
+        "Pet Friendly",
+        "Balcony/Patio",
+        "Garden",
+        "Garage",
+        "Security System",
+        "Elevator",
+        "Hardwood Floors",
+        "WiFi/Internet",
+        "Cable TV"
+    ];
+    const commonAmenities = allAmenities.slice(0, 6);
 
     return (
         <div
-            className={`absolute inset-0 z-[100] flex justify-end bg-black/10 transition-all duration-500 ease-in-out ${isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+            className={`fixed top-[64px] left-0 right-0 bottom-0 z-[100] flex justify-end bg-black/10 transition-all duration-500 ease-in-out ${isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
                 }`}
             onClick={onClose}
         >
             <div
+                ref={sidebarRef}
                 className={`bg-[#F4F7F8] w-full max-w-[380px] h-full shadow-2xl transition-all duration-500 ease-in-out overflow-y-auto transform ${isOpen ? "translate-x-0" : "translate-x-full"
                     }`}
                 onClick={(e) => e.stopPropagation()}
@@ -166,7 +268,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                         <h2 className="text-xl font-semibold text-gray-900">Filters</h2>
                         <button
                             onClick={handleReset}
-                            className="text-sm font-semibold text-[#8CD74B] hover:underline"
+                            className="text-sm font-medium text-[#8CD74B] "
                         >
                             Reset
                         </button>
@@ -213,16 +315,15 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                     {/* Region */}
                     <section className="space-y-2 pt-2 border-t border-gray-200">
                         <h3 className="text-base font-semibold text-[#202020] px-1">Region</h3>
-                        <div className="relative">
-                            <select
-                                value={region}
-                                onChange={(e) => setRegion(e.target.value)}
-                                className="w-full bg-white border border-gray-200 rounded-md py-3 px-4 appearance-none text-gray-700 text-sm focus:outline-none shadow-sm"
-                            >
-                                <option value="nearby locality">nearby locality</option>
-                            </select>
-                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-900 pointer-events-none" size={18} />
-                        </div>
+                        <CustomDropdown
+                            value={region}
+                            onChange={setRegion}
+                            options={regionOptions}
+                            placeholder="Select region"
+                            buttonClassName="py-2.5 border-gray-200 shadow-sm !rounded-md"
+                            dropdownClassName="!rounded-md"
+                            textClassName="text-sm"
+                        />
                     </section>
 
                     {/* Price Range */}
@@ -234,7 +335,10 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                                 <input
                                     type="text"
                                     value={minPrice}
-                                    onChange={(e) => setMinPrice(Math.min(maxPrice, Number(e.target.value) || 0))}
+                                    onChange={(e) => {
+                                        setMinPrice(Math.min(maxPrice, Number(e.target.value) || 0));
+                                        setPriceModified(true);
+                                    }}
                                     className="w-full bg-white border border-gray-200 rounded-md px-2 py-1.5 text-center text-[#8CD74B] font-semibold text-base focus:outline-none"
                                 />
                             </div>
@@ -243,54 +347,60 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                                 <input
                                     type="text"
                                     value={maxPrice}
-                                    onChange={(e) => setMaxPrice(Math.max(minPrice, Number(e.target.value) || 0))}
+                                    onChange={(e) => {
+                                        setMaxPrice(Math.max(minPrice, Number(e.target.value) || 0));
+                                        setPriceModified(true);
+                                    }}
                                     className="w-full bg-white border border-gray-200 rounded-md px-2 py-1.5 text-center text-[#8CD74B] font-semibold text-base focus:outline-none"
                                 />
                             </div>
                         </div>
 
                         {/* Range Slider */}
-                        <div
-                            className="relative h-8 flex items-center px-1 mt-1 cursor-pointer"
-                            onMouseDown={(e) => {
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                const updatePrice = (clientX: number) => {
-                                    const percent = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
-                                    const val = Math.round((percent / 100) * 50000);
+                        <div className="px-4 mt-1">
+                            <div
+                                className="relative h-8 flex items-center cursor-pointer"
+                                onMouseDown={(e) => {
+                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    const updatePrice = (clientX: number) => {
+                                        const percent = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
+                                        const val = Math.round((percent / 100) * 50000);
 
-                                    if (Math.abs(val - minPrice) < Math.abs(val - maxPrice)) {
-                                        setMinPrice(Math.min(val, maxPrice));
-                                    } else {
-                                        setMaxPrice(Math.max(val, minPrice));
-                                    }
-                                };
-                                updatePrice(e.clientX);
-                                const onMouseMove = (moveEvent: MouseEvent) => updatePrice(moveEvent.clientX);
-                                const onMouseUp = () => {
-                                    window.removeEventListener('mousemove', onMouseMove);
-                                    window.removeEventListener('mouseup', onMouseUp);
-                                };
-                                window.addEventListener('mousemove', onMouseMove);
-                                window.addEventListener('mouseup', onMouseUp);
-                            }}
-                        >
-                            <div className="w-full h-2 bg-gray-200 rounded-full relative">
+                                        if (Math.abs(val - minPrice) < Math.abs(val - maxPrice)) {
+                                            setMinPrice(Math.min(val, maxPrice));
+                                        } else {
+                                            setMaxPrice(Math.max(val, minPrice));
+                                        }
+                                        setPriceModified(true);
+                                    };
+                                    updatePrice(e.clientX);
+                                    const onMouseMove = (moveEvent: MouseEvent) => updatePrice(moveEvent.clientX);
+                                    const onMouseUp = () => {
+                                        window.removeEventListener('mousemove', onMouseMove);
+                                        window.removeEventListener('mouseup', onMouseUp);
+                                    };
+                                    window.addEventListener('mousemove', onMouseMove);
+                                    window.addEventListener('mouseup', onMouseUp);
+                                }}
+                            >
+                                <div className="w-full h-2 bg-gray-200 rounded-full relative">
+                                    <div
+                                        className="h-full bg-[#8CD74B] rounded-full absolute"
+                                        style={{
+                                            left: `${(minPrice / 50000) * 100}%`,
+                                            right: `${100 - (maxPrice / 50000) * 100}%`
+                                        }}
+                                    ></div>
+                                </div>
                                 <div
-                                    className="h-full bg-[#8CD74B] rounded-full absolute"
-                                    style={{
-                                        left: `${(minPrice / 50000) * 100}%`,
-                                        right: `${100 - (maxPrice / 50000) * 100}%`
-                                    }}
+                                    className="absolute w-6 h-6 bg-white border-2 border-[#8CD74B] rounded-full shadow-md -translate-x-1/2 pointer-events-none z-10"
+                                    style={{ left: `${(minPrice / 50000) * 100}%` }}
+                                ></div>
+                                <div
+                                    className="absolute w-6 h-6 bg-white border-2 border-[#8CD74B] rounded-full shadow-md -translate-x-1/2 pointer-events-none z-10"
+                                    style={{ left: `${(maxPrice / 50000) * 100}%` }}
                                 ></div>
                             </div>
-                            <div
-                                className="absolute w-6 h-6 bg-white border-2 border-[#8CD74B] rounded-full shadow-md -translate-x-1/2 pointer-events-none z-10"
-                                style={{ left: `${(minPrice / 50000) * 100}%` }}
-                            ></div>
-                            <div
-                                className="absolute w-6 h-6 bg-white border-2 border-[#8CD74B] rounded-full shadow-md -translate-x-1/2 pointer-events-none z-10"
-                                style={{ left: `${(maxPrice / 50000) * 100}%` }}
-                            ></div>
                         </div>
                     </section>
 
@@ -339,12 +449,38 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                         </div>
                     </section>
 
+                    {/* Pets Allowed */}
+                    <section className="space-y-2 pt-2 border-t border-gray-200">
+                        <h3 className="text-base font-semibold text-[#202020] px-1">Pets Allowed</h3>
+                        <div className="bg-white rounded-md p-2 shadow-sm space-y-1.5">
+                            {["All", "Yes", "No"].map((opt) => (
+                                <div
+                                    key={opt}
+                                    className="flex justify-between items-center cursor-pointer py-0.5"
+                                    onClick={() => setPetsAllowed(opt)}
+                                >
+                                    <span className={`text-[14px] ${petsAllowed === opt ? "text-gray-700 font-medium" : "text-gray-500"}`}>
+                                        {opt}
+                                    </span>
+                                    <div
+                                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${petsAllowed === opt
+                                            ? "bg-[#8CD74B] border-[#8CD74B]"
+                                            : "border-[#8CD74B] bg-white opacity-40"
+                                            }`}
+                                    >
+                                        {petsAllowed === opt && <Check size={12} className="text-white" strokeWidth={4} />}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+
                     {/* Amenities */}
                     <section className="space-y-2 pt-2 border-t border-gray-200 text-center">
                         <h3 className="text-base font-semibold text-[#202020] px-1 text-left">Amenities</h3>
                         <div className="bg-white rounded-md p-2 shadow-sm space-y-1.5">
                             <div className="space-y-1.5 text-left">
-                                {commonAmenities.map((amenity) => (
+                                {(showAllAmenities ? allAmenities : commonAmenities).map((amenity) => (
                                     <div
                                         key={amenity}
                                         className="flex justify-between items-center cursor-pointer py-0.5"
@@ -370,8 +506,11 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                                     </div>
                                 ))}
                             </div>
-                            <button className="text-[#8CD74B] text-[14px] font-semibold pt-1 transition-colors hover:text-[#76b83f]">
-                                + View More Amenities
+                            <button 
+                                onClick={() => setShowAllAmenities(!showAllAmenities)}
+                                className="text-[#8CD74B] text-[14px] font-semibold pt-1 transition-colors hover:text-[#76b83f]"
+                            >
+                                {showAllAmenities ? "- Show Less Amenities" : `+ View More Amenities (${allAmenities.length - commonAmenities.length} more)`}
                             </button>
                         </div>
                     </section>
