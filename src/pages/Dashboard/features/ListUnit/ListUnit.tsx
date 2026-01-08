@@ -564,7 +564,11 @@ const ListUnit: React.FC = () => {
     }
 
     if (currentStep === 1) {
-      navigate('/dashboard');
+      if (showCreateProperty) {
+        setShowCreateProperty(false);
+        return;
+      }
+      navigate(-1);
     } else if (currentStep === 2) {
       if (leasingStep === 3) {
         setLeasingStep(2);

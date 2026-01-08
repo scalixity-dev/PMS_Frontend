@@ -76,4 +76,29 @@ export const useCreateListing = () => {
   });
 };
 
+/**
+ * Hook to update an existing listing
+ */
+export const useUpdateListing = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<CreateListingDto> }): Promise<BackendListing> => {
+      return listingService.update(id, data);
+    },
+    onSuccess: (data) => {
+      // Invalidate and refetch listings list
+      queryClient.invalidateQueries({ queryKey: listingQueryKeys.lists() });
+      // Invalidate property-specific listings
+      queryClient.invalidateQueries({ queryKey: listingQueryKeys.byProperty(data.propertyId) });
+      // Cache the updated listing
+      queryClient.setQueryData(listingQueryKeys.detail(data.id), data);
+      // Invalidate specific detail query
+      queryClient.invalidateQueries({ queryKey: listingQueryKeys.detail(data.id) });
+      // Also invalidate properties to reflect status changes
+      queryClient.invalidateQueries({ queryKey: ['properties'] });
+    },
+  });
+};
+
 

@@ -276,7 +276,7 @@ const AddKey = () => {
                 <div className="mb-8">
                     <h2 className="text-lg font-bold text-gray-800 mb-4">Key photo</h2>
                     <div
-                        className="relative w-full h-80 bg-white rounded-2xl overflow-hidden shadow-sm group border border-white cursor-pointer"
+                        className="relative w-64 aspect-square bg-white rounded-2xl overflow-hidden shadow-sm group border border-gray-100 cursor-pointer"
                         onClick={triggerFileInput}
                     >
                         <input
@@ -295,14 +295,14 @@ const AddKey = () => {
                                         linear-gradient(45deg, transparent 75%, #000 75%),
                                         linear-gradient(-45deg, transparent 75%, #000 75%)
                                     `,
-                                backgroundSize: '40px 40px',
-                                backgroundPosition: '0 0, 0 20px, 20px -20px, -20px 0px'
+                                backgroundSize: '20px 20px',
+                                backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px'
                             }}
                         />
 
                         {image ? (
                             <>
-                                <img src={image} alt="Key Preview" className="w-full h-full object-contain relative z-10" />
+                                <img src={image} alt="Key Preview" className="w-full h-full object-cover relative z-10" />
                                 {isUploading && (
                                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
                                         <Loader2 className="w-8 h-8 animate-spin text-white" />
@@ -311,30 +311,32 @@ const AddKey = () => {
                             </>
                         ) : (
                             <div className="absolute inset-0 flex flex-col items-center justify-center z-10 hover:bg-black/5 transition-colors">
-                                <div className="bg-[#3A6D6C] p-2 rounded-lg mb-2">
+                                <div className="bg-[#3A6D6C] p-3 rounded-full mb-2 shadow-sm">
                                     <Upload className="w-6 h-6 text-white" />
                                 </div>
-                                <span className="text-sm font-bold text-gray-600">Upload Photos</span>
+                                <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Upload Photo</span>
                             </div>
                         )}
 
-                        {/* Action Icons */}
+                        {/* Action Bar (Visible on hover/always on touch) */}
                         {image && (
-                            <div className="absolute top-4 right-4 flex gap-3 z-20">
+                            <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent z-20 flex justify-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         triggerFileInput();
                                     }}
-                                    className="p-2 bg-white/90 hover:bg-white rounded text-[#3A6D6C] shadow-sm transition-colors border border-gray-100"
+                                    className="p-2 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full text-white shadow-sm transition-colors"
+                                    title="Change Photo"
                                 >
-                                    <Edit className="w-5 h-5" />
+                                    <Edit className="w-4 h-4" />
                                 </button>
                                 <button
                                     onClick={handleDeleteImage}
-                                    className="p-2 bg-white/90 hover:bg-white rounded text-red-500 shadow-sm transition-colors border border-gray-100"
+                                    className="p-2 bg-red-500/80 hover:bg-red-500 backdrop-blur-md rounded-full text-white shadow-sm transition-colors"
+                                    title="Remove Photo"
                                 >
-                                    <Trash2 className="w-5 h-5" />
+                                    <Trash2 className="w-4 h-4" />
                                 </button>
                             </div>
                         )}

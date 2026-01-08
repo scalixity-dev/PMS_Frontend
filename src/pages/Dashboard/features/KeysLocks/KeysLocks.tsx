@@ -4,6 +4,7 @@ import { ChevronLeft, Plus, Edit, Trash2, Check, Loader2 } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
 import { useGetAllKeys, useDeleteKey } from '../../../../hooks/useKeysQueries';
+import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import type { BackendKey } from '../../../../services/keys.service';
 
 // Map backend key type to display format
@@ -27,6 +28,8 @@ const KeysLocks = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 9;
     const [filters, setFilters] = useState<Record<string, string[]>>({});
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [keyToDelete, setKeyToDelete] = useState<string | null>(null);
 
     // Fetch keys from backend
     const { data: keys = [], isLoading, error } = useGetAllKeys();
@@ -174,14 +177,20 @@ const KeysLocks = () => {
         }
     };
 
-    const handleDelete = async (id: string, e: React.MouseEvent) => {
+    const handleDeleteClick = (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        if (window.confirm('Are you sure you want to delete this key?')) {
-            try {
-                await deleteKeyMutation.mutateAsync(id);
-            } catch (error) {
-                console.error('Error deleting key:', error);
-            }
+        setKeyToDelete(id);
+        setIsDeleteModalOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!keyToDelete) return;
+        try {
+            await deleteKeyMutation.mutateAsync(keyToDelete);
+            setIsDeleteModalOpen(false);
+            setKeyToDelete(null);
+        } catch (error) {
+            console.error('Error deleting key:', error);
         }
     };
 
@@ -308,7 +317,7 @@ const KeysLocks = () => {
                                                     <Edit className="w-4 h-4" />
                                                 </button>
                                                 <button
-                                                    onClick={(e) => handleDelete(item.id, e)}
+                                                    onClick={(e) => handleDeleteClick(item.id, e)}
                                                     className="p-1.5 text-red-500 hover:bg-red-50 rounded-full"
                                                     aria-label={`Delete key ${item.name}`}
                                                 >
@@ -349,7 +358,7 @@ const KeysLocks = () => {
                                                 <Edit className="w-5 h-5" />
                                             </button>
                                             <button
-                                                onClick={(e) => handleDelete(item.id, e)}
+                                                onClick={(e) => handleDeleteClick(item.id, e)}
                                                 disabled={deleteKeyMutation.isPending}
                                                 className="text-red-500 hover:text-red-600 transition-colors disabled:opacity-50"
                                             >
@@ -369,6 +378,15 @@ const KeysLocks = () => {
                     </>
                 )}
             </div>
+
+            <DeleteConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={handleConfirmDelete}
+                title="Delete Key"
+                message="Are you sure you want to delete this key? This action cannot be undone."
+                itemName={keyToDelete ? transformedKeys.find(k => k.id === keyToDelete)?.name : 'this key'}
+            />
         </div>
     );
 };
