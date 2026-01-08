@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect, useCallback } from "react";
-import { Filter, Heart, MapPin, DollarSign, BedDouble, PawPrint } from "lucide-react";
+import { Filter, Heart, MapPin, DollarSign, BedDouble, PawPrint, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import PropertyFilters from "./components/PropertyFilters";
 import type { Property, FilterState } from "../../utils/types";
@@ -16,7 +16,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
   return (
     <Link
       to={`/userdashboard/properties/${property.id}`}
-      className="block transition-transform duration-300 hover:scale-[1.02] active:scale-[0.98]"
+      className="block transition-transform duration-300 hover:scale-[1.01] active:scale-[0.98]"
     >
       <div className="relative w-full aspect-[4/3] rounded-[var(--radius-lg)] overflow-hidden group shadow-[var(--shadow-md)] hover:shadow-[var(--shadow-lg)] transition-shadow duration-300">
         {/* Background Image */}
@@ -69,7 +69,38 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
   );
 };
 
+const PropertySkeleton: React.FC = () => {
+  return (
+    <div className="relative w-full aspect-[4/3] rounded-[var(--radius-lg)] overflow-hidden shadow-[var(--shadow-md)] bg-gray-200 animate-pulse">
+      {/* Tag styles */}
+      <div className="absolute top-3 left-3 w-20 h-8 bg-gray-300 rounded-md opacity-50"></div>
+
+      {/* Info Overlay styles */}
+      <div className="absolute bottom-5 left-6 right-6 bg-white/80 backdrop-blur-sm rounded-[var(--radius-md)] p-4 shadow-[var(--shadow-sm)]">
+        <div className="flex justify-between items-start">
+          <div className="space-y-2 w-full pr-8">
+            {/* Title */}
+            <div className="h-5 bg-gray-300 rounded w-3/4"></div>
+            {/* Address */}
+            <div className="h-3 bg-gray-300 rounded w-1/2"></div>
+            {/* Type */}
+            <div className="h-3 bg-gray-300 rounded w-1/3"></div>
+          </div>
+          {/* Heart icon placeholder */}
+          <div className="w-5 h-5 bg-gray-300 rounded-full"></div>
+        </div>
+        <div className="mt-3 flex items-baseline gap-1">
+          {/* Price */}
+          <div className="h-5 bg-gray-300 rounded w-1/4"></div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 import { usePropertyStore } from "./store/propertyStore";
+
+const ITEMS_PER_PAGE = 15;
 
 const Properties: React.FC = () => {
   const {
@@ -84,6 +115,7 @@ const Properties: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [usePreferences, setUsePreferences] = useState(false); // Toggle for preferences
+  const [currentPage, setCurrentPage] = useState(1);
   const [userPreferences, setUserPreferences] = useState<{
     location?: { country: string; state: string; city: string };
     rentalTypes?: string[];
@@ -96,6 +128,8 @@ const Properties: React.FC = () => {
     };
   } | null>(null);
 
+  const [prefsLoaded, setPrefsLoaded] = useState(false);
+
   // Fetch user preferences on mount (only for authenticated tenants)
   useEffect(() => {
     const fetchPreferences = async () => {
@@ -105,6 +139,7 @@ const Properties: React.FC = () => {
 
         // Only fetch preferences if user is a tenant
         if (user.role !== 'TENANT') {
+          setPrefsLoaded(true);
           return; // Not a tenant, skip preferences
         }
 
@@ -130,6 +165,8 @@ const Properties: React.FC = () => {
         // If getCurrentUser fails or preferences fetch fails, continue without preferences
         console.log('Error fetching preferences (continuing without):', err);
         // Continue without preferences - this is expected for non-authenticated users
+      } finally {
+        setPrefsLoaded(true);
       }
     };
 
@@ -139,6 +176,8 @@ const Properties: React.FC = () => {
   // Fetch properties from API
   useEffect(() => {
     const fetchProperties = async () => {
+      if (!prefsLoaded) return;
+
       setLoading(true);
       setError(null);
       try {
@@ -355,6 +394,7 @@ const Properties: React.FC = () => {
     filters.petsAllowed,
     userPreferences,
     usePreferences,
+    prefsLoaded,
   ]);
 
   // Client-side filtering - only for search since backend handles other filters
@@ -373,6 +413,32 @@ const Properties: React.FC = () => {
       return true;
     });
   }, [properties, filters]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredProperties.length / ITEMS_PER_PAGE);
+  const paginatedProperties = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return filteredProperties.slice(startIndex, endIndex);
+  }, [filteredProperties, currentPage]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters.search, filters.propertyType, filters.minPrice, filters.maxPrice, filters.bedrooms, filters.petsAllowed, filters.locationFilter, usePreferences]);
+
+  // Reset to page 1 if current page is out of bounds
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [totalPages, currentPage]);
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   // Memoize the onApply callback to prevent unnecessary re-renders
   const handleApplyFilters = useCallback((newFilters: FilterState) => {
@@ -488,8 +554,10 @@ const Properties: React.FC = () => {
 
         {/* Grid Section */}
         {loading ? (
-          <div className="col-span-full py-20 text-center">
-            <p className="text-gray-500 text-lg">Loading properties...</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <PropertySkeleton key={i} />
+            ))}
           </div>
         ) : error ? (
           <div className="col-span-full py-20 text-center">
@@ -502,23 +570,65 @@ const Properties: React.FC = () => {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredProperties.length > 0 ? (
-              filteredProperties.map((property) => (
-                <PropertyCard key={property.id} property={property} />
-              ))
-            ) : (
-              <div className="col-span-full py-20 text-center">
-                <p className="text-gray-500 text-lg">No properties found matching your criteria.</p>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {paginatedProperties.length > 0 ? (
+                paginatedProperties.map((property) => (
+                  <PropertyCard key={property.id} property={property} />
+                ))
+              ) : (
+                <div className="col-span-full py-20 text-center">
+                  <p className="text-gray-500 text-lg">No properties found matching your criteria.</p>
+                  <button
+                    onClick={resetPropertyFilters}
+                    className="mt-4 text-[var(--dashboard-accent)] font-medium hover:underline"
+                  >
+                    Clear all filters
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Pagination */}
+            {filteredProperties.length > ITEMS_PER_PAGE && (
+              <div className="mt-8 flex justify-center items-center gap-2">
                 <button
-                  onClick={resetPropertyFilters}
-                  className="mt-4 text-[var(--dashboard-accent)] font-medium hover:underline"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className={`p-2 rounded-full transition-colors ${currentPage === 1
+                    ? 'text-gray-300 cursor-not-allowed'
+                    : 'text-gray-600 hover:bg-gray-200'
+                    }`}
                 >
-                  Clear all filters
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-medium transition-all ${currentPage === page
+                      ? 'bg-[#3A7D76] text-white shadow-lg'
+                      : 'bg-transparent text-gray-600 border border-gray-300 hover:bg-gray-100'
+                      }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className={`p-2 rounded-full transition-colors ${currentPage === totalPages
+                    ? 'text-gray-300 cursor-not-allowed'
+                    : 'text-gray-600 hover:bg-gray-200'
+                    }`}
+                >
+                  <ChevronRight className="w-6 h-6" />
                 </button>
               </div>
             )}
-          </div>
+          </>
         )}
       </div>
     </div >

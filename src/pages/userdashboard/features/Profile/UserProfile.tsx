@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Check, Eye, EyeOff } from "lucide-react";
+import { Check, Eye, EyeOff, Camera } from "lucide-react";
 import BaseModal from "../../../../components/common/modals/BaseModal";
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
 import profilePic from "../../../../assets/images/generated_profile_avatar.png";
@@ -7,31 +7,22 @@ import UserAccountSettingsLayout from "../../components/layout/UserAccountSettin
 
 import { useAuthStore } from "./store/authStore";
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
+import type { UserInfo } from "../../utils/types";
 
 
 
 const Profile: React.FC = () => {
   const { userInfo, setUserInfo } = useAuthStore();
 
-  useEffect(() => {
-    if (!userInfo.email) {
-      setUserInfo({
-        firstName: "Rishabh",
-        lastName: "Awasthi",
-        dob: "20/02/1990",
-        email: "rishabh@gmail.com",
-        phone: "+91 9999999999",
-        role: "Tenant",
-        country: "India",
-        city: "Mumbai",
-        pincode: "400001",
-      });
-    }
-  }, [userInfo.email, setUserInfo]);
-
   // Modal State
   const [editMode, setEditMode] = useState<'personal' | 'address' | 'email' | 'password' | null>(null);
-  const [tempInfo, setTempInfo] = useState(userInfo);
+  const [tempInfo, setTempInfo] = useState<UserInfo | null>(userInfo);
+
+  useEffect(() => {
+    if (userInfo && !tempInfo) {
+      setTempInfo(userInfo);
+    }
+  }, [userInfo, tempInfo]);
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
@@ -43,6 +34,7 @@ const Profile: React.FC = () => {
     confirm: false
   });
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
 
   const togglePasswordVisibility = (field: 'current' | 'new' | 'confirm') => {
@@ -70,6 +62,16 @@ const Profile: React.FC = () => {
     setEditMode(mode);
   };
 
+  if (!userInfo) {
+    return (
+      <UserAccountSettingsLayout activeTab="Profile">
+        <div className="flex items-center justify-center p-20">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--dashboard-accent)]"></div>
+        </div>
+      </UserAccountSettingsLayout>
+    );
+  }
+
   const handleSave = () => {
     if (editMode === 'password') {
       // Mock password save validation could go here
@@ -77,7 +79,9 @@ const Profile: React.FC = () => {
       setEditMode(null);
       return;
     }
-    setUserInfo(tempInfo);
+    if (tempInfo) {
+      setUserInfo(tempInfo);
+    }
     setEditMode(null);
   };
 
@@ -94,7 +98,7 @@ const Profile: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setTempInfo(prev => ({ ...prev, [name]: value }));
+    setTempInfo(prev => prev ? ({ ...prev, [name]: value }) : null);
   };
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,19 +106,76 @@ const Profile: React.FC = () => {
     setPasswordData(prev => ({ ...prev, [name]: value }));
   };
 
+  const [profileImage, setProfileImage] = useState(userInfo?.profileImage || profilePic);
+
+  useEffect(() => {
+    if (userInfo?.profileImage) {
+      setProfileImage(userInfo.profileImage);
+    }
+  }, [userInfo?.profileImage]);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validation: File Type
+      const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        setUploadError("Please select a valid image file (JPEG, PNG, GIF, or WebP).");
+        return;
+      }
+
+      // Validation: File Size (2MB limit)
+      const MAX_SIZE = 2 * 1024 * 1024;
+      if (file.size > MAX_SIZE) {
+        setUploadError("File is too large. Please select an image smaller than 2MB.");
+        return;
+      }
+
+      setUploadError(null);
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        try {
+          const imageResult = reader.result as string;
+          setProfileImage(imageResult);
+          setUserInfo({ profileImage: imageResult });
+        } catch (error) {
+          console.error("Error processing image:", error);
+          setUploadError("Failed to process the selected image.");
+        }
+      };
+
+      reader.onerror = () => {
+        setUploadError("Failed to read the file. Please try again.");
+        console.error("FileReader error:", reader.error);
+      };
+
+      reader.readAsDataURL(file);
+
+      // Reset the input value so the same file can be selected again
+      e.target.value = '';
+    }
+  };
+
+  const handleCameraClick = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
     <UserAccountSettingsLayout activeTab="Profile">
       {/* User Profile Overview */}
       <div className="flex px-8 items-center gap-6 mb-10">
-        <div className="w-44 h-44 rounded-full bg-gradient-to-br from-orange-200 via-pink-200 to-orange-300 flex items-center justify-center overflow-hidden transition-all duration-500 group relative">
-          <div className="w-full h-full flex items-center justify-center relative bg-[#F4D1AE]">
-            <img
-              src={profilePic}
-              alt="Profile"
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-                e.currentTarget.parentElement!.innerHTML = `
+        <div className="relative group">
+          <div className="w-44 h-44 rounded-full bg-gradient-to-br from-orange-200 via-pink-200 to-orange-300 flex items-center justify-center overflow-hidden transition-all duration-500 relative">
+            <div className="w-full h-full flex items-center justify-center relative bg-[#F4D1AE]">
+              <img
+                src={profileImage}
+                alt="Profile"
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.parentElement!.innerHTML = `
                   <svg width="100%" height="100%" viewBox="0 0 70 70" fill="none" xmlns="http://www.w3.org/2000/svg" class="absolute">
                     <circle cx="35" cy="28" r="12" fill="#F4D1AE" />
                     <path d="M35 16C28 16 23 20 23 26C23 28 24 30 25 31C25 25 28 20 35 20C42 20 45 25 45 31C46 30 47 28 47 26C47 20 42 16 35 16Z" fill="#2D3748" />
@@ -124,14 +185,34 @@ const Profile: React.FC = () => {
                     <path d="M25 35C25 40 30 45 35 45C40 45 45 40 45 35L45 50C45 55 40 60 35 60C30 60 25 55 25 50Z" fill="#87CEEB" />
                   </svg>
                 `;
-              }}
-            />
+                }}
+              />
+            </div>
           </div>
+
+          <button
+            onClick={handleCameraClick}
+            className="absolute bottom-2 right-2 p-2 bg-white rounded-full shadow-md border border-gray-200 text-gray-600 hover:text-[#7CD947] transition-colors z-10"
+          >
+            <Camera size={20} />
+          </button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleImageUpload}
+            className="hidden"
+            accept="image/*"
+          />
         </div>
         <div className="space-y-1">
           <h2 className="text-3xl font-medium text-[#1A1A1A]">{userInfo.firstName} {userInfo.lastName}</h2>
           <p className="text-lg text-[#6B7280] font-medium">{userInfo.role}</p>
           <p className="text-lg text-[#6B7280] font-medium">{userInfo.email}</p>
+          {uploadError && (
+            <p className="text-sm text-red-500 font-medium mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
+              {uploadError}
+            </p>
+          )}
         </div>
       </div>
 
@@ -356,7 +437,7 @@ const Profile: React.FC = () => {
         padding="px-6 py-6"
         titleSize="text-lg"
       >
-        {editMode === 'personal' && (
+        {editMode === 'personal' && tempInfo && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1">First Name</label>
@@ -412,7 +493,7 @@ const Profile: React.FC = () => {
           </div>
         )}
 
-        {editMode === 'address' && (
+        {editMode === 'address' && tempInfo && (
           <div className="grid grid-cols-1 gap-4">
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1">Country</label>
@@ -447,7 +528,7 @@ const Profile: React.FC = () => {
           </div>
         )}
 
-        {editMode === 'email' && (
+        {editMode === 'email' && tempInfo && (
           <div className="grid grid-cols-1 gap-4">
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1">New Email Address</label>

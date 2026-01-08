@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { Plus, Trash2, User } from 'lucide-react';
 import { useUserApplicationStore } from '../store/userApplicationStore';
 import PrimaryActionButton from '@/components/common/buttons/PrimaryActionButton';
-import AddOccupantModal from '../../../../Dashboard/features/Application/components/AddOccupantModal';
-import type { OccupantFormData } from '../../../../Dashboard/features/Application/components/AddOccupantModal';
+import UserAddOccupantModal, { type OccupantFormData } from '../components/UserAddOccupantModal';
 
 // I'll reuse the logic but restyle the container
 interface OccupantsStepProps {
@@ -30,7 +29,7 @@ const OccupantsStep: React.FC<OccupantsStepProps> = ({ onNext }) => {
 
     return (
         <div className="w-full">
-            <AddOccupantModal
+            <UserAddOccupantModal
                 isOpen={isAdding}
                 onClose={() => setIsAdding(false)}
                 onSave={handleSaveOccupant}
@@ -90,8 +89,8 @@ const OccupantsStep: React.FC<OccupantsStepProps> = ({ onNext }) => {
                         onClick={onNext}
                         text="Next"
                         className={`px-16 py-3.5 rounded-full font-bold uppercase transition-all ${true // It's never disabled currently, but keeping pattern
-                                ? 'bg-[#7ED957] hover:bg-[#6BC847] shadow-lg shadow-[#7ED957]/30 text-white'
-                                : 'bg-[#F3F4F6] text-black hover:bg-[#F3F4F6] cursor-not-allowed border-none shadow-none'
+                            ? 'bg-[#7ED957] hover:bg-[#6BC847] shadow-lg shadow-[#7ED957]/30 text-white'
+                            : 'bg-[#F3F4F6] text-black hover:bg-[#F3F4F6] cursor-not-allowed border-none shadow-none'
                             }`}
                     />
                 </div>

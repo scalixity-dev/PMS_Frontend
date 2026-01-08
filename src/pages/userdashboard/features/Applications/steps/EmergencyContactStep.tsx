@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Plus, Trash2, Users, AlertCircle, Pencil } from 'lucide-react';
 import { useUserApplicationStore, type EmergencyContactFormData } from '../store/userApplicationStore';
 import PrimaryActionButton from '@/components/common/buttons/PrimaryActionButton';
-import AddEmergencyContactModal from '../../../../Dashboard/features/Application/components/AddEmergencyContactModal';
+import UserAddEmergencyContactModal from '../components/UserAddEmergencyContactModal';
 
 const ContactItem: React.FC<{ contact: EmergencyContactFormData & { id: string }; onDelete: () => void; onEdit: () => void }> = ({ contact, onDelete, onEdit }) => {
     return (
@@ -112,14 +112,14 @@ const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({ onNext }) =
                         disabled={contacts.length === 0}
                         text="Next"
                         className={`px-16 py-3.5 rounded-full font-bold uppercase transition-all ${contacts.length > 0
-                                ? 'bg-[#7ED957] hover:bg-[#6BC847] shadow-lg shadow-[#7ED957]/30 text-white'
-                                : 'bg-[#F3F4F6] text-black hover:bg-[#F3F4F6] cursor-not-allowed border-none shadow-none'
+                            ? 'bg-[#7ED957] hover:bg-[#6BC847] shadow-lg shadow-[#7ED957]/30 text-white'
+                            : 'bg-[#F3F4F6] text-black hover:bg-[#F3F4F6] cursor-not-allowed border-none shadow-none'
                             }`}
                     />
                 </div>
             </div>
 
-            <AddEmergencyContactModal
+            <UserAddEmergencyContactModal
                 isOpen={isAdding}
                 onClose={() => { setIsAdding(false); setEditingIndex(null); }}
                 onSave={handleSaveContact}

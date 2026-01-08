@@ -122,24 +122,26 @@ const ChatSidebar = ({
             )}
 
             {/* Profile Header (Always Visible as per revert request) */}
-            <div className="px-4 pt-6 pb-4 border-b border-gray-200 font-inter">
-                <div className="flex items-center gap-3 mb-3">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-pink-400 flex items-center justify-center flex-shrink-0">
-                        <img
-                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userInfo.firstName}`}
-                            alt={`${userInfo.firstName} ${userInfo.lastName}`}
-                            className="w-full h-full rounded-full object-cover"
-                        />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <h3 className="text-base font-semibold text-gray-900 truncate">
-                            {userInfo.firstName} {userInfo.lastName}
-                        </h3>
-                        <p className="text-xs text-gray-500">{userInfo.role}</p>
-                        <p className="text-xs text-gray-400 truncate">{userInfo.email}</p>
+            {userInfo && (
+                <div className="px-4 pt-6 pb-4 border-b border-gray-200 font-inter">
+                    <div className="flex items-center gap-3 mb-3">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-pink-400 flex items-center justify-center flex-shrink-0">
+                            <img
+                                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userInfo.firstName}`}
+                                alt={`${userInfo.firstName} ${userInfo.lastName}`}
+                                className="w-full h-full rounded-full object-cover"
+                            />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <h3 className="text-base font-semibold text-gray-900 truncate">
+                                {userInfo.firstName} {userInfo.lastName}
+                            </h3>
+                            <p className="text-xs text-gray-500">{userInfo.role}</p>
+                            <p className="text-xs text-gray-400 truncate">{userInfo.email}</p>
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
 
             {/* Search Bar */}
             <div className={`px-4 py-4 border-b border-gray-200`}>

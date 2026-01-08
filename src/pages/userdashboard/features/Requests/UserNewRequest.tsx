@@ -77,9 +77,16 @@ const NewRequest: React.FC = () => {
 
   // Access the navigation context to intercept navigation
   const navigationContext = React.useContext(UNSAFE_NavigationContext);
-  
+
+  /* Use a ref to track navigation allowance synchronously, 
+     preventing race conditions between state updates and navigation events */
+  const shouldAllowNavigationRef = React.useRef(false);
+
   // Block navigation when form has unsaved changes
   useEffect(() => {
+    // Sync ref with state when state changes (for other cases)
+    shouldAllowNavigationRef.current = shouldAllowNavigation;
+
     if (!hasFormData || shouldAllowNavigation) return;
 
     const { navigator } = navigationContext;
@@ -88,9 +95,14 @@ const NewRequest: React.FC = () => {
 
     // Intercept push navigation
     navigator.push = (...args: Parameters<typeof originalPush>) => {
+      // Check ref directly for immediate feedback during submission
+      if (shouldAllowNavigationRef.current) {
+        return originalPush(...args);
+      }
+
       const [to] = args;
       const targetPath = typeof to === 'string' ? to : to.pathname;
-      
+
       if (targetPath !== location.pathname) {
         setNextLocation(targetPath || '');
         setIsModalOpen(true);
@@ -101,9 +113,14 @@ const NewRequest: React.FC = () => {
 
     // Intercept replace navigation
     navigator.replace = (...args: Parameters<typeof originalReplace>) => {
+      // Check ref directly
+      if (shouldAllowNavigationRef.current) {
+        return originalReplace(...args);
+      }
+
       const [to] = args;
       const targetPath = typeof to === 'string' ? to : to.pathname;
-      
+
       if (targetPath !== location.pathname) {
         setNextLocation(targetPath || '');
         setIsModalOpen(true);
@@ -121,9 +138,12 @@ const NewRequest: React.FC = () => {
 
   // Handle browser navigation (refresh, close tab, etc.)
   useEffect(() => {
+    // For browser native events, the state is sufficient usually, 
+    // but the ref is consistent.
     if (!hasFormData || shouldAllowNavigation) return;
 
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (shouldAllowNavigationRef.current) return;
       e.preventDefault();
       e.returnValue = '';
       return '';
@@ -135,8 +155,9 @@ const NewRequest: React.FC = () => {
 
   const handleConfirmLeave = useCallback(() => {
     setIsModalOpen(false);
+    shouldAllowNavigationRef.current = true;
     setShouldAllowNavigation(true);
-    
+
     // Navigate to the target location
     if (nextLocation) {
       setTimeout(() => {
@@ -152,8 +173,17 @@ const NewRequest: React.FC = () => {
 
   // Wrap handleSubmit to allow navigation after successful submission
   const handleFormSubmit = async () => {
+    // Temporarily allow navigation for the submission-triggered redirect
+    shouldAllowNavigationRef.current = true;
     setShouldAllowNavigation(true);
-    await handleSubmit();
+
+    const success = await handleSubmit();
+
+    // If submission failed, we should restore navigation blocking to prevent data loss
+    if (!success) {
+      shouldAllowNavigationRef.current = false;
+      setShouldAllowNavigation(false);
+    }
   };
 
   const renderStep = () => {
@@ -219,12 +249,48 @@ const NewRequest: React.FC = () => {
             videoInputRef={videoInputRef}
             onAttachmentsChange={(e) => {
               if (e.target.files) {
-                setAttachments(prev => [...prev, ...Array.from(e.target.files!)]);
+                const files = Array.from(e.target.files);
+                const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+                const ALLOWED_TYPES = [
+                  'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+                  'application/pdf', 'application/msword',
+                  'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                ];
+
+                const validFiles = files.filter(file => {
+                  if (!ALLOWED_TYPES.includes(file.type)) {
+                    setSubmissionError(`File "${file.name}" is not a supported type.`);
+                    return false;
+                  }
+                  if (file.size > MAX_SIZE) {
+                    setSubmissionError(`File "${file.name}" is too large (max 10MB).`);
+                    return false;
+                  }
+                  return true;
+                });
+
+                if (validFiles.length > 0) {
+                  setAttachments(prev => [...prev, ...validFiles]);
+                  setSubmissionError(null);
+                }
+                e.target.value = '';
               }
             }}
             onVideoChange={(e) => {
               if (e.target.files && e.target.files[0]) {
-                setVideo(e.target.files[0]);
+                const file = e.target.files[0];
+                const MAX_SIZE = 50 * 1024 * 1024; // 50MB
+                if (!file.type.startsWith('video/')) {
+                  setSubmissionError("Please select a valid video file.");
+                  return;
+                }
+                if (file.size > MAX_SIZE) {
+                  setSubmissionError("Video file is too large (max 50MB).");
+                  return;
+                }
+                setVideo(file);
+                setSubmissionError(null);
+                e.target.value = '';
               }
             }}
             onRemoveAttachment={handleRemoveAttachment}

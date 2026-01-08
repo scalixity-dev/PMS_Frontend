@@ -2,11 +2,15 @@ import React, { useState } from 'react';
 import { Plus, Trash2, Home, AlertCircle } from 'lucide-react';
 import { useUserApplicationStore } from '../store/userApplicationStore';
 import PrimaryActionButton from '@/components/common/buttons/PrimaryActionButton';
-import AddResidenceModal, { type ResidenceFormData } from '../../../../Dashboard/features/Application/components/AddResidenceModal';
+import UserAddResidenceModal, { type ResidenceFormData } from '../components/UserAddResidenceModal';
 
 const ResidenceItem: React.FC<{ residence: ResidenceFormData & { id: string }; onDelete: () => void }> = ({ residence, onDelete }) => {
     const formatDate = (dateVal: any) => {
         if (!dateVal) return '-';
+        if (typeof dateVal === 'string' && dateVal.includes('-')) {
+            const [year, month, day] = dateVal.split('-').map(Number);
+            return new Date(year, month - 1, day).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
         const date = new Date(dateVal);
         return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     };
@@ -103,14 +107,14 @@ const ResidencesStep: React.FC<ResidencesStepProps> = ({ onNext }) => {
                         disabled={residences.length === 0}
                         text="Next"
                         className={`px-16 py-3.5 rounded-full font-bold uppercase transition-all ${residences.length > 0
-                                ? 'bg-[#7ED957] hover:bg-[#6BC847] shadow-lg shadow-[#7ED957]/30 text-white'
-                                : 'bg-[#F3F4F6] text-black hover:bg-[#F3F4F6] cursor-not-allowed border-none shadow-none'
+                            ? 'bg-[#7ED957] hover:bg-[#6BC847] shadow-lg shadow-[#7ED957]/30 text-white'
+                            : 'bg-[#F3F4F6] text-black hover:bg-[#F3F4F6] cursor-not-allowed border-none shadow-none'
                             }`}
                     />
                 </div>
             </div>
 
-            <AddResidenceModal
+            <UserAddResidenceModal
                 isOpen={isAdding}
                 onClose={() => setIsAdding(false)}
                 onSave={handleSaveResidence}

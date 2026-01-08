@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from "react";
-import { Search, FileText, Image, File, Video, MoreVertical, Download, Edit2, Trash2 } from "lucide-react";
+import { Search, FileText, Image, File, Video, MoreVertical, Download, Edit2, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPortal } from "react-dom";
 import FilterDropdown from "../../../../components/ui/FilterDropdown";
@@ -88,6 +88,8 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
   );
 };
 
+const ROWS_PER_PAGE = 10;
+
 const FileManager: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [fileTypeFilter, setFileTypeFilter] = useState<string | null>(null);
@@ -95,6 +97,7 @@ const FileManager: React.FC = () => {
   const [menuPosition, setMenuPosition] = useState<MenuPosition | null>(null);
   const [editingFileId, setEditingFileId] = useState<number | null>(null);
   const [newName, setNewName] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const [files, setFiles] = useState<FileItem[]>([
     { id: 1, name: "Lease Agreement.pdf", type: "PDF", size: "2.4 MB", date: "2024-01-15" },
@@ -165,6 +168,32 @@ const FileManager: React.FC = () => {
       return true;
     });
   }, [searchQuery, fileTypeFilter, files]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredFiles.length / ROWS_PER_PAGE);
+  const paginatedFiles = useMemo(() => {
+    const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
+    const endIndex = startIndex + ROWS_PER_PAGE;
+    return filteredFiles.slice(startIndex, endIndex);
+  }, [filteredFiles, currentPage]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, fileTypeFilter]);
+
+  // Reset to page 1 if current page is out of bounds
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [totalPages, currentPage]);
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   const totalSize = useMemo(() => {
     const totalMB = files.reduce((acc, file) => {
@@ -246,7 +275,7 @@ const FileManager: React.FC = () => {
           />
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className="bg-white rounded-[1rem] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] border border-gray-200 overflow-hidden flex flex-col">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -259,8 +288,8 @@ const FileManager: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredFiles.length > 0 ? (
-                  filteredFiles.map((file) => (
+                {paginatedFiles.length > 0 ? (
+                  paginatedFiles.map((file) => (
                     <tr key={file.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
@@ -303,6 +332,49 @@ const FileManager: React.FC = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          {filteredFiles.length > ROWS_PER_PAGE && (
+            <div className="px-8 py-4 border-t border-gray-200 flex justify-center items-center gap-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className={`p-2 rounded-full transition-colors ${
+                  currentPage === 1
+                    ? 'text-gray-300 cursor-not-allowed'
+                    : 'text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => handlePageChange(page)}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-medium transition-all ${
+                    currentPage === page
+                      ? 'bg-[#3A7D76] text-white shadow-lg'
+                      : 'bg-transparent text-gray-600 border border-gray-300 hover:bg-gray-100'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className={`p-2 rounded-full transition-colors ${
+                  currentPage === totalPages
+                    ? 'text-gray-300 cursor-not-allowed'
+                    : 'text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

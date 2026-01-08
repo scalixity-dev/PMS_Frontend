@@ -1,4 +1,6 @@
+import { useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { handleDocumentPrint } from '../../../Dashboard/features/Documents/utils/printPreviewUtils';
 import { ChevronLeft, Printer, User, ChevronDown, CheckCircle2, Calendar, DollarSign, FileText, Download } from 'lucide-react';
 import { formatMoney } from '../../../../utils/currency.utils';
 import { mockTransactions } from '../../utils/mockData';
@@ -7,8 +9,16 @@ import { TransactionNotFound } from './components/TransactionNotFound';
 const TransactionDetails = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const contentRef = useRef<HTMLDivElement>(null);
 
     const foundTransaction = mockTransactions.find(t => t.id === id);
+
+    const handlePrint = () => {
+        const title = foundTransaction ? `INV-${foundTransaction.id}` : `Transaction-${id}`;
+        handleDocumentPrint(contentRef, { title });
+    };
+
+
 
     if (!foundTransaction) {
         return <TransactionNotFound />;
@@ -93,23 +103,23 @@ const TransactionDetails = () => {
             </nav>
 
             {/* Main Content Area */}
-            <div className="max-w-7xl mx-auto w-full space-y-6">
+            <div ref={contentRef} className="max-w-7xl mx-auto w-full space-y-6">
 
                 {/* Header Card */}
-                <div className="bg-[#F4F4F4] rounded-2xl border border-gray-200 shadow-[0px_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+                <div className="bg-[#F4F4F4] rounded-2xl border border-gray-200 shadow-[0px_4px_12px_rgba(0,0,0,0.05)] overflow-hidden avoid-break">
                     <div className="px-2 py-2 border-b border-[#E5E7EB] flex items-center justify-between">
                         <div className="flex items-center gap-1">
                             <button
                                 onClick={() => navigate(-1)}
-                                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                                className="p-2 hover:bg-gray-100 rounded-full transition-colors print:hidden"
                             >
                                 <ChevronLeft size={24} className="text-gray-900" />
                             </button>
                             <h1 className="text-2xl font-semibold text-gray-900">Transaction</h1>
                         </div>
                         <button
-                            onClick={() => window.print()}
-                            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                            onClick={handlePrint}
+                            className="p-2 hover:bg-gray-100 rounded-full transition-colors print:hidden"
                         >
                             <Printer size={24} className="text-gray-900" />
                         </button>
@@ -189,7 +199,7 @@ const TransactionDetails = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
                     {/* Summary Card */}
-                    <div className="bg-[#F4F4F4] rounded-2xl border border-gray-200 shadow-[0px_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+                    <div className="bg-[#F4F4F4] rounded-2xl border border-gray-200 shadow-[0px_4px_12px_rgba(0,0,0,0.05)] overflow-hidden avoid-break">
                         <div className="px-6 py-3 border-b border-[#E5E7EB] ">
                             <h3 className="text-xl font-semibold text-gray-900">Summary <span className="text-gray-400 text-sm font-medium ml-2">(Invoice Details)</span></h3>
                         </div>
@@ -214,7 +224,7 @@ const TransactionDetails = () => {
                     </div>
 
                     {/* Payment & Activity Card */}
-                    <div className="bg-[#F4F4F4] rounded-2xl border border-gray-200 shadow-[0px_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+                    <div className="bg-[#F4F4F4] rounded-2xl border border-gray-200 shadow-[0px_4px_12px_rgba(0,0,0,0.05)] overflow-hidden avoid-break">
                         <div className="px-6 py-3 border-b border-[#E5E7EB] flex items-center justify-between">
                             <div className="flex items-center gap-2">
 
@@ -246,7 +256,7 @@ const TransactionDetails = () => {
                                                     className="w-full h-full object-cover"
                                                 />
                                             </div>
-                                            <button className="p-1 hover:bg-gray-100 rounded-md transition-colors">
+                                            <button className="p-1 hover:bg-gray-100 rounded-md transition-colors print:hidden">
                                                 <ChevronDown size={20} className="text-gray-900" />
                                             </button>
                                         </div>
@@ -258,7 +268,7 @@ const TransactionDetails = () => {
                 </div>
 
                 {/* Attachments Section */}
-                <div className="bg-[#F4F4F4] rounded-2xl border border-gray-200 shadow-[0px_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+                <div className="bg-[#F4F4F4] rounded-2xl border border-gray-200 shadow-[0px_4px_12px_rgba(0,0,0,0.05)] overflow-hidden avoid-break">
                     <div className="px-6 py-3 border-b border-[#E5E7EB]">
                         <h3 className="text-xl font-semibold text-gray-900">Attachments <span className="text-gray-400 text-sm font-medium ml-2">({transaction.attachments?.length || 0} Files)</span></h3>
                     </div>
@@ -277,7 +287,7 @@ const TransactionDetails = () => {
                                             </div>
                                         </div>
                                         <button
-                                            className="p-2 text-gray-400 hover:text-[#7ED957] hover:bg-gray-50 rounded-lg transition-colors flex-shrink-0"
+                                            className="p-2 text-gray-400 hover:text-[#7ED957] hover:bg-gray-50 rounded-lg transition-colors flex-shrink-0 print:hidden"
                                             title="Download"
                                             onClick={() => handleDownload(file)}
                                         >

@@ -114,6 +114,7 @@ export interface UserInfo {
     country: string;
     city: string;
     pincode: string;
+    profileImage?: string;
 }
 
 export interface UserFinances {

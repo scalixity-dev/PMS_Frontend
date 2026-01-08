@@ -1,8 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Transaction } from "../../../utils/types";
 import { TransactionRow } from "./TransactionRow";
 import FilterDropdown from "@/components/ui/FilterDropdown";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface TransactionTableProps {
     transactions: Transaction[];
@@ -78,12 +79,16 @@ const matchesTimeFilter = (dateStr: string, filter: string): boolean => {
     }
 };
 
+const ROWS_PER_PAGE = 5;
+
 export const TransactionTable = ({ transactions }: TransactionTableProps) => {
     const navigate = useNavigate();
     const [selectedTimeFilter, setSelectedTimeFilter] = useState<string | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
 
     const handleTimeFilterChange = (value: string | null) => {
         setSelectedTimeFilter(value);
+        setCurrentPage(1); // Reset to first page when filter changes
     };
 
     // Filter transactions based on selected time period
@@ -97,10 +102,31 @@ export const TransactionTable = ({ transactions }: TransactionTableProps) => {
         );
     }, [transactions, selectedTimeFilter]);
 
+    // Calculate pagination
+    const totalPages = Math.ceil(filteredTransactions.length / ROWS_PER_PAGE);
+    const paginatedTransactions = useMemo(() => {
+        const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
+        const endIndex = startIndex + ROWS_PER_PAGE;
+        return filteredTransactions.slice(startIndex, endIndex);
+    }, [filteredTransactions, currentPage]);
+
+    // Reset to page 1 if current page is out of bounds
+    useEffect(() => {
+        if (currentPage > totalPages && totalPages > 0) {
+            setCurrentPage(1);
+        }
+    }, [totalPages, currentPage]);
+
     // Get the display label for the current selection
     const selectedLabel = selectedTimeFilter 
         ? TIME_FILTER_OPTIONS.find(opt => opt.value === selectedTimeFilter)?.label || "All Time"
         : "All Time";
+
+    const handlePageChange = (page: number) => {
+        if (page >= 1 && page <= totalPages) {
+            setCurrentPage(page);
+        }
+    };
 
     return (
         <div className="bg-white rounded-[1rem] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] border border-gray-200 flex flex-col">
@@ -126,12 +152,12 @@ export const TransactionTable = ({ transactions }: TransactionTableProps) => {
 
             {/* Table Body */}
             <div className="flex flex-col">
-                {filteredTransactions.length > 0 ? (
-                    filteredTransactions.map((transaction, index) => (
+                {paginatedTransactions.length > 0 ? (
+                    paginatedTransactions.map((transaction, index) => (
                         <TransactionRow
                             key={transaction.id}
                             transaction={transaction}
-                            isLast={index === filteredTransactions.length - 1}
+                            isLast={index === paginatedTransactions.length - 1}
                             onClick={() => navigate(`/userdashboard/transactions/${transaction.id}`)}
                         />
                     ))
@@ -141,6 +167,49 @@ export const TransactionTable = ({ transactions }: TransactionTableProps) => {
                     </div>
                 )}
             </div>
+
+            {/* Pagination */}
+            {filteredTransactions.length > ROWS_PER_PAGE && (
+                <div className="px-8 py-4 border-t border-gray-200 flex justify-center items-center gap-2">
+                    <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className={`p-2 rounded-full transition-colors ${
+                            currentPage === 1
+                                ? 'text-gray-300 cursor-not-allowed'
+                                : 'text-gray-600 hover:bg-gray-200'
+                        }`}
+                    >
+                        <ChevronLeft className="w-6 h-6" />
+                    </button>
+
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                        <button
+                            key={page}
+                            onClick={() => handlePageChange(page)}
+                            className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-medium transition-all ${
+                                currentPage === page
+                                    ? 'bg-[#3A7D76] text-white shadow-lg'
+                                    : 'bg-transparent text-gray-600 border border-gray-300 hover:bg-gray-100'
+                            }`}
+                        >
+                            {page}
+                        </button>
+                    ))}
+
+                    <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className={`p-2 rounded-full transition-colors ${
+                            currentPage === totalPages
+                                ? 'text-gray-300 cursor-not-allowed'
+                                : 'text-gray-600 hover:bg-gray-200'
+                        }`}
+                    >
+                        <ChevronRight className="w-6 h-6" />
+                    </button>
+                </div>
+            )}
         </div>
     );
 };
