@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Printer, User, MoreHorizontal, CheckCircle2, Calendar, DollarSign, FileText, Download } from 'lucide-react';
+import { ChevronLeft, Printer, User, ChevronDown, CheckCircle2, Calendar, DollarSign, FileText, Download } from 'lucide-react';
 import { formatMoney } from '../../../../utils/currency.utils';
 import { mockTransactions } from '../../utils/mockData';
 import { TransactionNotFound } from './components/TransactionNotFound';
@@ -47,10 +47,10 @@ const TransactionDetails = () => {
         invoiceNumber: `INV-${foundTransaction.id}`,
         property: "Luxury Apartment", // Default
         unit: "-",
-        type: `Expense / ${(["Rent", "Utility Bill"].includes(foundTransaction.category) || foundTransaction.category.includes("Monthly")) ? "Monthly" : "One Time"}`,
+        type: `Expense / ${foundTransaction.schedule}`,
         attachments: [
-            { id: 1, name: "Invoice-DEC-2025.pdf", size: "2.4 MB", type: "PDF" },
-            { id: 2, name: "Receipt-1234.png", size: "1.2 MB", type: "Image" }
+            { id: 1, name: "Invoice-DEC-2025.pdf", size: "2.4 MB", type: "PDF", url: "https://pdfobject.com/pdf/sample.pdf" },
+            { id: 2, name: "Receipt-1234.png", size: "1.2 MB", type: "Image", url: "https://images.unsplash.com/photo-1600596542815-e32904fc4969" }
         ]
     };
 
@@ -62,6 +62,18 @@ const TransactionDetails = () => {
             amount: transaction.paidAmount
         }
     ] : [];
+
+    const handleDownload = (file: { name: string; url?: string }) => {
+        // Since we're using mock data, we'll simulate a download
+        // In a real app, this would be a link to the actual file
+        const link = document.createElement('a');
+        link.href = file.url || '#';
+        link.download = file.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        console.log(`Downloading: ${file.name}`);
+    };
 
     return (
         <div className="flex flex-col gap-6 w-full min-h-screen bg-white p-4 lg:p-8">
@@ -95,7 +107,10 @@ const TransactionDetails = () => {
                             </button>
                             <h1 className="text-2xl font-semibold text-gray-900">Transaction</h1>
                         </div>
-                        <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                        <button
+                            onClick={() => window.print()}
+                            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                        >
                             <Printer size={24} className="text-gray-900" />
                         </button>
                     </div>
@@ -232,7 +247,7 @@ const TransactionDetails = () => {
                                                 />
                                             </div>
                                             <button className="p-1 hover:bg-gray-100 rounded-md transition-colors">
-                                                <MoreHorizontal size={20} className="text-gray-900" />
+                                                <ChevronDown size={20} className="text-gray-900" />
                                             </button>
                                         </div>
                                     </div>
@@ -261,7 +276,11 @@ const TransactionDetails = () => {
                                                 <p className="text-xs text-gray-500">{file.size} • {file.type}</p>
                                             </div>
                                         </div>
-                                        <button className="p-2 text-gray-400 hover:text-[#7ED957] hover:bg-gray-50 rounded-lg transition-colors flex-shrink-0" title="Download">
+                                        <button
+                                            className="p-2 text-gray-400 hover:text-[#7ED957] hover:bg-gray-50 rounded-lg transition-colors flex-shrink-0"
+                                            title="Download"
+                                            onClick={() => handleDownload(file)}
+                                        >
                                             <Download size={20} />
                                         </button>
                                     </div>

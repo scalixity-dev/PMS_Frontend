@@ -74,8 +74,8 @@ export const TenantOnboardingFlow: React.FC = () => {
   // Step 3: Criteria
   const [beds, setBeds] = useState<string>('Any');
   const [baths, setBaths] = useState<string>('Any');
-  const [minPrice, setMinPrice] = useState<number>(0);
-  const [maxPrice, setMaxPrice] = useState<number>(10000);
+  const [minPrice, setMinPrice] = useState<number | string>(0);
+  const [maxPrice, setMaxPrice] = useState<number | string>(10000);
   const [petsAllowed, setPetsAllowed] = useState<boolean>(false);
 
   // Get authenticated user ID on mount
@@ -227,8 +227,8 @@ export const TenantOnboardingFlow: React.FC = () => {
         criteria: {
           beds: beds === 'Any' || !beds ? null : beds,
           baths: baths === 'Any' || !baths ? null : baths,
-          minPrice: minPrice && minPrice > 0 ? minPrice : undefined,
-          maxPrice: maxPrice && maxPrice > 0 ? maxPrice : undefined,
+          minPrice: Number(minPrice) > 0 ? Number(minPrice) : undefined,
+          maxPrice: Number(maxPrice) > 0 ? Number(maxPrice) : undefined,
           petsAllowed: petsAllowed || false,
         },
       };
@@ -267,7 +267,7 @@ export const TenantOnboardingFlow: React.FC = () => {
             statusText: response.statusText,
             error: errorData,
           });
-          
+
           // Show user-friendly error message
           if (response.status === 401) {
             alert('Please log in again to save your preferences');
@@ -276,7 +276,7 @@ export const TenantOnboardingFlow: React.FC = () => {
           } else {
             alert(`Failed to save preferences: ${errorData.message || 'Unknown error'}`);
           }
-          
+
           // Still navigate even if save fails (preferences saved to localStorage)
           navigate('/userdashboard');
           return;
@@ -284,7 +284,7 @@ export const TenantOnboardingFlow: React.FC = () => {
 
         const result = await response.json();
         console.log('Preferences saved successfully:', result);
-        
+
         // Verify the response
         if (result.success && result.preferences) {
           console.log('Preferences confirmed in database:', result.preferences);
@@ -312,12 +312,48 @@ export const TenantOnboardingFlow: React.FC = () => {
     );
   };
 
-  const handleMinPriceChange = (value: number) => {
-    if (value <= maxPrice) setMinPrice(value);
+  const handleMinPriceChange = (value: number | string) => {
+    if (value === '') {
+      setMinPrice('');
+      return;
+    }
+    const numValue = Number(value);
+    if (!isNaN(numValue)) {
+      setMinPrice(numValue);
+      // If min exceeds max, push max up to match min
+      if (maxPrice !== '' && numValue > Number(maxPrice)) {
+        setMaxPrice(numValue);
+      }
+    }
   };
 
-  const handleMaxPriceChange = (value: number) => {
-    if (value >= minPrice) setMaxPrice(value);
+  const handleMaxPriceChange = (value: number | string) => {
+    if (value === '') {
+      setMaxPrice('');
+      return;
+    }
+    const numValue = Number(value);
+    if (!isNaN(numValue)) {
+      setMaxPrice(numValue);
+      // If max is less than min, push min down to match max
+      if (minPrice !== '' && numValue < Number(minPrice)) {
+        setMinPrice(numValue);
+      }
+    }
+  };
+
+  const handleInputBlur = () => {
+    // Ensure values are within bounds and valid on blur
+    const min = Number(minPrice) || 0;
+    const max = Number(maxPrice) || 0;
+
+    if (min > max) {
+      setMinPrice(max);
+      setMaxPrice(min);
+    } else {
+      setMinPrice(min);
+      setMaxPrice(max);
+    }
   };
 
   // Show loading state while fetching user ID
@@ -376,16 +412,14 @@ export const TenantOnboardingFlow: React.FC = () => {
                       </div>
                     )}
                     <div
-                      className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 z-10 ${
-                        isCompleted || isCurrent ? 'bg-[#4CAF50] text-white' : 'bg-gray-400 text-white'
-                      }`}
+                      className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 z-10 ${isCompleted || isCurrent ? 'bg-[#4CAF50] text-white' : 'bg-gray-400 text-white'
+                        }`}
                     >
                       {isCompleted ? <Check size={18} strokeWidth={3} /> : step.id}
                     </div>
                     <span
-                      className={`text-sm font-medium text-center whitespace-nowrap transition-colors duration-300 ${
-                        isCurrent ? 'text-gray-900' : 'text-gray-500'
-                      }`}
+                      className={`text-sm font-medium text-center whitespace-nowrap transition-colors duration-300 ${isCurrent ? 'text-gray-900' : 'text-gray-500'
+                        }`}
                     >
                       {step.name}
                     </span>
@@ -485,11 +519,10 @@ export const TenantOnboardingFlow: React.FC = () => {
                   <button
                     key={type}
                     onClick={() => handleToggleType(type)}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 border-2 ${
-                      selectedTypes.includes(type)
-                        ? 'bg-[#7BD747] border-[#7BD747] text-white shadow-sm'
-                        : 'bg-white border-gray-300 text-gray-700 hover:border-gray-400'
-                    }`}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 border-2 ${selectedTypes.includes(type)
+                      ? 'bg-[#7BD747] border-[#7BD747] text-white shadow-sm'
+                      : 'bg-white border-gray-300 text-gray-700 hover:border-gray-400'
+                      }`}
                   >
                     {type}
                   </button>
@@ -551,7 +584,9 @@ export const TenantOnboardingFlow: React.FC = () => {
                       <input
                         type="number"
                         value={minPrice}
-                        onChange={(e) => handleMinPriceChange(Number(e.target.value))}
+                        onChange={(e) => handleMinPriceChange(e.target.value)}
+                        onFocus={(e) => e.target.select()}
+                        onBlur={handleInputBlur}
                         className="w-32 px-4 py-2 bg-white border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7BD747] focus:border-transparent text-[#7BD747] text-xl font-semibold transition-all"
                       />
                     </div>
@@ -562,7 +597,9 @@ export const TenantOnboardingFlow: React.FC = () => {
                       <input
                         type="number"
                         value={maxPrice}
-                        onChange={(e) => handleMaxPriceChange(Number(e.target.value))}
+                        onChange={(e) => handleMaxPriceChange(e.target.value)}
+                        onFocus={(e) => e.target.select()}
+                        onBlur={handleInputBlur}
                         className="w-32 px-4 py-2 bg-white border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7BD747] focus:border-transparent text-[#7BD747] text-xl font-semibold transition-all"
                       />
                     </div>
@@ -595,8 +632,8 @@ export const TenantOnboardingFlow: React.FC = () => {
                         <div
                           className="absolute h-2 bg-[#7BD747] rounded-full"
                           style={{
-                            left: `${(minPrice / 50000) * 100}%`,
-                            right: `${100 - (maxPrice / 50000) * 100}%`,
+                            left: `${Math.min(100, Math.max(0, (Number(minPrice) / 50000) * 100))}%`,
+                            right: `${Math.min(100, Math.max(0, 100 - (Number(maxPrice) / 50000) * 100))}%`,
                           }}
                         />
                       </div>
@@ -609,17 +646,15 @@ export const TenantOnboardingFlow: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setPetsAllowed(!petsAllowed)}
-                    className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors duration-300  ${
-                      petsAllowed ? 'bg-[#7BD747]' : 'bg-gray-300'
-                    }`}
+                    className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors duration-300  ${petsAllowed ? 'bg-[#7BD747]' : 'bg-gray-300'
+                      }`}
                   >
                     <span
-                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform duration-300 ease-in-out ${
-                        petsAllowed ? 'translate-x-8' : 'translate-x-1'
-                      }`}
+                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform duration-300 ease-in-out ${petsAllowed ? 'translate-x-8' : 'translate-x-1'
+                        }`}
                     />
                   </button>
-                  <label 
+                  <label
                     className="text-base font-medium text-gray-700 cursor-pointer select-none"
                     onClick={() => setPetsAllowed(!petsAllowed)}
                   >

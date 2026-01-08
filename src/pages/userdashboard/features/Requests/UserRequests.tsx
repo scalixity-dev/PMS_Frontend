@@ -25,6 +25,9 @@ const CATEGORY_OPTIONS = [
   { label: "Appliances", value: "Appliances" },
   { label: "Plumbing", value: "Plumbing" },
   { label: "Electrical", value: "Electrical" },
+  { label: "Exterior", value: "Exterior" },
+  { label: "Households", value: "Households" },
+  { label: "Outdoors", value: "Outdoors" },
 ];
 
 // Utility functions (moved outside component for better performance)
@@ -93,29 +96,35 @@ const ActionMenu: React.FC<ActionMenuProps> = ({ isOpen, position, onClose, onPr
     <>
       <div
         className="fixed inset-0 z-[100]"
-        onClick={onClose}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
       />
       <div
-        className="fixed z-[101] bg-white rounded-lg shadow-lg border border-gray-100 py-1 w-36"
+        className="fixed z-[101] bg-white rounded-2xl shadow-xl border border-gray-100 py-2 w-40 animate-in fade-in zoom-in-95 duration-200"
         style={{
           top: position.top,
           right: position.right,
         }}
+        onClick={(e) => e.stopPropagation()}
       >
-        <button
-          onClick={onPrint}
-          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-        >
-          <Printer size={14} />
-          Print
-        </button>
-        <button
-          onClick={onCancel}
-          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-        >
-          <XCircle size={14} />
-          Cancel
-        </button>
+        <div className="px-2 space-y-0.5">
+          <button
+            onClick={onPrint}
+            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+          >
+            <Printer size={14} className="text-gray-400" />
+            Print
+          </button>
+          <button
+            onClick={onCancel}
+            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+          >
+            <XCircle size={14} className="text-red-400" />
+            Cancel
+          </button>
+        </div>
       </div>
     </>,
     document.body
@@ -132,6 +141,7 @@ interface RequestRowProps {
   onMenuClose: () => void;
   onPrint: () => void;
   onCancel: () => void;
+  onChatClick: (e: React.MouseEvent) => void;
 }
 
 // Request Row Component
@@ -145,6 +155,7 @@ const RequestRow: React.FC<RequestRowProps> = ({
   onMenuClose,
   onPrint,
   onCancel,
+  onChatClick,
 }) => (
   <tr
     onClick={onRowClick}
@@ -181,7 +192,10 @@ const RequestRow: React.FC<RequestRowProps> = ({
             <Paperclip size={18} />
           </button>
         ) : null}
-        <button className="text-[var(--dashboard-accent)] hover:opacity-80 mb-1 transition-opacity">
+        <button
+          className="text-[var(--dashboard-accent)] hover:opacity-80 mb-1 transition-opacity"
+          onClick={onChatClick}
+        >
           <MessageSquare size={18} />
         </button>
         <div className="relative">
@@ -524,6 +538,12 @@ const Requests: React.FC = () => {
                       onMenuClose={() => setActiveMenuId(null)}
                       onPrint={() => handlePrint(request)}
                       onCancel={() => handleCancel(request.id)}
+                      onChatClick={(e) => {
+                        e.stopPropagation();
+                        navigate('/userdashboard/messages', {
+                          state: { viewMode: 'MR', requestId: request.id }
+                        });
+                      }}
                     />
                   ))
                 ) : (

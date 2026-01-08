@@ -98,24 +98,27 @@ import FileManagerFeature from './pages/Dashboard/features/FileManager/FileManag
 // User Dashboard pages
 import UserDashboardLayout from './components/userdashboard/UserDashboardLayout';
 import UserDashboard from './pages/userdashboard/UserDashboard';
-import Rent from './pages/userdashboard/features/Rent/Rent';
-import RequestsUser from './pages/userdashboard/features/Requests/Requests';
-import UtilityProviders from './pages/userdashboard/features/Utilities/UtilityProviders';
-import PropertiesUser from './pages/userdashboard/features/Properties/Properties';
-import ApplicationsUser from './pages/userdashboard/features/Utilities/Applications';
-import FileManager from './pages/userdashboard/features/Utilities/FileManager';
-import Downloads from './pages/userdashboard/features/Utilities/Downloads';
-import NewRequest from './pages/userdashboard/features/Requests/NewRequest';
-import PropertyDetailUser from './pages/userdashboard/features/Properties/PropertyDetail';
-import SettingsUser from './pages/userdashboard/features/Settings/Settings';
-import ProfileUser from './pages/userdashboard/features/Profile/Profile';
-import SecurityUser from './pages/userdashboard/features/Profile/Security';
-import MyCardsUser from './pages/userdashboard/features/Profile/MyCards';
-import NotificationsUser from './pages/userdashboard/features/Profile/Notifications';
-import PublicRenterProfile from './pages/userdashboard/features/Profile/PublicRenterProfile';
-import LeaseDetails from './pages/userdashboard/features/Leases/LeaseDetails';
-import TransactionDetails from './pages/userdashboard/features/Transactions/TransactionDetails';
-import RequestDetails from './pages/userdashboard/features/Requests/RequestDetails';
+import UserRent from './pages/userdashboard/features/Rent/UserRent';
+import UserRequests from './pages/userdashboard/features/Requests/UserRequests';
+import UserUtilityProviders from './pages/userdashboard/features/Utilities/UserUtilityProviders';
+import UserProperties from './pages/userdashboard/features/Properties/UserProperties';
+import UserApplications from './pages/userdashboard/features/Applications/UserApplications';
+import UserApplicationDetail from './pages/userdashboard/features/Applications/UserApplicationDetail';
+import UserFileManager from './pages/userdashboard/features/Utilities/UserFileManager';
+import UserDownloads from './pages/userdashboard/features/Utilities/UserDownloads';
+import UserNewRequest from './pages/userdashboard/features/Requests/UserNewRequest';
+import UserPropertyDetail from './pages/userdashboard/features/Properties/UserPropertyDetail';
+import UserSettings from './pages/userdashboard/features/Settings/UserSettings';
+import UserProfile from './pages/userdashboard/features/Profile/UserProfile';
+import UserSecurity from './pages/userdashboard/features/Profile/UserSecurity';
+import UserMyCards from './pages/userdashboard/features/Profile/UserMyCards';
+import UserNotifications from './pages/userdashboard/features/Profile/UserNotifications';
+import UserPublicRenterProfile from './pages/userdashboard/features/Profile/UserPublicRenterProfile';
+import UserLeaseDetails from './pages/userdashboard/features/Leases/UserLeaseDetails';
+import UserTransactionDetails from './pages/userdashboard/features/Transactions/UserTransactionDetails';
+import UserRequestDetails from './pages/userdashboard/features/Requests/UserRequestDetails';
+import UserMessages from './pages/userdashboard/features/Messages/UserMessages';
+import UserNewApplication from './pages/userdashboard/features/Applications/UserNewApplication';
 
 
 
@@ -264,7 +267,7 @@ const App: React.FC = () => {
               <Route path="/dashboard/contacts/service-pros/edit/:id" element={<AddEditServicePro />} />
               <Route path="/dashboard/contacts/service-pros/:id" element={<ServiceProsDetail />} />
               <Route path="/dashboard/leasing/applications" element={<Application />} />
-              <Route path="/dashboard/property-detail/:id" element={<PropertyDetailUser />} />
+              <Route path="/dashboard/property-detail/:id" element={<PropertyDetail />} />
               <Route path="/dashboard/application/new" element={<NewApplication />} />
               <Route path="/dashboard/application/:id" element={<ApplicationDetail />} />
               <Route path="/dashboard/leasing/leases" element={<Leases />} />
@@ -713,24 +716,27 @@ const App: React.FC = () => {
             {/* User Dashboard Routes */}
             <Route element={<UserDashboardLayout />}>
               <Route path="/userdashboard" element={<UserDashboard />} />
-              <Route path="/userdashboard/rent" element={<Rent />} />
-              <Route path="/userdashboard/requests" element={<RequestsUser />} />
-              <Route path="/userdashboard/requests/:id" element={<RequestDetails />} />
-              <Route path="/userdashboard/utility-providers" element={<UtilityProviders />} />
-              <Route path="/userdashboard/properties" element={<PropertiesUser />} />
-              <Route path="/userdashboard/properties/:id" element={<PropertyDetailUser />} />
-              <Route path="/userdashboard/applications" element={<ApplicationsUser />} />
-              <Route path="/userdashboard/file-manager" element={<FileManager />} />
-              <Route path="/userdashboard/downloads" element={<Downloads />} />
-              <Route path="/userdashboard/new-request" element={<NewRequest />} />
-              <Route path="/userdashboard/settings" element={<SettingsUser />} />
-              <Route path="/userdashboard/settings/account/profile" element={<ProfileUser />} />
-              <Route path="/userdashboard/settings/account/security" element={<SecurityUser />} />
-              <Route path="/userdashboard/settings/account/cards" element={<MyCardsUser />} />
-              <Route path="/userdashboard/settings/account/notifications" element={<NotificationsUser />} />
-              <Route path="/userdashboard/settings/public-renter-profile" element={<PublicRenterProfile />} />
-              <Route path="/userdashboard/leases/:id" element={<LeaseDetails />} />
-              <Route path="/userdashboard/transactions/:id" element={<TransactionDetails />} />
+              <Route path="/userdashboard/rent" element={<UserRent />} />
+              <Route path="/userdashboard/requests" element={<UserRequests />} />
+              <Route path="/userdashboard/requests/:id" element={<UserRequestDetails />} />
+              <Route path="/userdashboard/messages" element={<UserMessages />} />
+              <Route path="/userdashboard/utility-providers" element={<UserUtilityProviders />} />
+              <Route path="/userdashboard/properties" element={<UserProperties />} />
+              <Route path="/userdashboard/properties/:id" element={<UserPropertyDetail />} />
+              <Route path="/userdashboard/applications" element={<UserApplications />} />
+              <Route path="/userdashboard/applications/:id" element={<UserApplicationDetail />} />
+              <Route path="/userdashboard/new-application" element={<UserNewApplication />} />
+              <Route path="/userdashboard/file-manager" element={<UserFileManager />} />
+              <Route path="/userdashboard/downloads" element={<UserDownloads />} />
+              <Route path="/userdashboard/new-request" element={<UserNewRequest />} />
+              <Route path="/userdashboard/settings" element={<UserSettings />} />
+              <Route path="/userdashboard/settings/account/profile" element={<UserProfile />} />
+              <Route path="/userdashboard/settings/account/security" element={<UserSecurity />} />
+              <Route path="/userdashboard/settings/account/cards" element={<UserMyCards />} />
+              <Route path="/userdashboard/settings/account/notifications" element={<UserNotifications />} />
+              <Route path="/userdashboard/settings/public-renter-profile" element={<UserPublicRenterProfile />} />
+              <Route path="/userdashboard/leases/:id" element={<UserLeaseDetails />} />
+              <Route path="/userdashboard/transactions/:id" element={<UserTransactionDetails />} />
             </Route>
 
             {/* Catch-all route */}

@@ -5,9 +5,9 @@ import PropertyFilters from "./components/PropertyFilters";
 import type { Property, FilterState } from "../../utils/types";
 import { API_ENDPOINTS } from "../../../../config/api.config";
 import { authService } from "../../../../services/auth.service";
-import type { 
+import type {
   PublicListingProperty,
-  PublicListingPhoto 
+  PublicListingPhoto
 } from "../../../../services/property.service";
 
 // --- Internal Components ---
@@ -83,7 +83,7 @@ const Properties: React.FC = () => {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [usePreferences, setUsePreferences] = useState(true); // Toggle for preferences
+  const [usePreferences, setUsePreferences] = useState(false); // Toggle for preferences
   const [userPreferences, setUserPreferences] = useState<{
     location?: { country: string; state: string; city: string };
     rentalTypes?: string[];
@@ -145,10 +145,10 @@ const Properties: React.FC = () => {
         // Build query params from filters and user preferences
         const params = new URLSearchParams();
 
-        
+
         const mapPropertyType = (type: string): string | null => {
           if (!type || type === 'All') return null;
-         
+
           // Map UI labels to backend values
           if (type === 'Single Unit') return 'SINGLE';
           if (type === 'Multi Unit') return 'MULTI';
@@ -179,19 +179,19 @@ const Properties: React.FC = () => {
         // Price filters: Use filters if user has modified them, otherwise use preferences if enabled
         let minPrice: number | undefined;
         let maxPrice: number | undefined;
-        
+
         if (filters.priceModified && filters.minPrice !== undefined && filters.minPrice !== null) {
           minPrice = filters.minPrice;
         } else if (shouldUsePreferences && userPreferences?.criteria?.minPrice !== undefined) {
           minPrice = userPreferences.criteria.minPrice;
         }
-        
+
         if (filters.priceModified && filters.maxPrice !== undefined && filters.maxPrice !== null) {
           maxPrice = filters.maxPrice;
         } else if (shouldUsePreferences && userPreferences?.criteria?.maxPrice !== undefined) {
           maxPrice = userPreferences.criteria.maxPrice;
         }
-        
+
         if (minPrice !== undefined && minPrice !== null) {
           params.append('minPrice', minPrice.toString());
         }
@@ -206,7 +206,7 @@ const Properties: React.FC = () => {
         } else if (shouldUsePreferences && userPreferences?.criteria?.beds && userPreferences.criteria.beds !== 'Any') {
           bedsFilter = userPreferences.criteria.beds;
         }
-        
+
         if (bedsFilter) {
           params.append('beds', bedsFilter);
         }
@@ -227,50 +227,54 @@ const Properties: React.FC = () => {
           params.append('propertyType', propertyType);
         }
 
-        // Pets allowed filter from UI filters
-        if (filters.petsAllowed && filters.petsAllowed !== 'All') {
-          params.append('petsAllowed', (filters.petsAllowed === 'Yes').toString());
-        }
+        // Only apply manual filters if preferences are NOT enabled
+        // When preferences are enabled, they take priority
+        if (!shouldUsePreferences) {
+          // Pets allowed filter from UI filters (only when preferences disabled)
+          if (filters.petsAllowed && filters.petsAllowed !== 'All') {
+            params.append('petsAllowed', (filters.petsAllowed === 'Yes').toString());
+          }
 
-        // Region/Location filter - Use structured location data
-        if (filters.locationFilter && filters.locationFilter.type !== 'all') {
-          const location = filters.locationFilter;
+          // Region/Location filter - Use structured location data (only when preferences disabled)
+          if (filters.locationFilter && filters.locationFilter.type !== 'all') {
+            const location = filters.locationFilter;
 
-          switch (location.type) {
-            case 'radius':
-              // Specific radius filter (e.g., "Within 5km of Bhopal")
-              if (location.city && location.radius) {
-                params.append('city', location.city);
-                params.append('radius', location.radius.toString());
-              }
-              break;
-            
-            case 'nearby':
-              // City & Nearby Areas (uses default radius)
-              if (location.city && location.radius) {
-                params.append('city', location.city);
-                params.append('radius', location.radius.toString());
-              }
-              break;
-            
-            case 'state':
-              // State-wide filter (e.g., "All Madhya Pradesh")
-              if (location.state) {
-                params.append('state', location.state);
-              }
-              break;
-            
-            case 'city':
-              // Direct city name
-              if (location.city) {
-                params.append('city', location.city);
-              }
-              break;
+            switch (location.type) {
+              case 'radius':
+                // Specific radius filter (e.g., "Within 5km of Bhopal")
+                if (location.city && location.radius) {
+                  params.append('city', location.city);
+                  params.append('radius', location.radius.toString());
+                }
+                break;
+
+              case 'nearby':
+                // City & Nearby Areas (uses default radius)
+                if (location.city && location.radius) {
+                  params.append('city', location.city);
+                  params.append('radius', location.radius.toString());
+                }
+                break;
+
+              case 'state':
+                // State-wide filter (e.g., "All Madhya Pradesh")
+                if (location.state) {
+                  params.append('state', location.state);
+                }
+                break;
+
+              case 'city':
+                // Direct city name
+                if (location.city) {
+                  params.append('city', location.city);
+                }
+                break;
+            }
           }
         }
 
         const url = `${API_ENDPOINTS.PROPERTY.GET_PUBLIC_LISTINGS}${params.toString() ? `?${params.toString()}` : ''}`;
-        
+
         const response = await fetch(url, {
           method: 'GET',
           credentials: 'include',
@@ -468,7 +472,7 @@ const Properties: React.FC = () => {
                 </div>
               </div>
             )}
-            
+
             {/* Filter Button */}
             <div className="flex justify-end">
               <button

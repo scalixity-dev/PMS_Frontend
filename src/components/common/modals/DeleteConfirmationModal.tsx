@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { X, AlertTriangle } from 'lucide-react';
 
 interface DeleteConfirmationModalProps {
@@ -24,9 +25,9 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
 }) => {
     if (!isOpen) return null;
 
-    return (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200" onClick={(e) => e.target === e.currentTarget && onClose()}>
-            <div className="bg-white w-full max-w-[95%] sm:max-w-sm rounded-[1.5rem] sm:rounded-xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+    return createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200" onClick={(e) => e.target === e.currentTarget && onClose()}>
+            <div className="bg-white w-full max-w-[95%] sm:max-w-sm rounded-[1.5rem] sm:rounded-xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
                 {/* Header */}
                 <div className="bg-red-600 px-6 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -40,7 +41,7 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
 
                 {/* Body */}
                 <div className="p-4 sm:p-6">
-                    <p className="text-gray-600 mb-6 text-center">
+                    <p className="text-gray-600 mb-6 text-center text-sm md:text-base">
                         {message || (
                             <>
                                 Are you sure you want to delete <span className="font-bold text-gray-800">{itemName || 'this item'}</span>?
@@ -66,7 +67,8 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
                     </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

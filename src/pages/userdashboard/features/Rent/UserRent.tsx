@@ -41,13 +41,8 @@ const Rent: React.FC = () => {
       }
 
       // Schedule filter
-      if (scheduleFilter) {
-        if (scheduleFilter === "Monthly" && !transaction.category.includes("Monthly")) {
-          return false;
-        }
-        if (scheduleFilter === "One-time" && transaction.category.includes("Monthly")) {
-          return false;
-        }
+      if (scheduleFilter && transaction.schedule !== scheduleFilter) {
+        return false;
       }
 
       return true;
