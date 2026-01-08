@@ -268,8 +268,11 @@ const LeaseDetail: React.FC = () => {
                             </p>
                         </div>
                         <div>
-                            <button className="bg-[#2B5251] text-white text-xs py-1.5 px-4 rounded-full hover:bg-opacity-90 transition-colors mb-4">
-                                Request
+                            <button
+                                onClick={() => navigate(`/dashboard/leasing/leases/${id}/send-notice`)}
+                                className="bg-[#2B5251] text-white text-xs py-1.5 px-4 rounded-full hover:bg-opacity-90 transition-colors mb-4"
+                            >
+                                Send
                             </button>
                             <div className="bg-white/90 rounded-full px-4 py-2 flex justify-between items-center text-xs text-gray-700">
                                 <span className="font-medium">Notices requested</span>

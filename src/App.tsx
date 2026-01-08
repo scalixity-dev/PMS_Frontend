@@ -546,6 +546,14 @@ const App: React.FC = () => {
                 }
               />
               <Route
+                path="/dashboard/leasing/leases/:id/send-notice"
+                element={
+                  <ProtectedRoute>
+                    <UseTemplateWizard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/dashboard/documents/my-templates"
                 element={
                   <ProtectedRoute>

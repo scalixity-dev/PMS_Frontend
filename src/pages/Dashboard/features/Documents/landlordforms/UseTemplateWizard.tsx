@@ -36,12 +36,15 @@ interface WizardDropdownProps {
     label: string;
     placeholder: string;
     options: string[];
-    selectedValue: string;
+    selectedValue?: string;
+    selectedValues?: string[];
     onSelect: (value: string) => void;
     isOpen: boolean;
     setIsOpen: (isOpen: boolean) => void;
     dropdownRef: React.RefObject<HTMLDivElement | null>;
     onNext: () => void;
+    disabled?: boolean;
+    multiple?: boolean;
 }
 
 const WizardDropdown: React.FC<WizardDropdownProps> = ({
@@ -49,11 +52,14 @@ const WizardDropdown: React.FC<WizardDropdownProps> = ({
     placeholder,
     options,
     selectedValue,
+    selectedValues = [],
     onSelect,
     isOpen,
     setIsOpen,
     dropdownRef,
     onNext,
+    disabled = false,
+    multiple = false,
 }) => (
     <div className="w-full max-w-md">
         <label className="block text-left text-sm font-semibold text-gray-700 mb-2">
@@ -62,10 +68,16 @@ const WizardDropdown: React.FC<WizardDropdownProps> = ({
         <div className="flex items-center gap-3">
             <div className="relative flex-1" ref={dropdownRef}>
                 <button
-                    onClick={() => setIsOpen(!isOpen)}
-                    className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-500 hover:border-[#20CC95] transition-colors"
+                    onClick={() => !disabled && setIsOpen(!isOpen)}
+                    disabled={disabled}
+                    className={`w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-lg bg-white ${disabled ? 'bg-gray-100 cursor-not-allowed text-gray-400' : 'text-gray-500 hover:border-[#20CC95]'} transition-colors`}
                 >
-                    <span>{selectedValue || placeholder}</span>
+                    <span className="truncate">
+                        {multiple
+                            ? (selectedValues.length > 0 ? `${selectedValues.length} selected` : placeholder)
+                            : (selectedValue || placeholder)
+                        }
+                    </span>
                     <ChevronDown
                         size={18}
                         className={`text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}
@@ -73,28 +85,55 @@ const WizardDropdown: React.FC<WizardDropdownProps> = ({
                 </button>
                 {isOpen && (
                     <div className="absolute z-[200] w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                        {options.map((option) => (
-                            <button
-                                key={option}
-                                onClick={() => {
-                                    onSelect(option);
-                                    setIsOpen(false);
-                                }}
-                                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                            >
-                                {option}
-                            </button>
-                        ))}
+                        {options.map((option) => {
+                            const isSelected = multiple ? selectedValues.includes(option) : selectedValue === option;
+                            return (
+                                <button
+                                    key={option}
+                                    onClick={() => {
+                                        onSelect(option);
+                                        if (!multiple) setIsOpen(false);
+                                    }}
+                                    className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center justify-between ${isSelected ? 'bg-green-50 text-[#20CC95] font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                                >
+                                    <span>{option}</span>
+                                    {multiple && (
+                                        <div className={`w-4 h-4 rounded border flex items-center justify-center ${isSelected ? 'bg-[#20CC95] border-[#20CC95]' : 'border-gray-300'}`}>
+                                            {isSelected && <div className="w-2 h-2 bg-white rounded-sm" />}
+                                        </div>
+                                    )}
+                                </button>
+                            );
+                        })}
                     </div>
                 )}
             </div>
             <PrimaryActionButton
                 onClick={onNext}
-                disabled={!selectedValue}
+                disabled={multiple ? selectedValues.length === 0 : !selectedValue}
                 text="Next"
                 className="!bg-[#3D7475] disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
             />
+
         </div>
+        {multiple && selectedValues.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-3">
+                {selectedValues.map((value) => (
+                    <div
+                        key={value}
+                        className="flex items-center gap-2 bg-[#E0F2F1] text-[#2B5251] px-3 py-1.5 rounded-full text-sm font-medium border border-[#B2DFDB]"
+                    >
+                        <span>{value}</span>
+                        <button
+                            onClick={() => onSelect(value)}
+                            className="hover:bg-[#B2DFDB] rounded-full p-0.5 transition-colors"
+                        >
+                            <X size={14} />
+                        </button>
+                    </div>
+                ))}
+            </div>
+        )}
     </div>
 );
 
@@ -109,15 +148,16 @@ const UseTemplateWizard: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const state = location.state as LocationState;
-    const { templateName } = useParams<{ templateName: string }>();
+    const { templateName, id } = useParams<{ templateName?: string; id?: string }>();
 
     const [currentStep, setCurrentStep] = useState<StepNumber>(1);
-    const [selectedLease, setSelectedLease] = useState('');
-    const [selectedTenants, setSelectedTenants] = useState('');
+    const [selectedLease, setSelectedLease] = useState(id ? `Lease ${id}` : '');
+
+    const [selectedTenants, setSelectedTenants] = useState<string[]>(id ? ['John Doe'] : []); // Mock pre-selection for lease context
     const [templates, setTemplates] = useState(['Template 1', 'Template 2', 'Template 3']);
     const [activeTemplateIndex, setActiveTemplateIndex] = useState(0);
     const [templateContents, setTemplateContents] = useState<string[]>(() => {
-        const initialContent = templateName ? getTemplateHTML(decodeURIComponent(templateName)) : '';
+        const initialContent = templateName ? getTemplateHTML(decodeURIComponent(templateName)) : '<p>Start typing your notice here...</p>';
         return [initialContent, '', ''];
     });
     const [isLeaseDropdownOpen, setIsLeaseDropdownOpen] = useState(false);
@@ -172,7 +212,7 @@ const UseTemplateWizard: React.FC = () => {
     };
 
     const handleSendToReview = () => {
-        const returnPath = state?.returnPath || `/dashboard/documents/landlord-forms/template/${templateName}`;
+        const returnPath = state?.returnPath || (id ? `/dashboard/portfolio/leases/${id}` : `/dashboard/documents/landlord-forms/template/${templateName}`);
         navigate(returnPath, {
             state: {
                 showSuccessPopup: true,
@@ -198,6 +238,8 @@ const UseTemplateWizard: React.FC = () => {
                             setIsOpen={setIsLeaseDropdownOpen}
                             dropdownRef={leaseDropdownRef}
                             onNext={() => setCurrentStep(2)}
+                            // Lock dropdown if lease ID is provided (context mode)
+                            disabled={!!id}
                         />
                     </div>
                 );
@@ -209,12 +251,19 @@ const UseTemplateWizard: React.FC = () => {
                             label="Tenants"
                             placeholder="Search Tenants"
                             options={MOCK_TENANTS}
-                            selectedValue={selectedTenants}
-                            onSelect={setSelectedTenants}
+                            selectedValues={selectedTenants}
+                            onSelect={(tenant) => {
+                                setSelectedTenants(prev =>
+                                    prev.includes(tenant)
+                                        ? prev.filter(t => t !== tenant)
+                                        : [...prev, tenant]
+                                );
+                            }}
                             isOpen={isTenantsDropdownOpen}
                             setIsOpen={setIsTenantsDropdownOpen}
                             dropdownRef={tenantsDropdownRef}
                             onNext={() => setCurrentStep(3)}
+                            multiple={true}
                         />
                     </div>
                 );
