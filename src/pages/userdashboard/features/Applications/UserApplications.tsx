@@ -38,6 +38,7 @@ const Applications: React.FC = () => {
     type: 'invitation' | 'application';
     applicationId?: number;
   }>({ isOpen: false, type: 'invitation' });
+  const [errorToast, setErrorToast] = useState<string | null>(null);
 
   const [applications, setApplications] = useState<ApplicationItem[]>(() => {
     const staticApps: ApplicationItem[] = [
@@ -146,18 +147,27 @@ const Applications: React.FC = () => {
           isOpen={deleteModalState.isOpen}
           onClose={() => setDeleteModalState({ ...deleteModalState, isOpen: false })}
           onConfirm={() => {
-            if (deleteModalState.type === 'invitation') {
-              setShowInvitation(false);
-            } else if (deleteModalState.type === 'application' && deleteModalState.applicationId) {
-              const newApps = applications.filter(app => app.id !== deleteModalState.applicationId);
-              setApplications(newApps);
+            try {
+              if (deleteModalState.type === 'invitation') {
+                setShowInvitation(false);
+              } else if (deleteModalState.type === 'application' && typeof deleteModalState.applicationId === 'number') {
+                const appId = deleteModalState.applicationId;
+                setApplications(prev => prev.filter(app => app.id !== appId));
 
-              // Update local storage
-              const localApps = JSON.parse(localStorage.getItem('user_applications') || '[]');
-              const updatedLocalApps = localApps.filter((app: ApplicationItem) => app.id !== deleteModalState.applicationId);
-              localStorage.setItem('user_applications', JSON.stringify(updatedLocalApps));
+                // Update local storage with error handling
+                const stored = localStorage.getItem('user_applications');
+                const localApps = stored ? JSON.parse(stored) : [];
+                const updatedLocalApps = localApps.filter((app: any) => app.id !== appId);
+                localStorage.setItem('user_applications', JSON.stringify(updatedLocalApps));
+              }
+            } catch (error) {
+              console.error('Failed to update local storage:', error);
+              setErrorToast('Failed to save changes. Your browser storage might be full or restricted.');
+              // Auto-dismiss after 5 seconds
+              setTimeout(() => setErrorToast(null), 5000);
+            } finally {
+              setDeleteModalState(prev => ({ ...prev, isOpen: false }));
             }
-            setDeleteModalState({ ...deleteModalState, isOpen: false });
           }}
           title={deleteModalState.type === 'invitation' ? "Ignore Invitation" : "Delete Application"}
           message={deleteModalState.type === 'invitation'
@@ -249,6 +259,22 @@ const Applications: React.FC = () => {
           ))}
         </div>
       </div>
+
+      {/* Error Toast */}
+      {errorToast && (
+        <div className="fixed bottom-8 right-8 bg-[#EF4444] text-white px-6 py-4 rounded-xl shadow-2xl z-50 max-w-md flex items-center gap-4 animate-in slide-in-from-right duration-300 border border-white/20 backdrop-blur-sm">
+          <div className="flex-1">
+            <p className="text-sm font-semibold">Error</p>
+            <p className="text-xs opacity-90">{errorToast}</p>
+          </div>
+          <button
+            onClick={() => setErrorToast(null)}
+            className="p-1 hover:bg-white/20 rounded-full transition-colors"
+          >
+            <Trash2 size={16} className="rotate-45" />
+          </button>
+        </div>
+      )}
     </div>
   );
 };

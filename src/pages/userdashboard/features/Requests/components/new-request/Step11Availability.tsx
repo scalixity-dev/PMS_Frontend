@@ -44,9 +44,10 @@ const Step11Availability: React.FC<Step11Props> = ({
                         <div className="mb-4">
                             <label className="block text-sm font-semibold text-gray-700 mb-2">Date <span className="text-red-500">*</span></label>
                             <DatePicker
-                                value={option.date ? (() => {
+                                value={option.date && option.date.includes("-") ? (() => {
                                     const [year, month, day] = option.date.split("-").map(Number);
-                                    return new Date(year, month - 1, day);
+                                    const date = new Date(year, month - 1, day);
+                                    return isNaN(date.getTime()) ? undefined : date;
                                 })() : undefined}
                                 onChange={(date) => {
                                     if (date) {

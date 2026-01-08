@@ -42,6 +42,7 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
     const [formData, setFormData] = useState<InsuranceData>(initialFormData);
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const [uploadError, setUploadError] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Load insurance data from localStorage on mount
@@ -143,17 +144,18 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
             'image/png'
         ];
         if (!ALLOWED_TYPES.includes(file.type)) {
-            alert("Please select a valid document (PDF, DOC, DOCX) or image (JPEG, PNG).");
+            setUploadError("Please select a valid document (PDF, DOC, DOCX) or image (JPEG, PNG).");
             return;
         }
 
         // Validation: File Size (5MB limit)
         const MAX_SIZE = 5 * 1024 * 1024;
         if (file.size > MAX_SIZE) {
-            alert("File is too large. Please select a file smaller than 5MB.");
+            setUploadError("File is too large. Please select a file smaller than 5MB.");
             return;
         }
 
+        setUploadError(null);
         setUploadedFile(file);
 
         // Convert to base64 for persistence
@@ -167,7 +169,7 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
             }));
         };
         reader.onerror = () => {
-            alert("Failed to read the file. Please try again.");
+            setUploadError("Failed to read the file. Please try again.");
         };
         reader.readAsDataURL(file);
     }, []);
@@ -395,6 +397,13 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
                     {isDateInvalid && (
                         <div className="col-span-3 text-xs text-red-600 bg-red-50 border border-red-200 rounded-md p-1.5">
                             ⚠️ Expiration date must be after effective date
+                        </div>
+                    )}
+
+                    {/* Upload Error */}
+                    {uploadError && (
+                        <div className="col-span-3 text-xs text-red-600 bg-red-50 border border-red-200 rounded-md p-1.5">
+                            ⚠️ {uploadError}
                         </div>
                     )}
 

@@ -42,11 +42,21 @@ const Messages = () => {
 
     // Initialize chats on mount
     useEffect(() => {
-        if (chats.length === 0) {
+        // Migration check: If we have chats but they look like the old mock data (id '1', '2', etc.), 
+        // we reset to the new prefixed IDs. We only do this if all existing chats are the old format.
+        const allChatsAreOld = chats.length > 0 && chats.every(c =>
+            !c.id.toString().startsWith('chat_') &&
+            !requests.some(r => r.requestId?.toString() === c.id.toString())
+        );
+
+        if (chats.length === 0 || allChatsAreOld) {
             setChats(mockChats);
-            setActiveChat(mockChats[0]);
+            // Only set active chat if we don't have one and we are in CHAT mode
+            if (viewMode === 'CHAT' && (!activeChat || allChatsAreOld)) {
+                setActiveChat(mockChats[0]);
+            }
         }
-    }, [chats.length, setChats, setActiveChat]);
+    }, [chats.length, setChats, setActiveChat, requests.length]); // Use lengths to avoid deep object comparison loops
 
     // Initialize publications on mount
     useEffect(() => {
@@ -81,8 +91,8 @@ const Messages = () => {
             // Exclude chats that are specifically for a maintenance request (MR)
             // MR chats use the requestId as their chat id
             const isMRChat = requests.some(req =>
-                req.requestId.toString() === chat.id ||
-                req.id.toString() === chat.id
+                (req.requestId || '').toString() === chat.id?.toString() ||
+                (req.id || '').toString() === chat.id?.toString()
             );
             return !isMRChat;
         });
@@ -106,11 +116,11 @@ const Messages = () => {
         const query = mrSearch.toLowerCase();
         return requests.filter(
             (req) =>
-                req.property.toLowerCase().includes(query) ||
-                req.requestId.toLowerCase().includes(query) ||
-                req.category.toLowerCase().includes(query) ||
-                req.subCategory?.toLowerCase().includes(query) ||
-                req.problem?.toLowerCase().includes(query)
+                (req.property || '').toLowerCase().includes(query) ||
+                (req.requestId || '').toLowerCase().includes(query) ||
+                (req.category || '').toLowerCase().includes(query) ||
+                (req.subCategory || '').toLowerCase().includes(query) ||
+                (req.problem || '').toLowerCase().includes(query)
         );
     }, [requests, mrSearch]);
 

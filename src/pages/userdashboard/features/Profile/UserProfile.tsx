@@ -43,6 +43,7 @@ const Profile: React.FC = () => {
     confirm: false
   });
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
 
   const togglePasswordVisibility = (field: 'current' | 'new' | 'confirm') => {
@@ -111,17 +112,18 @@ const Profile: React.FC = () => {
       // Validation: File Type
       const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
       if (!ALLOWED_TYPES.includes(file.type)) {
-        alert("Please select a valid image file (JPEG, PNG, GIF, or WebP).");
+        setUploadError("Please select a valid image file (JPEG, PNG, GIF, or WebP).");
         return;
       }
 
       // Validation: File Size (2MB limit)
       const MAX_SIZE = 2 * 1024 * 1024;
       if (file.size > MAX_SIZE) {
-        alert("File is too large. Please select an image smaller than 2MB.");
+        setUploadError("File is too large. Please select an image smaller than 2MB.");
         return;
       }
 
+      setUploadError(null);
       const reader = new FileReader();
 
       reader.onload = () => {
@@ -131,12 +133,12 @@ const Profile: React.FC = () => {
           setUserInfo({ profileImage: imageResult });
         } catch (error) {
           console.error("Error processing image:", error);
-          alert("Failed to process the selected image.");
+          setUploadError("Failed to process the selected image.");
         }
       };
 
       reader.onerror = () => {
-        alert("Failed to read the file. Please try again.");
+        setUploadError("Failed to read the file. Please try again.");
         console.error("FileReader error:", reader.error);
       };
 
@@ -197,6 +199,11 @@ const Profile: React.FC = () => {
           <h2 className="text-3xl font-medium text-[#1A1A1A]">{userInfo.firstName} {userInfo.lastName}</h2>
           <p className="text-lg text-[#6B7280] font-medium">{userInfo.role}</p>
           <p className="text-lg text-[#6B7280] font-medium">{userInfo.email}</p>
+          {uploadError && (
+            <p className="text-sm text-red-500 font-medium mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
+              {uploadError}
+            </p>
+          )}
         </div>
       </div>
 
