@@ -4,6 +4,8 @@ import { Link, useNavigate } from "react-router-dom";
 import FilterDropdown from "../../../../components/ui/FilterDropdown";
 import { useRentStore } from "./store/rentStore";
 import { mockTransactions } from "../../utils/mockData";
+import { calculateOutstandingAmount } from "../../utils/financeUtils";
+import { useDashboardStore } from "../../store/dashboardStore";
 import { TransactionRow } from "../Transactions/components/TransactionRow";
 
 const ROWS_PER_PAGE = 10;
@@ -11,6 +13,7 @@ const ROWS_PER_PAGE = 10;
 const Rent: React.FC = () => {
   const navigate = useNavigate();
   const { rentFilters, setRentFilters, resetRentFilters } = useRentStore();
+  const { finances } = useDashboardStore();
   const { search: searchQuery, status: statusFilter, date: dateFilter, schedule: scheduleFilter } = rentFilters;
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -84,12 +87,11 @@ const Rent: React.FC = () => {
     }
   };
 
-  // Calculate outstanding amount
-  const outstandingAmount = useMemo(() => {
-    return mockTransactions
-      .filter((t) => t.status === "Open" || t.status === "Overdue")
-      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-  }, []);
+  // Use outstanding amount from store if available, otherwise calculate it
+  const outstandingAmountValue = useMemo(() => {
+    if (finances.outstanding !== "0.00") return parseFloat(finances.outstanding);
+    return calculateOutstandingAmount(mockTransactions);
+  }, [finances.outstanding]);
 
 
   return (
@@ -118,7 +120,7 @@ const Rent: React.FC = () => {
           {/* Outstanding Section */}
           <div className="px-6 py-5">
             <p className="text-gray-600 text-lg text-sm mb-1">Outstanding</p>
-            <p className="text-lg font-medium text-gray-900">{outstandingAmount.toFixed(2)} INR</p>
+            <p className="text-lg font-medium text-gray-900">{outstandingAmountValue.toFixed(2)} INR</p>
           </div>
         </div>
 
@@ -223,8 +225,8 @@ const Rent: React.FC = () => {
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
                 className={`p-2 rounded-full transition-colors ${currentPage === 1
-                    ? 'text-gray-300 cursor-not-allowed'
-                    : 'text-gray-600 hover:bg-gray-200'
+                  ? 'text-gray-300 cursor-not-allowed'
+                  : 'text-gray-600 hover:bg-gray-200'
                   }`}
               >
                 <ChevronLeft className="w-6 h-6" />
@@ -235,8 +237,8 @@ const Rent: React.FC = () => {
                   key={page}
                   onClick={() => handlePageChange(page)}
                   className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-medium transition-all ${currentPage === page
-                      ? 'bg-[#3A7D76] text-white shadow-lg'
-                      : 'bg-transparent text-gray-600 border border-gray-300 hover:bg-gray-100'
+                    ? 'bg-[#3A7D76] text-white shadow-lg'
+                    : 'bg-transparent text-gray-600 border border-gray-300 hover:bg-gray-100'
                     }`}
                 >
                   {page}
@@ -247,8 +249,8 @@ const Rent: React.FC = () => {
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
                 className={`p-2 rounded-full transition-colors ${currentPage === totalPages
-                    ? 'text-gray-300 cursor-not-allowed'
-                    : 'text-gray-600 hover:bg-gray-200'
+                  ? 'text-gray-300 cursor-not-allowed'
+                  : 'text-gray-600 hover:bg-gray-200'
                   }`}
               >
                 <ChevronRight className="w-6 h-6" />

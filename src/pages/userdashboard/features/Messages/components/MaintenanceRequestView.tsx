@@ -16,55 +16,56 @@ const MaintenanceRequestView = ({ request, onBack }: MaintenanceRequestViewProps
     const { chats, addChat, sendMessage } = useMessagesStore();
     const { userInfo } = useAuthStore();
 
-    if (!userInfo) return null;
-
-    // Destructure specific fields to avoid infinite re-renders
-    const { email: userEmail, firstName, lastName } = userInfo;
+    const userEmail = userInfo?.email;
+    const firstName = userInfo?.firstName;
+    const lastName = userInfo?.lastName;
 
     const chatId = request.requestId.toString();
     const chat = chats.find((c) => c.id === chatId);
     const messages = chat?.messages || [];
 
     useEffect(() => {
-        if (!chat) {
-            const initialMessages = [
-                {
-                    id: '1',
-                    senderId: userEmail,
-                    senderName: `${firstName} ${lastName}`,
-                    text: `${request.category} / ${request.subCategory} / ${request.problem}\n\nDescription: ${request.description || 'No description provided.'}`,
-                    timestamp: request.createdAt,
-                    isRead: true,
-                },
-                {
-                    id: '2',
-                    senderId: request.assignee || 'system',
-                    senderName: request.assignee || 'System',
-                    text: 'I have received your request and will look into it shortly.',
-                    timestamp: new Date(new Date(request.createdAt).getTime() + 3600000).toISOString(),
-                    isRead: true,
-                },
-            ];
+        if (!userInfo || chat) return;
 
-            addChat({
-                id: chatId,
-                contactName: request.assignee || 'System',
-                contactRole: 'Maintenance',
-                contactEmail: '',
-                contactAvatar: `https://api.dicebear.com/7.x/initials/svg?seed=${request.assignee || 'System'}`,
-                lastMessage: initialMessages[1].text,
-                lastMessageTime: initialMessages[1].timestamp,
-                unreadCount: 0,
-                isOnline: false,
-                messages: initialMessages,
-                propertyAddress: request.property,
-            });
-        }
-    }, [chat, chatId, request, addChat, userEmail, firstName, lastName]);
+        const initialMessages = [
+            {
+                id: '1',
+                senderId: userEmail!,
+                senderName: `${firstName} ${lastName}`,
+                text: `${request.category} / ${request.subCategory} / ${request.problem}\n\nDescription: ${request.description || 'No description provided.'}`,
+                timestamp: request.createdAt,
+                isRead: true,
+            },
+            {
+                id: '2',
+                senderId: request.assignee || 'system',
+                senderName: request.assignee || 'System',
+                text: 'I have received your request and will look into it shortly.',
+                timestamp: new Date(new Date(request.createdAt).getTime() + 3600000).toISOString(),
+                isRead: true,
+            },
+        ];
+
+        addChat({
+            id: chatId,
+            contactName: request.assignee || 'System',
+            contactRole: 'Maintenance',
+            contactEmail: '',
+            contactAvatar: `https://api.dicebear.com/7.x/initials/svg?seed=${request.assignee || 'System'}`,
+            lastMessage: initialMessages[1].text,
+            lastMessageTime: initialMessages[1].timestamp,
+            unreadCount: 0,
+            isOnline: false,
+            messages: initialMessages,
+            propertyAddress: request.property,
+        });
+    }, [chat, chatId, request, addChat, userEmail, firstName, lastName, userInfo]);
+
+    if (!userInfo) return null;
 
     const handleSendMessage = (text: string) => {
         sendMessage(chatId, {
-            senderId: userEmail,
+            senderId: userEmail!,
             senderName: `${firstName} ${lastName}`,
             text: text,
             isRead: true,

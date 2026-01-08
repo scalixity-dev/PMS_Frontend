@@ -4,7 +4,8 @@ import { useDashboardStore } from "./store/dashboardStore";
 import { Sidebar } from "./components/layout/Sidebar";
 import { TransactionTable } from "./features/Transactions/components/TransactionTable";
 import { LeaseList } from "./features/Leases/components/LeaseList";
-import { mockTransactions, mockLeases, tabs, mockFinances } from "./utils/mockData";
+import { mockTransactions, mockLeases, tabs } from "./utils/mockData";
+import { calculateOutstandingAmount } from "./utils/financeUtils";
 import type { TabType } from "./utils/types";
 import PrimaryActionButton from "../../components/common/buttons/PrimaryActionButton";
 import { authService } from "../../services/auth.service";
@@ -74,10 +75,16 @@ const UserDashboard = () => {
         };
     }, []);
 
-    // Load mock finances on mount if authenticated
+    // Load finances on mount if authenticated
     useEffect(() => {
         if (isAuthenticated) {
-            setFinances(mockFinances);
+            const outstanding = calculateOutstandingAmount(mockTransactions).toFixed(2);
+            // You can also calculate deposits/credits if needed
+            setFinances({
+                outstanding,
+                deposits: "45000.00", // Keep existing static values for now if they don't match mockTransactions exactly
+                credits: "0.00",
+            });
         }
     }, [setFinances, isAuthenticated]);
 
