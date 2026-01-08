@@ -77,9 +77,16 @@ const NewRequest: React.FC = () => {
 
   // Access the navigation context to intercept navigation
   const navigationContext = React.useContext(UNSAFE_NavigationContext);
-  
+
+  /* Use a ref to track navigation allowance synchronously, 
+     preventing race conditions between state updates and navigation events */
+  const shouldAllowNavigationRef = React.useRef(false);
+
   // Block navigation when form has unsaved changes
   useEffect(() => {
+    // Sync ref with state when state changes (for other cases)
+    shouldAllowNavigationRef.current = shouldAllowNavigation;
+
     if (!hasFormData || shouldAllowNavigation) return;
 
     const { navigator } = navigationContext;
@@ -88,9 +95,14 @@ const NewRequest: React.FC = () => {
 
     // Intercept push navigation
     navigator.push = (...args: Parameters<typeof originalPush>) => {
+      // Check ref directly for immediate feedback during submission
+      if (shouldAllowNavigationRef.current) {
+        return originalPush(...args);
+      }
+
       const [to] = args;
       const targetPath = typeof to === 'string' ? to : to.pathname;
-      
+
       if (targetPath !== location.pathname) {
         setNextLocation(targetPath || '');
         setIsModalOpen(true);
@@ -101,9 +113,14 @@ const NewRequest: React.FC = () => {
 
     // Intercept replace navigation
     navigator.replace = (...args: Parameters<typeof originalReplace>) => {
+      // Check ref directly
+      if (shouldAllowNavigationRef.current) {
+        return originalReplace(...args);
+      }
+
       const [to] = args;
       const targetPath = typeof to === 'string' ? to : to.pathname;
-      
+
       if (targetPath !== location.pathname) {
         setNextLocation(targetPath || '');
         setIsModalOpen(true);
@@ -121,9 +138,12 @@ const NewRequest: React.FC = () => {
 
   // Handle browser navigation (refresh, close tab, etc.)
   useEffect(() => {
+    // For browser native events, the state is sufficient usually, 
+    // but the ref is consistent.
     if (!hasFormData || shouldAllowNavigation) return;
 
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (shouldAllowNavigationRef.current) return;
       e.preventDefault();
       e.returnValue = '';
       return '';
@@ -135,8 +155,9 @@ const NewRequest: React.FC = () => {
 
   const handleConfirmLeave = useCallback(() => {
     setIsModalOpen(false);
+    shouldAllowNavigationRef.current = true;
     setShouldAllowNavigation(true);
-    
+
     // Navigate to the target location
     if (nextLocation) {
       setTimeout(() => {
@@ -152,6 +173,8 @@ const NewRequest: React.FC = () => {
 
   // Wrap handleSubmit to allow navigation after successful submission
   const handleFormSubmit = async () => {
+    // Immediately allow navigation to prevent blocker from catching the submit navigation
+    shouldAllowNavigationRef.current = true;
     setShouldAllowNavigation(true);
     await handleSubmit();
   };

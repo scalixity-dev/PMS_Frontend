@@ -9,6 +9,7 @@ interface RequestState {
     resetRequestFilters: () => void;
     addRequest: (request: ServiceRequest) => void;
     updateRequestStatus: (id: number, status: ServiceRequest["status"]) => void;
+    deleteRequest: (id: number) => void;
 }
 
 const STORAGE_KEY = 'pms_user_requests';
@@ -177,6 +178,17 @@ export const useRequestStore = create<RequestState>((set) => ({
 
             if (!saved) {
                 console.warn('Request status updated in state but failed to persist to localStorage');
+            }
+
+            return { requests: updatedRequests };
+        }),
+    deleteRequest: (id) =>
+        set((state) => {
+            const updatedRequests = state.requests.filter((req) => req.id !== id);
+            const saved = saveRequests(updatedRequests);
+
+            if (!saved) {
+                console.warn('Request deleted from state but failed to persist to localStorage');
             }
 
             return { requests: updatedRequests };

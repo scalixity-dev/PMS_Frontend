@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Plus, Trash2, Car } from 'lucide-react';
 import { useUserApplicationStore } from '../store/userApplicationStore';
 import PrimaryActionButton from '@/components/common/buttons/PrimaryActionButton';
-import AddVehicleModal, { type VehicleFormData } from '../../../../Dashboard/features/Application/components/AddVehicleModal';
+import UserAddVehicleModal, { type VehicleFormData } from '../components/UserAddVehicleModal';
 
 const VehicleItem: React.FC<{ vehicle: any; onDelete: () => void }> = ({ vehicle, onDelete }) => {
     return (
@@ -85,14 +85,14 @@ const VehiclesStep: React.FC<VehiclesStepProps> = ({ onNext }) => {
                         onClick={onNext}
                         text="Next"
                         className={`px-16 py-3.5 rounded-full font-bold uppercase transition-all ${true
-                                ? 'bg-[#7ED957] hover:bg-[#6BC847] shadow-lg shadow-[#7ED957]/30 text-white'
-                                : 'bg-[#F3F4F6] text-black hover:bg-[#F3F4F6] cursor-not-allowed border-none shadow-none'
+                            ? 'bg-[#7ED957] hover:bg-[#6BC847] shadow-lg shadow-[#7ED957]/30 text-white'
+                            : 'bg-[#F3F4F6] text-black hover:bg-[#F3F4F6] cursor-not-allowed border-none shadow-none'
                             }`}
                     />
                 </div>
             </div>
 
-            <AddVehicleModal
+            <UserAddVehicleModal
                 isOpen={isAdding}
                 onClose={() => setIsAdding(false)}
                 onSave={handleSaveVehicle}

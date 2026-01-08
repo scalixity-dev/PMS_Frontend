@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Phone, Video, MoreVertical, Info, ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Printer } from 'lucide-react';
 import type { ServiceRequest } from '../../../utils/types';
 import ChatInput from './ChatInput';
 import MessageBubble from './MessageBubble';
@@ -102,17 +102,8 @@ const MaintenanceRequestView = ({ request, onBack }: MaintenanceRequestViewProps
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <button className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors group">
-                            <Phone className="w-5 h-5 text-gray-600 group-hover:text-[var(--dashboard-accent)]" />
-                        </button>
-                        <button className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors group">
-                            <Video className="w-5 h-5 text-gray-600 group-hover:text-[var(--dashboard-accent)]" />
-                        </button>
-                        <button className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors group">
-                            <Info className="w-5 h-5 text-gray-600 group-hover:text-[var(--dashboard-accent)]" />
-                        </button>
-                        <button className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors group">
-                            <MoreVertical className="w-5 h-5 text-gray-600 group-hover:text-[var(--dashboard-accent)]" />
+                        <button className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors group" title="Print Request">
+                            <Printer className="w-5 h-5 text-gray-600 group-hover:text-[var(--dashboard-accent)]" />
                         </button>
                     </div>
                 </div>

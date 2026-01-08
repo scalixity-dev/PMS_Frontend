@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Bell } from "lucide-react";
+import { Bell, Trash2 } from "lucide-react";
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
 import DeleteConfirmationModal from "../../../../components/common/modals/DeleteConfirmationModal";
 
@@ -31,9 +31,13 @@ const formatDate = (dateString: string): string => {
 const Applications: React.FC = () => {
   const navigate = useNavigate();
   const [showInvitation, setShowInvitation] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteModalState, setDeleteModalState] = useState<{
+    isOpen: boolean;
+    type: 'invitation' | 'application';
+    applicationId?: number;
+  }>({ isOpen: false, type: 'invitation' });
 
-  const [applications] = useState<ApplicationItem[]>(() => {
+  const [applications, setApplications] = useState<ApplicationItem[]>(() => {
     const staticApps: ApplicationItem[] = [
       {
         id: 1,
@@ -118,7 +122,7 @@ const Applications: React.FC = () => {
               </div>
               <div className="flex items-center gap-8 pr-2">
                 <button
-                  onClick={() => setIsDeleteModalOpen(true)}
+                  onClick={() => setDeleteModalState({ isOpen: true, type: 'invitation' })}
                   className="text-[#64748B] text-sm font-medium hover:text-[#1A1A1A] transition-colors"
                 >
                   Ignore
@@ -137,15 +141,27 @@ const Applications: React.FC = () => {
         )}
 
         <DeleteConfirmationModal
-          isOpen={isDeleteModalOpen}
-          onClose={() => setIsDeleteModalOpen(false)}
+          isOpen={deleteModalState.isOpen}
+          onClose={() => setDeleteModalState({ ...deleteModalState, isOpen: false })}
           onConfirm={() => {
-            setShowInvitation(false);
-            setIsDeleteModalOpen(false);
+            if (deleteModalState.type === 'invitation') {
+              setShowInvitation(false);
+            } else if (deleteModalState.type === 'application' && deleteModalState.applicationId) {
+              const newApps = applications.filter(app => app.id !== deleteModalState.applicationId);
+              setApplications(newApps);
+
+              // Update local storage
+              const localApps = JSON.parse(localStorage.getItem('user_applications') || '[]');
+              const updatedLocalApps = localApps.filter((app: ApplicationItem) => app.id !== deleteModalState.applicationId);
+              localStorage.setItem('user_applications', JSON.stringify(updatedLocalApps));
+            }
+            setDeleteModalState({ ...deleteModalState, isOpen: false });
           }}
-          title="Ignore Invitation"
-          message="Are you sure you want to ignore this invitation? This action cannot be undone."
-          confirmText="Ignore"
+          title={deleteModalState.type === 'invitation' ? "Ignore Invitation" : "Delete Application"}
+          message={deleteModalState.type === 'invitation'
+            ? "Are you sure you want to ignore this invitation? This action cannot be undone."
+            : "Are you sure you want to delete this application? This action cannot be undone."}
+          confirmText={deleteModalState.type === 'invitation' ? "Ignore" : "Delete"}
         />
 
         <div className="border-t border-[#E5E7EB]"></div>
@@ -172,6 +188,19 @@ const Applications: React.FC = () => {
                   {app.status}
                 </span>
               </div>
+
+              {/* Delete Draft Button */}
+              {app.status === "Draft" && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteModalState({ isOpen: true, type: 'application', applicationId: app.id });
+                  }}
+                  className="absolute top-4 right-4 z-10 p-1.5 bg-white rounded-full text-gray-400 hover:text-red-500 transition-all shadow-sm"
+                >
+                  <Trash2 size={16} />
+                </button>
+              )}
 
               {/* Main Content */}
               <div className="flex flex-col items-center pt-12  px-6">

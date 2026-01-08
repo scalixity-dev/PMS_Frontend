@@ -20,20 +20,20 @@ const UserDashboard = () => {
     // Check authentication and tenant role on mount
     useEffect(() => {
         let isMounted = true;
-        
+
         const checkAuth = async () => {
             try {
                 const user = await authService.getCurrentUser();
-                
+
                 if (!isMounted) return;
-                
+
                 // Verify user is a tenant
                 const isTenant = user.role && (
                     user.role.toUpperCase() === 'TENANT' ||
                     user.role.toLowerCase() === 'tenant' ||
                     user.role === 'tenant'
                 );
-                
+
                 // User must be a tenant and account must be active
                 if (isTenant && user.isActive) {
                     setIsAuthenticated(true);
@@ -45,7 +45,7 @@ const UserDashboard = () => {
                 }
             } catch (error) {
                 if (!isMounted) return;
-                
+
                 console.error('UserDashboard: Authentication check failed:', error);
                 setIsAuthenticated(false);
                 setIsLoading(false);
@@ -53,7 +53,7 @@ const UserDashboard = () => {
         };
 
         checkAuth();
-        
+
         return () => {
             isMounted = false;
         };

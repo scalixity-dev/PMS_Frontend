@@ -1,4 +1,30 @@
 import type { Chat } from '../types';
+import type { Publication } from '../../../utils/types';
+
+export const mockPublications: Publication[] = [
+    {
+        id: '1',
+        title: 'Building Maintenance Scheduled',
+        content: 'Please be advised that there will be scheduled maintenance for the elevator system on January 15th from 9 AM to 2 PM. We apologize for any inconvenience.',
+        date: new Date(Date.now() - 86400000).toISOString(),
+        author: 'Building Management',
+    },
+    {
+        id: '2',
+        title: 'Community Event: Summer BBQ',
+        content: 'Join us for our annual Summer BBQ this Saturday at the courtyard! Food and drinks will be provided. All residents are welcome.',
+        date: new Date(Date.now() - 172800000).toISOString(),
+        author: 'Social Committee',
+    },
+    {
+        id: '3',
+        title: 'New Recycling Policy',
+        content: 'We are implementing a new recycling program effective next month. Please separate your recyclables according to the new guidelines posted in the trash room.',
+        date: new Date(Date.now() - 432000000).toISOString(),
+        author: 'Green Team',
+    },
+];
+
 
 export const mockChats: Chat[] = [
     {

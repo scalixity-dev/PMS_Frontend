@@ -1,5 +1,5 @@
 import { useState, useRef, type KeyboardEvent } from 'react';
-import { Send, Paperclip, Image as ImageIcon, Smile, X } from 'lucide-react';
+import { Send, Paperclip, Image as ImageIcon, X } from 'lucide-react';
 
 interface ChatInputProps {
     onSendMessage: (text: string, files?: File[]) => void;
@@ -118,14 +118,7 @@ const ChatInput = ({ onSendMessage, disabled = false }: ChatInputProps) => {
                     />
                 </div>
 
-                {/* Emoji Button */}
-                <button
-                    disabled={disabled}
-                    className="p-2.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
-                    title="Add emoji"
-                >
-                    <Smile className="w-5 h-5" />
-                </button>
+
 
                 {/* Send Button */}
                 <button

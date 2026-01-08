@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { ChevronLeft } from "lucide-react";
-import { useNavigate, useLocation, useBlocker } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import ApplicationStepper from "./components/ApplicationStepper";
 import ApplicantInfoStep from "./steps/ApplicantInfoStep";
 import OccupantsStep from "./steps/OccupantsStep";
@@ -18,13 +18,21 @@ import ApplicationSuccessModal from "./components/ApplicationSuccessModal";
 import ApplicationErrorModal from "./components/ApplicationErrorModal";
 import UnsavedChangesModal from "../../../Dashboard/components/UnsavedChangesModal";
 
-// const STORAGE_KEY = 'user_application_draft';
+const APPLICATIONS_KEY = 'user_applications';
+const DRAFT_ID = 'draft_active';
+
+const hasValue = (v: any): boolean =>
+    Array.isArray(v) ? v.length > 0 :
+        v && typeof v === 'object' ? Object.keys(v).length > 0 :
+            typeof v === 'string' ? v.trim() !== '' :
+                v !== null && v !== undefined && v !== false;
 
 const UserNewApplication: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [shouldAllowNavigation, setShouldAllowNavigation] = useState(false);
+    const pendingNavigationRef = useRef<string | null>(null);
 
     const {
         formData,
@@ -41,61 +49,59 @@ const UserNewApplication: React.FC = () => {
     const [successMessage, setSuccessMessage] = useState<string | undefined>(undefined);
     const [isWarning, setIsWarning] = useState(false);
 
-    // Auto-select property if passed in state
+    // Auto-select property if passed in state (Invitation flow)
+    // Invitations should always start from Step 1
     useEffect(() => {
         const state = location.state as { propertyId?: string };
         if (state?.propertyId) {
+            resetForm();
             updateFormData('propertyId', state.propertyId);
             setIsPropertySelected(true);
         } else {
-            setIsPropertySelected(false);
+            // For Draft "Continue" flow, keep existing state and just update bridge state
+            setIsPropertySelected(!!formData.propertyId);
         }
-    }, [location.state, updateFormData, setIsPropertySelected]);
+    }, []); // Run once on mount to determine if we are starting fresh or continuing a draft
 
     const isFormDirty = React.useMemo(() => {
-        return (
-            formData.firstName.trim() !== '' ||
-            formData.lastName.trim() !== '' ||
-            formData.email.trim() !== '' ||
-            formData.phoneNumber.trim() !== '' ||
-            formData.shortBio.trim() !== '' ||
-            formData.propertyId.trim() !== '' ||
-            formData.occupants.length > 0 ||
-            formData.pets.length > 0 ||
-            formData.vehicles.length > 0 ||
-            formData.residences.length > 0 ||
-            formData.incomes.length > 0 ||
-            formData.emergencyContacts.length > 0 ||
-            formData.documents.length > 0 ||
-            formData.additionalResidenceInfo.trim() !== '' ||
-            formData.additionalIncomeInfo.trim() !== '' ||
-            Object.keys(formData.backgroundQuestions).length > 0 ||
-            Object.keys(formData.backgroundExplanations).length > 0
-        );
+        return Object.values(formData).some(hasValue);
     }, [formData]);
 
-    // Block navigation when form has unsaved changes
-    const blocker = useBlocker(
-        ({ currentLocation, nextLocation }) =>
-            isFormDirty &&
-            !shouldAllowNavigation &&
-            currentLocation.pathname !== nextLocation.pathname
-    );
-
+    // Block browser navigation (refresh, close tab) when form has unsaved changes
     useEffect(() => {
-        if (blocker.state === "blocked") {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (isFormDirty && !shouldAllowNavigation) {
+                e.preventDefault();
+                e.returnValue = '';
+                return '';
+            }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [isFormDirty, shouldAllowNavigation]);
+
+    // Handle browser back/forward button
+    useEffect(() => {
+        if (!isFormDirty || shouldAllowNavigation) return;
+
+        const handlePopState = () => {
+            pendingNavigationRef.current = 'back';
             setIsModalOpen(true);
-        } else {
-            setIsModalOpen(false);
-        }
-    }, [blocker.state]);
+            window.history.pushState(null, '', location.pathname);
+        };
+
+        window.history.pushState(null, '', location.pathname);
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, [isFormDirty, shouldAllowNavigation, location.pathname]);
 
     const saveDraft = useCallback(() => {
-        if (!isFormDirty) return;
+        if (!isFormDirty || shouldAllowNavigation) return;
 
         const name = `${formData.firstName} ${formData.lastName}`.trim();
         const newDraft = {
-            id: 'draft_active',
+            id: DRAFT_ID,
             name: name || 'Draft Applicant',
             phone: formData.phoneNumber || 'N/A',
             status: "Draft",
@@ -103,10 +109,10 @@ const UserNewApplication: React.FC = () => {
             address: 'In Progress...'
         };
 
-        const existingApps = JSON.parse(localStorage.getItem('user_applications') || '[]') as Array<{ id: string | number }>;
-        const filteredApps = existingApps.filter((app) => app.id !== 'draft_active');
-        localStorage.setItem('user_applications', JSON.stringify([newDraft, ...filteredApps]));
-    }, [formData, isFormDirty]);
+        const existingApps = JSON.parse(localStorage.getItem(APPLICATIONS_KEY) || '[]') as Array<{ id: string | number }>;
+        const filteredApps = existingApps.filter((app) => app.id !== DRAFT_ID);
+        localStorage.setItem(APPLICATIONS_KEY, JSON.stringify([newDraft, ...filteredApps]));
+    }, [formData, isFormDirty, shouldAllowNavigation]);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -117,116 +123,122 @@ const UserNewApplication: React.FC = () => {
 
     const handleConfirmLeave = useCallback(() => {
         saveDraft();
-        if (blocker.state === "blocked") {
-            blocker.proceed();
-        }
+        setShouldAllowNavigation(true);
         setIsModalOpen(false);
-    }, [blocker, saveDraft]);
+
+        // Navigate to pending location if there is one
+        if (pendingNavigationRef.current) {
+            if (pendingNavigationRef.current === 'back') {
+                navigate(-1);
+            } else {
+                navigate(pendingNavigationRef.current);
+            }
+            pendingNavigationRef.current = null;
+        } else {
+            navigate(-1);
+        }
+    }, [navigate, saveDraft]);
 
     const handleCancelLeave = useCallback(() => {
-        if (blocker.state === "blocked") {
-            blocker.reset();
-        }
         setIsModalOpen(false);
-    }, [blocker]);
+        pendingNavigationRef.current = null;
+    }, []);
 
     const handleBack = () => {
         if (currentStep === 1) {
-            navigate(-1);
+            if (isFormDirty && !shouldAllowNavigation) {
+                pendingNavigationRef.current = 'back';
+                setIsModalOpen(true);
+            } else {
+                navigate(-1);
+            }
         } else {
             setCurrentStep(currentStep - 1);
         }
     };
 
-    const handleSubmitSuccess = async () => {
-        try {
-            const { applicationService } = await import('../../../../services/application.service');
-            const { leasingService } = await import('../../../../services/leasing.service');
+    const fetchLeasingData = async () => {
+        const { leasingService } = await import('../../../../services/leasing.service');
+        let leasingId: string | undefined;
+        let address: string | undefined;
+        let leasingFetchFailed = false;
 
-            let leasingId: string | undefined;
-            let address: string | undefined;
-            let leasingFetchFailed = false;
-
-            // Only attempt to fetch leasing data if propertyId is provided
-            if (formData.propertyId?.trim()) {
-                try {
-                    const leasing = await leasingService.getByPropertyId(formData.propertyId);
-                    if (leasing && leasing.id) {
-                        leasingId = leasing.id;
-                        if (leasing.property?.address) {
-                            const addr = leasing.property.address;
-                            address = `${addr.streetAddress}, ${addr.city}, ${addr.stateRegion} ${addr.zipCode}, ${addr.country}`;
-                        }
-                    } else {
-                        // Leasing found but missing required data
-                        console.warn('Leasing data incomplete');
-                        leasingFetchFailed = true;
+        if (formData.propertyId?.trim()) {
+            try {
+                const leasing = await leasingService.getByPropertyId(formData.propertyId);
+                if (leasing && leasing.id) {
+                    leasingId = leasing.id;
+                    if (leasing.property?.address) {
+                        const addr = leasing.property.address;
+                        address = `${addr.streetAddress}, ${addr.city}, ${addr.stateRegion} ${addr.zipCode}, ${addr.country}`;
                     }
-                } catch (error) {
-                    console.warn('Leasing fetch failed', error);
+                } else {
                     leasingFetchFailed = true;
                 }
-            } else {
-                // No propertyId provided - this should be caught earlier, but handle gracefully
-                console.warn('No propertyId provided');
+            } catch (error) {
                 leasingFetchFailed = true;
             }
+        } else {
+            leasingFetchFailed = true;
+        }
 
-            // Handle fallback data with environment guard
-            if (leasingFetchFailed) {
-                if (import.meta.env.DEV) {
-                    console.warn('Using fallback data (Development Only)');
-                    leasingId = 'mock_leasing_id_123';
-                    address = 'Gandhi Path Rd, Jaipur, Rajasthan 302020';
-                } else {
-                    // Block submission in production if leasing data is missing
-                    throw new Error('Unable to verify property details. Please try again or contact support.');
-                }
+        if (leasingFetchFailed) {
+            if (import.meta.env.DEV) {
+                leasingId = 'mock_leasing_id_123';
+                address = 'Gandhi Path Rd, Jaipur, Rajasthan 302020';
+            } else {
+                throw new Error('Unable to verify property details. Please try again or contact support.');
             }
+        }
 
-            // Ensure leasingId is defined
-            const finalLeasingId = leasingId as string;
+        return { leasingId: leasingId as string, address, leasingFetchFailed };
+    };
 
-            // Track whether API submission was successful
-            let apiSubmissionSuccessful = false;
-            try {
-                await applicationService.create(formData, finalLeasingId);
-                apiSubmissionSuccessful = true;
-            } catch (err) {
-                console.warn('API submission failed, persisting locally for demo', err);
-                apiSubmissionSuccessful = false;
-            }
+    const submitApplication = async (leasingId: string) => {
+        const { applicationService } = await import('../../../../services/application.service');
+        try {
+            await applicationService.create(formData, leasingId);
+            return true;
+        } catch (err) {
+            console.warn('API submission failed, persisting locally', err);
+            return false;
+        }
+    };
 
-            // Persist locally so it shows up in the Applications list
-            const existingApps = JSON.parse(localStorage.getItem('user_applications') || '[]') as Array<{ id: string | number }>;
-            const filteredApps = existingApps.filter((app) => app.id !== 'draft_active');
+    const persistApplicationLocally = (address?: string) => {
+        const existingApps = JSON.parse(localStorage.getItem(APPLICATIONS_KEY) || '[]') as Array<{ id: string | number }>;
+        const filteredApps = existingApps.filter((app) => app.id !== DRAFT_ID);
 
-            const newApp = {
-                id: Date.now(),
-                name: `${formData.firstName} ${formData.lastName}`,
-                phone: formData.phoneNumber,
-                status: "Submitted",
-                appliedDate: new Date().toISOString().split('T')[0],
-                address: address || 'Address not available'
-            };
+        const newApp = {
+            id: Date.now(),
+            name: `${formData.firstName} ${formData.lastName}`,
+            phone: formData.phoneNumber,
+            status: "Submitted",
+            appliedDate: new Date().toISOString().split('T')[0],
+            address: address || 'Address not available'
+        };
 
-            localStorage.setItem('user_applications', JSON.stringify([newApp, ...filteredApps]));
+        localStorage.setItem(APPLICATIONS_KEY, JSON.stringify([newApp, ...filteredApps]));
+    };
+
+    const handleSubmitSuccess = async () => {
+        try {
+            const { leasingId, address, leasingFetchFailed } = await fetchLeasingData();
+            const apiSubmissionSuccessful = await submitApplication(leasingId);
+
+            persistApplicationLocally(address);
 
             resetForm();
             setShouldAllowNavigation(true);
 
-            // Build success/warning message based on what succeeded or failed
             const warningMessages: string[] = [];
-
             if (leasingFetchFailed) {
-                warningMessages.push("We couldn't retrieve the property address from our system. A placeholder address has been used. Please verify your application details.");
+                warningMessages.push("We couldn't retrieve the property address. A placeholder address has been used.");
             }
-
             if (!apiSubmissionSuccessful) {
-                warningMessages.push("Your application has been saved locally. We couldn't connect to the server, so it will be submitted when you're back online. Please check your connection and try again later.");
+                warningMessages.push("Application saved locally. It will be submitted when you're back online.");
             }
 
-            // Show appropriate message based on submission status
             if (apiSubmissionSuccessful && !leasingFetchFailed) {
                 setSuccessMessage(undefined);
                 setIsWarning(false);

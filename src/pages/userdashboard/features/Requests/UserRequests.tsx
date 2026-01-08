@@ -1,6 +1,6 @@
 import React, { useMemo, useEffect, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { MessageSquare, Search, MoreVertical, Printer, XCircle, Paperclip } from "lucide-react";
+import { MessageSquare, Search, MoreVertical, Printer, XCircle, Paperclip, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
 import FilterDropdown from "../../../../components/ui/FilterDropdown";
@@ -86,10 +86,11 @@ interface ActionMenuProps {
   onClose: () => void;
   onPrint: () => void;
   onCancel: () => void;
+  onDelete: () => void;
 }
 
 // Action Menu Component
-const ActionMenu: React.FC<ActionMenuProps> = ({ isOpen, position, onClose, onPrint, onCancel }) => {
+const ActionMenu: React.FC<ActionMenuProps> = ({ isOpen, position, onClose, onPrint, onCancel, onDelete }) => {
   if (!isOpen || !position) return null;
 
   return createPortal(
@@ -119,10 +120,17 @@ const ActionMenu: React.FC<ActionMenuProps> = ({ isOpen, position, onClose, onPr
           </button>
           <button
             onClick={onCancel}
+            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+          >
+            <XCircle size={14} className="text-gray-400" />
+            Cancel
+          </button>
+          <button
+            onClick={onDelete}
             className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
           >
-            <XCircle size={14} className="text-red-400" />
-            Cancel
+            <Trash2 size={14} className="text-red-400" />
+            Delete
           </button>
         </div>
       </div>
@@ -141,6 +149,7 @@ interface RequestRowProps {
   onMenuClose: () => void;
   onPrint: () => void;
   onCancel: () => void;
+  onDelete: () => void;
   onChatClick: (e: React.MouseEvent) => void;
 }
 
@@ -155,6 +164,7 @@ const RequestRow: React.FC<RequestRowProps> = ({
   onMenuClose,
   onPrint,
   onCancel,
+  onDelete,
   onChatClick,
 }) => (
   <tr
@@ -211,6 +221,7 @@ const RequestRow: React.FC<RequestRowProps> = ({
             onClose={onMenuClose}
             onPrint={onPrint}
             onCancel={onCancel}
+            onDelete={onDelete}
           />
         </div>
       </div>
@@ -335,13 +346,16 @@ const PrintableRequest: React.FC<PrintableRequestProps> = ({ request }) => {
   );
 };
 
+const ROWS_PER_PAGE = 10;
+
 const Requests: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { requestFilters, setRequestFilters, resetRequestFilters, requests, updateRequestStatus } = useRequestStore();
+  const { requestFilters, setRequestFilters, resetRequestFilters, requests, updateRequestStatus, deleteRequest } = useRequestStore();
   const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
   const [menuPosition, setMenuPosition] = useState<MenuPosition | null>(null);
   const [printingRequest, setPrintingRequest] = useState<ServiceRequest | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const { search: searchQuery, status: statusFilter, priority: priorityFilter, category: categoryFilter } = requestFilters;
 
   const showSuccess = location.state?.showSuccess;
@@ -376,6 +390,13 @@ const Requests: React.FC = () => {
     updateRequestStatus(id, "Cancelled");
     setActiveMenuId(null);
   }, [updateRequestStatus]);
+
+  const handleDelete = useCallback((id: number) => {
+    if (window.confirm("Are you sure you want to delete this request?")) {
+      deleteRequest(id);
+      setActiveMenuId(null);
+    }
+  }, [deleteRequest]);
 
   const handleMenuClick = useCallback((event: React.MouseEvent<HTMLButtonElement>, id: number) => {
     event.stopPropagation();
@@ -423,6 +444,32 @@ const Requests: React.FC = () => {
       return true;
     });
   }, [searchQuery, statusFilter, priorityFilter, categoryFilter, requests]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredRequests.length / ROWS_PER_PAGE);
+  const paginatedRequests = useMemo(() => {
+    const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
+    const endIndex = startIndex + ROWS_PER_PAGE;
+    return filteredRequests.slice(startIndex, endIndex);
+  }, [filteredRequests, currentPage]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, priorityFilter, categoryFilter]);
+
+  // Reset to page 1 if current page is out of bounds
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [totalPages, currentPage]);
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   return (
     <div className="bg-white min-h-screen">
@@ -493,7 +540,7 @@ const Requests: React.FC = () => {
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className="bg-white rounded-[1rem] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] border border-gray-200 overflow-hidden flex flex-col">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -522,8 +569,8 @@ const Requests: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredRequests.length > 0 ? (
-                  filteredRequests.map((request) => (
+                {paginatedRequests.length > 0 ? (
+                  paginatedRequests.map((request) => (
                     <RequestRow
                       key={request.id}
                       request={request}
@@ -538,6 +585,7 @@ const Requests: React.FC = () => {
                       onMenuClose={() => setActiveMenuId(null)}
                       onPrint={() => handlePrint(request)}
                       onCancel={() => handleCancel(request.id)}
+                      onDelete={() => handleDelete(request.id)}
                       onChatClick={(e) => {
                         e.stopPropagation();
                         navigate('/userdashboard/messages', {
@@ -564,6 +612,46 @@ const Requests: React.FC = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          {filteredRequests.length > ROWS_PER_PAGE && (
+            <div className="px-8 py-4 border-t border-gray-200 flex justify-center items-center gap-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className={`p-2 rounded-full transition-colors ${currentPage === 1
+                  ? 'text-gray-300 cursor-not-allowed'
+                  : 'text-gray-600 hover:bg-gray-200'
+                  }`}
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => handlePageChange(page)}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-medium transition-all ${currentPage === page
+                    ? 'bg-[#3A7D76] text-white shadow-lg'
+                    : 'bg-transparent text-gray-600 border border-gray-300 hover:bg-gray-100'
+                    }`}
+                >
+                  {page}
+                </button>
+              ))}
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className={`p-2 rounded-full transition-colors ${currentPage === totalPages
+                  ? 'text-gray-300 cursor-not-allowed'
+                  : 'text-gray-600 hover:bg-gray-200'
+                  }`}
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
       <RequestSuccessModal

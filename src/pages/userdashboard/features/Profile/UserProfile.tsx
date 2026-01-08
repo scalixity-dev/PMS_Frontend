@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Check, Eye, EyeOff } from "lucide-react";
+import { Check, Eye, EyeOff, Camera } from "lucide-react";
 import BaseModal from "../../../../components/common/modals/BaseModal";
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
 import profilePic from "../../../../assets/images/generated_profile_avatar.png";
@@ -102,19 +102,40 @@ const Profile: React.FC = () => {
     setPasswordData(prev => ({ ...prev, [name]: value }));
   };
 
+  const [profileImage, setProfileImage] = useState(userInfo.profileImage || profilePic);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const imageResult = reader.result as string;
+        setProfileImage(imageResult);
+        setUserInfo({ profileImage: imageResult });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCameraClick = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
     <UserAccountSettingsLayout activeTab="Profile">
       {/* User Profile Overview */}
       <div className="flex px-8 items-center gap-6 mb-10">
-        <div className="w-44 h-44 rounded-full bg-gradient-to-br from-orange-200 via-pink-200 to-orange-300 flex items-center justify-center overflow-hidden transition-all duration-500 group relative">
-          <div className="w-full h-full flex items-center justify-center relative bg-[#F4D1AE]">
-            <img
-              src={profilePic}
-              alt="Profile"
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-                e.currentTarget.parentElement!.innerHTML = `
+        <div className="relative group">
+          <div className="w-44 h-44 rounded-full bg-gradient-to-br from-orange-200 via-pink-200 to-orange-300 flex items-center justify-center overflow-hidden transition-all duration-500 relative">
+            <div className="w-full h-full flex items-center justify-center relative bg-[#F4D1AE]">
+              <img
+                src={profileImage}
+                alt="Profile"
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.parentElement!.innerHTML = `
                   <svg width="100%" height="100%" viewBox="0 0 70 70" fill="none" xmlns="http://www.w3.org/2000/svg" class="absolute">
                     <circle cx="35" cy="28" r="12" fill="#F4D1AE" />
                     <path d="M35 16C28 16 23 20 23 26C23 28 24 30 25 31C25 25 28 20 35 20C42 20 45 25 45 31C46 30 47 28 47 26C47 20 42 16 35 16Z" fill="#2D3748" />
@@ -124,9 +145,24 @@ const Profile: React.FC = () => {
                     <path d="M25 35C25 40 30 45 35 45C40 45 45 40 45 35L45 50C45 55 40 60 35 60C30 60 25 55 25 50Z" fill="#87CEEB" />
                   </svg>
                 `;
-              }}
-            />
+                }}
+              />
+            </div>
           </div>
+
+          <button
+            onClick={handleCameraClick}
+            className="absolute bottom-2 right-2 p-2 bg-white rounded-full shadow-md border border-gray-200 text-gray-600 hover:text-[#7CD947] transition-colors z-10"
+          >
+            <Camera size={20} />
+          </button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleImageUpload}
+            className="hidden"
+            accept="image/*"
+          />
         </div>
         <div className="space-y-1">
           <h2 className="text-3xl font-medium text-[#1A1A1A]">{userInfo.firstName} {userInfo.lastName}</h2>

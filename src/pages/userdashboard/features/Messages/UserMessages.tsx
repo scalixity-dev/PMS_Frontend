@@ -1,14 +1,15 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, ListPlus } from 'lucide-react';
 import ChatSidebar from './components/ChatSidebar';
 import ChatHeader from './components/ChatHeader';
 import MessageList from './components/MessageList';
 import ChatInput from './components/ChatInput';
 import MaintenanceRequestView from './components/MaintenanceRequestView';
+import PublicationView from './components/PublicationView';
 import { useMessagesStore } from './store/messagesStore';
 import { useRequestStore } from '../Requests/store/requestStore';
-import { mockChats } from './utils/mockData';
+import { mockChats, mockPublications } from './utils/mockData';
 import type { Chat } from './types';
 import type { ServiceRequest, Publication } from '../../utils/types';
 
@@ -34,7 +35,7 @@ const Messages = () => {
     const [pbSearch, setPbSearch] = useState('');
 
     const [activeRequest, setActiveRequest] = useState<ServiceRequest | null>(null);
-    const [publications] = useState<Publication[]>([]);
+    const [publications, setPublications] = useState<Publication[]>([]);
     const [activePublication, setActivePublication] = useState<Publication | null>(null);
     const [showMobileChat, setShowMobileChat] = useState(false);
     const [viewMode, setViewMode] = useState<'CHAT' | 'MR' | 'PB'>('CHAT');
@@ -46,6 +47,11 @@ const Messages = () => {
             setActiveChat(mockChats[0]);
         }
     }, [chats.length, setChats, setActiveChat]);
+
+    // Initialize publications on mount
+    useEffect(() => {
+        setPublications(mockPublications);
+    }, []);
 
     // Initial request selection from state
     useEffect(() => {
@@ -72,7 +78,7 @@ const Messages = () => {
     // Filter chats based on chat search query and role
     const filteredChats = useMemo(() => {
         const baseChats = chats.filter(chat =>
-            chat.contactRole === 'Landlord' || chat.contactRole === 'Maintenance'
+            chat.contactRole === 'Landlord'
         );
 
         if (!chatSearch) return baseChats;
@@ -250,12 +256,20 @@ const Messages = () => {
                             </div>
                         )
                     ) : (
-                        <div className="flex-1 flex flex-col items-center justify-center bg-[#f8fafc] px-6 text-center">
-                            <h3 className="text-xl font-semibold text-[#1e293b] mb-2">No details</h3>
-                            <p className="text-sm text-[#64748b] max-w-md">
-                                When Landlord adds a publication, you will be able to view it here.
-                            </p>
-                        </div>
+                        activePublication ? (
+                            <PublicationView
+                                publication={activePublication}
+                                onBack={handleBackToSidebar}
+                            />
+                        ) : (
+                            <div className="flex-1 flex flex-col items-center justify-center bg-[#f8fafc] px-6 text-center">
+                                <ListPlus className="w-24 h-24 mb-4 text-gray-300" />
+                                <h3 className="text-xl font-semibold text-[#1e293b] mb-2">No publication selected</h3>
+                                <p className="text-sm text-[#64748b] max-w-md">
+                                    Choose a publication from the sidebar to read the full details.
+                                </p>
+                            </div>
+                        )
                     )}
                 </div>
             </div>

@@ -17,6 +17,7 @@ const createEmptyUserInfo = (): UserInfo => ({
     country: '',
     city: '',
     pincode: '',
+    profileImage: undefined,
 });
 
 export const useAuthStore = create<AuthState>((set) => ({

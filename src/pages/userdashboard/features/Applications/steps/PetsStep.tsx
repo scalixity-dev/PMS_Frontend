@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Dog } from 'lucide-react';
 import { useUserApplicationStore } from '../store/userApplicationStore';
 import PrimaryActionButton from '@/components/common/buttons/PrimaryActionButton';
-import AddPetModal, { type PetFormData } from '../../../../Dashboard/features/Application/components/AddPetModal';
+import UserAddPetModal, { type PetFormData } from '../components/UserAddPetModal';
 
 const PetItem: React.FC<{ pet: PetFormData & { id: string }; onDelete: () => void }> = ({ pet, onDelete }) => {
     const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -99,14 +99,14 @@ const PetsStep: React.FC<PetsStepProps> = ({ onNext }) => {
                         onClick={onNext}
                         text="Next"
                         className={`px-16 py-3.5 rounded-full font-bold uppercase transition-all ${true
-                                ? 'bg-[#7ED957] hover:bg-[#6BC847] shadow-lg shadow-[#7ED957]/30 text-white'
-                                : 'bg-[#F3F4F6] text-black hover:bg-[#F3F4F6] cursor-not-allowed border-none shadow-none'
+                            ? 'bg-[#7ED957] hover:bg-[#6BC847] shadow-lg shadow-[#7ED957]/30 text-white'
+                            : 'bg-[#F3F4F6] text-black hover:bg-[#F3F4F6] cursor-not-allowed border-none shadow-none'
                             }`}
                     />
                 </div>
             </div>
 
-            <AddPetModal
+            <UserAddPetModal
                 isOpen={isAdding}
                 onClose={() => setIsAdding(false)}
                 onSave={handleSavePet}
