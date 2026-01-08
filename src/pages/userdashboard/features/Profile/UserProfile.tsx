@@ -7,31 +7,22 @@ import UserAccountSettingsLayout from "../../components/layout/UserAccountSettin
 
 import { useAuthStore } from "./store/authStore";
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
+import type { UserInfo } from "../../utils/types";
 
 
 
 const Profile: React.FC = () => {
   const { userInfo, setUserInfo } = useAuthStore();
 
-  useEffect(() => {
-    if (!userInfo.email) {
-      setUserInfo({
-        firstName: "Rishabh",
-        lastName: "Awasthi",
-        dob: "20/02/1990",
-        email: "rishabh@gmail.com",
-        phone: "+91 9999999999",
-        role: "Tenant",
-        country: "India",
-        city: "Mumbai",
-        pincode: "400001",
-      });
-    }
-  }, [userInfo.email, setUserInfo]);
-
   // Modal State
   const [editMode, setEditMode] = useState<'personal' | 'address' | 'email' | 'password' | null>(null);
-  const [tempInfo, setTempInfo] = useState(userInfo);
+  const [tempInfo, setTempInfo] = useState<UserInfo | null>(userInfo);
+
+  useEffect(() => {
+    if (userInfo && !tempInfo) {
+      setTempInfo(userInfo);
+    }
+  }, [userInfo, tempInfo]);
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
@@ -71,6 +62,16 @@ const Profile: React.FC = () => {
     setEditMode(mode);
   };
 
+  if (!userInfo) {
+    return (
+      <UserAccountSettingsLayout activeTab="Profile">
+        <div className="flex items-center justify-center p-20">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--dashboard-accent)]"></div>
+        </div>
+      </UserAccountSettingsLayout>
+    );
+  }
+
   const handleSave = () => {
     if (editMode === 'password') {
       // Mock password save validation could go here
@@ -78,7 +79,9 @@ const Profile: React.FC = () => {
       setEditMode(null);
       return;
     }
-    setUserInfo(tempInfo);
+    if (tempInfo) {
+      setUserInfo(tempInfo);
+    }
     setEditMode(null);
   };
 
@@ -95,7 +98,7 @@ const Profile: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setTempInfo(prev => ({ ...prev, [name]: value }));
+    setTempInfo(prev => prev ? ({ ...prev, [name]: value }) : null);
   };
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -103,7 +106,13 @@ const Profile: React.FC = () => {
     setPasswordData(prev => ({ ...prev, [name]: value }));
   };
 
-  const [profileImage, setProfileImage] = useState(userInfo.profileImage || profilePic);
+  const [profileImage, setProfileImage] = useState(userInfo?.profileImage || profilePic);
+
+  useEffect(() => {
+    if (userInfo?.profileImage) {
+      setProfileImage(userInfo.profileImage);
+    }
+  }, [userInfo?.profileImage]);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -428,7 +437,7 @@ const Profile: React.FC = () => {
         padding="px-6 py-6"
         titleSize="text-lg"
       >
-        {editMode === 'personal' && (
+        {editMode === 'personal' && tempInfo && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1">First Name</label>
@@ -484,7 +493,7 @@ const Profile: React.FC = () => {
           </div>
         )}
 
-        {editMode === 'address' && (
+        {editMode === 'address' && tempInfo && (
           <div className="grid grid-cols-1 gap-4">
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1">Country</label>
@@ -519,7 +528,7 @@ const Profile: React.FC = () => {
           </div>
         )}
 
-        {editMode === 'email' && (
+        {editMode === 'email' && tempInfo && (
           <div className="grid grid-cols-1 gap-4">
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1">New Email Address</label>

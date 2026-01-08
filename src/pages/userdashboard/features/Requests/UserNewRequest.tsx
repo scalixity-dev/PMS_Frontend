@@ -173,10 +173,17 @@ const NewRequest: React.FC = () => {
 
   // Wrap handleSubmit to allow navigation after successful submission
   const handleFormSubmit = async () => {
-    // Immediately allow navigation to prevent blocker from catching the submit navigation
+    // Temporarily allow navigation for the submission-triggered redirect
     shouldAllowNavigationRef.current = true;
     setShouldAllowNavigation(true);
-    await handleSubmit();
+
+    const success = await handleSubmit();
+
+    // If submission failed, we should restore navigation blocking to prevent data loss
+    if (!success) {
+      shouldAllowNavigationRef.current = false;
+      setShouldAllowNavigation(false);
+    }
   };
 
   const renderStep = () => {

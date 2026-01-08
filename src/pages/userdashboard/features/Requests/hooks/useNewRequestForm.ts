@@ -33,7 +33,7 @@ export const useNewRequestForm = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const attachmentsInputRef = useRef<HTMLInputElement>(null);
     const videoInputRef = useRef<HTMLInputElement>(null);
-    
+
     // Track if form has been modified
     const hasFormData = useMemo(() => {
         return (
@@ -136,14 +136,14 @@ export const useNewRequestForm = () => {
                 setSubmissionError(customEvent.detail.message);
             }
         };
-        
+
         window.addEventListener('storage-quota-exceeded', handleStorageQuotaExceeded);
         return () => window.removeEventListener('storage-quota-exceeded', handleStorageQuotaExceeded);
     }, []);
 
-    const handleSubmit = async () => {
-        if (!selectedCategory || !priority) return;
-        
+    const handleSubmit = async (): Promise<boolean> => {
+        if (!selectedCategory || !priority) return false;
+
         // Clear any previous errors and set submitting state
         setSubmissionError(null);
         setIsSubmitting(true);
@@ -177,7 +177,7 @@ export const useNewRequestForm = () => {
                     console.error('Error converting attachments to data URLs:', error);
                     setSubmissionError(errorMessage);
                     setIsSubmitting(false);
-                    return; // Prevent form submission
+                    return false; // Prevent form submission
                 }
             }
 
@@ -191,7 +191,7 @@ export const useNewRequestForm = () => {
                     console.error('Error converting video to data URL:', error);
                     setSubmissionError(errorMessage);
                     setIsSubmitting(false);
-                    return; // Prevent form submission
+                    return false; // Prevent form submission
                 }
             }
 
@@ -229,31 +229,33 @@ export const useNewRequestForm = () => {
                     requestId: newRequest.requestId
                 }
             });
+            return true;
         } catch (error) {
             // Catch any unexpected errors during submission
             const errorMessage = `Failed to submit request: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`;
             console.error('Unexpected error during request submission:', error);
             setSubmissionError(errorMessage);
             setIsSubmitting(false);
+            return false;
         }
     };
 
     const nextStep = (step?: number) => {
         const targetStep = step || (currentStep + 1);
-        
+
         // When reaching step 6, set default title if empty
         if (targetStep === 6 && !title) {
             const categoryName = categories.find(c => c.id === selectedCategory)?.name || selectedCategory || "";
             const subCategoryName = selectedSubCategory || "";
             const problemName = selectedProblem || "";
-            
+
             // Build title in format: category/subcategory/problem
             const parts = [categoryName, subCategoryName, problemName].filter(Boolean);
             if (parts.length > 0) {
                 setTitle(parts.join(" / "));
             }
         }
-        
+
         if (step) {
             setCurrentStep(step);
         } else {

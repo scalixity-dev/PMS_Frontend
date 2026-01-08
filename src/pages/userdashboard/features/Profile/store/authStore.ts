@@ -1,16 +1,15 @@
 import { create } from 'zustand';
 import type { UserInfo } from '../../../utils/types';
-import { mockUserInfo } from '../../../utils/mockData';
 
 interface AuthState {
-    userInfo: UserInfo;
+    userInfo: UserInfo | null;
     setUserInfo: (info: Partial<UserInfo>) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
-    userInfo: mockUserInfo,
+    userInfo: null,
     setUserInfo: (info) =>
         set((state) => ({
-            userInfo: { ...state.userInfo, ...info }
+            userInfo: state.userInfo ? { ...state.userInfo, ...info } : info as UserInfo
         })),
 }));

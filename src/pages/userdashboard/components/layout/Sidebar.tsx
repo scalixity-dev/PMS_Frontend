@@ -24,6 +24,9 @@ const FinancialCard = ({ title, amount, currency, action }: { title: string; amo
 export const Sidebar = () => {
     const { finances } = useDashboardStore();
     const { userInfo } = useAuthStore();
+
+    if (!userInfo) return null;
+
     const userName = `${userInfo.firstName} ${userInfo.lastName}`;
     const userEmail = userInfo.email;
     const { deposits, credits } = finances;

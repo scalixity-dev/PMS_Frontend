@@ -16,6 +16,8 @@ const MaintenanceRequestView = ({ request, onBack }: MaintenanceRequestViewProps
     const { chats, addChat, sendMessage } = useMessagesStore();
     const { userInfo } = useAuthStore();
 
+    if (!userInfo) return null;
+
     // Destructure specific fields to avoid infinite re-renders
     const { email: userEmail, firstName, lastName } = userInfo;
 

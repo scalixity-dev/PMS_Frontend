@@ -4,7 +4,7 @@ import { useDashboardStore } from "./store/dashboardStore";
 import { Sidebar } from "./components/layout/Sidebar";
 import { TransactionTable } from "./features/Transactions/components/TransactionTable";
 import { LeaseList } from "./features/Leases/components/LeaseList";
-import { mockTransactions, mockLeases, tabs, mockUserInfo, mockFinances } from "./utils/mockData";
+import { mockTransactions, mockLeases, tabs, mockFinances } from "./utils/mockData";
 import type { TabType } from "./utils/types";
 import PrimaryActionButton from "../../components/common/buttons/PrimaryActionButton";
 import { authService } from "../../services/auth.service";
@@ -13,7 +13,7 @@ import { useAuthStore } from "./features/Profile/store/authStore";
 const UserDashboard = () => {
     const navigate = useNavigate();
     const { activeTab, setActiveTab, setFinances } = useDashboardStore();
-    const { userInfo, setUserInfo } = useAuthStore();
+    const { setUserInfo } = useAuthStore();
     const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -37,6 +37,21 @@ const UserDashboard = () => {
                 // User must be a tenant and account must be active
                 if (isTenant && user.isActive) {
                     setIsAuthenticated(true);
+
+                    // Map real user info from authService to store
+                    const [firstName, ...lastNameParts] = (user.fullName || "").split(" ");
+                    setUserInfo({
+                        firstName: firstName || "User",
+                        lastName: lastNameParts.join(" ") || "",
+                        email: user.email,
+                        role: user.role,
+                        phone: user.phoneNumber || "",
+                        country: user.country || "",
+                        city: user.state || "",
+                        pincode: user.pincode || "",
+                        dob: "1990-01-01", // Default placeholder for missing field
+                    });
+
                     setIsLoading(false);
                 } else {
                     console.warn('UserDashboard: Access denied - user is not a tenant or account not active');
@@ -59,13 +74,12 @@ const UserDashboard = () => {
         };
     }, []);
 
-    // Load mock data on mount if store is empty (only after authentication)
+    // Load mock finances on mount if authenticated
     useEffect(() => {
-        if (isAuthenticated && !userInfo.firstName) {
-            setUserInfo(mockUserInfo);
+        if (isAuthenticated) {
             setFinances(mockFinances);
         }
-    }, [setUserInfo, setFinances, userInfo.firstName, isAuthenticated]);
+    }, [setFinances, isAuthenticated]);
 
     // Show loading state while checking authentication
     if (isLoading) {
