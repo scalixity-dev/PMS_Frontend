@@ -24,18 +24,61 @@ const EditApplicantNameModal: React.FC<EditApplicantNameModalProps> = ({
     const [lastName, setLastName] = useState(initialData.lastName);
     const [isLoading, setIsLoading] = useState(false);
 
+    const [errors, setErrors] = useState<{ firstName?: string; lastName?: string }>({});
+    const [touched, setTouched] = useState<{ firstName?: boolean; lastName?: boolean }>({});
+
     useEffect(() => {
         if (isOpen) {
             setFirstName(initialData.firstName);
             setMiddleName(initialData.middleName || '');
             setLastName(initialData.lastName);
+            setErrors({});
+            setTouched({});
         }
     }, [isOpen, initialData]);
 
-    if (!isOpen) return null;
+    const validate = (field: 'firstName' | 'lastName', value: string) => {
+        if (!value.trim()) {
+            return `${field === 'firstName' ? 'First' : 'Last'} Name is required`;
+        }
+        if (!/^[a-zA-Z\s\-']+$/.test(value)) {
+            return `${field === 'firstName' ? 'First' : 'Last'} Name can only contain letters, spaces, hyphens, and apostrophes`;
+        }
+        return undefined;
+    };
+
+    const handleBlur = (field: 'firstName' | 'lastName') => {
+        setTouched(prev => ({ ...prev, [field]: true }));
+        const value = field === 'firstName' ? firstName : lastName;
+        const error = validate(field, value);
+        setErrors(prev => ({ ...prev, [field]: error }));
+    };
+
+    const handleChange = (field: 'firstName' | 'lastName', value: string) => {
+        // Block numbers and special chars
+        if (!/^[a-zA-Z\s\-']*$/.test(value)) return;
+
+        if (field === 'firstName') setFirstName(value);
+        else setLastName(value);
+
+        if (touched[field]) {
+            const error = validate(field, value);
+            setErrors(prev => ({ ...prev, [field]: error }));
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        const firstNameError = validate('firstName', firstName);
+        const lastNameError = validate('lastName', lastName);
+
+        if (firstNameError || lastNameError) {
+            setErrors({ firstName: firstNameError, lastName: lastNameError });
+            setTouched({ firstName: true, lastName: true });
+            return;
+        }
+
         setIsLoading(true);
         try {
             await onSave({ firstName, middleName, lastName });
@@ -46,6 +89,10 @@ const EditApplicantNameModal: React.FC<EditApplicantNameModalProps> = ({
             setIsLoading(false);
         }
     };
+
+    const isValid = !validate('firstName', firstName) && !validate('lastName', lastName);
+
+    if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200">
@@ -67,10 +114,14 @@ const EditApplicantNameModal: React.FC<EditApplicantNameModalProps> = ({
                         <input
                             type="text"
                             placeholder="Enter First Name"
-                            className="w-full bg-white p-2.5 rounded-lg outline-none text-gray-700 placeholder-gray-400 shadow-sm text-sm border-none"
+                            className={`w-full bg-white p-2.5 rounded-lg outline-none text-gray-700 placeholder-gray-400 shadow-sm text-sm ${touched.firstName && errors.firstName ? 'border-2 border-red-500' : 'border-none'}`}
                             value={firstName}
-                            onChange={(e) => setFirstName(e.target.value)}
+                            onChange={(e) => handleChange('firstName', e.target.value)}
+                            onBlur={() => handleBlur('firstName')}
                         />
+                        {touched.firstName && errors.firstName && (
+                            <p className="text-red-500 text-xs mt-1 ml-1">{errors.firstName}</p>
+                        )}
                     </div>
 
                     {/* Middle Name */}
@@ -81,7 +132,12 @@ const EditApplicantNameModal: React.FC<EditApplicantNameModalProps> = ({
                             placeholder="Enter Middle Name (Optional)"
                             className="w-full bg-white p-2.5 rounded-lg outline-none text-gray-700 placeholder-gray-400 shadow-sm text-sm border-none"
                             value={middleName}
-                            onChange={(e) => setMiddleName(e.target.value)}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                if (/^[a-zA-Z\s\-']*$/.test(val)) {
+                                    setMiddleName(val);
+                                }
+                            }}
                         />
                     </div>
 
@@ -91,17 +147,21 @@ const EditApplicantNameModal: React.FC<EditApplicantNameModalProps> = ({
                         <input
                             type="text"
                             placeholder="Enter Last Name"
-                            className="w-full bg-white p-2.5 rounded-lg outline-none text-gray-700 placeholder-gray-400 shadow-sm text-sm border-none"
+                            className={`w-full bg-white p-2.5 rounded-lg outline-none text-gray-700 placeholder-gray-400 shadow-sm text-sm ${touched.lastName && errors.lastName ? 'border-2 border-red-500' : 'border-none'}`}
                             value={lastName}
-                            onChange={(e) => setLastName(e.target.value)}
+                            onChange={(e) => handleChange('lastName', e.target.value)}
+                            onBlur={() => handleBlur('lastName')}
                         />
+                        {touched.lastName && errors.lastName && (
+                            <p className="text-red-500 text-xs mt-1 ml-1">{errors.lastName}</p>
+                        )}
                     </div>
 
                     <div className="pt-2">
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full px-8 py-2.5 rounded-xl text-sm font-medium transition-colors shadow-md bg-[#3A6D6C] text-white hover:bg-[#2c5251] disabled:opacity-70 disabled:cursor-not-allowed"
+                            className={`w-full px-8 py-2.5 rounded-xl text-sm font-medium transition-colors shadow-md ${isValid ? 'bg-[#3A6D6C] text-white hover:bg-[#2c5251]' : 'bg-gray-300 text-gray-500 cursor-not-allowed'} disabled:opacity-70`}
                         >
                             {isLoading ? 'Saving...' : 'Save Changes'}
                         </button>

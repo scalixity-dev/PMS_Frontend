@@ -113,6 +113,7 @@ const AddReferenceModal: React.FC<AddReferenceModalProps> = ({ isOpen, onClose, 
         switch (key) {
             case 'contactName':
                 if (!value || value.trim() === '') return 'Contact Name is required';
+                if (!/^[a-zA-Z\s\-']+$/.test(value)) return 'Contact Name can only contain letters, spaces, hyphens, and apostrophes';
                 break;
             case 'contactEmail':
                 if (!value || value.trim() === '') return 'Contact Email is required';
@@ -129,31 +130,37 @@ const AddReferenceModal: React.FC<AddReferenceModalProps> = ({ isOpen, onClose, 
                 break;
             case 'relationship':
                 if (!value || value.trim() === '') return 'Relationship is required';
+                if (!/^[a-zA-Z\s\-']+$/.test(value)) return 'Relationship can only contain letters, spaces, hyphens, and apostrophes';
                 break;
             case 'yearsKnown':
                 if (!value || value.trim() === '') return 'Years Known is required';
+                if (/\D/.test(value)) return 'Years Known must be a number';
                 break;
         }
         return '';
     };
 
-    const validateAllFields = (): boolean => {
-        const newErrors: Record<string, string> = {};
-        let isValid = true;
-
-        (Object.keys(formData) as Array<keyof ReferenceFormData>).forEach(key => {
-            const error = validateField(key, formData[key]);
-            if (error) {
-                newErrors[key] = error;
-                isValid = false;
-            }
+    const isFormValid = (): boolean => {
+        return (Object.keys(formData) as Array<keyof ReferenceFormData>).every(key => {
+            return !validateField(key, formData[key]);
         });
-
-        setErrors(newErrors);
-        return isValid;
     };
 
     const handleChange = (key: keyof ReferenceFormData | 'phoneCountryCode', value: any) => {
+        // Restrict input for Name and Relationship to block numbers/special chars
+        if ((key === 'contactName' || key === 'relationship') && typeof value === 'string') {
+            if (value && !/^[a-zA-Z\s\-']*$/.test(value)) {
+                return;
+            }
+        }
+
+        // Restrict input for Years Known to numbers only
+        if (key === 'yearsKnown' && typeof value === 'string') {
+            if (/\D/.test(value)) {
+                return;
+            }
+        }
+
         setFormData(prev => ({ ...prev, [key]: value }));
 
         if (key !== 'phoneCountryCode' && touched[key]) {
@@ -169,13 +176,7 @@ const AddReferenceModal: React.FC<AddReferenceModalProps> = ({ isOpen, onClose, 
     };
 
     const handleSubmit = () => {
-        const allTouched = (Object.keys(formData) as Array<keyof ReferenceFormData>).reduce((acc, key) => {
-            acc[key] = true;
-            return acc;
-        }, {} as Record<string, boolean>);
-        setTouched(allTouched);
-
-        if (validateAllFields()) {
+        if (isFormValid()) {
             onSave(formData);
             onClose();
         }
@@ -199,7 +200,11 @@ const AddReferenceModal: React.FC<AddReferenceModalProps> = ({ isOpen, onClose, 
                 </div>
 
                 {/* Body - Scrollable */}
-                <div className="p-8 overflow-y-auto custom-scrollbar flex-1 bg-[#EAEAEA]">
+                {/* Body - Scrollable */}
+                <div
+                    className="p-8 overflow-y-auto custom-scrollbar flex-1 bg-[#EAEAEA]"
+                    style={{ scrollbarGutter: 'stable' }}
+                >
 
                     {/* Form Grid */}
                     <div className="flex flex-col gap-6 mb-6">
@@ -212,7 +217,7 @@ const AddReferenceModal: React.FC<AddReferenceModalProps> = ({ isOpen, onClose, 
                                 <input
                                     type="text"
                                     placeholder="Type here"
-                                    className={`w-full bg-white p-3 rounded-xl outline-none text-gray-700 placeholder-gray-500 shadow-sm text-sm ${touched.contactName && errors.contactName ? 'border-2 border-red-500' : ''}`}
+                                    className={`w-full bg-white p-3 rounded-lg outline-none text-gray-700 placeholder-gray-500 shadow-sm text-sm ${touched.contactName && errors.contactName ? 'border-2 border-red-500' : ''}`}
                                     value={formData.contactName}
                                     onChange={(e) => handleChange('contactName', e.target.value)}
                                     onBlur={() => handleBlur('contactName')}
@@ -226,7 +231,7 @@ const AddReferenceModal: React.FC<AddReferenceModalProps> = ({ isOpen, onClose, 
                                 <input
                                     type="email"
                                     placeholder="Type here"
-                                    className={`w-full bg-white p-3 rounded-xl outline-none text-gray-700 placeholder-gray-500 shadow-sm text-sm ${touched.contactEmail && errors.contactEmail ? 'border-2 border-red-500' : ''}`}
+                                    className={`w-full bg-white p-3 rounded-lg outline-none text-gray-700 placeholder-gray-500 shadow-sm text-sm ${touched.contactEmail && errors.contactEmail ? 'border-2 border-red-500' : ''}`}
                                     value={formData.contactEmail}
                                     onChange={(e) => handleChange('contactEmail', e.target.value)}
                                     onBlur={() => handleBlur('contactEmail')}
@@ -237,7 +242,7 @@ const AddReferenceModal: React.FC<AddReferenceModalProps> = ({ isOpen, onClose, 
                             {/* Contact Number */}
                             <div>
                                 <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Contact Number *</label>
-                                <div className={`flex border rounded-xl transition-all ${touched.contactNumber && errors.contactNumber
+                                <div className={`flex border rounded-lg transition-all ${touched.contactNumber && errors.contactNumber
                                     ? 'border-red-500 border-2'
                                     : 'border-gray-200 focus-within:ring-2 focus-within:ring-[#3A6D6C] focus-within:border-[#3A6D6C]'
                                     }`}>
@@ -246,7 +251,7 @@ const AddReferenceModal: React.FC<AddReferenceModalProps> = ({ isOpen, onClose, 
                                         <button
                                             type="button"
                                             onClick={() => setIsPhoneCodeOpen(!isPhoneCodeOpen)}
-                                            className={`flex items-center gap-1 px-3 py-2.5 border-r bg-white rounded-l-xl focus:outline-none text-sm min-w-[100px] hover:bg-gray-50 transition-colors ${touched.contactNumber && errors.contactNumber
+                                            className={`flex items-center gap-1 px-3 py-2.5 border-r bg-white rounded-l-lg focus:outline-none text-sm min-w-[100px] hover:bg-gray-50 transition-colors ${touched.contactNumber && errors.contactNumber
                                                 ? 'border-red-500'
                                                 : 'border-gray-200'
                                                 }`}
@@ -266,7 +271,7 @@ const AddReferenceModal: React.FC<AddReferenceModalProps> = ({ isOpen, onClose, 
 
                                         {/* Dropdown */}
                                         {isPhoneCodeOpen && (
-                                            <div className="absolute left-0 top-full mt-1 w-80 bg-white border border-gray-300 rounded-xl shadow-lg z-[100] max-h-80 overflow-hidden flex flex-col">
+                                            <div className="absolute left-0 top-full mt-1 w-80 bg-white border border-gray-300 rounded-lg shadow-lg z-[100] max-h-80 overflow-hidden flex flex-col">
                                                 <div className="p-2 border-b border-gray-200">
                                                     <div className="relative">
                                                         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -314,7 +319,7 @@ const AddReferenceModal: React.FC<AddReferenceModalProps> = ({ isOpen, onClose, 
                                     <input
                                         type="tel"
                                         placeholder="Type here"
-                                        className={`flex-1 min-w-0 px-4 py-2.5 rounded-r-xl focus:outline-none text-sm placeholder-gray-400 bg-white border-0 ${touched.contactNumber && errors.contactNumber ? 'text-red-500' : 'text-gray-700'
+                                        className={`flex-1 min-w-0 px-4 py-2.5 rounded-r-lg focus:outline-none text-sm placeholder-gray-400 bg-white border-0 ${touched.contactNumber && errors.contactNumber ? 'text-red-500' : 'text-gray-700'
                                             }`}
                                         value={formData.contactNumber}
                                         onChange={(e) => handleChange('contactNumber', e.target.value)}
@@ -331,7 +336,7 @@ const AddReferenceModal: React.FC<AddReferenceModalProps> = ({ isOpen, onClose, 
                             <input
                                 type="text"
                                 placeholder="Type Here"
-                                className={`w-full md:w-2/3 bg-white p-3 rounded-xl outline-none text-gray-700 placeholder-gray-500 shadow-sm text-sm ${touched.relationship && errors.relationship ? 'border-2 border-red-500' : ''}`}
+                                className={`w-full md:w-2/3 bg-white p-3 rounded-lg outline-none text-gray-700 placeholder-gray-500 shadow-sm text-sm ${touched.relationship && errors.relationship ? 'border-2 border-red-500' : ''}`}
                                 value={formData.relationship}
                                 onChange={(e) => handleChange('relationship', e.target.value)}
                                 onBlur={() => handleBlur('relationship')}
@@ -345,7 +350,7 @@ const AddReferenceModal: React.FC<AddReferenceModalProps> = ({ isOpen, onClose, 
                             <input
                                 type="text"
                                 placeholder="Type Here"
-                                className={`w-full md:w-2/3 bg-white p-3 rounded-xl outline-none text-gray-700 placeholder-gray-500 shadow-sm text-sm ${touched.yearsKnown && errors.yearsKnown ? 'border-2 border-red-500' : ''}`}
+                                className={`w-full md:w-2/3 bg-white p-3 rounded-lg outline-none text-gray-700 placeholder-gray-500 shadow-sm text-sm ${touched.yearsKnown && errors.yearsKnown ? 'border-2 border-red-500' : ''}`}
                                 value={formData.yearsKnown}
                                 onChange={(e) => handleChange('yearsKnown', e.target.value)}
                                 onBlur={() => handleBlur('yearsKnown')}
@@ -359,7 +364,8 @@ const AddReferenceModal: React.FC<AddReferenceModalProps> = ({ isOpen, onClose, 
                     <div>
                         <button
                             onClick={handleSubmit}
-                            className="bg-[#3A6D6C] text-white px-12 py-3 rounded-lg text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm"
+                            disabled={!isFormValid()}
+                            className={`px-12 py-3 rounded-lg text-sm font-medium transition-colors shadow-sm ${isFormValid() ? 'bg-[#3A6D6C] text-white hover:bg-[#2c5251]' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
                         >
                             {initialData ? 'Save' : 'Add'}
                         </button>

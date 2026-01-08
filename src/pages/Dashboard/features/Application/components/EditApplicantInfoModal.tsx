@@ -32,6 +32,9 @@ const EditApplicantInfoModal: React.FC<EditApplicantInfoModalProps> = ({
         currency: initialData.currency || 'GBP'
     });
 
+    const [errors, setErrors] = useState<{ [key: string]: string }>({});
+    const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
+
     useEffect(() => {
         if (isOpen) {
             setFormData({
@@ -40,13 +43,77 @@ const EditApplicantInfoModal: React.FC<EditApplicantInfoModalProps> = ({
                 moveInDate: initialData.moveInDate ? new Date(initialData.moveInDate) : undefined,
                 currency: initialData.currency || 'GBP'
             });
+            setErrors({});
+            setTouched({});
         }
     }, [isOpen, initialData]);
+
+    const validateField = (name: string, value: any): string => {
+        switch (name) {
+            case 'monthlyRent':
+            case 'householdIncome':
+                if (value === undefined || value === null || value < 0) {
+                    return 'Must be a positive number';
+                }
+                break;
+            case 'dateOfBirth':
+                if (!value) return 'Date of birth is required';
+                break;
+            case 'moveInDate':
+                if (!value) return 'Move-in date is required';
+                break;
+            default:
+                break;
+        }
+        return '';
+    };
+
+    const handleBlur = (name: string) => {
+        setTouched(prev => ({ ...prev, [name]: true }));
+        const error = validateField(name, formData[name as keyof ApplicantInfoData]);
+        setErrors(prev => ({ ...prev, [name]: error }));
+    };
+
+    const handleChange = (name: keyof ApplicantInfoData, value: any) => {
+        setFormData(prev => ({ ...prev, [name]: value }));
+        if (touched[name]) {
+            const error = validateField(name, value);
+            setErrors(prev => ({ ...prev, [name]: error }));
+        }
+    };
+
+    const isFormValid = () => {
+        const checkErrors = {
+            monthlyRent: validateField('monthlyRent', formData.monthlyRent),
+            householdIncome: validateField('householdIncome', formData.householdIncome),
+            dateOfBirth: validateField('dateOfBirth', formData.dateOfBirth),
+            moveInDate: validateField('moveInDate', formData.moveInDate)
+        };
+        return !Object.values(checkErrors).some(error => error);
+    };
 
     if (!isOpen) return null;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        const newErrors = {
+            monthlyRent: validateField('monthlyRent', formData.monthlyRent),
+            householdIncome: validateField('householdIncome', formData.householdIncome),
+            dateOfBirth: validateField('dateOfBirth', formData.dateOfBirth),
+            moveInDate: validateField('moveInDate', formData.moveInDate)
+        };
+
+        setErrors(newErrors);
+        setTouched({
+            monthlyRent: true,
+            householdIncome: true,
+            dateOfBirth: true,
+            moveInDate: true
+        });
+
+        if (Object.values(newErrors).some(error => error)) return;
+
         await onSave(formData);
         onClose();
     };
@@ -73,10 +140,13 @@ const EditApplicantInfoModal: React.FC<EditApplicantInfoModalProps> = ({
                             <div className="relative">
                                 <DatePicker
                                     value={formData.dateOfBirth}
-                                    onChange={(date) => setFormData({ ...formData, dateOfBirth: date })}
+                                    onChange={(date) => handleChange('dateOfBirth', date)}
                                     placeholder="Select date"
-                                    className="w-full pl-3 pr-4 py-2.5 bg-white rounded-lg outline-none text-gray-700 shadow-sm text-sm border-none focus:ring-1 focus:ring-[#3A6D6C]"
+                                    className={`w-full pl-3 pr-4 py-2.5 bg-white rounded-lg outline-none text-gray-700 shadow-sm text-sm border-none focus:ring-1 focus:ring-[#3A6D6C] ${touched.dateOfBirth && errors.dateOfBirth ? 'ring-2 ring-red-500' : ''}`}
                                 />
+                                {touched.dateOfBirth && errors.dateOfBirth && (
+                                    <p className="text-red-500 text-xs mt-1 absolute -bottom-5 left-0">{errors.dateOfBirth}</p>
+                                )}
                             </div>
                         </div>
 
@@ -86,22 +156,25 @@ const EditApplicantInfoModal: React.FC<EditApplicantInfoModalProps> = ({
                             <div className="relative">
                                 <DatePicker
                                     value={formData.moveInDate}
-                                    onChange={(date) => setFormData({ ...formData, moveInDate: date })}
+                                    onChange={(date) => handleChange('moveInDate', date)}
                                     placeholder="Select date"
-                                    className="w-full pl-3 pr-4 py-2.5 bg-white rounded-lg outline-none text-gray-700 shadow-sm text-sm border-none focus:ring-1 focus:ring-[#3A6D6C]"
+                                    className={`w-full pl-3 pr-4 py-2.5 bg-white rounded-lg outline-none text-gray-700 shadow-sm text-sm border-none focus:ring-1 focus:ring-[#3A6D6C] ${touched.moveInDate && errors.moveInDate ? 'ring-2 ring-red-500' : ''}`}
                                 />
+                                {touched.moveInDate && errors.moveInDate && (
+                                    <p className="text-red-500 text-xs mt-1 absolute -bottom-5 left-0">{errors.moveInDate}</p>
+                                )}
                             </div>
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-4 pt-2">
                         {/* Monthly Rent */}
                         <div className="space-y-1">
                             <label className="text-sm font-bold text-gray-700">Monthly Rent</label>
-                            <div className="relative flex items-center bg-white rounded-lg shadow-sm focus-within:ring-1 focus-within:ring-[#3A6D6C] border border-gray-100">
+                            <div className={`relative flex items-center bg-white rounded-lg shadow-sm focus-within:ring-1 focus-within:ring-[#3A6D6C] border ${touched.monthlyRent && errors.monthlyRent ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-100'}`}>
                                 <CurrencySelector
                                     value={formData.currency}
-                                    onChange={(code) => setFormData({ ...formData, currency: code })}
+                                    onChange={(code) => handleChange('currency', code)}
                                     className="bg-transparent border-none sm:min-w-[80px]"
                                 />
                                 <div className="h-6 w-px bg-gray-200 mx-1"></div>
@@ -109,20 +182,25 @@ const EditApplicantInfoModal: React.FC<EditApplicantInfoModalProps> = ({
                                     type="number"
                                     step="0.01"
                                     value={formData.monthlyRent}
-                                    onChange={(e) => setFormData({ ...formData, monthlyRent: parseFloat(e.target.value) || 0 })}
+                                    onChange={(e) => handleChange('monthlyRent', parseFloat(e.target.value) || 0)}
+                                    onBlur={() => handleBlur('monthlyRent')}
                                     className="w-full pl-2 pr-4 py-2.5 bg-transparent outline-none text-gray-700 text-sm border-none"
                                     placeholder="0.00"
+                                    min="0"
                                 />
                             </div>
+                            {touched.monthlyRent && errors.monthlyRent && (
+                                <p className="text-red-500 text-xs mt-1">{errors.monthlyRent}</p>
+                            )}
                         </div>
 
                         {/* Household Income */}
                         <div className="space-y-1">
                             <label className="text-sm font-bold text-gray-700">Household Income</label>
-                            <div className="relative flex items-center bg-white rounded-lg shadow-sm focus-within:ring-1 focus-within:ring-[#3A6D6C] border border-gray-100">
+                            <div className={`relative flex items-center bg-white rounded-lg shadow-sm focus-within:ring-1 focus-within:ring-[#3A6D6C] border ${touched.householdIncome && errors.householdIncome ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-100'}`}>
                                 <CurrencySelector
                                     value={formData.currency}
-                                    onChange={(code) => setFormData({ ...formData, currency: code })}
+                                    onChange={(code) => handleChange('currency', code)}
                                     className="bg-transparent border-none sm:min-w-[80px]"
                                 />
                                 <div className="h-6 w-px bg-gray-200 mx-1"></div>
@@ -130,11 +208,16 @@ const EditApplicantInfoModal: React.FC<EditApplicantInfoModalProps> = ({
                                     type="number"
                                     step="0.01"
                                     value={formData.householdIncome}
-                                    onChange={(e) => setFormData({ ...formData, householdIncome: parseFloat(e.target.value) || 0 })}
+                                    onChange={(e) => handleChange('householdIncome', parseFloat(e.target.value) || 0)}
+                                    onBlur={() => handleBlur('householdIncome')}
                                     className="w-full pl-2 pr-4 py-2.5 bg-transparent outline-none text-gray-700 text-sm border-none"
                                     placeholder="0.00"
+                                    min="0"
                                 />
                             </div>
+                            {touched.householdIncome && errors.householdIncome && (
+                                <p className="text-red-500 text-xs mt-1">{errors.householdIncome}</p>
+                            )}
                         </div>
                     </div>
 
@@ -143,7 +226,7 @@ const EditApplicantInfoModal: React.FC<EditApplicantInfoModalProps> = ({
                         <label className="text-sm font-bold text-gray-700">Short bio</label>
                         <textarea
                             value={formData.bio}
-                            onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                            onChange={(e) => handleChange('bio', e.target.value)}
                             className="w-full p-3 bg-white rounded-lg outline-none text-gray-700 shadow-sm text-sm border-none resize-none min-h-[100px] focus:ring-1 focus:ring-[#3A6D6C]"
                             placeholder="Enter short bio..."
                         />
@@ -152,8 +235,8 @@ const EditApplicantInfoModal: React.FC<EditApplicantInfoModalProps> = ({
                     <div className="pt-4">
                         <button
                             type="submit"
-                            disabled={isLoading}
-                            className="w-full px-8 py-3 rounded-lg text-sm font-bold transition-colors shadow-md bg-[#3A6D6C] text-white hover:bg-[#2c5251] disabled:opacity-70 disabled:cursor-not-allowed"
+                            disabled={isLoading || !isFormValid()}
+                            className={`w-full px-8 py-3 rounded-lg text-sm font-bold transition-colors shadow-md ${!isLoading && isFormValid() ? 'bg-[#3A6D6C] text-white hover:bg-[#2c5251]' : 'bg-gray-300 text-gray-500 cursor-not-allowed'} disabled:opacity-70`}
                         >
                             {isLoading ? 'Saving...' : 'Save Changes'}
                         </button>

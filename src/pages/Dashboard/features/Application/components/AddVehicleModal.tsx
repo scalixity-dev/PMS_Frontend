@@ -110,6 +110,13 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSa
             }
         }
 
+        // Special validation for color
+        if (key === 'color') {
+            if (/\d/.test(value)) {
+                return 'Color cannot contain numbers';
+            }
+        }
+
         return '';
     };
 
@@ -135,6 +142,13 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({ isOpen, onClose, onSa
     };
 
     const handleChange = (key: keyof VehicleFormData, value: string) => {
+        // Restrict input for Color to block numbers
+        if (key === 'color') {
+            if (/\d/.test(value)) {
+                return;
+            }
+        }
+
         setFormData(prev => ({ ...prev, [key]: value }));
 
         // Clear error for this field when user starts typing/selecting

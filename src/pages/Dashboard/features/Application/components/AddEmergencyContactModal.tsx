@@ -152,20 +152,10 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
         return '';
     };
 
-    const validateAllFields = (): boolean => {
-        const newErrors: Record<string, string> = {};
-        let isValid = true;
-
-        (Object.keys(formData) as Array<keyof EmergencyContactFormData>).forEach(key => {
-            const error = validateField(key, formData[key]);
-            if (error) {
-                newErrors[key] = error;
-                isValid = false;
-            }
+    const isFormValid = (): boolean => {
+        return (Object.keys(formData) as Array<keyof EmergencyContactFormData>).every(key => {
+            return !validateField(key, formData[key]);
         });
-
-        setErrors(newErrors);
-        return isValid;
     };
 
     const handleChange = (key: keyof EmergencyContactFormData | 'phoneCountryCode', value: any) => {
@@ -184,13 +174,7 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
     };
 
     const handleSubmit = () => {
-        const allTouched = (Object.keys(formData) as Array<keyof EmergencyContactFormData>).reduce((acc, key) => {
-            acc[key] = true;
-            return acc;
-        }, {} as Record<string, boolean>);
-        setTouched(allTouched);
-
-        if (validateAllFields()) {
+        if (isFormValid()) {
             onSave(formData);
             onClose();
         }
@@ -214,7 +198,10 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
                 </div>
 
                 {/* Body - Scrollable */}
-                <div className="p-8 overflow-y-auto custom-scrollbar flex-1 bg-[#EAEAEA]">
+                <div
+                    className="p-8 overflow-y-auto custom-scrollbar flex-1 bg-[#EAEAEA]"
+                    style={{ scrollbarGutter: 'stable' }}
+                >
 
                     {/* Form Grid */}
                     <div className="flex flex-col gap-6 mb-6">
@@ -227,7 +214,7 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
                                 <input
                                     type="text"
                                     placeholder="Type here"
-                                    className={`w-full bg-white p-3 rounded-xl outline-none text-gray-700 placeholder-gray-500 shadow-sm text-sm ${touched.fullName && errors.fullName ? 'border-2 border-red-500' : ''}`}
+                                    className={`w-full bg-white p-3 rounded-lg outline-none text-gray-700 placeholder-gray-500 shadow-sm text-sm ${touched.fullName && errors.fullName ? 'border-2 border-red-500' : ''}`}
                                     value={formData.fullName}
                                     onChange={(e) => handleChange('fullName', e.target.value)}
                                     onBlur={() => handleBlur('fullName')}
@@ -241,7 +228,7 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
                                 <input
                                     type="email"
                                     placeholder="Type here"
-                                    className={`w-full bg-white p-3 rounded-xl outline-none text-gray-700 placeholder-gray-500 shadow-sm text-sm ${touched.email && errors.email ? 'border-2 border-red-500' : ''}`}
+                                    className={`w-full bg-white p-3 rounded-lg outline-none text-gray-700 placeholder-gray-500 shadow-sm text-sm ${touched.email && errors.email ? 'border-2 border-red-500' : ''}`}
                                     value={formData.email}
                                     onChange={(e) => handleChange('email', e.target.value)}
                                     onBlur={() => handleBlur('email')}
@@ -252,7 +239,7 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
                             {/* Phone Number */}
                             <div>
                                 <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Contact Number *</label>
-                                <div className={`flex border rounded-xl transition-all ${touched.phoneNumber && errors.phoneNumber
+                                <div className={`flex border rounded-lg transition-all ${touched.phoneNumber && errors.phoneNumber
                                     ? 'border-red-500 border-2'
                                     : 'border-gray-200 focus-within:ring-2 focus-within:ring-[#3A6D6C] focus-within:border-[#3A6D6C]'
                                     }`}>
@@ -261,7 +248,7 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
                                         <button
                                             type="button"
                                             onClick={() => setIsPhoneCodeOpen(!isPhoneCodeOpen)}
-                                            className={`flex items-center gap-1 px-3 py-2.5 border-r bg-white rounded-l-xl focus:outline-none text-sm min-w-[100px] hover:bg-gray-50 transition-colors ${touched.phoneNumber && errors.phoneNumber
+                                            className={`flex items-center gap-1 px-3 py-2.5 border-r bg-white rounded-l-lg focus:outline-none text-sm min-w-[100px] hover:bg-gray-50 transition-colors ${touched.phoneNumber && errors.phoneNumber
                                                 ? 'border-red-500'
                                                 : 'border-gray-200'
                                                 }`}
@@ -281,7 +268,7 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
 
                                         {/* Dropdown */}
                                         {isPhoneCodeOpen && (
-                                            <div className="absolute left-0 top-full mt-1 w-80 bg-white border border-gray-300 rounded-xl shadow-lg z-[100] max-h-80 overflow-hidden flex flex-col">
+                                            <div className="absolute left-0 top-full mt-1 w-80 bg-white border border-gray-300 rounded-lg shadow-lg z-[100] max-h-80 overflow-hidden flex flex-col">
                                                 {/* Search Input */}
                                                 <div className="p-2 border-b border-gray-200">
                                                     <div className="relative">
@@ -331,7 +318,7 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
                                     <input
                                         type="tel"
                                         placeholder="Enter phone number"
-                                        className={`flex-1 min-w-0 px-4 py-2.5 rounded-r-xl focus:outline-none text-sm placeholder-gray-400 bg-white border-0 ${touched.phoneNumber && errors.phoneNumber ? 'text-red-500' : 'text-gray-700'
+                                        className={`flex-1 min-w-0 px-4 py-2.5 rounded-r-lg focus:outline-none text-sm placeholder-gray-400 bg-white border-0 ${touched.phoneNumber && errors.phoneNumber ? 'text-red-500' : 'text-gray-700'
                                             }`}
                                         value={formData.phoneNumber}
                                         onChange={(e) => handleChange('phoneNumber', e.target.value)}
@@ -349,7 +336,7 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
                                 <button
                                     type="button"
                                     onClick={() => setIsRelationshipOpen(!isRelationshipOpen)}
-                                    className={`w-full bg-white p-3 rounded-xl outline-none text-left flex items-center justify-between text-sm ${touched.relationship && errors.relationship
+                                    className={`w-full bg-white p-3 rounded-lg outline-none text-left flex items-center justify-between text-sm ${touched.relationship && errors.relationship
                                         ? 'border-2 border-red-500'
                                         : 'border border-gray-200 focus-within:ring-2 focus-within:ring-[#3A6D6C] focus-within:border-[#3A6D6C]'
                                         } ${formData.relationship ? 'text-gray-700' : 'text-gray-500'}`}
@@ -360,7 +347,7 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
 
                                 {/* Dropdown */}
                                 {isRelationshipOpen && (
-                                    <div className="absolute left-0 top-full mt-1 w-full bg-white border border-gray-300 rounded-xl shadow-lg z-50 max-h-60 overflow-y-auto">
+                                    <div className="absolute left-0 top-full mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
                                         {relationshipOptions.map((option) => (
                                             <button
                                                 key={option}
@@ -386,7 +373,7 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
                             <label className="block text-sm font-semibold text-[#2c3e50] mb-2">Details *</label>
                             <textarea
                                 placeholder="Type Here"
-                                className={`w-full bg-white p-4 rounded-xl outline-none text-gray-700 placeholder-gray-500 shadow-sm text-sm min-h-[150px] resize-none ${touched.details && errors.details ? 'border-2 border-red-500' : ''}`}
+                                className={`w-full bg-white p-4 rounded-lg outline-none text-gray-700 placeholder-gray-500 shadow-sm text-sm min-h-[150px] resize-none ${touched.details && errors.details ? 'border-2 border-red-500' : ''}`}
                                 value={formData.details}
                                 onChange={(e) => handleChange('details', e.target.value)}
                                 onBlur={() => handleBlur('details')}
@@ -400,7 +387,8 @@ const AddEmergencyContactModal: React.FC<AddEmergencyContactModalProps> = ({ isO
                     <div>
                         <button
                             onClick={handleSubmit}
-                            className="bg-[#3A6D6C] text-white px-12 py-3 rounded-lg text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm"
+                            disabled={!isFormValid()}
+                            className={`bg-[#3A6D6C] text-white px-12 py-3 rounded-lg text-sm font-medium transition-colors shadow-sm ${isFormValid() ? 'bg-[#3A6D6C] hover:bg-[#2c5251]' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
                         >
                             {initialData ? 'Save' : 'Add'}
                         </button>
