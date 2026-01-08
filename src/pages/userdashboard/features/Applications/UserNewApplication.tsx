@@ -159,28 +159,33 @@ const UserNewApplication: React.FC = () => {
                         }
                     } else {
                         // Leasing found but missing required data
-                        console.warn('Leasing data incomplete, using fallback data');
+                        console.warn('Leasing data incomplete');
                         leasingFetchFailed = true;
-                        leasingId = 'mock_leasing_id_123';
-                        address = 'Gandhi Path Rd, Jaipur, Rajasthan 302020';
                     }
                 } catch (error) {
-                    console.warn('Leasing fetch failed, using fallback data', error);
+                    console.warn('Leasing fetch failed', error);
                     leasingFetchFailed = true;
-                    // Set fallback values only when fetch fails
-                    leasingId = 'mock_leasing_id_123';
-                    address = 'Gandhi Path Rd, Jaipur, Rajasthan 302020';
                 }
             } else {
                 // No propertyId provided - this should be caught earlier, but handle gracefully
-                console.warn('No propertyId provided, using fallback data');
+                console.warn('No propertyId provided');
                 leasingFetchFailed = true;
-                leasingId = 'mock_leasing_id_123';
-                address = 'Gandhi Path Rd, Jaipur, Rajasthan 302020';
             }
 
-            // Ensure leasingId is always defined before API call
-            const finalLeasingId = leasingId || 'mock_leasing_id_123';
+            // Handle fallback data with environment guard
+            if (leasingFetchFailed) {
+                if (import.meta.env.DEV) {
+                    console.warn('Using fallback data (Development Only)');
+                    leasingId = 'mock_leasing_id_123';
+                    address = 'Gandhi Path Rd, Jaipur, Rajasthan 302020';
+                } else {
+                    // Block submission in production if leasing data is missing
+                    throw new Error('Unable to verify property details. Please try again or contact support.');
+                }
+            }
+
+            // Ensure leasingId is defined
+            const finalLeasingId = leasingId as string;
 
             // Track whether API submission was successful
             let apiSubmissionSuccessful = false;
