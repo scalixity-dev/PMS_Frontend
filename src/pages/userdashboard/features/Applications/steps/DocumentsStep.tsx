@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { useApplicationStore, type FileMetadata } from '../../../../Dashboard/features/Application/store/applicationStore';
+import { useUserApplicationStore, type FileMetadata } from '../store/userApplicationStore';
 import { Upload, FileText, Trash2, ShieldCheck } from 'lucide-react';
 import PrimaryActionButton from '@/components/common/buttons/PrimaryActionButton';
 
@@ -8,7 +8,7 @@ interface DocumentsStepProps {
 }
 
 const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext }) => {
-    const { formData, setFormData } = useApplicationStore();
+    const { formData, setFormData } = useUserApplicationStore();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {

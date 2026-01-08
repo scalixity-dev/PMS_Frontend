@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, Car } from 'lucide-react';
-import { useApplicationStore } from '../../../../Dashboard/features/Application/store/applicationStore';
+import { useUserApplicationStore } from '../store/userApplicationStore';
 import PrimaryActionButton from '@/components/common/buttons/PrimaryActionButton';
 import AddVehicleModal, { type VehicleFormData } from '../../../../Dashboard/features/Application/components/AddVehicleModal';
 
@@ -31,7 +31,7 @@ interface VehiclesStepProps {
 }
 
 const VehiclesStep: React.FC<VehiclesStepProps> = ({ onNext }) => {
-    const { formData, updateFormData } = useApplicationStore();
+    const { formData, updateFormData } = useUserApplicationStore();
     const [isAdding, setIsAdding] = useState(false);
 
     const handleSaveVehicle = (data: VehicleFormData) => {

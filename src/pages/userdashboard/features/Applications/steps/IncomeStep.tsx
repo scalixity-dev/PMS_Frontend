@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, Wallet, AlertCircle, Pencil } from 'lucide-react';
-import { useApplicationStore } from '../../../../Dashboard/features/Application/store/applicationStore';
+import { useUserApplicationStore } from '../store/userApplicationStore';
 import PrimaryActionButton from '@/components/common/buttons/PrimaryActionButton';
 import AddIncomeModal, { type IncomeFormData } from '../../../../Dashboard/features/Application/components/AddIncomeModal';
 
@@ -43,7 +43,7 @@ interface IncomeStepProps {
 }
 
 const IncomeStep: React.FC<IncomeStepProps> = ({ onNext }) => {
-    const { formData, updateFormData } = useApplicationStore();
+    const { formData, updateFormData } = useUserApplicationStore();
     const [isAdding, setIsAdding] = useState(false);
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
 

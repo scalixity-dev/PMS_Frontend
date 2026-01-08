@@ -1,6 +1,17 @@
 import { create } from 'zustand';
 import type { Message, ChatStore } from '../types';
 
+/**
+ * Generate a unique message ID to prevent collisions.
+ * Combines timestamp with a random suffix to ensure uniqueness
+ * even when multiple messages are sent within the same millisecond.
+ */
+const generateMessageId = (): string => {
+    const timestamp = Date.now();
+    const randomSuffix = Math.random().toString(36).substring(2, 9);
+    return `msg_${timestamp}_${randomSuffix}`;
+};
+
 export const useMessagesStore = create<ChatStore>((set) => ({
     chats: [],
     activeChat: null,
@@ -15,7 +26,7 @@ export const useMessagesStore = create<ChatStore>((set) => ({
     sendMessage: (chatId, message) => set((state) => {
         const newMessage: Message = {
             ...message,
-            id: Date.now().toString(),
+            id: generateMessageId(),
             timestamp: new Date().toISOString(),
             isRead: true,
         };

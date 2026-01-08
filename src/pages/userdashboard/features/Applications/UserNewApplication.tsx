@@ -13,7 +13,7 @@ import AdditionalIncomeStep from "./steps/AdditionalIncomeStep";
 import EmergencyContactStep from "./steps/EmergencyContactStep";
 import BackgroundQuestionsStep from "./steps/BackgroundQuestionsStep";
 import DocumentsStep from "./steps/DocumentsStep";
-import { useApplicationStore } from "../../../Dashboard/features/Application/store/applicationStore";
+import { useUserApplicationStore } from "./store/userApplicationStore";
 import ApplicationSuccessModal from "./components/ApplicationSuccessModal";
 import ApplicationErrorModal from "./components/ApplicationErrorModal";
 import UnsavedChangesModal from "../../../Dashboard/components/UnsavedChangesModal";
@@ -33,7 +33,7 @@ const UserNewApplication: React.FC = () => {
         setIsPropertySelected,
         resetForm,
         updateFormData,
-    } = useApplicationStore();
+    } = useUserApplicationStore();
 
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showErrorModal, setShowErrorModal] = useState(false);
@@ -48,10 +48,7 @@ const UserNewApplication: React.FC = () => {
             updateFormData('propertyId', state.propertyId);
             setIsPropertySelected(true);
         } else {
-            // If no property is selected and we're in user dashboard, 
-            // we might want to default to something or show an error
-            // For now, let's just make sure it stays on ApplicantInfoStep if we want to skip selection
-            setIsPropertySelected(true);
+            setIsPropertySelected(false);
         }
     }, [location.state, updateFormData, setIsPropertySelected]);
 
@@ -65,7 +62,15 @@ const UserNewApplication: React.FC = () => {
             formData.propertyId.trim() !== '' ||
             formData.occupants.length > 0 ||
             formData.pets.length > 0 ||
-            formData.vehicles.length > 0
+            formData.vehicles.length > 0 ||
+            formData.residences.length > 0 ||
+            formData.incomes.length > 0 ||
+            formData.emergencyContacts.length > 0 ||
+            formData.documents.length > 0 ||
+            formData.additionalResidenceInfo.trim() !== '' ||
+            formData.additionalIncomeInfo.trim() !== '' ||
+            Object.keys(formData.backgroundQuestions).length > 0 ||
+            Object.keys(formData.backgroundExplanations).length > 0
         );
     }, [formData]);
 

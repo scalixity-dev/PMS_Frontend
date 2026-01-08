@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, Users, AlertCircle, Pencil } from 'lucide-react';
-import { useApplicationStore, type EmergencyContactFormData } from '../../../../Dashboard/features/Application/store/applicationStore';
+import { useUserApplicationStore, type EmergencyContactFormData } from '../store/userApplicationStore';
 import PrimaryActionButton from '@/components/common/buttons/PrimaryActionButton';
 import AddEmergencyContactModal from '../../../../Dashboard/features/Application/components/AddEmergencyContactModal';
 
@@ -39,7 +39,7 @@ interface EmergencyContactStepProps {
 }
 
 const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({ onNext }) => {
-    const { formData, updateFormData } = useApplicationStore();
+    const { formData, updateFormData } = useUserApplicationStore();
     const [isAdding, setIsAdding] = useState(false);
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
 

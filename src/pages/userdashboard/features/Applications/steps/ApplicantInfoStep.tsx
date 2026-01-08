@@ -1,5 +1,5 @@
 import React from 'react';
-import { useApplicationStore } from '../../../../Dashboard/features/Application/store/applicationStore';
+import { useUserApplicationStore } from '../store/userApplicationStore';
 import ApplicantForm from '../components/forms/ApplicantForm';
 
 interface ApplicantInfoStepProps {
@@ -7,7 +7,7 @@ interface ApplicantInfoStepProps {
 }
 
 const ApplicantInfoStep: React.FC<ApplicantInfoStepProps> = ({ onNext }) => {
-    const { formData, updateFormData } = useApplicationStore();
+    const { formData, updateFormData } = useUserApplicationStore();
 
     return (
         <ApplicantForm

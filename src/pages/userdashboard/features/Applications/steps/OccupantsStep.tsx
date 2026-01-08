@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, User } from 'lucide-react';
-import { useApplicationStore } from '../../../../Dashboard/features/Application/store/applicationStore';
+import { useUserApplicationStore } from '../store/userApplicationStore';
 import PrimaryActionButton from '@/components/common/buttons/PrimaryActionButton';
 import AddOccupantModal from '../../../../Dashboard/features/Application/components/AddOccupantModal';
 import type { OccupantFormData } from '../../../../Dashboard/features/Application/components/AddOccupantModal';
@@ -11,7 +11,7 @@ interface OccupantsStepProps {
 }
 
 const OccupantsStep: React.FC<OccupantsStepProps> = ({ onNext }) => {
-    const { formData, updateFormData } = useApplicationStore();
+    const { formData, updateFormData } = useUserApplicationStore();
     const [isAdding, setIsAdding] = useState(false);
 
     const handleAddClick = () => {

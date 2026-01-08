@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Dog } from 'lucide-react';
-import { useApplicationStore } from '../../../../Dashboard/features/Application/store/applicationStore';
+import { useUserApplicationStore } from '../store/userApplicationStore';
 import PrimaryActionButton from '@/components/common/buttons/PrimaryActionButton';
 import AddPetModal, { type PetFormData } from '../../../../Dashboard/features/Application/components/AddPetModal';
 
@@ -45,7 +45,7 @@ interface PetsStepProps {
 }
 
 const PetsStep: React.FC<PetsStepProps> = ({ onNext }) => {
-    const { formData, updateFormData } = useApplicationStore();
+    const { formData, updateFormData } = useUserApplicationStore();
     const [isAdding, setIsAdding] = useState(false);
 
     const handleSavePet = (data: PetFormData) => {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useApplicationStore } from '../../../../Dashboard/features/Application/store/applicationStore';
+import { useUserApplicationStore } from '../store/userApplicationStore';
 import PrimaryActionButton from '@/components/common/buttons/PrimaryActionButton';
 
 interface Question {
@@ -21,7 +21,7 @@ interface BackgroundQuestionsStepProps {
 }
 
 const BackgroundQuestionsStep: React.FC<BackgroundQuestionsStepProps> = ({ onNext }) => {
-    const { formData, updateFormData } = useApplicationStore();
+    const { formData, updateFormData } = useUserApplicationStore();
     const responses = formData.backgroundQuestions || {};
     const explanations = formData.backgroundExplanations || {};
 

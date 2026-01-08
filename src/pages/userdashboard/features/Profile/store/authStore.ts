@@ -1,14 +1,26 @@
 import { create } from 'zustand';
 import type { UserInfo } from '../../../utils/types';
-import { mockUserInfo } from '../../../utils/mockData';
 
 interface AuthState {
     userInfo: UserInfo;
     setUserInfo: (info: Partial<UserInfo>) => void;
 }
 
+// Create empty default UserInfo to avoid exposing mock data in production
+const createEmptyUserInfo = (): UserInfo => ({
+    firstName: '',
+    lastName: '',
+    dob: '',
+    email: '',
+    phone: '',
+    role: '',
+    country: '',
+    city: '',
+    pincode: '',
+});
+
 export const useAuthStore = create<AuthState>((set) => ({
-    userInfo: mockUserInfo,
+    userInfo: createEmptyUserInfo(),
     setUserInfo: (info) =>
         set((state) => ({
             userInfo: { ...state.userInfo, ...info }

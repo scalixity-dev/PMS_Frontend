@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, Home, AlertCircle } from 'lucide-react';
-import { useApplicationStore } from '../../../../Dashboard/features/Application/store/applicationStore';
+import { useUserApplicationStore } from '../store/userApplicationStore';
 import PrimaryActionButton from '@/components/common/buttons/PrimaryActionButton';
 import AddResidenceModal, { type ResidenceFormData } from '../../../../Dashboard/features/Application/components/AddResidenceModal';
 
@@ -43,7 +43,7 @@ interface ResidencesStepProps {
 }
 
 const ResidencesStep: React.FC<ResidencesStepProps> = ({ onNext }) => {
-    const { formData, updateFormData } = useApplicationStore();
+    const { formData, updateFormData } = useUserApplicationStore();
     const [isAdding, setIsAdding] = useState(false);
 
     const residences = formData.residences || [];

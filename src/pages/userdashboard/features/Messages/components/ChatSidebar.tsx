@@ -1,6 +1,7 @@
 import { Search, Lightbulb, Microwave, Trees, AlertCircle, Wrench, ListPlus } from 'lucide-react';
 import type { Chat } from '../types';
 import type { ServiceRequest, Publication } from '../../../utils/types';
+import { useAuthStore } from '../../Profile/store/authStore';
 
 interface ChatSidebarProps {
     chats: Chat[];
@@ -33,6 +34,7 @@ const ChatSidebar = ({
     onSelectChat,
     onSelectRequest,
 }: ChatSidebarProps) => {
+    const { userInfo } = useAuthStore();
 
     const formatTime = (time: string) => {
         if (!time) return '';
@@ -124,15 +126,17 @@ const ChatSidebar = ({
                 <div className="flex items-center gap-3 mb-3">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-pink-400 flex items-center justify-center flex-shrink-0">
                         <img
-                            src="https://api.dicebear.com/7.x/avataaars/svg?seed=Siddak"
-                            alt="Siddak Bagga"
+                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userInfo.firstName}`}
+                            alt={`${userInfo.firstName} ${userInfo.lastName}`}
                             className="w-full h-full rounded-full object-cover"
                         />
                     </div>
                     <div className="flex-1 min-w-0">
-                        <h3 className="text-base font-semibold text-gray-900 truncate">Siddak Bagga</h3>
-                        <p className="text-xs text-gray-500">Tenant</p>
-                        <p className="text-xs text-gray-400 truncate">siddakbagga@gmail.com</p>
+                        <h3 className="text-base font-semibold text-gray-900 truncate">
+                            {userInfo.firstName} {userInfo.lastName}
+                        </h3>
+                        <p className="text-xs text-gray-500">{userInfo.role}</p>
+                        <p className="text-xs text-gray-400 truncate">{userInfo.email}</p>
                     </div>
                 </div>
             </div>

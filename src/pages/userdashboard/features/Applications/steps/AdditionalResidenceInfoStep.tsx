@@ -1,5 +1,5 @@
 import React from 'react';
-import { useApplicationStore } from '../../../../Dashboard/features/Application/store/applicationStore';
+import { useUserApplicationStore } from '../store/userApplicationStore';
 import PrimaryActionButton from '@/components/common/buttons/PrimaryActionButton';
 
 interface AdditionalResidenceInfoStepProps {
@@ -7,7 +7,7 @@ interface AdditionalResidenceInfoStepProps {
 }
 
 const AdditionalResidenceInfoStep: React.FC<AdditionalResidenceInfoStepProps> = ({ onNext }) => {
-    const { formData, updateFormData } = useApplicationStore();
+    const { formData, updateFormData } = useUserApplicationStore();
 
     return (
         <div className="w-full">

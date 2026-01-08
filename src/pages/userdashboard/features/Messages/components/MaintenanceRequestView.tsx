@@ -16,6 +16,9 @@ const MaintenanceRequestView = ({ request, onBack }: MaintenanceRequestViewProps
     const { chats, addChat, sendMessage } = useMessagesStore();
     const { userInfo } = useAuthStore();
 
+    // Destructure specific fields to avoid infinite re-renders
+    const { email: userEmail, firstName, lastName } = userInfo;
+
     const chatId = request.requestId.toString();
     const chat = chats.find((c) => c.id === chatId);
     const messages = chat?.messages || [];
@@ -25,8 +28,8 @@ const MaintenanceRequestView = ({ request, onBack }: MaintenanceRequestViewProps
             const initialMessages = [
                 {
                     id: '1',
-                    senderId: userInfo.email,
-                    senderName: `${userInfo.firstName} ${userInfo.lastName}`,
+                    senderId: userEmail,
+                    senderName: `${firstName} ${lastName}`,
                     text: `${request.category} / ${request.subCategory} / ${request.problem}\n\nDescription: ${request.description || 'No description provided.'}`,
                     timestamp: request.createdAt,
                     isRead: true,
@@ -55,12 +58,12 @@ const MaintenanceRequestView = ({ request, onBack }: MaintenanceRequestViewProps
                 propertyAddress: request.property,
             });
         }
-    }, [chat, chatId, request, addChat, userInfo]);
+    }, [chat, chatId, request, addChat, userEmail, firstName, lastName]);
 
     const handleSendMessage = (text: string) => {
         sendMessage(chatId, {
-            senderId: userInfo.email,
-            senderName: `${userInfo.firstName} ${userInfo.lastName}`,
+            senderId: userEmail,
+            senderName: `${firstName} ${lastName}`,
             text: text,
             isRead: true,
         });
@@ -82,7 +85,7 @@ const MaintenanceRequestView = ({ request, onBack }: MaintenanceRequestViewProps
                         )}
                         <div className="flex -space-x-2">
                             <div className="w-10 h-10 rounded-full bg-emerald-400 border-2 border-white flex items-center justify-center text-xs text-white font-bold ring-2 ring-emerald-50">
-                                {userInfo.firstName?.[0]}{userInfo.lastName?.[0]}
+                                {firstName?.[0]}{lastName?.[0]}
                             </div>
                             <div className="w-10 h-10 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center text-xs text-white font-bold ring-2 ring-emerald-50">
                                 {request.assignee ?
@@ -137,7 +140,7 @@ const MaintenanceRequestView = ({ request, onBack }: MaintenanceRequestViewProps
                         <MessageBubble
                             key={message.id}
                             message={message}
-                            isOwnMessage={message.senderId === userInfo.email}
+                            isOwnMessage={message.senderId === userEmail}
                             contactName={message.senderName}
                             contactAvatar={`https://api.dicebear.com/7.x/initials/svg?seed=${message.senderName}`}
                         />
