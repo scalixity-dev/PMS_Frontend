@@ -94,7 +94,7 @@ const MoveIn: React.FC = () => {
         if (currentStep > 0) {
             setCurrentStep(currentStep - 1);
         } else {
-            navigate('/dashboard');
+            navigate(-1);
         }
     };
 

@@ -50,6 +50,9 @@ export const API_ENDPOINTS = {
     CREATE: `${API_BASE_URL}/leasing`,
     UPDATE: (id: string) => `${API_BASE_URL}/leasing/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/leasing/${id}`,
+    IMPORT_EXCEL: `${API_BASE_URL}/leasing/import-excel`,
+    VALIDATE_EXCEL: `${API_BASE_URL}/leasing/validate-excel`,
+    GET_IMPORT_FIELDS: `${API_BASE_URL}/leasing/import-fields`,
   },
   LISTING: {
     GET_ALL: `${API_BASE_URL}/listing`,

@@ -68,6 +68,7 @@ import Units from './pages/Dashboard/features/Units/Units';
 import KeysLocks from './pages/Dashboard/features/KeysLocks/KeysLocks';
 import KeyDetail from './pages/Dashboard/features/KeysLocks/KeyDetail';
 import Leases from './pages/Dashboard/features/Leases/Leases';
+import ImportLeases from './pages/Dashboard/features/Leases/ImportLeases/ImportLeases';
 import LeaseDetail from './pages/Dashboard/features/Leases/LeaseDetail';
 import AddKey from './pages/Dashboard/features/KeysLocks/AddKey';
 import ServicePros from './pages/Dashboard/features/ServicePros/ServicePros';
@@ -271,6 +272,7 @@ const App: React.FC = () => {
               <Route path="/dashboard/application/new" element={<NewApplication />} />
               <Route path="/dashboard/application/:id" element={<ApplicationDetail />} />
               <Route path="/dashboard/leasing/leases" element={<Leases />} />
+              <Route path="/dashboard/leasing/leases/import" element={<ImportLeases />} />
               <Route
                 path="/dashboard/leasing/leads"
                 element={
