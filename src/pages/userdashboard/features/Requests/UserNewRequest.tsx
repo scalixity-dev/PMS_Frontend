@@ -242,12 +242,46 @@ const NewRequest: React.FC = () => {
             videoInputRef={videoInputRef}
             onAttachmentsChange={(e) => {
               if (e.target.files) {
-                setAttachments(prev => [...prev, ...Array.from(e.target.files!)]);
+                const files = Array.from(e.target.files);
+                const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+                const ALLOWED_TYPES = [
+                  'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+                  'application/pdf', 'application/msword',
+                  'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                ];
+
+                const validFiles = files.filter(file => {
+                  if (!ALLOWED_TYPES.includes(file.type)) {
+                    alert(`File "${file.name}" is not a supported type.`);
+                    return false;
+                  }
+                  if (file.size > MAX_SIZE) {
+                    alert(`File "${file.name}" is too large (max 10MB).`);
+                    return false;
+                  }
+                  return true;
+                });
+
+                if (validFiles.length > 0) {
+                  setAttachments(prev => [...prev, ...validFiles]);
+                }
+                e.target.value = '';
               }
             }}
             onVideoChange={(e) => {
               if (e.target.files && e.target.files[0]) {
-                setVideo(e.target.files[0]);
+                const file = e.target.files[0];
+                const MAX_SIZE = 50 * 1024 * 1024; // 50MB
+                if (!file.type.startsWith('video/')) {
+                  alert("Please select a valid video file.");
+                  return;
+                }
+                if (file.size > MAX_SIZE) {
+                  alert("Video file is too large (max 50MB).");
+                  return;
+                }
+                setVideo(file);
+                e.target.value = '';
               }
             }}
             onRemoveAttachment={handleRemoveAttachment}

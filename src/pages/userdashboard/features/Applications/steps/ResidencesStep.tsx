@@ -7,6 +7,10 @@ import UserAddResidenceModal, { type ResidenceFormData } from '../components/Use
 const ResidenceItem: React.FC<{ residence: ResidenceFormData & { id: string }; onDelete: () => void }> = ({ residence, onDelete }) => {
     const formatDate = (dateVal: any) => {
         if (!dateVal) return '-';
+        if (typeof dateVal === 'string' && dateVal.includes('-')) {
+            const [year, month, day] = dateVal.split('-').map(Number);
+            return new Date(year, month - 1, day).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
         const date = new Date(dateVal);
         return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     };

@@ -324,7 +324,10 @@ const PrintableRequest: React.FC<PrintableRequestProps> = ({ request }) => {
                 <div key={index}>
                   <p className="font-bold text-sm">Availability time {index + 1}:</p>
                   <p className="text-sm">
-                    {new Date(slot.date).toLocaleDateString()} - {slot.timeSlots.join(", ")}
+                    {(() => {
+                      const [year, month, day] = slot.date.split("-").map(Number);
+                      return new Date(year, month - 1, day).toLocaleDateString();
+                    })()} - {slot.timeSlots.join(", ")}
                   </p>
                 </div>
               ))

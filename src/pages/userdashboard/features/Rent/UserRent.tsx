@@ -36,7 +36,13 @@ const Rent: React.FC = () => {
 
       // Date filter (simple month-based filtering)
       if (dateFilter) {
-        const transactionMonth = new Date(transaction.dueDate).getMonth();
+        let transactionMonth: number;
+        if (typeof transaction.dueDate === 'string' && transaction.dueDate.includes('-')) {
+          const [year, month, day] = transaction.dueDate.split('-').map(Number);
+          transactionMonth = new Date(year, month - 1, day).getMonth();
+        } else {
+          transactionMonth = new Date(transaction.dueDate).getMonth();
+        }
         const filterMonth = parseInt(dateFilter);
         if (transactionMonth !== filterMonth) {
           return false;
@@ -216,11 +222,10 @@ const Rent: React.FC = () => {
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className={`p-2 rounded-full transition-colors ${
-                  currentPage === 1
+                className={`p-2 rounded-full transition-colors ${currentPage === 1
                     ? 'text-gray-300 cursor-not-allowed'
                     : 'text-gray-600 hover:bg-gray-200'
-                }`}
+                  }`}
               >
                 <ChevronLeft className="w-6 h-6" />
               </button>
@@ -229,11 +234,10 @@ const Rent: React.FC = () => {
                 <button
                   key={page}
                   onClick={() => handlePageChange(page)}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-medium transition-all ${
-                    currentPage === page
+                  className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-medium transition-all ${currentPage === page
                       ? 'bg-[#3A7D76] text-white shadow-lg'
                       : 'bg-transparent text-gray-600 border border-gray-300 hover:bg-gray-100'
-                  }`}
+                    }`}
                 >
                   {page}
                 </button>
@@ -242,11 +246,10 @@ const Rent: React.FC = () => {
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className={`p-2 rounded-full transition-colors ${
-                  currentPage === totalPages
+                className={`p-2 rounded-full transition-colors ${currentPage === totalPages
                     ? 'text-gray-300 cursor-not-allowed'
                     : 'text-gray-600 hover:bg-gray-200'
-                }`}
+                  }`}
               >
                 <ChevronRight className="w-6 h-6" />
               </button>

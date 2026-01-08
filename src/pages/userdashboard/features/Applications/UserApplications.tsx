@@ -20,7 +20,9 @@ const getAvatarSeed = (name: string): string => {
 
 // Helper function to format date
 const formatDate = (dateString: string): string => {
-  const date = new Date(dateString);
+  if (!dateString) return '-';
+  const [year, month, day] = dateString.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
   const months = [
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"

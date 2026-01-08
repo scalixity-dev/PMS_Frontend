@@ -96,10 +96,28 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
+
+            // Validation: File Type
+            const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+            if (!ALLOWED_TYPES.includes(file.type)) {
+                alert("Please select a valid image file (JPEG, PNG, or WebP).");
+                return;
+            }
+
+            // Validation: File Size (5MB limit)
+            const MAX_SIZE = 5 * 1024 * 1024;
+            if (file.size > MAX_SIZE) {
+                alert("File is too large. Please select an image smaller than 5MB.");
+                return;
+            }
+
             const reader = new FileReader();
             reader.onload = (event) => {
                 setImageToCrop(event.target?.result as string);
                 setIsCropModalOpen(true);
+            };
+            reader.onerror = () => {
+                alert("Failed to read the file. Please try again.");
             };
             reader.readAsDataURL(file);
         }

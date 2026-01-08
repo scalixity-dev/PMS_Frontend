@@ -108,13 +108,42 @@ const Profile: React.FC = () => {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validation: File Type
+      const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        alert("Please select a valid image file (JPEG, PNG, GIF, or WebP).");
+        return;
+      }
+
+      // Validation: File Size (2MB limit)
+      const MAX_SIZE = 2 * 1024 * 1024;
+      if (file.size > MAX_SIZE) {
+        alert("File is too large. Please select an image smaller than 2MB.");
+        return;
+      }
+
       const reader = new FileReader();
-      reader.onloadend = () => {
-        const imageResult = reader.result as string;
-        setProfileImage(imageResult);
-        setUserInfo({ profileImage: imageResult });
+
+      reader.onload = () => {
+        try {
+          const imageResult = reader.result as string;
+          setProfileImage(imageResult);
+          setUserInfo({ profileImage: imageResult });
+        } catch (error) {
+          console.error("Error processing image:", error);
+          alert("Failed to process the selected image.");
+        }
       };
+
+      reader.onerror = () => {
+        alert("Failed to read the file. Please try again.");
+        console.error("FileReader error:", reader.error);
+      };
+
       reader.readAsDataURL(file);
+
+      // Reset the input value so the same file can be selected again
+      e.target.value = '';
     }
   };
 

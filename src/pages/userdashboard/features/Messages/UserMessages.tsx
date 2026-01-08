@@ -77,9 +77,15 @@ const Messages = () => {
 
     // Filter chats based on chat search query and role
     const filteredChats = useMemo(() => {
-        const baseChats = chats.filter(chat =>
-            chat.contactRole === 'Landlord'
-        );
+        const baseChats = chats.filter(chat => {
+            // Exclude chats that are specifically for a maintenance request (MR)
+            // MR chats use the requestId as their chat id
+            const isMRChat = requests.some(req =>
+                req.requestId.toString() === chat.id ||
+                req.id.toString() === chat.id
+            );
+            return !isMRChat;
+        });
 
         if (!chatSearch) return baseChats;
 
