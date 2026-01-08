@@ -143,25 +143,49 @@ const UserNewApplication: React.FC = () => {
             const { applicationService } = await import('../../../../services/application.service');
             const { leasingService } = await import('../../../../services/leasing.service');
 
-            let leasingId = 'mock_leasing_id_123';
-            let address = 'Gandhi Path Rd, Jaipur, Rajasthan 302020';
-            try {
-                const leasing = await leasingService.getByPropertyId(formData.propertyId);
-                if (leasing) {
-                    leasingId = leasing.id;
-                    if (leasing.property?.address) {
-                        const addr = leasing.property.address;
-                        address = `${addr.streetAddress}, ${addr.city}, ${addr.stateRegion} ${addr.zipCode}, ${addr.country}`;
+            let leasingId: string | undefined;
+            let address: string | undefined;
+            let leasingFetchFailed = false;
+
+            // Only attempt to fetch leasing data if propertyId is provided
+            if (formData.propertyId?.trim()) {
+                try {
+                    const leasing = await leasingService.getByPropertyId(formData.propertyId);
+                    if (leasing && leasing.id) {
+                        leasingId = leasing.id;
+                        if (leasing.property?.address) {
+                            const addr = leasing.property.address;
+                            address = `${addr.streetAddress}, ${addr.city}, ${addr.stateRegion} ${addr.zipCode}, ${addr.country}`;
+                        }
+                    } else {
+                        // Leasing found but missing required data
+                        console.warn('Leasing data incomplete, using fallback data');
+                        leasingFetchFailed = true;
+                        leasingId = 'mock_leasing_id_123';
+                        address = 'Gandhi Path Rd, Jaipur, Rajasthan 302020';
                     }
+                } catch (error) {
+                    console.warn('Leasing fetch failed, using fallback data', error);
+                    leasingFetchFailed = true;
+                    // Set fallback values only when fetch fails
+                    leasingId = 'mock_leasing_id_123';
+                    address = 'Gandhi Path Rd, Jaipur, Rajasthan 302020';
                 }
-            } catch {
-                console.warn('Leasing fetch failed, using mock data');
+            } else {
+                // No propertyId provided - this should be caught earlier, but handle gracefully
+                console.warn('No propertyId provided, using fallback data');
+                leasingFetchFailed = true;
+                leasingId = 'mock_leasing_id_123';
+                address = 'Gandhi Path Rd, Jaipur, Rajasthan 302020';
             }
+
+            // Ensure leasingId is always defined before API call
+            const finalLeasingId = leasingId || 'mock_leasing_id_123';
 
             // Track whether API submission was successful
             let apiSubmissionSuccessful = false;
             try {
-                await applicationService.create(formData, leasingId);
+                await applicationService.create(formData, finalLeasingId);
                 apiSubmissionSuccessful = true;
             } catch (err) {
                 console.warn('API submission failed, persisting locally for demo', err);
@@ -178,7 +202,7 @@ const UserNewApplication: React.FC = () => {
                 phone: formData.phoneNumber,
                 status: "Submitted",
                 appliedDate: new Date().toISOString().split('T')[0],
-                address: address
+                address: address || 'Address not available'
             };
 
             localStorage.setItem('user_applications', JSON.stringify([newApp, ...filteredApps]));
@@ -186,12 +210,23 @@ const UserNewApplication: React.FC = () => {
             resetForm();
             setShouldAllowNavigation(true);
 
-            // Show appropriate message based on API submission status
-            if (apiSubmissionSuccessful) {
+            // Build success/warning message based on what succeeded or failed
+            const warningMessages: string[] = [];
+
+            if (leasingFetchFailed) {
+                warningMessages.push("We couldn't retrieve the property address from our system. A placeholder address has been used. Please verify your application details.");
+            }
+
+            if (!apiSubmissionSuccessful) {
+                warningMessages.push("Your application has been saved locally. We couldn't connect to the server, so it will be submitted when you're back online. Please check your connection and try again later.");
+            }
+
+            // Show appropriate message based on submission status
+            if (apiSubmissionSuccessful && !leasingFetchFailed) {
                 setSuccessMessage(undefined);
                 setIsWarning(false);
             } else {
-                setSuccessMessage("Your application has been saved locally. We couldn't connect to the server, so it will be submitted when you're back online. Please check your connection and try again later.");
+                setSuccessMessage(warningMessages.join(' '));
                 setIsWarning(true);
             }
             setShowSuccessModal(true);
