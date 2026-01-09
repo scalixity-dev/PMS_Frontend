@@ -5,6 +5,7 @@ import PropertyFilters from "./components/PropertyFilters";
 import type { Property, FilterState } from "../../utils/types";
 import { API_ENDPOINTS } from "../../../../config/api.config";
 import { authService } from "../../../../services/auth.service";
+import { formatMoney } from "../../../../utils/currency.utils";
 
 // --- Internal Components ---
 
@@ -55,7 +56,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
           </div>
           <div className="mt-2 flex items-baseline gap-1">
             <span className="text-[var(--dashboard-text-main)] text-base font-semibold">
-              {property.price || `${property.currency}${property.rent}`}
+              {property.price || (property.rent ? formatMoney(property.rent, property.currencyCode || 'USD') : 'N/A')}
             </span>
             <span className="text-gray-500 text-[10px]">month</span>
           </div>
@@ -93,7 +94,13 @@ const Properties: React.FC = () => {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [usePreferences, setUsePreferences] = useState(true); // Toggle for preferences
+  
+  // Initialize usePreferences from localStorage, defaulting to true only if no stored value exists
+  const [usePreferences, setUsePreferences] = useState<boolean>(() => {
+    const stored = localStorage.getItem('propertyPreferencesEnabled');
+    return stored !== null ? stored === 'true' : true; // Default to true only if no stored value
+  });
+  
   const [prefsLoaded, setPrefsLoaded] = useState(false); // Track if preferences have been loaded
   const [currentPage, setCurrentPage] = useState(1); // Pagination state
   const [userPreferences, setUserPreferences] = useState<{
@@ -299,15 +306,26 @@ const Properties: React.FC = () => {
           // Use listing.id if available, otherwise use property.id with index to ensure uniqueness
           const uniqueId = item.listing?.id ? `${item.id}-${item.listing.id}` : `${item.id}-${index}`;
 
+          // Get currency from backend response, fallback to property country or default
+          const currencyInfo = item.currency || (address?.country ? {
+            code: address.country === 'India' || address.country === 'IN' ? 'INR' : 'USD',
+            symbol: address.country === 'India' || address.country === 'IN' ? '₹' : '$',
+            name: address.country === 'India' || address.country === 'IN' ? 'Indian Rupee' : 'US Dollar'
+          } : { code: 'USD', symbol: '$', name: 'US Dollar' });
+
+          // Format price with currency
+          const formattedPrice = formatMoney(price, currencyInfo.code);
+
           return {
             id: item.id, // Use actual property ID for navigation
             uniqueId: uniqueId, // Use composite ID for React keys
             title: title,
             address: addressString,
             type: item.propertyType === 'SINGLE' ? 'Single Unit' : 'Multi Unit',
-            price: `$${price.toLocaleString()}`,
+            price: formattedPrice, // Use formatted price with currency
             rent: price,
-            currency: '$',
+            currency: currencyInfo.symbol, // Currency symbol
+            currencyCode: currencyInfo.code, // Currency code for reference
             tag: item.listing?.petsAllowed ? 'Pets Allowed' : null,
             image: item.coverPhotoUrl || (item.photos?.[0]?.photoUrl ?? null),
             images: item.photos?.map((p: any) => p.photoUrl) || [],
@@ -436,7 +454,10 @@ const Properties: React.FC = () => {
                           type="checkbox"
                           checked={usePreferences}
                           onChange={(e) => {
-                            setUsePreferences(e.target.checked);
+                            const newValue = e.target.checked;
+                            setUsePreferences(newValue);
+                            // Persist user's choice to localStorage
+                            localStorage.setItem('propertyPreferencesEnabled', String(newValue));
                             resetPropertyFilters();
                           }}
                           className="sr-only peer"
