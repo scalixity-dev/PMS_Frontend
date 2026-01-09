@@ -31,6 +31,7 @@ export const API_ENDPOINTS = {
     VALIDATE_EXCEL: `${API_BASE_URL}/property/validate-excel`,
     GET_IMPORT_FIELDS: `${API_BASE_URL}/property/import-fields`,
     GET_PUBLIC_LISTINGS: `${API_BASE_URL}/property/public/listings`,
+    GET_PUBLIC_DETAIL: (id: string) => `${API_BASE_URL}/property/public/${id}`,
   },
   UNIT: {
     GET_ALL_BY_PROPERTY: (propertyId: string) => `${API_BASE_URL}/unit/property/${propertyId}`,

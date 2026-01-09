@@ -246,7 +246,8 @@ const Properties: React.FC = () => {
           const uniqueId = item.listing?.id ? `${item.id}-${item.listing.id}` : `${item.id}-${index}`;
 
           return {
-            id: uniqueId,
+            id: item.id, // Use actual property ID for navigation
+            uniqueId: uniqueId, // Use composite ID for React keys
             title: title,
             address: addressString,
             type: item.propertyType === 'SINGLE' ? 'Single Unit' : 'Multi Unit',
@@ -262,8 +263,8 @@ const Properties: React.FC = () => {
         // Deduplicate properties by property ID (keep first occurrence)
         const seen = new Set<string>();
         const deduplicatedProperties = mappedProperties.filter((property) => {
-          // Extract base property ID (before the dash)
-          const baseId = String(property.id).split('-')[0];
+          // Use the actual property ID for deduplication
+          const baseId = String(property.id);
           if (seen.has(baseId)) {
             return false; // Skip duplicate
           }
@@ -439,7 +440,7 @@ const Properties: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredProperties.length > 0 ? (
               filteredProperties.map((property) => (
-                <PropertyCard key={property.id} property={property} />
+                <PropertyCard key={(property as any).uniqueId || property.id} property={property} />
               ))
             ) : (
               <div className="col-span-full py-20 text-center">
