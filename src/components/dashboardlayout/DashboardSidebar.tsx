@@ -487,8 +487,9 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
       <InviteToApplyModal
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
-        onSend={(email, propertyId) => {
-          console.log('Sending invitation:', { email, propertyId });
+        onSend={async (emails, propertyId) => {
+          console.log('Sending invitation:', { emails, propertyId });
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate async operation
         }}
       />
     </SidebarContext.Provider>

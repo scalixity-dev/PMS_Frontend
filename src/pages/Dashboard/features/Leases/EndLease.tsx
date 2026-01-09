@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { MoreHorizontal, Plus } from 'lucide-react';
 import { MOCK_LEASE_DETAIL } from './LeaseDetail';
 import DatePicker from '../../../../components/ui/DatePicker';
+import CustomTextBox from '../../components/CustomTextBox';
 
 // --- Types ---
 
@@ -76,27 +77,37 @@ const EndLease: React.FC = () => {
                 {/* Lease Details Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-y-6 gap-x-12 mb-10 bg-white text-sm p-6 rounded-[2rem] shadow-sm">
                     <div>
-                        <span className="block font-bold text-gray-800 mb-1">Property</span>
-                        <span className="text-gray-600">{leaseData.property}</span>
+                        <CustomTextBox
+                            label="Property"
+                            value={leaseData.property}
+                        />
                     </div>
                     {/* Empty col for spacing matching screenshot roughly, or just responsive grid */}
 
-                    <div className="col-span-2 md:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <div className="md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <span className="block font-bold text-gray-800 mb-1">Lease Type</span>
-                            <span className="text-gray-600">{leaseData.type}</span>
+                            <CustomTextBox
+                                label="Lease Type"
+                                value={leaseData.type}
+                            />
                         </div>
                         <div>
-                            <span className="block font-bold text-gray-800 mb-1">Start Date</span>
-                            <span className="text-gray-600">{leaseData.startDate}</span>
+                            <CustomTextBox
+                                label="Start Date"
+                                value={leaseData.startDate}
+                            />
                         </div>
                         <div>
-                            <span className="block font-bold text-gray-800 mb-1">Lease Invoicing</span>
-                            <span className="text-gray-600">{leaseData.invoicing}</span>
+                            <CustomTextBox
+                                label="Lease Invoicing"
+                                value={leaseData.invoicing}
+                            />
                         </div>
                         <div>
-                            <span className="block font-bold text-gray-800 mb-1">End date</span>
-                            <span className="text-gray-600">{leaseData.endDate}</span>
+                            <CustomTextBox
+                                label="End date"
+                                value={leaseData.endDate}
+                            />
                         </div>
                     </div>
                 </div>
@@ -233,53 +244,52 @@ const EndLease: React.FC = () => {
                             </div>
                         </div>
                     </div>
-                    <div className="flex justify-end">
-                        <button
-                            onClick={() => navigate('/dashboard/accounting/transactions/return-deposit', {
-                                state: {
-                                    prefilledPayer: { label: MOCK_LEASE_DETAIL.tenant.name },
-                                    prefilledDepositCategory: 'security_deposit'
-                                }
-                            })}
-                            className="w-full sm:w-auto bg-[#3A6D6C] hover:bg-[#2c5251] text-white px-4 py-2 rounded-md text-sm font-bold transition-colors shadow-sm"
-                        >
-                            Return deposit
-                        </button>
-                    </div>
                 </div>
-
-                <hr className="border-dashed border-gray-200 mb-8" />
-
-                {/* Footer Actions */}
-                <div className="flex flex-col-reverse md:flex-row justify-between items-end md:items-center gap-6">
+                <div className="flex justify-end">
                     <button
-                        onClick={() => navigate(-1)}
-                        className="px-8 py-2.5 border border-gray-400 text-gray-600 font-bold rounded-md hover:bg-gray-50 transition-colors w-full md:w-auto"
+                        onClick={() => navigate('/dashboard/accounting/transactions/return-deposit', {
+                            state: {
+                                prefilledPayer: { label: MOCK_LEASE_DETAIL.tenant.name },
+                                prefilledDepositCategory: 'security_deposit'
+                            }
+                        })}
+                        className="bg-[#3A6D6C] hover:bg-[#2c5251] text-white px-8 py-2 rounded-full text-sm font-bold transition-colors shadow-sm w-full sm:w-auto"
                     >
-                        Cancel
+                        Return Deposit
                     </button>
-
-                    <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-                        <div className="flex flex-col gap-1 w-full md:w-auto">
-                            <label className="text-xs font-bold text-gray-600">Date ended</label>
-                            <div className="w-full md:w-48">
-                                <DatePicker
-                                    value={endDate}
-                                    onChange={setEndDate}
-                                    popoverClassName="bottom-full mb-2 mt-0 w-[300px]"
-                                    className="border-gray-300 shadow-none focus:ring-[#20CC95]/20 focus:border-[#20CC95]"
-                                />
-                            </div>
-                        </div>
-                        <button
-                            onClick={handleEndLease}
-                            className="bg-[#D3455B] hover:bg-[#b9384b] text-white px-6 py-2.5 rounded-md font-bold transition-colors shadow-sm w-full md:w-auto h-[42px] mt-auto"
-                        >
-                            End the Lease
-                        </button>
-                    </div>
                 </div>
+            </div>
 
+            <hr className="border-dashed border-gray-200 mb-8" />
+
+            {/* Footer Actions */}
+            <div className="flex flex-col-reverse md:flex-row justify-between items-end md:items-center gap-6">
+                <button
+                    onClick={() => navigate(-1)}
+                    className="px-8 py-2.5 border border-gray-400 text-gray-600 font-bold rounded-md hover:bg-gray-50 transition-colors w-full md:w-auto"
+                >
+                    Cancel
+                </button>
+
+                <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+                    <div className="flex flex-col gap-1 w-full md:w-auto">
+                        <label className="text-xs font-bold text-gray-600">Date ended</label>
+                        <div className="w-full md:w-48">
+                            <DatePicker
+                                value={endDate}
+                                onChange={setEndDate}
+                                popoverClassName="bottom-full mb-2 mt-0 w-[300px]"
+                                className="border-gray-300 shadow-none focus:ring-[#20CC95]/20 focus:border-[#20CC95]"
+                            />
+                        </div>
+                    </div>
+                    <button
+                        onClick={handleEndLease}
+                        className="bg-[#EF4444] hover:bg-[#DC2626] text-white px-6 py-2.5 rounded-md font-bold transition-colors shadow-sm w-full md:w-auto h-[42px] mt-auto"
+                    >
+                        End the Lease
+                    </button>
+                </div>
             </div>
         </div>
     );
