@@ -5,10 +5,6 @@ import PropertyFilters from "./components/PropertyFilters";
 import type { Property, FilterState } from "../../utils/types";
 import { API_ENDPOINTS } from "../../../../config/api.config";
 import { authService } from "../../../../services/auth.service";
-import type {
-  PublicListingProperty,
-  PublicListingPhoto
-} from "../../../../services/property.service";
 
 // --- Internal Components ---
 
@@ -16,7 +12,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
   return (
     <Link
       to={`/userdashboard/properties/${property.id}`}
-      className="block transition-transform duration-300 hover:scale-[1.01] active:scale-[0.98]"
+      className="block transition-transform duration-300 hover:scale-[1.02] active:scale-[0.98]"
     >
       <div className="relative w-full aspect-[4/3] rounded-[var(--radius-lg)] overflow-hidden group shadow-[var(--shadow-md)] hover:shadow-[var(--shadow-lg)] transition-shadow duration-300">
         {/* Background Image */}
@@ -69,44 +65,12 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
   );
 };
 
-const PropertySkeleton: React.FC = () => {
-  return (
-    <div className="relative w-full aspect-[4/3] rounded-[var(--radius-lg)] overflow-hidden shadow-[var(--shadow-md)] bg-gray-200 animate-pulse">
-      {/* Tag styles */}
-      <div className="absolute top-3 left-3 w-20 h-8 bg-gray-300 rounded-md opacity-50"></div>
-
-      {/* Info Overlay styles */}
-      <div className="absolute bottom-5 left-6 right-6 bg-white/80 backdrop-blur-sm rounded-[var(--radius-md)] p-4 shadow-[var(--shadow-sm)]">
-        <div className="flex justify-between items-start">
-          <div className="space-y-2 w-full pr-8">
-            {/* Title */}
-            <div className="h-5 bg-gray-300 rounded w-3/4"></div>
-            {/* Address */}
-            <div className="h-3 bg-gray-300 rounded w-1/2"></div>
-            {/* Type */}
-            <div className="h-3 bg-gray-300 rounded w-1/3"></div>
-          </div>
-          {/* Heart icon placeholder */}
-          <div className="w-5 h-5 bg-gray-300 rounded-full"></div>
-        </div>
-        <div className="mt-3 flex items-baseline gap-1">
-          {/* Price */}
-          <div className="h-5 bg-gray-300 rounded w-1/4"></div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 import { usePropertyStore } from "./store/propertyStore";
-
-const ITEMS_PER_PAGE = 15;
 
 const Properties: React.FC = () => {
   const {
     propertyFilters: filters,
     setPropertyFilters: setFilters,
-    resetPropertyFilters,
     isPropertyFiltersOpen,
     setIsPropertyFiltersOpen
   } = usePropertyStore();
@@ -114,8 +78,7 @@ const Properties: React.FC = () => {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [usePreferences, setUsePreferences] = useState(false); // Toggle for preferences
-  const [currentPage, setCurrentPage] = useState(1);
+  const [usePreferences, setUsePreferences] = useState(true); // Toggle for preferences
   const [userPreferences, setUserPreferences] = useState<{
     location?: { country: string; state: string; city: string };
     rentalTypes?: string[];
@@ -127,8 +90,6 @@ const Properties: React.FC = () => {
       petsAllowed?: boolean;
     };
   } | null>(null);
-
-  const [prefsLoaded, setPrefsLoaded] = useState(false);
 
   // Fetch user preferences on mount (only for authenticated tenants)
   useEffect(() => {
@@ -245,7 +206,7 @@ const Properties: React.FC = () => {
         } else if (shouldUsePreferences && userPreferences?.criteria?.beds && userPreferences.criteria.beds !== 'Any') {
           bedsFilter = userPreferences.criteria.beds;
         }
-
+        
         if (bedsFilter) {
           params.append('beds', bedsFilter);
         }
@@ -266,54 +227,7 @@ const Properties: React.FC = () => {
           params.append('propertyType', propertyType);
         }
 
-        // Only apply manual filters if preferences are NOT enabled
-        // When preferences are enabled, they take priority
-        if (!shouldUsePreferences) {
-          // Pets allowed filter from UI filters (only when preferences disabled)
-          if (filters.petsAllowed && filters.petsAllowed !== 'All') {
-            params.append('petsAllowed', (filters.petsAllowed === 'Yes').toString());
-          }
-
-          // Region/Location filter - Use structured location data (only when preferences disabled)
-          if (filters.locationFilter && filters.locationFilter.type !== 'all') {
-            const location = filters.locationFilter;
-
-            switch (location.type) {
-              case 'radius':
-                // Specific radius filter (e.g., "Within 5km of Bhopal")
-                if (location.city && location.radius) {
-                  params.append('city', location.city);
-                  params.append('radius', location.radius.toString());
-                }
-                break;
-
-              case 'nearby':
-                // City & Nearby Areas (uses default radius)
-                if (location.city && location.radius) {
-                  params.append('city', location.city);
-                  params.append('radius', location.radius.toString());
-                }
-                break;
-
-              case 'state':
-                // State-wide filter (e.g., "All Madhya Pradesh")
-                if (location.state) {
-                  params.append('state', location.state);
-                }
-                break;
-
-              case 'city':
-                // Direct city name
-                if (location.city) {
-                  params.append('city', location.city);
-                }
-                break;
-            }
-          }
-        }
-
         const url = `${API_ENDPOINTS.PROPERTY.GET_PUBLIC_LISTINGS}${params.toString() ? `?${params.toString()}` : ''}`;
-
         const response = await fetch(url, {
           method: 'GET',
           credentials: 'include',
@@ -348,7 +262,8 @@ const Properties: React.FC = () => {
           const uniqueId = item.listing?.id ? `${item.id}-${item.listing.id}` : `${item.id}-${index}`;
 
           return {
-            id: uniqueId,
+            id: item.id, // Use actual property ID for navigation
+            uniqueId: uniqueId, // Use composite ID for React keys
             title: title,
             address: addressString,
             type: item.propertyType === 'SINGLE' ? 'Single Unit' : 'Multi Unit',
@@ -357,19 +272,19 @@ const Properties: React.FC = () => {
             currency: '$',
             tag: item.listing?.petsAllowed ? 'Pets Allowed' : null,
             image: item.coverPhotoUrl || (item.photos?.[0]?.photoUrl ?? null),
-            images: item.photos?.map((p: PublicListingPhoto) => p.photoUrl) || [],
+            images: item.photos?.map((p: any) => p.photoUrl) || [],
           };
         });
 
-        // Deduplicate properties by full unique ID (property-listing combination)
-        // Each property-listing combination gets its own card
+        // Deduplicate properties by property ID (keep first occurrence)
         const seen = new Set<string>();
         const deduplicatedProperties = mappedProperties.filter((property) => {
-          const uniqueId = String(property.id);
-          if (seen.has(uniqueId)) {
+          // Use the actual property ID for deduplication
+          const baseId = String(property.id);
+          if (seen.has(baseId)) {
             return false; // Skip duplicate
           }
-          seen.add(uniqueId);
+          seen.add(baseId);
           return true;
         });
 
