@@ -67,18 +67,35 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
 
 import { usePropertyStore } from "./store/propertyStore";
 
+// Skeleton component for loading state
+const PropertySkeleton: React.FC = () => (
+  <div className="relative w-full aspect-[4/3] rounded-lg overflow-hidden bg-gray-200 animate-pulse">
+    <div className="absolute inset-0 bg-gray-300"></div>
+    <div className="absolute bottom-5 left-6 right-6 bg-white/90 backdrop-blur-sm rounded-md p-4">
+      <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+      <div className="h-3 bg-gray-200 rounded w-1/2 mb-2"></div>
+      <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+    </div>
+  </div>
+);
+
+const ITEMS_PER_PAGE = 12;
+
 const Properties: React.FC = () => {
   const {
     propertyFilters: filters,
     setPropertyFilters: setFilters,
     isPropertyFiltersOpen,
-    setIsPropertyFiltersOpen
+    setIsPropertyFiltersOpen,
+    resetPropertyFilters
   } = usePropertyStore();
 
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [usePreferences, setUsePreferences] = useState(true); // Toggle for preferences
+  const [prefsLoaded, setPrefsLoaded] = useState(false); // Track if preferences have been loaded
+  const [currentPage, setCurrentPage] = useState(1); // Pagination state
   const [userPreferences, setUserPreferences] = useState<{
     location?: { country: string; state: string; city: string };
     rentalTypes?: string[];
@@ -240,7 +257,7 @@ const Properties: React.FC = () => {
         const data = await response.json();
 
         // Map backend response to Property type
-        const mappedProperties: Property[] = data.map((item: PublicListingProperty, index: number) => {
+        const mappedProperties: Property[] = data.map((item: any, index: number) => {
           const address = item.address;
           const addressString = address
             ? `${address.streetAddress || ''}, ${address.city || ''}, ${address.stateRegion || ''}, ${address.zipCode || ''}, ${address.country || ''}`
@@ -489,7 +506,7 @@ const Properties: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {paginatedProperties.length > 0 ? (
                 paginatedProperties.map((property) => (
-                  <PropertyCard key={property.id} property={property} />
+                  <PropertyCard key={(property as any).uniqueId || property.id} property={property} />
                 ))
               ) : (
                 <div className="col-span-full py-20 text-center">
