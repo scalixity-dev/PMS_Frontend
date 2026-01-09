@@ -20,7 +20,7 @@ interface EditInvoiceFormData {
 }
 
 const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({ onConfirm }) => {
-    const { isEditInvoiceOpen, setEditInvoiceOpen } = useTransactionStore();
+    const { isEditInvoiceOpen, setEditInvoiceOpen, editingTransactionData } = useTransactionStore();
     const isOpen = isEditInvoiceOpen;
     const onClose = () => setEditInvoiceOpen(false);
     const [category, setCategory] = useState('');
@@ -42,13 +42,46 @@ const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({ onConfirm }) => {
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden';
+
+            // Pre-populate data if available
+            if (editingTransactionData) {
+                setCategory(editingTransactionData.category || '');
+                // Clean amount string if it has currency symbols
+                const cleanAmount = editingTransactionData.amount
+                    ? editingTransactionData.amount.replace(/[^0-9.]/g, '')
+                    : '';
+                setAmount(cleanAmount);
+                setDetails(editingTransactionData.details || '');
+                setTags(editingTransactionData.tags || '');
+
+                if (editingTransactionData.date) {
+                    const parsedDate = new Date(editingTransactionData.date);
+                    if (!isNaN(parsedDate.getTime())) {
+                        setDueOn(parsedDate);
+                    }
+                }
+            }
         } else {
             document.body.style.overflow = 'unset';
+            // Optional: reset fields on close if desired, but retaining might be better for UX if reopening accidentally
+            // For now, let's reset to ensure fresh state on next open if no data passed, 
+            // but if we are editing, we usually want it to reset.
+            // Let's reset if we want "New" behavior, but "Edit" implies we override.
+            // A simple reset on close ensures clean slate.
+
+            /* 
+            setCategory('');
+            setAmount('');
+            setDueOn(undefined);
+            setDetails('');
+            setTags('');
+            setSelectedFile(null);
+            */
         }
         return () => {
             document.body.style.overflow = 'unset';
         };
-    }, [isOpen]);
+    }, [isOpen, editingTransactionData]);
 
     const handleFileClick = () => {
         setUploadError('');

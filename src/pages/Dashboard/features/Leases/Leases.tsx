@@ -70,7 +70,6 @@ const Leases: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [filters, setFilters] = useState<Record<string, string[]>>({});
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [isEndLeaseModalOpen, setIsEndLeaseModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedLeaseId, setSelectedLeaseId] = useState<number | string | null>(null);
     const [selectedLeaseData, setSelectedLeaseData] = useState<LeaseItem | null>(null);
@@ -154,8 +153,7 @@ const Leases: React.FC = () => {
 
     const handleEndLeaseClick = (e: React.MouseEvent, id: number | string) => {
         e.stopPropagation();
-        setSelectedLeaseId(id);
-        setIsEndLeaseModalOpen(true);
+        navigate(`/dashboard/leasing/leases/${id}/end-lease`);
     };
 
     const handleEditClick = (e: React.MouseEvent, item: LeaseItem) => {
@@ -174,13 +172,6 @@ const Leases: React.FC = () => {
         console.log('Deleting lease', selectedLeaseId);
         // Add actual delete logic here
         setIsDeleteModalOpen(false);
-        setSelectedLeaseId(null);
-    };
-
-    const handleConfirmEndLease = () => {
-        console.log('Ending lease', selectedLeaseId);
-        // Add actual end lease logic here
-        setIsEndLeaseModalOpen(false);
         setSelectedLeaseId(null);
     };
 
@@ -564,17 +555,6 @@ const Leases: React.FC = () => {
                 onConfirm={handleConfirmDelete}
                 title="Delete Lease"
                 message="Are you sure you want to delete this lease? This action cannot be undone."
-                itemName={selectedLeaseId ? `Lease #${selectedLeaseId}` : 'Lease'}
-            />
-
-            <DeleteConfirmationModal
-                isOpen={isEndLeaseModalOpen}
-                onClose={() => setIsEndLeaseModalOpen(false)}
-                onConfirm={handleConfirmEndLease}
-                title="End Lease"
-                message="Are you sure you want to end this lease? This will change the status to historical."
-                confirmText="End Lease"
-                confirmButtonClass="bg-orange-600 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-orange-700 transition-colors shadow-sm"
                 itemName={selectedLeaseId ? `Lease #${selectedLeaseId}` : 'Lease'}
             />
 
