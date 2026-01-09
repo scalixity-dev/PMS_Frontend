@@ -62,6 +62,7 @@ import ListingDetail from './pages/Dashboard/features/Listing/ListingDetail';
 import Calendar from './pages/Dashboard/features/Calendar/Calendar';
 import Tasks from './pages/Dashboard/features/Tasks/Tasks';
 import Tenants from './pages/Dashboard/features/Tenants/Tenants';
+import ImportTenants from './pages/Dashboard/features/Tenants/ImportTenants/ImportTenants';
 import AddEditTenant from './pages/Dashboard/features/Tenants/AddEditTenant';
 import TenantDetail from './pages/Dashboard/features/Tenants/TenantDetail';
 import Units from './pages/Dashboard/features/Units/Units';
@@ -261,6 +262,7 @@ const App: React.FC = () => {
               <Route path="/dashboard/maintenance/recurring/:id" element={<MaintenanceRecurringDetail />} />
               <Route path="/dashboard/movein" element={<MoveIn />} />
               <Route path="/dashboard/contacts/tenants" element={<Tenants />} />
+              <Route path="/dashboard/contacts/tenants/import" element={<ImportTenants />} />
               <Route path="/dashboard/contacts/tenants/add" element={<AddEditTenant />} />
               <Route path="/dashboard/contacts/tenants/edit/:id" element={<AddEditTenant />} />
               <Route path="/dashboard/contacts/tenants/:id" element={<TenantDetail />} />

@@ -134,7 +134,10 @@ const Tenants = () => {
                         <h1 className="text-2xl font-bold text-black">Tenants</h1>
                     </div>
                     <div className="flex gap-3 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
-                        <button className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors whitespace-nowrap">
+                        <button
+                            onClick={() => navigate('/dashboard/contacts/tenants/import')}
+                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors whitespace-nowrap"
+                        >
                             Import
                         </button>
                         <button

@@ -97,6 +97,9 @@ export const API_ENDPOINTS = {
     DELETE_DOCUMENT: (documentId: string) => `${API_BASE_URL}/tenant/documents/${documentId}`,
     SAVE_PREFERENCES: `${API_BASE_URL}/tenant/preferences`,
     GET_PREFERENCES: `${API_BASE_URL}/tenant/preferences`,
+    IMPORT_EXCEL: `${API_BASE_URL}/tenant/import-excel`,
+    VALIDATE_EXCEL: `${API_BASE_URL}/tenant/validate-excel`,
+    GET_IMPORT_FIELDS: `${API_BASE_URL}/tenant/import-fields`,
   },
   APPLICATION: {
     GET_ALL: `${API_BASE_URL}/application`,
