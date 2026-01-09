@@ -19,6 +19,7 @@ import { Link, useParams, useNavigate } from "react-router-dom";
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
 import type { PropertyFeature } from "../../utils/types";
 import { API_ENDPOINTS } from "../../../../config/api.config";
+import { formatMoney } from "../../../../utils/currency.utils";
 
 // --- Types ---
 interface PropertyData {
@@ -28,6 +29,7 @@ interface PropertyData {
     availabilityDate: string;
     rent: number;
     currency: string;
+    currencyCode?: string; // ISO currency code (e.g., "USD", "INR", "EUR")
     images: string[];
     discount: string;
     description: string;
@@ -305,6 +307,13 @@ const PropertyDetailUser: React.FC = () => {
                             ? parseFloat(data.marketRent)
                             : 0;
 
+                // Get currency from backend response, fallback to property country or default
+                const currencyInfo = data.currency || (address?.country ? {
+                    code: address.country === 'India' || address.country === 'IN' ? 'INR' : 'USD',
+                    symbol: address.country === 'India' || address.country === 'IN' ? '₹' : '$',
+                    name: address.country === 'India' || address.country === 'IN' ? 'Indian Rupee' : 'US Dollar'
+                } : { code: 'USD', symbol: '$', name: 'US Dollar' });
+
                 const beds = data.singleUnitDetail?.beds ?? null;
                 const title = data.listing?.title ||
                     (beds !== null ? `${beds} Bedroom ${data.propertyType === 'SINGLE' ? 'Property' : 'Unit'}` : data.propertyName);
@@ -381,19 +390,19 @@ const PropertyDetailUser: React.FC = () => {
                 if (data.listing?.securityDeposit) {
                     leaseTerms.push({
                         label: "Security deposit",
-                        value: `$${parseFloat(data.listing.securityDeposit).toLocaleString()}`
+                        value: formatMoney(parseFloat(data.listing.securityDeposit), currencyInfo.code)
                     });
                 }
                 if (data.listing?.amountRefundable) {
                     leaseTerms.push({
                         label: "Amount Refundable",
-                        value: `$${parseFloat(data.listing.amountRefundable).toLocaleString()}`
+                        value: formatMoney(parseFloat(data.listing.amountRefundable), currencyInfo.code)
                     });
                 }
                 if (data.listing?.applicationFee) {
                     leaseTerms.push({
                         label: "Application fee",
-                        value: `$${parseFloat(data.listing.applicationFee).toLocaleString()}`
+                        value: formatMoney(parseFloat(data.listing.applicationFee), currencyInfo.code)
                     });
                 }
 
@@ -408,13 +417,13 @@ const PropertyDetailUser: React.FC = () => {
                     if (data.listing.petDeposit) {
                         policies.push({
                             label: "Pet Deposit",
-                            value: `$${parseFloat(data.listing.petDeposit).toLocaleString()}`
+                            value: formatMoney(parseFloat(data.listing.petDeposit), currencyInfo.code)
                         });
                     }
                     if (data.listing.petFee) {
                         policies.push({
                             label: "Pet Fee",
-                            value: `$${parseFloat(data.listing.petFee).toLocaleString()}`
+                            value: formatMoney(parseFloat(data.listing.petFee), currencyInfo.code)
                         });
                     }
                 }
@@ -425,7 +434,8 @@ const PropertyDetailUser: React.FC = () => {
                     address: addressString,
                     availabilityDate: formatDate(data.listing?.availableFrom),
                     rent: price,
-                    currency: "$",
+                    currency: currencyInfo.symbol,
+                    currencyCode: currencyInfo.code,
                     images: images.length > 0 ? images : ["https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=800"],
                     discount: "", // Can be added from listing if available
                     description: data.description || data.listing?.description || "No description available.",
@@ -502,7 +512,7 @@ const PropertyDetailUser: React.FC = () => {
                 images={propertyData.images}
                 discount={propertyData.discount}
                 title={propertyData.title}
-                rent={`${propertyData.currency}${propertyData.rent}`}
+                rent={propertyData.currencyCode ? formatMoney(propertyData.rent, propertyData.currencyCode) : `${propertyData.currency}${propertyData.rent}`}
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
@@ -519,7 +529,7 @@ const PropertyDetailUser: React.FC = () => {
                         </div>
                         <div className="text-right">
                             <p className="text-2xl font-medium text-[var(--dashboard-text-main)]">
-                                {propertyData.currency}{propertyData.rent} <span className="text-gray-500 text-xl font-normal">month</span>
+                                {propertyData.currencyCode ? formatMoney(propertyData.rent, propertyData.currencyCode) : `${propertyData.currency}${propertyData.rent}`} <span className="text-gray-500 text-xl font-normal">month</span>
                             </p>
                             <p className="text-[#4B5563] font-normal">Rent</p>
                         </div>
