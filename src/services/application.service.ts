@@ -569,6 +569,47 @@ class ApplicationService {
 
     return response.json();
   }
+
+  /**
+   * Send invitation to apply for a property (supports multiple emails, max 5)
+   */
+  async inviteToApply(emails: string[], propertyId: string): Promise<{ 
+    message: string; 
+    successful: number;
+    failed: number;
+    existingEmails: string[];
+    nonExistingEmails: string[];
+    propertyName: string; 
+    propertyManagerName: string;
+  }> {
+    const response = await fetch(API_ENDPOINTS.APPLICATION.INVITE, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ emails, propertyId }),
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to send invitation';
+      try {
+        const errorData = await response.json();
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join('. ');
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+      } catch (parseError) {
+        errorMessage = `Failed to send invitation: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  }
 }
 
 export const applicationService = new ApplicationService();
