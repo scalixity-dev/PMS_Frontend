@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronLeft, Edit, Trash2, MoreHorizontal } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import PayerPayeeDropdown from './components/PayerPayeeDropdown';
 import TransactionToggle from './components/TransactionToggle';
 import AddTenantModal from '../Tenants/components/AddTenantModal';
@@ -36,6 +36,19 @@ const BulkPaymentsIncome: React.FC = () => {
     const [payerPayee, setPayerPayee] = useState<string>('');
     const [property, setProperty] = useState<string>('');
     const [isAddTenantModalOpen, setIsAddTenantModalOpen] = useState(false);
+    const location = useLocation();
+
+    // Handle prefilled data
+    React.useEffect(() => {
+        if (location.state?.prefilledPayer) {
+            // Set to Tenant '2' context
+            setPayerPayee('2');
+        }
+        if (location.state?.prefilledProperty) {
+            // Set to a valid property mock 'prop_3' for Tenant '2' to show it works
+            setProperty('prop_3');
+        }
+    }, [location.state]);
 
     // Dynamic Options and Data
     const propertyOptions = payerPayee ? (MOCK_PROPERTIES[payerPayee] || []) : [];

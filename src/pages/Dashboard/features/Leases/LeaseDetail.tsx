@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, FileText, ChevronDown, SquarePen, Upload, Edit, Trash2, ClipboardCheck, XCircle } from 'lucide-react';
+import { ChevronLeft, FileText, ChevronDown, SquarePen, Upload, Edit, Trash2, XCircle } from 'lucide-react';
 import DetailTabs from '../../components/DetailTabs';
 import CustomTextBox from '../../components/CustomTextBox';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
@@ -8,7 +8,7 @@ import EditLeaseTermsModal, { type Lease } from './components/EditLeaseTermsModa
 
 
 // Mock Data for the view
-const MOCK_LEASE_DETAIL: Lease = {
+export const MOCK_LEASE_DETAIL: Lease = {
     id: 5,
     property: {
         name: 'Luxury Apartment',
@@ -159,20 +159,11 @@ const LeaseDetail: React.FC = () => {
                                     <Edit className="w-4 h-4" />
                                     Edit
                                 </button>
+
                                 <button
                                     onClick={() => {
                                         setIsActionDropdownOpen(false);
-                                        console.log('Move-out inspection clicked');
-                                    }}
-                                    className="flex items-center gap-3 w-full px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-50"
-                                >
-                                    <ClipboardCheck className="w-4 h-4" />
-                                    Move-out Inspection
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        setIsActionDropdownOpen(false);
-                                        setIsEndLeaseModalOpen(true);
+                                        navigate(`/dashboard/leasing/leases/${id}/end-lease`);
                                     }}
                                     className="flex items-center gap-3 w-full px-4 py-3 text-sm text-orange-600 hover:bg-orange-50 transition-colors border-b border-gray-50"
                                 >

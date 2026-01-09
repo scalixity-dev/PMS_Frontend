@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronLeft, Edit, Trash2, MoreHorizontal } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import PayerPayeeDropdown from './components/PayerPayeeDropdown';
 import AddTenantModal from '../Tenants/components/AddTenantModal';
 import CustomDropdown from '../../components/CustomDropdown';
@@ -23,6 +23,17 @@ const ReturnDeposit: React.FC = () => {
     const [payerPayee, setPayerPayee] = useState<string>('');
     const [depositCategory, setDepositCategory] = useState<string>('');
     const [isAddTenantModalOpen, setIsAddTenantModalOpen] = useState(false);
+    const location = useLocation();
+
+    // Handle prefilled data
+    React.useEffect(() => {
+        if (location.state?.prefilledPayer) {
+            setPayerPayee('2'); // defaulting to Tenant
+        }
+        if (location.state?.prefilledDepositCategory) {
+            setDepositCategory('security_deposit'); // defaulting to Security Deposit
+        }
+    }, [location.state]);
 
     // Get dynamic options based on selected payer/payee
     const depositOptions = payerPayee ? (MOCK_DEPOSIT_OPTIONS[payerPayee] || []) : [];

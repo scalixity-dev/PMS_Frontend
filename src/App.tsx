@@ -70,6 +70,7 @@ import KeyDetail from './pages/Dashboard/features/KeysLocks/KeyDetail';
 import Leases from './pages/Dashboard/features/Leases/Leases';
 import ImportLeases from './pages/Dashboard/features/Leases/ImportLeases/ImportLeases';
 import LeaseDetail from './pages/Dashboard/features/Leases/LeaseDetail';
+import EndLease from './pages/Dashboard/features/Leases/EndLease';
 import AddKey from './pages/Dashboard/features/KeysLocks/AddKey';
 import ServicePros from './pages/Dashboard/features/ServicePros/ServicePros';
 import AddEditServicePro from './pages/Dashboard/features/ServicePros/AddEditServicePro';
@@ -306,6 +307,7 @@ const App: React.FC = () => {
                 }
               />
               <Route path="/dashboard/portfolio/leases/:id" element={<LeaseDetail />} />
+              <Route path="/dashboard/leasing/leases/:id/end-lease" element={<EndLease />} />
 
               <Route
                 path="/dashboard/messages"

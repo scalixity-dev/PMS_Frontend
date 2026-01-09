@@ -28,6 +28,9 @@ const AddIncomeInvoice: React.FC = () => {
 			setLease(location.state.prefilledLease);
 			setShowLeaseInput(true);
 		}
+		if (location.state?.prefilledDate) {
+			setDueDate(location.state.prefilledDate);
+		}
 	}, [location.state]);
 
 	return (
