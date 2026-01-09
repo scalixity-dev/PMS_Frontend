@@ -11,7 +11,8 @@ const defaultFilters: FilterState = {
     bedrooms: "All",
     availability: "All",
     selectedAmenities: [],
-    petsAllowed: "All"
+    petsAllowed: "All",
+    locationModified: false
 };
 
 interface PropertyState {
