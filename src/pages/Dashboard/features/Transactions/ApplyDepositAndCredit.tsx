@@ -3,6 +3,7 @@ import { ChevronLeft } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import PayerPayeeDropdown from './components/PayerPayeeDropdown';
 import AddTenantModal from '../Tenants/components/AddTenantModal';
+import { validateFile } from '../../../../utils/fileValidation';
 import CustomDropdown from '../../components/CustomDropdown';
 
 // Mock Data
@@ -31,30 +32,17 @@ const ApplyDepositAndCredit: React.FC = () => {
     const [payerPayee, setPayerPayee] = useState<string>('');
     const [lease, setLease] = useState<string>('');
     const [isAddTenantModalOpen, setIsAddTenantModalOpen] = useState(false);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [uploadError, setUploadError] = useState<string>('');
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
     const location = useLocation();
 
     // Reset state based on location state if provided
     React.useEffect(() => {
         if (location.state?.prefilledPayer) {
-            // Assuming the prefilledPayer object has a 'label' or 'id' that matches the dropdown value expectations.
-            // The dropdown expects a string value (ID or Label depending on implementation).
-            // Based on AddIncomeInvoice, it used label. Let's see PayerPayeeDropdown usage.
-            // In AddIncomeInvoice: setPayerPayee(location.state.prefilledPayer.label);
-            // Here: setPayerPayee(value).
-            // Let's assume passed value matches.
-            setPayerPayee(location.state.prefilledPayer.id || '2'); // Defaulting to '2' (Tenant) for demo if ID missing, or just use what's passed.
-            // Actually, EndLease passes: prefilledPayer: { label: MOCK_LEASE_DETAIL.tenant.name } which is just name.
-            // The dropdown options have IDs '1', '2'.
-            // I'll just set it to '2' (Tenant) if the passed label matches our tenant mock, or just '2' since we know it's a tenant context from EndLease.
-            // To be generic, I should probably check the logic. But for this specific task, wiring it up:
-            // I will set it to '2' (Tenant) if coming from EndLease, as EndLease is tenant context.
-            setPayerPayee('2');
+            setPayerPayee(location.state.prefilledPayer.id || '2');
         }
         if (location.state?.prefilledLease) {
-            // MOCK_LEASES['2'] has 'lease_a'. MOCK_LEASE_DETAIL.lease is 'Lease 5'.
-            // I'll just set it to a valid value from the mock 'lease_a' to show it works, or pass the value if it matches.
-            // setLease(location.state.prefilledLease); 
-            // For visual confirmation, I'll force it to the first available option for Tenant '2' -> 'lease_a'.
             setLease('lease_a');
         }
     }, [location.state]);
@@ -66,6 +54,34 @@ const ApplyDepositAndCredit: React.FC = () => {
     const handlePayerChange = (value: string) => {
         setPayerPayee(value);
         setLease(''); // Reset lease when payer changes
+    };
+
+    const handleFileClick = () => {
+        setUploadError('');
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const validation = validateFile(file);
+        if (!validation.isValid) {
+            setUploadError(validation.error || 'Invalid file');
+            return;
+        }
+
+        setSelectedFile(file);
+        setUploadError('');
+    };
+
+    const handleRecord = () => {
+        console.log({
+            payerPayee,
+            lease,
+            file: selectedFile
+        });
+        // TODO: Implement API call
     };
 
     return (
@@ -201,9 +217,37 @@ const ApplyDepositAndCredit: React.FC = () => {
                     )}
                 </div>
 
+                {/* File Upload Error/Success Message */}
+                {uploadError && (
+                    <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-lg text-red-700 text-sm">
+                        {uploadError}
+                    </div>
+                )}
+                {selectedFile && !uploadError && (
+                    <div className="mb-4 p-3 bg-green-100 border border-green-300 rounded-lg text-green-700 text-sm">
+                        File selected: {selectedFile.name}
+                    </div>
+                )}
+
                 {/* Footer Buttons */}
-                <div className="mt-8">
-                    <button className="bg-[#3A6D6C] text-white px-8 py-3 rounded-lg font-semibold shadow-md hover:bg-[#2c5251] hover:shadow-lg transition-all duration-200">
+                <div className="mt-8 flex flex-col sm:flex-row gap-4">
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        className="hidden"
+                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                        onChange={handleFileChange}
+                    />
+                    <button
+                        onClick={handleFileClick}
+                        className="bg-[#20CC95] text-white px-8 py-3 rounded-lg font-semibold shadow-md hover:bg-[#1bb584] hover:shadow-lg transition-all duration-200"
+                    >
+                        Upload File
+                    </button>
+                    <button
+                        onClick={handleRecord}
+                        className="bg-[#3A6D6C] text-white px-8 py-3 rounded-lg font-semibold shadow-md hover:bg-[#2c5251] hover:shadow-lg transition-all duration-200"
+                    >
                         Record as Applied
                     </button>
                 </div>

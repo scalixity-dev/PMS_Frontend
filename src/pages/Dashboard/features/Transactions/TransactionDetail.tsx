@@ -78,10 +78,20 @@ const TransactionDetail: React.FC = () => {
 
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit">
-            <EditPaymentModal />
-            <RefundRentModal />
-            <EditPaymentModal />
-            <RefundRentModal />
+            <EditPaymentModal
+                onConfirm={(data) => {
+                    console.log('Edit Payment data:', data);
+                    // TODO: Implement API call
+                    setEditPaymentModalOpen(false);
+                }}
+            />
+            <RefundRentModal
+                onConfirm={(data) => {
+                    console.log('Refund Rent data:', data);
+                    // TODO: Implement API call
+                    setRefundModalOpen(false);
+                }}
+            />
             <DeleteConfirmationModal
                 isOpen={useTransactionStore((state) => state.isDeleteModalOpen)}
                 onClose={() => setDeleteModalOpen(false)}
@@ -108,15 +118,40 @@ const TransactionDetail: React.FC = () => {
                 itemName="Payment"
                 headerClassName="bg-red-600"
             />
-            <MarkAsPaidModal />
-            <ApplyDepositsModal />
-            <ApplyCreditsModal />
-            <AddDiscountModal />
+            <MarkAsPaidModal
+                onConfirm={(data) => {
+                    console.log('Mark As Paid data:', data);
+                    // TODO: Implement API call
+                    setMarkAsPaidOpen(false);
+                }}
+            />
+            <ApplyDepositsModal
+                onConfirm={(data) => {
+                    console.log('Apply Deposits data:', data);
+                    // TODO: Implement API call
+                    setApplyDepositsOpen(false);
+                }}
+            />
+            <ApplyCreditsModal
+                onConfirm={(data) => {
+                    console.log('Apply Credits data:', data);
+                    // TODO: Implement API call
+                    setApplyCreditsOpen(false);
+                }}
+            />
+            <AddDiscountModal
+                onConfirm={(data) => {
+                    console.log('Add Discount data:', data);
+                    // TODO: Implement API call
+                    setAddDiscountOpen(false);
+                }}
+            />
             <DeleteConfirmationModal
                 isOpen={useTransactionStore((state) => state.isDeleteTransactionOpen)}
                 onClose={() => setDeleteTransactionOpen(false)}
                 onConfirm={() => {
                     // Handle delete transaction logic here
+                    console.log('Deleting transaction...');
                     setDeleteTransactionOpen(false);
                 }}
                 title="Delete transaction"
@@ -128,11 +163,17 @@ const TransactionDetail: React.FC = () => {
                 confirmText="Delete"
                 confirmButtonClass="bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors px-6 py-2.5"
             />
-            <EditInvoiceModal />
+            <EditInvoiceModal
+                onConfirm={(data) => {
+                    console.log('Edit Invoice data:', data);
+                    // TODO: Implement API call
+                    setEditInvoiceOpen(false);
+                }}
+            />
             <VoidTransactionModal
                 onConfirm={(reason) => {
-                    // Handle void logic here
                     console.log('Voiding transaction with reason:', reason);
+                    setVoidModalOpen(false);
                 }}
             />
 

@@ -8,15 +8,22 @@ import TransactionToggle from './components/TransactionToggle';
 import DatePicker from '../../../../components/ui/DatePicker';
 import CustomDropdown from '../../components/CustomDropdown';
 
+import { validateFile } from '../../../../utils/fileValidation';
+
 const AddExpenseInvoice: React.FC = () => {
     const navigate = useNavigate();
     const [expenseType, setExpenseType] = useState<'property' | 'general'>('property');
     const [category, setCategory] = useState<string>('');
     const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
+    const [amount, setAmount] = useState<string>('');
     const [currency, setCurrency] = useState<string>('');
+    const [tags, setTags] = useState<string>('');
     const [isPaid, setIsPaid] = useState<boolean>(false);
     const [payerPayee, setPayerPayee] = useState<string>('');
     const [isAddServiceProModalOpen, setIsAddServiceProModalOpen] = useState(false);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [uploadError, setUploadError] = useState<string>('');
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
     const location = useLocation();
 
     // Pre-fill payer/payee if passed from navigation state
@@ -25,6 +32,40 @@ const AddExpenseInvoice: React.FC = () => {
             setPayerPayee(location.state.prefilledPayer.label);
         }
     }, [location.state]);
+
+    const handleFileClick = () => {
+        setUploadError('');
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const validation = validateFile(file);
+        if (!validation.isValid) {
+            setUploadError(validation.error || 'Invalid file');
+            return;
+        }
+
+        setSelectedFile(file);
+        setUploadError('');
+    };
+
+    const handleCreate = () => {
+        console.log({
+            expenseType,
+            category,
+            dueDate,
+            amount: 'TODO: get amount state', // Note: amount state was local in input, need to fix
+            payerPayee,
+            currency,
+            tags: 'TODO: get tags',
+            isPaid,
+            file: selectedFile
+        });
+        // TODO: Implement API call
+    };
 
     return (
         <div className="p-4 sm:p-6 max-w-6xl mx-auto font-['Urbanist']">
@@ -88,6 +129,8 @@ const AddExpenseInvoice: React.FC = () => {
                             <input
                                 type="number"
                                 placeholder="0.00"
+                                value={amount}
+                                onChange={(e) => setAmount(e.target.value)}
                                 className="w-full rounded-md bg-white px-4 py-3 text-sm text-gray-700 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#84CC16]/20 transition-all shadow-sm appearance-none"
                             />
                         </div>
@@ -145,8 +188,12 @@ const AddExpenseInvoice: React.FC = () => {
                     <div className="col-span-1 md:col-span-2">
                         <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Tags *</label>
                         <div className="relative">
-                            <select className="w-full rounded-md bg-white px-4 py-3 text-sm text-gray-700 outline-none appearance-none shadow-sm focus:ring-2 focus:ring-[#84CC16]/20 cursor-pointer">
-                                <option value="" disabled selected>Tags</option>
+                            <select
+                                value={tags}
+                                onChange={(e) => setTags(e.target.value)}
+                                className="w-full rounded-md bg-white px-4 py-3 text-sm text-gray-700 outline-none appearance-none shadow-sm focus:ring-2 focus:ring-[#84CC16]/20 cursor-pointer"
+                            >
+                                <option value="" disabled>Tags</option>
                                 <option value="tag1">Tag 1</option>
                                 <option value="tag2">Tag 2</option>
                             </select>
@@ -182,12 +229,37 @@ const AddExpenseInvoice: React.FC = () => {
                     ></textarea>
                 </div>
 
+                {/* File Upload Error/Success Message */}
+                {uploadError && (
+                    <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-lg text-red-700 text-sm">
+                        {uploadError}
+                    </div>
+                )}
+                {selectedFile && !uploadError && (
+                    <div className="mb-4 p-3 bg-green-100 border border-green-300 rounded-lg text-green-700 text-sm">
+                        File selected: {selectedFile.name}
+                    </div>
+                )}
+
                 {/* Actions */}
                 <div className="flex flex-col sm:flex-row gap-4">
-                    <button className="bg-[#84CC16] text-white px-8 py-3 rounded-md font-semibold shadow-lg shadow-[#84CC16]/20 hover:bg-[#65a30d] hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2 w-full sm:w-auto">
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        className="hidden"
+                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                        onChange={handleFileChange}
+                    />
+                    <button
+                        onClick={handleFileClick}
+                        className="bg-[#84CC16] text-white px-8 py-3 rounded-md font-semibold shadow-lg shadow-[#84CC16]/20 hover:bg-[#65a30d] hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2 w-full sm:w-auto"
+                    >
                         Upload File
                     </button>
-                    <button className="bg-[#3D7475] text-white px-10 py-3 rounded-md font-semibold shadow-lg shadow-[#3D7475]/20 hover:bg-[#2c5556] hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 w-full sm:w-auto">
+                    <button
+                        onClick={handleCreate}
+                        className="bg-[#3D7475] text-white px-10 py-3 rounded-md font-semibold shadow-lg shadow-[#3D7475]/20 hover:bg-[#2c5556] hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 w-full sm:w-auto"
+                    >
                         Create
                     </button>
                 </div>

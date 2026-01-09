@@ -3,6 +3,7 @@ import { ChevronLeft, Edit, Trash2, MoreHorizontal } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import PayerPayeeDropdown from './components/PayerPayeeDropdown';
 import AddTenantModal from '../Tenants/components/AddTenantModal';
+import { validateFile } from '../../../../utils/fileValidation';
 import CustomDropdown from '../../components/CustomDropdown';
 
 // Mock options mapping
@@ -23,6 +24,9 @@ const ReturnDeposit: React.FC = () => {
     const [payerPayee, setPayerPayee] = useState<string>('');
     const [depositCategory, setDepositCategory] = useState<string>('');
     const [isAddTenantModalOpen, setIsAddTenantModalOpen] = useState(false);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [uploadError, setUploadError] = useState<string>('');
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
     const location = useLocation();
 
     // Handle prefilled data
@@ -41,6 +45,35 @@ const ReturnDeposit: React.FC = () => {
     const handlePayerChange = (value: string) => {
         setPayerPayee(value);
         setDepositCategory(''); // Reset second dropdown when first changes
+    };
+
+    const handleFileClick = () => {
+        setUploadError('');
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const validation = validateFile(file);
+        if (!validation.isValid) {
+            setUploadError(validation.error || 'Invalid file');
+            return;
+        }
+
+        setSelectedFile(file);
+        setUploadError('');
+    };
+
+    const handleAction = (action: 'pay_now' | 'mark_paid') => {
+        console.log({
+            action,
+            payerPayee,
+            depositCategory,
+            file: selectedFile
+        });
+        // TODO: Implement API call
     };
 
     return (
@@ -176,12 +209,43 @@ const ReturnDeposit: React.FC = () => {
                     </div>
                 </div>
 
+                {/* File Upload Error/Success Message */}
+                {uploadError && (
+                    <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-lg text-red-700 text-sm">
+                        {uploadError}
+                    </div>
+                )}
+                {selectedFile && !uploadError && (
+                    <div className="mb-4 p-3 bg-green-100 border border-green-300 rounded-lg text-green-700 text-sm">
+                        File selected: {selectedFile.name}
+                    </div>
+                )}
+
                 {/* Footer Buttons */}
-                <div className="flex gap-4 mt-8">
-                    <button className="bg-[#7BD747] text-white px-8 py-3 rounded-lg font-semibold shadow-md hover:bg-[#6cc73d] hover:shadow-lg transition-all duration-200">
+                <div className="flex flex-col sm:flex-row gap-4 mt-8">
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        className="hidden"
+                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                        onChange={handleFileChange}
+                    />
+                    <button
+                        onClick={handleFileClick}
+                        className="bg-[#20CC95] text-white px-8 py-3 rounded-lg font-semibold shadow-md hover:bg-[#1bb584] hover:shadow-lg transition-all duration-200"
+                    >
+                        Upload File
+                    </button>
+                    <button
+                        onClick={() => handleAction('pay_now')}
+                        className="bg-[#7BD747] text-white px-8 py-3 rounded-lg font-semibold shadow-md hover:bg-[#6cc73d] hover:shadow-lg transition-all duration-200"
+                    >
                         Pay Now
                     </button>
-                    <button className="bg-[#3A6D6C] text-white px-8 py-3 rounded-lg font-semibold shadow-md hover:bg-[#2c5251] hover:shadow-lg transition-all duration-200">
+                    <button
+                        onClick={() => handleAction('mark_paid')}
+                        className="bg-[#3A6D6C] text-white px-8 py-3 rounded-lg font-semibold shadow-md hover:bg-[#2c5251] hover:shadow-lg transition-all duration-200"
+                    >
                         Mark as paid
                     </button>
                 </div>

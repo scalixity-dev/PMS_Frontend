@@ -6,7 +6,11 @@ import CustomDropdown from '../../../components/CustomDropdown';
 
 import { useTransactionStore } from '../store/transactionStore';
 
-const EditPaymentModal: React.FC = () => {
+interface EditPaymentModalProps {
+    onConfirm?: (data: any) => void;
+}
+
+const EditPaymentModal: React.FC<EditPaymentModalProps> = ({ onConfirm }) => {
     const { isEditPaymentModalOpen, setEditPaymentModalOpen, selectedPayment } = useTransactionStore();
     const isOpen = isEditPaymentModalOpen;
     const onClose = () => setEditPaymentModalOpen(false);
@@ -72,6 +76,25 @@ const EditPaymentModal: React.FC = () => {
 
         setSelectedFile(file);
         setUploadError('');
+    };
+
+    const handleConfirm = () => {
+        // Basic validation
+        if (!amountPaid) {
+            alert("Please enter amount paid");
+            return;
+        }
+
+        if (onConfirm) {
+            onConfirm({
+                datePaid,
+                amountPaid,
+                method,
+                details,
+                file: selectedFile
+            });
+        }
+        onClose();
     };
 
     if (!isOpen) return null;
@@ -182,7 +205,10 @@ const EditPaymentModal: React.FC = () => {
                         >
                             Upload File
                         </button>
-                        <button className="flex-1 py-3 px-6 bg-[#3A6D6C] text-white rounded-lg font-medium hover:bg-[#2c5251] transition-colors shadow-lg">
+                        <button
+                            onClick={handleConfirm}
+                            className="flex-1 py-3 px-6 bg-[#3A6D6C] text-white rounded-lg font-medium hover:bg-[#2c5251] transition-colors shadow-lg"
+                        >
                             Confirm
                         </button>
                     </div>
