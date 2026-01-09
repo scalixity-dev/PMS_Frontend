@@ -120,6 +120,9 @@ export const API_ENDPOINTS = {
     UPLOAD_DOCUMENT: (id: string) => `${API_BASE_URL}/service-provider/${id}/documents`,
     GET_DOCUMENTS: (id: string) => `${API_BASE_URL}/service-provider/${id}/documents`,
     DELETE_DOCUMENT: (documentId: string) => `${API_BASE_URL}/service-provider/documents/${documentId}`,
+    IMPORT_EXCEL: `${API_BASE_URL}/service-provider/import-excel`,
+    VALIDATE_EXCEL: `${API_BASE_URL}/service-provider/validate-excel`,
+    GET_IMPORT_FIELDS: `${API_BASE_URL}/service-provider/import-fields`,
   },
   TASK: {
     GET_ALL: `${API_BASE_URL}/task`,

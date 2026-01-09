@@ -74,6 +74,7 @@ import LeaseDetail from './pages/Dashboard/features/Leases/LeaseDetail';
 import EndLease from './pages/Dashboard/features/Leases/EndLease';
 import AddKey from './pages/Dashboard/features/KeysLocks/AddKey';
 import ServicePros from './pages/Dashboard/features/ServicePros/ServicePros';
+import ImportServicePros from './pages/Dashboard/features/ServicePros/ImportServicePros/ImportServicePros';
 import AddEditServicePro from './pages/Dashboard/features/ServicePros/AddEditServicePro';
 import ServiceProsDetail from './pages/Dashboard/features/ServicePros/ServiceProsDetail';
 import Application from './pages/Dashboard/features/Application/Application';
@@ -267,6 +268,7 @@ const App: React.FC = () => {
               <Route path="/dashboard/contacts/tenants/edit/:id" element={<AddEditTenant />} />
               <Route path="/dashboard/contacts/tenants/:id" element={<TenantDetail />} />
               <Route path="/dashboard/contacts/service-pros" element={<ServicePros />} />
+              <Route path="/dashboard/contacts/service-pros/import" element={<ImportServicePros />} />
               <Route path="/dashboard/contacts/service-pros/add" element={<AddEditServicePro />} />
               <Route path="/dashboard/contacts/service-pros/edit/:id" element={<AddEditServicePro />} />
               <Route path="/dashboard/contacts/service-pros/:id" element={<ServiceProsDetail />} />
