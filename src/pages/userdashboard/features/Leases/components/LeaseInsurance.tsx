@@ -42,6 +42,7 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
     const [formData, setFormData] = useState<InsuranceData>(initialFormData);
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const [uploadError, setUploadError] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Load insurance data from localStorage on mount
@@ -118,10 +119,10 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
             fileData: formData.fileData,
             fileType: formData.fileType
         };
-        
+
         // Save to state - this persists the data
         setInsuranceData(updatedData);
-        
+
         // Close modal
         setIsModalOpen(false);
 
@@ -134,6 +135,27 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
+        // Validation: File Type
+        const ALLOWED_TYPES = [
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'image/jpeg',
+            'image/png'
+        ];
+        if (!ALLOWED_TYPES.includes(file.type)) {
+            setUploadError("Please select a valid document (PDF, DOC, DOCX) or image (JPEG, PNG).");
+            return;
+        }
+
+        // Validation: File Size (5MB limit)
+        const MAX_SIZE = 5 * 1024 * 1024;
+        if (file.size > MAX_SIZE) {
+            setUploadError("File is too large. Please select a file smaller than 5MB.");
+            return;
+        }
+
+        setUploadError(null);
         setUploadedFile(file);
 
         // Convert to base64 for persistence
@@ -145,6 +167,9 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
                 fileData: reader.result as string,
                 fileType: file.type
             }));
+        };
+        reader.onerror = () => {
+            setUploadError("Failed to read the file. Please try again.");
         };
         reader.readAsDataURL(file);
     }, []);
@@ -375,6 +400,13 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
                         </div>
                     )}
 
+                    {/* Upload Error */}
+                    {uploadError && (
+                        <div className="col-span-3 text-xs text-red-600 bg-red-50 border border-red-200 rounded-md p-1.5">
+                            ⚠️ {uploadError}
+                        </div>
+                    )}
+
                     <div className="flex flex-col gap-1.5">
                         <label className="text-[13px] font-medium text-[#1A1A1A]">Details</label>
                         <textarea
@@ -397,7 +429,7 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
                             accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                             className="hidden"
                         />
-                        
+
                         {/* Preview if file is uploaded */}
                         {(uploadedFile || formData.fileName) && (
                             <div className="bg-white rounded-lg border border-gray-200 p-2 flex items-center justify-between gap-3">
@@ -420,7 +452,7 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
                                 </button>
                             </div>
                         )}
-                        
+
                         {/* Upload Button */}
                         <label
                             htmlFor="insurance-file-upload"
@@ -438,7 +470,7 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
 
             {/* Image Preview Modal */}
             {selectedImage && (
-                <div 
+                <div
                     className="fixed inset-0 bg-black/75 z-[10000] flex items-center justify-center p-28"
                     onClick={() => setSelectedImage(null)}
                 >
@@ -451,11 +483,11 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
                         >
                             <X size={24} className="text-gray-700" strokeWidth={2.5} />
                         </button>
-                        
+
                         {/* Image */}
-                        <img 
-                            src={selectedImage} 
-                            alt="Insurance document preview" 
+                        <img
+                            src={selectedImage}
+                            alt="Insurance document preview"
                             className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
                             onClick={(e) => e.stopPropagation()}
                         />

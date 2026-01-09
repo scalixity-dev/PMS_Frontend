@@ -63,13 +63,15 @@ export interface PropertyFeature {
 
 export interface Property {
     id: string | number; // Support both for now to avoid breaking existing code
+    uniqueId?: string; // Composite ID for React keys
     title: string;
     address: string;
     availabilityDate?: string;
     rent?: number;
-    price?: string; // Support both for now
+    price?: string; // Formatted price with currency (e.g., "₹50,000" or "$1,500")
     type: string;
-    currency?: string;
+    currency?: string; // Currency symbol (e.g., "$", "₹", "€")
+    currencyCode?: string; // ISO currency code (e.g., "USD", "INR", "EUR")
     images?: string[];
     image?: string; // Support both for now
     description?: string;
@@ -86,6 +88,7 @@ export interface Property {
 export interface LocationFilter {
     displayText: string; // For display purposes
     type: 'city' | 'nearby' | 'radius' | 'state' | 'all';
+    country?: string;
     city?: string;
     state?: string;
     radius?: number; // in km
@@ -99,6 +102,7 @@ export interface FilterState {
     minPrice: number;
     maxPrice: number;
     priceModified?: boolean; // Track if user has interacted with price controls
+    locationModified?: boolean; // Track if user has interacted with location controls
     bedrooms: string;
     availability: string;
     selectedAmenities: string[];
@@ -114,6 +118,7 @@ export interface UserInfo {
     country: string;
     city: string;
     pincode: string;
+    profileImage?: string;
 }
 
 export interface UserFinances {

@@ -7,6 +7,7 @@ export const API_ENDPOINTS = {
     REGISTER_TENANT: `${API_BASE_URL}/auth/register/tenant`,
     LOGIN: `${API_BASE_URL}/auth/login`,
     CHECK_EMAIL: `${API_BASE_URL}/auth/check-email`,
+    CHECK_TENANT_EMAIL: `${API_BASE_URL}/auth/check-tenant-email`,
     VERIFY_EMAIL: (userId: string) => `${API_BASE_URL}/auth/verify-email/${userId}`,
     RESEND_EMAIL_OTP: (userId: string) => `${API_BASE_URL}/auth/resend-email-otp/${userId}`,
     VERIFY_DEVICE: (userId: string) => `${API_BASE_URL}/auth/verify-device/${userId}`,
@@ -31,6 +32,7 @@ export const API_ENDPOINTS = {
     VALIDATE_EXCEL: `${API_BASE_URL}/property/validate-excel`,
     GET_IMPORT_FIELDS: `${API_BASE_URL}/property/import-fields`,
     GET_PUBLIC_LISTINGS: `${API_BASE_URL}/property/public/listings`,
+    GET_PUBLIC_DETAIL: (id: string) => `${API_BASE_URL}/property/public/${id}`,
   },
   UNIT: {
     GET_ALL_BY_PROPERTY: (propertyId: string) => `${API_BASE_URL}/unit/property/${propertyId}`,
@@ -103,6 +105,7 @@ export const API_ENDPOINTS = {
     CREATE: `${API_BASE_URL}/application`,
     UPDATE: (id: string) => `${API_BASE_URL}/application/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/application/${id}`,
+    INVITE: `${API_BASE_URL}/application/invite`,
   },
   SERVICE_PROVIDER: {
     GET_ALL: `${API_BASE_URL}/service-provider`,

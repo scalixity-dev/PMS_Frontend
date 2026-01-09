@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { SquarePen, ChevronLeft, ChevronRight, ListPlus } from "lucide-react";
+import PrimaryActionButton from '../common/buttons/PrimaryActionButton';
 import {
     PiChartLineUpFill,
     PiCurrencyDollarFill,
@@ -106,19 +107,18 @@ const DownloadPopup: React.FC<DownloadPopupProps> = ({ isOpen, onClose, position
                     <ListPlus size={40} className="text-[#566573]" />
                 </div>
                 <div>
-                    <h4 className="text-lg font-bold text-[#111827] mb-2">No files downloaded yet</h4>
+                    <h4 className="text-lg font-semibold text-[#111827] mb-2">No files downloaded yet</h4>
                     <p className="text-sm text-[#7F8C8D] leading-relaxed max-w-[280px] mx-auto">
                         There are no downloaded files. Once you export some files, they will appear here.
                     </p>
                 </div>
             </div>
             <div className="p-3 border-t border-gray-100 flex justify-end">
-                <button
+                <PrimaryActionButton
                     onClick={onClose}
-                    className="px-6 py-2 bg-[#4CAF50] hover:bg-[#45a049] text-white text-xs font-semibold rounded-lg transition-colors shadow-sm"
-                >
-                    Close
-                </button>
+                    text="Close"
+                    className="text-xs"
+                />
             </div>
         </div>,
         document.body

@@ -1,14 +1,11 @@
 import React, { useMemo, useState, useEffect, useCallback } from "react";
-import { Filter, Heart, MapPin, DollarSign, BedDouble, PawPrint } from "lucide-react";
+import { Filter, Heart, MapPin, DollarSign, BedDouble, PawPrint, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import PropertyFilters from "./components/PropertyFilters";
 import type { Property, FilterState } from "../../utils/types";
 import { API_ENDPOINTS } from "../../../../config/api.config";
 import { authService } from "../../../../services/auth.service";
-import type {
-  PublicListingProperty,
-  PublicListingPhoto
-} from "../../../../services/property.service";
+import { formatMoney } from "../../../../utils/currency.utils";
 
 // --- Internal Components ---
 
@@ -59,7 +56,7 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
           </div>
           <div className="mt-2 flex items-baseline gap-1">
             <span className="text-[var(--dashboard-text-main)] text-base font-semibold">
-              {property.price || `${property.currency}${property.rent}`}
+              {property.price || (property.rent ? formatMoney(property.rent, property.currencyCode || 'USD') : 'N/A')}
             </span>
             <span className="text-gray-500 text-[10px]">month</span>
           </div>
@@ -71,19 +68,41 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
 
 import { usePropertyStore } from "./store/propertyStore";
 
+// Skeleton component for loading state
+const PropertySkeleton: React.FC = () => (
+  <div className="relative w-full aspect-[4/3] rounded-lg overflow-hidden bg-gray-200 animate-pulse">
+    <div className="absolute inset-0 bg-gray-300"></div>
+    <div className="absolute bottom-5 left-6 right-6 bg-white/90 backdrop-blur-sm rounded-md p-4">
+      <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+      <div className="h-3 bg-gray-200 rounded w-1/2 mb-2"></div>
+      <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+    </div>
+  </div>
+);
+
+const ITEMS_PER_PAGE = 12;
+
 const Properties: React.FC = () => {
   const {
     propertyFilters: filters,
     setPropertyFilters: setFilters,
-    resetPropertyFilters,
     isPropertyFiltersOpen,
-    setIsPropertyFiltersOpen
+    setIsPropertyFiltersOpen,
+    resetPropertyFilters
   } = usePropertyStore();
 
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [usePreferences, setUsePreferences] = useState(false); // Toggle for preferences
+  
+  // Initialize usePreferences from localStorage, defaulting to true only if no stored value exists
+  const [usePreferences, setUsePreferences] = useState<boolean>(() => {
+    const stored = localStorage.getItem('propertyPreferencesEnabled');
+    return stored !== null ? stored === 'true' : true; // Default to true only if no stored value
+  });
+  
+  const [prefsLoaded, setPrefsLoaded] = useState(false); // Track if preferences have been loaded
+  const [currentPage, setCurrentPage] = useState(1); // Pagination state
   const [userPreferences, setUserPreferences] = useState<{
     location?: { country: string; state: string; city: string };
     rentalTypes?: string[];
@@ -96,6 +115,13 @@ const Properties: React.FC = () => {
     };
   } | null>(null);
 
+  // Reset user preferences on unmount to ensure fresh state on return
+  useEffect(() => {
+    return () => {
+      resetPropertyFilters();
+    };
+  }, [resetPropertyFilters]);
+
   // Fetch user preferences on mount (only for authenticated tenants)
   useEffect(() => {
     const fetchPreferences = async () => {
@@ -105,6 +131,7 @@ const Properties: React.FC = () => {
 
         // Only fetch preferences if user is a tenant
         if (user.role !== 'TENANT') {
+          setPrefsLoaded(true);
           return; // Not a tenant, skip preferences
         }
 
@@ -130,6 +157,8 @@ const Properties: React.FC = () => {
         // If getCurrentUser fails or preferences fetch fails, continue without preferences
         console.log('Error fetching preferences (continuing without):', err);
         // Continue without preferences - this is expected for non-authenticated users
+      } finally {
+        setPrefsLoaded(true);
       }
     };
 
@@ -139,6 +168,8 @@ const Properties: React.FC = () => {
   // Fetch properties from API
   useEffect(() => {
     const fetchProperties = async () => {
+      if (!prefsLoaded) return;
+
       setLoading(true);
       setError(null);
       try {
@@ -161,20 +192,34 @@ const Properties: React.FC = () => {
         // Use preferences only if enabled and no explicit filters are set
         const shouldUsePreferences = usePreferences && userPreferences;
 
-        // Location: Always apply preferences if enabled (location is a hard filter)
-        if (shouldUsePreferences && userPreferences?.location) {
-          const location = userPreferences.location;
-          // Always apply location filters from preferences when enabled
-          if (location.country) {
-            params.append('country', location.country);
-          }
-          if (location.state) {
-            params.append('state', location.state);
-          }
-          if (location.city) {
-            params.append('city', location.city);
-          }
+        // Location: Use filters if user has modified them, otherwise use preferences if enabled
+        let country: string | undefined;
+        let state: string | undefined;
+        let city: string | undefined;
+
+        // Check if locationFilter has any actual values (even if locationModified is false)
+        const hasLocationFilterValues = filters.locationFilter && 
+          (filters.locationFilter.country || filters.locationFilter.state || filters.locationFilter.city);
+
+        if (filters.locationModified && filters.locationFilter) {
+          country = filters.locationFilter.country;
+          state = filters.locationFilter.state;
+          city = filters.locationFilter.city;
+        } else if (hasLocationFilterValues) {
+          // Use locationFilter if it has values, even if locationModified is false
+          // This prevents silently ignoring location filters that were set
+          country = filters.locationFilter?.country;
+          state = filters.locationFilter?.state;
+          city = filters.locationFilter?.city;
+        } else if (shouldUsePreferences && userPreferences?.location) {
+          country = userPreferences.location.country;
+          state = userPreferences.location.state;
+          city = userPreferences.location.city;
         }
+
+        if (country) params.append('country', country);
+        if (state) params.append('state', state);
+        if (city) params.append('city', city);
 
         // Price filters: Use filters if user has modified them, otherwise use preferences if enabled
         let minPrice: number | undefined;
@@ -227,54 +272,7 @@ const Properties: React.FC = () => {
           params.append('propertyType', propertyType);
         }
 
-        // Only apply manual filters if preferences are NOT enabled
-        // When preferences are enabled, they take priority
-        if (!shouldUsePreferences) {
-          // Pets allowed filter from UI filters (only when preferences disabled)
-          if (filters.petsAllowed && filters.petsAllowed !== 'All') {
-            params.append('petsAllowed', (filters.petsAllowed === 'Yes').toString());
-          }
-
-          // Region/Location filter - Use structured location data (only when preferences disabled)
-          if (filters.locationFilter && filters.locationFilter.type !== 'all') {
-            const location = filters.locationFilter;
-
-            switch (location.type) {
-              case 'radius':
-                // Specific radius filter (e.g., "Within 5km of Bhopal")
-                if (location.city && location.radius) {
-                  params.append('city', location.city);
-                  params.append('radius', location.radius.toString());
-                }
-                break;
-
-              case 'nearby':
-                // City & Nearby Areas (uses default radius)
-                if (location.city && location.radius) {
-                  params.append('city', location.city);
-                  params.append('radius', location.radius.toString());
-                }
-                break;
-
-              case 'state':
-                // State-wide filter (e.g., "All Madhya Pradesh")
-                if (location.state) {
-                  params.append('state', location.state);
-                }
-                break;
-
-              case 'city':
-                // Direct city name
-                if (location.city) {
-                  params.append('city', location.city);
-                }
-                break;
-            }
-          }
-        }
-
         const url = `${API_ENDPOINTS.PROPERTY.GET_PUBLIC_LISTINGS}${params.toString() ? `?${params.toString()}` : ''}`;
-
         const response = await fetch(url, {
           method: 'GET',
           credentials: 'include',
@@ -287,7 +285,7 @@ const Properties: React.FC = () => {
         const data = await response.json();
 
         // Map backend response to Property type
-        const mappedProperties: Property[] = data.map((item: PublicListingProperty, index: number) => {
+        const mappedProperties: Property[] = data.map((item: any, index: number) => {
           const address = item.address;
           const addressString = address
             ? `${address.streetAddress || ''}, ${address.city || ''}, ${address.stateRegion || ''}, ${address.zipCode || ''}, ${address.country || ''}`
@@ -308,29 +306,41 @@ const Properties: React.FC = () => {
           // Use listing.id if available, otherwise use property.id with index to ensure uniqueness
           const uniqueId = item.listing?.id ? `${item.id}-${item.listing.id}` : `${item.id}-${index}`;
 
+          // Get currency from backend response, fallback to property country or default
+          const currencyInfo = item.currency || (address?.country ? {
+            code: address.country === 'India' || address.country === 'IN' ? 'INR' : 'USD',
+            symbol: address.country === 'India' || address.country === 'IN' ? '₹' : '$',
+            name: address.country === 'India' || address.country === 'IN' ? 'Indian Rupee' : 'US Dollar'
+          } : { code: 'USD', symbol: '$', name: 'US Dollar' });
+
+          // Format price with currency
+          const formattedPrice = formatMoney(price, currencyInfo.code);
+
           return {
-            id: uniqueId,
+            id: item.id, // Use actual property ID for navigation
+            uniqueId: uniqueId, // Use composite ID for React keys
             title: title,
             address: addressString,
             type: item.propertyType === 'SINGLE' ? 'Single Unit' : 'Multi Unit',
-            price: `$${price.toLocaleString()}`,
+            price: formattedPrice, // Use formatted price with currency
             rent: price,
-            currency: '$',
+            currency: currencyInfo.symbol, // Currency symbol
+            currencyCode: currencyInfo.code, // Currency code for reference
             tag: item.listing?.petsAllowed ? 'Pets Allowed' : null,
             image: item.coverPhotoUrl || (item.photos?.[0]?.photoUrl ?? null),
-            images: item.photos?.map((p: PublicListingPhoto) => p.photoUrl) || [],
+            images: item.photos?.map((p: any) => p.photoUrl) || [],
           };
         });
 
-        // Deduplicate properties by full unique ID (property-listing combination)
-        // Each property-listing combination gets its own card
+        // Deduplicate properties by property ID (keep first occurrence)
         const seen = new Set<string>();
         const deduplicatedProperties = mappedProperties.filter((property) => {
-          const uniqueId = String(property.id);
-          if (seen.has(uniqueId)) {
+          // Use the actual property ID for deduplication
+          const baseId = String(property.id);
+          if (seen.has(baseId)) {
             return false; // Skip duplicate
           }
-          seen.add(uniqueId);
+          seen.add(baseId);
           return true;
         });
 
@@ -351,10 +361,12 @@ const Properties: React.FC = () => {
     filters.propertyType,
     filters.bedrooms,
     filters.region,
+    filters.locationModified, // Add locationModified to dependency array
     filters.locationFilter,
     filters.petsAllowed,
     userPreferences,
     usePreferences,
+    prefsLoaded,
   ]);
 
   // Client-side filtering - only for search since backend handles other filters
@@ -374,6 +386,32 @@ const Properties: React.FC = () => {
     });
   }, [properties, filters]);
 
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredProperties.length / ITEMS_PER_PAGE);
+  const paginatedProperties = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return filteredProperties.slice(startIndex, endIndex);
+  }, [filteredProperties, currentPage]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters.search, filters.propertyType, filters.minPrice, filters.maxPrice, filters.bedrooms, filters.petsAllowed, filters.locationFilter, usePreferences]);
+
+  // Reset to page 1 if current page is out of bounds
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [totalPages, currentPage]);
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
   // Memoize the onApply callback to prevent unnecessary re-renders
   const handleApplyFilters = useCallback((newFilters: FilterState) => {
     setFilters(newFilters);
@@ -386,7 +424,7 @@ const Properties: React.FC = () => {
         onClose={() => setIsPropertyFiltersOpen(false)}
         onApply={handleApplyFilters}
         onReset={resetPropertyFilters}
-        userPreferences={userPreferences}
+        userPreferences={usePreferences ? userPreferences : null}
         initialFilters={filters}
       />
 
@@ -415,7 +453,13 @@ const Properties: React.FC = () => {
                         <input
                           type="checkbox"
                           checked={usePreferences}
-                          onChange={(e) => setUsePreferences(e.target.checked)}
+                          onChange={(e) => {
+                            const newValue = e.target.checked;
+                            setUsePreferences(newValue);
+                            // Persist user's choice to localStorage
+                            localStorage.setItem('propertyPreferencesEnabled', String(newValue));
+                            resetPropertyFilters();
+                          }}
                           className="sr-only peer"
                         />
                         <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-[#8CD74B] transition-colors duration-300"></div>
@@ -439,10 +483,13 @@ const Properties: React.FC = () => {
                           <span className="text-xs font-medium text-gray-500 flex-shrink-0">
                             Active:
                           </span>
-                          {userPreferences.location?.city && (
+                          {/* Show Preference City if active and not modified, OR Show Modified City if modified */}
+                          {(!filters.locationModified ? userPreferences.location?.city : filters.locationFilter?.city) && (
                             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-[#8CD74B]/10 to-[#8CD74B]/5 border border-[#8CD74B]/20 rounded-md text-sm text-gray-700 font-medium shadow-sm">
                               <MapPin size={14} className="text-[#8CD74B]" strokeWidth={2.5} />
-                              <span>{userPreferences.location.city}</span>
+                              <span>
+                                {!filters.locationModified ? userPreferences.location?.city : filters.locationFilter?.city}
+                              </span>
                             </div>
                           )}
                           {userPreferences.criteria?.minPrice !== undefined && userPreferences.criteria?.maxPrice !== undefined && (
@@ -488,8 +535,10 @@ const Properties: React.FC = () => {
 
         {/* Grid Section */}
         {loading ? (
-          <div className="col-span-full py-20 text-center">
-            <p className="text-gray-500 text-lg">Loading properties...</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <PropertySkeleton key={i} />
+            ))}
           </div>
         ) : error ? (
           <div className="col-span-full py-20 text-center">
@@ -502,23 +551,65 @@ const Properties: React.FC = () => {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredProperties.length > 0 ? (
-              filteredProperties.map((property) => (
-                <PropertyCard key={property.id} property={property} />
-              ))
-            ) : (
-              <div className="col-span-full py-20 text-center">
-                <p className="text-gray-500 text-lg">No properties found matching your criteria.</p>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {paginatedProperties.length > 0 ? (
+                paginatedProperties.map((property) => (
+                  <PropertyCard key={(property as any).uniqueId || property.id} property={property} />
+                ))
+              ) : (
+                <div className="col-span-full py-20 text-center">
+                  <p className="text-gray-500 text-lg">No properties found matching your criteria.</p>
+                  <button
+                    onClick={resetPropertyFilters}
+                    className="mt-4 text-[var(--dashboard-accent)] font-medium hover:underline"
+                  >
+                    Clear all filters
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Pagination */}
+            {filteredProperties.length > ITEMS_PER_PAGE && (
+              <div className="mt-8 flex justify-center items-center gap-2">
                 <button
-                  onClick={resetPropertyFilters}
-                  className="mt-4 text-[var(--dashboard-accent)] font-medium hover:underline"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className={`p-2 rounded-full transition-colors ${currentPage === 1
+                    ? 'text-gray-300 cursor-not-allowed'
+                    : 'text-gray-600 hover:bg-gray-200'
+                    }`}
                 >
-                  Clear all filters
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-medium transition-all ${currentPage === page
+                      ? 'bg-[#3A7D76] text-white shadow-lg'
+                      : 'bg-transparent text-gray-600 border border-gray-300 hover:bg-gray-100'
+                      }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className={`p-2 rounded-full transition-colors ${currentPage === totalPages
+                    ? 'text-gray-300 cursor-not-allowed'
+                    : 'text-gray-600 hover:bg-gray-200'
+                    }`}
+                >
+                  <ChevronRight className="w-6 h-6" />
                 </button>
               </div>
             )}
-          </div>
+          </>
         )}
       </div>
     </div >

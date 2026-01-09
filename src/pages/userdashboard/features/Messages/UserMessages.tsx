@@ -1,14 +1,15 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, ListPlus } from 'lucide-react';
 import ChatSidebar from './components/ChatSidebar';
 import ChatHeader from './components/ChatHeader';
 import MessageList from './components/MessageList';
 import ChatInput from './components/ChatInput';
 import MaintenanceRequestView from './components/MaintenanceRequestView';
+import PublicationView from './components/PublicationView';
 import { useMessagesStore } from './store/messagesStore';
 import { useRequestStore } from '../Requests/store/requestStore';
-import { mockChats } from './utils/mockData';
+import { mockChats, mockPublications } from './utils/mockData';
 import type { Chat } from './types';
 import type { ServiceRequest, Publication } from '../../utils/types';
 
@@ -34,18 +35,33 @@ const Messages = () => {
     const [pbSearch, setPbSearch] = useState('');
 
     const [activeRequest, setActiveRequest] = useState<ServiceRequest | null>(null);
-    const [publications] = useState<Publication[]>([]);
+    const [publications, setPublications] = useState<Publication[]>([]);
     const [activePublication, setActivePublication] = useState<Publication | null>(null);
     const [showMobileChat, setShowMobileChat] = useState(false);
     const [viewMode, setViewMode] = useState<'CHAT' | 'MR' | 'PB'>('CHAT');
 
     // Initialize chats on mount
     useEffect(() => {
-        if (chats.length === 0) {
+        // Migration check: If we have chats but they look like the old mock data (id '1', '2', etc.), 
+        // we reset to the new prefixed IDs. We only do this if all existing chats are the old format.
+        const allChatsAreOld = chats.length > 0 && chats.every(c =>
+            !c.id.toString().startsWith('chat_') &&
+            !requests.some(r => r.requestId?.toString() === c.id.toString())
+        );
+
+        if (chats.length === 0 || allChatsAreOld) {
             setChats(mockChats);
-            setActiveChat(mockChats[0]);
+            // Only set active chat if we don't have one and we are in CHAT mode
+            if (viewMode === 'CHAT' && (!activeChat || allChatsAreOld)) {
+                setActiveChat(mockChats[0]);
+            }
         }
-    }, [chats.length, setChats, setActiveChat]);
+    }, [chats.length, setChats, setActiveChat, requests.length]); // Use lengths to avoid deep object comparison loops
+
+    // Initialize publications on mount
+    useEffect(() => {
+        setPublications(mockPublications);
+    }, []);
 
     // Initial request selection from state
     useEffect(() => {
@@ -71,9 +87,15 @@ const Messages = () => {
 
     // Filter chats based on chat search query and role
     const filteredChats = useMemo(() => {
-        const baseChats = chats.filter(chat =>
-            chat.contactRole === 'Landlord' || chat.contactRole === 'Maintenance'
-        );
+        const baseChats = chats.filter(chat => {
+            // Exclude chats that are specifically for a maintenance request (MR)
+            // MR chats use the requestId as their chat id
+            const isMRChat = requests.some(req =>
+                (req.requestId || '').toString() === chat.id?.toString() ||
+                (req.id || '').toString() === chat.id?.toString()
+            );
+            return !isMRChat;
+        });
 
         if (!chatSearch) return baseChats;
 
@@ -94,11 +116,11 @@ const Messages = () => {
         const query = mrSearch.toLowerCase();
         return requests.filter(
             (req) =>
-                req.property.toLowerCase().includes(query) ||
-                req.requestId.toLowerCase().includes(query) ||
-                req.category.toLowerCase().includes(query) ||
-                req.subCategory?.toLowerCase().includes(query) ||
-                req.problem?.toLowerCase().includes(query)
+                (req.property || '').toLowerCase().includes(query) ||
+                (req.requestId || '').toLowerCase().includes(query) ||
+                (req.category || '').toLowerCase().includes(query) ||
+                (req.subCategory || '').toLowerCase().includes(query) ||
+                (req.problem || '').toLowerCase().includes(query)
         );
     }, [requests, mrSearch]);
 
@@ -250,12 +272,20 @@ const Messages = () => {
                             </div>
                         )
                     ) : (
-                        <div className="flex-1 flex flex-col items-center justify-center bg-[#f8fafc] px-6 text-center">
-                            <h3 className="text-xl font-semibold text-[#1e293b] mb-2">No details</h3>
-                            <p className="text-sm text-[#64748b] max-w-md">
-                                When Landlord adds a publication, you will be able to view it here.
-                            </p>
-                        </div>
+                        activePublication ? (
+                            <PublicationView
+                                publication={activePublication}
+                                onBack={handleBackToSidebar}
+                            />
+                        ) : (
+                            <div className="flex-1 flex flex-col items-center justify-center bg-[#f8fafc] px-6 text-center">
+                                <ListPlus className="w-24 h-24 mb-4 text-gray-300" />
+                                <h3 className="text-xl font-semibold text-[#1e293b] mb-2">No publication selected</h3>
+                                <p className="text-sm text-[#64748b] max-w-md">
+                                    Choose a publication from the sidebar to read the full details.
+                                </p>
+                            </div>
+                        )
                     )}
                 </div>
             </div>

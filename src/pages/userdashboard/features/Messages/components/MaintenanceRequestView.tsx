@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Phone, Video, MoreVertical, Info, ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Printer } from 'lucide-react';
 import type { ServiceRequest } from '../../../utils/types';
 import ChatInput from './ChatInput';
 import MessageBubble from './MessageBubble';
@@ -16,53 +16,56 @@ const MaintenanceRequestView = ({ request, onBack }: MaintenanceRequestViewProps
     const { chats, addChat, sendMessage } = useMessagesStore();
     const { userInfo } = useAuthStore();
 
-    // Destructure specific fields to avoid infinite re-renders
-    const { email: userEmail, firstName, lastName } = userInfo;
+    const userEmail = userInfo?.email;
+    const firstName = userInfo?.firstName;
+    const lastName = userInfo?.lastName;
 
     const chatId = request.requestId.toString();
     const chat = chats.find((c) => c.id === chatId);
     const messages = chat?.messages || [];
 
     useEffect(() => {
-        if (!chat) {
-            const initialMessages = [
-                {
-                    id: '1',
-                    senderId: userEmail,
-                    senderName: `${firstName} ${lastName}`,
-                    text: `${request.category} / ${request.subCategory} / ${request.problem}\n\nDescription: ${request.description || 'No description provided.'}`,
-                    timestamp: request.createdAt,
-                    isRead: true,
-                },
-                {
-                    id: '2',
-                    senderId: request.assignee || 'system',
-                    senderName: request.assignee || 'System',
-                    text: 'I have received your request and will look into it shortly.',
-                    timestamp: new Date(new Date(request.createdAt).getTime() + 3600000).toISOString(),
-                    isRead: true,
-                },
-            ];
+        if (!userInfo || chat) return;
 
-            addChat({
-                id: chatId,
-                contactName: request.assignee || 'System',
-                contactRole: 'Maintenance',
-                contactEmail: '',
-                contactAvatar: `https://api.dicebear.com/7.x/initials/svg?seed=${request.assignee || 'System'}`,
-                lastMessage: initialMessages[1].text,
-                lastMessageTime: initialMessages[1].timestamp,
-                unreadCount: 0,
-                isOnline: false,
-                messages: initialMessages,
-                propertyAddress: request.property,
-            });
-        }
-    }, [chat, chatId, request, addChat, userEmail, firstName, lastName]);
+        const initialMessages = [
+            {
+                id: '1',
+                senderId: userEmail!,
+                senderName: `${firstName} ${lastName}`,
+                text: `${request.category} / ${request.subCategory} / ${request.problem}\n\nDescription: ${request.description || 'No description provided.'}`,
+                timestamp: request.createdAt,
+                isRead: true,
+            },
+            {
+                id: '2',
+                senderId: request.assignee || 'system',
+                senderName: request.assignee || 'System',
+                text: 'I have received your request and will look into it shortly.',
+                timestamp: new Date(new Date(request.createdAt).getTime() + 3600000).toISOString(),
+                isRead: true,
+            },
+        ];
+
+        addChat({
+            id: chatId,
+            contactName: request.assignee || 'System',
+            contactRole: 'Maintenance',
+            contactEmail: '',
+            contactAvatar: `https://api.dicebear.com/7.x/initials/svg?seed=${request.assignee || 'System'}`,
+            lastMessage: initialMessages[1].text,
+            lastMessageTime: initialMessages[1].timestamp,
+            unreadCount: 0,
+            isOnline: false,
+            messages: initialMessages,
+            propertyAddress: request.property,
+        });
+    }, [chat, chatId, request, addChat, userEmail, firstName, lastName, userInfo]);
+
+    if (!userInfo) return null;
 
     const handleSendMessage = (text: string) => {
         sendMessage(chatId, {
-            senderId: userEmail,
+            senderId: userEmail!,
             senderName: `${firstName} ${lastName}`,
             text: text,
             isRead: true,
@@ -102,17 +105,8 @@ const MaintenanceRequestView = ({ request, onBack }: MaintenanceRequestViewProps
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <button className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors group">
-                            <Phone className="w-5 h-5 text-gray-600 group-hover:text-[var(--dashboard-accent)]" />
-                        </button>
-                        <button className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors group">
-                            <Video className="w-5 h-5 text-gray-600 group-hover:text-[var(--dashboard-accent)]" />
-                        </button>
-                        <button className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors group">
-                            <Info className="w-5 h-5 text-gray-600 group-hover:text-[var(--dashboard-accent)]" />
-                        </button>
-                        <button className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors group">
-                            <MoreVertical className="w-5 h-5 text-gray-600 group-hover:text-[var(--dashboard-accent)]" />
+                        <button className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors group" title="Print Request">
+                            <Printer className="w-5 h-5 text-gray-600 group-hover:text-[var(--dashboard-accent)]" />
                         </button>
                     </div>
                 </div>

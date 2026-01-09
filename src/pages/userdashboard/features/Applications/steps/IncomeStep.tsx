@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Plus, Trash2, Wallet, AlertCircle, Pencil } from 'lucide-react';
 import { useUserApplicationStore } from '../store/userApplicationStore';
 import PrimaryActionButton from '@/components/common/buttons/PrimaryActionButton';
-import AddIncomeModal, { type IncomeFormData } from '../../../../Dashboard/features/Application/components/AddIncomeModal';
+import UserAddIncomeModal, { type IncomeFormData } from '../components/UserAddIncomeModal';
 
 const IncomeItem: React.FC<{ income: IncomeFormData & { id: string }; onDelete: () => void; onEdit: () => void }> = ({ income, onDelete, onEdit }) => {
     return (
@@ -115,14 +115,14 @@ const IncomeStep: React.FC<IncomeStepProps> = ({ onNext }) => {
                         disabled={incomes.length === 0}
                         text="Next"
                         className={`px-16 py-3.5 rounded-full font-bold uppercase transition-all ${incomes.length > 0
-                                ? 'bg-[#7ED957] hover:bg-[#6BC847] shadow-lg shadow-[#7ED957]/30 text-white'
-                                : 'bg-[#F3F4F6] text-black hover:bg-[#F3F4F6] cursor-not-allowed border-none shadow-none'
+                            ? 'bg-[#7ED957] hover:bg-[#6BC847] shadow-lg shadow-[#7ED957]/30 text-white'
+                            : 'bg-[#F3F4F6] text-black hover:bg-[#F3F4F6] cursor-not-allowed border-none shadow-none'
                             }`}
                     />
                 </div>
             </div>
 
-            <AddIncomeModal
+            <UserAddIncomeModal
                 isOpen={isAdding}
                 onClose={() => { setIsAdding(false); setEditingIndex(null); }}
                 onSave={handleSaveIncome}

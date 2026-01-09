@@ -459,6 +459,28 @@ class AuthService {
   }
 
   /**
+   * Check if email exists and user has TENANT role
+   */
+  async checkTenantEmailExists(email: string): Promise<boolean> {
+    const response = await fetch(API_ENDPOINTS.AUTH.CHECK_TENANT_EMAIL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ email }),
+    });
+
+    if (!response.ok) {
+      // If there's an error, assume email doesn't exist
+      return false;
+    }
+
+    const data = await response.json();
+    return data.exists === true;
+  }
+
+  /**
    * Get current authenticated user
    */
   async getCurrentUser(): Promise<CurrentUser> {

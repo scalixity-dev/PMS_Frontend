@@ -1,4 +1,4 @@
-import { Phone, Video, MoreVertical, ArrowLeft, Info } from 'lucide-react';
+import { ArrowLeft, Printer, Trash2 } from 'lucide-react';
 import type { Chat } from '../types';
 
 interface ChatHeaderProps {
@@ -43,17 +43,11 @@ const ChatHeader = ({ chat, onBack, showBackButton = false }: ChatHeaderProps) =
 
                 {/* Right Section - Actions */}
                 <div className="flex items-center gap-2">
-                    <button className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors group">
-                        <Phone className="w-5 h-5 text-gray-600 group-hover:text-[var(--dashboard-accent)]" />
+                    <button className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors group" title="Print Conversation">
+                        <Printer className="w-5 h-5 text-gray-600 group-hover:text-[var(--dashboard-accent)]" />
                     </button>
-                    <button className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors group">
-                        <Video className="w-5 h-5 text-gray-600 group-hover:text-[var(--dashboard-accent)]" />
-                    </button>
-                    <button className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors group">
-                        <Info className="w-5 h-5 text-gray-600 group-hover:text-[var(--dashboard-accent)]" />
-                    </button>
-                    <button className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors group">
-                        <MoreVertical className="w-5 h-5 text-gray-600 group-hover:text-[var(--dashboard-accent)]" />
+                    <button className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors group" title="Delete Conversation">
+                        <Trash2 className="w-5 h-5 text-gray-600 group-hover:text-red-500" />
                     </button>
                 </div>
             </div>

@@ -4,7 +4,8 @@ import { useDashboardStore } from "./store/dashboardStore";
 import { Sidebar } from "./components/layout/Sidebar";
 import { TransactionTable } from "./features/Transactions/components/TransactionTable";
 import { LeaseList } from "./features/Leases/components/LeaseList";
-import { mockTransactions, mockLeases, tabs, mockUserInfo, mockFinances } from "./utils/mockData";
+import { mockTransactions, mockLeases, tabs } from "./utils/mockData";
+import { calculateOutstandingAmount } from "./utils/financeUtils";
 import type { TabType } from "./utils/types";
 import PrimaryActionButton from "../../components/common/buttons/PrimaryActionButton";
 import { authService } from "../../services/auth.service";
@@ -13,30 +14,45 @@ import { useAuthStore } from "./features/Profile/store/authStore";
 const UserDashboard = () => {
     const navigate = useNavigate();
     const { activeTab, setActiveTab, setFinances } = useDashboardStore();
-    const { userInfo, setUserInfo } = useAuthStore();
+    const { setUserInfo } = useAuthStore();
     const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     // Check authentication and tenant role on mount
     useEffect(() => {
         let isMounted = true;
-        
+
         const checkAuth = async () => {
             try {
                 const user = await authService.getCurrentUser();
-                
+
                 if (!isMounted) return;
-                
+
                 // Verify user is a tenant
                 const isTenant = user.role && (
                     user.role.toUpperCase() === 'TENANT' ||
                     user.role.toLowerCase() === 'tenant' ||
                     user.role === 'tenant'
                 );
-                
+
                 // User must be a tenant and account must be active
                 if (isTenant && user.isActive) {
                     setIsAuthenticated(true);
+
+                    // Map real user info from authService to store
+                    const [firstName, ...lastNameParts] = (user.fullName || "").split(" ");
+                    setUserInfo({
+                        firstName: firstName || "User",
+                        lastName: lastNameParts.join(" ") || "",
+                        email: user.email,
+                        role: user.role,
+                        phone: user.phoneNumber || "",
+                        country: user.country || "",
+                        city: user.state || "",
+                        pincode: user.pincode || "",
+                        dob: "1990-01-01", // Default placeholder for missing field
+                    });
+
                     setIsLoading(false);
                 } else {
                     console.warn('UserDashboard: Access denied - user is not a tenant or account not active');
@@ -45,7 +61,7 @@ const UserDashboard = () => {
                 }
             } catch (error) {
                 if (!isMounted) return;
-                
+
                 console.error('UserDashboard: Authentication check failed:', error);
                 setIsAuthenticated(false);
                 setIsLoading(false);
@@ -53,19 +69,24 @@ const UserDashboard = () => {
         };
 
         checkAuth();
-        
+
         return () => {
             isMounted = false;
         };
     }, []);
 
-    // Load mock data on mount if store is empty (only after authentication)
+    // Load finances on mount if authenticated
     useEffect(() => {
-        if (isAuthenticated && !userInfo.firstName) {
-            setUserInfo(mockUserInfo);
-            setFinances(mockFinances);
+        if (isAuthenticated) {
+            const outstanding = calculateOutstandingAmount(mockTransactions).toFixed(2);
+            // You can also calculate deposits/credits if needed
+            setFinances({
+                outstanding,
+                deposits: "45000.00", // Keep existing static values for now if they don't match mockTransactions exactly
+                credits: "0.00",
+            });
         }
-    }, [setUserInfo, setFinances, userInfo.firstName, isAuthenticated]);
+    }, [setFinances, isAuthenticated]);
 
     // Show loading state while checking authentication
     if (isLoading) {

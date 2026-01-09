@@ -365,7 +365,10 @@ const RequestDetails = () => {
                                             </p>
                                             <div className="text-gray-900 font-medium">
                                                 {slot.date && (
-                                                    <p>Date: {new Date(slot.date).toLocaleDateString()}</p>
+                                                    <p>Date: {(() => {
+                                                        const [year, month, day] = slot.date.split("-").map(Number);
+                                                        return new Date(year, month - 1, day).toLocaleDateString();
+                                                    })()}</p>
                                                 )}
                                                 {slot.timeSlots && slot.timeSlots.length > 0 && (
                                                     <p>Time: {slot.timeSlots.join(", ")}</p>

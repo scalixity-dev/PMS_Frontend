@@ -6,6 +6,7 @@ import ApplicationCard from './components/ApplicationCard';
 import { Plus, ChevronLeft, Loader2 } from 'lucide-react';
 import { useGetAllApplications } from '../../../../hooks/useApplicationQueries';
 import type { BackendApplication } from '../../../../services/application.service';
+import { applicationService } from '../../../../services/application.service';
 import InviteToApplyModal from './components/InviteToApplyModal';
 
 // Transform backend application to card format
@@ -349,12 +350,21 @@ const Application = () => {
             <InviteToApplyModal
                 isOpen={isInviteModalOpen}
                 onClose={() => setIsInviteModalOpen(false)}
-                onSend={async (email) => {
-                    // TODO: Implement API call to send invitation
-                    console.log('Sending invitation to:', email);
-                    // Replace with actual API call when ready
-                    // await invitationService.sendInvitation(email);
-                    setIsInviteModalOpen(false);
+                onSend={async (emails, propertyId) => {
+                    try {
+                        const result = await applicationService.inviteToApply(emails, propertyId);
+                        setIsInviteModalOpen(false);
+                        // Optionally show success message with details
+                        if (result.nonExistingEmails.length > 0) {
+                            console.warn('Some emails do not exist:', result.nonExistingEmails);
+                        }
+                        console.log(`Successfully sent ${result.successful} invitation(s)`);
+                    } catch (error) {
+                        console.error('Failed to send invitation:', error);
+                        // Optionally show error message to user
+                        // You might want to add a toast notification here
+                        throw error; // Re-throw to let modal handle it
+                    }
                 }}
             />
         </div>

@@ -1,6 +1,7 @@
 import React from "react";
 import { Check, Trash2, Plus } from "lucide-react";
 import PrimaryActionButton from "../../../../../../components/common/buttons/PrimaryActionButton";
+import DatePicker from "@/components/ui/DatePicker";
 import type { AvailabilityOption } from "../../../../utils/types";
 
 interface Step11Props {
@@ -27,7 +28,7 @@ const Step11Availability: React.FC<Step11Props> = ({
                 <p className="text-gray-400 text-sm font-normal">Please provide the possible options below..</p>
             </div>
 
-            <div className="max-w-md mx-auto px-4 mb-8">
+            <div className="max-w-sm mx-auto px-4 mb-8">
                 {availability.map((option, index) => (
                     <div key={option.id} className="mb-8">
                         <div className="flex items-center gap-2 mb-3">
@@ -42,12 +43,25 @@ const Step11Availability: React.FC<Step11Props> = ({
 
                         <div className="mb-4">
                             <label className="block text-sm font-semibold text-gray-700 mb-2">Date <span className="text-red-500">*</span></label>
-                            <input
-                                type="date"
-                                value={option.date}
-                                onChange={(e) => onDateChange(option.id, e.target.value)}
-                                className="w-full px-4 py-3 bg-white rounded-lg border border-gray-300 focus:border-[#7ED957] focus:outline-none transition-colors text-gray-900 placeholder-gray-400"
-                                placeholder="dd/mm/yyyy"
+                            <DatePicker
+                                value={option.date && option.date.includes("-") ? (() => {
+                                    const [year, month, day] = option.date.split("-").map(Number);
+                                    const date = new Date(year, month - 1, day);
+                                    return isNaN(date.getTime()) ? undefined : date;
+                                })() : undefined}
+                                onChange={(date) => {
+                                    if (date) {
+                                        // Convert Date to YYYY-MM-DD format
+                                        const year = date.getFullYear();
+                                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                                        const day = String(date.getDate()).padStart(2, '0');
+                                        onDateChange(option.id, `${year}-${month}-${day}`);
+                                    } else {
+                                        onDateChange(option.id, '');
+                                    }
+                                }}
+                                placeholder="Select date"
+                                className="w-full rounded-lg border border-gray-300 focus:border-[#7ED957] focus:outline-none transition-colors"
                             />
                         </div>
 
