@@ -86,6 +86,7 @@ export interface Property {
 export interface LocationFilter {
     displayText: string; // For display purposes
     type: 'city' | 'nearby' | 'radius' | 'state' | 'all';
+    country?: string;
     city?: string;
     state?: string;
     radius?: number; // in km
@@ -99,6 +100,7 @@ export interface FilterState {
     minPrice: number;
     maxPrice: number;
     priceModified?: boolean; // Track if user has interacted with price controls
+    locationModified?: boolean; // Track if user has interacted with location controls
     bedrooms: string;
     availability: string;
     selectedAmenities: string[];
