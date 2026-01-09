@@ -1,5 +1,7 @@
+import { useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Printer, User, MoreHorizontal, CheckCircle2, Calendar, DollarSign, FileText, Download } from 'lucide-react';
+import { handleDocumentPrint } from '../../../Dashboard/features/Documents/utils/printPreviewUtils';
+import { ChevronLeft, Printer, User, ChevronDown, CheckCircle2, Calendar, DollarSign, FileText, Download } from 'lucide-react';
 import { formatMoney } from '../../../../utils/currency.utils';
 import { mockTransactions } from '../../utils/mockData';
 import { TransactionNotFound } from './components/TransactionNotFound';
@@ -7,8 +9,16 @@ import { TransactionNotFound } from './components/TransactionNotFound';
 const TransactionDetails = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const contentRef = useRef<HTMLDivElement>(null);
 
     const foundTransaction = mockTransactions.find(t => t.id === id);
+
+    const handlePrint = () => {
+        const title = foundTransaction ? `INV-${foundTransaction.id}` : `Transaction-${id}`;
+        handleDocumentPrint(contentRef, { title });
+    };
+
+
 
     if (!foundTransaction) {
         return <TransactionNotFound />;
@@ -47,10 +57,10 @@ const TransactionDetails = () => {
         invoiceNumber: `INV-${foundTransaction.id}`,
         property: "Luxury Apartment", // Default
         unit: "-",
-        type: `Expense / ${(["Rent", "Utility Bill"].includes(foundTransaction.category) || foundTransaction.category.includes("Monthly")) ? "Monthly" : "One Time"}`,
+        type: `Expense / ${foundTransaction.schedule}`,
         attachments: [
-            { id: 1, name: "Invoice-DEC-2025.pdf", size: "2.4 MB", type: "PDF" },
-            { id: 2, name: "Receipt-1234.png", size: "1.2 MB", type: "Image" }
+            { id: 1, name: "Invoice-DEC-2025.pdf", size: "2.4 MB", type: "PDF", url: "https://pdfobject.com/pdf/sample.pdf" },
+            { id: 2, name: "Receipt-1234.png", size: "1.2 MB", type: "Image", url: "https://images.unsplash.com/photo-1600596542815-e32904fc4969" }
         ]
     };
 
@@ -62,6 +72,18 @@ const TransactionDetails = () => {
             amount: transaction.paidAmount
         }
     ] : [];
+
+    const handleDownload = (file: { name: string; url?: string }) => {
+        // Since we're using mock data, we'll simulate a download
+        // In a real app, this would be a link to the actual file
+        const link = document.createElement('a');
+        link.href = file.url || '#';
+        link.download = file.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        console.log(`Downloading: ${file.name}`);
+    };
 
     return (
         <div className="flex flex-col gap-6 w-full min-h-screen bg-white p-4 lg:p-8">
@@ -81,21 +103,24 @@ const TransactionDetails = () => {
             </nav>
 
             {/* Main Content Area */}
-            <div className="max-w-7xl mx-auto w-full space-y-6">
+            <div ref={contentRef} className="max-w-7xl mx-auto w-full space-y-6">
 
                 {/* Header Card */}
-                <div className="bg-[#F4F4F4] rounded-2xl border border-gray-200 shadow-[0px_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+                <div className="bg-[#F4F4F4] rounded-2xl border border-gray-200 shadow-[0px_4px_12px_rgba(0,0,0,0.05)] overflow-hidden avoid-break">
                     <div className="px-2 py-2 border-b border-[#E5E7EB] flex items-center justify-between">
                         <div className="flex items-center gap-1">
                             <button
                                 onClick={() => navigate(-1)}
-                                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                                className="p-2 hover:bg-gray-100 rounded-full transition-colors print:hidden"
                             >
                                 <ChevronLeft size={24} className="text-gray-900" />
                             </button>
                             <h1 className="text-2xl font-semibold text-gray-900">Transaction</h1>
                         </div>
-                        <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                        <button
+                            onClick={handlePrint}
+                            className="p-2 hover:bg-gray-100 rounded-full transition-colors print:hidden"
+                        >
                             <Printer size={24} className="text-gray-900" />
                         </button>
                     </div>
@@ -174,7 +199,7 @@ const TransactionDetails = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
                     {/* Summary Card */}
-                    <div className="bg-[#F4F4F4] rounded-2xl border border-gray-200 shadow-[0px_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+                    <div className="bg-[#F4F4F4] rounded-2xl border border-gray-200 shadow-[0px_4px_12px_rgba(0,0,0,0.05)] overflow-hidden avoid-break">
                         <div className="px-6 py-3 border-b border-[#E5E7EB] ">
                             <h3 className="text-xl font-semibold text-gray-900">Summary <span className="text-gray-400 text-sm font-medium ml-2">(Invoice Details)</span></h3>
                         </div>
@@ -199,7 +224,7 @@ const TransactionDetails = () => {
                     </div>
 
                     {/* Payment & Activity Card */}
-                    <div className="bg-[#F4F4F4] rounded-2xl border border-gray-200 shadow-[0px_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+                    <div className="bg-[#F4F4F4] rounded-2xl border border-gray-200 shadow-[0px_4px_12px_rgba(0,0,0,0.05)] overflow-hidden avoid-break">
                         <div className="px-6 py-3 border-b border-[#E5E7EB] flex items-center justify-between">
                             <div className="flex items-center gap-2">
 
@@ -231,8 +256,8 @@ const TransactionDetails = () => {
                                                     className="w-full h-full object-cover"
                                                 />
                                             </div>
-                                            <button className="p-1 hover:bg-gray-100 rounded-md transition-colors">
-                                                <MoreHorizontal size={20} className="text-gray-900" />
+                                            <button className="p-1 hover:bg-gray-100 rounded-md transition-colors print:hidden">
+                                                <ChevronDown size={20} className="text-gray-900" />
                                             </button>
                                         </div>
                                     </div>
@@ -243,7 +268,7 @@ const TransactionDetails = () => {
                 </div>
 
                 {/* Attachments Section */}
-                <div className="bg-[#F4F4F4] rounded-2xl border border-gray-200 shadow-[0px_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+                <div className="bg-[#F4F4F4] rounded-2xl border border-gray-200 shadow-[0px_4px_12px_rgba(0,0,0,0.05)] overflow-hidden avoid-break">
                     <div className="px-6 py-3 border-b border-[#E5E7EB]">
                         <h3 className="text-xl font-semibold text-gray-900">Attachments <span className="text-gray-400 text-sm font-medium ml-2">({transaction.attachments?.length || 0} Files)</span></h3>
                     </div>
@@ -261,7 +286,11 @@ const TransactionDetails = () => {
                                                 <p className="text-xs text-gray-500">{file.size} • {file.type}</p>
                                             </div>
                                         </div>
-                                        <button className="p-2 text-gray-400 hover:text-[#7ED957] hover:bg-gray-50 rounded-lg transition-colors flex-shrink-0" title="Download">
+                                        <button
+                                            className="p-2 text-gray-400 hover:text-[#7ED957] hover:bg-gray-50 rounded-lg transition-colors flex-shrink-0 print:hidden"
+                                            title="Download"
+                                            onClick={() => handleDownload(file)}
+                                        >
                                             <Download size={20} />
                                         </button>
                                     </div>

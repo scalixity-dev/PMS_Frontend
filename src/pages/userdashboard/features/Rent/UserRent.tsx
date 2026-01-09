@@ -1,15 +1,21 @@
-import React, { useMemo } from "react";
-import { Search } from "lucide-react";
+import React, { useMemo, useState, useEffect } from "react";
+import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import FilterDropdown from "../../../../components/ui/FilterDropdown";
 import { useRentStore } from "./store/rentStore";
 import { mockTransactions } from "../../utils/mockData";
+import { calculateOutstandingAmount } from "../../utils/financeUtils";
+import { useDashboardStore } from "../../store/dashboardStore";
 import { TransactionRow } from "../Transactions/components/TransactionRow";
+
+const ROWS_PER_PAGE = 10;
 
 const Rent: React.FC = () => {
   const navigate = useNavigate();
   const { rentFilters, setRentFilters, resetRentFilters } = useRentStore();
+  const { finances } = useDashboardStore();
   const { search: searchQuery, status: statusFilter, date: dateFilter, schedule: scheduleFilter } = rentFilters;
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Filter transactions
   const filteredTransactions = useMemo(() => {
@@ -33,7 +39,13 @@ const Rent: React.FC = () => {
 
       // Date filter (simple month-based filtering)
       if (dateFilter) {
-        const transactionMonth = new Date(transaction.dueDate).getMonth();
+        let transactionMonth: number;
+        if (typeof transaction.dueDate === 'string' && transaction.dueDate.includes('-')) {
+          const [year, month, day] = transaction.dueDate.split('-').map(Number);
+          transactionMonth = new Date(year, month - 1, day).getMonth();
+        } else {
+          transactionMonth = new Date(transaction.dueDate).getMonth();
+        }
         const filterMonth = parseInt(dateFilter);
         if (transactionMonth !== filterMonth) {
           return false;
@@ -41,25 +53,45 @@ const Rent: React.FC = () => {
       }
 
       // Schedule filter
-      if (scheduleFilter) {
-        if (scheduleFilter === "Monthly" && !transaction.category.includes("Monthly")) {
-          return false;
-        }
-        if (scheduleFilter === "One-time" && transaction.category.includes("Monthly")) {
-          return false;
-        }
+      if (scheduleFilter && transaction.schedule !== scheduleFilter) {
+        return false;
       }
 
       return true;
     });
   }, [searchQuery, statusFilter, dateFilter, scheduleFilter]);
 
-  // Calculate outstanding amount
-  const outstandingAmount = useMemo(() => {
-    return mockTransactions
-      .filter((t) => t.status === "Open" || t.status === "Overdue")
-      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-  }, []);
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredTransactions.length / ROWS_PER_PAGE);
+  const paginatedTransactions = useMemo(() => {
+    const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
+    const endIndex = startIndex + ROWS_PER_PAGE;
+    return filteredTransactions.slice(startIndex, endIndex);
+  }, [filteredTransactions, currentPage]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, dateFilter, scheduleFilter]);
+
+  // Reset to page 1 if current page is out of bounds
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [totalPages, currentPage]);
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  // Use outstanding amount from store if available, otherwise calculate it
+  const outstandingAmountValue = useMemo(() => {
+    if (finances.outstanding !== "0.00") return parseFloat(finances.outstanding);
+    return calculateOutstandingAmount(mockTransactions);
+  }, [finances.outstanding]);
 
 
   return (
@@ -88,7 +120,7 @@ const Rent: React.FC = () => {
           {/* Outstanding Section */}
           <div className="px-6 py-5">
             <p className="text-gray-600 text-lg text-sm mb-1">Outstanding</p>
-            <p className="text-lg font-medium text-gray-900">{outstandingAmount.toFixed(2)} INR</p>
+            <p className="text-lg font-medium text-gray-900">{outstandingAmountValue.toFixed(2)} INR</p>
           </div>
         </div>
 
@@ -164,12 +196,12 @@ const Rent: React.FC = () => {
 
           {/* Table Body */}
           <div className="flex flex-col">
-            {filteredTransactions.length > 0 ? (
-              filteredTransactions.map((transaction, index) => (
+            {paginatedTransactions.length > 0 ? (
+              paginatedTransactions.map((transaction, index) => (
                 <TransactionRow
                   key={transaction.id}
                   transaction={transaction}
-                  isLast={index === filteredTransactions.length - 1}
+                  isLast={index === paginatedTransactions.length - 1}
                   onClick={() => navigate(`/userdashboard/transactions/${transaction.id}`)}
                 />
               ))
@@ -185,6 +217,46 @@ const Rent: React.FC = () => {
               </div>
             )}
           </div>
+
+          {/* Pagination */}
+          {filteredTransactions.length > ROWS_PER_PAGE && (
+            <div className="px-8 py-4 border-t border-gray-200 flex justify-center items-center gap-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className={`p-2 rounded-full transition-colors ${currentPage === 1
+                  ? 'text-gray-300 cursor-not-allowed'
+                  : 'text-gray-600 hover:bg-gray-200'
+                  }`}
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => handlePageChange(page)}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-medium transition-all ${currentPage === page
+                    ? 'bg-[#3A7D76] text-white shadow-lg'
+                    : 'bg-transparent text-gray-600 border border-gray-300 hover:bg-gray-100'
+                    }`}
+                >
+                  {page}
+                </button>
+              ))}
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className={`p-2 rounded-full transition-colors ${currentPage === totalPages
+                  ? 'text-gray-300 cursor-not-allowed'
+                  : 'text-gray-600 hover:bg-gray-200'
+                  }`}
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

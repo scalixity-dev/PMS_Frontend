@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect, useCallback } from "react";
-import { Filter, Heart, X } from "lucide-react";
+import { Filter, Heart, MapPin, DollarSign, BedDouble, PawPrint, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import PropertyFilters from "./components/PropertyFilters";
 import type { Property, FilterState } from "../../utils/types";
@@ -100,6 +100,7 @@ const Properties: React.FC = () => {
 
         // Only fetch preferences if user is a tenant
         if (user.role !== 'TENANT') {
+          setPrefsLoaded(true);
           return; // Not a tenant, skip preferences
         }
 
@@ -125,6 +126,8 @@ const Properties: React.FC = () => {
         // If getCurrentUser fails or preferences fetch fails, continue without preferences
         console.log('Error fetching preferences (continuing without):', err);
         // Continue without preferences - this is expected for non-authenticated users
+      } finally {
+        setPrefsLoaded(true);
       }
     };
 
@@ -134,16 +137,21 @@ const Properties: React.FC = () => {
   // Fetch properties from API
   useEffect(() => {
     const fetchProperties = async () => {
+      if (!prefsLoaded) return;
+
       setLoading(true);
       setError(null);
       try {
         // Build query params from filters and user preferences
         const params = new URLSearchParams();
 
-        
+
         const mapPropertyType = (type: string): string | null => {
           if (!type || type === 'All') return null;
-         
+
+          // Map UI labels to backend values
+          if (type === 'Single Unit') return 'SINGLE';
+          if (type === 'Multi Unit') return 'MULTI';
           if (type === 'SINGLE' || type === 'MULTI') {
             return type;
           }
@@ -168,14 +176,22 @@ const Properties: React.FC = () => {
           }
         }
 
-        // Price filters: Use filters if set, otherwise use preferences if enabled
-        const minPrice = filters?.minPrice !== undefined && filters.minPrice !== null
-          ? filters.minPrice
-          : (shouldUsePreferences ? userPreferences?.criteria?.minPrice : undefined);
-        const maxPrice = filters?.maxPrice !== undefined && filters.maxPrice !== null
-          ? filters.maxPrice
-          : (shouldUsePreferences ? userPreferences?.criteria?.maxPrice : undefined);
-        
+        // Price filters: Use filters if user has modified them, otherwise use preferences if enabled
+        let minPrice: number | undefined;
+        let maxPrice: number | undefined;
+
+        if (filters.priceModified && filters.minPrice !== undefined && filters.minPrice !== null) {
+          minPrice = filters.minPrice;
+        } else if (shouldUsePreferences && userPreferences?.criteria?.minPrice !== undefined) {
+          minPrice = userPreferences.criteria.minPrice;
+        }
+
+        if (filters.priceModified && filters.maxPrice !== undefined && filters.maxPrice !== null) {
+          maxPrice = filters.maxPrice;
+        } else if (shouldUsePreferences && userPreferences?.criteria?.maxPrice !== undefined) {
+          maxPrice = userPreferences.criteria.maxPrice;
+        }
+
         if (minPrice !== undefined && minPrice !== null) {
           params.append('minPrice', minPrice.toString());
         }
@@ -185,7 +201,7 @@ const Properties: React.FC = () => {
 
         // Beds filter: Use filters if set, otherwise use preferences if enabled
         let bedsFilter: string | undefined;
-        if (filters?.bedrooms && filters.bedrooms !== 'All' && filters.bedrooms !== 'Any') {
+        if (filters.bedrooms && filters.bedrooms !== 'All' && filters.bedrooms !== 'Any') {
           bedsFilter = filters.bedrooms === '4+' ? '4' : filters.bedrooms;
         } else if (shouldUsePreferences && userPreferences?.criteria?.beds && userPreferences.criteria.beds !== 'Any') {
           bedsFilter = userPreferences.criteria.beds;
@@ -206,7 +222,7 @@ const Properties: React.FC = () => {
         }
 
         // Property type filter (from filters only, not preferences)
-        const propertyType = mapPropertyType(filters?.propertyType || '');
+        const propertyType = mapPropertyType(filters.propertyType || '');
         if (propertyType) {
           params.append('propertyType', propertyType);
         }
@@ -224,7 +240,7 @@ const Properties: React.FC = () => {
         const data = await response.json();
 
         // Map backend response to Property type
-        const mappedProperties: Property[] = data.map((item: any, index: number) => {
+        const mappedProperties: Property[] = data.map((item: PublicListingProperty, index: number) => {
           const address = item.address;
           const addressString = address
             ? `${address.streetAddress || ''}, ${address.city || ''}, ${address.stateRegion || ''}, ${address.zipCode || ''}, ${address.country || ''}`
@@ -283,54 +299,61 @@ const Properties: React.FC = () => {
 
     fetchProperties();
   }, [
-    filters?.minPrice,
-    filters?.maxPrice,
-    filters?.propertyType,
-    filters?.bedrooms,
+    filters.minPrice,
+    filters.maxPrice,
+    filters.priceModified,
+    filters.propertyType,
+    filters.bedrooms,
+    filters.region,
+    filters.locationFilter,
+    filters.petsAllowed,
     userPreferences,
     usePreferences,
+    prefsLoaded,
   ]);
 
+  // Client-side filtering - only for search since backend handles other filters
   const filteredProperties = useMemo(() => {
-    if (!filters) return properties;
-
     return properties.filter(property => {
-      const { search, propertyType, minPrice, maxPrice, bedrooms } = filters;
+      const { search } = filters;
 
-      // Search filter
+      // Search filter (client-side only - backend doesn't support text search)
       if (search &&
         !property.title.toLowerCase().includes(search.toLowerCase()) &&
         !property.address.toLowerCase().includes(search.toLowerCase())) {
         return false;
       }
 
-      // Property Type filter
-      if (propertyType && propertyType !== "All" && property.type !== propertyType) {
-        return false;
-      }
-
-      // Price filter
-      const price = property.rent || parseInt((property.price || "").replace(/[$,]/g, ""));
-      if (!isNaN(price)) {
-        if (minPrice && price < minPrice) return false;
-        if (maxPrice && price > maxPrice) return false;
-      }
-
-      // Bedrooms filter
-      if (bedrooms && bedrooms !== "All" && bedrooms !== "Any") {
-        const match = property.title.match(/(\d+)\s*Bedroom/i);
-        const propertyBedrooms = match ? parseInt(match[1]) : 0;
-
-        if (bedrooms === "4+") {
-          if (propertyBedrooms < 4) return false;
-        } else {
-          if (propertyBedrooms !== parseInt(bedrooms)) return false;
-        }
-      }
-
+      // All other filters (propertyType, price, bedrooms) are handled by the backend API
       return true;
     });
   }, [properties, filters]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredProperties.length / ITEMS_PER_PAGE);
+  const paginatedProperties = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return filteredProperties.slice(startIndex, endIndex);
+  }, [filteredProperties, currentPage]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters.search, filters.propertyType, filters.minPrice, filters.maxPrice, filters.bedrooms, filters.petsAllowed, filters.locationFilter, usePreferences]);
+
+  // Reset to page 1 if current page is out of bounds
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [totalPages, currentPage]);
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   // Memoize the onApply callback to prevent unnecessary re-renders
   const handleApplyFilters = useCallback((newFilters: FilterState) => {
@@ -343,6 +366,7 @@ const Properties: React.FC = () => {
         isOpen={isPropertyFiltersOpen}
         onClose={() => setIsPropertyFiltersOpen(false)}
         onApply={handleApplyFilters}
+        onReset={resetPropertyFilters}
         userPreferences={userPreferences}
         initialFilters={filters}
       />
@@ -361,53 +385,75 @@ const Properties: React.FC = () => {
             </ol>
           </nav>
           <div className="flex flex-col gap-3">
-            {/* Preferences Toggle and Info */}
+            {/* My Preferences Section */}
             {userPreferences && (
-              <div className="flex items-center justify-between p-3 bg-[#F0F9FF] border border-[#8CD74B] rounded-lg">
-                <div className="flex items-center gap-3 flex-1">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={usePreferences}
-                      onChange={(e) => setUsePreferences(e.target.checked)}
-                      className="w-4 h-4 text-[#8CD74B] border-gray-300 rounded focus:ring-[#8CD74B]"
-                    />
-                    <span className="text-sm font-medium text-gray-700">
-                      Use my preferences
-                    </span>
-                  </label>
-                  {usePreferences && (
-                    <div className="flex items-center gap-2 text-xs text-gray-600 ml-4">
-                      <span className="font-medium">Active filters:</span>
-                      {userPreferences.location?.city && (
-                        <span className="px-2 py-1 bg-white rounded">📍 {userPreferences.location.city}</span>
-                      )}
-                      {userPreferences.criteria?.minPrice && userPreferences.criteria?.maxPrice && (
-                        <span className="px-2 py-1 bg-white rounded">
-                          💰 ${userPreferences.criteria.minPrice.toLocaleString()} - ${userPreferences.criteria.maxPrice.toLocaleString()}
+              <div className="bg-white rounded-lg border border-gray-200 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.08)] overflow-hidden">
+                <div className="p-4">
+                  <div className="flex items-center justify-between gap-4">
+                    {/* Left Side - Toggle */}
+                    <label className="flex items-center gap-3 cursor-pointer group flex-shrink-0">
+                      <div className="relative">
+                        <input
+                          type="checkbox"
+                          checked={usePreferences}
+                          onChange={(e) => setUsePreferences(e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-[#8CD74B] transition-colors duration-300"></div>
+                        <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 peer-checked:translate-x-5"></div>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-base font-semibold text-gray-900">
+                          My Preferences
                         </span>
-                      )}
-                      {userPreferences.criteria?.beds && userPreferences.criteria.beds !== 'Any' && (
-                        <span className="px-2 py-1 bg-white rounded">🛏️ {userPreferences.criteria.beds} beds</span>
-                      )}
-                      {userPreferences.criteria?.petsAllowed && (
-                        <span className="px-2 py-1 bg-white rounded">🐾 Pets allowed</span>
-                      )}
-                    </div>
-                  )}
+                        <span className="text-xs text-gray-500">
+                          {usePreferences ? 'Active' : 'Disabled'}
+                        </span>
+                      </div>
+                    </label>
+
+                    {/* Right Side - Active Filters */}
+                    {usePreferences && (
+                      <div className="flex items-center gap-4 flex-1 min-w-0 animate-in fade-in slide-in-from-right-2 duration-300">
+                        <div className="h-8 w-px bg-gray-200"></div>
+                        <div className="flex flex-wrap items-center gap-2 flex-1 min-w-0">
+                          <span className="text-xs font-medium text-gray-500 flex-shrink-0">
+                            Active:
+                          </span>
+                          {userPreferences.location?.city && (
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-[#8CD74B]/10 to-[#8CD74B]/5 border border-[#8CD74B]/20 rounded-md text-sm text-gray-700 font-medium shadow-sm">
+                              <MapPin size={14} className="text-[#8CD74B]" strokeWidth={2.5} />
+                              <span>{userPreferences.location.city}</span>
+                            </div>
+                          )}
+                          {userPreferences.criteria?.minPrice !== undefined && userPreferences.criteria?.maxPrice !== undefined && (
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-[#8CD74B]/10 to-[#8CD74B]/5 border border-[#8CD74B]/20 rounded-md text-sm text-gray-700 font-medium shadow-sm">
+                              <DollarSign size={14} className="text-[#8CD74B]" strokeWidth={2.5} />
+                              <span>
+                                {userPreferences.criteria.minPrice.toLocaleString()}-{userPreferences.criteria.maxPrice.toLocaleString()}
+                              </span>
+                            </div>
+                          )}
+                          {userPreferences.criteria?.beds && userPreferences.criteria.beds !== 'Any' && (
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-[#8CD74B]/10 to-[#8CD74B]/5 border border-[#8CD74B]/20 rounded-md text-sm text-gray-700 font-medium shadow-sm">
+                              <BedDouble size={14} className="text-[#8CD74B]" strokeWidth={2.5} />
+                              <span>{userPreferences.criteria.beds} beds</span>
+                            </div>
+                          )}
+                          {userPreferences.criteria?.petsAllowed && (
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-[#8CD74B]/10 to-[#8CD74B]/5 border border-[#8CD74B]/20 rounded-md text-sm text-gray-700 font-medium shadow-sm">
+                              <PawPrint size={14} className="text-[#8CD74B]" strokeWidth={2.5} />
+                              <span>Pets OK</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                {usePreferences && (
-                  <button
-                    onClick={() => setUsePreferences(false)}
-                    className="ml-2 text-gray-400 hover:text-gray-600 transition-colors"
-                    title="Disable preferences"
-                  >
-                    <X size={16} />
-                  </button>
-                )}
               </div>
             )}
-            
+
             {/* Filter Button */}
             <div className="flex justify-end">
               <button
@@ -423,8 +469,10 @@ const Properties: React.FC = () => {
 
         {/* Grid Section */}
         {loading ? (
-          <div className="col-span-full py-20 text-center">
-            <p className="text-gray-500 text-lg">Loading properties...</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <PropertySkeleton key={i} />
+            ))}
           </div>
         ) : error ? (
           <div className="col-span-full py-20 text-center">
@@ -437,23 +485,65 @@ const Properties: React.FC = () => {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredProperties.length > 0 ? (
-              filteredProperties.map((property) => (
-                <PropertyCard key={(property as any).uniqueId || property.id} property={property} />
-              ))
-            ) : (
-              <div className="col-span-full py-20 text-center">
-                <p className="text-gray-500 text-lg">No properties found matching your criteria.</p>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {paginatedProperties.length > 0 ? (
+                paginatedProperties.map((property) => (
+                  <PropertyCard key={property.id} property={property} />
+                ))
+              ) : (
+                <div className="col-span-full py-20 text-center">
+                  <p className="text-gray-500 text-lg">No properties found matching your criteria.</p>
+                  <button
+                    onClick={resetPropertyFilters}
+                    className="mt-4 text-[var(--dashboard-accent)] font-medium hover:underline"
+                  >
+                    Clear all filters
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Pagination */}
+            {filteredProperties.length > ITEMS_PER_PAGE && (
+              <div className="mt-8 flex justify-center items-center gap-2">
                 <button
-                  onClick={() => setFilters(null)}
-                  className="mt-4 text-[var(--dashboard-accent)] font-medium hover:underline"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className={`p-2 rounded-full transition-colors ${currentPage === 1
+                    ? 'text-gray-300 cursor-not-allowed'
+                    : 'text-gray-600 hover:bg-gray-200'
+                    }`}
                 >
-                  Clear all filters
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-medium transition-all ${currentPage === page
+                      ? 'bg-[#3A7D76] text-white shadow-lg'
+                      : 'bg-transparent text-gray-600 border border-gray-300 hover:bg-gray-100'
+                      }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className={`p-2 rounded-full transition-colors ${currentPage === totalPages
+                    ? 'text-gray-300 cursor-not-allowed'
+                    : 'text-gray-600 hover:bg-gray-200'
+                    }`}
+                >
+                  <ChevronRight className="w-6 h-6" />
                 </button>
               </div>
             )}
-          </div>
+          </>
         )}
       </div>
     </div >

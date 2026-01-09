@@ -1,7 +1,8 @@
 import { useState, useRef, useMemo, useCallback, forwardRef, useImperativeHandle, useEffect } from 'react';
-import { UploadCloud, X, FileText } from 'lucide-react';
+import { UploadCloud, X, FileText, Pencil, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import BaseModal from "@/components/common/modals/BaseModal";
+import DeleteConfirmationModal from "@/components/common/modals/DeleteConfirmationModal";
 import DatePicker from "@/components/ui/DatePicker";
 
 interface InsuranceData {
@@ -36,10 +37,12 @@ const STORAGE_KEY = 'lease_insurance_data';
 
 export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [insuranceData, setInsuranceData] = useState<InsuranceData | null>(null);
     const [formData, setFormData] = useState<InsuranceData>(initialFormData);
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const [uploadError, setUploadError] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Load insurance data from localStorage on mount
@@ -116,10 +119,10 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
             fileData: formData.fileData,
             fileType: formData.fileType
         };
-        
+
         // Save to state - this persists the data
         setInsuranceData(updatedData);
-        
+
         // Close modal
         setIsModalOpen(false);
 
@@ -132,6 +135,27 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
+        // Validation: File Type
+        const ALLOWED_TYPES = [
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'image/jpeg',
+            'image/png'
+        ];
+        if (!ALLOWED_TYPES.includes(file.type)) {
+            setUploadError("Please select a valid document (PDF, DOC, DOCX) or image (JPEG, PNG).");
+            return;
+        }
+
+        // Validation: File Size (5MB limit)
+        const MAX_SIZE = 5 * 1024 * 1024;
+        if (file.size > MAX_SIZE) {
+            setUploadError("File is too large. Please select a file smaller than 5MB.");
+            return;
+        }
+
+        setUploadError(null);
         setUploadedFile(file);
 
         // Convert to base64 for persistence
@@ -143,6 +167,9 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
                 fileData: reader.result as string,
                 fileType: file.type
             }));
+        };
+        reader.onerror = () => {
+            setUploadError("Failed to read the file. Please try again.");
         };
         reader.readAsDataURL(file);
     }, []);
@@ -160,14 +187,6 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
         return imageExtensions.some(ext => fileName.toLowerCase().endsWith(ext));
     }, []);
 
-    // Get file preview URL (uses base64 data, no memory leak)
-    const getFilePreviewUrl = useCallback(() => {
-        if (formData.fileData) {
-            return formData.fileData;
-        }
-        return null;
-    }, [formData.fileData]);
-
     // Date validation
     const isDateInvalid = useMemo(() => {
         return !!(
@@ -183,6 +202,18 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
         setUploadedFile(null);
         setIsModalOpen(false);
     }, [insuranceData]);
+
+    const handleDelete = useCallback(() => {
+        setIsDeleteModalOpen(true);
+    }, []);
+
+    const handleDeleteConfirm = useCallback(() => {
+        setInsuranceData(null);
+        setFormData(initialFormData);
+        setUploadedFile(null);
+        localStorage.removeItem(STORAGE_KEY);
+        setIsDeleteModalOpen(false);
+    }, []);
 
     const footerButtons = useMemo(() => [
         {
@@ -220,12 +251,22 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
                 <div className="bg-[#F7F7F7] rounded-[1.25rem] p-6 shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] border border-[#F1F1F1]  transition-all duration-300">
                     <div className="flex items-start justify-between px-6 py-3 -mx-6 -mt-6 mb-4 border-b border-[#E5E7EB]">
                         <h3 className="text-[22px] font-semibold text-[#1A1A1A]">Insurance Details</h3>
-                        <button
-                            onClick={handleOpenModal}
-                            className="text-[var(--dashboard-accent)] font-semibold text-sm hover:opacity-80 transition-opacity"
-                        >
-                            Edit
-                        </button>
+                        <div className="flex items-center gap-1">
+                            <button
+                                onClick={handleOpenModal}
+                                className="text-[var(--dashboard-accent)] hover:opacity-80 transition-opacity p-1.5 hover:bg-gray-100 rounded-md"
+                                title="Edit"
+                            >
+                                <Pencil size={18} />
+                            </button>
+                            <button
+                                onClick={handleDelete}
+                                className="text-red-500 hover:text-red-700 transition-colors p-1.5 hover:bg-red-50 rounded-md"
+                                title="Delete"
+                            >
+                                <Trash2 size={18} />
+                            </button>
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -292,11 +333,11 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
                 titleSize="text-xl"
                 headerBorder={true}
                 footerBorder={false}
-                padding="px-6 py-6 !overflow-visible"
+                padding="px-6 py-4 !overflow-visible"
             >
-                <div className="flex flex-col gap-4 overflow-visible">
-                    <div className="grid grid-cols-2 gap-6 overflow-visible">
-                        <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-3 overflow-visible">
+                    <div className="grid grid-cols-2 gap-4 overflow-visible">
+                        <div className="flex flex-col gap-1.5">
                             <label className="text-[13px] font-medium text-[#1A1A1A]">Company name</label>
                             <input
                                 type="text"
@@ -304,10 +345,10 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
                                 value={formData.companyName}
                                 onChange={handleChange}
                                 placeholder="Enter company name"
-                                className="w-full px-3 py-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--dashboard-accent)]/20 transition-all"
+                                className="w-full px-3 py-2 bg-[#F9FAFB] border border-[#E5E7EB] rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--dashboard-accent)]/20 transition-all"
                             />
                         </div>
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-1.5">
                             <label className="text-[13px] font-medium text-[#1A1A1A]">Company website</label>
                             <input
                                 type="text"
@@ -315,13 +356,13 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
                                 value={formData.companyWebsite}
                                 onChange={handleChange}
                                 placeholder="Enter company website"
-                                className="w-full px-3 py-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--dashboard-accent)]/20 transition-all"
+                                className="w-full px-3 py-2 bg-[#F9FAFB] border border-[#E5E7EB] rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--dashboard-accent)]/20 transition-all"
                             />
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4 overflow-visible">
-                        <div className="flex flex-col gap-2 overflow-visible">
+                    <div className="grid grid-cols-3 gap-3 overflow-visible">
+                        <div className="flex flex-col gap-1.5 overflow-visible">
                             <label className="text-[13px] font-medium text-[#1A1A1A]">Policy</label>
                             <input
                                 type="text"
@@ -329,10 +370,10 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
                                 value={formData.policy}
                                 onChange={handleChange}
                                 placeholder="Enter policy number"
-                                className="w-full px-3 py-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--dashboard-accent)]/20 transition-all"
+                                className="w-full px-3 py-2 bg-[#F9FAFB] border border-[#E5E7EB] rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--dashboard-accent)]/20 transition-all"
                             />
                         </div>
-                        <div className="flex flex-col gap-2 overflow-visible">
+                        <div className="flex flex-col gap-1.5 overflow-visible">
                             <label className="text-[13px] font-medium text-[#1A1A1A]">Effective Date</label>
                             <DatePicker
                                 value={formData.effectiveDate}
@@ -341,7 +382,7 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
                                 className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-md text-sm focus:ring-2 focus:ring-[var(--dashboard-accent)]/20"
                             />
                         </div>
-                        <div className="flex flex-col gap-2 overflow-visible">
+                        <div className="flex flex-col gap-1.5 overflow-visible">
                             <label className="text-[13px] font-medium text-[#1A1A1A]">Expiration Date</label>
                             <DatePicker
                                 value={formData.expirationDate}
@@ -354,25 +395,32 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
 
                     {/* Date Validation Error */}
                     {isDateInvalid && (
-                        <div className="col-span-3 text-xs text-red-600 bg-red-50 border border-red-200 rounded-md p-2">
+                        <div className="col-span-3 text-xs text-red-600 bg-red-50 border border-red-200 rounded-md p-1.5">
                             ⚠️ Expiration date must be after effective date
                         </div>
                     )}
 
-                    <div className="flex flex-col gap-2">
+                    {/* Upload Error */}
+                    {uploadError && (
+                        <div className="col-span-3 text-xs text-red-600 bg-red-50 border border-red-200 rounded-md p-1.5">
+                            ⚠️ {uploadError}
+                        </div>
+                    )}
+
+                    <div className="flex flex-col gap-1.5">
                         <label className="text-[13px] font-medium text-[#1A1A1A]">Details</label>
                         <textarea
                             name="details"
-                            rows={3}
+                            rows={4}
                             value={formData.details}
                             onChange={handleChange}
                             placeholder="Enter insurance details..."
-                            className="w-full px-3 py-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--dashboard-accent)]/20 transition-all resize-none"
+                            className="w-full px-3 py-2 bg-[#F9FAFB] border border-[#E5E7EB] rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--dashboard-accent)]/20 transition-all resize-none"
                         />
                     </div>
 
                     {/* Upload Section */}
-                    <div className="w-full space-y-3">
+                    <div className="w-full space-y-2">
                         <input
                             type="file"
                             ref={fileInputRef}
@@ -381,75 +429,38 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
                             accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                             className="hidden"
                         />
-                        
+
                         {/* Preview if file is uploaded */}
                         {(uploadedFile || formData.fileName) && (
-                            <div className="bg-white rounded-lg border border-gray-200 p-3">
-                                {uploadedFile && isImageFile(uploadedFile.name) ? (
-                                    <div className="flex items-center gap-3">
-                                        <div 
-                                            className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 cursor-pointer hover:opacity-80 transition-opacity"
-                                            onClick={() => {
-                                                const url = getFilePreviewUrl();
-                                                if (url) setSelectedImage(url);
-                                            }}
-                                        >
-                                            <img
-                                                src={getFilePreviewUrl() || ''}
-                                                alt="Preview"
-                                                className="w-full h-full object-cover"
-                                            />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium text-gray-900 truncate">{uploadedFile.name}</p>
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                handleRemoveFile();
-                                                setFormData(prev => ({ ...prev, fileName: null }));
-                                            }}
-                                            className="text-red-500 hover:text-red-700 transition-colors p-1"
-                                            title="Remove file"
-                                        >
-                                            <X size={20} />
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center">
-                                            <FileText size={24} className="text-gray-500" />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium text-gray-900 truncate">
-                                                {uploadedFile?.name || formData.fileName}
-                                            </p>
-                                            <p className="text-xs text-gray-500">Document attached</p>
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                handleRemoveFile();
-                                                setFormData(prev => ({ ...prev, fileName: null }));
-                                            }}
-                                            className="text-red-500 hover:text-red-700 transition-colors p-1"
-                                            title="Remove file"
-                                        >
-                                            <X size={20} />
-                                        </button>
-                                    </div>
-                                )}
+                            <div className="bg-white rounded-lg border border-gray-200 p-2 flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-2 flex-1 min-w-0">
+                                    <FileText size={16} className="text-gray-500 flex-shrink-0" />
+                                    <p className="text-sm font-medium text-gray-900 truncate">
+                                        {uploadedFile?.name || formData.fileName}
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        handleRemoveFile();
+                                        setFormData(prev => ({ ...prev, fileName: null, fileData: null, fileType: null }));
+                                    }}
+                                    className="text-red-500 hover:text-red-700 transition-colors p-1 flex-shrink-0"
+                                    title="Remove file"
+                                >
+                                    <X size={18} />
+                                </button>
                             </div>
                         )}
-                        
+
                         {/* Upload Button */}
                         <label
                             htmlFor="insurance-file-upload"
-                            className="w-full h-24 bg-[#E9E9E9] rounded-xl flex flex-col items-center justify-center cursor-pointer border-2 border-dashed border-gray-300 hover:border-[var(--dashboard-accent)] transition-all group"
+                            className="w-full h-16 bg-[#E9E9E9] rounded-xl flex flex-col items-center justify-center cursor-pointer border-2 border-dashed border-gray-300 hover:border-[var(--dashboard-accent)] transition-all group"
                             aria-label={uploadedFile || formData.fileName ? 'Click to change insurance document' : 'Click to upload insurance document'}
                         >
-                            <UploadCloud className="w-8 h-8 text-[var(--dashboard-accent)] group-hover:scale-110 transition-transform mb-2" />
-                            <span className="text-sm text-gray-400">
+                            <UploadCloud className="w-6 h-6 text-[var(--dashboard-accent)] group-hover:scale-110 transition-transform mb-1" />
+                            <span className="text-xs text-gray-400">
                                 {uploadedFile || formData.fileName ? 'Click to change document' : 'Click to upload document'}
                             </span>
                         </label>
@@ -459,7 +470,7 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
 
             {/* Image Preview Modal */}
             {selectedImage && (
-                <div 
+                <div
                     className="fixed inset-0 bg-black/75 z-[10000] flex items-center justify-center p-28"
                     onClick={() => setSelectedImage(null)}
                 >
@@ -472,17 +483,27 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
                         >
                             <X size={24} className="text-gray-700" strokeWidth={2.5} />
                         </button>
-                        
+
                         {/* Image */}
-                        <img 
-                            src={selectedImage} 
-                            alt="Insurance document preview" 
+                        <img
+                            src={selectedImage}
+                            alt="Insurance document preview"
                             className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
                             onClick={(e) => e.stopPropagation()}
                         />
                     </div>
                 </div>
             )}
+
+            {/* Delete Confirmation Modal */}
+            <DeleteConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={handleDeleteConfirm}
+                title="Delete Insurance"
+                message="Are you sure you want to delete this insurance information? This action cannot be undone."
+                itemName="insurance information"
+            />
         </div>
     );
 });

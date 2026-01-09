@@ -1,0 +1,147 @@
+import type { Chat } from '../types';
+import type { Publication } from '../../../utils/types';
+
+export const mockPublications: Publication[] = [
+    {
+        id: '1',
+        title: 'Building Maintenance Scheduled',
+        content: 'Please be advised that there will be scheduled maintenance for the elevator system on January 15th from 9 AM to 2 PM. We apologize for any inconvenience.',
+        date: new Date(Date.now() - 86400000).toISOString(),
+        author: 'Building Management',
+    },
+    {
+        id: '2',
+        title: 'Community Event: Summer BBQ',
+        content: 'Join us for our annual Summer BBQ this Saturday at the courtyard! Food and drinks will be provided. All residents are welcome.',
+        date: new Date(Date.now() - 172800000).toISOString(),
+        author: 'Social Committee',
+    },
+    {
+        id: '3',
+        title: 'New Recycling Policy',
+        content: 'We are implementing a new recycling program effective next month. Please separate your recyclables according to the new guidelines posted in the trash room.',
+        date: new Date(Date.now() - 432000000).toISOString(),
+        author: 'Green Team',
+    },
+];
+
+
+export const mockChats: Chat[] = [
+    {
+        id: 'chat_1',
+        contactName: 'Ashendra Sharma',
+        contactRole: 'Landlord',
+        contactEmail: 'ashendra.sharma@email.com',
+        contactAvatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Ashendra%20Sharma&backgroundColor=52D3A2',
+        lastMessage: 'Sure, I can help you with that. When would you like to schedule the repair?',
+        lastMessageTime: '10:45 AM',
+        unreadCount: 0,
+        isOnline: true,
+        isPinned: true,
+        propertyAddress: 'Sunset Apartments, 123 Sunset Blvd',
+        messages: [
+            {
+                id: 'm1',
+                senderId: 'user',
+                senderName: 'You',
+                text: 'Hi, I wanted to discuss the water heater issue in my unit.',
+                timestamp: new Date(Date.now() - 3600000).toISOString(),
+                isRead: true,
+            },
+            {
+                id: 'm2',
+                senderId: 'landlord-1',
+                senderName: 'Ashendra Sharma',
+                text: 'Hello! Thanks for reaching out. Can you describe the issue in more detail?',
+                timestamp: new Date(Date.now() - 3300000).toISOString(),
+                isRead: true,
+            },
+            {
+                id: 'm6',
+                senderId: 'landlord-1',
+                senderName: 'Ashendra Sharma',
+                text: 'Sure, I can help you with that. When would you like to schedule the repair?',
+                timestamp: new Date(Date.now() - 1800000).toISOString(),
+                isRead: true,
+            },
+        ],
+    },
+    {
+        id: 'chat_2',
+        contactName: 'Siddak Bagga',
+        contactRole: 'Landlord',
+        contactEmail: 'siddak.bagga@email.com',
+        contactAvatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Siddak%20Bagga&backgroundColor=4ECDC4',
+        lastMessage: 'I have reviewed your lease extension request. Let\'s discuss.',
+        lastMessageTime: '09:30 AM',
+        unreadCount: 1,
+        isOnline: false,
+        isPinned: false,
+        propertyAddress: 'Grand Villa, Room 102',
+        messages: [
+            {
+                id: 'm1',
+                senderId: 'user',
+                senderName: 'You',
+                text: 'Hi Siddak, I sent the lease extension documents yesterday.',
+                timestamp: new Date(Date.now() - 86400000).toISOString(),
+                isRead: true,
+            },
+            {
+                id: 'm2',
+                senderId: 'landlord-2',
+                senderName: 'Siddak Bagga',
+                text: 'I have reviewed your lease extension request. Let\'s discuss.',
+                timestamp: new Date(Date.now() - 85000000).toISOString(),
+                isRead: false,
+            },
+        ],
+    },
+    {
+        id: 'chat_3',
+        contactName: 'Atul Rawat',
+        contactRole: 'Landlord',
+        contactEmail: 'atul.rawat@email.com',
+        contactAvatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Atul%20Rawat&backgroundColor=FF6B6B',
+        lastMessage: 'The new security system is being installed Friday.',
+        lastMessageTime: 'Yesterday',
+        unreadCount: 0,
+        isOnline: true,
+        isPinned: false,
+        propertyAddress: 'Sunset Apartments, 123 Sunset Blvd',
+        messages: [
+            {
+                id: 'm1',
+                senderId: 'landlord-3',
+                senderName: 'Atul Rawat',
+                text: 'The new security system is being installed Friday. Please ensure all windows are closed.',
+                timestamp: new Date(Date.now() - 172800000).toISOString(),
+                isRead: true,
+            },
+        ],
+    },
+    {
+        id: 'chat_4',
+        contactName: 'John Doesmith',
+        contactRole: 'Property Manager',
+        contactEmail: 'john.doesmith@email.com',
+        contactAvatar: 'https://api.dicebear.com/7.x/initials/svg?seed=John%20Doesmith&backgroundColor=4ECDC4',
+        lastMessage: 'The rent payment for this month has been received. Thank you!',
+        lastMessageTime: '2 days ago',
+        unreadCount: 0,
+        isOnline: false,
+        isPinned: false,
+        propertyAddress: 'Green Valley Homes, 456 Green Valley Dr',
+        messages: [
+            {
+                id: 'm1',
+                senderId: 'manager-1',
+                senderName: 'John Doesmith',
+                text: 'The rent payment for this month has been received. Thank you!',
+                timestamp: new Date(Date.now() - 792000000).toISOString(),
+                isRead: true,
+            },
+        ],
+    },
+];
+

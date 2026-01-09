@@ -242,7 +242,22 @@ input[type="submit"],
 
 @media print {
   body {
-    background-color: white !important;
+    background: white !important;
     background-image: none !important;
+  }
+
+  /* Hide interactive-only elements */
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Remove shadows for PDF */
+  * {
+    box-shadow: none !important;
+  }
+
+  /* Prevent awkward page breaks */
+  .avoid-break {
+    page-break-inside: avoid;
   }
 }

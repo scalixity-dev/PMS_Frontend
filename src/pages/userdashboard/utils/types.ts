@@ -13,6 +13,7 @@ export interface Transaction {
     amount: number;
     paidAmount?: number;
     currency: string;
+    schedule: 'Monthly' | 'One-time';
 }
 
 export interface TenantSummary {
@@ -82,15 +83,26 @@ export interface Property {
     tag?: string; // Support both for now
 }
 
+export interface LocationFilter {
+    displayText: string; // For display purposes
+    type: 'city' | 'nearby' | 'radius' | 'state' | 'all';
+    city?: string;
+    state?: string;
+    radius?: number; // in km
+}
+
 export interface FilterState {
     search: string;
     propertyType: string;
-    region: string;
+    region: string; // Kept for backward compatibility - display text
+    locationFilter?: LocationFilter; // New structured location data
     minPrice: number;
     maxPrice: number;
+    priceModified?: boolean; // Track if user has interacted with price controls
     bedrooms: string;
     availability: string;
     selectedAmenities: string[];
+    petsAllowed: string;
 }
 export interface UserInfo {
     firstName: string;
@@ -102,6 +114,7 @@ export interface UserInfo {
     country: string;
     city: string;
     pincode: string;
+    profileImage?: string;
 }
 
 export interface UserFinances {
@@ -149,4 +162,12 @@ export interface ServiceRequest {
     attachments?: (File | string)[]; // Can be File objects or data URL strings
     video?: File | string | null; // Can be File object or data URL string
     pets?: string[];
+}
+
+export interface Publication {
+    id: string;
+    title: string;
+    content: string;
+    date: string;
+    author: string;
 }

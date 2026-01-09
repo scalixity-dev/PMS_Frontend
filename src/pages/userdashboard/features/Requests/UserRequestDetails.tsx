@@ -4,7 +4,7 @@ import {
     ChevronLeft, MessageSquare, Printer, Tag,
     ImageIcon, ChevronDown, ChevronUp, User,
     DollarSign, Paperclip,
-    FileText, Download, XCircle, X
+    FileText, Download, X
 } from 'lucide-react';
 import { useRequestStore } from './store/requestStore';
 
@@ -12,7 +12,6 @@ const RequestDetails = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { requests } = useRequestStore();
-    const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
     const [selectedMedia, setSelectedMedia] = useState<{ type: string; url: string; name: string } | null>(null);
 
     // Find the request from the store - try matching by both id and requestId
@@ -22,8 +21,8 @@ const RequestDetails = () => {
         const requestIdNum = Number(r.id);
         const urlIdNum = Number(id);
         return (
-            requestIdStr === id || 
-            requestIdNum === urlIdNum || 
+            requestIdStr === id ||
+            requestIdNum === urlIdNum ||
             r.requestId === id
         );
     });
@@ -79,7 +78,7 @@ const RequestDetails = () => {
         // Convert attachments and video to media array for display
         media: (() => {
             const mediaItems: Array<{ id: number; type: string; url: string; name: string }> = [];
-            
+
             // Add attachments as images
             if (foundRequest.attachments && foundRequest.attachments.length > 0) {
                 foundRequest.attachments.forEach((file, index) => {
@@ -102,7 +101,7 @@ const RequestDetails = () => {
                     }
                 });
             }
-            
+
             // Add video if present
             if (foundRequest.video) {
                 if (foundRequest.video instanceof File) {
@@ -122,7 +121,7 @@ const RequestDetails = () => {
                     });
                 }
             }
-            
+
             return mediaItems;
         })(),
         assigneeInfo: {
@@ -178,30 +177,20 @@ const RequestDetails = () => {
                             <h1 className="text-xl font-semibold text-gray-900">Maintenance request</h1>
                         </div>
                         <div className="flex items-center gap-3">
-                            <button className="p-2 bg-white rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors">
+                            <button
+                                onClick={() => navigate('/userdashboard/messages', {
+                                    state: { viewMode: 'MR', requestId: foundRequest.id }
+                                })}
+                                className="p-2  transition-colors"
+                            >
                                 <MessageSquare size={20} />
                             </button>
-                            <div className="relative">
-                                <button
-                                    onClick={() => setIsActionMenuOpen(!isActionMenuOpen)}
-                                    className="bg-[#7ED957] hover:bg-[#6BC847] text-white px-6 py-2 rounded-xl text-sm font-semibold transition-colors"
-                                >
-                                    Action
-                                </button>
-                                {isActionMenuOpen && (
-                                    <>
-                                        <div className="fixed inset-0 z-10" onClick={() => setIsActionMenuOpen(false)}></div>
-                                        <div className="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-100 z-20 py-1">
-                                            <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                                                <Printer size={14} /> Print
-                                            </button>
-                                            <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50">
-                                                <XCircle size={14} /> Cancel
-                                            </button>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
+                            <button
+                                onClick={() => window.print()}
+                                className="p-2 transition-colors"
+                            >
+                                <Printer size={20} />
+                            </button>
                         </div>
                     </div>
 
@@ -211,7 +200,7 @@ const RequestDetails = () => {
                             <div className="pt-1">
                                 <Tag size={20} className="text-gray-500" />
                             </div>
-                            
+
                             {/* Content */}
                             <div className="flex-1 space-y-4">
                                 {/* Request ID & Title */}
@@ -226,7 +215,7 @@ const RequestDetails = () => {
 
                                 {/* Property */}
                                 <div className="flex gap-4">
-                                    
+
                                     <div className="flex-1 space-y-1">
                                         <p className="text-gray-500 text-sm font-medium">Property</p>
                                         <p className="text-xl font-medium text-gray-900">{request.property}</p>
@@ -260,8 +249,8 @@ const RequestDetails = () => {
                             {request.media.length > 0 ? (
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                     {request.media.map((item) => (
-                                        <div 
-                                            key={item.id} 
+                                        <div
+                                            key={item.id}
                                             className="aspect-square rounded-xl overflow-hidden bg-gray-100 border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity"
                                             onClick={() => setSelectedMedia(item)}
                                         >
@@ -342,11 +331,11 @@ const RequestDetails = () => {
                             <div>
                                 <p className="text-gray-500 text-sm font-medium mb-1">Authorization to Enter</p>
                                 <p className="text-gray-900 font-medium">
-                                    {foundRequest.authorizationToEnter 
-                                        ? (foundRequest.authorizationToEnter.toLowerCase() === "yes" 
-                                            ? "Yes" 
-                                            : foundRequest.authorizationToEnter.toLowerCase() === "no" 
-                                                ? "No" 
+                                    {foundRequest.authorizationToEnter
+                                        ? (foundRequest.authorizationToEnter.toLowerCase() === "yes"
+                                            ? "Yes"
+                                            : foundRequest.authorizationToEnter.toLowerCase() === "no"
+                                                ? "No"
                                                 : foundRequest.authorizationToEnter)
                                         : "Not specified"}
                                 </p>
@@ -358,8 +347,8 @@ const RequestDetails = () => {
                             <div>
                                 <p className="text-gray-500 text-sm font-medium mb-1">Pets</p>
                                 <p className="text-gray-900 font-medium">
-                                    {foundRequest.pets && foundRequest.pets.length > 0 
-                                        ? foundRequest.pets.join(", ") 
+                                    {foundRequest.pets && foundRequest.pets.length > 0
+                                        ? foundRequest.pets.join(", ")
                                         : "No pets"}
                                 </p>
                             </div>
@@ -376,7 +365,10 @@ const RequestDetails = () => {
                                             </p>
                                             <div className="text-gray-900 font-medium">
                                                 {slot.date && (
-                                                    <p>Date: {new Date(slot.date).toLocaleDateString()}</p>
+                                                    <p>Date: {(() => {
+                                                        const [year, month, day] = slot.date.split("-").map(Number);
+                                                        return new Date(year, month - 1, day).toLocaleDateString();
+                                                    })()}</p>
                                                 )}
                                                 {slot.timeSlots && slot.timeSlots.length > 0 && (
                                                     <p>Time: {slot.timeSlots.join(", ")}</p>
@@ -442,7 +434,7 @@ const RequestDetails = () => {
                                         const fileName = file instanceof File ? file.name : `attachment-${index + 1}`;
                                         const fileSize = file instanceof File ? `${(file.size / 1024).toFixed(2)} KB` : 'N/A';
                                         const fileType = file instanceof File ? file.type : 'unknown';
-                                        
+
                                         return (
                                             <div key={index} className="bg-white rounded-xl border border-gray-200 p-4 flex items-center justify-between hover:shadow-md transition-shadow group">
                                                 <div className="flex items-center gap-3 overflow-hidden">
@@ -454,8 +446,8 @@ const RequestDetails = () => {
                                                         <p className="text-xs text-gray-500">{fileSize} • {fileType}</p>
                                                     </div>
                                                 </div>
-                                                <button 
-                                                    className="p-2 text-gray-400 hover:text-[#7ED957] hover:bg-gray-50 rounded-lg transition-colors shrink-0" 
+                                                <button
+                                                    className="p-2 text-gray-400 hover:text-[#7ED957] hover:bg-gray-50 rounded-lg transition-colors shrink-0"
                                                     title="Download"
                                                     onClick={() => {
                                                         if (file instanceof File) {
@@ -490,7 +482,7 @@ const RequestDetails = () => {
 
             {/* Media Modal */}
             {selectedMedia && (
-                <div 
+                <div
                     className="fixed inset-0 bg-black/40 bg-opacity-75 z-50 flex items-center justify-center p-28"
                     onClick={() => setSelectedMedia(null)}
                 >
@@ -504,20 +496,20 @@ const RequestDetails = () => {
                         >
                             <X size={24} className="text-gray-700" strokeWidth={2.5} />
                         </button>
-                        
+
                         {selectedMedia.type === "video" ? (
-                            <video 
-                                src={selectedMedia.url} 
-                                controls 
+                            <video
+                                src={selectedMedia.url}
+                                controls
                                 className="max-w-full max-h-full rounded-lg shadow-2xl"
                                 onClick={(e) => e.stopPropagation()}
                             >
                                 Your browser does not support the video tag.
                             </video>
                         ) : (
-                            <img 
-                                src={selectedMedia.url} 
-                                alt={selectedMedia.name} 
+                            <img
+                                src={selectedMedia.url}
+                                alt={selectedMedia.name}
                                 className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
                                 onClick={(e) => e.stopPropagation()}
                             />
@@ -525,6 +517,111 @@ const RequestDetails = () => {
                     </div>
                 </div>
             )}
+
+            {/* Print Only Component */}
+            <div className="hidden print:block p-8" id="printable-request">
+                <div className="max-w-4xl mx-auto space-y-8 font-sans">
+                    <div className="flex justify-between items-start border-b-2 border-black pb-4">
+                        <div>
+                            <h1 className="text-2xl font-bold">Maintenance Request #</h1>
+                            <p className="text-3xl font-bold mt-1">{foundRequest.requestId}</p>
+                            <p className="text-sm mt-2">Status: {foundRequest.status}</p>
+                        </div>
+                        <div className="text-right">
+                            <p className="font-bold">Landlord:</p>
+                            <p>Ashendra Sharma</p>
+                            <p className="text-sm">ashendrasharma360@gmail.com</p>
+                        </div>
+                    </div>
+
+                    <section>
+                        <h2 className="text-xl font-bold mb-4">General Information</h2>
+                        <div className="grid grid-cols-2 gap-8">
+                            <div>
+                                <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider mb-2">
+                                    Property Information:
+                                </p>
+                                <p className="font-bold">{foundRequest.property}</p>
+                            </div>
+                            <div className="space-y-4">
+                                <div>
+                                    <p className="font-bold">Title:</p>
+                                    <p className="text-sm">
+                                        {foundRequest.category} / {foundRequest.subCategory || "N/A"} / {foundRequest.problem || "N/A"}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="font-bold">Categories:</p>
+                                    <p className="text-sm">{foundRequest.category}</p>
+                                </div>
+                                <div>
+                                    <p className="font-bold">Description:</p>
+                                    <p className="text-sm">{foundRequest.problem || "N/A"}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <div className="border-t border-black pt-4">
+                        <h2 className="text-xl font-bold mb-4">Assignee Information</h2>
+                        <div className="grid grid-cols-4 gap-4">
+                            <div>
+                                <p className="text-sm">{foundRequest.assignee || "N/A"}</p>
+                            </div>
+                            <div>
+                                <p className="font-bold text-sm">Priority:</p>
+                                <p className="text-sm">{foundRequest.priority}</p>
+                            </div>
+                            <div>
+                                <p className="font-bold text-sm">Date initiated:</p>
+                                <p className="text-sm">{new Date(foundRequest.createdAt).toLocaleDateString()}</p>
+                            </div>
+                            <div>
+                                <p className="font-bold text-sm">Due date:</p>
+                                <p className="text-sm">N/A</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="border-t border-black pt-4">
+                        <h2 className="text-xl font-bold mb-4">Tenant Information</h2>
+                        <div className="grid grid-cols-3 gap-y-6">
+                            <div>
+                                <p className="font-bold text-sm">Authorization:</p>
+                                <p className="text-sm">{foundRequest.authorizationToEnter || "Allowed to enter"}</p>
+                            </div>
+                            <div>
+                                <p className="font-bold text-sm">Alarm code:</p>
+                                <p className="text-sm">{foundRequest.authorizationCode || "N/A"}</p>
+                            </div>
+                            <div>
+                                <p className="font-bold text-sm">Pets:</p>
+                                <p className="text-sm">
+                                    {foundRequest.pets && foundRequest.pets.length > 0 ? foundRequest.pets.join(", ") : "N/A"}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <style dangerouslySetInnerHTML={{
+                __html: `
+                @media print {
+                    body * {
+                        visibility: hidden;
+                    }
+                    #printable-request, #printable-request * {
+                        visibility: visible;
+                    }
+                    #printable-request {
+                        position: absolute;
+                        left: 0;
+                        top: 0;
+                        width: 100%;
+                    }
+                }
+            `}} />
         </div>
     );
 };

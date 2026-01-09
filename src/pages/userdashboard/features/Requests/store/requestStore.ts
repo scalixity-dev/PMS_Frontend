@@ -9,6 +9,7 @@ interface RequestState {
     resetRequestFilters: () => void;
     addRequest: (request: ServiceRequest) => void;
     updateRequestStatus: (id: number, status: ServiceRequest["status"]) => void;
+    deleteRequest: (id: number) => void;
 }
 
 const STORAGE_KEY = 'pms_user_requests';
@@ -52,10 +53,10 @@ const saveRequests = (requests: ServiceRequest[]): boolean => {
         // Convert File objects to data URLs for persistence
         const serializableRequests: SerializedServiceRequest[] = requests.map((req) => {
             const attachmentUrls: string[] = [];
-            
+
             // Check if we have pre-converted data URLs (from form submission)
             const requestWithDataUrls = req as ServiceRequest & { attachmentDataUrls?: string[]; videoDataUrl?: string | null };
-            
+
             if (requestWithDataUrls.attachmentDataUrls && requestWithDataUrls.attachmentDataUrls.length > 0) {
                 // Use pre-converted data URLs
                 attachmentUrls.push(...requestWithDataUrls.attachmentDataUrls);
@@ -94,7 +95,7 @@ const saveRequests = (requests: ServiceRequest[]): boolean => {
                 videoDataUrl: requestWithDataUrls.videoDataUrl,
             };
         });
-        
+
         const serializedData = JSON.stringify(serializableRequests);
         localStorage.setItem(STORAGE_KEY, serializedData);
         return true;
@@ -105,7 +106,7 @@ const saveRequests = (requests: ServiceRequest[]): boolean => {
             error.name === 'NS_ERROR_DOM_QUOTA_REACHED'
         )) {
             console.error('localStorage quota exceeded. Unable to save requests with attachments.');
-            
+
             // Attempt to save without attachments/videos as fallback
             try {
                 const requestsWithoutMedia: SerializedServiceRequest[] = requests.map((req) => ({
@@ -117,7 +118,7 @@ const saveRequests = (requests: ServiceRequest[]): boolean => {
                 }));
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(requestsWithoutMedia));
                 console.warn('Saved requests without media files due to storage quota limits.');
-                
+
                 // Notify user through a custom event that can be caught by components
                 window.dispatchEvent(new CustomEvent('storage-quota-exceeded', {
                     detail: {
@@ -130,7 +131,7 @@ const saveRequests = (requests: ServiceRequest[]): boolean => {
                 return false;
             }
         }
-        
+
         console.error('Error saving requests to localStorage:', error);
         return false;
     }
@@ -161,11 +162,11 @@ export const useRequestStore = create<RequestState>((set) => ({
         set((state) => {
             const updatedRequests = [request, ...state.requests];
             const saved = saveRequests(updatedRequests);
-            
+
             if (!saved) {
                 console.warn('Request added to state but failed to persist to localStorage');
             }
-            
+
             return { requests: updatedRequests };
         }),
     updateRequestStatus: (id, status) =>
@@ -174,11 +175,22 @@ export const useRequestStore = create<RequestState>((set) => ({
                 req.id === id ? { ...req, status } : req
             );
             const saved = saveRequests(updatedRequests);
-            
+
             if (!saved) {
                 console.warn('Request status updated in state but failed to persist to localStorage');
             }
-            
+
+            return { requests: updatedRequests };
+        }),
+    deleteRequest: (id) =>
+        set((state) => {
+            const updatedRequests = state.requests.filter((req) => req.id !== id);
+            const saved = saveRequests(updatedRequests);
+
+            if (!saved) {
+                console.warn('Request deleted from state but failed to persist to localStorage');
+            }
+
             return { requests: updatedRequests };
         }),
 }));
