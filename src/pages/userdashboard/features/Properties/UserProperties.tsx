@@ -190,10 +190,20 @@ const Properties: React.FC = () => {
         let state: string | undefined;
         let city: string | undefined;
 
+        // Check if locationFilter has any actual values (even if locationModified is false)
+        const hasLocationFilterValues = filters.locationFilter && 
+          (filters.locationFilter.country || filters.locationFilter.state || filters.locationFilter.city);
+
         if (filters.locationModified && filters.locationFilter) {
           country = filters.locationFilter.country;
           state = filters.locationFilter.state;
           city = filters.locationFilter.city;
+        } else if (hasLocationFilterValues) {
+          // Use locationFilter if it has values, even if locationModified is false
+          // This prevents silently ignoring location filters that were set
+          country = filters.locationFilter?.country;
+          state = filters.locationFilter?.state;
+          city = filters.locationFilter?.city;
         } else if (shouldUsePreferences && userPreferences?.location) {
           country = userPreferences.location.country;
           state = userPreferences.location.state;

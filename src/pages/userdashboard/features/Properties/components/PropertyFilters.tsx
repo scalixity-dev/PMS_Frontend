@@ -193,6 +193,9 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                 // CustomDropdown value is what is stored.
                 // Let's use the values directly.
                 setRegion(city);
+            } else {
+                // Clear region when location is partially cleared
+                setRegion("All Locations");
             }
         }
     }, [country, stateRegion, city, countries, states]);
