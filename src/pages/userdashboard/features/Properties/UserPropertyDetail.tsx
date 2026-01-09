@@ -651,7 +651,7 @@ const PropertyDetailUser: React.FC = () => {
                         <div className="bg-[#F5F5F5] border border-[#3333334D] rounded-2xl p-4 mb-6">
                             <textarea
                                 className="w-full bg-transparent border-0 focus:ring-0 focus:outline-none focus-visible:ring-0 focus-visible:outline-none text-sm text-gray-600 resize-none h-24"
-                                defaultValue={`Hello ${propertyData.agent.name.split(' ')[0]}, I would like to know more about the listing`}
+                                defaultValue={`Hello ${propertyData.agent.name?.split(' ')[0] || 'there'}, I would like to know more about the listing`}
                             />
                         </div>
 
