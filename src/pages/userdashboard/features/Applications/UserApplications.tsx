@@ -5,12 +5,22 @@ import PrimaryActionButton from "../../../../components/common/buttons/PrimaryAc
 import DeleteConfirmationModal from "../../../../components/common/modals/DeleteConfirmationModal";
 
 interface ApplicationItem {
-  id: number;
+  id: number | string;
   name: string;
   phone: string;
   status: "Approved" | "Rejected" | "Submitted" | "Draft";
   appliedDate: string;
   address: string;
+  propertyId?: string;
+}
+
+interface InvitationItem {
+  id: string;
+  inviterName: string;
+  propertyName: string;
+  propertyAddress: string;
+  propertyId: string;
+  initials: string;
 }
 
 // Helper function to generate avatar seed from name
@@ -32,11 +42,45 @@ const formatDate = (dateString: string): string => {
 
 const Applications: React.FC = () => {
   const navigate = useNavigate();
-  const [showInvitation, setShowInvitation] = useState(false);
+  const [showInvitationsSection, setShowInvitationsSection] = useState(false);
+  const [invitations, setInvitations] = useState<InvitationItem[]>([
+    {
+      id: 'inv_1',
+      inviterName: 'Ashendra Sharma',
+      propertyName: 'Sagar Sadhan Hotel Rd',
+      propertyAddress: 'Thoothukudi, TN 462026, IN',
+      propertyId: 'prop_mock_123',
+      initials: 'AS'
+    },
+    {
+      id: 'inv_2',
+      inviterName: 'Ravi Kumar',
+      propertyName: 'Cloud 9 Apartments',
+      propertyAddress: 'Hitech City, Hyderabad, TS 500081, IN',
+      propertyId: 'prop_mock_456',
+      initials: 'RK'
+    },
+    {
+      id: 'inv_3',
+      inviterName: 'Siddharth Jain',
+      propertyName: 'Oasis Residency',
+      propertyAddress: 'Indiranagar, Bangalore, KA 560038, IN',
+      propertyId: 'prop_mock_789',
+      initials: 'SJ'
+    },
+    {
+      id: 'inv_4',
+      inviterName: 'Meera Reddy',
+      propertyName: 'Sunrise Villas',
+      propertyAddress: 'Whitefield, Bangalore, KA 560066, IN',
+      propertyId: 'prop_mock_012',
+      initials: 'MR'
+    }
+  ]);
   const [deleteModalState, setDeleteModalState] = useState<{
     isOpen: boolean;
     type: 'invitation' | 'application';
-    applicationId?: number;
+    targetId?: number | string;
   }>({ isOpen: false, type: 'invitation' });
   const [errorToast, setErrorToast] = useState<string | null>(null);
 
@@ -86,15 +130,19 @@ const Applications: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Notification Bell - Toggles Invitation Card */}
+            {/* Notification Bell - Toggles Invitation Cards */}
             <button
-              onClick={() => setShowInvitation(!showInvitation)}
+              onClick={() => setShowInvitationsSection(!showInvitationsSection)}
               className="relative"
             >
               <div className="w-10 h-10 bg-[#7ED957] rounded-full flex items-center justify-center text-white cursor-pointer hover:opacity-90 transition-opacity shadow-sm">
                 <Bell size={22} fill="white" strokeWidth={1.5} />
               </div>
-              <div className="absolute top-0 right-0 w-3 h-3 bg-[#FF3B30] border-2 border-white rounded-full"></div>
+              {invitations.length > 0 && (
+                <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#FF3B30] border-2 border-white rounded-full flex items-center justify-center text-[10px] font-bold text-white">
+                  {invitations.length}
+                </div>
+              )}
             </button>
 
             {/* Find a Place Button */}
@@ -106,40 +154,49 @@ const Applications: React.FC = () => {
           </div>
         </div>
 
-        {/* Invitation Card */}
-        {showInvitation && (
-          <div className="flex justify-start">
-            <div className="bg-white rounded-xl border border-[#E5E7EB] p-5 flex items-center justify-between w-full max-w-2xl shadow-[0px_4px_4px_0px_#00000040]">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-[#52D3A2] flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-                  AS
+        {/* Invitations Section */}
+        {showInvitationsSection && invitations.length > 0 && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold text-[#1A1A1A]">Invitations ({invitations.length})</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {invitations.map((inv) => (
+                <div key={inv.id} className="bg-white rounded-xl border border-[#E5E7EB] p-5 flex items-center justify-between shadow-[0px_4px_4px_0px_#00000040]">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-[#52D3A2] flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                      {inv.initials}
+                    </div>
+                    <div className="flex flex-col">
+                      <h3 className="font-semibold text-[#1A1A1A] text-sm">{inv.inviterName}</h3>
+                      <p className="text-sm text-[#71717A] leading-tight mt-0.5">
+                        invited you to apply for {inv.propertyName}, {inv.propertyAddress}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-6 pr-2">
+                    <button
+                      onClick={() => setDeleteModalState({ isOpen: true, type: 'invitation', targetId: inv.id })}
+                      className="text-[#64748B] text-sm font-medium hover:text-[#1A1A1A] transition-colors"
+                    >
+                      Ignore
+                    </button>
+                    <button
+                      onClick={() => navigate("/userdashboard/new-application", {
+                        state: { propertyId: inv.propertyId }
+                      })}
+                      className="text-[#7ED957] text-sm font-semibold hover:opacity-80 transition-opacity"
+                    >
+                      View
+                    </button>
+                  </div>
                 </div>
-                <div className="flex flex-col">
-                  <h3 className="font-semibold text-[#1A1A1A] text-sm">Ashendra Sharma</h3>
-                  <p className="text-sm text-[#71717A] leading-tight mt-0.5">
-                    invited you to apply for Sagar Sadhan Hotel Rd, Thoothukudi, TN
-                    <br />
-                    462026, IN
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-8 pr-2">
-                <button
-                  onClick={() => setDeleteModalState({ isOpen: true, type: 'invitation' })}
-                  className="text-[#64748B] text-sm font-medium hover:text-[#1A1A1A] transition-colors"
-                >
-                  Ignore
-                </button>
-                <button
-                  onClick={() => navigate("/userdashboard/new-application", {
-                    state: { propertyId: 'prop_mock_123' }
-                  })}
-                  className="text-[#7ED957] text-sm font-semibold hover:opacity-80 transition-opacity"
-                >
-                  View
-                </button>
-              </div>
+              ))}
             </div>
+          </div>
+        )}
+
+        {showInvitationsSection && invitations.length === 0 && (
+          <div className="bg-[#F9FAFB] rounded-xl border border-dashed border-[#E5E7EB] p-8 text-center text-[#71717A]">
+            No new invitations at the moment.
           </div>
         )}
 
@@ -148,10 +205,11 @@ const Applications: React.FC = () => {
           onClose={() => setDeleteModalState({ ...deleteModalState, isOpen: false })}
           onConfirm={() => {
             try {
-              if (deleteModalState.type === 'invitation') {
-                setShowInvitation(false);
-              } else if (deleteModalState.type === 'application' && typeof deleteModalState.applicationId === 'number') {
-                const appId = deleteModalState.applicationId;
+              if (deleteModalState.type === 'invitation' && deleteModalState.targetId) {
+                const invId = deleteModalState.targetId;
+                setInvitations(prev => prev.filter(inv => inv.id !== invId));
+              } else if (deleteModalState.type === 'application' && deleteModalState.targetId) {
+                const appId = deleteModalState.targetId;
                 setApplications(prev => prev.filter(app => app.id !== appId));
 
                 // Update local storage with error handling
@@ -159,6 +217,11 @@ const Applications: React.FC = () => {
                 const localApps = stored ? JSON.parse(stored) : [];
                 const updatedLocalApps = localApps.filter((app: any) => app.id !== appId);
                 localStorage.setItem('user_applications', JSON.stringify(updatedLocalApps));
+
+                // If it's a draft, clear the full data too
+                if (typeof appId === 'string' && appId.startsWith('draft_')) {
+                  localStorage.removeItem(`application_draft_data_${appId}`);
+                }
               }
             } catch (error) {
               console.error('Failed to update local storage:', error);
@@ -206,7 +269,7 @@ const Applications: React.FC = () => {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    setDeleteModalState({ isOpen: true, type: 'application', applicationId: app.id });
+                    setDeleteModalState({ isOpen: true, type: 'application', targetId: app.id });
                   }}
                   className="absolute top-4 right-4 z-10 p-1.5 bg-white rounded-full text-gray-400 hover:text-red-500 transition-all shadow-sm"
                 >
@@ -249,7 +312,9 @@ const Applications: React.FC = () => {
               {/* View Application Link */}
               <div className="py-4 flex justify-center">
                 <button
-                  onClick={() => navigate(app.status === "Draft" ? "/userdashboard/new-application" : `/userdashboard/applications/${app.id}`)}
+                  onClick={() => navigate(app.status === "Draft" ? "/userdashboard/new-application" : `/userdashboard/applications/${app.id}`, {
+                    state: app.status === "Draft" && app.propertyId ? { propertyId: app.propertyId } : undefined
+                  })}
                   className="text-[#7ED957] text-sm font-semibold hover:opacity-80 transition-opacity"
                 >
                   {app.status === "Draft" ? "Continue application" : "View application"}

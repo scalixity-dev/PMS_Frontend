@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Search, Check } from "lucide-react";
+import { Country, State, City } from 'country-state-city';
+import type { ICountry, IState, ICity } from 'country-state-city';
 import CustomDropdown from "../../../../../pages/Dashboard/components/CustomDropdown";
 
-import type { FilterState, LocationFilter } from "../../../utils/types";
+import type { FilterState } from "../../../utils/types";
 
 interface UserPreferences {
     location?: { country: string; state: string; city: string };
@@ -26,13 +28,13 @@ interface PropertyFiltersProps {
 }
 
 
-const PropertyFilters: React.FC<PropertyFiltersProps> = ({ 
-    isOpen, 
-    onClose, 
+const PropertyFilters: React.FC<PropertyFiltersProps> = ({
+    isOpen,
+    onClose,
     onApply,
     onReset,
     userPreferences,
-    initialFilters 
+    initialFilters
 }) => {
     // Initialize state with preferences or initial filters
     const getInitialMinPrice = () => {
@@ -57,7 +59,20 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
 
     const [search, setSearch] = useState(initialFilters.search || "");
     const [propertyType, setPropertyType] = useState(initialFilters.propertyType || "All");
+
+
+    // Location State
+    const [countries, setCountries] = useState<ICountry[]>([]);
+    const [states, setStates] = useState<IState[]>([]);
+    const [cities, setCities] = useState<ICity[]>([]);
+
+    const [country, setCountry] = useState(initialFilters.locationFilter?.country || userPreferences?.location?.country || "");
+    const [stateRegion, setStateRegion] = useState(initialFilters.locationFilter?.state || userPreferences?.location?.state || "");
+    const [city, setCity] = useState(initialFilters.locationFilter?.city || userPreferences?.location?.city || "");
+
+    // Maintain region string for backward compatibility or display
     const [region, setRegion] = useState(initialFilters.region || (userPreferences?.location?.city ? userPreferences.location.city : "All Locations"));
+    const [locationModified, setLocationModified] = useState(initialFilters.locationModified || false);
     const [minPrice, setMinPrice] = useState(getInitialMinPrice());
     const [maxPrice, setMaxPrice] = useState(getInitialMaxPrice());
     const [priceModified, setPriceModified] = useState(initialFilters.priceModified || false);
@@ -70,7 +85,8 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
     // Ref to track if we're syncing from props (to prevent infinite loop)
     const isSyncingFromProps = useRef(false);
     const prevInitialFiltersRef = useRef(initialFilters);
-    
+    const prevUserPreferencesRef = useRef(userPreferences);
+
     // Ref for the sidebar content container
     const sidebarRef = useRef<HTMLDivElement>(null);
 
@@ -83,18 +99,32 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
 
     // Update state when initialFilters or userPreferences change
     useEffect(() => {
-        // Only sync if initialFilters actually changed
+        // Only sync if initialFilters or userPreferences actually changed
         const hasInitialFiltersChanged = prevInitialFiltersRef.current !== initialFilters;
-        
-        if (hasInitialFiltersChanged) {
+        const hasUserPreferencesChanged = prevUserPreferencesRef.current !== userPreferences;
+
+        if (hasInitialFiltersChanged || hasUserPreferencesChanged) {
             isSyncingFromProps.current = true;
             prevInitialFiltersRef.current = initialFilters;
+            prevUserPreferencesRef.current = userPreferences;
         }
-        
-        if (hasInitialFiltersChanged) {
+
+        if (hasInitialFiltersChanged || hasUserPreferencesChanged) {
             setSearch(initialFilters.search || "");
             setPropertyType(initialFilters.propertyType || "All");
-            setRegion(initialFilters.region || (userPreferences?.location?.city ? userPreferences.location.city : "All Locations"));
+
+
+            // Sync Location
+            // Explicitly only sync from preferences if the location hasn't been manually modified.
+            // This prevents turning "My Preferences" ON/OFF from overwriting a user's manual work.
+            if (!initialFilters.locationModified) {
+                setCountry(userPreferences?.location?.country || "");
+                setStateRegion(userPreferences?.location?.state || "");
+                setCity(userPreferences?.location?.city || "");
+                setRegion(userPreferences?.location?.city ? userPreferences.location.city : "All Locations");
+            }
+            // Ensure local state reflects the store's modified status
+            setLocationModified(initialFilters.locationModified || false);
             setMinPrice(initialFilters.minPrice ?? getInitialMinPrice());
             setMaxPrice(initialFilters.maxPrice ?? getInitialMaxPrice());
             setPriceModified(initialFilters.priceModified || false);
@@ -103,9 +133,9 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
             setSelectedAmenities(initialFilters.selectedAmenities || []);
             setPetsAllowed(initialFilters.petsAllowed || "All");
         }
-        
+
         // Reset the flag after a microtask to allow state updates to complete
-        if (hasInitialFiltersChanged) {
+        if (hasInitialFiltersChanged || hasUserPreferencesChanged) {
             Promise.resolve().then(() => {
                 isSyncingFromProps.current = false;
             });
@@ -119,51 +149,53 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
         // Local state will be synced via the useEffect when initialFilters changes
     };
 
-    // Helper function to parse region display text into structured LocationFilter
-    const parseRegionToLocationFilter = (regionText: string): LocationFilter | undefined => {
-        if (!regionText || regionText === 'All Locations') {
-            return { displayText: regionText, type: 'all' };
-        }
 
-        // Extract radius from region string (e.g., "Within 5km of Bhopal")
-        const radiusMatch = regionText.match(/Within (\d+)km of (.+)/);
-        if (radiusMatch) {
-            return {
-                displayText: regionText,
-                type: 'radius',
-                city: radiusMatch[2],
-                radius: parseInt(radiusMatch[1], 10)
-            };
-        }
 
-        // Handle "City & Nearby Areas" (default 10km radius)
-        if (regionText.includes(' & Nearby Areas')) {
-            const city = regionText.replace(' & Nearby Areas', '');
-            return {
-                displayText: regionText,
-                type: 'nearby',
-                city,
-                radius: 10 // Default radius for nearby areas
-            };
-        }
+    // Load all countries on mount
+    useEffect(() => {
+        setCountries(Country.getAllCountries());
+    }, []);
 
-        // Handle "All State" (e.g., "All Madhya Pradesh")
-        if (regionText.startsWith('All ')) {
-            const state = regionText.replace('All ', '');
-            return {
-                displayText: regionText,
-                type: 'state',
-                state
-            };
+    // Load states when country changes
+    useEffect(() => {
+        if (country) {
+            const countryStates = State.getStatesOfCountry(country);
+            setStates(countryStates);
+            // We don't reset stateRegion here to allow syncing from props to work naturally, 
+            // but in user interaction validation happens via UI options
+        } else {
+            setStates([]);
         }
+    }, [country]);
 
-        // Handle direct city name or other formats
-        return {
-            displayText: regionText,
-            type: 'city',
-            city: regionText
-        };
-    };
+    // Load cities when state changes
+    useEffect(() => {
+        if (country && stateRegion) {
+            const stateCities = City.getCitiesOfState(country, stateRegion);
+            setCities(stateCities);
+        } else {
+            setCities([]);
+        }
+    }, [country, stateRegion]);
+
+    // Convert to options for CustomDropdown
+    const countryOptions = useMemo(() => countries.map(c => ({ value: c.isoCode, label: c.name })).sort((a, b) => a.label.localeCompare(b.label)), [countries]);
+    const stateOptions = useMemo(() => states.map(s => ({ value: s.isoCode, label: s.name })).sort((a, b) => a.label.localeCompare(b.label)), [states]);
+    const cityOptions = useMemo(() => cities.map(c => ({ value: c.name, label: c.name })).sort((a, b) => a.label.localeCompare(b.label)), [cities]);
+
+    // Update region string when location parts change
+    useEffect(() => {
+        if (!isSyncingFromProps.current) {
+            if (city && stateRegion && country) {
+                // Construct a display string
+                // Find names for codes if needed, but we store isoCode for country/state usually? 
+                // Wait, TenantOnboarding stored isoCode for value but maybe we want readable?
+                // CustomDropdown value is what is stored.
+                // Let's use the values directly.
+                setRegion(city);
+            }
+        }
+    }, [country, stateRegion, city, countries, states]);
 
     // Update filters when they change (but not when syncing from props)
     useEffect(() => {
@@ -171,14 +203,22 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
         if (isSyncingFromProps.current) {
             return;
         }
-        
-        const locationFilter = parseRegionToLocationFilter(region);
-        
+
+
+
         onApply({
             search,
             propertyType,
             region,
-            locationFilter,
+            locationModified,
+
+            locationFilter: {
+                displayText: region,
+                type: 'city',
+                country,
+                state: stateRegion,
+                city
+            },
             minPrice,
             maxPrice,
             priceModified,
@@ -188,40 +228,9 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
             petsAllowed
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [search, propertyType, region, minPrice, maxPrice, priceModified, bedrooms, availability, selectedAmenities, petsAllowed]);
+    }, [search, propertyType, region, locationModified, country, stateRegion, city, minPrice, maxPrice, priceModified, bedrooms, availability, selectedAmenities, petsAllowed]);
 
-    // Generate region options based on user's location from preferences
-    const getRegionOptions = () => {
-        const options: { value: string; label: string }[] = [
-            { value: "All Locations", label: "All Locations" }
-        ];
-        
-        if (userPreferences?.location) {
-            const { city, state } = userPreferences.location;
-            
-            // Add user's city as primary option
-            if (city) {
-                options.push({ value: `${city} & Nearby Areas`, label: `${city} & Nearby Areas` });
-            }
-            
-            // Add nearby/surrounding areas option
-            if (city) {
-                options.push({ value: `Within 5km of ${city}`, label: `Within 5km of ${city}` });
-                options.push({ value: `Within 10km of ${city}`, label: `Within 10km of ${city}` });
-                options.push({ value: `Within 25km of ${city}`, label: `Within 25km of ${city}` });
-            }
-            if (state && city !== state) {
-                options.push({ value: `All ${state}`, label: `All ${state}` });
-            }
-        } else {
-            // Default options if no user location
-            options.push({ value: "Nearby Locality", label: "Nearby Locality" });
-        }
-        
-        return options;
-    };
 
-    const regionOptions = getRegionOptions();
     const propertyTypes = ["All", "Single Unit", "Multi Unit"];
     const bedroomOptions = ["All", "1", "2", "3", "4", "4+"];
     const availabilityOptions = [
@@ -312,18 +321,61 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                         </div>
                     </section>
 
-                    {/* Region */}
-                    <section className="space-y-2 pt-2 border-t border-gray-200">
-                        <h3 className="text-base font-semibold text-[#202020] px-1">Region</h3>
-                        <CustomDropdown
-                            value={region}
-                            onChange={setRegion}
-                            options={regionOptions}
-                            placeholder="Select region"
-                            buttonClassName="py-2.5 border-gray-200 shadow-sm !rounded-md"
-                            dropdownClassName="!rounded-md"
-                            textClassName="text-sm"
-                        />
+                    {/* Location Filters */}
+                    <section className="space-y-4 pt-2 border-t border-gray-200">
+                        <h3 className="text-base font-semibold text-[#202020] px-1">Location</h3>
+
+                        <div className="space-y-4">
+                            {/* Country */}
+                            <CustomDropdown
+                                value={country}
+                                onChange={(val: string) => {
+                                    setCountry(val);
+                                    setStateRegion("");
+                                    setCity("");
+                                    setLocationModified(true);
+                                }}
+                                options={countryOptions}
+                                placeholder="Select country"
+                                buttonClassName="py-2.5 border-gray-200 shadow-sm !rounded-md"
+                                dropdownClassName="!rounded-md"
+                                textClassName="text-sm"
+                                searchable={true}
+                            />
+
+                            {/* State */}
+                            <CustomDropdown
+                                value={stateRegion}
+                                onChange={(val: string) => {
+                                    setStateRegion(val);
+                                    setCity("");
+                                    setLocationModified(true);
+                                }}
+                                options={stateOptions}
+                                placeholder={country ? "Select state" : "Select country first"}
+                                disabled={!country}
+                                buttonClassName="py-2.5 border-gray-200 shadow-sm !rounded-md"
+                                dropdownClassName="!rounded-md"
+                                textClassName="text-sm"
+                                searchable={true}
+                            />
+
+                            {/* City */}
+                            <CustomDropdown
+                                value={city}
+                                onChange={(val: string) => {
+                                    setCity(val);
+                                    setLocationModified(true);
+                                }}
+                                options={cityOptions}
+                                placeholder={stateRegion ? "Select city" : "Select state first"}
+                                disabled={!stateRegion}
+                                buttonClassName="py-2.5 border-gray-200 shadow-sm !rounded-md"
+                                dropdownClassName="!rounded-md"
+                                textClassName="text-sm"
+                                searchable={true}
+                            />
+                        </div>
                     </section>
 
                     {/* Price Range */}
@@ -506,7 +558,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                                     </div>
                                 ))}
                             </div>
-                            <button 
+                            <button
                                 onClick={() => setShowAllAmenities(!showAllAmenities)}
                                 className="text-[#8CD74B] text-[14px] font-semibold pt-1 transition-colors hover:text-[#76b83f]"
                             >

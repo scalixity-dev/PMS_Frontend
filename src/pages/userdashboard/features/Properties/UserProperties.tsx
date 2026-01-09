@@ -108,6 +108,13 @@ const Properties: React.FC = () => {
     };
   } | null>(null);
 
+  // Reset user preferences on unmount to ensure fresh state on return
+  useEffect(() => {
+    return () => {
+      resetPropertyFilters();
+    };
+  }, [resetPropertyFilters]);
+
   // Fetch user preferences on mount (only for authenticated tenants)
   useEffect(() => {
     const fetchPreferences = async () => {
@@ -178,20 +185,24 @@ const Properties: React.FC = () => {
         // Use preferences only if enabled and no explicit filters are set
         const shouldUsePreferences = usePreferences && userPreferences;
 
-        // Location: Always apply preferences if enabled (location is a hard filter)
-        if (shouldUsePreferences && userPreferences?.location) {
-          const location = userPreferences.location;
-          // Always apply location filters from preferences when enabled
-          if (location.country) {
-            params.append('country', location.country);
-          }
-          if (location.state) {
-            params.append('state', location.state);
-          }
-          if (location.city) {
-            params.append('city', location.city);
-          }
+        // Location: Use filters if user has modified them, otherwise use preferences if enabled
+        let country: string | undefined;
+        let state: string | undefined;
+        let city: string | undefined;
+
+        if (filters.locationModified && filters.locationFilter) {
+          country = filters.locationFilter.country;
+          state = filters.locationFilter.state;
+          city = filters.locationFilter.city;
+        } else if (shouldUsePreferences && userPreferences?.location) {
+          country = userPreferences.location.country;
+          state = userPreferences.location.state;
+          city = userPreferences.location.city;
         }
+
+        if (country) params.append('country', country);
+        if (state) params.append('state', state);
+        if (city) params.append('city', city);
 
         // Price filters: Use filters if user has modified them, otherwise use preferences if enabled
         let minPrice: number | undefined;
@@ -223,7 +234,7 @@ const Properties: React.FC = () => {
         } else if (shouldUsePreferences && userPreferences?.criteria?.beds && userPreferences.criteria.beds !== 'Any') {
           bedsFilter = userPreferences.criteria.beds;
         }
-        
+
         if (bedsFilter) {
           params.append('beds', bedsFilter);
         }
@@ -322,6 +333,7 @@ const Properties: React.FC = () => {
     filters.propertyType,
     filters.bedrooms,
     filters.region,
+    filters.locationModified, // Add locationModified to dependency array
     filters.locationFilter,
     filters.petsAllowed,
     userPreferences,
@@ -384,7 +396,7 @@ const Properties: React.FC = () => {
         onClose={() => setIsPropertyFiltersOpen(false)}
         onApply={handleApplyFilters}
         onReset={resetPropertyFilters}
-        userPreferences={userPreferences}
+        userPreferences={usePreferences ? userPreferences : null}
         initialFilters={filters}
       />
 
@@ -413,7 +425,10 @@ const Properties: React.FC = () => {
                         <input
                           type="checkbox"
                           checked={usePreferences}
-                          onChange={(e) => setUsePreferences(e.target.checked)}
+                          onChange={(e) => {
+                            setUsePreferences(e.target.checked);
+                            resetPropertyFilters();
+                          }}
                           className="sr-only peer"
                         />
                         <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-[#8CD74B] transition-colors duration-300"></div>
@@ -437,10 +452,13 @@ const Properties: React.FC = () => {
                           <span className="text-xs font-medium text-gray-500 flex-shrink-0">
                             Active:
                           </span>
-                          {userPreferences.location?.city && (
+                          {/* Show Preference City if active and not modified, OR Show Modified City if modified */}
+                          {(!filters.locationModified ? userPreferences.location?.city : filters.locationFilter?.city) && (
                             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-[#8CD74B]/10 to-[#8CD74B]/5 border border-[#8CD74B]/20 rounded-md text-sm text-gray-700 font-medium shadow-sm">
                               <MapPin size={14} className="text-[#8CD74B]" strokeWidth={2.5} />
-                              <span>{userPreferences.location.city}</span>
+                              <span>
+                                {!filters.locationModified ? userPreferences.location?.city : filters.locationFilter?.city}
+                              </span>
                             </div>
                           )}
                           {userPreferences.criteria?.minPrice !== undefined && userPreferences.criteria?.maxPrice !== undefined && (
