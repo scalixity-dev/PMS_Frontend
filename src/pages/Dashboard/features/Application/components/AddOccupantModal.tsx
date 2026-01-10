@@ -132,10 +132,16 @@ const AddOccupantModal: React.FC<AddOccupantModalProps> = ({ isOpen, onClose, on
                 if (!value || value.trim() === '') {
                     return 'First name is required';
                 }
+                if (!/^[a-zA-Z\s\-']+$/.test(value)) {
+                    return 'First name can only contain letters, spaces, hyphens, and apostrophes';
+                }
                 break;
             case 'lastName':
                 if (!value || value.trim() === '') {
                     return 'Last name is required';
+                }
+                if (!/^[a-zA-Z\s\-']+$/.test(value)) {
+                    return 'Last name can only contain letters, spaces, hyphens, and apostrophes';
                 }
                 break;
             case 'email':
@@ -202,6 +208,13 @@ const AddOccupantModal: React.FC<AddOccupantModalProps> = ({ isOpen, onClose, on
     };
 
     const handleChange = (key: keyof OccupantFormData, value: any) => {
+        // Restrict input for Name fields to allow only letters, spaces, hyphens, and apostrophes
+        if ((key === 'firstName' || key === 'lastName') && typeof value === 'string') {
+            if (value && !/^[a-zA-Z\s\-']*$/.test(value)) {
+                return;
+            }
+        }
+
         setFormData(prev => ({ ...prev, [key]: value }));
 
         // Clear error for this field when user starts typing

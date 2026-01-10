@@ -65,6 +65,8 @@ interface TransactionStoreState {
     // Selected Data States
     selectedPayment: PaymentData | null;
     clonedTransactionData: TransactionData | null;
+    editingTransactionData: TransactionData | null;
+    markAsPaidData: { amount?: string; date?: Date } | null;
     selectedTransactionId: number | string | null;
 
     // Actions
@@ -81,6 +83,8 @@ interface TransactionStoreState {
 
     setSelectedPayment: (payment: PaymentData | null) => void;
     setClonedTransactionData: (data: TransactionData | null) => void;
+    setEditingTransactionData: (data: TransactionData | null) => void;
+    setMarkAsPaidData: (data: { amount?: string; date?: Date } | null) => void;
     setSelectedTransactionId: (id: number | string | null) => void;
 
     // Helper to close all (optional)
@@ -103,6 +107,8 @@ export const useTransactionStore = create<TransactionStoreState>((set) => ({
 
     selectedPayment: null,
     clonedTransactionData: null,
+    editingTransactionData: null,
+    markAsPaidData: null,
     selectedTransactionId: null,
 
     // Setters
@@ -119,6 +125,8 @@ export const useTransactionStore = create<TransactionStoreState>((set) => ({
 
     setSelectedPayment: (payment) => set({ selectedPayment: payment }),
     setClonedTransactionData: (data) => set({ clonedTransactionData: data }),
+    setEditingTransactionData: (data) => set({ editingTransactionData: data }),
+    setMarkAsPaidData: (data) => set({ markAsPaidData: data }),
     setSelectedTransactionId: (id) => set({ selectedTransactionId: id }),
 
     closeAllModals: () => set({

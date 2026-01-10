@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useNavigate, useOutletContext, useLocation } from 'react-router-dom';
 import { ChevronLeft, Download, Check, MoreHorizontal } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import { useTransactionStore } from './store/transactionStore';
@@ -91,6 +91,7 @@ const MOCK_TRANSACTIONS = [
 
 const Transactions: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
     const [activeTab, setActiveTab] = useState<'All' | 'Income' | 'Expense'>('All');
     const [selectedItems, setSelectedItems] = useState<number[]>([]);
@@ -133,6 +134,19 @@ const Transactions: React.FC = () => {
         property: [],
         categories: []
     });
+
+    // Handle pre-selected property from navigation state
+    useEffect(() => {
+        const state = location.state as { preSelectedProperty?: string };
+        if (state?.preSelectedProperty) {
+            setFilters(prev => ({
+                ...prev,
+                property: [state.preSelectedProperty!]
+            }));
+            // Clear state to prevent reapplying on refresh/navigation
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state]);
 
     const filterOptions: Record<string, FilterOption[]> = {
         date: [
@@ -264,18 +278,48 @@ const Transactions: React.FC = () => {
     return (
         <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit transition-all duration-300`}>
             {/* Modals */}
-            <EditInvoiceModal />
+            <EditInvoiceModal
+                onConfirm={(data) => {
+                    console.log('Edit Invoice data:', data);
+                    setEditInvoiceOpen(false);
+                }}
+            />
             <DeleteTransactionModal
                 onConfirm={() => {
                     setDeleteTransactionOpen(false);
                     setSelectedTransactionId(null);
                 }}
             />
-            <ApplyDepositsModal />
-            <ApplyCreditsModal />
-            <AddDiscountModal />
-            <MarkAsPaidModal />
-            <VoidTransactionModal />
+            <ApplyDepositsModal
+                onConfirm={(data) => {
+                    console.log('Apply Deposits data:', data);
+                    setApplyDepositsOpen(false);
+                }}
+            />
+            <ApplyCreditsModal
+                onConfirm={(data) => {
+                    console.log('Apply Credits data:', data);
+                    setApplyCreditsOpen(false);
+                }}
+            />
+            <AddDiscountModal
+                onConfirm={(data) => {
+                    console.log('Add Discount data:', data);
+                    setAddDiscountOpen(false);
+                }}
+            />
+            <MarkAsPaidModal
+                onConfirm={(data) => {
+                    console.log('Mark As Paid data:', data);
+                    setMarkAsPaidOpen(false);
+                }}
+            />
+            <VoidTransactionModal
+                onConfirm={(reason) => {
+                    console.log('Voiding transaction with reason:', reason);
+                    setVoidModalOpen(false);
+                }}
+            />
 
             {/* Breadcrumb */}
             <div className="inline-flex items-center px-4 py-2 bg-[#DFE5E3] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">

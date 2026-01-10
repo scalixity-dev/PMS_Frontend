@@ -6,6 +6,9 @@ import TransactionToggle from './components/TransactionToggle';
 import AddTenantModal from '../Tenants/components/AddTenantModal';
 import CustomDropdown from '../../components/CustomDropdown';
 
+import { validateFile } from '../../../../utils/fileValidation';
+import { Upload } from 'lucide-react';
+
 // Mock Data
 const MOCK_PROPERTIES: Record<string, { value: string, label: string }[]> = {
     '1': [ // Service Pro
@@ -36,6 +39,9 @@ const BulkPaymentsExpense: React.FC = () => {
     const [payerPayee, setPayerPayee] = useState<string>('');
     const [property, setProperty] = useState<string>('');
     const [isAddTenantModalOpen, setIsAddTenantModalOpen] = useState(false);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [uploadError, setUploadError] = useState<string>('');
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     // Dynamic Options and Data
     const propertyOptions = payerPayee ? (MOCK_PROPERTIES[payerPayee] || []) : [];
@@ -44,6 +50,26 @@ const BulkPaymentsExpense: React.FC = () => {
     const handlePayerChange = (value: string) => {
         setPayerPayee(value);
         setProperty(''); // Reset property when payer changes
+    };
+
+    const handleFileClick = () => {
+        setUploadError('');
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const validation = validateFile(file);
+        if (!validation.isValid) {
+            setUploadError(validation.error || 'Invalid file');
+            return;
+        }
+
+        setSelectedFile(file);
+        setUploadError('');
+        console.log('Bulk file selected:', file);
     };
 
     const handleEdit = (id: string) => {
@@ -81,10 +107,38 @@ const BulkPaymentsExpense: React.FC = () => {
                         <ChevronLeft className="w-6 h-6" />
                         Bulk payments expense
                     </button>
-                    <button className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium shadow-sm hover:bg-[#2c5251] transition-colors">
-                        Action
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            className="hidden"
+                            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                            onChange={handleFileChange}
+                        />
+                        <button
+                            onClick={handleFileClick}
+                            className="bg-[#7BD747] text-white px-6 py-2 rounded-full text-sm font-medium shadow-sm hover:bg-[#6cc73d] transition-colors flex items-center gap-2"
+                        >
+                            <Upload className="w-4 h-4" />
+                            Upload Bulk File
+                        </button>
+                        <button className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium shadow-sm hover:bg-[#2c5251] transition-colors">
+                            Action
+                        </button>
+                    </div>
                 </div>
+
+                {/* File Upload Error/Success Message */}
+                {uploadError && (
+                    <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-lg text-red-700 text-sm">
+                        {uploadError}
+                    </div>
+                )}
+                {selectedFile && !uploadError && (
+                    <div className="mb-4 p-3 bg-green-100 border border-green-300 rounded-lg text-green-700 text-sm">
+                        File selected: {selectedFile.name}
+                    </div>
+                )}
 
                 {/* Toggle Switch */}
                 <TransactionToggle

@@ -74,7 +74,6 @@ const RefundRentModal: React.FC<RefundRentModalProps> = ({ onConfirm }) => {
                 file: selectedFile,
             });
         }
-        // TODO: Handle file upload before closing if selectedFile exists
         onClose();
     };
 

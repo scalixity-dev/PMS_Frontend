@@ -8,12 +8,14 @@ export interface BackendEquipment {
   unitId?: string | null;
   singleUnitDetailId?: string | null;
   // Can be a simple string or an expanded object from Prisma include
+  categoryId?: string;
   category: string | {
     id: string;
     name: string;
     description?: string | null;
   };
   // Optional subcategory object when included from backend
+  subcategoryId?: string | null;
   subcategory?: {
     id: string;
     name: string;

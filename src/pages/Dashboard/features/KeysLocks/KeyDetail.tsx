@@ -3,6 +3,7 @@ import { useNavigate, useParams, useOutletContext } from 'react-router-dom';
 import { ChevronLeft, Edit, Trash2, Loader2 } from 'lucide-react';
 import CustomTextBox from '../../components/CustomTextBox';
 import AssignKeyModal from './AssignKeyModal';
+import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import ConfirmationModal from './ConfirmationModal';
 import { useGetKey, useUpdateKey, useDeleteKey } from '../../../../hooks/useKeysQueries';
 import { useGetAllProperties } from '../../../../hooks/usePropertyQueries';
@@ -420,13 +421,13 @@ const KeyDetail = () => {
                 properties={properties.map(p => p.propertyName)}
             />
 
-            <ConfirmationModal
+            <DeleteConfirmationModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={handleDeleteKey}
-                title="You're about to delete this key"
-                message="Are you sure you want to delete it?"
-                confirmLabel="Delete"
+                title="Delete Key"
+                message="Are you sure you want to delete this key? This action cannot be undone."
+                itemName={keyData?.keyName || 'this key'}
             />
 
             <ConfirmationModal

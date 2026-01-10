@@ -4,15 +4,14 @@ import { ChevronLeft, Edit, Plus, Trash2, Paperclip, ChevronDown } from 'lucide-
 import CustomTextBox from '../../components/CustomTextBox';
 import EditPaymentModal from './components/EditPaymentModal';
 import RefundRentModal from './components/RefundRentModal';
-import DeletePaymentModal from './components/DeletePaymentModal';
 import MarkAsPaidModal from './components/MarkAsPaidModal';
 import ApplyDepositsModal from './components/ApplyDepositsModal';
 import ApplyCreditsModal from './components/ApplyCreditsModal';
 import AddDiscountModal from './components/AddDiscountModal';
-import DeleteTransactionModal from './components/DeleteTransactionModal';
 import EditInvoiceModal from './components/EditInvoiceModal';
 import VoidTransactionModal from './components/VoidTransactionModal';
 import { useTransactionStore } from './store/transactionStore';
+import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 
 const TransactionDetail: React.FC = () => {
     const navigate = useNavigate();
@@ -36,7 +35,9 @@ const TransactionDetail: React.FC = () => {
         setVoidModalOpen,
         setSelectedPayment,
         selectedPayment,
-        setClonedTransactionData
+        setClonedTransactionData,
+        setEditingTransactionData,
+        setMarkAsPaidData
     } = useTransactionStore();
 
     // Close dropdown when clicking outside
@@ -77,30 +78,102 @@ const TransactionDetail: React.FC = () => {
 
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit">
-            <EditPaymentModal />
-            <RefundRentModal />
-            <DeletePaymentModal
+            <EditPaymentModal
+                onConfirm={(data) => {
+                    console.log('Edit Payment data:', data);
+                    // TODO: Implement API call
+                    setEditPaymentModalOpen(false);
+                }}
+            />
+            <RefundRentModal
+                onConfirm={(data) => {
+                    console.log('Refund Rent data:', data);
+                    // TODO: Implement API call
+                    setRefundModalOpen(false);
+                }}
+            />
+            <DeleteConfirmationModal
+                isOpen={useTransactionStore((state) => state.isDeleteModalOpen)}
+                onClose={() => setDeleteModalOpen(false)}
                 onConfirm={() => {
                     // Handle delete logic here
                     setDeleteModalOpen(false);
                     setSelectedPayment(null);
                 }}
+                title="Delete Payment"
+                message={
+                    <>
+                        Are you sure you want to delete this payment
+                        {selectedPayment?.date && selectedPayment?.amount && (
+                            <span className="font-semibold text-gray-900"> of {selectedPayment.amount} on {selectedPayment.date}</span>
+                        )}
+                        ?
+                        <br />
+                        <span className="text-sm text-gray-500 mt-2 block">
+                            This action cannot be undone. The payment record will be permanently removed from the transaction history.
+                        </span>
+                    </>
+                }
+                confirmText="Delete Payment"
+                itemName="Payment"
+                headerClassName="bg-red-600"
             />
-            <MarkAsPaidModal />
-            <ApplyDepositsModal />
-            <ApplyCreditsModal />
-            <AddDiscountModal />
-            <DeleteTransactionModal
-                onConfirm={() => {
-                    // Handle delete transaction logic here
-                    setDeleteTransactionOpen(false);
+            <MarkAsPaidModal
+                onConfirm={(data) => {
+                    console.log('Mark As Paid data:', data);
+                    // TODO: Implement API call
+                    setMarkAsPaidOpen(false);
                 }}
             />
-            <EditInvoiceModal />
+            <ApplyDepositsModal
+                onConfirm={(data) => {
+                    console.log('Apply Deposits data:', data);
+                    // TODO: Implement API call
+                    setApplyDepositsOpen(false);
+                }}
+            />
+            <ApplyCreditsModal
+                onConfirm={(data) => {
+                    console.log('Apply Credits data:', data);
+                    // TODO: Implement API call
+                    setApplyCreditsOpen(false);
+                }}
+            />
+            <AddDiscountModal
+                onConfirm={(data) => {
+                    console.log('Add Discount data:', data);
+                    // TODO: Implement API call
+                    setAddDiscountOpen(false);
+                }}
+            />
+            <DeleteConfirmationModal
+                isOpen={useTransactionStore((state) => state.isDeleteTransactionOpen)}
+                onClose={() => setDeleteTransactionOpen(false)}
+                onConfirm={() => {
+                    // Handle delete transaction logic here
+                    console.log('Deleting transaction...');
+                    setDeleteTransactionOpen(false);
+                }}
+                title="Delete transaction"
+                message={
+                    <span className="text-gray-700 leading-relaxed block text-center">
+                        Deleting a transaction means it will be deleted from your accounting and from payer's portals if this transaction is shared.
+                    </span>
+                }
+                confirmText="Delete"
+                confirmButtonClass="bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors px-6 py-2.5"
+            />
+            <EditInvoiceModal
+                onConfirm={(data) => {
+                    console.log('Edit Invoice data:', data);
+                    // TODO: Implement API call
+                    setEditInvoiceOpen(false);
+                }}
+            />
             <VoidTransactionModal
                 onConfirm={(reason) => {
-                    // Handle void logic here
                     console.log('Voiding transaction with reason:', reason);
+                    setVoidModalOpen(false);
                 }}
             />
 
@@ -125,7 +198,16 @@ const TransactionDetail: React.FC = () => {
                     </button>
                     <div className="flex flex-wrap gap-3">
                         <button
-                            onClick={() => setEditInvoiceOpen(true)}
+                            onClick={() => {
+                                setEditingTransactionData({
+                                    category: 'rent',
+                                    amount: '53,200.00',
+                                    date: '08 Dec 2025',
+                                    details: mockSummaryData.details,
+                                    tags: 'recurring'
+                                });
+                                setEditInvoiceOpen(true);
+                            }}
                             className="px-6 py-2 bg-[#5F6D7E] text-white rounded-full text-sm font-medium hover:bg-[#4a5563] transition-colors flex-1 sm:flex-none"
                         >
                             Edit
@@ -223,7 +305,13 @@ const TransactionDetail: React.FC = () => {
                             )}
                         </div>
                         <button
-                            onClick={() => setMarkAsPaidOpen(true)}
+                            onClick={() => {
+                                setMarkAsPaidData({
+                                    amount: '200.00',
+                                    date: new Date()
+                                });
+                                setMarkAsPaidOpen(true);
+                            }}
                             className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors flex-1 sm:flex-none whitespace-nowrap"
                         >
                             Mark As Paid
@@ -275,7 +363,7 @@ const TransactionDetail: React.FC = () => {
 
                     {/* Tags Row - Outside the white card */}
                     <div className="flex gap-4 flex-wrap px-0 sm:px-2">
-                        {['Equipment', 'Recurring Requests', 'SmartTenantAI', 'Maintenance'].map((tag, idx) => (
+                        {['Equipment', 'Recurring Requests', 'Tenants', 'Maintenance'].map((tag, idx) => (
                             <div key={idx} className="flex items-center gap-2 px-4 py-2 rounded-full border-[1.5px] border-[#7BD747] text-xs font-bold text-gray-700 bg-white shadow-sm">
                                 <div className="w-5 h-5 rounded-full bg-[#7BD747] text-white flex items-center justify-center text-[10px] font-bold">2</div>
                                 {tag}

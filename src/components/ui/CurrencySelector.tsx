@@ -36,9 +36,10 @@ interface CurrencySelectorProps {
     onChange: (currencyCode: string) => void;
     className?: string;
     error?: boolean;
+    onToggle?: (isOpen: boolean) => void;
 }
 
-const CurrencySelector: React.FC<CurrencySelectorProps> = ({ value, onChange, className = '', error = false }) => {
+const CurrencySelector: React.FC<CurrencySelectorProps> = ({ value, onChange, className = '', error = false, onToggle }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [search, setSearch] = useState('');
     const containerRef = useRef<HTMLDivElement>(null);
@@ -61,6 +62,7 @@ const CurrencySelector: React.FC<CurrencySelectorProps> = ({ value, onChange, cl
             if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
                 setIsOpen(false);
                 setSearch('');
+                onToggle?.(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -71,10 +73,14 @@ const CurrencySelector: React.FC<CurrencySelectorProps> = ({ value, onChange, cl
         <div className="relative" ref={containerRef}>
             <button
                 type="button"
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={() => {
+                    const newState = !isOpen;
+                    setIsOpen(newState);
+                    onToggle?.(newState);
+                }}
                 className={`flex items-center gap-1 px-3 py-3 border-r bg-gray-50 rounded-l-lg hover:bg-gray-100 transition-colors h-full min-w-[80px] ${className} ${error ? 'border-red-500' : 'border-gray-200'}`}
             >
-                <span className="text-sm font-bold text-gray-700">
+                <span className="text-base sm:text-sm font-bold text-gray-700">
                     <span className="flex items-center gap-1">
                         <span>{selectedCurrency.symbol}</span>
                         <span className="text-xs text-gray-500">{selectedCurrency.code}</span>
@@ -107,8 +113,9 @@ const CurrencySelector: React.FC<CurrencySelectorProps> = ({ value, onChange, cl
                                     onChange(c.code);
                                     setIsOpen(false);
                                     setSearch('');
+                                    onToggle?.(false);
                                 }}
-                                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center justify-between ${value === c.code ? 'bg-gray-50 text-[#3A6D6C] font-bold' : 'text-gray-700'}`}
+                                className={`w-full text-left px-4 py-2 text-base sm:text-sm hover:bg-gray-50 flex items-center justify-between ${value === c.code ? 'bg-gray-50 text-[#3A6D6C] font-bold' : 'text-gray-700'}`}
                             >
                                 <span className="flex items-center gap-2">
                                     <span className="w-6 text-center">{c.symbol}</span>

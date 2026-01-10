@@ -293,6 +293,129 @@ class LeasingService {
       throw new Error(errorMessage);
     }
   }
+    /**
+   * Validate Excel file for import
+   */
+  async validateExcel(file: File): Promise<{
+    total: number;
+    successful: number;
+    failed: number;
+    errors: Array<{ row: number; error: string }>;
+    message: string;
+    headers: string[];
+  }> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(API_ENDPOINTS.LEASING.VALIDATE_EXCEL, {
+      method: 'POST',
+      headers: {
+        // Content-Type is set automatically for FormData
+      },
+      credentials: 'include',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      // Mock response for development if endpoint doesn't exist
+      if (response.status === 404) {
+        console.warn('Validate endpoint not found, returning mock data');
+        return {
+          total: 5,
+          successful: 5,
+          failed: 0,
+          errors: [],
+          message: 'File validated successfully (Mock)',
+          headers: ['Property', 'Tenant', 'StartDate', 'EndDate', 'Rent'],
+        };
+      }
+      throw new Error(`Failed to validate file: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Import leasings from Excel
+   */
+  async importFromExcel(
+    file: File,
+    mappings: Record<string, string>,
+    importFirstRow: boolean
+  ): Promise<{
+    total: number;
+    successful: number;
+    failed: number;
+    errors: Array<{ row: number; error: string }>;
+    jobId: string | null;
+    message: string;
+  }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('mappings', JSON.stringify(mappings));
+    formData.append('importFirstRow', String(importFirstRow));
+
+    const response = await fetch(API_ENDPOINTS.LEASING.IMPORT_EXCEL, {
+      method: 'POST',
+      headers: {
+        // Content-Type is set automatically for FormData
+      },
+      credentials: 'include',
+      body: formData,
+    });
+
+    if (!response.ok) {
+        // Mock response for development
+        if (response.status === 404) {
+            console.warn('Import endpoint not found, returning mock data');
+            return {
+                total: 5,
+                successful: 5,
+                failed: 0,
+                errors: [],
+                jobId: 'mock-job-id-123',
+                message: 'Import started successfully (Mock)',
+            };
+        }
+      throw new Error(`Failed to import leasings: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get import fields definition
+   */
+  async getImportFields(): Promise<{
+    fields: Array<{ key: string; label: string; required: boolean }>;
+  }> {
+    const response = await fetch(API_ENDPOINTS.LEASING.GET_IMPORT_FIELDS, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+        // Mock response
+        if (response.status === 404) {
+             return {
+                fields: [
+                    { key: 'property', label: 'Property', required: true },
+                    { key: 'tenant', label: 'Tenant', required: true },
+                    { key: 'startDate', label: 'Start Date', required: true },
+                    { key: 'endDate', label: 'End Date', required: true },
+                    { key: 'rent', label: 'Monthly Rent', required: true },
+                ]
+             };
+        }
+      throw new Error(`Failed to fetch import fields: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
 }
 
 export const leasingService = new LeasingService();

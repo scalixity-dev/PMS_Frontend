@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import GetStartedButton from '../../../../components/common/buttons/GetStartedButton';
 import MoveInStepper from './components/MoveInStepper';
 import MoveInPropertySelection from './steps/MoveInPropertySelection';
@@ -72,6 +72,7 @@ const getVisualStep = (step: number) => {
 
 const MoveIn: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [selectedScenario, setSelectedScenario] = useState<{ type: 'easy' | 'advanced' } | null>(null);
     const [currentStep, setCurrentStep] = useState(0); // 0 = Selection, 1 = Property, 2 = Tenant, 3 = Share Lease, 4 = Recurring Rent, 5 = Recurring Rent Settings, 6 = Deposit, 7 = Deposit Settings, 8 = Late Fees, 9 = Late Fees Type, 10 = Lease, 11 = Fees
     const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
@@ -81,11 +82,19 @@ const MoveIn: React.FC = () => {
     const [lateFeeType, setLateFeeType] = useState<'one-time' | 'daily' | 'both'>('one-time');
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 
+    // Handle pre-selection from navigation state
+    useEffect(() => {
+        const state = location.state as { preSelectedPropertyId?: string } | null;
+        if (state?.preSelectedPropertyId) {
+            setSelectedPropertyId(state.preSelectedPropertyId);
+        }
+    }, [location.state]);
+
     const handleBack = () => {
         if (currentStep > 0) {
             setCurrentStep(currentStep - 1);
         } else {
-            navigate('/dashboard');
+            navigate(-1);
         }
     };
 

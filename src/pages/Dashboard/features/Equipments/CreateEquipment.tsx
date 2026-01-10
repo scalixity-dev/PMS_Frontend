@@ -1,14 +1,15 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Upload, Check, Loader2, X, ChevronLeft } from 'lucide-react';
+import { Upload, Check, Loader2, X, ChevronLeft, Edit, Trash2 } from 'lucide-react';
 import CustomDropdown from '../../components/CustomDropdown';
+import CurrencySelector from '@/components/ui/CurrencySelector';
 import UnsavedChangesModal from '../../components/UnsavedChangesModal';
 import DatePicker from '../../../../components/ui/DatePicker';
 import { format } from 'date-fns';
 import { useCreateEquipment, useUpdateEquipment, useGetEquipment, useGetEquipmentCategories, useGetEquipmentSubcategories } from '../../../../hooks/useEquipmentQueries';
 import { useGetAllProperties } from '../../../../hooks/usePropertyQueries';
 import { API_ENDPOINTS } from '../../../../config/api.config';
-import { getCurrencySymbol } from '../../../../utils/currency.utils';
+
 
 const CreateEquipment = () => {
     const navigate = useNavigate();
@@ -31,6 +32,8 @@ const CreateEquipment = () => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const fileUploadRef = useRef<HTMLInputElement>(null);
     const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+    const [image, setImage] = useState<string | null>(null);
+    const imageUrlRef = useRef<string | null>(null);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
     const [attachmentErrors, setAttachmentErrors] = useState<string[]>([]);
@@ -47,7 +50,8 @@ const CreateEquipment = () => {
         hasWarranty: false,
         warrantyExpirationDate: '',
         isLifetimeWarranty: false,
-        description: ''
+        description: '',
+        currency: 'USD'
     });
 
     // Allowed MIME types for document attachments (same as AddProperty)
@@ -85,10 +89,12 @@ const CreateEquipment = () => {
                 hasWarranty: false, // Warranty fields not in backend yet
                 warrantyExpirationDate: '',
                 isLifetimeWarranty: false,
-                description: eq.equipmentDetails || ''
+                description: eq.equipmentDetails || '',
+                currency: 'USD'
             });
             if (eq.photoUrl) {
                 setUploadedImageUrl(eq.photoUrl);
+                setImage(eq.photoUrl);
             }
             // Reset dirty state after a short delay to allow for state updates
             setTimeout(() => {
@@ -100,18 +106,9 @@ const CreateEquipment = () => {
         }
     }, [isEditMode, existingEquipment]);
 
-    // Get selected property to extract currency
-    const selectedProperty = useMemo(() => {
-        return properties.find(prop => prop.id === formData.propertyId);
-    }, [properties, formData.propertyId]);
 
-    // Get currency symbol based on selected property's country
-    const currencySymbol = useMemo(() => {
-        if (selectedProperty?.address?.country) {
-            return getCurrencySymbol(selectedProperty.address.country);
-        }
-        return '$'; // Default to USD
-    }, [selectedProperty]);
+
+
 
 
 
@@ -129,9 +126,27 @@ const CreateEquipment = () => {
         }
     };
 
+    // Cleanup blob URL on component unmount
+    useEffect(() => {
+        return () => {
+            if (imageUrlRef.current) {
+                URL.revokeObjectURL(imageUrlRef.current);
+            }
+        };
+    }, []);
+
     const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
+            // Revoke the previous blob URL to free up memory
+            if (imageUrlRef.current) {
+                URL.revokeObjectURL(imageUrlRef.current);
+            }
+            // Create and store the new blob URL for preview
+            const imageUrl = URL.createObjectURL(file);
+            imageUrlRef.current = imageUrl;
+            setImage(imageUrl);
+
             setIsUploading(true);
             try {
                 const formData = new FormData();
@@ -157,6 +172,25 @@ const CreateEquipment = () => {
                 setIsUploading(false);
             }
         }
+    };
+
+    const handleDeleteImage = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        // Revoke the blob URL to free up memory
+        if (imageUrlRef.current) {
+            URL.revokeObjectURL(imageUrlRef.current);
+            imageUrlRef.current = null;
+        }
+        setImage(null);
+        setUploadedImageUrl(null);
+        setIsDirty(true);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
+    const triggerFileInput = () => {
+        fileInputRef.current?.click();
     };
 
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -236,6 +270,18 @@ const CreateEquipment = () => {
     const handleSubmit = async () => {
         if (!formData.categoryId || !formData.brand || !formData.model || !formData.price || !formData.propertyId || !formData.serial || !formData.installationDate) {
             alert('Please fill in all required fields');
+            return;
+        }
+
+        // Basic Validation
+        const priceValue = parseFloat(formData.price.replace(/[^0-9.]/g, ''));
+        if (isNaN(priceValue) || priceValue < 0) {
+            alert('Please enter a valid price');
+            return;
+        }
+
+        if (!formData.serial.trim()) {
+            alert('Please enter a valid serial number');
             return;
         }
 
@@ -362,12 +408,14 @@ const CreateEquipment = () => {
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-12 transition-all duration-300">
             {/* Breadcrumb */}
-            <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold cursor-pointer" onClick={() => handleNavigation('/dashboard/equipments')}>Equipments</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">{isEditMode ? 'Edit Equipment' : 'Add Equipment'}</span>
+            <div className="overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:pb-0 mb-6 w-full">
+                <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] whitespace-nowrap">
+                    <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
+                    <span className="text-gray-500 text-sm mx-1">/</span>
+                    <span className="text-gray-600 text-sm font-semibold cursor-pointer" onClick={() => handleNavigation('/dashboard/equipments')}>Equipments</span>
+                    <span className="text-gray-500 text-sm mx-1">/</span>
+                    <span className="text-gray-600 text-sm font-semibold">{isEditMode ? 'Edit Equipment' : 'Add Equipment'}</span>
+                </div>
             </div>
 
             <div className="p-4 md:p-6 bg-[#E0E8E7] min-h-screen rounded-[1.5rem] md:rounded-[2rem]">
@@ -382,76 +430,74 @@ const CreateEquipment = () => {
                     <h1 className="text-2xl font-bold text-gray-800">{isEditMode ? 'Edit Equipment' : 'Add Equipment'}</h1>
                 </div>
 
-                {/* Cover Photo Upload */}
+                {/* Equipment Photo */}
                 <div className="mb-8">
                     <h2 className="text-lg font-bold text-gray-800 mb-4">Equipment Photo</h2>
-                    <div className="bg-white rounded-[2rem] p-8 border-2 border-dashed border-gray-300 flex flex-col items-center justify-center min-h-64 relative overflow-hidden group hover:border-[#4ad1a6] transition-colors">
-                        {/* Checkered background pattern */}
-                        <div className="absolute inset-0 opacity-[0.03]"
-                            style={{
-                                backgroundImage: `linear-gradient(45deg, #000 25%, transparent 25%), 
-                                linear-gradient(-45deg, #000 25%, transparent 25%), 
-                                linear-gradient(45deg, transparent 75%, #000 75%), 
-                                linear-gradient(-45deg, transparent 75%, #000 75%)`,
-                                backgroundSize: '20px 20px',
-                                backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px'
-                            }}
-                        />
-                        {uploadedImageUrl ? (
-                            <div className="relative w-full h-full min-h-64 flex flex-col items-center justify-center">
-                                <img src={uploadedImageUrl} alt="Equipment" className="max-w-full max-h-64 object-contain relative z-10 rounded-lg" />
-                                {isUploading && (
-                                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20 rounded-lg">
-                                        <Loader2 className="w-8 h-8 animate-spin text-white" />
-                                    </div>
-                                )}
-                                {!isUploading && (
-                                    <div className="mt-4 flex gap-3 z-10">
-                                        <button
-                                            type="button"
-                                            onClick={() => fileInputRef.current?.click()}
-                                            className="px-4 py-2 bg-[#3A6D6C] text-white rounded-lg text-sm font-medium hover:bg-[#2c5251] transition-colors"
-                                        >
-                                            Replace Photo
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setUploadedImageUrl(null);
-                                                setIsDirty(true);
-                                                if (fileInputRef.current) {
-                                                    fileInputRef.current.value = '';
-                                                }
-                                            }}
-                                            className="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-colors"
-                                        >
-                                            Remove Photo
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        ) : (
-                            <div className="z-10 flex flex-col items-center cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                                <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center mb-3">
-                                    {isUploading ? (
-                                        <Loader2 className="w-6 h-6 text-white animate-spin" />
-                                    ) : (
-                                        <Upload className="w-6 h-6 text-white" />
-                                    )}
-                                </div>
-                                <span className="text-sm font-medium text-gray-600">
-                                    {isUploading ? 'Uploading...' : 'Upload Equipment Photo'}
-                                </span>
-                                <span className="text-xs text-gray-500 mt-1">Click to upload</span>
-                            </div>
-                        )}
+                    <div
+                        className="relative w-64 aspect-square bg-white rounded-2xl overflow-hidden shadow-sm group border border-gray-100 cursor-pointer"
+                        onClick={triggerFileInput}
+                    >
                         <input
                             type="file"
                             ref={fileInputRef}
                             onChange={handleImageUpload}
+                            className="hidden"
                             accept="image/*"
-                            className="absolute inset-0 opacity-0 cursor-pointer"
                         />
+                        {/* Checkerboard pattern simulation */}
+                        <div className="absolute inset-0 opacity-10"
+                            style={{
+                                backgroundImage: `
+                                        linear-gradient(45deg, #000 25%, transparent 25%),
+                                        linear-gradient(-45deg, #000 25%, transparent 25%),
+                                        linear-gradient(45deg, transparent 75%, #000 75%),
+                                        linear-gradient(-45deg, transparent 75%, #000 75%)
+                                    `,
+                                backgroundSize: '20px 20px',
+                                backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px'
+                            }}
+                        />
+
+                        {image ? (
+                            <>
+                                <img src={image} alt="Equipment Preview" className="w-full h-full object-cover relative z-10" />
+                                {isUploading && (
+                                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
+                                        <Loader2 className="w-8 h-8 animate-spin text-white" />
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center z-10 hover:bg-black/5 transition-colors">
+                                <div className="bg-[#3A6D6C] p-3 rounded-full mb-2 shadow-sm">
+                                    <Upload className="w-6 h-6 text-white" />
+                                </div>
+                                <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Upload Photo</span>
+                            </div>
+                        )}
+
+                        {/* Action Bar (Visible on hover/always on touch) */}
+                        {image && (
+                            <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent z-20 flex justify-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        triggerFileInput();
+                                    }}
+                                    className="p-2 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full text-white shadow-sm transition-colors"
+                                    title="Change Photo"
+                                >
+                                    <Edit className="w-4 h-4" />
+                                </button>
+                                <button
+                                    onClick={handleDeleteImage}
+                                    className="p-2 bg-red-500/80 hover:bg-red-500 backdrop-blur-md rounded-full text-white shadow-sm transition-colors"
+                                    title="Remove Photo"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -469,7 +515,7 @@ const CreateEquipment = () => {
                                 value={formData.categoryId}
                                 onChange={(val) => handleInputChange('categoryId', val)}
                                 placeholder="Select Category"
-                                buttonClassName="w-full bg-white rounded-xl border-none h-12"
+                                buttonClassName="w-full bg-white rounded-lg border-none h-12"
                             />
                         </div>
                         {formData.categoryId && (
@@ -489,10 +535,10 @@ const CreateEquipment = () => {
                                         value={formData.subcategoryId}
                                         onChange={(val) => handleInputChange('subcategoryId', val)}
                                         placeholder="Select Subcategory (Optional)"
-                                        buttonClassName="w-full bg-white rounded-xl border-none h-12"
+                                        buttonClassName="w-full bg-white rounded-lg border-none h-12"
                                     />
                                 ) : (
-                                    <div className="w-full bg-white rounded-xl border-none h-12 px-4 flex items-center text-sm text-gray-500">
+                                    <div className="w-full bg-white rounded-lg border-none h-12 px-4 flex items-center text-sm text-gray-500">
                                         No subcategories available
                                     </div>
                                 )}
@@ -505,7 +551,7 @@ const CreateEquipment = () => {
                                 value={formData.brand}
                                 onChange={(e) => handleInputChange('brand', e.target.value)}
                                 placeholder="Enter brand name"
-                                className="w-full bg-white rounded-xl border-none h-12 px-4 focus:ring-0"
+                                className="w-full bg-white rounded-lg border-none h-12 px-4 focus:ring-0"
                             />
                         </div>
                         <div>
@@ -515,23 +561,29 @@ const CreateEquipment = () => {
                                 value={formData.model}
                                 onChange={(e) => handleInputChange('model', e.target.value)}
                                 placeholder="Type here"
-                                className="w-full bg-white rounded-xl border-none h-12 px-4 focus:ring-0"
+                                className="w-full bg-white rounded-lg border-none h-12 px-4 focus:ring-0"
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-600 mb-2">
-                                Price * {formData.propertyId && <span className="text-xs text-gray-500 font-normal">({currencySymbol})</span>}
-                            </label>
-                            <div className="relative">
-                                {formData.propertyId && (
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 font-medium">{currencySymbol}</span>
-                                )}
+                        <div className="col-span-1">
+                            <label className="block text-sm font-medium text-gray-600 mb-2">Price *</label>
+                            <div className="flex bg-white rounded-lg h-12 items-center relative z-20">
+                                <CurrencySelector
+                                    value={formData.currency}
+                                    onChange={(val) => handleInputChange('currency', val)}
+                                    className="bg-transparent border-r border-gray-100 h-full pl-4"
+                                />
                                 <input
                                     type="text"
                                     value={formData.price}
-                                    onChange={(e) => handleInputChange('price', e.target.value)}
-                                    placeholder={`${currencySymbol} 0.00`}
-                                    className={`w-full bg-white rounded-xl border-none h-12 px-4 focus:ring-0 ${formData.propertyId ? 'pl-8' : ''}`}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        // Allow numbers and one decimal point
+                                        if (/^\d*\.?\d*$/.test(val)) {
+                                            handleInputChange('price', val);
+                                        }
+                                    }}
+                                    placeholder="0.00"
+                                    className="flex-1 w-full border-none h-full px-4 focus:ring-0 bg-transparent text-gray-800 placeholder-gray-400 rounded-r-lg"
                                 />
                             </div>
                         </div>
@@ -551,7 +603,7 @@ const CreateEquipment = () => {
                                     value={formData.propertyId}
                                     onChange={(val) => handleInputChange('propertyId', val)}
                                     placeholder="Select Property"
-                                    buttonClassName="w-full bg-white rounded-xl border-none h-12"
+                                    buttonClassName="w-full bg-white rounded-lg border-none h-12"
                                 />
                             )}
                         </div>
@@ -561,8 +613,8 @@ const CreateEquipment = () => {
                                 type="text"
                                 value={formData.serial}
                                 onChange={(e) => handleInputChange('serial', e.target.value)}
-                                placeholder="0.00"
-                                className="w-full bg-white rounded-xl border-none h-12 px-4 focus:ring-0"
+                                placeholder="Enter serial number"
+                                className="w-full bg-white rounded-lg border-none h-12 px-4 focus:ring-0"
                             />
                         </div>
                         <div className="col-span-1">
@@ -571,7 +623,7 @@ const CreateEquipment = () => {
                                 value={formData.installationDate ? new Date(formData.installationDate) : undefined}
                                 onChange={(date) => handleInputChange('installationDate', date ? format(date, 'yyyy-MM-dd') : '')}
                                 placeholder="Select Date"
-                                className="w-full bg-white rounded-xl border-none h-12 px-4 focus:ring-0 text-gray-500"
+                                className="w-full bg-white rounded-lg border-none h-12 px-4 focus:ring-0 text-gray-500"
                             />
                         </div>
                     </div>
@@ -616,7 +668,7 @@ const CreateEquipment = () => {
                                             value={formData.warrantyExpirationDate ? new Date(formData.warrantyExpirationDate) : undefined}
                                             onChange={(date) => handleInputChange('warrantyExpirationDate', date ? format(date, 'yyyy-MM-dd') : '')}
                                             placeholder="Select Date"
-                                            className="w-full bg-white rounded-xl border-none h-12 px-4 focus:ring-0 text-gray-500"
+                                            className="w-full bg-white rounded-lg border-none h-12 px-4 focus:ring-0 text-gray-500"
                                             disabled={formData.isLifetimeWarranty}
                                         />
                                     </div>

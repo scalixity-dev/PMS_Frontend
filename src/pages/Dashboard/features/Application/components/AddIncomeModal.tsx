@@ -165,22 +165,12 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
     const validateField = (key: keyof IncomeFormData, value: any): string => {
         switch (key) {
             case 'incomeType':
-                // Optional in image? No, likely required but not marked with *. Wait, Image shows no * on Income Type.
-                // But typically it is required. I'll make it required.
-                // Image doesn't show * on Income Type but shows on Start Date *.
-                // I will assume it's nice to have.
+                // Keeping optional as per existing logic
                 break;
             case 'startDate':
                 if (!value) return 'Start Date is required';
                 break;
             case 'endDate':
-                if (!formData.currentEmployment && !value) return 'End Date is required';
-                // If current employment, maybe end date is not applicable? 
-                // Image shows "End Date *" which implies it is required.
-                // However, "Current Employment" usually means no end date. 
-                // I will follow the visual cue: It has a * so I will make it required if not current employment??
-                // Actually, if current employment is ON, End Date should probably be disabled or optional.
-                // But the UI shows it there. I'll make it optional if current employment is checked.
                 if (formData.currentEmployment) return '';
                 if (!value) return 'End Date is required';
                 break;
@@ -201,36 +191,38 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
                 break;
             case 'companyPhone':
                 if (!value || value.trim() === '') return 'Company Phone is required';
+                {
+                    const digitsOnly = value.replace(/\D/g, '');
+                    if (digitsOnly.length < 4 || digitsOnly.length > 15) {
+                        return 'Phone number must be between 4 and 15 digits';
+                    }
+                }
                 break;
             case 'supervisorName':
                 if (!value || value.trim() === '') return 'Supervisor Name is required';
                 break;
             case 'supervisorEmail':
-                // Optional
-                // Email validation if provided
                 if (value && value.trim() !== '' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Invalid email';
                 break;
             case 'supervisorPhone':
                 if (!value || value.trim() === '') return 'Supervisor Phone is required';
+                {
+                    const digitsOnly = value.replace(/\D/g, '');
+                    if (digitsOnly.length < 4 || digitsOnly.length > 15) {
+                        return 'Phone number must be between 4 and 15 digits';
+                    }
+                }
                 break;
         }
         return '';
     };
 
-    const validateAllFields = (): boolean => {
-        const newErrors: Record<string, string> = {};
-        let isValid = true;
 
-        (Object.keys(formData) as Array<keyof IncomeFormData>).forEach(key => {
-            const error = validateField(key, formData[key]);
-            if (error) {
-                newErrors[key] = error;
-                isValid = false;
-            }
+
+    const isFormValid = (): boolean => {
+        return (Object.keys(formData) as Array<keyof IncomeFormData>).every(key => {
+            return !validateField(key, formData[key]);
         });
-
-        setErrors(newErrors);
-        return isValid;
     };
 
     const handleChange = (key: keyof IncomeFormData, value: any) => {
@@ -250,13 +242,8 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
     };
 
     const handleSubmit = () => {
-        const allTouched = (Object.keys(formData) as Array<keyof IncomeFormData>).reduce((acc, key) => {
-            acc[key] = true;
-            return acc;
-        }, {} as Record<string, boolean>);
-        setTouched(allTouched);
-
-        if (validateAllFields()) {
+        // Even if button is disabled, we keep this check for safety
+        if (isFormValid()) {
             onSave(formData);
             onClose();
         }
@@ -565,7 +552,8 @@ const AddIncomeModal: React.FC<AddIncomeModalProps> = ({ isOpen, onClose, onSave
                     <div>
                         <button
                             onClick={handleSubmit}
-                            className="bg-[#3A6D6C] text-white px-12 py-2.5 rounded-lg text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm"
+                            disabled={!isFormValid()}
+                            className={`px-12 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm ${isFormValid() ? 'bg-[#3A6D6C] text-white hover:bg-[#2c5251]' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
                         >
                             {initialData ? 'Save' : 'Add'}
                         </button>
