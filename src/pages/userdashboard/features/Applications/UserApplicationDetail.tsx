@@ -103,8 +103,9 @@ interface ApplicationData {
         military: string;
         crime: string;
         bankruptcy: string;
-        refusedRent: string;
+        refuseRent: string;
         evicted: string;
+        explanations: Record<string, string>;
     };
     attachments: number;
     documentsData: Array<{
@@ -180,7 +181,7 @@ const ApplicationDetail: React.FC = () => {
             // Map Residences
             const residentialHistoryData = (formData.residences || []).map((res: any, idx: number) => ({
                 id: idx + 1,
-                address: res.address || `${res.city}, ${res.state}` || 'Unknown Address',
+                address: res.address || [res.city, res.state].filter(Boolean).join(', ') || 'Unknown Address',
                 location: res.city || 'Unknown Location',
                 status: res.isCurrent ? 'Current' : 'Previous',
                 rentOrOwn: res.residencyType,
@@ -189,7 +190,7 @@ const ApplicationDetail: React.FC = () => {
                 rent: parseFloat(res.rentAmount || '0'),
                 landlord: {
                     name: res.landlordName || '—',
-                    initials: (res.landlordName || 'L').split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()
+                    initials: (res.landlordName?.trim() || 'L').split(/\s+/).map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()
                 }
             }));
 
@@ -255,8 +256,9 @@ const ApplicationDetail: React.FC = () => {
                     military: formData.backgroundQuestions?.military ? 'Yes' : 'No',
                     crime: formData.backgroundQuestions?.crime ? 'Yes' : 'No',
                     bankruptcy: formData.backgroundQuestions?.bankruptcy ? 'Yes' : 'No',
-                    refusedRent: formData.backgroundQuestions?.refusedRent ? 'Yes' : 'No',
+                    refuseRent: formData.backgroundQuestions?.refuseRent ? 'Yes' : 'No',
                     evicted: formData.backgroundQuestions?.evicted ? 'Yes' : 'No',
+                    explanations: formData.backgroundExplanations || {},
                 },
                 attachments: (formData.documents || []).length,
                 documentsData: formData.documents || [],
@@ -301,8 +303,9 @@ const ApplicationDetail: React.FC = () => {
                 military: 'No',
                 crime: 'No',
                 bankruptcy: 'No',
-                refusedRent: 'No',
+                refuseRent: 'No',
                 evicted: 'No',
+                explanations: {},
             },
             attachments: 0,
             documentsData: [],
@@ -981,21 +984,49 @@ const ApplicationDetail: React.FC = () => {
                                         <p className="text-gray-900 font-normal text-base">Are any occupants members in the military?</p>
                                         <p className="text-gray-900 font-normal text-base">{application.additionalQuestions.military}</p>
                                     </div>
-                                    <div className="flex items-center justify-between py-4">
-                                        <p className="text-gray-900 font-normal text-base">Have you ever been charged or convicted of a crime?</p>
-                                        <p className="text-gray-900 font-normal text-base">{application.additionalQuestions.crime}</p>
+                                    <div className="space-y-2 py-4">
+                                        <div className="flex items-center justify-between">
+                                            <p className="text-gray-900 font-normal text-base">Have you ever been charged or convicted of a crime?</p>
+                                            <p className="text-gray-900 font-normal text-base">{application.additionalQuestions.crime}</p>
+                                        </div>
+                                        {application.additionalQuestions.crime === 'Yes' && application.additionalQuestions.explanations.crime && (
+                                            <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                                <p className="text-sm text-gray-600"><span className="font-medium text-gray-900">Explanation:</span> {application.additionalQuestions.explanations.crime}</p>
+                                            </div>
+                                        )}
                                     </div>
-                                    <div className="flex items-center justify-between py-4">
-                                        <p className="text-gray-900 font-normal text-base">Have you ever filed for bankruptcy?</p>
-                                        <p className="text-gray-900 font-normal text-base">{application.additionalQuestions.bankruptcy}</p>
+                                    <div className="space-y-2 py-4">
+                                        <div className="flex items-center justify-between">
+                                            <p className="text-gray-900 font-normal text-base">Have you ever filed for bankruptcy?</p>
+                                            <p className="text-gray-900 font-normal text-base">{application.additionalQuestions.bankruptcy}</p>
+                                        </div>
+                                        {application.additionalQuestions.bankruptcy === 'Yes' && application.additionalQuestions.explanations.bankruptcy && (
+                                            <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                                <p className="text-sm text-gray-600"><span className="font-medium text-gray-900">Explanation:</span> {application.additionalQuestions.explanations.bankruptcy}</p>
+                                            </div>
+                                        )}
                                     </div>
-                                    <div className="flex items-center justify-between py-4">
-                                        <p className="text-gray-900 font-normal text-base">Have you ever willfully refused to pay rent when it was due?</p>
-                                        <p className="text-gray-900 font-normal text-base">{application.additionalQuestions.refusedRent}</p>
+                                    <div className="space-y-2 py-4">
+                                        <div className="flex items-center justify-between">
+                                            <p className="text-gray-900 font-normal text-base">Have you ever willfully refused to pay rent when it was due?</p>
+                                            <p className="text-gray-900 font-normal text-base">{application.additionalQuestions.refuseRent}</p>
+                                        </div>
+                                        {application.additionalQuestions.refuseRent === 'Yes' && application.additionalQuestions.explanations.refuseRent && (
+                                            <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                                <p className="text-sm text-gray-600"><span className="font-medium text-gray-900">Explanation:</span> {application.additionalQuestions.explanations.refuseRent}</p>
+                                            </div>
+                                        )}
                                     </div>
-                                    <div className="flex items-center justify-between py-4">
-                                        <p className="text-gray-900 font-normal text-base">Have you ever been evicted or left a tenancy owing money?</p>
-                                        <p className="text-gray-900 font-normal text-base">{application.additionalQuestions.evicted}</p>
+                                    <div className="space-y-2 py-4">
+                                        <div className="flex items-center justify-between">
+                                            <p className="text-gray-900 font-normal text-base">Have you ever been evicted or left a tenancy owing money?</p>
+                                            <p className="text-gray-900 font-normal text-base">{application.additionalQuestions.evicted}</p>
+                                        </div>
+                                        {application.additionalQuestions.evicted === 'Yes' && application.additionalQuestions.explanations.evicted && (
+                                            <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                                <p className="text-sm text-gray-600"><span className="font-medium text-gray-900">Explanation:</span> {application.additionalQuestions.explanations.evicted}</p>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>

@@ -195,7 +195,7 @@ const Applications: React.FC = () => {
 
               // Use logic from property detail to get landlord/agent name
               const inviterName = item.listingAgent?.fullName || item.listingContactName || item.manager?.fullName || "Property Manager";
-              const initials = inviterName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase();
+              const initials = (inviterName?.trim() || 'P').split(/\s+/).map((n: string) => n[0]).join('').substring(0, 2).toUpperCase();
 
               return {
                 id: `inv_${item.id}`,
