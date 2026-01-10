@@ -26,27 +26,34 @@ const ApplicationPropertyIntro: React.FC<ApplicationPropertyIntroProps> = ({ pro
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        const controller = new AbortController();
+        let isMounted = true;
+
         const fetchProperty = async () => {
-            setData(null);
-            setLoading(true);
-            setError(null);
+            if (isMounted) {
+                setData(null);
+                setLoading(true);
+                setError(null);
+            }
 
             if (!propertyId || propertyId === 'prop_mock_123') {
                 // Mock data for dev/testing if needed, or just handle gracefully
                 // For now, if it's the specific mock ID, return mock data
                 if (propertyId === 'prop_mock_123') {
-                    setData({
-                        image: "https://images.unsplash.com/photo-1600596542815-e3289cab6558?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-                        title: "Luxury Villa",
-                        address: "Gandhi Path Rd, Jaipur, RJ 302020, IN",
-                        rent: 30000,
-                        currencySymbol: "₹",
-                        currencyCode: "INR",
-                        beds: 3,
-                        baths: 2,
-                        agentName: "Ashendra Sharma"
-                    });
-                    setLoading(false);
+                    if (isMounted) {
+                        setData({
+                            image: "https://images.unsplash.com/photo-1600596542815-e3289cab6558?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+                            title: "Luxury Villa",
+                            address: "Gandhi Path Rd, Jaipur, RJ 302020, IN",
+                            rent: 30000,
+                            currencySymbol: "₹",
+                            currencyCode: "INR",
+                            beds: 3,
+                            baths: 2,
+                            agentName: "Ashendra Sharma"
+                        });
+                        setLoading(false);
+                    }
                     return;
                 }
             }
@@ -56,10 +63,16 @@ const ApplicationPropertyIntro: React.FC<ApplicationPropertyIntroProps> = ({ pro
                 let validId = propertyId;
                 if (propertyId.length > 36) validId = propertyId.substring(0, 36);
 
-                const response = await fetch(API_ENDPOINTS.PROPERTY.GET_PUBLIC_DETAIL(validId));
+                const response = await fetch(API_ENDPOINTS.PROPERTY.GET_PUBLIC_DETAIL(validId), {
+                    signal: controller.signal
+                });
+
                 if (!response.ok) throw new Error('Failed to fetch property details');
 
                 const apiData = await response.json();
+
+                // Only update state if component is still mounted
+                if (!isMounted) return;
 
                 // Extract Data
                 const addressObj = apiData.address || {};
@@ -95,14 +108,28 @@ const ApplicationPropertyIntro: React.FC<ApplicationPropertyIntroProps> = ({ pro
                     agentName
                 });
             } catch (err) {
+                // Don't update state if request was aborted or component unmounted
+                if (err instanceof Error && err.name === 'AbortError') {
+                    return;
+                }
+                if (!isMounted) return;
+
                 console.error("Error loading property intro:", err);
                 setError("Could not load property details.");
             } finally {
-                setLoading(false);
+                if (isMounted) {
+                    setLoading(false);
+                }
             }
         };
 
         fetchProperty();
+
+        // Cleanup function to abort request and prevent state updates
+        return () => {
+            isMounted = false;
+            controller.abort();
+        };
     }, [propertyId]);
 
     if (loading) return <div className="p-8 text-center text-gray-500">Loading property details...</div>;

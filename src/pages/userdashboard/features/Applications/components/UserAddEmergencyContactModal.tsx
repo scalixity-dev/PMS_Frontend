@@ -239,9 +239,8 @@ const UserAddEmergencyContactModal: React.FC<UserAddEmergencyContactModalProps> 
                                 <button
                                     type="button"
                                     onClick={() => setIsPhoneCodeOpen(!isPhoneCodeOpen)}
-                                    className={`flex items-center gap-1 px-3 py-2 border-r bg-gray-50 rounded-l-md focus:outline-none text-sm hover:bg-gray-100 transition-colors h-full min-w-[80px] ${
-                                        touched.phoneNumber && !formData.phoneCountryCode ? 'border-red-500' : ''
-                                    }`}
+                                    className={`flex items-center gap-1 px-3 py-2 border-r bg-gray-50 rounded-l-md focus:outline-none text-sm hover:bg-gray-100 transition-colors h-full min-w-[80px] ${touched.phoneNumber && !formData.phoneCountryCode ? 'border-red-500' : ''
+                                        }`}
                                 >
                                     <span className="text-sm font-medium">
                                         {selectedPhoneCode ? (
@@ -283,7 +282,10 @@ const UserAddEmergencyContactModal: React.FC<UserAddEmergencyContactModalProps> 
                                                             setIsPhoneCodeOpen(false);
                                                             setPhoneCodeSearch('');
                                                             if (touched.phoneNumber && formData.phoneNumber) {
-                                                                handleBlur('phoneNumber');
+                                                                // Defer validation to next tick to avoid race condition with state update
+                                                                setTimeout(() => {
+                                                                    handleBlur('phoneNumber');
+                                                                }, 0);
                                                             }
                                                         }}
                                                         className={`w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors text-left ${formData.phoneCountryCode === code.value ? 'bg-[#7ED957]/10' : ''}`}

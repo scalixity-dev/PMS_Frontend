@@ -505,7 +505,10 @@ const UserAddResidenceModal: React.FC<UserAddResidenceModalProps> = ({ isOpen, o
                                                             setIsLandlordPhoneCodeOpen(false);
                                                             setLandlordPhoneCodeSearch('');
                                                             if (touched.landlordPhone && formData.landlordPhone) {
-                                                                handleBlur('landlordPhone');
+                                                                // Defer validation to next tick to avoid race condition with state update
+                                                                setTimeout(() => {
+                                                                    handleBlur('landlordPhone');
+                                                                }, 0);
                                                             }
                                                         }} className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-left ${formData.landlordPhoneCountryCode === code.value ? 'bg-gray-50' : ''}`}>
                                                             <span className="text-lg">{code.flag}</span><span className="text-xs font-medium text-gray-900 truncate flex-1">{code.name}</span><span className="text-xs text-gray-500">{code.phonecode}</span>

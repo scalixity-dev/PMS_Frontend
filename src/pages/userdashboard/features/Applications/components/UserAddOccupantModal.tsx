@@ -261,9 +261,8 @@ const UserAddOccupantModal: React.FC<UserAddOccupantModalProps> = ({ isOpen, onC
                             <button
                                 type="button"
                                 onClick={() => setIsPhoneCodeOpen(!isPhoneCodeOpen)}
-                                className={`flex items-center gap-1 px-3 py-2 border-r border-gray-300 bg-gray-50 rounded-l-md focus:outline-none text-sm min-w-[80px] hover:bg-gray-100 transition-colors h-full ${
-                                    touched.phoneNumber && !formData.phoneCountryCode ? 'border-red-500' : ''
-                                }`}
+                                className={`flex items-center gap-1 px-3 py-2 border-r border-gray-300 bg-gray-50 rounded-l-md focus:outline-none text-sm min-w-[80px] hover:bg-gray-100 transition-colors h-full ${touched.phoneNumber && !formData.phoneCountryCode ? 'border-red-500' : ''
+                                    }`}
                             >
                                 <span className="text-sm font-medium truncate">
                                     {selectedPhoneCode ? (
@@ -304,7 +303,10 @@ const UserAddOccupantModal: React.FC<UserAddOccupantModalProps> = ({ isOpen, onC
                                                         setIsPhoneCodeOpen(false);
                                                         setPhoneCodeSearch('');
                                                         if (touched.phoneNumber && formData.phoneNumber) {
-                                                            handleBlur('phoneNumber');
+                                                            // Defer validation to next tick to avoid race condition with state update
+                                                            setTimeout(() => {
+                                                                handleBlur('phoneNumber');
+                                                            }, 0);
                                                         }
                                                     }}
                                                     className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 transition-colors text-left ${formData.phoneCountryCode === code.value ? 'bg-gray-50' : ''}`}

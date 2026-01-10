@@ -132,6 +132,22 @@ const ApplicationDetail: React.FC = () => {
             // Helpers
             const formatDateStr = (d: string | undefined | null) => d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 
+            // Helper to format phone with country code
+            // Country code is stored as "isoCode|phonecode" (e.g., "US|+1")
+            const formatPhone = (phoneNumber: string | undefined, phoneCountryCode: string | undefined): string => {
+                if (!phoneNumber) return '—';
+                if (!phoneCountryCode) return phoneNumber;
+
+                // Parse the country code format: "isoCode|phonecode"
+                const parts = phoneCountryCode.split('|');
+                const phonecode = parts.length > 1 ? parts[1] : phoneCountryCode;
+
+                // Ensure phonecode starts with '+'
+                const formattedCode = phonecode.startsWith('+') ? phonecode : `+${phonecode}`;
+
+                return `(${formattedCode}) ${phoneNumber}`;
+            };
+
             // Map Occupants
             const occupantsData = (formData.occupants || []).map((occ: any, idx: number) => ({
                 id: occ.id || `occ_${idx}`,
@@ -139,7 +155,7 @@ const ApplicationDetail: React.FC = () => {
                 relationship: occ.relationship,
                 dob: formatDateStr(occ.dob),
                 email: occ.email || '—',
-                phone: occ.phoneNumber ? (occ.phoneCountryCode ? `(${occ.phoneCountryCode}) ${occ.phoneNumber}` : occ.phoneNumber) : '—'
+                phone: formatPhone(occ.phoneNumber, occ.phoneCountryCode)
             }));
 
             // Map Pets
@@ -196,7 +212,7 @@ const ApplicationDetail: React.FC = () => {
                 id: contact.id || `cont_${idx}`,
                 name: contact.fullName,
                 relationship: contact.relationship,
-                phone: contact.phoneNumber ? (contact.phoneCountryCode ? `(${contact.phoneCountryCode}) ${contact.phoneNumber}` : contact.phoneNumber) : '—',
+                phone: formatPhone(contact.phoneNumber, contact.phoneCountryCode),
                 email: contact.email || '—',
                 type: 'Emergency Contact'
             }));
@@ -209,7 +225,7 @@ const ApplicationDetail: React.FC = () => {
                 id: String(foundApp.id),
                 applicationNumber: String(foundApp.id).slice(-7),
                 applicantName: foundApp.name,
-                phone: foundApp.phone || formData.phoneNumber,
+                phone: formatPhone(foundApp.phone || formData.phoneNumber, formData.phoneCountryCode),
                 email: formData.email || 'user@example.com',
                 status: foundApp.status,
                 propertyName: foundApp.propertyName || 'Property Name',

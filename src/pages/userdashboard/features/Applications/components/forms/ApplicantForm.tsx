@@ -270,11 +270,10 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                                 <button
                                     type="button"
                                     onClick={() => setIsPhoneCodeOpen(!isPhoneCodeOpen)}
-                                    className={`w-full h-full px-3 py-3 bg-white border rounded-[10px] text-sm font-medium flex items-center justify-between ${
-                                        touched.phoneNumber && !data.phoneCountryCode
+                                    className={`w-full h-full px-3 py-3 bg-white border rounded-[10px] text-sm font-medium flex items-center justify-between ${touched.phoneNumber && !data.phoneCountryCode
                                             ? 'border-red-500 ring-1 ring-red-200'
                                             : 'border-[#E5E7EB]'
-                                    }`}
+                                        }`}
                                 >
                                     <span className="truncate">{selectedPhoneCode ? selectedPhoneCode.phonecode : 'Code'}</span>
                                     <ChevronDown size={14} className="text-gray-400" />
@@ -298,11 +297,14 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                                             {filteredPhoneCodes.map(code => (
                                                 <button
                                                     key={code.value}
-                                                    onClick={() => { 
-                                                        onChange('phoneCountryCode', code.value); 
+                                                    onClick={() => {
+                                                        onChange('phoneCountryCode', code.value);
                                                         setIsPhoneCodeOpen(false);
                                                         if (touched.phoneNumber && data.phoneNumber) {
-                                                            handleBlur('phoneNumber');
+                                                            // Defer validation to next tick to avoid race condition with parent state update
+                                                            setTimeout(() => {
+                                                                handleBlur('phoneNumber');
+                                                            }, 0);
                                                         }
                                                     }}
                                                     className="w-full px-4 py-2 text-left text-xs hover:bg-gray-50 flex items-center gap-2"
