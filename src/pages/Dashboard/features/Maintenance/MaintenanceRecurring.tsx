@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { ChevronLeft, Plus, Check, Trash2 } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
-import ConfirmationModal from '../KeysLocks/ConfirmationModal';
+import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import MakeRecurringModal from './components/MakeRecurringModal';
 
 // Mock Data for recurring maintenance requests
@@ -354,15 +354,12 @@ const MaintenanceRecurring: React.FC = () => {
                 onSave={handleCreateRecurring}
             />
 
-            <ConfirmationModal
+            <DeleteConfirmationModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={confirmDelete}
                 title="Delete Recurring Request"
-                message="Are you sure you want to delete this recurring maintenance request? This action cannot be undone."
-                confirmLabel="Delete"
-                cancelLabel="Cancel"
-                isLoading={isDeleting}
+                itemName="this recurring maintenance request"
             />
         </div>
     );

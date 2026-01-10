@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import CustomDropdown from '../../../components/CustomDropdown';
-import { Upload, Video } from 'lucide-react';
+import { Upload, Video, X } from 'lucide-react';
 
 interface AdvancedRequestFormProps {
     onNext: (data: any) => void;
@@ -17,6 +17,8 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
         title: initialData?.title || '',
         details: initialData?.details || ''
     });
+
+    const [mediaFiles, setMediaFiles] = useState<File[]>([]);
 
     // Track if user has edited the form to avoid clobbering their changes
     const formTouchedRef = useRef(false);
@@ -262,14 +264,14 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
             </div>
 
             {/* Attachments */}
-            <div className="flex flex-col md:flex-row gap-12 items-center mb-12">
+            <div className="flex flex-col md:flex-row gap-12 items-center mb-8">
                 {/* Attachments Card */}
                 <div className="relative w-full md:w-80 max-w-[20rem] md:max-w-none">
                     <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#7BD747] text-white px-10 py-3 rounded-full flex items-center gap-2 font-bold shadow-sm z-10 whitespace-nowrap">
                         <Upload size={20} strokeWidth={2.5} />
                         <span>Attachments</span>
                     </div>
-                    <div className="bg-[#F0F0F6] border-2 border-[#7BD747] rounded-[2.5rem] p-8 pt-10 flex flex-col items-center justify-center h-auto w-full">
+                    <div className="bg-[#F0F0F6] border-2 border-[#7BD747] rounded-[2.5rem] p-8 pt-10 flex flex-col items-center justify-center h-48 w-full">
                         <p className="text-[#5C6B7F] text-center font-medium mb-4">Add photos or upload a file</p>
                         <label className="cursor-pointer text-[#2E6819] font-bold text-sm hover:opacity-80 transition-opacity">
                             Choose File
@@ -279,7 +281,8 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
                                 accept="image/*"
                                 onChange={(e) => {
                                     if (e.target.files && e.target.files[0]) {
-                                        console.log('File selected:', e.target.files[0]);
+                                        setMediaFiles([...mediaFiles, e.target.files[0]]);
+                                        e.target.value = '';
                                     }
                                 }}
                             />
@@ -293,7 +296,7 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
                         <Video size={20} strokeWidth={2.5} />
                         <span>Video</span>
                     </div>
-                    <div className="bg-[#F0F0F6] border-2 border-[#7BD747] rounded-[2.5rem] p-8 pt-10 flex flex-col items-center justify-center h-auto w-full">
+                    <div className="bg-[#F0F0F6] border-2 border-[#7BD747] rounded-[2.5rem] p-8 pt-10 flex flex-col items-center justify-center h-48 w-full">
                         <p className="text-[#5C6B7F] text-center font-medium mb-4">Take 15 sec. video of the problem</p>
                         <label className="cursor-pointer text-[#2E6819] font-bold text-sm hover:opacity-80 transition-opacity">
                             Choose File
@@ -303,7 +306,8 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
                                 accept="video/*"
                                 onChange={(e) => {
                                     if (e.target.files && e.target.files[0]) {
-                                        console.log('Video selected:', e.target.files[0]);
+                                        setMediaFiles([...mediaFiles, e.target.files[0]]);
+                                        e.target.value = '';
                                     }
                                 }}
                             />
@@ -311,6 +315,39 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
                     </div>
                 </div>
             </div>
+
+            {/* File Previews */}
+            {mediaFiles.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+                    {mediaFiles.map((file, index) => (
+                        <div key={index} className="relative aspect-square rounded-xl overflow-hidden bg-gray-100 border border-gray-200 group">
+                            {file.type.startsWith('video/') ? (
+                                <video
+                                    src={URL.createObjectURL(file)}
+                                    className="w-full h-full object-cover"
+                                    controls
+                                />
+                            ) : (
+                                <img
+                                    src={URL.createObjectURL(file)}
+                                    alt={`preview-${index}`}
+                                    className="w-full h-full object-cover"
+                                />
+                            )}
+                            <button
+                                onClick={() => {
+                                    const newFiles = [...mediaFiles];
+                                    newFiles.splice(index, 1);
+                                    setMediaFiles(newFiles);
+                                }}
+                                className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            )}
 
             {/* Footer Buttons */}
             <div className="flex flex-col md:flex-row gap-4">
@@ -321,7 +358,7 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
                     Discard
                 </button>
                 <button
-                    onClick={() => onNext(formData)}
+                    onClick={() => onNext({ ...formData, files: mediaFiles })}
                     className="flex-1 md:flex-none px-8 py-3 rounded-lg bg-[#3D7475] text-white font-bold hover:opacity-90 transition-opacity shadow-md"
                 >
                     Continue

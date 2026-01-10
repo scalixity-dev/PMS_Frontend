@@ -249,7 +249,7 @@ const AddMaintenanceRequest: React.FC = () => {
 
     const handleBack = () => {
         if (mainStep === 0) {
-            navigate('/dashboard');
+            navigate(-1);
         } else if (mainStep === 1) {
             if (generalSubStep === 1) {
                 setMainStep(0);
@@ -352,8 +352,8 @@ const AddMaintenanceRequest: React.FC = () => {
                                         selectedCategory={selectedCategory}
                                         onSelect={(cat) => {
                                             setSelectedCategory(cat);
-                                            handleNext();
                                         }}
+                                        onNext={handleNext}
                                     />
                                 )}
                                 {generalSubStep === 2 && (
@@ -388,10 +388,16 @@ const AddMaintenanceRequest: React.FC = () => {
                                 )}
                                 {generalSubStep === 5 && (
                                     <MediaUpload
+                                        files={mediaFiles}
                                         onFileSelect={(file) => {
                                             setMediaFiles([...mediaFiles, file]);
-                                            handleNext();
                                         }}
+                                        onRemove={(index) => {
+                                            const newFiles = [...mediaFiles];
+                                            newFiles.splice(index, 1);
+                                            setMediaFiles(newFiles);
+                                        }}
+                                        onNext={handleNext}
                                     />
                                 )}
                                 {generalSubStep === 6 && (
@@ -469,7 +475,7 @@ const AddMaintenanceRequest: React.FC = () => {
                     <MaintenanceSuccessModal
                         isOpen={showSuccessModal}
                         onClose={() => setShowSuccessModal(false)}
-                        onBackToList={() => navigate('/dashboard')}
+                        onBackToList={() => navigate('/dashboard/maintenance/requests')}
                         onAssignPro={() => {
                             console.log('Assign Service Pro clicked');
                             navigate('/dashboard'); // Or navigate to assign pro page

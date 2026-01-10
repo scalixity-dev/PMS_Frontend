@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams, useOutletContext } from 'react-router-dom';
 import { ChevronLeft, ChevronDown, ChevronRight, Edit, Trash2, Plus, Repeat, Printer } from 'lucide-react';
-import ConfirmationModal from '../KeysLocks/ConfirmationModal';
+import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import ChangeStatusModal from './components/ChangeStatusModal';
 import AssigneeModal from './components/AssigneeModal';
 import MakeRecurringModal from './components/MakeRecurringModal';
@@ -442,14 +442,12 @@ const MaintenanceRequestsDetail: React.FC = () => {
 
             </div>
 
-            <ConfirmationModal
+            <DeleteConfirmationModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={handleDelete}
                 title="Delete Request"
-                message="Are you sure you want to delete this maintenance request? This action cannot be undone."
-                confirmLabel="Delete"
-                cancelLabel="Cancel"
+                itemName="this maintenance request"
             />
 
             <ChangeStatusModal
