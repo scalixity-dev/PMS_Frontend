@@ -32,7 +32,19 @@ const getAvatarSeed = (name: string): string => {
 // Helper function to format date - handles both YYYY-MM-DD and ISO strings
 const formatDate = (dateString: string): string => {
   if (!dateString) return '-';
-  const date = new Date(dateString);
+
+  let date: Date;
+  // If explicitly YYYY-MM-DD, parse components to start at local midnight
+  // (Avoids UTC midnight shifting to previous day in Western timezones)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+    const [year, month, day] = dateString.split('-').map(Number);
+    date = new Date(year, month - 1, day);
+  } else {
+    date = new Date(dateString);
+  }
+
+  if (isNaN(date.getTime())) return '-';
+
   const months = [
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
@@ -150,14 +162,19 @@ const Applications: React.FC = () => {
   }>({ isOpen: false, propertyName: '', landlordName: '' });
 
   useEffect(() => {
-    if (location.state?.submissionSuccess) {
+    const state = location.state as { submissionSuccess?: boolean; propertyName?: string; landlordName?: string } | null;
+
+    if (state?.submissionSuccess) {
       setSubmittedModalState({
         isOpen: true,
-        propertyName: location.state.propertyName || 'Property',
-        landlordName: location.state.landlordName || 'Landlord'
+        propertyName: state.propertyName || 'Property',
+        landlordName: state.landlordName || 'Landlord'
       });
-      // Clear navigation state to prevent modal from reappearing on refresh
-      navigate(location.pathname, { replace: true, state: {} });
+      // Clear navigation state to prevent modal from reappearing on refresh, preserving URL params
+      navigate(
+        { pathname: location.pathname, search: location.search, hash: location.hash },
+        { replace: true, state: {} }
+      );
     }
   }, [location, navigate]);
 
@@ -224,24 +241,40 @@ const Applications: React.FC = () => {
   }, []);
 
   const [applications, setApplications] = useState<ApplicationItem[]>(() => {
-    const localApps = JSON.parse(localStorage.getItem('user_applications') || '[]');
-    return localApps;
+    try {
+      const localApps = JSON.parse(localStorage.getItem('user_applications') || '[]');
+      return Array.isArray(localApps) ? localApps : [];
+    } catch (e) {
+      console.warn("Failed to parse user_applications from localStorage", e);
+      return [];
+    }
   });
 
   // Fetch applications from API
   useEffect(() => {
+    const controller = new AbortController();
+
     const fetchApplications = async () => {
       try {
         const response = await fetch(API_ENDPOINTS.APPLICATION.GET_ALL, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            // Add authorization header if needed, assuming cookie-based or handled globally
           },
+          signal: controller.signal,
         });
 
         if (response.ok) {
           const data = await response.json();
+
+          // Normalization helper for status
+          const normalizeStatus = (status: string): "Approved" | "Rejected" | "Submitted" | "Draft" => {
+            const normalized = status?.charAt(0).toUpperCase() + status?.slice(1).toLowerCase();
+            if (['Approved', 'Rejected', 'Submitted', 'Draft'].includes(normalized)) {
+              return normalized as "Approved" | "Rejected" | "Submitted" | "Draft";
+            }
+            return "Submitted"; // Default fallback
+          };
 
           // Map API data to ApplicationItem structure
           const apiApps: ApplicationItem[] = data.map((app: any) => {
@@ -257,7 +290,7 @@ const Applications: React.FC = () => {
               id: app.id,
               name: applicantName,
               phone: applicantPhone,
-              status: app.status || "Submitted", // Default to Submitted if status is missing
+              status: normalizeStatus(app.status), // Normalized status
               appliedDate: app.createdAt ? app.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
               address: propertyAddress,
               propertyId: app.propertyId
@@ -274,11 +307,14 @@ const Applications: React.FC = () => {
           });
         }
       } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') return;
         console.error("Failed to fetch applications:", error);
       }
     };
 
     fetchApplications();
+
+    return () => controller.abort();
   }, []);
 
   return (

@@ -164,7 +164,7 @@ const ApplicationDetail: React.FC = () => {
             // Map Occupants
             const occupantsData = (formData.occupants || []).map((occ: any, idx: number) => ({
                 id: occ.id || `occ_${idx}`,
-                name: `${occ.firstName} ${occ.lastName}`,
+                name: [occ.firstName, occ.lastName].filter(Boolean).join(' ') || 'Unknown Occupant',
                 relationship: occ.relationship,
                 dob: formatDateStr(occ.dob),
                 email: occ.email || '—',
