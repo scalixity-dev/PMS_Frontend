@@ -461,7 +461,7 @@ const Applications: React.FC = () => {
           ))}
           {
             applications.length === 0 && (
-              <div className="w-full py-20 flex flex-col items-center justify-center text-gray-400">
+              <div className="col-span-full w-full py-20 flex flex-col items-center justify-center text-gray-400">
                 <p className="text-lg font-medium">No applications found</p>
                 <p className="text-sm">Start a new application or check your invitations.</p>
               </div>

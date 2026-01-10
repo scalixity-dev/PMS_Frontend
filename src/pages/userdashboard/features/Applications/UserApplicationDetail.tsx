@@ -139,9 +139,21 @@ const ApplicationDetail: React.FC = () => {
                 if (!phoneNumber) return '—';
                 if (!phoneCountryCode) return phoneNumber;
 
+                let phonecode = phoneCountryCode;
+
                 // Parse the country code format: "isoCode|phonecode"
-                const parts = phoneCountryCode.split('|');
-                const phonecode = parts.length > 1 ? parts[1] : phoneCountryCode;
+                if (phoneCountryCode.includes('|')) {
+                    const parts = phoneCountryCode.split('|');
+                    if (parts.length > 1 && parts[1]) {
+                        phonecode = parts[1];
+                    }
+                }
+
+                // If the resulting code is just letters (e.g. "US"), it's likely an ISO code without dial code
+                // Return just the phone number in this case to avoid "+US"
+                if (/^[A-Za-z]+$/.test(phonecode)) {
+                    return phoneNumber;
+                }
 
                 // Ensure phonecode starts with '+'
                 const formattedCode = phonecode.startsWith('+') ? phonecode : `+${phonecode}`;
@@ -187,7 +199,7 @@ const ApplicationDetail: React.FC = () => {
                 rentOrOwn: res.residencyType,
                 moveInDate: formatDateStr(res.moveInDate),
                 moveOutDate: formatDateStr(res.moveOutDate),
-                rent: parseFloat(res.rentAmount || '0'),
+                rent: parseFloat(res.rentAmount || '0') || 0,
                 landlord: {
                     name: res.landlordName || '—',
                     initials: (res.landlordName?.trim() || 'L').split(/\s+/).map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()
@@ -203,7 +215,7 @@ const ApplicationDetail: React.FC = () => {
                 type: inc.incomeType,
                 startDate: formatDateStr(inc.startDate),
                 address: inc.address || '—',
-                incomePerMonth: parseFloat(inc.monthlyAmount || '0'),
+                incomePerMonth: parseFloat(inc.monthlyAmount || '0') || 0,
                 officeNumber: '—',
                 workPhone: inc.companyPhone || '—'
             }));
@@ -929,7 +941,6 @@ const ApplicationDetail: React.FC = () => {
                                                                     <p className="text-xs text-gray-500">{(doc.size / 1024).toFixed(1)} KB • {doc.type}</p>
                                                                 </div>
                                                             </div>
-                                                            <button className="text-[#7ED957] font-medium text-sm hover:underline">View</button>
                                                         </div>
                                                     ))}
                                                 </div>
