@@ -1,6 +1,6 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { useUserApplicationStore, type FileMetadata } from '../store/userApplicationStore';
-import { Upload, FileText, Trash2, ShieldCheck } from 'lucide-react';
+import { Upload, FileText, Trash2, ShieldCheck, AlertCircle } from 'lucide-react';
 import PrimaryActionButton from '@/components/common/buttons/PrimaryActionButton';
 
 interface DocumentsStepProps {
@@ -10,24 +10,62 @@ interface DocumentsStepProps {
 const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext }) => {
     const { formData, setFormData } = useUserApplicationStore();
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [fileError, setFileError] = useState<string>('');
+
+    const ALLOWED_TYPES = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'image/jpeg',
+        'image/jpg',
+        'image/png',
+        'image/webp'
+    ];
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const files = event.target.files;
-        if (files && files.length > 0) {
-            const newFiles = Array.from(files);
-            const newMetadata: FileMetadata[] = newFiles.map(file => ({
-                name: file.name,
-                size: file.size,
-                type: file.type,
-                lastModified: file.lastModified
-            }));
+        setFileError('');
 
-            const existingFiles = formData.documentFiles || [];
-            setFormData({
-                ...formData,
-                documents: [...formData.documents, ...newMetadata],
-                documentFiles: [...existingFiles, ...newFiles]
+        if (files && files.length > 0) {
+            const newFiles: File[] = [];
+            const newMetadata: FileMetadata[] = [];
+            const errors: string[] = [];
+
+            Array.from(files).forEach(file => {
+                // Validate file type
+                if (!ALLOWED_TYPES.includes(file.type)) {
+                    errors.push(`${file.name}: Invalid file type. Only PDF, DOC, DOCX, and images are allowed.`);
+                    return;
+                }
+
+                // Validate file size
+                if (file.size > MAX_FILE_SIZE) {
+                    errors.push(`${file.name}: File size exceeds 10MB limit.`);
+                    return;
+                }
+
+                newFiles.push(file);
+                newMetadata.push({
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                    lastModified: file.lastModified
+                });
             });
+
+            if (errors.length > 0) {
+                setFileError(errors.join(' '));
+            }
+
+            if (newFiles.length > 0) {
+                const existingFiles = formData.documentFiles || [];
+                setFormData({
+                    ...formData,
+                    documents: [...formData.documents, ...newMetadata],
+                    documentFiles: [...existingFiles, ...newFiles]
+                });
+            }
         }
         if (event.target) event.target.value = '';
     };
@@ -40,6 +78,7 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext }) => {
             documents: updatedDocs,
             documentFiles: updatedFiles
         });
+        setFileError('');
     };
 
     return (
@@ -69,6 +108,17 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext }) => {
                         onChange={handleFileUpload}
                     />
                 </div>
+
+                {/* Error Message */}
+                {fileError && (
+                    <div className="w-full mb-6 bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+                        <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                            <p className="text-sm font-semibold text-red-800 mb-1">Upload Error</p>
+                            <p className="text-xs text-red-600">{fileError}</p>
+                        </div>
+                    </div>
+                )}
 
                 {/* File List */}
                 {formData.documents.length > 0 && (
@@ -108,8 +158,8 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext }) => {
                         onClick={onNext}
                         text="Submit Application"
                         className={`px-20 py-4 rounded-full font-bold uppercase tracking-wider transition-all ${true
-                                ? 'bg-[#7ED957] hover:bg-[#6BC847] shadow-lg shadow-[#7ED957]/30 text-white'
-                                : 'bg-[#F3F4F6] text-black hover:bg-[#F3F4F6] cursor-not-allowed border-none shadow-none'
+                            ? 'bg-[#7ED957] hover:bg-[#6BC847] shadow-lg shadow-[#7ED957]/30 text-white'
+                            : 'bg-[#F3F4F6] text-black hover:bg-[#F3F4F6] cursor-not-allowed border-none shadow-none'
                             }`}
                     />
                 </div>
