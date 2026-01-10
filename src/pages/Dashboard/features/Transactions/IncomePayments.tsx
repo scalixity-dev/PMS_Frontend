@@ -46,6 +46,8 @@ const IncomePayments: React.FC = () => {
 
         const validation = validateFile(file);
         if (!validation.isValid) {
+            setSelectedFile(null);
+            e.target.value = '';
             setUploadError(validation.error || 'Invalid file');
             return;
         }
