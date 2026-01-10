@@ -61,6 +61,7 @@ const UserAddResidenceModal: React.FC<UserAddResidenceModalProps> = ({ isOpen, o
     const [touched, setTouched] = useState<Record<string, boolean>>({});
     const [isLandlordPhoneCodeOpen, setIsLandlordPhoneCodeOpen] = useState(false);
     const [landlordPhoneCodeSearch, setLandlordPhoneCodeSearch] = useState('');
+    const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
     const landlordPhoneCodeRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -119,6 +120,7 @@ const UserAddResidenceModal: React.FC<UserAddResidenceModalProps> = ({ isOpen, o
             setErrors({});
             setTouched({});
             setIsLandlordPhoneCodeOpen(false);
+            setIsCityDropdownOpen(false);
         } else if (initialData) {
             setFormData(initialData);
         }
@@ -155,9 +157,9 @@ const UserAddResidenceModal: React.FC<UserAddResidenceModalProps> = ({ isOpen, o
     }, [formData.landlordPhoneCountryCode, phoneCountryCodes]);
 
     const validateField = (key: string, value: any): string => {
-        if (['address', 'state', 'zip', 'country', 'city'].includes(key)) {
+        if (['address', 'state', 'zip', 'country'].includes(key)) {
             if (!value || (typeof value === 'string' && value.trim() === '')) {
-                const map: Record<string, string> = { address: 'Address', state: 'State', zip: 'Zip', country: 'Country', city: 'City' };
+                const map: Record<string, string> = { address: 'Address', state: 'State', zip: 'Zip', country: 'Country' };
                 return `${map[key]} is required`;
             }
         }
@@ -165,7 +167,12 @@ const UserAddResidenceModal: React.FC<UserAddResidenceModalProps> = ({ isOpen, o
         if (key === 'moveOutDate' && formData.residencyType === 'Rent' && !value) return 'Move out date is required for rented properties';
         if (formData.residencyType === 'Rent') {
             if (key === 'landlordName' && (!value || value.trim() === '')) return 'Landlord name is required';
-            if (key === 'landlordPhone' && (!value || value.trim() === '')) return 'Landlord phone is required';
+            if (key === 'landlordPhone') {
+                if (!formData.landlordPhoneCountryCode) {
+                    return 'Please select a country code first';
+                }
+                if (!value || value.trim() === '') return 'Landlord phone is required';
+            }
             if (key === 'landlordEmail') {
                 if (!value || value.trim() === '') return 'Landlord email is required';
                 if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Enter valid email';
@@ -183,7 +190,7 @@ const UserAddResidenceModal: React.FC<UserAddResidenceModalProps> = ({ isOpen, o
             if (err) { newErrors[field] = err; isValid = false; }
         };
 
-        ['address', 'state', 'zip', 'country', 'city', 'moveInDate'].forEach(check);
+        ['address', 'state', 'zip', 'country', 'moveInDate'].forEach(check);
         if (formData.residencyType === 'Rent') {
             check('moveOutDate');
             ['landlordName', 'landlordPhone', 'landlordEmail'].forEach(check);
@@ -197,7 +204,7 @@ const UserAddResidenceModal: React.FC<UserAddResidenceModalProps> = ({ isOpen, o
     const isFormValid = () => {
         const check = (field: string) => !!validateField(field, (formData as any)[field]);
 
-        if (['address', 'state', 'zip', 'country', 'city', 'moveInDate'].some(check)) return false;
+        if (['address', 'state', 'zip', 'country', 'moveInDate'].some(check)) return false;
 
         if (formData.residencyType === 'Rent') {
             if (check('moveOutDate')) return false;
@@ -239,14 +246,11 @@ const UserAddResidenceModal: React.FC<UserAddResidenceModalProps> = ({ isOpen, o
     };
 
     const handleSubmit = () => {
-        const allTouched: Record<string, boolean> = { address: true, state: true, zip: true, country: true, city: true, moveInDate: true };
-        if (formData.residencyType === 'Rent') {
-            allTouched.moveOutDate = true;
-            allTouched.landlordName = true;
-            allTouched.landlordPhone = true;
-            allTouched.landlordEmail = true;
-        }
-        if (formData.residencyType === 'Others') allTouched.otherResidencyType = true;
+        // Mark all fields as touched to show validation errors
+        const allTouched = (Object.keys(formData) as Array<keyof ResidenceFormData>).reduce((acc, key) => {
+            acc[key] = true;
+            return acc;
+        }, {} as Record<string, boolean>);
         setTouched(allTouched);
 
         if (validateAllFields()) {
@@ -332,19 +336,72 @@ const UserAddResidenceModal: React.FC<UserAddResidenceModalProps> = ({ isOpen, o
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label className={labelClasses}>City</label>
-                        <CustomDropdown
-                            value={formData.city}
-                            onChange={(val) => { handleChange('city', val); if (!touched.city) handleBlur('city', val); }}
-                            options={cityOptions}
-                            placeholder="Select city"
-                            searchable
-                            disabled={!formData.state}
-                            buttonClassName={`${inputClasses} ${touched.city && errors.city ? 'border-red-500' : ''}`}
-                        />
+                        <div className="relative">
+                            <input
+                                type="text"
+                                placeholder={formData.state ? "Type or select city" : "Select state first"}
+                                className={`${inputClasses} ${touched.city && errors.city ? 'border-red-500' : ''}`}
+                                value={formData.city}
+                                onChange={(e) => {
+                                    handleChange('city', e.target.value);
+                                    setIsCityDropdownOpen(true);
+                                }}
+                                onFocus={() => setIsCityDropdownOpen(true)}
+                                onBlur={() => {
+                                    // Delay to allow click on dropdown item
+                                    setTimeout(() => {
+                                        setIsCityDropdownOpen(false);
+                                        handleBlur('city');
+                                    }, 200);
+                                }}
+                                disabled={!formData.state}
+                            />
+
+                            {/* City Suggestions Dropdown */}
+                            {isCityDropdownOpen && formData.state && (
+                                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                    {cityOptions.filter(city =>
+                                        city.label.toLowerCase().includes(formData.city.toLowerCase())
+                                    ).length > 0 ? (
+                                        cityOptions
+                                            .filter(city => city.label.toLowerCase().includes(formData.city.toLowerCase()))
+                                            .slice(0, 50) // Limit to 50 results
+                                            .map((city) => (
+                                                <button
+                                                    key={city.value}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        handleChange('city', city.label);
+                                                        setIsCityDropdownOpen(false);
+                                                    }}
+                                                    className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors"
+                                                >
+                                                    {city.label}
+                                                </button>
+                                            ))
+                                    ) : formData.city.trim() ? (
+                                        <div className="px-4 py-3 text-sm text-gray-500">
+                                            <p className="mb-2">No cities found matching "{formData.city}"</p>
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsCityDropdownOpen(false)}
+                                                className="text-[#7ED957] font-medium hover:underline"
+                                            >
+                                                ✓ Use "{formData.city}" as custom city
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                                            Start typing to search cities...
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                         {touched.city && errors.city && <p className={errorClasses}>{errors.city}</p>}
                     </div>
                     <div>
-                        <label className={labelClasses}>Zip *</label>
+                        <label className={labelClasses}>Zip Code *</label>
                         <input
                             type="text"
                             placeholder="Enter zip code"
@@ -429,9 +486,10 @@ const UserAddResidenceModal: React.FC<UserAddResidenceModalProps> = ({ isOpen, o
                             </div>
                             <div>
                                 <label className={labelClasses}>Landlord Phone *</label>
-                                <div className={`flex border rounded-md transition-all ${touched.landlordPhone && errors.landlordPhone ? 'border-red-500' : 'border-gray-300'}`}>
+                                <div className={`flex border rounded-md transition-all ${(touched.landlordPhone && errors.landlordPhone) || (!formData.landlordPhoneCountryCode && touched.landlordPhone) ? 'border-red-500' : 'border-gray-300'}`}>
                                     <div className="relative" ref={landlordPhoneCodeRef}>
-                                        <button type="button" onClick={() => setIsLandlordPhoneCodeOpen(!isLandlordPhoneCodeOpen)} className="flex items-center gap-1 px-3 py-2 border-r border-gray-300 bg-gray-50 rounded-l-md focus:outline-none text-sm min-w-[80px] hover:bg-gray-100 h-full">
+                                        <button type="button" onClick={() => setIsLandlordPhoneCodeOpen(!isLandlordPhoneCodeOpen)} className={`flex items-center gap-1 px-3 py-2 border-r border-gray-300 bg-gray-50 rounded-l-md focus:outline-none text-sm min-w-[80px] hover:bg-gray-100 h-full ${touched.landlordPhone && !formData.landlordPhoneCountryCode ? 'border-red-500' : ''
+                                            }`}>
                                             <span className="text-sm font-medium truncate">{selectedLandlordPhoneCode ? `${selectedLandlordPhoneCode.flag} ${selectedLandlordPhoneCode.phonecode}` : <span className="text-gray-500">Code</span>}</span>
                                             <ChevronDown size={14} className="text-gray-500 ml-auto" />
                                         </button>
@@ -442,7 +500,14 @@ const UserAddResidenceModal: React.FC<UserAddResidenceModalProps> = ({ isOpen, o
                                                 </div>
                                                 <div className="overflow-y-auto">
                                                     {filteredLandlordPhoneCodes.map((code) => (
-                                                        <button key={code.value} type="button" onClick={() => { handleChange('landlordPhoneCountryCode', code.value); setIsLandlordPhoneCodeOpen(false); setLandlordPhoneCodeSearch(''); }} className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-left ${formData.landlordPhoneCountryCode === code.value ? 'bg-gray-50' : ''}`}>
+                                                        <button key={code.value} type="button" onClick={() => {
+                                                            handleChange('landlordPhoneCountryCode', code.value);
+                                                            setIsLandlordPhoneCodeOpen(false);
+                                                            setLandlordPhoneCodeSearch('');
+                                                            if (touched.landlordPhone && formData.landlordPhone) {
+                                                                handleBlur('landlordPhone');
+                                                            }
+                                                        }} className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-left ${formData.landlordPhoneCountryCode === code.value ? 'bg-gray-50' : ''}`}>
                                                             <span className="text-lg">{code.flag}</span><span className="text-xs font-medium text-gray-900 truncate flex-1">{code.name}</span><span className="text-xs text-gray-500">{code.phonecode}</span>
                                                         </button>
                                                     ))}
@@ -450,9 +515,17 @@ const UserAddResidenceModal: React.FC<UserAddResidenceModalProps> = ({ isOpen, o
                                             </div>
                                         )}
                                     </div>
-                                    <input type="tel" placeholder="Enter phone" className="flex-1 px-3 py-2 rounded-r-md focus:outline-none text-sm bg-white border-0" value={formData.landlordPhone || ''} onChange={(e) => handleChange('landlordPhone', e.target.value)} onBlur={() => handleBlur('landlordPhone')} />
+                                    <input type="tel" placeholder="Enter phone" className={`flex-1 px-3 py-2 rounded-r-md focus:outline-none text-sm bg-white border-0 ${!formData.landlordPhoneCountryCode ? 'opacity-60 cursor-not-allowed' : ''}`} value={formData.landlordPhone || ''} onChange={(e) => {
+                                        if (!formData.landlordPhoneCountryCode) return;
+                                        const value = e.target.value.replace(/[^\d\s\-\+\(\)]/g, '');
+                                        handleChange('landlordPhone', value);
+                                    }} onBlur={() => handleBlur('landlordPhone')} disabled={!formData.landlordPhoneCountryCode} />
                                 </div>
-                                {touched.landlordPhone && errors.landlordPhone && <p className={errorClasses}>{errors.landlordPhone}</p>}
+                                {(touched.landlordPhone && errors.landlordPhone) || (!formData.landlordPhoneCountryCode && touched.landlordPhone) ? (
+                                    <p className={errorClasses}>
+                                        {errors.landlordPhone || 'Please select a country code first'}
+                                    </p>
+                                ) : null}
                             </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

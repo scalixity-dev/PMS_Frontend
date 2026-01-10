@@ -83,7 +83,9 @@ export interface Property {
     };
     discount?: string;
     tag?: string; // Support both for now
+    amenities?: string[]; // Added for client-side filtering
 }
+
 
 export interface LocationFilter {
     displayText: string; // For display purposes

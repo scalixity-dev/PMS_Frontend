@@ -120,6 +120,9 @@ const UserAddEmergencyContactModal: React.FC<UserAddEmergencyContactModalProps> 
                 if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Invalid email';
                 break;
             case 'phoneNumber':
+                if (!formData.phoneCountryCode) {
+                    return 'Please select a country code first';
+                }
                 if (!value || value.trim() === '') return 'Phone Number is required';
                 {
                     const digitsOnly = value.replace(/\D/g, '');
@@ -227,7 +230,7 @@ const UserAddEmergencyContactModal: React.FC<UserAddEmergencyContactModalProps> 
                     {/* Phone Number */}
                     <div>
                         <label className={labelClasses}>Contact Number *</label>
-                        <div className={`flex border rounded-md transition-all ${touched.phoneNumber && errors.phoneNumber
+                        <div className={`flex border rounded-md transition-all ${(touched.phoneNumber && errors.phoneNumber) || (!formData.phoneCountryCode && touched.phoneNumber)
                             ? 'border-red-500'
                             : 'border-gray-300 focus-within:border-[#7CD947] focus-within:ring-1 focus-within:ring-[#7CD947]'
                             }`}>
@@ -236,7 +239,9 @@ const UserAddEmergencyContactModal: React.FC<UserAddEmergencyContactModalProps> 
                                 <button
                                     type="button"
                                     onClick={() => setIsPhoneCodeOpen(!isPhoneCodeOpen)}
-                                    className="flex items-center gap-1 px-3 py-2 border-r bg-gray-50 rounded-l-md focus:outline-none text-sm hover:bg-gray-100 transition-colors h-full min-w-[80px]"
+                                    className={`flex items-center gap-1 px-3 py-2 border-r bg-gray-50 rounded-l-md focus:outline-none text-sm hover:bg-gray-100 transition-colors h-full min-w-[80px] ${
+                                        touched.phoneNumber && !formData.phoneCountryCode ? 'border-red-500' : ''
+                                    }`}
                                 >
                                     <span className="text-sm font-medium">
                                         {selectedPhoneCode ? (
@@ -277,6 +282,9 @@ const UserAddEmergencyContactModal: React.FC<UserAddEmergencyContactModalProps> 
                                                             handleChange('phoneCountryCode', code.value);
                                                             setIsPhoneCodeOpen(false);
                                                             setPhoneCodeSearch('');
+                                                            if (touched.phoneNumber && formData.phoneNumber) {
+                                                                handleBlur('phoneNumber');
+                                                            }
                                                         }}
                                                         className={`w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 transition-colors text-left ${formData.phoneCountryCode === code.value ? 'bg-[#7ED957]/10' : ''}`}
                                                     >
@@ -296,13 +304,22 @@ const UserAddEmergencyContactModal: React.FC<UserAddEmergencyContactModalProps> 
                             <input
                                 type="tel"
                                 placeholder="Phone"
-                                className="flex-1 min-w-0 px-3 py-2 rounded-r-md focus:outline-none text-sm border-0 bg-transparent"
+                                className={`flex-1 min-w-0 px-3 py-2 rounded-r-md focus:outline-none text-sm border-0 bg-transparent ${!formData.phoneCountryCode ? 'opacity-60 cursor-not-allowed' : ''}`}
                                 value={formData.phoneNumber}
-                                onChange={(e) => handleChange('phoneNumber', e.target.value)}
+                                onChange={(e) => {
+                                    if (!formData.phoneCountryCode) return;
+                                    const value = e.target.value.replace(/[^\d\s\-\+\(\)]/g, '');
+                                    handleChange('phoneNumber', value);
+                                }}
                                 onBlur={() => handleBlur('phoneNumber')}
+                                disabled={!formData.phoneCountryCode}
                             />
                         </div>
-                        {touched.phoneNumber && errors.phoneNumber && <p className={errorClasses}>{errors.phoneNumber}</p>}
+                        {(touched.phoneNumber && errors.phoneNumber) || (!formData.phoneCountryCode && touched.phoneNumber) ? (
+                            <p className={errorClasses}>
+                                {errors.phoneNumber || 'Please select a country code first'}
+                            </p>
+                        ) : null}
                     </div>
                 </div>
 
