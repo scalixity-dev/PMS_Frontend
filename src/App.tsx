@@ -14,6 +14,8 @@ import { RentalApplicationSettingsLayout } from './components/common/RentalAppli
 import PricingPage from './pages/basewebsite/pricing';
 import LoginPage from './pages/basewebsite/auth/login';
 import SignUpPage from './pages/basewebsite/auth/signUp';
+import ServiceDashboardLogin from './pages/ServiceDashboard/auth/Login';
+import ServiceDashboardSignup from './pages/ServiceDashboard/auth/Signup';
 import OtpPage from './pages/basewebsite/auth/otp';
 import OAuthCallbackPage from './pages/basewebsite/auth/otp'; // Note: This might have been a mistake in the original or I misread, checking...
 import OAuthCompletePage from './pages/basewebsite/auth/signUp/oauth-complete';
@@ -142,6 +144,7 @@ import OnlinePaymentsConfigurations from './pages/Dashboard/settings/online-paym
 import OnlineApplication from './pages/Dashboard/settings/rental-application/OnlineApplication';
 import FormConfiguration from './pages/Dashboard/settings/rental-application/FormConfiguration';
 import TermsSignature from './pages/Dashboard/settings/rental-application/TermsSignature';
+import BackgroundQuestions from './pages/Dashboard/settings/rental-application/BackgroundQuestions';
 import RolesPermissions from './pages/Dashboard/settings/team-management/RolesPermissions';
 import PropertyPermissions from './pages/Dashboard/settings/team-management/PropertyPermissions';
 import RequestSettings from './pages/Dashboard/settings/request-settings/RequestSettings';
@@ -182,14 +185,20 @@ const App: React.FC = () => {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignUpPage />} />
+            <Route path="/signup/oauth-complete" element={<OAuthCompletePage />} />
+            <Route path="/signup/tenant-onboarding-flow" element={<TenantOnboardingFlow />} />
+            <Route path="/otp" element={<OtpPage />} />
+            <Route path="/auth/callback" element={<OAuthCallbackPage />} />
+
+            {/* Service Dashboard Auth */}
+            <Route path="/service-dashboard/login" element={<ServiceDashboardLogin />} />
+            <Route path="/service-dashboard/signup" element={<ServiceDashboardSignup />} />
+
             <Route element={<AppLayout />}>
               <Route path="/" element={<HomePage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/signup" element={<SignUpPage />} />
-              <Route path="/signup/oauth-complete" element={<OAuthCompletePage />} />
-              <Route path="/signup/tenant-onboarding-flow" element={<TenantOnboardingFlow />} />
-              <Route path="/otp" element={<OtpPage />} />
-              <Route path="/auth/callback" element={<OAuthCallbackPage />} />
+
 
 
               <Route path="/usecases/landlord" element={<LandlordUseCasesPage />} />
@@ -439,6 +448,12 @@ const App: React.FC = () => {
                 <Route path="form-configuration" element={<FormConfiguration />} />
                 <Route path="terms-signature" element={<TermsSignature />} />
               </Route>
+
+              <Route path="/dashboard/settings/rental-application/background-questions" element={
+                <ProtectedRoute>
+                  <BackgroundQuestions />
+                </ProtectedRoute>
+              } />
 
               {/* Team Management Settings */}
               <Route
