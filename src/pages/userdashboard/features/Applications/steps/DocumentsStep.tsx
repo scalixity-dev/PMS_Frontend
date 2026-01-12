@@ -1,7 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { useUserApplicationStore, type FileMetadata } from '../store/userApplicationStore';
-import { Upload, FileText, Trash2, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Upload, FileText, Trash2, ShieldCheck, AlertCircle, Loader2, Check } from 'lucide-react';
 import PrimaryActionButton from '@/components/common/buttons/PrimaryActionButton';
+import { API_ENDPOINTS } from '@/config/api.config';
 
 interface DocumentsStepProps {
     onNext: () => void;
@@ -11,6 +12,8 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext }) => {
     const { formData, setFormData } = useUserApplicationStore();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [fileError, setFileError] = useState<string>('');
+    const [uploadingFiles, setUploadingFiles] = useState<Map<number, boolean>>(new Map());
+    const [uploadedUrls, setUploadedUrls] = useState<Map<number, string>>(new Map());
 
     const ALLOWED_TYPES = [
         'application/pdf',
@@ -23,7 +26,46 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext }) => {
     ];
     const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
-    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const uploadFileToBackend = async (file: File, index: number): Promise<string> => {
+        setUploadingFiles(prev => new Map(prev).set(index, true));
+        
+        try {
+            const formDataToSend = new FormData();
+            formDataToSend.append('file', file);
+            formDataToSend.append('category', 'DOCUMENT');
+            if (formData.propertyId) {
+                formDataToSend.append('propertyId', formData.propertyId);
+            }
+
+            const response = await fetch(API_ENDPOINTS.UPLOAD.FILE, {
+                method: 'POST',
+                credentials: 'include',
+                body: formDataToSend,
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: 'Failed to upload file' }));
+                throw new Error(errorData.message || 'Failed to upload file');
+            }
+
+            const data = await response.json();
+            const fileUrl = data.url;
+            
+            setUploadedUrls(prev => new Map(prev).set(index, fileUrl));
+            return fileUrl;
+        } catch (error) {
+            console.error('File upload error:', error);
+            throw error;
+        } finally {
+            setUploadingFiles(prev => {
+                const newMap = new Map(prev);
+                newMap.delete(index);
+                return newMap;
+            });
+        }
+    };
+
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const files = event.target.files;
         setFileError('');
 
@@ -60,10 +102,33 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext }) => {
 
             if (newFiles.length > 0) {
                 const existingFiles = formData.documentFiles || [];
+                const existingDocs = formData.documents || [];
+                const existingUrls = formData.documentUrls || [];
+                const startIndex = existingDocs.length;
+                
+                // Add files to store first
                 setFormData({
                     ...formData,
-                    documents: [...formData.documents, ...newMetadata],
-                    documentFiles: [...existingFiles, ...newFiles]
+                    documents: [...existingDocs, ...newMetadata],
+                    documentFiles: [...existingFiles, ...newFiles],
+                    documentUrls: [...existingUrls, ...new Array(newFiles.length).fill('')] // Placeholder for URLs
+                });
+
+                // Upload files to backend asynchronously
+                newFiles.forEach(async (file, relativeIndex) => {
+                    const absoluteIndex = startIndex + relativeIndex;
+                    try {
+                        const url = await uploadFileToBackend(file, absoluteIndex);
+                        // Update the URL in formData
+                        setFormData(prev => {
+                            const urls = [...(prev.documentUrls || [])];
+                            urls[absoluteIndex] = url;
+                            return { ...prev, documentUrls: urls };
+                        });
+                    } catch (error) {
+                        console.error(`Failed to upload ${file.name}:`, error);
+                        setFileError(prev => prev ? `${prev}. Failed to upload ${file.name}.` : `Failed to upload ${file.name}.`);
+                    }
                 });
             }
         }
@@ -73,13 +138,29 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext }) => {
     const removeDocument = (index: number) => {
         const updatedDocs = formData.documents.filter((_, i) => i !== index);
         const updatedFiles = (formData.documentFiles || []).filter((_, i) => i !== index);
+        const updatedUrls = (formData.documentUrls || []).filter((_, i) => i !== index);
+        
         setFormData({
             ...formData,
             documents: updatedDocs,
-            documentFiles: updatedFiles
+            documentFiles: updatedFiles,
+            documentUrls: updatedUrls
+        });
+        
+        // Clean up upload state
+        setUploadedUrls(prev => {
+            const newMap = new Map(prev);
+            newMap.delete(index);
+            return newMap;
+        });
+        setUploadingFiles(prev => {
+            const newMap = new Map(prev);
+            newMap.delete(index);
+            return newMap;
         });
         setFileError('');
     };
+
 
     return (
         <div className="w-full">
@@ -112,7 +193,7 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext }) => {
                 {/* Error Message */}
                 {fileError && (
                     <div className="w-full mb-6 bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
-                        <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                        <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
                         <div className="flex-1">
                             <p className="text-sm font-semibold text-red-800 mb-1">Upload Error</p>
                             <p className="text-xs text-red-600">{fileError}</p>
@@ -127,25 +208,49 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext }) => {
                             <h3 className="text-sm font-semibold text-[#1A1A1A]">Attached Documents</h3>
                             <span className="bg-[#7ED957] text-white text-[10px] px-2 py-0.5 rounded-full font-bold">{formData.documents.length}</span>
                         </div>
-                        {formData.documents.map((file, index) => (
-                            <div key={index} className="flex items-center justify-between bg-white px-5 py-4 rounded-2xl border border-[#E5E7EB] shadow-sm hover:shadow-md transition-shadow">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 bg-[#F3F4F6] rounded-xl flex items-center justify-center transition-colors">
-                                        <FileText className="w-5 h-5 text-[#7ED957]" />
+                        {formData.documents.map((file, index) => {
+                            const isUploading = uploadingFiles.get(index);
+                            const uploadedUrl = uploadedUrls.get(index);
+                            
+                            return (
+                                <div key={index} className="flex items-center justify-between bg-white px-5 py-4 rounded-2xl border border-[#E5E7EB] shadow-sm hover:shadow-md transition-shadow">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 bg-[#F3F4F6] rounded-xl flex items-center justify-center transition-colors">
+                                            {isUploading ? (
+                                                <Loader2 className="w-5 h-5 text-[#7ED957] animate-spin" />
+                                            ) : uploadedUrl ? (
+                                                <Check className="w-5 h-5 text-[#7ED957]" />
+                                            ) : (
+                                                <FileText className="w-5 h-5 text-[#7ED957]" />
+                                            )}
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-semibold text-[#1A1A1A] truncate max-w-[200px] sm:max-w-md">{file.name}</p>
+                                            <p className="text-[11px] text-[#ADADAD]">
+                                                {isUploading ? 'Uploading...' : uploadedUrl ? 'Uploaded' : 'Pending upload'} • {(file.size / 1024 / 1024).toFixed(2)} MB
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="text-sm font-semibold text-[#1A1A1A] truncate max-w-[200px] sm:max-w-md">{file.name}</p>
-                                        <p className="text-[11px] text-[#ADADAD]">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                                    </div>
+                                    <button
+                                        onClick={(e) => { 
+                                            e.stopPropagation(); 
+                                            if (!isUploading) {
+                                                removeDocument(index);
+                                                setUploadedUrls(prev => {
+                                                    const newMap = new Map(prev);
+                                                    newMap.delete(index);
+                                                    return newMap;
+                                                });
+                                            }
+                                        }}
+                                        disabled={isUploading}
+                                        className={`p-2 transition-colors ${isUploading ? 'text-gray-300 cursor-not-allowed' : 'text-gray-300 hover:text-red-500'}`}
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); removeDocument(index); }}
-                                    className="p-2 text-gray-300 hover:text-red-500 transition-colors"
-                                >
-                                    <Trash2 size={16} />
-                                </button>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
 
@@ -156,8 +261,9 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext }) => {
                     </div>
                     <PrimaryActionButton
                         onClick={onNext}
-                        text="Submit Application"
-                        className={`px-20 py-4 rounded-full font-bold uppercase tracking-wider transition-all ${true
+                        disabled={uploadingFiles.size > 0}
+                        text={uploadingFiles.size > 0 ? `Uploading ${uploadingFiles.size} file(s)...` : "Submit Application"}
+                        className={`px-20 py-4 rounded-full font-bold uppercase tracking-wider transition-all ${uploadingFiles.size === 0
                             ? 'bg-[#7ED957] hover:bg-[#6BC847] shadow-lg shadow-[#7ED957]/30 text-white'
                             : 'bg-[#F3F4F6] text-black hover:bg-[#F3F4F6] cursor-not-allowed border-none shadow-none'
                             }`}

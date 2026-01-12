@@ -312,57 +312,56 @@ const UserNewApplication: React.FC = () => {
         let address: string | undefined;
         let propertyName: string | undefined;
         let landlordName: string | undefined;
-        let leasingFetchFailed = false;
 
-        if (formData.propertyId?.trim()) {
-            try {
-                const leasing = await leasingService.getByPropertyId(formData.propertyId);
-                if (leasing && leasing.id) {
-                    leasingId = leasing.id;
-                    if (leasing.property?.address) {
-                        const addr = leasing.property.address;
-                        address = `${addr.streetAddress}, ${addr.city}, ${addr.stateRegion} ${addr.zipCode}, ${addr.country}`;
-                    }
-                    propertyName = leasing.property?.propertyName || leasing.property?.listing?.title;
-                    landlordName = leasing.property?.manager?.fullName || leasing.property?.listingContactName || "Property Manager";
-                } else {
-                    leasingFetchFailed = true;
-                }
-            } catch (error) {
-                leasingFetchFailed = true;
-            }
-        } else {
-            leasingFetchFailed = true;
+        if (!formData.propertyId?.trim()) {
+            throw new Error('Property ID is required. Please select a property first.');
         }
 
-        if (leasingFetchFailed) {
-            if (import.meta.env.DEV) {
-                leasingId = 'mock_leasing_id_123';
-                address = 'Gandhi Path Rd, Jaipur, Rajasthan 302020';
-                propertyName = 'Luxury Villa';
-                landlordName = 'Property Manager';
-            } else {
-                throw new Error('Unable to verify property details. Please try again or contact support.');
+        try {
+            const leasing = await leasingService.getByPropertyId(formData.propertyId);
+            
+            if (!leasing || !leasing.id) {
+                throw new Error('No leasing information found for this property. Please ensure the property has leasing details configured.');
             }
+
+            leasingId = leasing.id;
+            
+            if (leasing.property?.address) {
+                const addr = leasing.property.address;
+                address = `${addr.streetAddress || ''}, ${addr.city || ''}, ${addr.stateRegion || ''} ${addr.zipCode || ''}, ${addr.country || ''}`.replace(/^, |, $/g, '').replace(/, ,/g, ',');
+            }
+            
+            propertyName = leasing.property?.propertyName || leasing.property?.listing?.title || 'Property';
+            landlordName = leasing.property?.manager?.fullName || leasing.property?.listingContactName || "Property Manager";
+        } catch (error) {
+            // Re-throw with more context if it's already an Error
+            if (error instanceof Error) {
+                throw error;
+            }
+            // Otherwise wrap in a new error
+            throw new Error('Unable to fetch property leasing details. Please try again or contact support.');
+        }
+
+        if (!leasingId) {
+            throw new Error('Leasing ID is missing. Please ensure the property has valid leasing information.');
         }
 
         return {
-            leasingId: leasingId as string,
-            address,
+            leasingId,
+            address: address || 'Address not available',
             propertyName: propertyName || 'Property',
             landlordName: landlordName || 'Property Manager',
-            leasingFetchFailed
         };
     };
 
     const submitApplication = async (leasingId: string) => {
         const { applicationService } = await import('../../../../services/application.service');
         try {
-            await applicationService.create(formData, leasingId);
+            await applicationService.createUserApplication(formData, leasingId);
             return true;
         } catch (err) {
             console.warn('API submission failed, persisting locally', err);
-            return false;
+            throw err; // Re-throw to allow error handling in handleSubmitSuccess
         }
     };
 

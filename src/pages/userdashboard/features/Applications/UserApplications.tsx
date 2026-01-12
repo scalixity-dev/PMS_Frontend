@@ -13,6 +13,7 @@ interface ApplicationItem {
   appliedDate: string;
   address: string;
   propertyId?: string;
+  imageUrl?: string | null;
 }
 
 interface InvitationItem {
@@ -24,9 +25,20 @@ interface InvitationItem {
   initials: string;
 }
 
-// Helper function to generate avatar seed from name
-const getAvatarSeed = (name: string): string => {
-  return name.toLowerCase().replace(/\s+/g, "-");
+// Helper function to generate initials from name
+const getInitials = (name: string): string => {
+  if (!name || name.trim() === '') return 'U';
+  
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) {
+    return parts[0].charAt(0).toUpperCase();
+  }
+  
+  // Get first letter of first name and last name
+  const firstInitial = parts[0].charAt(0).toUpperCase();
+  const lastInitial = parts[parts.length - 1].charAt(0).toUpperCase();
+  
+  return `${firstInitial}${lastInitial}`;
 };
 
 // Helper function to format date - handles both YYYY-MM-DD and ISO strings
@@ -62,11 +74,13 @@ interface ApplicationCardProps {
 }
 
 const ApplicationCard: React.FC<ApplicationCardProps> = ({ app, onDelete, onNavigate }) => {
-  // Memoize avatar URL to prevent unnecessary API calls
-  const avatarUrl = useMemo(
-    () => `https://api.dicebear.com/7.x/personas/svg?seed=${getAvatarSeed(app.name)}`,
-    [app.name]
-  );
+  const initials = useMemo(() => getInitials(app.name), [app.name]);
+  const [imageError, setImageError] = useState(false);
+
+  // Reset image error when imageUrl changes
+  useEffect(() => {
+    setImageError(false);
+  }, [app.imageUrl]);
 
   return (
     <div className="bg-[#F7F7F7] rounded-2xl border border-[#F3F4F6] shadow-[0px_4px_4px_0px_#00000040] w-full flex flex-col relative">
@@ -100,12 +114,19 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({ app, onDelete, onNavi
       {/* Main Content */}
       <div className="flex flex-col items-center pt-12 px-6">
         {/* Avatar */}
-        <div className="w-20 h-20 rounded-full bg-[#E0F2FE] mb-3 overflow-hidden">
-          <img
-            src={avatarUrl}
-            alt={app.name}
-            className="w-full h-full object-cover"
-          />
+        <div className="w-20 h-20 rounded-full bg-[#E0F2FE] mb-3 overflow-hidden flex items-center justify-center">
+          {app.imageUrl && !imageError ? (
+            <img
+              src={app.imageUrl}
+              alt={app.name}
+              className="w-full h-full object-cover"
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <span className="text-2xl font-semibold text-[#1565C0]">
+              {initials}
+            </span>
+          )}
         </div>
 
         {/* Name */}
@@ -178,17 +199,18 @@ const Applications: React.FC = () => {
     }
   }, [location, navigate]);
 
-  // Fetch properties for invitations
+  // Fetch invitations for the current user
   useEffect(() => {
     const controller = new AbortController();
 
     const fetchInvitations = async () => {
       try {
-        const response = await fetch(API_ENDPOINTS.PROPERTY.GET_PUBLIC_LISTINGS, {
+        const response = await fetch(API_ENDPOINTS.APPLICATION.GET_INVITATIONS, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
           },
+          credentials: 'include',
           signal: controller.signal,
         });
 
@@ -198,40 +220,49 @@ const Applications: React.FC = () => {
 
           // Filter out hidden properties, then limit to 4
           const mappedInvitations: InvitationItem[] = data
-            .filter((item: any) => !hiddenProps.includes(item.id))
+            .filter((invitation: any) => !hiddenProps.includes(invitation.property?.id))
             .slice(0, 4)
-            .map((item: any) => {
-              const address = item.address;
+            .map((invitation: any) => {
+              const property = invitation.property;
+              const address = property?.address;
               const addressString = address
                 ? `${address.streetAddress || ''}, ${address.city || ''}, ${address.stateRegion || ''}, ${address.zipCode || ''}, ${address.country || ''}`.replace(/^, |, $/g, '').replace(/, ,/g, ',')
                 : '';
 
-              const beds = item.singleUnitDetail?.beds ?? null;
-              const propertyName = item.listing?.title ||
-                (beds !== null ? `${beds} Bedroom ${item.propertyType === 'SINGLE' ? 'Property' : 'Unit'}` : item.propertyName);
+              const beds = property?.leasing?.singleUnitDetail?.beds ?? property?.leasing?.unit?.beds ?? null;
+              // Get listing title from property listings (first active listing)
+              const listingTitle = property?.listings && property.listings.length > 0 
+                ? property.listings[0]?.title 
+                : null;
+              const propertyName = listingTitle ||
+                (beds !== null ? `${beds} Bedroom ${property?.propertyType === 'SINGLE' ? 'Property' : 'Unit'}` : property?.propertyName);
 
-              // Use logic from property detail to get landlord/agent name
-              const inviterName = item.listingAgent?.fullName || item.listingContactName || item.manager?.fullName || "Property Manager";
+              // Use inviter name from invitation
+              const inviterName = invitation.invitedBy?.fullName || property?.manager?.fullName || "Property Manager";
               const initials = (inviterName?.trim() || 'P').split(/\s+/).map((n: string) => n[0]).join('').substring(0, 2).toUpperCase();
 
               return {
-                id: `inv_${item.id}`,
+                id: `inv_${invitation.id}`,
                 inviterName: inviterName,
                 propertyName: propertyName,
                 propertyAddress: addressString,
-                propertyId: item.id,
+                propertyId: property?.id,
                 initials: initials
               };
             });
 
           setInvitations(mappedInvitations);
+        } else if (response.status === 401) {
+          // User not authenticated - no invitations
+          setInvitations([]);
         }
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {
           // Request was aborted, this is expected on unmount
           return;
         }
-        console.error("Failed to fetch invitation properties:", error);
+        console.error("Failed to fetch invitations:", error);
+        setInvitations([]);
       }
     };
 
@@ -240,15 +271,7 @@ const Applications: React.FC = () => {
     return () => controller.abort();
   }, []);
 
-  const [applications, setApplications] = useState<ApplicationItem[]>(() => {
-    try {
-      const localApps = JSON.parse(localStorage.getItem('user_applications') || '[]');
-      return Array.isArray(localApps) ? localApps : [];
-    } catch (e) {
-      console.warn("Failed to parse user_applications from localStorage", e);
-      return [];
-    }
-  });
+  const [applications, setApplications] = useState<ApplicationItem[]>([]);
 
   // Fetch applications from API
   useEffect(() => {
@@ -261,6 +284,7 @@ const Applications: React.FC = () => {
           headers: {
             'Content-Type': 'application/json',
           },
+          credentials: 'include',
           signal: controller.signal,
         });
 
@@ -276,15 +300,20 @@ const Applications: React.FC = () => {
             return "Submitted"; // Default fallback
           };
 
-          // Map API data to ApplicationItem structure
+          // Map API data to ApplicationItem structure - only backend applications
           const apiApps: ApplicationItem[] = data.map((app: any) => {
-            // Safe nested access and default values
-            const applicantName = app.applicant?.fullName || app.primaryApplicantName || "Unknown Applicant";
-            const applicantPhone = app.applicant?.phoneNumber || app.primaryApplicantPhone || "N/A";
-            const propertyAddress = app.property?.address
-              ? `${app.property.address.streetAddress || ''}, ${app.property.address.city || ''}, ${app.property.address.stateRegion || ''}`
+            // Get primary applicant (first one or the one marked as primary)
+            const primaryApplicant = app.applicants?.find((a: any) => a.isPrimary) || app.applicants?.[0];
+            const applicantName = primaryApplicant
+              ? `${primaryApplicant.firstName || ''} ${primaryApplicant.middleName || ''} ${primaryApplicant.lastName || ''}`.trim() || "Unknown Applicant"
+              : "Unknown Applicant";
+            const applicantPhone = primaryApplicant?.phoneNumber || "N/A";
+            
+            // Get property address from leasing property
+            const propertyAddress = app.leasing?.property?.address
+              ? `${app.leasing.property.address.streetAddress || ''}, ${app.leasing.property.address.city || ''}, ${app.leasing.property.address.stateRegion || ''}`
                 .replace(/^, |, $/g, '').replace(/, ,/g, ',')
-              : app.propertyAddress || "Address not available";
+              : "Address not available";
 
             return {
               id: app.id,
@@ -293,22 +322,21 @@ const Applications: React.FC = () => {
               status: normalizeStatus(app.status), // Normalized status
               appliedDate: app.createdAt ? app.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
               address: propertyAddress,
-              propertyId: app.propertyId
+              propertyId: app.leasing?.property?.id,
+              imageUrl: app.imageUrl || null
             };
           });
 
-          setApplications(prev => {
-            // Keep all local applications (drafts and local submissions)
-            // Filter out any local apps that are already returned by the API (matching by ID)
-            const apiIds = new Set(apiApps.map(a => String(a.id)));
-            const uniqueLocal = prev.filter(app => !apiIds.has(String(app.id)));
-
-            return [...uniqueLocal, ...apiApps];
-          });
+          // Set only backend applications, no local storage merging
+          setApplications(apiApps);
+        } else if (response.status === 401) {
+          // User not authenticated - no applications
+          setApplications([]);
         }
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') return;
         console.error("Failed to fetch applications:", error);
+        setApplications([]);
       }
     };
 
@@ -421,14 +449,14 @@ const Applications: React.FC = () => {
         <DeleteConfirmationModal
           isOpen={deleteModalState.isOpen}
           onClose={() => setDeleteModalState({ ...deleteModalState, isOpen: false })}
-          onConfirm={() => {
+          onConfirm={async () => {
             try {
               if (deleteModalState.type === 'invitation' && deleteModalState.targetId) {
                 const invId = deleteModalState.targetId;
 
                 // Find property ID from the invitation to hide it persistently
                 const invitation = invitations.find(inv => inv.id === invId);
-                if (invitation) {
+                if (invitation && invitation.propertyId) {
                   const hiddenProps = JSON.parse(localStorage.getItem('hidden_invitation_properties') || '[]');
                   if (!hiddenProps.includes(invitation.propertyId)) {
                     hiddenProps.push(invitation.propertyId);
@@ -441,31 +469,33 @@ const Applications: React.FC = () => {
               } else if (deleteModalState.type === 'application' && deleteModalState.targetId) {
                 const appId = deleteModalState.targetId;
 
-                // ⚠️ WARNING: This only deletes locally. API applications will reappear on refresh.
-                // TODO: Implement proper API deletion when backend endpoint is ready:
-                // if (typeof appId === 'number') {
-                //   await fetch(`${API_ENDPOINTS.APPLICATION.DELETE}/${appId}`, {
-                //     method: 'DELETE'
-                //   });
-                // }
+                // Delete from backend API
+                try {
+                  const deleteResponse = await fetch(API_ENDPOINTS.APPLICATION.DELETE(String(appId)), {
+                    method: 'DELETE',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                  });
 
-                setApplications(prev => prev.filter(app => app.id !== appId));
-
-                // Update local storage with error handling
-                const stored = localStorage.getItem('user_applications');
-                const localApps = stored ? JSON.parse(stored) : [];
-                const updatedLocalApps = localApps.filter((app: any) => app.id !== appId);
-                localStorage.setItem('user_applications', JSON.stringify(updatedLocalApps));
-
-                // If it's a draft, clear the full data too
-                if (typeof appId === 'string' && appId.startsWith('draft_')) {
-                  localStorage.removeItem(`application_draft_data_${appId}`);
+                  if (deleteResponse.ok) {
+                    // Remove from state only after successful API deletion
+                    setApplications(prev => prev.filter(app => app.id !== appId));
+                  } else {
+                    const errorData = await deleteResponse.json().catch(() => ({ message: 'Failed to delete application' }));
+                    setErrorToast(errorData.message || 'Failed to delete application. Please try again.');
+                    setTimeout(() => setErrorToast(null), 5000);
+                  }
+                } catch (error) {
+                  console.error('Failed to delete application:', error);
+                  setErrorToast('Failed to delete application. Please try again.');
+                  setTimeout(() => setErrorToast(null), 5000);
                 }
               }
             } catch (error) {
-              console.error('Failed to update local storage:', error);
-              setErrorToast('Failed to save changes. Your browser storage might be full or restricted.');
-              // Auto-dismiss after 5 seconds
+              console.error('Failed to process deletion:', error);
+              setErrorToast('Failed to process deletion. Please try again.');
               setTimeout(() => setErrorToast(null), 5000);
             } finally {
               setDeleteModalState(prev => ({ ...prev, isOpen: false }));

@@ -13,9 +13,11 @@ type DatePickerProps = {
   disabled?: boolean;
   iconClassName?: string;
   placeholderClassName?: string;
+  minDate?: Date;
+  maxDate?: Date;
 };
 
-const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, placeholder = 'Select date', className, popoverClassName, disabled, iconClassName, placeholderClassName }) => {
+const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, placeholder = 'Select date', className, popoverClassName, disabled, iconClassName, placeholderClassName, minDate, maxDate }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
 
@@ -87,6 +89,8 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, placeholder = 
               onChange?.(date);
               setOpen(false);
             }}
+            fromDate={minDate}
+            toDate={maxDate}
           />
         </div>
       )}

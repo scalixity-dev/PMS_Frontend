@@ -79,7 +79,25 @@ const ApplicationPropertyIntro: React.FC<ApplicationPropertyIntroProps> = ({ pro
                 const address = `${addressObj.streetAddress || ''}, ${addressObj.city || ''}, ${addressObj.stateRegion || ''} ${addressObj.zipCode || ''}, ${addressObj.country || ''}`.replace(/^, |, $/g, '').replace(/, ,/g, ',');
 
                 const listing = apiData.listing || {};
-                const unit = apiData.singleUnitDetail || {};
+                const singleUnitDetails = apiData.singleUnitDetails || apiData.singleUnitDetail || {};
+                
+                // For multi-unit properties, try to get unit details from the first available unit
+                let unitDetails = singleUnitDetails;
+                if (apiData.propertyType === 'MULTI' && apiData.units) {
+                    const unitsArray = Array.isArray(apiData.units) 
+                        ? apiData.units 
+                        : (apiData.units.units || []);
+                    if (unitsArray.length > 0) {
+                        // Try to find unit with beds/baths, or use first unit
+                        const unitWithDetails = unitsArray.find((u: any) => u.beds || u.baths) || unitsArray[0];
+                        if (unitWithDetails) {
+                            unitDetails = {
+                                beds: unitWithDetails.beds || singleUnitDetails.beds,
+                                baths: unitWithDetails.baths || singleUnitDetails.baths
+                            };
+                        }
+                    }
+                }
 
                 const rent = listing.monthlyRent ? parseFloat(listing.monthlyRent) : (listing.listingPrice ? parseFloat(listing.listingPrice) : 0);
 
@@ -92,8 +110,13 @@ const ApplicationPropertyIntro: React.FC<ApplicationPropertyIntroProps> = ({ pro
 
                 const agentName = apiData.manager?.fullName || apiData.listingContactName || "Property Manager";
 
-                const beds = unit.beds ? parseFloat(unit.beds) : 0;
-                const baths = unit.baths ? parseFloat(unit.baths) : 0;
+                // Extract beds and baths, handling both number and string types
+                const beds = unitDetails.beds 
+                    ? (typeof unitDetails.beds === 'string' ? parseFloat(unitDetails.beds) : Number(unitDetails.beds)) 
+                    : 0;
+                const baths = unitDetails.baths 
+                    ? (typeof unitDetails.baths === 'string' ? parseFloat(unitDetails.baths) : Number(unitDetails.baths)) 
+                    : 0;
                 const title = listing.title || apiData.propertyName || "Property";
 
                 setData({
