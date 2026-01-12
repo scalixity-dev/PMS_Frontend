@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 
 interface Question {
@@ -28,7 +28,7 @@ export default function BackgroundQuestions() {
         setQuestions(questions.map(q => q.id === id ? { ...q, text } : q));
     };
 
-    const sidebarCollapsed = false; // Fallback or use context if available
+    const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
     const primaryColor = "#7CD947";
 
     return (
