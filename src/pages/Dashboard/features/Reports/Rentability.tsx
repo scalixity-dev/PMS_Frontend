@@ -3,18 +3,34 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import SearchableDropdown from '../../../../components/ui/SearchableDropdown';
 
+const PROPERTY_DATA = [
+    { name: 'Unit 101 - Sunset Apartments', beds: '2', baths: '2' },
+    { name: 'Unit 102 - Sunset Apartments', beds: '1', baths: '1' },
+    { name: 'Unit 205 - Downtown Lofts', beds: '2', baths: '1.5' },
+    { name: 'Unit 3B - The Heights', beds: '3', baths: '2' },
+    { name: 'Single Family Home - 123 Maple St', beds: '4', baths: '3' },
+    { name: 'Luxury Villa - 456 Palm Dr', beds: '5', baths: '4.5' }
+];
+
 const Rentability: React.FC = () => {
     const navigate = useNavigate();
     const [selectedProperty, setSelectedProperty] = useState('');
+    const [beds, setBeds] = useState('');
+    const [baths, setBaths] = useState('');
 
-    const propertyOptions = [
-        'Unit 101 - Sunset Apartments',
-        'Unit 102 - Sunset Apartments',
-        'Unit 205 - Downtown Lofts',
-        'Unit 3B - The Heights',
-        'Single Family Home - 123 Maple St',
-        'Luxury Villa - 456 Palm Dr'
-    ];
+    const propertyOptions = PROPERTY_DATA.map(p => p.name);
+
+    const handlePropertyChange = (value: string) => {
+        setSelectedProperty(value);
+        const property = PROPERTY_DATA.find(p => p.name === value);
+        if (property) {
+            setBeds(property.beds);
+            setBaths(property.baths);
+        } else {
+            setBeds('');
+            setBaths('');
+        }
+    };
 
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit">
@@ -85,7 +101,7 @@ const Rentability: React.FC = () => {
                                 label="Property*"
                                 value={selectedProperty}
                                 options={propertyOptions}
-                                onChange={setSelectedProperty}
+                                onChange={handlePropertyChange}
                                 placeholder="Select unit..."
                                 className="w-full"
                                 buttonClassName="w-full flex items-center justify-between bg-white text-gray-700 px-4 py-3 rounded-lg shadow-sm"
@@ -96,7 +112,9 @@ const Rentability: React.FC = () => {
                             <input
                                 type="text"
                                 placeholder="0"
-                                className="w-full bg-white px-4 py-3 rounded-lg border-none shadow-sm focus:ring-2 focus:ring-[#4ad1a6] outline-none"
+                                value={beds}
+                                readOnly
+                                className="w-full bg-gray-100 text-gray-500 cursor-not-allowed px-4 py-3 rounded-lg border-none shadow-sm outline-none"
                             />
                         </div>
                         <div>
@@ -104,7 +122,9 @@ const Rentability: React.FC = () => {
                             <input
                                 type="text"
                                 placeholder="0"
-                                className="w-full bg-white px-4 py-3 rounded-lg border-none shadow-sm focus:ring-2 focus:ring-[#4ad1a6] outline-none"
+                                value={baths}
+                                readOnly
+                                className="w-full bg-gray-100 text-gray-500 cursor-not-allowed px-4 py-3 rounded-lg border-none shadow-sm outline-none"
                             />
                         </div>
                     </div>
