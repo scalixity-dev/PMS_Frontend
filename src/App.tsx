@@ -185,20 +185,18 @@ const App: React.FC = () => {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignUpPage />} />
-            <Route path="/signup/oauth-complete" element={<OAuthCompletePage />} />
-            <Route path="/signup/tenant-onboarding-flow" element={<TenantOnboardingFlow />} />
-            <Route path="/otp" element={<OtpPage />} />
-            <Route path="/auth/callback" element={<OAuthCallbackPage />} />
-
-            {/* Service Dashboard Auth */}
-            <Route path="/service-dashboard/login" element={<ServiceDashboardLogin />} />
-            <Route path="/service-dashboard/signup" element={<ServiceDashboardSignup />} />
-
             <Route element={<AppLayout />}>
               <Route path="/" element={<HomePage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignUpPage />} />
+              <Route path="/signup/oauth-complete" element={<OAuthCompletePage />} />
+              <Route path="/signup/tenant-onboarding-flow" element={<TenantOnboardingFlow />} />
+              <Route path="/otp" element={<OtpPage />} />
+              <Route path="/auth/callback" element={<OAuthCallbackPage />} />
 
+              {/* Service Dashboard Auth */}
+              <Route path="/service-dashboard/login" element={<ServiceDashboardLogin />} />
+              <Route path="/service-dashboard/signup" element={<ServiceDashboardSignup />} />
 
 
               <Route path="/usecases/landlord" element={<LandlordUseCasesPage />} />
