@@ -467,7 +467,10 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
                             placeholder="Type Phone Number"
                             className={`${inputClasses} ${touched.companyPhone && errors.companyPhone ? 'border-red-500' : ''}`}
                             value={formData.companyPhone}
-                            onChange={(e) => handleChange('companyPhone', e.target.value)}
+                            onChange={(e) => {
+                                const value = e.target.value.replace(/[^\d\s\-\+\(\)]/g, '');
+                                handleChange('companyPhone', value);
+                            }}
                             onBlur={() => handleBlur('companyPhone')}
                         />
                         {touched.companyPhone && errors.companyPhone && <p className={errorClasses}>{errors.companyPhone}</p>}
@@ -512,7 +515,10 @@ const UserAddIncomeModal: React.FC<UserAddIncomeModalProps> = ({ isOpen, onClose
                                     placeholder="Add Phone number here"
                                     className={`${inputClasses} ${touched.supervisorPhone && errors.supervisorPhone ? 'border-red-500' : ''}`}
                                     value={formData.supervisorPhone}
-                                    onChange={(e) => handleChange('supervisorPhone', e.target.value)}
+                                    onChange={(e) => {
+                                        const value = e.target.value.replace(/[^\d\s\-\+\(\)]/g, '');
+                                        handleChange('supervisorPhone', value);
+                                    }}
                                     onBlur={() => handleBlur('supervisorPhone')}
                                 />
                                 {touched.supervisorPhone && errors.supervisorPhone && <p className={errorClasses}>{errors.supervisorPhone}</p>}

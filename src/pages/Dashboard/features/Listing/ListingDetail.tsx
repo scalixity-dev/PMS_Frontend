@@ -10,6 +10,10 @@ import {
     List,
     ChevronDown,
     Loader2,
+    Copy,
+    Facebook,
+    Twitter,
+    Mail,
 } from 'lucide-react';
 import { parse, format } from 'date-fns';
 import SelectionModal from './components/SelectionModal';
@@ -18,8 +22,9 @@ import DatePicker from '../../../../components/ui/DatePicker';
 import OnlineApplicationModal from './components/OnlineApplicationModal';
 import InviteToApplyModal from './components/InviteToApplyModal';
 import DetailTabs from '../../components/DetailTabs';
-import { useGetListing } from '../../../../hooks/useListingQueries';
+import { useGetListing, useUpdateListing } from '../../../../hooks/useListingQueries';
 import { getCurrencySymbol } from '../../../../utils/currency.utils';
+import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 
 const ListingDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -29,11 +34,14 @@ const ListingDetail: React.FC = () => {
     const [isInviteToApplyModalOpen, setIsInviteToApplyModalOpen] = useState(false);
 
     // All hooks must be declared before any conditional returns
+    const [isUnlistConfirmationOpen, setIsUnlistConfirmationOpen] = useState(false);
+    const [isShareDropdownOpen, setIsShareDropdownOpen] = useState(false);
     const [isGalleryEditing, setIsGalleryEditing] = useState(false);
     const [isVideoEditing, setIsVideoEditing] = useState(false);
     const [isDescriptionEditing, setIsDescriptionEditing] = useState(false);
     const [isRibbonEditing, setIsRibbonEditing] = useState(false);
     const [isLeaseTermsEditing, setIsLeaseTermsEditing] = useState(false);
+    const [isCopied, setIsCopied] = useState(false);
     const [activeModal, setActiveModal] = useState<'features' | 'amenities' | null>(null);
     const [isContactEditing, setIsContactEditing] = useState(false);
     const [galleryImages, setGalleryImages] = useState<string[]>([]);
@@ -57,6 +65,45 @@ const ListingDetail: React.FC = () => {
 
     // Fetch listing data from backend
     const { data: backendListing, isLoading, error } = useGetListing(id || null, !!id);
+    const updateListing = useUpdateListing();
+
+    const handleToggleListing = () => {
+        if (!backendListing?.id) return;
+
+        const isListed = listing?.status === 'Listed';
+
+        if (isListed) {
+            setIsUnlistConfirmationOpen(true);
+        } else {
+            // List immediately
+            updateListing.mutate(
+                { id: backendListing.id, data: { listingStatus: 'ACTIVE', isActive: true } },
+                {
+                    onSuccess: () => {
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    }
+                }
+            );
+        }
+    };
+
+    const handleConfirmUnlist = () => {
+        if (!backendListing?.id) return;
+
+        updateListing.mutate(
+            { id: backendListing.id, data: { listingStatus: 'DRAFT', isActive: false } },
+            {
+                onSuccess: () => {
+                    setIsUnlistConfirmationOpen(false);
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                }
+            }
+        );
+    };
 
     // Transform backend listing to component format
     const listing = useMemo(() => {
@@ -84,9 +131,9 @@ const ListingDetail: React.FC = () => {
         }
 
         // Get image - prioritize coverPhotoUrl, then primary photo, then first photo
-        const image = property.coverPhotoUrl 
-            || photos.find((p: any) => p.isPrimary)?.photoUrl 
-            || photos[0]?.photoUrl 
+        const image = property.coverPhotoUrl
+            || photos.find((p: any) => p.isPrimary)?.photoUrl
+            || photos[0]?.photoUrl
             || null;
 
         // Get gallery images (non-primary photos)
@@ -109,14 +156,14 @@ const ListingDetail: React.FC = () => {
         const status = statusMap[backendListing.listingStatus] || 'Draft';
 
         // Get price (monthly rent)
-        const price = backendListing.monthlyRent 
+        const price = backendListing.monthlyRent
             ? typeof backendListing.monthlyRent === 'string'
                 ? parseFloat(backendListing.monthlyRent) || 0
                 : Number(backendListing.monthlyRent) || 0
             : 0;
 
         // Format expiry date
-        const expiryDate = backendListing.expiresAt 
+        const expiryDate = backendListing.expiresAt
             ? format(new Date(backendListing.expiresAt), 'dd MMM, yyyy')
             : 'No expiry';
 
@@ -245,7 +292,7 @@ const ListingDetail: React.FC = () => {
             })(),
             contact: {
                 name: property.listingContactName || 'N/A',
-                phone: property.listingPhoneNumber 
+                phone: property.listingPhoneNumber
                     ? `${property.listingPhoneCountryCode || ''} ${property.listingPhoneNumber}`.trim()
                     : 'N/A',
                 email: property.listingEmail || 'N/A',
@@ -386,12 +433,22 @@ const ListingDetail: React.FC = () => {
             <div className="bg-[#E0E8E7] rounded-[2rem] p-6 min-h-screen">
                 {/* Header */}
                 <div className="flex items-center gap-6 mb-6">
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => navigate(-1)}
+                            className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+                        >
+                            <ChevronLeft className="w-6 h-6 text-gray-700" />
+                        </button>
                         <h1 className="text-2xl font-bold text-gray-800">{listing?.name || `#${id}`}</h1>
                     </div>
                     <div className="flex gap-3">
-                        <button className="bg-[#467676] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#3A6D6C] transition-colors">
-                            List
+                        <button
+                            onClick={handleToggleListing}
+                            disabled={updateListing.isPending}
+                            className={`bg-[#467676] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#3A6D6C] transition-colors ${updateListing.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                            {updateListing.isPending ? (listing?.status === 'Listed' ? 'Unlisting...' : 'Listing...') : (listing?.status === 'Listed' ? 'Unlist' : 'List')}
                         </button>
                         <button
                             onClick={() => setIsInviteToApplyModalOpen(true)}
@@ -399,9 +456,82 @@ const ListingDetail: React.FC = () => {
                         >
                             Invite to apply
                         </button>
-                        <button className="bg-[#467676] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#3A6D6C] transition-colors">
-                            Share
-                        </button>
+                        <div className="relative">
+                            <button
+                                onClick={() => setIsShareDropdownOpen(!isShareDropdownOpen)}
+                                className="bg-[#467676] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#3A6D6C] transition-colors flex items-center gap-2"
+                            >
+                                Share <ChevronDown className={`w-4 h-4 transition-transform ${isShareDropdownOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {isShareDropdownOpen && (
+                                <>
+                                    <div
+                                        className="fixed inset-0 z-10"
+                                        onClick={() => setIsShareDropdownOpen(false)}
+                                    />
+                                    <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                        <div className="p-1">
+                                            <button
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(window.location.href);
+                                                    setIsCopied(true);
+                                                    setTimeout(() => {
+                                                        setIsCopied(false);
+                                                        setIsShareDropdownOpen(false);
+                                                    }, 1000);
+                                                }}
+                                                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left"
+                                            >
+                                                <div className={`w-8 h-8 rounded-full ${isCopied ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500'} flex items-center justify-center transition-colors`}>
+                                                    {isCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                                                </div>
+                                                {isCopied ? 'Copied!' : 'Copy link address'}
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, '_blank');
+                                                    setIsShareDropdownOpen(false);
+                                                }}
+                                                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left"
+                                            >
+                                                <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                                                    <Facebook className="w-4 h-4" />
+                                                </div>
+                                                Share to Facebook
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    const text = `Check out ${listing?.name || 'this property'}!`;
+                                                    window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(text)}`, '_blank');
+                                                    setIsShareDropdownOpen(false);
+                                                }}
+                                                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left"
+                                            >
+                                                <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-800">
+                                                    <Twitter className="w-4 h-4" />
+                                                </div>
+                                                Share to X
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    const subject = `Check out ${listing?.name || 'this property'}`;
+                                                    const body = `Hi,\n\nI found this property and thought you might be interested:\n${window.location.href}`;
+                                                    window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+                                                    setIsShareDropdownOpen(false);
+                                                }}
+                                                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-left"
+                                            >
+                                                <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-green-600">
+                                                    <Mail className="w-4 h-4" />
+                                                </div>
+                                                Share via email
+                                            </button>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -440,7 +570,7 @@ const ListingDetail: React.FC = () => {
                                     }}
                                 />
                             ) : null}
-                            <div 
+                            <div
                                 className={`w-44 h-44 ${listing.image ? 'hidden' : 'flex'} items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300 rounded-2xl`}
                             >
                                 <div className="text-center">
@@ -1079,6 +1209,16 @@ const ListingDetail: React.FC = () => {
                     onSend={() => {
                         setIsInviteToApplyModalOpen(false);
                     }}
+                />
+                <DeleteConfirmationModal
+                    isOpen={isUnlistConfirmationOpen}
+                    onClose={() => setIsUnlistConfirmationOpen(false)}
+                    onConfirm={handleConfirmUnlist}
+                    title="Unlist Property?"
+                    message="Are you sure you want to unlist this property? It will be moved back to draft status and won't be visible to applicants."
+                    confirmText="Unlist"
+                    confirmButtonClass="!bg-[var(--color-primary)] text-white px-4 py-2.5 rounded-lg font-bold hover:!bg-[#346364] transition-colors shadow-sm"
+                    headerClassName="!bg-[var(--color-primary)]"
                 />
             </div>
         </div>

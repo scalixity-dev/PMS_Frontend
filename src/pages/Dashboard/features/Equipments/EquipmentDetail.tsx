@@ -1,9 +1,20 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, Edit, Paperclip, ChevronDown, ChevronUp, Trash2, Loader2, AlertTriangle, X } from 'lucide-react';
+import { ChevronLeft, Edit, Paperclip, ChevronDown, ChevronUp, Trash2, Loader2 } from 'lucide-react';
+import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import CustomTextBox from '../../components/CustomTextBox';
-import { useGetEquipment, useDeleteEquipment } from '../../../../hooks/useEquipmentQueries';
+import { useGetEquipment, useDeleteEquipment, useGetEquipmentCategories } from '../../../../hooks/useEquipmentQueries';
 import type { BackendEquipment } from '../../../../services/equipment.service';
+
+const findSubcategoryName = (categories: any[], subcategoryId: string): string => {
+    for (const cat of categories) {
+        if (cat.subcategories) {
+            const found = cat.subcategories.find((sub: any) => sub.id === subcategoryId);
+            if (found) return found.name;
+        }
+    }
+    return '';
+};
 
 const EquipmentDetail = () => {
     const navigate = useNavigate();
@@ -48,6 +59,7 @@ const EquipmentDetail = () => {
 
     // Fetch equipment details from backend
     const { data: equipment, isLoading, error } = useGetEquipment(id ?? null, !!id);
+    const { data: allCategories = [] } = useGetEquipmentCategories();
 
     if (isLoading) {
         return (
@@ -82,17 +94,27 @@ const EquipmentDetail = () => {
     // Strongly-typed backend equipment (see BackendEquipment in equipment.service.ts)
     const equipmentTyped = equipment as BackendEquipment;
     // Handle category being either a string or an object { id, name, description }
-    const categoryLabel =
-        typeof equipmentTyped.category === 'string'
-            ? equipmentTyped.category
-            : equipmentTyped.category && typeof equipmentTyped.category === 'object'
-                ? equipmentTyped.category.name ?? 'Unknown category'
-                : 'Unknown category';
+    let categoryLabel = 'Unknown category';
+    if (typeof equipmentTyped.category === 'string') {
+        const foundCat = allCategories.find(c => c.id === equipmentTyped.category || c.name === equipmentTyped.category);
+        categoryLabel = foundCat ? foundCat.name : equipmentTyped.category;
+    } else if (equipmentTyped.category && typeof equipmentTyped.category === 'object') {
+        categoryLabel = equipmentTyped.category.name ?? 'Unknown category';
+    } else if (equipmentTyped.categoryId) {
+        const foundCat = allCategories.find(c => c.id === equipmentTyped.categoryId);
+        categoryLabel = foundCat ? foundCat.name : '-';
+    }
+
     // Handle subcategory being an object { id, name, description }
-    const subcategoryLabel =
-        equipmentTyped.subcategory && typeof equipmentTyped.subcategory === 'object'
-            ? equipmentTyped.subcategory.name ?? ''
-            : '';
+    let subcategoryLabel = '';
+    if (equipmentTyped.subcategory && typeof equipmentTyped.subcategory === 'object') {
+        subcategoryLabel = equipmentTyped.subcategory.name ?? '';
+    } else if (typeof equipmentTyped.subcategory === 'string') {
+        const resolvedName = findSubcategoryName(allCategories, equipmentTyped.subcategory);
+        subcategoryLabel = resolvedName || equipmentTyped.subcategory;
+    } else if (equipmentTyped.subcategoryId) {
+        subcategoryLabel = findSubcategoryName(allCategories, equipmentTyped.subcategoryId);
+    }
     const imageUrl = equipmentTyped.photoUrl || 'https://via.placeholder.com/300x300?text=No+Image';
     const propertyName = equipmentTyped.property?.propertyName || 'Unassigned property';
     // Prefer property cover photo (or primary photo) for the Property section image
@@ -323,67 +345,20 @@ const EquipmentDetail = () => {
                 </div>
             </div>
             {/* Delete Confirmation Modal */}
-            {isDeleteModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl shadow-xl max-w-md w-full mx-4 animate-in fade-in zoom-in-95 duration-200">
-                        {/* Header */}
-                        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-                                    <AlertTriangle className="w-5 h-5 text-red-600" />
-                                </div>
-                                <h3 className="text-lg font-bold text-gray-800">Delete Equipment</h3>
-                            </div>
-                            <button
-                                onClick={() => setIsDeleteModalOpen(false)}
-                                disabled={deleteEquipmentMutation.isPending}
-                                className="text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-
-                        {/* Content */}
-                        <div className="p-6">
-                            <p className="text-gray-700 mb-4">
-                                Are you sure you want to delete{' '}
-                                <span className="font-semibold text-gray-900">
-                                    "{equipmentTyped?.brand || 'this equipment'}"
-                                </span>
-                                ?
-                            </p>
-                            <p className="text-sm text-gray-500 mb-6">
-                                This action cannot be undone. All associated data for this equipment will be permanently deleted.
-                            </p>
-
-                            {/* Actions */}
-                            <div className="flex gap-3 justify-end">
-                                <button
-                                    onClick={() => setIsDeleteModalOpen(false)}
-                                    disabled={deleteEquipmentMutation.isPending}
-                                    className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={confirmDelete}
-                                    disabled={deleteEquipmentMutation.isPending}
-                                    className="px-6 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                                >
-                                    {deleteEquipmentMutation.isPending ? (
-                                        <>
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                            Deleting...
-                                        </>
-                                    ) : (
-                                        'Delete Equipment'
-                                    )}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <DeleteConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={confirmDelete}
+                title="Delete Equipment"
+                itemName={equipmentTyped?.brand || 'this equipment'}
+                message={
+                    <>
+                        Are you sure you want to delete <span className="font-bold text-gray-800">"{equipmentTyped?.brand || 'this equipment'}"</span>?
+                        <br />This action cannot be undone. All associated data for this equipment will be permanently deleted.
+                    </>
+                }
+                confirmText={deleteEquipmentMutation.isPending ? 'Deleting...' : 'Delete Equipment'}
+            />
         </div>
     );
 };

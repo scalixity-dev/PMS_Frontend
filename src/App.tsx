@@ -62,15 +62,19 @@ import ListingDetail from './pages/Dashboard/features/Listing/ListingDetail';
 import Calendar from './pages/Dashboard/features/Calendar/Calendar';
 import Tasks from './pages/Dashboard/features/Tasks/Tasks';
 import Tenants from './pages/Dashboard/features/Tenants/Tenants';
+import ImportTenants from './pages/Dashboard/features/Tenants/ImportTenants/ImportTenants';
 import AddEditTenant from './pages/Dashboard/features/Tenants/AddEditTenant';
 import TenantDetail from './pages/Dashboard/features/Tenants/TenantDetail';
 import Units from './pages/Dashboard/features/Units/Units';
 import KeysLocks from './pages/Dashboard/features/KeysLocks/KeysLocks';
 import KeyDetail from './pages/Dashboard/features/KeysLocks/KeyDetail';
 import Leases from './pages/Dashboard/features/Leases/Leases';
+import ImportLeases from './pages/Dashboard/features/Leases/ImportLeases/ImportLeases';
 import LeaseDetail from './pages/Dashboard/features/Leases/LeaseDetail';
+import EndLease from './pages/Dashboard/features/Leases/EndLease';
 import AddKey from './pages/Dashboard/features/KeysLocks/AddKey';
 import ServicePros from './pages/Dashboard/features/ServicePros/ServicePros';
+import ImportServicePros from './pages/Dashboard/features/ServicePros/ImportServicePros/ImportServicePros';
 import AddEditServicePro from './pages/Dashboard/features/ServicePros/AddEditServicePro';
 import ServiceProsDetail from './pages/Dashboard/features/ServicePros/ServiceProsDetail';
 import Application from './pages/Dashboard/features/Application/Application';
@@ -259,10 +263,12 @@ const App: React.FC = () => {
               <Route path="/dashboard/maintenance/recurring/:id" element={<MaintenanceRecurringDetail />} />
               <Route path="/dashboard/movein" element={<MoveIn />} />
               <Route path="/dashboard/contacts/tenants" element={<Tenants />} />
+              <Route path="/dashboard/contacts/tenants/import" element={<ImportTenants />} />
               <Route path="/dashboard/contacts/tenants/add" element={<AddEditTenant />} />
               <Route path="/dashboard/contacts/tenants/edit/:id" element={<AddEditTenant />} />
               <Route path="/dashboard/contacts/tenants/:id" element={<TenantDetail />} />
               <Route path="/dashboard/contacts/service-pros" element={<ServicePros />} />
+              <Route path="/dashboard/contacts/service-pros/import" element={<ImportServicePros />} />
               <Route path="/dashboard/contacts/service-pros/add" element={<AddEditServicePro />} />
               <Route path="/dashboard/contacts/service-pros/edit/:id" element={<AddEditServicePro />} />
               <Route path="/dashboard/contacts/service-pros/:id" element={<ServiceProsDetail />} />
@@ -271,6 +277,7 @@ const App: React.FC = () => {
               <Route path="/dashboard/application/new" element={<NewApplication />} />
               <Route path="/dashboard/application/:id" element={<ApplicationDetail />} />
               <Route path="/dashboard/leasing/leases" element={<Leases />} />
+              <Route path="/dashboard/leasing/leases/import" element={<ImportLeases />} />
               <Route
                 path="/dashboard/leasing/leads"
                 element={
@@ -304,6 +311,7 @@ const App: React.FC = () => {
                 }
               />
               <Route path="/dashboard/portfolio/leases/:id" element={<LeaseDetail />} />
+              <Route path="/dashboard/leasing/leases/:id/end-lease" element={<EndLease />} />
 
               <Route
                 path="/dashboard/messages"
@@ -537,6 +545,22 @@ const App: React.FC = () => {
               />
               <Route
                 path="/dashboard/documents/landlord-forms/use-template/:templateName"
+                element={
+                  <ProtectedRoute>
+                    <UseTemplateWizard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/leasing/leases/:id/send-notice"
+                element={
+                  <ProtectedRoute>
+                    <UseTemplateWizard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/leasing/leases/:id/send-agreement"
                 element={
                   <ProtectedRoute>
                     <UseTemplateWizard />

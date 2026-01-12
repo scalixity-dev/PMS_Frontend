@@ -13,13 +13,17 @@ import {
     Send,
     X,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    FileText
 } from "lucide-react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
+import SendMessageModal from "./components/SendMessageModal";
 import type { PropertyFeature } from "../../utils/types";
 import { API_ENDPOINTS } from "../../../../config/api.config";
 import { formatMoney } from "../../../../utils/currency.utils";
+import { formatAmenityLabel } from "../../../../utils/string.utils";
+
 
 // --- Types ---
 interface PropertyData {
@@ -256,6 +260,7 @@ const PropertyDetailUser: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [activeBottomTab, setActiveBottomTab] = useState("Description");
+    const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [propertyData, setPropertyData] = useState<PropertyData | null>(null);
@@ -271,14 +276,14 @@ const PropertyDetailUser: React.FC = () => {
             try {
                 setLoading(true);
                 setError(null);
-                
-                
+
+
                 let propertyId = id;
                 if (id.length > 36) {
-                  
+
                     propertyId = id.substring(0, 36);
                 }
-                
+
                 const response = await fetch(API_ENDPOINTS.PROPERTY.GET_PUBLIC_DETAIL(propertyId), {
                     method: 'GET',
                     credentials: 'include',
@@ -292,7 +297,7 @@ const PropertyDetailUser: React.FC = () => {
                 }
 
                 const data = await response.json();
-                
+
                 // Map backend data to PropertyData format
                 const address = data.address;
                 const addressString = address
@@ -349,18 +354,18 @@ const PropertyDetailUser: React.FC = () => {
                 if (data.yearBuilt) {
                     features.push({ icon: <Building2 />, label: "Built", value: data.yearBuilt.toString() });
                 }
-                
+
                 // Add amenities to features
                 const amenities = data.amenities || data.singleUnitDetail?.amenities;
                 if (amenities) {
                     if (amenities.parking && amenities.parking !== 'NONE') {
-                        features.push({ icon: <ParkingSquare />, label: "Parking", value: amenities.parking.replace('_', ' ') });
+                        features.push({ icon: <ParkingSquare />, label: "Parking", value: formatAmenityLabel(amenities.parking) });
                     }
                     if (amenities.laundry && amenities.laundry !== 'NONE') {
-                        features.push({ icon: <Shirt />, label: "Laundry", value: amenities.laundry.replace('_', ' ') });
+                        features.push({ icon: <Shirt />, label: "Laundry", value: formatAmenityLabel(amenities.laundry) });
                     }
                     if (amenities.airConditioning && amenities.airConditioning !== 'NONE') {
-                        features.push({ icon: <AirVent />, label: "A.C", value: amenities.airConditioning.replace('_', ' ') });
+                        features.push({ icon: <AirVent />, label: "A.C", value: formatAmenityLabel(amenities.airConditioning) });
                     }
                     if (data.listing?.petsAllowed) {
                         features.push({ icon: <Dog />, label: "Pets", value: "Yes" });
@@ -369,15 +374,16 @@ const PropertyDetailUser: React.FC = () => {
 
                 // Build detailed features from propertyFeatures array
                 const detailedFeatures = amenities?.propertyFeatures?.map((feature: string) => ({
-                    label: feature,
+                    label: formatAmenityLabel(feature),
                     selected: true
                 })) || [];
 
                 // Build amenities list from propertyAmenities array
                 const amenitiesList = amenities?.propertyAmenities?.map((amenity: string) => ({
-                    label: amenity,
+                    label: formatAmenityLabel(amenity),
                     selected: true
                 })) || [];
+
 
                 // Build lease terms
                 const leaseTerms = [];
@@ -658,16 +664,18 @@ const PropertyDetailUser: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="bg-[#F5F5F5] border border-[#3333334D] rounded-2xl p-4 mb-6">
-                            <textarea
-                                className="w-full bg-transparent border-0 focus:ring-0 focus:outline-none focus-visible:ring-0 focus-visible:outline-none text-sm text-gray-600 resize-none h-24"
-                                defaultValue={`Hello ${propertyData.agent.name?.split(' ')[0] || 'there'}, I would like to know more about the listing`}
-                            />
-                        </div>
-
-                        <div className="flex justify-center">
+                        <div className="flex flex-col gap-3">
                             <PrimaryActionButton
-                                className="bg-[var(--dashboard-accent)] hover:bg-[var(--dashboard-accent)] text-white font-bold px-2 py-2 rounded-md flex items-center justify-center gap-3 transition-all duration-300 shadow-[0_10px_20px_rgba(140,215,75,0.3)]"
+                                onClick={() => navigate('/userdashboard/new-application', { state: { propertyId: propertyData.id } })}
+                                className="w-full bg-[var(--dashboard-accent)] hover:bg-[var(--dashboard-accent)] hover:brightness-98 text-white font-bold py-2 rounded-md flex items-center justify-center gap-3 transition-all duration-300 shadow-[0_4px_10px_rgba(140,215,75,0.4)] "
+                            >
+                                <FileText size={18} />
+                                Apply to this listing
+                            </PrimaryActionButton>
+
+                            <PrimaryActionButton
+                                onClick={() => setIsMessageModalOpen(true)}
+                                className="bg-[var(--dashboard-accent)] hover:bg-[var(--dashboard-accent)] hover:brightness-98 text-white font-bold px-2 py-2 rounded-md flex items-center justify-center gap-3 transition-all duration-300 shadow-[0_10px_20px_rgba(140,215,75,0.3)]"
                             >
                                 <Send size={18} />
                                 Send a message
@@ -676,6 +684,12 @@ const PropertyDetailUser: React.FC = () => {
                     </div>
                 </div>
             </div>
+            <SendMessageModal
+                isOpen={isMessageModalOpen}
+                onClose={() => setIsMessageModalOpen(false)}
+                propertyTitle={propertyData.title}
+                landlordName={propertyData.agent.name}
+            />
         </div>
     );
 };

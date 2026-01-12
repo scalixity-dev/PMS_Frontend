@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useOutletContext, useLocation } from 'react-router-dom';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
 import TenantCard from './components/TenantCard';
@@ -12,6 +12,20 @@ const Tenants = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [filters, setFilters] = useState<Record<string, string[]>>({});
     const [currentPage, setCurrentPage] = useState(1);
+    const location = useLocation();
+
+    // Handle pre-selected property from navigation state
+    useEffect(() => {
+        const state = location.state as { preSelectedProperty?: string };
+        if (state?.preSelectedProperty) {
+            setFilters(prev => ({
+                ...prev,
+                propertyUnits: [state.preSelectedProperty!]
+            }));
+            // Clear state to prevent reapplying on refresh/navigation
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state]);
     const itemsPerPage = 9;
 
     // Fetch tenants using React Query
@@ -120,7 +134,10 @@ const Tenants = () => {
                         <h1 className="text-2xl font-bold text-black">Tenants</h1>
                     </div>
                     <div className="flex gap-3 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
-                        <button className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors whitespace-nowrap">
+                        <button
+                            onClick={() => navigate('/dashboard/contacts/tenants/import')}
+                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors whitespace-nowrap"
+                        >
                             Import
                         </button>
                         <button

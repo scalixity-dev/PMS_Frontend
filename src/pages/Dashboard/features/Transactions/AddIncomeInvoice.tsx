@@ -7,6 +7,8 @@ import CustomDropdown from '../../components/CustomDropdown';
 import PayerPayeeDropdown from './components/PayerPayeeDropdown';
 import AddTenantModal from '../Tenants/components/AddTenantModal';
 
+import { validateFile } from '../../../../utils/fileValidation';
+
 const AddIncomeInvoice: React.FC = () => {
 	const navigate = useNavigate();
 	const [incomeType, setIncomeType] = useState<'property' | 'general'>('property');
@@ -17,7 +19,43 @@ const AddIncomeInvoice: React.FC = () => {
 	const [isAddTenantModalOpen, setIsAddTenantModalOpen] = useState(false);
 	const [lease, setLease] = useState<string>('');
 	const [showLeaseInput, setShowLeaseInput] = useState(false);
+	const [selectedFile, setSelectedFile] = useState<File | null>(null);
+	const [uploadError, setUploadError] = useState<string>('');
+	const fileInputRef = React.useRef<HTMLInputElement>(null);
 	const location = useLocation();
+
+	const handleFileClick = () => {
+		setUploadError('');
+		fileInputRef.current?.click();
+	};
+
+	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0];
+		if (!file) return;
+
+		const validation = validateFile(file);
+		if (!validation.isValid) {
+			setUploadError(validation.error || 'Invalid file');
+			return;
+		}
+
+		setSelectedFile(file);
+		setUploadError('');
+	};
+
+	const handleCreate = () => {
+		// Log data for now
+		console.log({
+			incomeType,
+			dueDate,
+			currency,
+			isPaid,
+			payerPayee,
+			lease,
+			file: selectedFile
+		});
+		// TODO: Implement API call
+	};
 
 	// Pre-fill data if passed from navigation state
 	React.useEffect(() => {
@@ -27,6 +65,9 @@ const AddIncomeInvoice: React.FC = () => {
 		if (location.state?.prefilledLease) {
 			setLease(location.state.prefilledLease);
 			setShowLeaseInput(true);
+		}
+		if (location.state?.prefilledDate) {
+			setDueDate(location.state.prefilledDate);
 		}
 	}, [location.state]);
 
@@ -195,12 +236,37 @@ const AddIncomeInvoice: React.FC = () => {
 					></textarea>
 				</div>
 
+				{/* File Upload Error/Success Message */}
+				{uploadError && (
+					<div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-lg text-red-700 text-sm">
+						{uploadError}
+					</div>
+				)}
+				{selectedFile && !uploadError && (
+					<div className="mb-4 p-3 bg-green-100 border border-green-300 rounded-lg text-green-700 text-sm">
+						File selected: {selectedFile.name}
+					</div>
+				)}
+
 				{/* Actions */}
 				<div className="flex flex-col sm:flex-row gap-4">
-					<button className="bg-[#84CC16] text-white px-8 py-3 rounded-md font-semibold shadow-lg shadow-[#84CC16]/20 hover:bg-[#65a30d] hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2 w-full sm:w-auto">
+					<input
+						ref={fileInputRef}
+						type="file"
+						className="hidden"
+						accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+						onChange={handleFileChange}
+					/>
+					<button
+						onClick={handleFileClick}
+						className="bg-[#84CC16] text-white px-8 py-3 rounded-md font-semibold shadow-lg shadow-[#84CC16]/20 hover:bg-[#65a30d] hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2 w-full sm:w-auto"
+					>
 						Upload File
 					</button>
-					<button className="bg-[#3D7475] text-white px-10 py-3 rounded-md font-semibold shadow-lg shadow-[#3D7475]/20 hover:bg-[#2c5556] hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 w-full sm:w-auto">
+					<button
+						onClick={handleCreate}
+						className="bg-[#3D7475] text-white px-10 py-3 rounded-md font-semibold shadow-lg shadow-[#3D7475]/20 hover:bg-[#2c5556] hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 w-full sm:w-auto"
+					>
 						Create
 					</button>
 				</div>

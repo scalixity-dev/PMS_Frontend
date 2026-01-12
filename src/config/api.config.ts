@@ -52,6 +52,9 @@ export const API_ENDPOINTS = {
     CREATE: `${API_BASE_URL}/leasing`,
     UPDATE: (id: string) => `${API_BASE_URL}/leasing/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/leasing/${id}`,
+    IMPORT_EXCEL: `${API_BASE_URL}/leasing/import-excel`,
+    VALIDATE_EXCEL: `${API_BASE_URL}/leasing/validate-excel`,
+    GET_IMPORT_FIELDS: `${API_BASE_URL}/leasing/import-fields`,
   },
   LISTING: {
     GET_ALL: `${API_BASE_URL}/listing`,
@@ -94,6 +97,9 @@ export const API_ENDPOINTS = {
     DELETE_DOCUMENT: (documentId: string) => `${API_BASE_URL}/tenant/documents/${documentId}`,
     SAVE_PREFERENCES: `${API_BASE_URL}/tenant/preferences`,
     GET_PREFERENCES: `${API_BASE_URL}/tenant/preferences`,
+    IMPORT_EXCEL: `${API_BASE_URL}/tenant/import-excel`,
+    VALIDATE_EXCEL: `${API_BASE_URL}/tenant/validate-excel`,
+    GET_IMPORT_FIELDS: `${API_BASE_URL}/tenant/import-fields`,
   },
   APPLICATION: {
     GET_ALL: `${API_BASE_URL}/application`,
@@ -114,6 +120,9 @@ export const API_ENDPOINTS = {
     UPLOAD_DOCUMENT: (id: string) => `${API_BASE_URL}/service-provider/${id}/documents`,
     GET_DOCUMENTS: (id: string) => `${API_BASE_URL}/service-provider/${id}/documents`,
     DELETE_DOCUMENT: (documentId: string) => `${API_BASE_URL}/service-provider/documents/${documentId}`,
+    IMPORT_EXCEL: `${API_BASE_URL}/service-provider/import-excel`,
+    VALIDATE_EXCEL: `${API_BASE_URL}/service-provider/validate-excel`,
+    GET_IMPORT_FIELDS: `${API_BASE_URL}/service-provider/import-fields`,
   },
   TASK: {
     GET_ALL: `${API_BASE_URL}/task`,

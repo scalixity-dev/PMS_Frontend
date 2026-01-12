@@ -19,7 +19,7 @@ interface MarkAsPaidFormData {
 }
 
 const MarkAsPaidModal: React.FC<MarkAsPaidModalProps> = ({ onConfirm }) => {
-    const { isMarkAsPaidOpen, setMarkAsPaidOpen } = useTransactionStore();
+    const { isMarkAsPaidOpen, setMarkAsPaidOpen, markAsPaidData } = useTransactionStore();
     const isOpen = isMarkAsPaidOpen;
     const onClose = () => setMarkAsPaidOpen(false);
     const [datePaid, setDatePaid] = useState<Date | undefined>(undefined);
@@ -39,13 +39,34 @@ const MarkAsPaidModal: React.FC<MarkAsPaidModalProps> = ({ onConfirm }) => {
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden';
+
+            // Pre-fill data if available
+            if (markAsPaidData) {
+                if (markAsPaidData.date) {
+                    setDatePaid(markAsPaidData.date);
+                } else {
+                    setDatePaid(undefined);
+                }
+
+                if (markAsPaidData.amount) {
+                    setAmountPaid(markAsPaidData.amount);
+                } else {
+                    setAmountPaid('');
+                }
+            } else {
+                // Reset if no data passed (optional, depends on desired behavior)
+                // setDatePaid(undefined);
+                // setAmountPaid('');
+            }
+
         } else {
             document.body.style.overflow = 'unset';
+            // Optional: reset on close
         }
         return () => {
             document.body.style.overflow = 'unset';
         };
-    }, [isOpen]);
+    }, [isOpen, markAsPaidData]);
 
     const handleFileClick = () => {
         setUploadError('');

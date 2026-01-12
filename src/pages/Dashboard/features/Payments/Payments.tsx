@@ -100,6 +100,12 @@ const Payments: React.FC = () => {
         setEditPaymentModalOpen,
         setSelectedPayment,
         setRefundModalOpen,
+        setEditInvoiceOpen,
+        setApplyDepositsOpen,
+        setApplyCreditsOpen,
+        setAddDiscountOpen,
+        setMarkAsPaidOpen,
+        setVoidModalOpen
     } = useTransactionStore();
 
     // Filter State
@@ -217,20 +223,61 @@ const Payments: React.FC = () => {
     return (
         <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit transition-all duration-300`}>
             {/* Modals - Reused from Transactions */}
-            <EditInvoiceModal />
+            <EditInvoiceModal
+                onConfirm={(data) => {
+                    console.log('Edit Invoice data:', data);
+                    setEditInvoiceOpen(false);
+                }}
+            />
             <DeleteTransactionModal
                 onConfirm={() => {
                     setDeleteTransactionOpen(false);
                     setSelectedTransactionId(null);
                 }}
             />
-            <ApplyDepositsModal />
-            <ApplyCreditsModal />
-            <AddDiscountModal />
-            <MarkAsPaidModal />
-            <VoidTransactionModal />
-            <EditPaymentModal />
-            <RefundPaymentModal />
+            <ApplyDepositsModal
+                onConfirm={(data) => {
+                    console.log('Apply Deposits data:', data);
+                    setApplyDepositsOpen(false);
+                }}
+            />
+            <ApplyCreditsModal
+                onConfirm={(data) => {
+                    console.log('Apply Credits data:', data);
+                    setApplyCreditsOpen(false);
+                }}
+            />
+            <AddDiscountModal
+                onConfirm={(data) => {
+                    console.log('Add Discount data:', data);
+                    setAddDiscountOpen(false);
+                }}
+            />
+            <MarkAsPaidModal
+                onConfirm={(data) => {
+                    console.log('Mark As Paid data:', data);
+                    setMarkAsPaidOpen(false);
+                }}
+            />
+            <VoidTransactionModal
+                onConfirm={(reason) => {
+                    console.log('Voiding transaction with reason:', reason);
+                    setVoidModalOpen(false);
+                }}
+            />
+            <EditPaymentModal
+                onConfirm={(data) => {
+                    console.log('Edit Payment data:', data);
+                    setEditPaymentModalOpen(false);
+                }}
+            />
+            <RefundPaymentModal
+                onConfirm={(data) => {
+                    console.log('Refund Payment data:', data);
+                    // TODO: Implement API call
+                    setRefundModalOpen(false);
+                }}
+            />
 
             {/* Breadcrumb */}
             <div className="inline-flex items-center px-4 py-2 bg-[#DFE5E3] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">

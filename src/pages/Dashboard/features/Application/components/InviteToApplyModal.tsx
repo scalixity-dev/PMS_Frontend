@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, ChevronDown, Check, Plus, Trash2 } from 'lucide-react';
 import { useGetAllProperties } from '@/hooks/usePropertyQueries';
 import { authService } from '@/services/auth.service';
@@ -180,9 +181,9 @@ const InviteToApplyModal: React.FC<InviteToApplyModalProps> = ({ isOpen, onClose
 
     if (!isOpen) return null;
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
                 {/* Header */}
                 <div className="bg-[#3A6D6C] px-6 py-4 flex items-center justify-between">
                     <h2 className="text-white text-lg font-medium">Invite applicants to apply online</h2>
@@ -192,7 +193,7 @@ const InviteToApplyModal: React.FC<InviteToApplyModalProps> = ({ isOpen, onClose
                 </div>
 
                 {/* Body */}
-                <div className="p-6 space-y-6 overflow-y-auto flex-1">
+                <div className="p-6 sm:p-8 space-y-6 overflow-y-auto flex-1">
                     {/* Select Property */}
                     <div className="space-y-2">
                         <label className="block text-sm font-medium text-gray-700">Select property*</label>
@@ -323,7 +324,8 @@ const InviteToApplyModal: React.FC<InviteToApplyModalProps> = ({ isOpen, onClose
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

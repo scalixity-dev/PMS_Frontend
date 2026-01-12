@@ -116,6 +116,14 @@ const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave, init
                 const fieldName = key.charAt(0).toUpperCase() + key.slice(1);
                 return `${fieldName} is required`;
             }
+
+            // Specific validation for Name and Breed
+            if (key === 'name' || key === 'breed') {
+                if (!/^[a-zA-Z\s\-']+$/.test(value)) {
+                    const fieldName = key.charAt(0).toUpperCase() + key.slice(1);
+                    return `${fieldName} can only contain letters, spaces, hyphens, and apostrophes`;
+                }
+            }
         }
 
         return '';
@@ -141,6 +149,13 @@ const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave, init
     };
 
     const handleChange = (key: keyof PetFormData, value: any) => {
+        // Restrict input for Name and Breed fields to allow only letters, spaces, hyphens, and apostrophes
+        if ((key === 'name' || key === 'breed') && typeof value === 'string') {
+            if (value && !/^[a-zA-Z\s\-']*$/.test(value)) {
+                return;
+            }
+        }
+
         setFormData(prev => ({ ...prev, [key]: value }));
 
         // Clear error for this field when user starts typing/selecting
@@ -255,7 +270,7 @@ const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave, init
                                     }}
                                     options={typeOptions}
                                     placeholder="Choose Type"
-                                    buttonClassName={`w-full bg-white p-3 rounded-xl outline-none text-gray-700 placeholder-gray-400 shadow-sm ${touched.type && errors.type ? 'border-2 border-red-500' : 'border-none'
+                                    buttonClassName={`w-full bg-white p-3 rounded-lg outline-none text-gray-700 placeholder-gray-400 shadow-sm ${touched.type && errors.type ? 'border-2 border-red-500' : 'border-none'
                                         }`}
                                     dropdownClassName="max-h-60"
                                 />
@@ -270,7 +285,7 @@ const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave, init
                                 <input
                                     type="text"
                                     placeholder="Enter Name"
-                                    className={`w-full bg-white p-3 rounded-xl outline-none text-gray-700 placeholder-gray-400 shadow-sm ${touched.name && errors.name ? 'border-2 border-red-500' : 'border-none'
+                                    className={`w-full bg-white p-3 rounded-lg outline-none text-gray-700 placeholder-gray-400 shadow-sm ${touched.name && errors.name ? 'border-2 border-red-500' : 'border-none'
                                         }`}
                                     value={formData.name}
                                     onChange={(e) => handleChange('name', e.target.value)}
@@ -294,7 +309,7 @@ const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave, init
                                     }}
                                     options={weightOptions}
                                     placeholder="Choose Type"
-                                    buttonClassName={`w-full bg-white p-3 rounded-xl outline-none text-gray-700 placeholder-gray-400 shadow-sm ${touched.weight && errors.weight ? 'border-2 border-red-500' : 'border-none'
+                                    buttonClassName={`w-full bg-white p-3 rounded-lg outline-none text-gray-700 placeholder-gray-400 shadow-sm ${touched.weight && errors.weight ? 'border-2 border-red-500' : 'border-none'
                                         }`}
                                     dropdownClassName="max-h-60"
                                 />
@@ -309,7 +324,7 @@ const AddPetModal: React.FC<AddPetModalProps> = ({ isOpen, onClose, onSave, init
                                 <input
                                     type="text"
                                     placeholder="Enter Breed"
-                                    className={`w-full bg-white p-3 rounded-xl outline-none text-gray-700 placeholder-gray-400 shadow-sm ${touched.breed && errors.breed ? 'border-2 border-red-500' : 'border-none'
+                                    className={`w-full bg-white p-3 rounded-lg outline-none text-gray-700 placeholder-gray-400 shadow-sm ${touched.breed && errors.breed ? 'border-2 border-red-500' : 'border-none'
                                         }`}
                                     value={formData.breed}
                                     onChange={(e) => handleChange('breed', e.target.value)}

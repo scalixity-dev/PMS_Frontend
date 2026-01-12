@@ -199,6 +199,39 @@ class ListingService {
   }
 
   /**
+   * Update a listing
+   */
+  async update(id: string, data: Partial<CreateListingDto>): Promise<BackendListing> {
+    const response = await fetch(API_ENDPOINTS.LISTING.UPDATE(id), {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to update listing';
+      try {
+        const errorData = await response.json();
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join('. ');
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+      } catch (parseError) {
+        errorMessage = `Failed to update listing: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  }
+
+  /**
    * Get listings by property ID
    */
   async getByPropertyId(propertyId: string): Promise<BackendListing[]> {

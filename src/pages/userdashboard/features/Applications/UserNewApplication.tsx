@@ -14,9 +14,10 @@ import EmergencyContactStep from "./steps/EmergencyContactStep";
 import BackgroundQuestionsStep from "./steps/BackgroundQuestionsStep";
 import DocumentsStep from "./steps/DocumentsStep";
 import { useUserApplicationStore } from "./store/userApplicationStore";
-import ApplicationSuccessModal from "./components/ApplicationSuccessModal";
+
 import ApplicationErrorModal from "./components/ApplicationErrorModal";
 import UnsavedChangesModal from "../../../Dashboard/components/UnsavedChangesModal";
+import ApplicationPropertyIntro from "./components/ApplicationPropertyIntro";
 
 const APPLICATIONS_KEY = 'user_applications';
 
@@ -37,9 +38,14 @@ const hasValue = (v: any): boolean =>
 const UserNewApplication: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
+
+    // Determine if we should show intro initially. Defaults to true.
+    const [showIntro, setShowIntro] = useState(true);
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [shouldAllowNavigation, setShouldAllowNavigation] = useState(false);
     const pendingNavigationRef = useRef<string | null>(null);
+    const shouldAllowNavigationRef = useRef(false);
 
     const {
         formData,
@@ -51,11 +57,8 @@ const UserNewApplication: React.FC = () => {
         setFormData,
     } = useUserApplicationStore();
 
-    const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [errorMessages, setErrorMessages] = useState<string[]>([]);
-    const [successMessage, setSuccessMessage] = useState<string | undefined>(undefined);
-    const [isWarning, setIsWarning] = useState(false);
 
     // Load draft on mount
     useEffect(() => {
@@ -130,6 +133,7 @@ const UserNewApplication: React.FC = () => {
         if (!isFormDirty || shouldAllowNavigation) return;
 
         const handlePopState = () => {
+            if (shouldAllowNavigationRef.current) return;
             pendingNavigationRef.current = 'back';
             setIsModalOpen(true);
             // Re-push the trap state if the user tries to go back
@@ -149,7 +153,6 @@ const UserNewApplication: React.FC = () => {
 
     // Internal Navigation Blocking (Sidebar, Links, etc.)
     const navigationContext = React.useContext(UNSAFE_NavigationContext);
-    const shouldAllowNavigationRef = useRef(false);
 
     useEffect(() => {
         shouldAllowNavigationRef.current = shouldAllowNavigation;
@@ -206,14 +209,19 @@ const UserNewApplication: React.FC = () => {
 
         const draftId = getDraftId(formData.propertyId);
 
+        const currentResidence = formData.residences.find(r => r.isCurrent);
+        const applicantAddress = currentResidence?.address || (currentResidence?.city ? `${currentResidence.city}, ${currentResidence.state || ''}` : '');
+
         const newDraft = {
             id: draftId,
             name: name || 'Draft Applicant',
             phone: formData.phoneNumber || 'N/A',
             status: "Draft",
             appliedDate: new Date().toISOString().split('T')[0],
-            address: propertyAddress,
-            propertyId: formData.propertyId // Link to invitation
+            address: applicantAddress || propertyAddress || 'Address not available',
+            propertyAddress: propertyAddress,
+            propertyId: formData.propertyId, // Link to invitation
+            formData: { ...formData }
         };
 
         // Save summary for list view
@@ -240,23 +248,29 @@ const UserNewApplication: React.FC = () => {
     const handleConfirmLeave = useCallback(() => {
         saveDraft();
         setShouldAllowNavigation(true);
+        shouldAllowNavigationRef.current = true;
         setIsModalOpen(false);
 
         // Navigate to pending location if there is one
         if (pendingNavigationRef.current) {
             if (pendingNavigationRef.current === 'back') {
-                // Since we prevent duplicate traps now, navigate(-1) should correctly
-                // go back to the previous page from the trapped state.
-                // However, browser back (popstate) puts us on the PREVIOUS page temporarily,
-                // then we re-push trap. So we are at Trap.
-                // navigate(-1) -> Previous.
-                navigate(-1);
+                const state = window.history.state;
+                if (state?.trapped) {
+                    navigate(-2);
+                } else {
+                    navigate(-1);
+                }
             } else {
                 navigate(pendingNavigationRef.current);
             }
             pendingNavigationRef.current = null;
         } else {
-            navigate(-1);
+            const state = window.history.state;
+            if (state?.trapped) {
+                navigate(-2);
+            } else {
+                navigate(-1);
+            }
         }
     }, [navigate, saveDraft]);
 
@@ -267,6 +281,12 @@ const UserNewApplication: React.FC = () => {
 
     const handleBack = () => {
         if (currentStep === 1) {
+            // Modified: Check if we need to return to Intro
+            if (!showIntro && formData.propertyId) {
+                setShowIntro(true);
+                return;
+            }
+
             if (isFormDirty && !shouldAllowNavigation) {
                 pendingNavigationRef.current = 'back';
                 setIsModalOpen(true);
@@ -290,6 +310,8 @@ const UserNewApplication: React.FC = () => {
         const { leasingService } = await import('../../../../services/leasing.service');
         let leasingId: string | undefined;
         let address: string | undefined;
+        let propertyName: string | undefined;
+        let landlordName: string | undefined;
         let leasingFetchFailed = false;
 
         if (formData.propertyId?.trim()) {
@@ -301,6 +323,8 @@ const UserNewApplication: React.FC = () => {
                         const addr = leasing.property.address;
                         address = `${addr.streetAddress}, ${addr.city}, ${addr.stateRegion} ${addr.zipCode}, ${addr.country}`;
                     }
+                    propertyName = leasing.property?.propertyName || leasing.property?.listing?.title;
+                    landlordName = leasing.property?.manager?.fullName || leasing.property?.listingContactName || "Property Manager";
                 } else {
                     leasingFetchFailed = true;
                 }
@@ -315,12 +339,20 @@ const UserNewApplication: React.FC = () => {
             if (import.meta.env.DEV) {
                 leasingId = 'mock_leasing_id_123';
                 address = 'Gandhi Path Rd, Jaipur, Rajasthan 302020';
+                propertyName = 'Luxury Villa';
+                landlordName = 'Property Manager';
             } else {
                 throw new Error('Unable to verify property details. Please try again or contact support.');
             }
         }
 
-        return { leasingId: leasingId as string, address, leasingFetchFailed };
+        return {
+            leasingId: leasingId as string,
+            address,
+            propertyName: propertyName || 'Property',
+            landlordName: landlordName || 'Property Manager',
+            leasingFetchFailed
+        };
     };
 
     const submitApplication = async (leasingId: string) => {
@@ -334,7 +366,7 @@ const UserNewApplication: React.FC = () => {
         }
     };
 
-    const persistApplicationLocally = (address?: string) => {
+    const persistApplicationLocally = (propertyAddress?: string, propertyName?: string) => {
         const existingApps = JSON.parse(localStorage.getItem(APPLICATIONS_KEY) || '[]') as Array<{ id: string | number }>;
         const draftId = getDraftId(formData.propertyId);
         const filteredApps = existingApps.filter((app) => app.id !== draftId);
@@ -343,13 +375,20 @@ const UserNewApplication: React.FC = () => {
         const dataKey = getDraftDataKey(draftId);
         localStorage.removeItem(dataKey);
 
+        const currentResidence = formData.residences.find(r => r.isCurrent);
+        const applicantAddress = currentResidence?.address || (currentResidence?.city ? `${currentResidence.city}, ${currentResidence.state || ''}` : '');
+
         const newApp = {
             id: Date.now(),
             name: `${formData.firstName} ${formData.lastName}`,
             phone: formData.phoneNumber,
             status: "Submitted",
             appliedDate: new Date().toISOString().split('T')[0],
-            address: address || 'Address not available'
+            address: applicantAddress || propertyAddress || 'Address not available',
+            propertyAddress: propertyAddress,
+            propertyName: propertyName || 'Property',
+            propertyId: formData.propertyId,
+            formData: { ...formData } // Save complete form data for details view
         };
 
         localStorage.setItem(APPLICATIONS_KEY, JSON.stringify([newApp, ...filteredApps]));
@@ -357,30 +396,33 @@ const UserNewApplication: React.FC = () => {
 
     const handleSubmitSuccess = async () => {
         try {
-            const { leasingId, address, leasingFetchFailed } = await fetchLeasingData();
-            const apiSubmissionSuccessful = await submitApplication(leasingId);
+            const { leasingId, address, propertyName, landlordName } = await fetchLeasingData();
+            await submitApplication(leasingId);
 
-            persistApplicationLocally(address);
+            persistApplicationLocally(address, propertyName);
+
+            // Mark invitation as completed (hidden)
+            if (formData.propertyId) {
+                const hiddenProps = JSON.parse(localStorage.getItem('hidden_invitation_properties') || '[]');
+                if (!hiddenProps.includes(formData.propertyId)) {
+                    hiddenProps.push(formData.propertyId);
+                    localStorage.setItem('hidden_invitation_properties', JSON.stringify(hiddenProps));
+                }
+            }
 
             resetForm();
             setShouldAllowNavigation(true);
+            shouldAllowNavigationRef.current = true;
 
-            const warningMessages: string[] = [];
-            if (leasingFetchFailed) {
-                warningMessages.push("We couldn't retrieve the property address. A placeholder address has been used.");
-            }
-            if (!apiSubmissionSuccessful) {
-                warningMessages.push("Application saved locally. It will be submitted when you're back online.");
-            }
-
-            if (apiSubmissionSuccessful && !leasingFetchFailed) {
-                setSuccessMessage(undefined);
-                setIsWarning(false);
-            } else {
-                setSuccessMessage(warningMessages.join(' '));
-                setIsWarning(true);
-            }
-            setShowSuccessModal(true);
+            // Redirect to applications page with success details for the popup
+            navigate('/userdashboard/applications', {
+                replace: true,
+                state: {
+                    submissionSuccess: true,
+                    propertyName: propertyName,
+                    landlordName: landlordName
+                }
+            });
         } catch (error) {
             console.error('Failed to submit application:', error);
             setErrorMessages([error instanceof Error ? error.message : 'Failed to submit application.']);
@@ -389,8 +431,35 @@ const UserNewApplication: React.FC = () => {
     };
 
     const renderStep = () => {
+        const state = location.state as { propertyId?: string };
+        const targetPropertyId = state?.propertyId;
+
+        // If we have a target property from navigation that doesn't match our store,
+        // we are in a transition frame. Show the intro for the target property.
+        if (targetPropertyId && targetPropertyId !== formData.propertyId) {
+            return (
+                <ApplicationPropertyIntro
+                    key={targetPropertyId}
+                    propertyId={targetPropertyId}
+                    onNext={() => setShowIntro(false)}
+                />
+            );
+        }
+
+        const activePropertyId = formData.propertyId;
+
         switch (currentStep) {
             case 1:
+                // Modified: Conditional render of Intro
+                if (showIntro && activePropertyId) {
+                    return (
+                        <ApplicationPropertyIntro
+                            key={activePropertyId}
+                            propertyId={activePropertyId}
+                            onNext={() => setShowIntro(false)}
+                        />
+                    );
+                }
                 return (
                     <ApplicantInfoStep onNext={() => setCurrentStep(2)} />
                 );
@@ -439,15 +508,7 @@ const UserNewApplication: React.FC = () => {
                 </div>
             </div>
 
-            <ApplicationSuccessModal
-                isOpen={showSuccessModal}
-                onClose={() => {
-                    setShowSuccessModal(false);
-                    navigate('/userdashboard/applications');
-                }}
-                message={successMessage}
-                isWarning={isWarning}
-            />
+
 
             <ApplicationErrorModal
                 isOpen={showErrorModal}

@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { Edit, Trash2, Check, ChevronLeft, Plus, Loader2, AlertTriangle, X } from 'lucide-react';
+import { Edit, Trash2, Check, ChevronLeft, Plus, Loader2 } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
-import { useGetAllEquipment, useDeleteEquipment } from '../../../../hooks/useEquipmentQueries';
+import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
+import { useGetAllEquipment, useDeleteEquipment, useGetEquipmentCategories } from '../../../../hooks/useEquipmentQueries';
 import type { BackendEquipment } from '../../../../services/equipment.service';
 
 // Map backend status to display format
@@ -17,77 +18,17 @@ const mapStatus = (status: string): string => {
     return statusMap[status] || status.toLowerCase();
 };
 
-// Legacy mock data for reference (can be removed)
-export const MOCK_EQUIPMENTS = [
-    {
-        id: 96325,
-        brand: 'Tata',
-        category: 'Electric meter',
-        subcategory: '',
-        property: '-',
-        status: 'active',
-        occupancy: 'occupied',
-        propertyType: 'household',
-        description: 'Main electric meter for the building.',
-        model: 'T-1000',
-        serial: 'SN-998877',
-        price: '$500',
-        warrantyExpiration: '2026-12-31',
-        additionalEmail: 'admin@example.com',
-        image: 'https://images.unsplash.com/photo-1582139329536-e7284fece509?auto=format&fit=crop&q=80&w=400'
-    },
-    {
-        id: 56325,
-        brand: 'Croma',
-        category: 'Electric meter',
-        subcategory: 'ovan',
-        property: '-',
-        status: 'active',
-        occupancy: 'occupied',
-        propertyType: 'household',
-        description: 'Secondary meter.',
-        model: 'C-200',
-        serial: 'SN-112233',
-        price: '$300',
-        warrantyExpiration: '2025-06-30',
-        additionalEmail: 'manager@example.com',
-        image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&q=80&w=400'
-    },
-    {
-        id: 12345,
-        brand: 'Samsung',
-        category: 'Appliances',
-        subcategory: 'Refrigerator',
-        property: 'Sunset Villa',
-        status: 'maintenance',
-        occupancy: 'vacant',
-        propertyType: 'appliances',
-        description: 'Double door refrigerator.',
-        model: 'RF-500',
-        serial: 'SN-445566',
-        price: '$1200',
-        warrantyExpiration: '2024-11-15',
-        additionalEmail: 'support@samsung.com',
-        image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80'
-    },
-    {
-        id: 67890,
-        brand: 'LG',
-        category: 'Appliances',
-        subcategory: 'Washing Machine',
-        property: 'Ocean View',
-        status: 'inactive',
-        occupancy: 'occupied',
-        propertyType: 'appliances',
-        description: 'Front load washing machine.',
-        model: 'WM-300',
-        serial: 'SN-778899',
-        price: '$800',
-        warrantyExpiration: '2025-01-20',
-        additionalEmail: 'service@lg.com',
-        image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1453&q=80'
+const findSubcategoryName = (categories: any[], subcategoryId: string): string => {
+    for (const cat of categories) {
+        if (cat.subcategories) {
+            const found = cat.subcategories.find((sub: any) => sub.id === subcategoryId);
+            if (found) return found.name;
+        }
     }
-];
+    return '';
+};
+
+
 
 const ITEMS_PER_PAGE = 9;
 
@@ -115,29 +56,43 @@ const Equipments: React.FC = () => {
 
     // Fetch equipment from backend
     const { data: equipment = [], isLoading, error } = useGetAllEquipment();
+    const { data: allCategories = [] } = useGetEquipmentCategories();
     const deleteEquipmentMutation = useDeleteEquipment();
 
     // Transform backend equipment to display format
     const transformedEquipment = useMemo(() => {
         return equipment.map((eq: BackendEquipment) => {
             // Handle category being either a string or an object { id, name, description }
-            const categoryName =
-                typeof eq.category === 'string'
-                    ? eq.category
-                    : eq.category && typeof eq.category === 'object'
-                        ? eq.category.name ?? ''
-                        : '';
+            let categoryName = '';
+            if (typeof eq.category === 'string') {
+                // If it looks like a valid ID (not just a name), try to find it in categories
+                const foundCat = allCategories.find(c => c.id === eq.category || c.name === eq.category);
+                categoryName = foundCat ? foundCat.name : eq.category;
+            } else if (eq.category && typeof eq.category === 'object') {
+                categoryName = eq.category.name ?? '';
+            } else if (eq.categoryId) {
+                // Fallback to categoryId if category object is missing or null
+                const foundCat = allCategories.find(c => c.id === eq.categoryId);
+                categoryName = foundCat ? foundCat.name : '-';
+            }
 
             // Handle subcategory being an object { id, name, description } or string (provided by backend)
-            const subcategoryName =
-                typeof eq.subcategory === 'object'
-                    ? eq.subcategory?.name || ''
-                    : (eq.subcategory || '');
+            let subcategoryName = '';
+            if (typeof eq.subcategory === 'object' && eq.subcategory) {
+                subcategoryName = eq.subcategory.name || '';
+            } else if (typeof eq.subcategory === 'string') {
+                // Try to resolve as ID first
+                const resolvedName = findSubcategoryName(allCategories, eq.subcategory);
+                subcategoryName = resolvedName || eq.subcategory;
+            } else if (eq.subcategoryId) {
+                // Resolve using subcategoryId
+                subcategoryName = findSubcategoryName(allCategories, eq.subcategoryId);
+            }
 
             return {
                 id: eq.id,
                 brand: eq.brand,
-                category: categoryName,
+                category: categoryName || '-',
                 subcategory: subcategoryName, // Extracted from backend subcategory object
                 property: eq.property?.propertyName || '-',
                 propertyId: eq.propertyId,
@@ -391,7 +346,7 @@ const Equipments: React.FC = () => {
                     <>
                         <div className="bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm mt-8 hidden md:block">
                             {/* Table Header */}
-                            <div className="text-white px-6 py-4 grid grid-cols-[40px_80px_1fr_1.5fr_1fr_120px] gap-4 items-center text-sm font-medium">
+                            <div className="text-white px-6 py-4 grid grid-cols-[50px_90px_1fr_1.5fr_1fr_110px] gap-4 items-center text-sm font-medium">
                                 <div className="flex items-center justify-center ml-2">
                                     <button onClick={toggleAll} className="flex items-center justify-center">
                                         <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${selectedItems.length === paginatedEquipments.length && paginatedEquipments.length > 0 ? 'bg-[#7BD747]' : 'bg-white/20 border border-white/50'}`}>
@@ -414,7 +369,7 @@ const Equipments: React.FC = () => {
                                     <div
                                         key={item.id}
                                         onClick={() => navigate(`/dashboard/equipments/${item.id}`)}
-                                        className="bg-white rounded-2xl px-4 md:px-6 py-4 grid grid-cols-1 md:grid-cols-[40px_80px_1fr_1.5fr_1fr_120px] gap-2 md:gap-4 items-start md:items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer relative"
+                                        className="bg-white rounded-2xl px-4 md:px-6 py-4 grid grid-cols-1 md:grid-cols-[50px_90px_1fr_1.5fr_1fr_110px] gap-2 md:gap-4 items-start md:items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer relative"
                                     >
                                         <div className="flex items-center justify-start md:justify-center absolute top-4 left-4 md:static">
                                             <button
@@ -475,67 +430,20 @@ const Equipments: React.FC = () => {
                 )}
 
                 {/* Delete Equipment Modal */}
-                {isDeleteModalOpen && equipmentToDelete && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                        <div className="bg-white rounded-2xl shadow-xl max-w-md w-full mx-4 animate-in fade-in zoom-in-95 duration-200">
-                            {/* Header */}
-                            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-                                        <AlertTriangle className="w-5 h-5 text-red-600" />
-                                    </div>
-                                    <h3 className="text-lg font-bold text-gray-800">Delete Equipment</h3>
-                                </div>
-                                <button
-                                    onClick={closeDeleteModal}
-                                    disabled={deleteEquipmentMutation.isPending}
-                                    className="text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <X className="w-5 h-5" />
-                                </button>
-                            </div>
-
-                            {/* Content */}
-                            <div className="p-6">
-                                <p className="text-gray-700 mb-4">
-                                    Are you sure you want to delete{' '}
-                                    <span className="font-semibold text-gray-900">
-                                        "{equipmentToDelete.name}"
-                                    </span>
-                                    ?
-                                </p>
-                                <p className="text-sm text-gray-500 mb-6">
-                                    This action cannot be undone. All associated data for this equipment will be permanently deleted.
-                                </p>
-
-                                {/* Actions */}
-                                <div className="flex gap-3 justify-end">
-                                    <button
-                                        onClick={closeDeleteModal}
-                                        disabled={deleteEquipmentMutation.isPending}
-                                        className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={confirmDelete}
-                                        disabled={deleteEquipmentMutation.isPending}
-                                        className="px-6 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                                    >
-                                        {deleteEquipmentMutation.isPending ? (
-                                            <>
-                                                <Loader2 className="w-4 h-4 animate-spin" />
-                                                Deleting...
-                                            </>
-                                        ) : (
-                                            'Delete Equipment'
-                                        )}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                <DeleteConfirmationModal
+                    isOpen={isDeleteModalOpen}
+                    onClose={closeDeleteModal}
+                    onConfirm={confirmDelete}
+                    title="Delete Equipment"
+                    itemName={equipmentToDelete?.name}
+                    message={
+                        <>
+                            Are you sure you want to delete <span className="font-bold text-gray-800">"{equipmentToDelete?.name}"</span>?
+                            <br />This action cannot be undone. All associated data for this equipment will be permanently deleted.
+                        </>
+                    }
+                    confirmText={deleteEquipmentMutation.isPending ? 'Deleting...' : 'Delete Equipment'}
+                />
             </div>
         </div>
     );

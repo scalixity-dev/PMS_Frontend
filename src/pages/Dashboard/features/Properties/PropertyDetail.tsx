@@ -18,6 +18,7 @@ import FinancialsTab from './components/FinancialsTab';
 import ServiceProvidersTab from './components/ServiceProvidersTab';
 import PhotoGalleryModal from './components/PhotoGalleryModal';
 import DeletePropertyModal from './components/DeletePropertyModal';
+import AssignTeamModal from './components/AssignTeamModal';
 import DetailTabs from '../../components/DetailTabs';
 import { useGetProperty } from '../../../../hooks/usePropertyQueries';
 import { useGetUnit } from '../../../../hooks/useUnitQueries';
@@ -363,6 +364,7 @@ const PropertyDetail: React.FC = () => {
     const [isGalleryOpen, setIsGalleryOpen] = useState(false);
     const [galleryStartIndex, setGalleryStartIndex] = useState(0);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isAssignTeamModalOpen, setIsAssignTeamModalOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [deleteError, setDeleteError] = useState<string | null>(null);
     const actionDropdownRef = useRef<HTMLDivElement>(null);
@@ -770,7 +772,10 @@ const PropertyDetail: React.FC = () => {
                         <h1 className="text-lg md:text-2xl font-bold text-gray-800 truncate">{property?.name || 'Property'}</h1>
                     </div>
                     <div className="flex gap-2 md:gap-3 w-full sm:w-auto">
-                        <button className="flex-1 sm:flex-none bg-[#3A6D6C] text-white px-4 md:px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5554] transition-colors">
+                        <button
+                            onClick={() => navigate('/dashboard/movein', { state: { preSelectedPropertyId: id } })}
+                            className="flex-1 sm:flex-none bg-[#3A6D6C] text-white px-4 md:px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5554] transition-colors"
+                        >
                             Move In
                         </button>
                         <div className="relative" ref={actionDropdownRef}>
@@ -915,7 +920,10 @@ const PropertyDetail: React.FC = () => {
                                 </div>
                                 <div className="bg-[#F0F0F6] border-2 border-[#7BD747] rounded-[2.5rem] p-4 pt-10 flex flex-col items-center justify-center h-auto w-full">
                                     <p className="text-[#5C6B7F] text-center font-medium mb-4">No assigned members</p>
-                                    <button className="py-2 px-6 rounded-full cursor-pointer bg-[#BEFB9B] text-[#2E6819] border border-2 border-[#2E6819] font-bold text-sm hover:opacity-80 transition-opacity">
+                                    <button
+                                        onClick={() => setIsAssignTeamModalOpen(true)}
+                                        className="py-2 px-6 rounded-full cursor-pointer bg-[#BEFB9B] text-[#2E6819] border border-2 border-[#2E6819] font-bold text-sm hover:opacity-80 transition-opacity"
+                                    >
                                         Assign
                                     </button>
                                 </div>
@@ -1301,6 +1309,21 @@ const PropertyDetail: React.FC = () => {
                     onConfirm={handleDelete}
                     propertyName={property?.name || 'Property'}
                     isLoading={isDeleting}
+                />
+
+                <AssignTeamModal
+                    isOpen={isAssignTeamModalOpen}
+                    onClose={() => setIsAssignTeamModalOpen(false)}
+                    onUpdate={(selectedIds) => {
+                        console.log('Selected IDs:', selectedIds);
+                        setIsAssignTeamModalOpen(false);
+                        // TODO: Implement actual update logic
+                    }}
+                    propertyDetails={{
+                        name: property?.name || 'Property',
+                        address: property?.address || 'Address not available',
+                        image: property?.image || null
+                    }}
                 />
 
                 {deleteError && (

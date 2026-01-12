@@ -11,6 +11,7 @@ interface SearchableDropdownProps {
     buttonClassName?: string;
     dropUp?: boolean;
     labelClassName?: string;
+    onToggle?: (isOpen: boolean) => void;
 }
 
 const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
@@ -22,7 +23,8 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
     className,
     buttonClassName,
     dropUp = false,
-    labelClassName
+    labelClassName,
+    onToggle
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -36,6 +38,7 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
                 setIsOpen(false);
+                onToggle?.(false);
             }
         };
 
@@ -43,14 +46,18 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, []);
+    }, [onToggle]);
 
     return (
         <div className={`flex flex-col gap-2 relative ${className || ''}`} ref={dropdownRef}>
             {label && <label className={`text-sm font-bold text-gray-700 ${labelClassName || ''}`}>{label}</label>}
             <div className="relative">
                 <button
-                    onClick={() => setIsOpen(!isOpen)}
+                    onClick={() => {
+                        const newState = !isOpen;
+                        setIsOpen(newState);
+                        onToggle?.(newState);
+                    }}
                     className={buttonClassName || "w-full flex items-center justify-between text-white bg-[#7BD747] px-4 py-3 rounded-xl font-medium shadow-sm hover:opacity-90 transition-opacity"}
                 >
                     <span className={buttonClassName ? "" : "text-white"}>{value || placeholder || 'Select'}</span>
@@ -67,7 +74,7 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
                                     placeholder={placeholder}
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-9 pr-4 py-2 bg-gray-50 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#3D7475]"
+                                    className="w-full pl-9 pr-4 py-2 bg-gray-50 rounded-lg text-base sm:text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#3D7475]"
                                     autoFocus
                                 />
                             </div>
@@ -83,13 +90,14 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
                                             onChange(option);
                                             setIsOpen(false);
                                             setSearchTerm('');
+                                            onToggle?.(false);
                                         }}
                                         className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-left transition-colors"
                                     >
                                         <div className="w-5 flex justify-center">
                                             {value === option && <Check size={16} className="text-[#3A6D6C]" />}
                                         </div>
-                                        <span className={`text-sm ${value === option ? 'text-[#3A6D6C] font-semibold' : 'text-gray-700'}`}>
+                                        <span className={`text-base sm:text-sm ${value === option ? 'text-[#3A6D6C] font-semibold' : 'text-gray-700'}`}>
                                             {option}
                                         </span>
                                     </button>

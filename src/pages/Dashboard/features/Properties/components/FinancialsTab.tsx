@@ -1,6 +1,10 @@
 import React from 'react';
 import { Edit2, Trash2 } from 'lucide-react';
 import SectionHeader from './SectionHeader';
+import AddInsuranceModal from './AddInsuranceModal';
+import AddLoanModal from './AddLoanModal';
+import AddPurchaseModal from './AddPurchaseModal';
+import { useState } from 'react';
 
 // --- Types ---
 
@@ -66,8 +70,12 @@ const FinancialCard: React.FC<FinancialCardProps> = ({ record, onEdit, onDelete 
 };
 
 const FinancialsTab: React.FC = () => {
+    const [isAddInsuranceModalOpen, setIsAddInsuranceModalOpen] = useState(false);
+    const [isAddLoanModalOpen, setIsAddLoanModalOpen] = useState(false);
+    const [isAddPurchaseModalOpen, setIsAddPurchaseModalOpen] = useState(false);
+
     // Mock Data
-    const insurances: FinancialRecord[] = [
+    const [insurances, setInsurances] = useState<FinancialRecord[]>([
         {
             id: 1,
             headerPills: [
@@ -86,9 +94,43 @@ const FinancialsTab: React.FC = () => {
                 { label: 'Email', value: 'afsaft@gmail.com' },
             ]
         }
-    ];
+    ]);
 
-    const loans: FinancialRecord[] = [
+    const handleAddInsurance = (data: {
+        companyName: string;
+        companyWebsite: string;
+        agentName: string;
+        agentEmail: string;
+        agentPhone: string;
+        policyNumber: string;
+        price: string;
+        effectiveDate: string;
+        expirationDate: string;
+        details: string;
+        emailNotification: boolean;
+    }) => {
+        const newRecord: FinancialRecord = {
+            id: Date.now(),
+            headerPills: [
+                { label: 'Effective date', value: data.effectiveDate || '-' },
+                { label: 'Expiration date', value: data.expirationDate || '-' },
+                { label: 'Price', value: data.price ? `₹${data.price}` : '-' },
+            ],
+            details: [
+                { label: 'Company name', value: data.companyName },
+                { label: 'Email notification due to expiration', value: data.emailNotification ? 'Yes' : 'No' },
+                { label: 'Phone number', value: data.agentPhone || '-' },
+                { label: 'Website', value: data.companyWebsite },
+                { label: 'Policy', value: data.policyNumber || '-' },
+                { label: 'Details', value: data.details || '-' },
+                { label: 'Agent', value: data.agentName || '-' },
+                { label: 'Email', value: data.agentEmail || '-' },
+            ]
+        };
+        setInsurances([...insurances, newRecord]);
+    };
+
+    const [loans, setLoans] = useState<FinancialRecord[]>([
         {
             id: 1,
             headerPills: [
@@ -107,9 +149,44 @@ const FinancialsTab: React.FC = () => {
                 { label: 'Contact person', value: 'sam' },
             ]
         }
-    ];
+    ]);
 
-    const purchases: FinancialRecord[] = [
+    const handleAddLoan = (data: {
+        title: string;
+        loanAmount: string;
+        annualInterestRate: string;
+        loanStartDate: string;
+        loanPeriod: string;
+        loanType: string;
+        paymentsDue: string;
+        currentLoanBalance: string;
+        bankName: string;
+        contactPerson: string;
+        email: string;
+        phone: string;
+    }) => {
+        const newRecord: FinancialRecord = {
+            id: Date.now(),
+            headerPills: [
+                { label: 'Loan start date', value: data.loanStartDate || '-' },
+                { label: 'Loan amount', value: data.loanAmount ? `₹${data.loanAmount}` : '-' },
+                { label: 'Current loan balance', value: data.currentLoanBalance ? `₹${data.currentLoanBalance}` : '-' },
+            ],
+            details: [
+                { label: 'Annual interest %', value: data.annualInterestRate },
+                { label: 'Email', value: data.email || '-' },
+                { label: 'Phone number', value: data.phone || '-' },
+                { label: 'Payments due', value: data.paymentsDue || '-' },
+                { label: 'Loan period in years', value: data.loanPeriod },
+                { label: 'Loan type', value: data.loanType || '-' },
+                { label: 'Bank name', value: data.bankName || '-' },
+                { label: 'Contact person', value: data.contactPerson || '-' },
+            ]
+        };
+        setLoans([...loans, newRecord]);
+    };
+
+    const [purchases, setPurchases] = useState<FinancialRecord[]>([
         {
             id: 1,
             headerPills: [
@@ -126,7 +203,33 @@ const FinancialsTab: React.FC = () => {
                 { label: 'Details', value: 'ccvcdvvv.' },
             ]
         }
-    ];
+    ]);
+
+    const handleAddPurchase = (data: {
+        purchasePrice: string;
+        startDate: string;
+        downPayment: string;
+        depreciableYears: string;
+        annualDepreciation: string;
+        landValue: string;
+        details: string;
+    }) => {
+        const newRecord: FinancialRecord = {
+            id: Date.now(),
+            headerPills: [
+                { label: 'Start date', value: data.startDate || '-' },
+                { label: 'Purchase price', value: data.purchasePrice ? `₹${data.purchasePrice}` : '-' },
+            ],
+            details: [
+                { label: 'Down payment', value: data.downPayment ? `₹${data.downPayment}` : '-' },
+                { label: 'Annual depreciation', value: data.annualDepreciation ? `₹${data.annualDepreciation}` : '-' },
+                { label: 'Depreciable years', value: data.depreciableYears || '-' },
+                { label: 'Land value', value: data.landValue ? `₹${data.landValue}` : '-' },
+                { label: 'Details', value: data.details || '-' },
+            ]
+        };
+        setPurchases([...purchases, newRecord]);
+    };
 
     return (
         <div className="space-y-8">
@@ -135,7 +238,8 @@ const FinancialsTab: React.FC = () => {
                 <SectionHeader
                     title="Insurances"
                     count={insurances.length}
-                    onAction={() => console.log('Add Insurance')}
+                    actionLabel="Add"
+                    onAction={() => setIsAddInsuranceModalOpen(true)}
                 />
                 <div>
                     {insurances.map(record => (
@@ -154,7 +258,8 @@ const FinancialsTab: React.FC = () => {
                 <SectionHeader
                     title="Loans"
                     count={loans.length}
-                    onAction={() => console.log('Add Loan')}
+                    actionLabel="Add"
+                    onAction={() => setIsAddLoanModalOpen(true)}
                 />
                 <div>
                     {loans.map(record => (
@@ -173,7 +278,8 @@ const FinancialsTab: React.FC = () => {
                 <SectionHeader
                     title="Purchase"
                     count={purchases.length}
-                    onAction={() => console.log('Add Purchase')}
+                    actionLabel="Add"
+                    onAction={() => setIsAddPurchaseModalOpen(true)}
                 />
                 <div>
                     {purchases.map(record => (
@@ -186,6 +292,22 @@ const FinancialsTab: React.FC = () => {
                     ))}
                 </div>
             </div>
+
+            <AddInsuranceModal
+                isOpen={isAddInsuranceModalOpen}
+                onClose={() => setIsAddInsuranceModalOpen(false)}
+                onAdd={handleAddInsurance}
+            />
+            <AddLoanModal
+                isOpen={isAddLoanModalOpen}
+                onClose={() => setIsAddLoanModalOpen(false)}
+                onAdd={handleAddLoan}
+            />
+            <AddPurchaseModal
+                isOpen={isAddPurchaseModalOpen}
+                onClose={() => setIsAddPurchaseModalOpen(false)}
+                onAdd={handleAddPurchase}
+            />
         </div>
     );
 };
