@@ -22,7 +22,7 @@ interface NavbarProps {
     setSidebarOpen: (open: boolean) => void;
 }
 
-export default function UserDashboardNavbar({ setSidebarOpen }: NavbarProps) {
+export default function UserDashboardNavbar({ sidebarOpen: _, setSidebarOpen }: NavbarProps) {
     const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);

@@ -84,9 +84,9 @@ export const Sidebar = () => {
 
 
             {/* Rental Profile Card */}
-            <div className="bg-[var(--dashboard-bg-light)] rounded-[1rem] p-4 flex justify-between items-center shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] border border-gray-50 hover:border-[var(--dashboard-accent)]/30 transition-colors group">
+            <div className="bg-[var(--dashboard-bg-light)] rounded-[1rem] p-4 flex justify-between items-center shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] border border-gray-50 transition-colors group">
                 <span className="text-[var(--dashboard-text-main)] font-medium text-lg">Rental Profile</span>
-                <Link to="/userdashboard/settings/public-renter-profile" className="text-[var(--dashboard-accent)] font-semibold hover:underline">View</Link>
+                <Link to="/userdashboard/settings/public-renter-profile" className="text-[var(--dashboard-accent)] text-md font-semibold ">View</Link>
             </div>
         </div>
     );

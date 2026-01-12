@@ -154,13 +154,19 @@ const UserDashboard = () => {
     }, [isAuthenticated, setDashboardStage, setActiveTab]);
 
     const handleDeleteApplication = async () => {
-        if (!deleteModalState.targetId) return;
+        const targetId = deleteModalState.targetId;
+        if (!targetId) return;
+
         try {
-            await applicationService.delete(String(deleteModalState.targetId));
-            setApplications(prev => prev.filter(app => app.id !== deleteModalState.targetId));
-            if (applications.length <= 1) {
-                setDashboardStage('no_lease');
-            }
+            await applicationService.delete(String(targetId));
+
+            setApplications(prev => {
+                const nextApps = prev.filter(app => app.id !== targetId);
+                if (nextApps.length === 0) {
+                    setDashboardStage('no_lease');
+                }
+                return nextApps;
+            });
         } catch (error) {
             setErrorToast("Error deleting application");
         } finally {

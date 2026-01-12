@@ -303,13 +303,13 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
                     </div>
 
                     <nav className="px-1 py-2 space-y-1">
-                        <SidebarLink label="Dashboard" to="/userdashboard" icon={<PiChartLineUpFill size={22} />} isCurrentPath={isCurrentPath} onClick={isMobile ? () => closeMobileDrawer?.() : undefined} />
-                        <SidebarLink label="Rent" to="/userdashboard/rent" icon={<PiCurrencyDollarFill size={22} />} isCurrentPath={isCurrentPath} onClick={isMobile ? () => closeMobileDrawer?.() : undefined} />
-                        <SidebarLink label="Requests" to="/userdashboard/requests" icon={<PiWrenchFill size={22} />} isCurrentPath={isCurrentPath} onClick={isMobile ? () => closeMobileDrawer?.() : undefined} />
-                        <SidebarLink label="Utility Providers" to="/userdashboard/utility-providers" icon={<PiPlugsConnectedFill size={22} />} isCurrentPath={isCurrentPath} onClick={isMobile ? () => closeMobileDrawer?.() : undefined} />
-                        <SidebarLink label="Properties" to="/userdashboard/properties" icon={<PiHouseLineFill size={22} />} isCurrentPath={isCurrentPath} onClick={isMobile ? () => closeMobileDrawer?.() : undefined} />
-                        <SidebarLink label="Applications" to="/userdashboard/applications" icon={<PiClipboardTextFill size={22} />} isCurrentPath={isCurrentPath} onClick={isMobile ? () => closeMobileDrawer?.() : undefined} />
-                        <SidebarLink label="File Manager" to="/userdashboard/file-manager" icon={<PiFolderSimpleFill size={22} />} isCurrentPath={isCurrentPath} onClick={isMobile ? () => closeMobileDrawer?.() : undefined} />
+                        <SidebarLink label="Dashboard" to="/userdashboard" icon={<PiChartLineUpFill size={22} />} isCurrentPath={isCurrentPath} onClick={isMobile ? () => onNavigate("/userdashboard") : undefined} />
+                        <SidebarLink label="Rent" to="/userdashboard/rent" icon={<PiCurrencyDollarFill size={22} />} isCurrentPath={isCurrentPath} onClick={isMobile ? () => onNavigate("/userdashboard/rent") : undefined} />
+                        <SidebarLink label="Requests" to="/userdashboard/requests" icon={<PiWrenchFill size={22} />} isCurrentPath={isCurrentPath} onClick={isMobile ? () => onNavigate("/userdashboard/requests") : undefined} />
+                        <SidebarLink label="Utility Providers" to="/userdashboard/utility-providers" icon={<PiPlugsConnectedFill size={22} />} isCurrentPath={isCurrentPath} onClick={isMobile ? () => onNavigate("/userdashboard/utility-providers") : undefined} />
+                        <SidebarLink label="Properties" to="/userdashboard/properties" icon={<PiHouseLineFill size={22} />} isCurrentPath={isCurrentPath} onClick={isMobile ? () => onNavigate("/userdashboard/properties") : undefined} />
+                        <SidebarLink label="Applications" to="/userdashboard/applications" icon={<PiClipboardTextFill size={22} />} isCurrentPath={isCurrentPath} onClick={isMobile ? () => onNavigate("/userdashboard/applications") : undefined} />
+                        <SidebarLink label="File Manager" to="/userdashboard/file-manager" icon={<PiFolderSimpleFill size={22} />} isCurrentPath={isCurrentPath} onClick={isMobile ? () => onNavigate("/userdashboard/file-manager") : undefined} />
                         <div className={`my-2 border-t border-gray-200 ${collapsed ? 'mx-2' : 'mx-3'}`} />
                         <SidebarLink linkRef={downloadButtonRef} label="Downloads" onClick={toggleDownloads} icon={<PiCloudArrowDownFill size={22} />} />
                     </nav>

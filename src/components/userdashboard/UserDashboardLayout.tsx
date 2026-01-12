@@ -15,7 +15,7 @@ export default function UserDashboardLayout({ children }: UserDashboardLayoutPro
     return (
         <div className="flex min-h-screen bg-gray-100 flex-col">
             <div className="fixed top-0 left-0 right-0 z-50 print:hidden">
-                <UserDashboardNavbar setSidebarOpen={setSidebarOpen} />
+                <UserDashboardNavbar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
             </div>
 
             {/* Mobile Backdrop */}
