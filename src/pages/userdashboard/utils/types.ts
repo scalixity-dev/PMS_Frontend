@@ -53,7 +53,10 @@ export interface Lease {
     }[];
 }
 
-export type TabType = "Outstanding" | "Leases" | "Service providers" | "Inspections";
+export type TabType = "Outstanding" | "Leases" | "Service providers" | "Applications";
+
+export type DashboardStage = 'no_lease' | 'application_submitted' | 'move_in';
+
 
 export interface PropertyFeature {
     icon: ReactNode; // React component from lucide-react

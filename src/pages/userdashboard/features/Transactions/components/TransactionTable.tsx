@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Transaction } from "../../../utils/types";
 import { TransactionRow } from "./TransactionRow";
+import { TransactionCard } from "./TransactionCard";
 import FilterDropdown from "@/components/ui/FilterDropdown";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -17,7 +18,6 @@ const TIME_FILTER_OPTIONS = [
     { label: "Last Month", value: "last_month" },
 ];
 
-// Helper function to parse date string "DD MMM, YYYY" format
 const parseDate = (dateStr: string): Date | null => {
     try {
         const cleanDateStr = dateStr.trim();
@@ -44,10 +44,9 @@ const parseDate = (dateStr: string): Date | null => {
     }
 };
 
-// Helper function to check if date matches filter
 const matchesTimeFilter = (dateStr: string, filter: string): boolean => {
     const transactionDate = parseDate(dateStr);
-    if (!transactionDate) return true; // If can't parse, show it
+    if (!transactionDate) return true;
 
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -59,9 +58,9 @@ const matchesTimeFilter = (dateStr: string, filter: string): boolean => {
         }
         case "this_week": {
             const weekStart = new Date(today);
-            weekStart.setDate(today.getDate() - today.getDay()); // Start of week (Sunday)
+            weekStart.setDate(today.getDate() - today.getDay());
             const weekEnd = new Date(weekStart);
-            weekEnd.setDate(weekStart.getDate() + 6); // End of week (Saturday)
+            weekEnd.setDate(weekStart.getDate() + 6);
             return transactionDate >= weekStart && transactionDate <= weekEnd;
         }
         case "this_month": {
@@ -88,10 +87,9 @@ export const TransactionTable = ({ transactions }: TransactionTableProps) => {
 
     const handleTimeFilterChange = (value: string | null) => {
         setSelectedTimeFilter(value);
-        setCurrentPage(1); // Reset to first page when filter changes
+        setCurrentPage(1);
     };
 
-    // Filter transactions based on selected time period
     const filteredTransactions = useMemo(() => {
         if (!selectedTimeFilter || selectedTimeFilter === "all_time") {
             return transactions;
@@ -102,7 +100,6 @@ export const TransactionTable = ({ transactions }: TransactionTableProps) => {
         );
     }, [transactions, selectedTimeFilter]);
 
-    // Calculate pagination
     const totalPages = Math.ceil(filteredTransactions.length / ROWS_PER_PAGE);
     const paginatedTransactions = useMemo(() => {
         const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
@@ -110,15 +107,13 @@ export const TransactionTable = ({ transactions }: TransactionTableProps) => {
         return filteredTransactions.slice(startIndex, endIndex);
     }, [filteredTransactions, currentPage]);
 
-    // Reset to page 1 if current page is out of bounds
     useEffect(() => {
         if (currentPage > totalPages && totalPages > 0) {
             setCurrentPage(1);
         }
     }, [totalPages, currentPage]);
 
-    // Get the display label for the current selection
-    const selectedLabel = selectedTimeFilter 
+    const selectedLabel = selectedTimeFilter
         ? TIME_FILTER_OPTIONS.find(opt => opt.value === selectedTimeFilter)?.label || "All Time"
         : "All Time";
 
@@ -129,18 +124,18 @@ export const TransactionTable = ({ transactions }: TransactionTableProps) => {
     };
 
     return (
-        <div className="bg-white rounded-[1rem] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] border border-gray-200 flex flex-col">
-            {/* Table Header */}
-            <div className="bg-[var(--dashboard-accent)] flex justify-between px-10 py-3 rounded-t-[1rem]">
-                <span className="text-white font-normal text-lg flex-[1.2]">Status</span>
-                <span className="text-white font-normal text-lg flex-1 text-center">Due Date</span>
-                <span className="text-white font-normal text-lg flex-1 text-center">Category</span>
-                <span className="text-white font-normal text-lg flex-[2] text-center">Contact</span>
-                <span className="text-white font-normal text-lg flex-[1.5] text-right">Total</span>
+        <div className="bg-white rounded-[1rem] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] border border-gray-200 flex flex-col overflow-hidden">
+            {/* Desktop Table Header */}
+            <div className="hidden lg:flex bg-[var(--dashboard-accent)] justify-between px-6 lg:px-10 py-3 rounded-t-[1rem]">
+                <span className="text-white font-normal text-base lg:text-lg flex-[1.2]">Status</span>
+                <span className="text-white font-normal text-base lg:text-lg flex-1 text-center">Due Date</span>
+                <span className="text-white font-normal text-base lg:text-lg flex-1 text-center">Category</span>
+                <span className="text-white font-normal text-base lg:text-lg flex-[2] text-center">Contact</span>
+                <span className="text-white font-normal text-base lg:text-lg flex-[1.5] text-right">Total</span>
             </div>
 
             {/* Filter Section */}
-            <div className="px-8 py-3 border-b border-gray-200 relative overflow-visible">
+            <div className="px-6 lg:px-8 py-3 border-b border-gray-200 relative overflow-visible">
                 <FilterDropdown
                     value={selectedTimeFilter}
                     options={TIME_FILTER_OPTIONS}
@@ -150,17 +145,35 @@ export const TransactionTable = ({ transactions }: TransactionTableProps) => {
                 />
             </div>
 
-            {/* Table Body */}
+            {/* Content Area */}
             <div className="flex flex-col">
                 {paginatedTransactions.length > 0 ? (
-                    paginatedTransactions.map((transaction, index) => (
-                        <TransactionRow
-                            key={transaction.id}
-                            transaction={transaction}
-                            isLast={index === paginatedTransactions.length - 1}
-                            onClick={() => navigate(`/userdashboard/transactions/${transaction.id}`)}
-                        />
-                    ))
+                    <>
+                        {/* Mobile Card View */}
+                        <div className="flex lg:hidden flex-col gap-0">
+                            {paginatedTransactions.map((transaction, index) => (
+                                <div key={`card-container-${transaction.id}`} className={index !== paginatedTransactions.length - 1 ? "border-b border-gray-100" : ""}>
+                                    <TransactionCard
+                                        transaction={transaction}
+                                        onClick={() => navigate(`/userdashboard/transactions/${transaction.id}`)}
+                                        isInsideContainer={true}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Desktop Row View */}
+                        <div className="hidden lg:flex flex-col">
+                            {paginatedTransactions.map((transaction, index) => (
+                                <TransactionRow
+                                    key={`row-${transaction.id}`}
+                                    transaction={transaction}
+                                    isLast={index === paginatedTransactions.length - 1}
+                                    onClick={() => navigate(`/userdashboard/transactions/${transaction.id}`)}
+                                />
+                            ))}
+                        </div>
+                    </>
                 ) : (
                     <div className="px-8 py-12 text-center text-gray-400 font-medium">
                         No transactions found for the selected time period.
@@ -170,15 +183,14 @@ export const TransactionTable = ({ transactions }: TransactionTableProps) => {
 
             {/* Pagination */}
             {filteredTransactions.length > ROWS_PER_PAGE && (
-                <div className="px-8 py-4 border-t border-gray-200 flex justify-center items-center gap-2">
+                <div className="px-4 lg:px-8 py-4 border-t border-gray-200 flex flex-wrap justify-center items-center gap-2">
                     <button
                         onClick={() => handlePageChange(currentPage - 1)}
                         disabled={currentPage === 1}
-                        className={`p-2 rounded-full transition-colors ${
-                            currentPage === 1
-                                ? 'text-gray-300 cursor-not-allowed'
-                                : 'text-gray-600 hover:bg-gray-200'
-                        }`}
+                        className={`p-2 rounded-full transition-colors ${currentPage === 1
+                            ? 'text-gray-300 cursor-not-allowed'
+                            : 'text-gray-600 hover:bg-gray-200'
+                            }`}
                     >
                         <ChevronLeft className="w-6 h-6" />
                     </button>
@@ -187,11 +199,10 @@ export const TransactionTable = ({ transactions }: TransactionTableProps) => {
                         <button
                             key={page}
                             onClick={() => handlePageChange(page)}
-                            className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-medium transition-all ${
-                                currentPage === page
-                                    ? 'bg-[#3A7D76] text-white shadow-lg'
-                                    : 'bg-transparent text-gray-600 border border-gray-300 hover:bg-gray-100'
-                            }`}
+                            className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-medium transition-all ${currentPage === page
+                                ? 'bg-[#3A7D76] text-white shadow-lg'
+                                : 'text-gray-600 border border-gray-300 hover:bg-gray-100'
+                                }`}
                         >
                             {page}
                         </button>
@@ -200,11 +211,10 @@ export const TransactionTable = ({ transactions }: TransactionTableProps) => {
                     <button
                         onClick={() => handlePageChange(currentPage + 1)}
                         disabled={currentPage === totalPages}
-                        className={`p-2 rounded-full transition-colors ${
-                            currentPage === totalPages
-                                ? 'text-gray-300 cursor-not-allowed'
-                                : 'text-gray-600 hover:bg-gray-200'
-                        }`}
+                        className={`p-2 rounded-full transition-colors ${currentPage === totalPages
+                            ? 'text-gray-300 cursor-not-allowed'
+                            : 'text-gray-600 hover:bg-gray-200'
+                            }`}
                     >
                         <ChevronRight className="w-6 h-6" />
                     </button>
