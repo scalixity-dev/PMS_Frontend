@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Upload, Video } from 'lucide-react';
 
 interface MediaUploadProps {
@@ -38,10 +38,16 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ onFileSelect, files, onRemove
         }
     }, [files]);
 
+    // Track previewUrls in a ref for unmount cleanup
+    const previewUrlsRef = useRef(previewUrls);
+    useEffect(() => {
+        previewUrlsRef.current = previewUrls;
+    }, [previewUrls]);
+
     // Cleanup on unmount
     useEffect(() => {
         return () => {
-            previewUrls.forEach(url => URL.revokeObjectURL(url));
+            previewUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
         };
     }, []);
 

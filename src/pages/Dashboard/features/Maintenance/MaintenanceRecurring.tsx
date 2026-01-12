@@ -53,7 +53,7 @@ const MaintenanceRecurring: React.FC = () => {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [requestToDelete, setRequestToDelete] = useState<string | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
-    const [isDeleting, setIsDeleting] = useState(false);
+
     const [recurringRequests, setRecurringRequests] = useState(MOCK_RECURRING_REQUESTS);
     const [filters, setFilters] = useState<{
         display: string[];
@@ -74,8 +74,6 @@ const MaintenanceRecurring: React.FC = () => {
 
     const confirmDelete = async () => {
         if (!requestToDelete) return;
-
-        setIsDeleting(true);
 
         // Optimistically remove from UI
         const previousRequests = recurringRequests;
@@ -105,7 +103,7 @@ const MaintenanceRecurring: React.FC = () => {
             // TODO: Show error toast/notification to user
             alert('Failed to delete recurring request. Please try again.');
         } finally {
-            setIsDeleting(false);
+
             setIsDeleteModalOpen(false);
             setRequestToDelete(null);
         }

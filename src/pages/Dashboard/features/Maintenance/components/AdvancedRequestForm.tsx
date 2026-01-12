@@ -43,12 +43,18 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
         }
     }, [initialData]);
 
-    // Cleanup object URLs on unmount
+    // Keep track of media files in a ref for unmount cleanup
+    const mediaFilesRef = useRef(mediaFiles);
+    useEffect(() => {
+        mediaFilesRef.current = mediaFiles;
+    }, [mediaFiles]);
+
+    // Cleanup object URLs ONLY on unmount
     useEffect(() => {
         return () => {
-            mediaFiles.forEach(media => URL.revokeObjectURL(media.previewUrl));
+            mediaFilesRef.current.forEach(media => URL.revokeObjectURL(media.previewUrl));
         };
-    }, [mediaFiles]);
+    }, []);
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
