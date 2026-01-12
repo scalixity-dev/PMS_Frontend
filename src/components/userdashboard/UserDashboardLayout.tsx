@@ -13,19 +13,15 @@ export default function UserDashboardLayout({ children }: UserDashboardLayoutPro
     const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
 
     return (
-        <div
-            className="flex min-h-screen bg-gray-100 flex-col"
-            style={{
-                '--sidebar-width': sidebarCollapsed ? '80px' : '220px',
-                '--sidebar-collapsed': sidebarCollapsed ? '1' : '0'
-            } as React.CSSProperties}
-        >
-            <div className="fixed top-0 left-0 right-0 z-50">
+        <div className="flex min-h-screen bg-gray-100 flex-col">
+            <div className="fixed top-0 left-0 right-0 z-50 print:hidden">
                 <UserDashboardNavbar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
             </div>
 
+
+
             <div className="flex flex-1 pt-16">
-                <div className={`fixed left-0 top-16 bottom-0 z-40 h-[calc(100vh-32px)] transition-all duration-300 ${sidebarCollapsed ? 'w-20' : 'w-55'}`}>
+                <div className={`fixed left-0 top-16 bottom-0 z-40 h-[calc(100vh-64px)] transition-transform duration-300 print:hidden ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 ${sidebarCollapsed ? 'w-20' : 'w-64'}`}>
                     <UserDashboardSidebar
                         open={sidebarOpen}
                         setOpen={setSidebarOpen}
@@ -34,8 +30,8 @@ export default function UserDashboardLayout({ children }: UserDashboardLayoutPro
                     />
                 </div>
 
-                <main className={`flex-1 ml-0 transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-55'} overflow-y-auto`}>
-                    {children || <Outlet />}
+                <main className={` flex-1 ml-0 transition-all duration-300 print:m-0 print:p-0 print:ml-0 print:overflow-visible ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'} overflow-y-auto`}>
+                    {children || <Outlet context={{ sidebarCollapsed }} />}
                 </main>
             </div>
         </div>
