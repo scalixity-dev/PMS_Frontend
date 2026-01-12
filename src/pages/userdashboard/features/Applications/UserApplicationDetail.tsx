@@ -14,7 +14,8 @@ import {
     HelpCircle,
     Paperclip,
     ExternalLink,
-    Info
+    Info,
+    FileText
 } from 'lucide-react';
 
 interface ApplicationData {
@@ -35,8 +36,31 @@ interface ApplicationData {
         householdIncome: number;
     };
     additionalOccupants: number;
+    occupantsData: Array<{
+        id: string;
+        name: string;
+        relationship: string;
+        dob: string;
+        email: string;
+        phone: string;
+    }>;
     pets: number;
+    petsData: Array<{
+        id: string;
+        name: string;
+        type: string;
+        breed: string;
+        weight: string;
+    }>;
     vehicles: number;
+    vehiclesData: Array<{
+        id: string;
+        make: string;
+        model: string;
+        year: string;
+        color: string;
+        licensePlate: string;
+    }>;
     residentialHistory: number;
     residentialHistoryData: Array<{
         id: number;
@@ -66,15 +90,29 @@ interface ApplicationData {
         workPhone: string;
     }>;
     contacts: number;
+    contactsData: Array<{
+        id: string;
+        name: string;
+        relationship: string;
+        phone: string;
+        email: string;
+        type: string;
+    }>;
     additionalQuestions: {
         smoke: string;
         military: string;
         crime: string;
         bankruptcy: string;
-        refusedRent: string;
+        refuseRent: string;
         evicted: string;
+        explanations: Record<string, string>;
     };
     attachments: number;
+    documentsData: Array<{
+        name: string;
+        size: number;
+        type: string;
+    }>;
     termsAccepted: {
         date: string;
     };
@@ -90,139 +128,201 @@ const ApplicationDetail: React.FC = () => {
         const foundApp = localApps.find((app: any) => String(app.id) === id);
 
         if (foundApp) {
+            const formData = foundApp.formData || {};
+
+            // Helpers
+            const formatDateStr = (d: string | undefined | null) => d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+
+            // Helper to format phone with country code
+            // Country code is stored as "isoCode|phonecode" (e.g., "US|+1")
+            const formatPhone = (phoneNumber: string | undefined, phoneCountryCode: string | undefined): string => {
+                if (!phoneNumber) return '—';
+                if (!phoneCountryCode) return phoneNumber;
+
+                let phonecode = phoneCountryCode;
+
+                // Parse the country code format: "isoCode|phonecode"
+                if (phoneCountryCode.includes('|')) {
+                    const parts = phoneCountryCode.split('|');
+                    if (parts.length > 1 && parts[1]) {
+                        phonecode = parts[1];
+                    }
+                }
+
+                // If the resulting code is just letters (e.g. "US"), it's likely an ISO code without dial code
+                // Return just the phone number in this case to avoid "+US"
+                if (/^[A-Za-z]+$/.test(phonecode)) {
+                    return phoneNumber;
+                }
+
+                // Ensure phonecode starts with '+'
+                const formattedCode = phonecode.startsWith('+') ? phonecode : `+${phonecode}`;
+
+                return `(${formattedCode}) ${phoneNumber}`;
+            };
+
+            // Map Occupants
+            const occupantsData = (formData.occupants || []).map((occ: any, idx: number) => ({
+                id: occ.id || `occ_${idx}`,
+                name: [occ.firstName, occ.lastName].filter(Boolean).join(' ') || 'Unknown Occupant',
+                relationship: occ.relationship,
+                dob: formatDateStr(occ.dob),
+                email: occ.email || '—',
+                phone: formatPhone(occ.phoneNumber, occ.phoneCountryCode)
+            }));
+
+            // Map Pets
+            const petsData = (formData.pets || []).map((pet: any, idx: number) => ({
+                id: pet.id || `pet_${idx}`,
+                name: pet.name,
+                type: pet.type,
+                breed: pet.breed,
+                weight: pet.weight
+            }));
+
+            // Map Vehicles
+            const vehiclesData = (formData.vehicles || []).map((veh: any, idx: number) => ({
+                id: veh.id || `veh_${idx}`,
+                make: veh.make,
+                model: veh.model,
+                year: veh.year,
+                color: veh.color,
+                licensePlate: veh.licensePlate
+            }));
+
+            // Map Residences
+            const residentialHistoryData = (formData.residences || []).map((res: any, idx: number) => ({
+                id: idx + 1,
+                address: res.address || [res.city, res.state].filter(Boolean).join(', ') || 'Unknown Address',
+                location: res.city || 'Unknown Location',
+                status: res.isCurrent ? 'Current' : 'Previous',
+                rentOrOwn: res.residencyType,
+                moveInDate: formatDateStr(res.moveInDate),
+                moveOutDate: formatDateStr(res.moveOutDate),
+                rent: parseFloat(res.rentAmount || '0') || 0,
+                landlord: {
+                    name: res.landlordName || '—',
+                    initials: (res.landlordName?.trim() || 'L').split(/\s+/).map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()
+                }
+            }));
+
+            // Map Incomes
+            const incomeHistoryData = (formData.incomes || []).map((inc: any, idx: number) => ({
+                id: idx + 1,
+                jobTitle: inc.position || 'Unknown Title',
+                company: inc.company || 'Unknown Company',
+                status: inc.currentEmployment ? 'Current' : 'Previous',
+                type: inc.incomeType,
+                startDate: formatDateStr(inc.startDate),
+                address: inc.address || '—',
+                incomePerMonth: parseFloat(inc.monthlyAmount || '0') || 0,
+                officeNumber: '—',
+                workPhone: inc.companyPhone || '—'
+            }));
+
+            // Map Contacts (Emergency)
+            const contactsData = (formData.emergencyContacts || []).map((contact: any, idx: number) => ({
+                id: contact.id || `cont_${idx}`,
+                name: contact.fullName,
+                relationship: contact.relationship,
+                phone: formatPhone(contact.phoneNumber, contact.phoneCountryCode),
+                email: contact.email || '—',
+                type: 'Emergency Contact'
+            }));
+
+            // Calculate total income for rent ratio
+            const totalIncome = incomeHistoryData.reduce((acc: number, curr: any) => acc + curr.incomePerMonth, 0);
+            const currentRent = residentialHistoryData.find((r: any) => r.status === 'Current')?.rent || 0;
+
             return {
                 id: String(foundApp.id),
                 applicationNumber: String(foundApp.id).slice(-7),
                 applicantName: foundApp.name,
-                phone: foundApp.phone,
-                email: 'user@example.com', // Placeholder or use store
+                phone: formatPhone(foundApp.phone || formData.phoneNumber, formData.phoneCountryCode),
+                email: formData.email || 'user@example.com',
                 status: foundApp.status,
-                propertyName: 'Grand Villa',
-                listingContact: 'Ashendra Sharma',
+                propertyName: foundApp.propertyName || 'Property Name',
+                listingContact: 'Property Manager', // This could be better if saved in app data
                 applicantInfo: {
-                    hasDetails: true,
-                    dateOfBirth: '12 Jan, 1995',
-                    preferredMoveIn: foundApp.appliedDate,
-                    shortBio: 'I am looking for a peaceful residence.',
-                    rentPerMonth: 45000,
-                    householdIncome: 500000,
+                    hasDetails: !!formData.firstName,
+                    dateOfBirth: formatDateStr(formData.dob),
+                    preferredMoveIn: formatDateStr(formData.moveInDate),
+                    shortBio: formData.shortBio || '—',
+                    rentPerMonth: currentRent,
+                    householdIncome: totalIncome,
                 },
-                additionalOccupants: 0,
-                pets: 0,
-                vehicles: 0,
-                residentialHistory: 1,
-                residentialHistoryData: [
-                    {
-                        id: 1,
-                        address: foundApp.address,
-                        location: 'Current Address',
-                        status: 'Current',
-                        rentOrOwn: 'Rent',
-                        moveInDate: '01 Jan, 2023',
-                        moveOutDate: '—',
-                        rent: 25000,
-                        landlord: {
-                            name: 'Inderjeet Singh',
-                            initials: 'IS',
-                        },
-                    },
-                ],
-                incomeHistory: 1,
-                incomeHistoryData: [
-                    {
-                        id: 1,
-                        jobTitle: 'Senior Developer',
-                        company: 'Tech Solutions',
-                        status: 'Current',
-                        type: 'Full-time',
-                        startDate: '01 June, 2021',
-                        address: 'Business Park, City',
-                        incomePerMonth: 150000,
-                        officeNumber: '—',
-                        workPhone: '—',
-                    },
-                ],
-                contacts: 1,
+                additionalOccupants: occupantsData.length,
+                occupantsData,
+                pets: petsData.length,
+                petsData,
+                vehicles: vehiclesData.length,
+                vehiclesData,
+                residentialHistory: residentialHistoryData.length,
+                residentialHistoryData,
+                incomeHistory: incomeHistoryData.length,
+                incomeHistoryData,
+                contacts: contactsData.length,
+                contactsData,
                 additionalQuestions: {
-                    smoke: 'No',
-                    military: 'No',
-                    crime: 'No',
-                    bankruptcy: 'No',
-                    refusedRent: 'No',
-                    evicted: 'No',
+                    smoke: formData.backgroundQuestions?.smoke ? 'Yes' : 'No',
+                    military: formData.backgroundQuestions?.military ? 'Yes' : 'No',
+                    crime: formData.backgroundQuestions?.crime ? 'Yes' : 'No',
+                    bankruptcy: formData.backgroundQuestions?.bankruptcy ? 'Yes' : 'No',
+                    refuseRent: formData.backgroundQuestions?.refuseRent ? 'Yes' : 'No',
+                    evicted: formData.backgroundQuestions?.evicted ? 'Yes' : 'No',
+                    explanations: formData.backgroundExplanations || {},
                 },
-                attachments: 1,
+                attachments: (formData.documents || []).length,
+                documentsData: formData.documents || [],
                 termsAccepted: {
-                    date: foundApp.appliedDate,
+                    date: formatDateStr(foundApp.appliedDate),
                 },
             };
         }
 
-        // Default mock data
+        // Return a mock fallback if no app found (preserved generic fallback but minimal)
         return {
-            id: id || '1771890',
-            applicationNumber: '1771890',
-            applicantName: 'Siddak Bagga',
-            phone: '+91 88395 86908',
-            email: 'siddak77777@gmail.com',
-            status: 'Approved',
-            propertyName: 'Grand Villa',
-            listingContact: 'Ashendra Sharma',
+            id: id || '00000',
+            applicationNumber: '00000',
+            applicantName: 'Unknown',
+            phone: '—',
+            email: '—',
+            status: 'Submitted',
+            propertyName: 'Unknown Property',
+            listingContact: '—',
             applicantInfo: {
-                hasDetails: true,
+                hasDetails: false,
                 dateOfBirth: '—',
                 preferredMoveIn: '—',
                 shortBio: '—',
-                rentPerMonth: 45000,
-                householdIncome: 500000,
+                rentPerMonth: 0,
+                householdIncome: 0,
             },
             additionalOccupants: 0,
+            occupantsData: [],
             pets: 0,
+            petsData: [],
             vehicles: 0,
-            residentialHistory: 1,
-            residentialHistoryData: [
-                {
-                    id: 1,
-                    address: 'Indore Bypass Rd, Indore Division, MP 452007, IN',
-                    location: 'Indore Bypass Rd',
-                    status: 'Current',
-                    rentOrOwn: 'Rent',
-                    moveInDate: '15 Dec, 2025',
-                    moveOutDate: '—',
-                    rent: 50000,
-                    landlord: {
-                        name: 'Siddak Bagga',
-                        initials: 'SB',
-                    },
-                },
-            ],
-            incomeHistory: 1,
-            incomeHistoryData: [
-                {
-                    id: 1,
-                    jobTitle: 'CEO',
-                    company: 'Maza aa Gaya',
-                    status: 'Current',
-                    type: 'Full-time',
-                    startDate: '—',
-                    address: 'Indore Bypass Rd, Indore Division, MP 452007, IN',
-                    incomePerMonth: 500000,
-                    officeNumber: '—',
-                    workPhone: '—',
-                },
-            ],
-            contacts: 1,
+            vehiclesData: [],
+            residentialHistory: 0,
+            residentialHistoryData: [],
+            incomeHistory: 0,
+            incomeHistoryData: [],
+            contacts: 0,
+            contactsData: [],
             additionalQuestions: {
-                smoke: 'Yes',
+                smoke: 'No',
                 military: 'No',
                 crime: 'No',
                 bankruptcy: 'No',
-                refusedRent: 'No',
+                refuseRent: 'No',
                 evicted: 'No',
+                explanations: {},
             },
             attachments: 0,
+            documentsData: [],
             termsAccepted: {
-                date: '15 Dec, 2025',
+                date: '—',
             },
         };
     });
@@ -322,6 +422,15 @@ const ApplicationDetail: React.FC = () => {
             recordCount: application.contacts,
             primaryAction: '+ Add reference',
             secondaryActions: ['+ Add emergency contact'],
+        },
+        {
+            id: 'attachments',
+            icon: Paperclip,
+            title: 'Attachments',
+            subtitle: `(${application.attachments} file${application.attachments !== 1 ? 's' : ''})`,
+            recordCount: application.attachments,
+            primaryAction: '+ Add file',
+            secondaryActions: [],
         },
     ];
 
@@ -728,12 +837,112 @@ const ApplicationDetail: React.FC = () => {
                                                         </div>
                                                     ))}
                                                 </div>
-                                            ) : section.recordCount > 0 ? (
-                                                <div className="text-gray-600 text-sm">
-                                                    {/* Content would be displayed here based on section type */}
-                                                    <p className="text-gray-500 italic">
-                                                        {section.recordCount} record(s) available
-                                                    </p>
+                                            ) : section.id === 'additionalOccupants' && section.recordCount > 0 ? (
+                                                <div className="space-y-4">
+                                                    {application.occupantsData.map((occupant) => (
+                                                        <div key={occupant.id} className="bg-[#FAFAFA] rounded-lg border border-gray-200 p-5 space-y-4">
+                                                            <div className="flex items-start justify-between gap-4 pb-3 border-b border-gray-200">
+                                                                <h4 className="text-base font-semibold text-gray-900">{occupant.name}</h4>
+                                                                <span className="text-gray-500 font-medium text-sm">{occupant.relationship}</span>
+                                                            </div>
+                                                            <div className="grid grid-cols-2 gap-4">
+                                                                <div>
+                                                                    <p className="text-gray-900 font-medium text-sm">Date of Birth</p>
+                                                                    <p className="text-gray-900 font-normal text-sm">{occupant.dob}</p>
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-gray-900 font-medium text-sm">Phone</p>
+                                                                    <p className="text-gray-900 font-normal text-sm">{occupant.phone}</p>
+                                                                </div>
+                                                                <div className="col-span-2">
+                                                                    <p className="text-gray-900 font-medium text-sm">Email</p>
+                                                                    <p className="text-gray-900 font-normal text-sm">{occupant.email}</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : section.id === 'pets' && section.recordCount > 0 ? (
+                                                <div className="space-y-4">
+                                                    {application.petsData.map((pet) => (
+                                                        <div key={pet.id} className="bg-[#FAFAFA] rounded-lg border border-gray-200 p-5 space-y-4">
+                                                            <div className="flex items-start justify-between gap-4 pb-3 border-b border-gray-200">
+                                                                <h4 className="text-base font-semibold text-gray-900">{pet.name}</h4>
+                                                                <span className="text-gray-500 font-medium text-sm">{pet.type}</span>
+                                                            </div>
+                                                            <div className="grid grid-cols-2 gap-4">
+                                                                <div>
+                                                                    <p className="text-gray-900 font-medium text-sm">Breed</p>
+                                                                    <p className="text-gray-900 font-normal text-sm">{pet.breed}</p>
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-gray-900 font-medium text-sm">Weight</p>
+                                                                    <p className="text-gray-900 font-normal text-sm">{pet.weight}</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : section.id === 'vehicles' && section.recordCount > 0 ? (
+                                                <div className="space-y-4">
+                                                    {application.vehiclesData.map((vehicle) => (
+                                                        <div key={vehicle.id} className="bg-[#FAFAFA] rounded-lg border border-gray-200 p-5 space-y-4">
+                                                            <div className="flex items-start justify-between gap-4 pb-3 border-b border-gray-200">
+                                                                <h4 className="text-base font-semibold text-gray-900">{vehicle.year} {vehicle.make} {vehicle.model}</h4>
+                                                            </div>
+                                                            <div className="grid grid-cols-2 gap-4">
+                                                                <div>
+                                                                    <p className="text-gray-900 font-medium text-sm">Color</p>
+                                                                    <p className="text-gray-900 font-normal text-sm">{vehicle.color}</p>
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-gray-900 font-medium text-sm">License Plate</p>
+                                                                    <p className="text-gray-900 font-normal text-sm">{vehicle.licensePlate}</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : section.id === 'contacts' && section.recordCount > 0 ? (
+                                                <div className="space-y-4">
+                                                    {application.contactsData.map((contact) => (
+                                                        <div key={contact.id} className="bg-[#FAFAFA] rounded-lg border border-gray-200 p-5 space-y-4">
+                                                            <div className="flex items-start justify-between gap-4 pb-3 border-b border-gray-200">
+                                                                <h4 className="text-base font-semibold text-gray-900">{contact.name}</h4>
+                                                                <span className="text-gray-500 font-medium text-sm">{contact.relationship}</span>
+                                                            </div>
+                                                            <div className="grid grid-cols-2 gap-4">
+                                                                <div>
+                                                                    <p className="text-gray-900 font-medium text-sm">Type</p>
+                                                                    <p className="text-gray-900 font-normal text-sm">{contact.type}</p>
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-gray-900 font-medium text-sm">Phone</p>
+                                                                    <p className="text-gray-900 font-normal text-sm">{contact.phone}</p>
+                                                                </div>
+                                                                <div className="col-span-2">
+                                                                    <p className="text-gray-900 font-medium text-sm">Email</p>
+                                                                    <p className="text-gray-900 font-normal text-sm">{contact.email}</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : section.id === 'attachments' && section.recordCount > 0 ? (
+                                                <div className="space-y-4">
+                                                    {application.documentsData.map((doc, idx) => (
+                                                        <div key={idx} className="bg-[#FAFAFA] rounded-lg border border-gray-200 p-5 flex items-center justify-between">
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="p-2 bg-white rounded-lg border border-gray-200">
+                                                                    <FileText size={20} className="text-[#7ED957]" />
+                                                                </div>
+                                                                <div>
+                                                                    <h4 className="text-sm font-semibold text-gray-900">{doc.name}</h4>
+                                                                    <p className="text-xs text-gray-500">{(doc.size / 1024).toFixed(1)} KB • {doc.type}</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             ) : (
                                                 <p className="text-gray-500 italic text-sm">No records found</p>
@@ -786,21 +995,49 @@ const ApplicationDetail: React.FC = () => {
                                         <p className="text-gray-900 font-normal text-base">Are any occupants members in the military?</p>
                                         <p className="text-gray-900 font-normal text-base">{application.additionalQuestions.military}</p>
                                     </div>
-                                    <div className="flex items-center justify-between py-4">
-                                        <p className="text-gray-900 font-normal text-base">Have you ever been charged or convicted of a crime?</p>
-                                        <p className="text-gray-900 font-normal text-base">{application.additionalQuestions.crime}</p>
+                                    <div className="space-y-2 py-4">
+                                        <div className="flex items-center justify-between">
+                                            <p className="text-gray-900 font-normal text-base">Have you ever been charged or convicted of a crime?</p>
+                                            <p className="text-gray-900 font-normal text-base">{application.additionalQuestions.crime}</p>
+                                        </div>
+                                        {application.additionalQuestions.crime === 'Yes' && application.additionalQuestions.explanations.crime && (
+                                            <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                                <p className="text-sm text-gray-600"><span className="font-medium text-gray-900">Explanation:</span> {application.additionalQuestions.explanations.crime}</p>
+                                            </div>
+                                        )}
                                     </div>
-                                    <div className="flex items-center justify-between py-4">
-                                        <p className="text-gray-900 font-normal text-base">Have you ever filed for bankruptcy?</p>
-                                        <p className="text-gray-900 font-normal text-base">{application.additionalQuestions.bankruptcy}</p>
+                                    <div className="space-y-2 py-4">
+                                        <div className="flex items-center justify-between">
+                                            <p className="text-gray-900 font-normal text-base">Have you ever filed for bankruptcy?</p>
+                                            <p className="text-gray-900 font-normal text-base">{application.additionalQuestions.bankruptcy}</p>
+                                        </div>
+                                        {application.additionalQuestions.bankruptcy === 'Yes' && application.additionalQuestions.explanations.bankruptcy && (
+                                            <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                                <p className="text-sm text-gray-600"><span className="font-medium text-gray-900">Explanation:</span> {application.additionalQuestions.explanations.bankruptcy}</p>
+                                            </div>
+                                        )}
                                     </div>
-                                    <div className="flex items-center justify-between py-4">
-                                        <p className="text-gray-900 font-normal text-base">Have you ever willfully refused to pay rent when it was due?</p>
-                                        <p className="text-gray-900 font-normal text-base">{application.additionalQuestions.refusedRent}</p>
+                                    <div className="space-y-2 py-4">
+                                        <div className="flex items-center justify-between">
+                                            <p className="text-gray-900 font-normal text-base">Have you ever willfully refused to pay rent when it was due?</p>
+                                            <p className="text-gray-900 font-normal text-base">{application.additionalQuestions.refuseRent}</p>
+                                        </div>
+                                        {application.additionalQuestions.refuseRent === 'Yes' && application.additionalQuestions.explanations.refuseRent && (
+                                            <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                                <p className="text-sm text-gray-600"><span className="font-medium text-gray-900">Explanation:</span> {application.additionalQuestions.explanations.refuseRent}</p>
+                                            </div>
+                                        )}
                                     </div>
-                                    <div className="flex items-center justify-between py-4">
-                                        <p className="text-gray-900 font-normal text-base">Have you ever been evicted or left a tenancy owing money?</p>
-                                        <p className="text-gray-900 font-normal text-base">{application.additionalQuestions.evicted}</p>
+                                    <div className="space-y-2 py-4">
+                                        <div className="flex items-center justify-between">
+                                            <p className="text-gray-900 font-normal text-base">Have you ever been evicted or left a tenancy owing money?</p>
+                                            <p className="text-gray-900 font-normal text-base">{application.additionalQuestions.evicted}</p>
+                                        </div>
+                                        {application.additionalQuestions.evicted === 'Yes' && application.additionalQuestions.explanations.evicted && (
+                                            <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                                <p className="text-sm text-gray-600"><span className="font-medium text-gray-900">Explanation:</span> {application.additionalQuestions.explanations.evicted}</p>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>

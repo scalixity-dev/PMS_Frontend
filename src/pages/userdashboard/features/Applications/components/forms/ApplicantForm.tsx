@@ -20,7 +20,7 @@ interface FormData {
 
 interface ApplicantFormProps {
     data: FormData;
-    onChange: (key: keyof FormData, value: any) => void;
+    onChange: (key: keyof FormData, value: FormData[keyof FormData]) => void;
     onSubmit: () => void;
     title: string;
     subTitle: string;
@@ -135,15 +135,27 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
         setImageToCrop(null);
     };
 
-    const validateField = (key: keyof FormData, value: any): string => {
+    const validateField = (key: keyof FormData, value: FormData[keyof FormData]): string => {
         if (['firstName', 'lastName', 'email', 'phoneNumber', 'shortBio'].includes(key)) {
             if (!value || (typeof value === 'string' && value.trim() === '')) {
                 return 'This field is required';
             }
         }
-        if (key === 'email' && value) {
+        if (key === 'email' && value && typeof value === 'string') {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(value)) return 'Please enter a valid email address';
+        }
+        if (key === 'phoneNumber') {
+            if (!data.phoneCountryCode) {
+                return 'Please select a country code first';
+            }
+            if (value && typeof value === 'string') {
+                const phoneRegex = /^[\d\s+()-]+$/;
+                if (!phoneRegex.test(value)) return 'Phone number can only contain digits and +, -, (, )';
+                const digitsOnly = value.replace(/[\s+()-]/g, '');
+                if (digitsOnly.length < 4) return 'Phone number must contain at least 4 digits';
+                if (digitsOnly.length > 15) return 'Phone number cannot exceed 15 digits';
+            }
         }
         if (key === 'dob' && !value) return 'Date of birth is required';
         if (key === 'moveInDate' && !value) return 'Preferred move in date is required';
@@ -155,7 +167,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
         setErrors(prev => ({ ...prev, [key]: validateField(key, data[key]) }));
     };
 
-    const handleFieldChange = (key: keyof FormData, value: any) => {
+    const handleFieldChange = (key: keyof FormData, value: FormData[keyof FormData]) => {
         onChange(key, value);
         if (touched[key]) {
             setErrors(prev => ({ ...prev, [key]: validateField(key, value) }));
@@ -256,8 +268,12 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                         <div className="flex gap-2">
                             <div className="relative w-28" ref={phoneCodeRef}>
                                 <button
+                                    type="button"
                                     onClick={() => setIsPhoneCodeOpen(!isPhoneCodeOpen)}
-                                    className="w-full h-full px-3 py-3 bg-white border border-[#E5E7EB] rounded-[10px] text-sm font-medium flex items-center justify-between"
+                                    className={`w-full h-full px-3 py-3 bg-white border rounded-[10px] text-sm font-medium flex items-center justify-between ${touched.phoneNumber && !data.phoneCountryCode
+                                            ? 'border-red-500 ring-1 ring-red-200'
+                                            : 'border-[#E5E7EB]'
+                                        }`}
                                 >
                                     <span className="truncate">{selectedPhoneCode ? selectedPhoneCode.phonecode : 'Code'}</span>
                                     <ChevronDown size={14} className="text-gray-400" />
@@ -281,7 +297,16 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                                             {filteredPhoneCodes.map(code => (
                                                 <button
                                                     key={code.value}
-                                                    onClick={() => { onChange('phoneCountryCode', code.value); setIsPhoneCodeOpen(false); }}
+                                                    onClick={() => {
+                                                        onChange('phoneCountryCode', code.value);
+                                                        setIsPhoneCodeOpen(false);
+                                                        if (touched.phoneNumber && data.phoneNumber) {
+                                                            // Defer validation to next tick to avoid race condition with parent state update
+                                                            setTimeout(() => {
+                                                                handleBlur('phoneNumber');
+                                                            }, 0);
+                                                        }
+                                                    }}
                                                     className="w-full px-4 py-2 text-left text-xs hover:bg-gray-50 flex items-center gap-2"
                                                 >
                                                     <span>{code.flag}</span>
@@ -296,12 +321,22 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                             <input
                                 type="tel"
                                 placeholder="Number"
-                                className={`${inputClass('phoneNumber')} flex-1`}
+                                className={`${inputClass('phoneNumber')} flex-1 ${!data.phoneCountryCode ? 'opacity-60 cursor-not-allowed' : ''}`}
                                 value={data.phoneNumber}
-                                onChange={(e) => handleFieldChange('phoneNumber', e.target.value)}
+                                onChange={(e) => {
+                                    if (!data.phoneCountryCode) return;
+                                    const value = e.target.value.replace(/[^\d\s+()-]/g, '');
+                                    handleFieldChange('phoneNumber', value);
+                                }}
                                 onBlur={() => handleBlur('phoneNumber')}
+                                disabled={!data.phoneCountryCode}
                             />
                         </div>
+                        {(touched.phoneNumber && errors.phoneNumber) || (!data.phoneCountryCode && touched.phoneNumber) ? (
+                            <span className="text-red-500 text-[11px] font-medium">
+                                {errors.phoneNumber || 'Please select a country code first'}
+                            </span>
+                        ) : null}
                     </div>
 
                     <div className="space-y-1.5">

@@ -6,6 +6,8 @@ import type { Property, FilterState } from "../../utils/types";
 import { API_ENDPOINTS } from "../../../../config/api.config";
 import { authService } from "../../../../services/auth.service";
 import { formatMoney } from "../../../../utils/currency.utils";
+import { formatAmenityLabel } from "../../../../utils/string.utils";
+
 
 // --- Internal Components ---
 
@@ -94,13 +96,14 @@ const Properties: React.FC = () => {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+  const [availableAmenities, setAvailableAmenities] = useState<string[]>([]);
+
   // Initialize usePreferences from localStorage, defaulting to true only if no stored value exists
   const [usePreferences, setUsePreferences] = useState<boolean>(() => {
     const stored = localStorage.getItem('propertyPreferencesEnabled');
     return stored !== null ? stored === 'true' : true; // Default to true only if no stored value
   });
-  
+
   const [prefsLoaded, setPrefsLoaded] = useState(false); // Track if preferences have been loaded
   const [currentPage, setCurrentPage] = useState(1); // Pagination state
   const [userPreferences, setUserPreferences] = useState<{
@@ -198,7 +201,7 @@ const Properties: React.FC = () => {
         let city: string | undefined;
 
         // Check if locationFilter has any actual values (even if locationModified is false)
-        const hasLocationFilterValues = filters.locationFilter && 
+        const hasLocationFilterValues = filters.locationFilter &&
           (filters.locationFilter.country || filters.locationFilter.state || filters.locationFilter.city);
 
         if (filters.locationModified && filters.locationFilter) {
@@ -261,10 +264,20 @@ const Properties: React.FC = () => {
           params.append('baths', userPreferences.criteria.baths);
         }
 
-        // Pets allowed filter: Use preferences if enabled
-        if (shouldUsePreferences && userPreferences?.criteria?.petsAllowed !== undefined) {
+        // Pets allowed filter: Use filters if set, otherwise use preferences if enabled
+        if (filters.petsAllowed !== 'All') {
+          params.append('petsAllowed', filters.petsAllowed === 'Yes' ? 'true' : 'false');
+        } else if (shouldUsePreferences && userPreferences?.criteria?.petsAllowed !== undefined) {
           params.append('petsAllowed', userPreferences.criteria.petsAllowed.toString());
         }
+
+        // Amenities filter
+        if (filters.selectedAmenities && filters.selectedAmenities.length > 0) {
+          // Map back to potential backend values (Upper Snake Case)
+          const backendAmenities = filters.selectedAmenities.map(a => a.toUpperCase().replace(/ /g, '_'));
+          params.append('amenities', backendAmenities.join(','));
+        }
+
 
         // Property type filter (from filters only, not preferences)
         const propertyType = mapPropertyType(filters.propertyType || '');
@@ -329,7 +342,15 @@ const Properties: React.FC = () => {
             tag: item.listing?.petsAllowed ? 'Pets Allowed' : null,
             image: item.coverPhotoUrl || (item.photos?.[0]?.photoUrl ?? null),
             images: item.photos?.map((p: any) => p.photoUrl) || [],
+            amenities: [
+              ...(item.amenities?.parking && item.amenities.parking !== 'NONE' ? [formatAmenityLabel(item.amenities.parking)] : []),
+              ...(item.amenities?.laundry && item.amenities.laundry !== 'NONE' ? [formatAmenityLabel(item.amenities.laundry)] : []),
+              ...(item.amenities?.airConditioning && item.amenities.airConditioning !== 'NONE' ? [formatAmenityLabel(item.amenities.airConditioning)] : []),
+              ...(item.amenities?.propertyAmenities || []).map((a: string) => formatAmenityLabel(a)),
+              ...(item.amenities?.propertyFeatures || []).map((f: string) => formatAmenityLabel(f)),
+            ],
           };
+
         });
 
         // Deduplicate properties by property ID (keep first occurrence)
@@ -345,6 +366,32 @@ const Properties: React.FC = () => {
         });
 
         setProperties(deduplicatedProperties);
+
+        // Extract unique amenities from all properties
+        const amenitiesSet = new Set<string>();
+        data.forEach((item: any) => {
+          // Add basic amenities if they exist and are not 'NONE'
+          if (item.amenities?.parking && item.amenities.parking !== 'NONE') {
+            amenitiesSet.add(formatAmenityLabel(item.amenities.parking));
+          }
+          if (item.amenities?.laundry && item.amenities.laundry !== 'NONE') {
+            amenitiesSet.add(formatAmenityLabel(item.amenities.laundry));
+          }
+          if (item.amenities?.airConditioning && item.amenities.airConditioning !== 'NONE') {
+            amenitiesSet.add(formatAmenityLabel(item.amenities.airConditioning));
+          }
+          // Add property amenities
+          if (item.amenities?.propertyAmenities && Array.isArray(item.amenities.propertyAmenities)) {
+            item.amenities.propertyAmenities.forEach((amenity: string) => amenitiesSet.add(formatAmenityLabel(amenity)));
+          }
+          // Add property features
+          if (item.amenities?.propertyFeatures && Array.isArray(item.amenities.propertyFeatures)) {
+            item.amenities.propertyFeatures.forEach((feature: string) => amenitiesSet.add(formatAmenityLabel(feature)));
+          }
+        });
+
+        setAvailableAmenities(Array.from(amenitiesSet).sort());
+
       } catch (err) {
         console.error('Error fetching properties:', err);
         setError(err instanceof Error ? err.message : 'Failed to load properties');
@@ -364,10 +411,12 @@ const Properties: React.FC = () => {
     filters.locationModified, // Add locationModified to dependency array
     filters.locationFilter,
     filters.petsAllowed,
+    filters.selectedAmenities,
     userPreferences,
     usePreferences,
     prefsLoaded,
   ]);
+
 
   // Client-side filtering - only for search since backend handles other filters
   const filteredProperties = useMemo(() => {
@@ -382,8 +431,19 @@ const Properties: React.FC = () => {
       }
 
       // All other filters (propertyType, price, bedrooms) are handled by the backend API
+
+      // Amenities filter (client-side)
+      if (filters.selectedAmenities && filters.selectedAmenities.length > 0) {
+        // Property must have ALL selected amenities
+        const hasAllAmenities = filters.selectedAmenities.every(amenity =>
+          property.amenities?.includes(amenity)
+        );
+        if (!hasAllAmenities) return false;
+      }
+
       return true;
     });
+
   }, [properties, filters]);
 
   // Calculate pagination
@@ -426,6 +486,7 @@ const Properties: React.FC = () => {
         onReset={resetPropertyFilters}
         userPreferences={usePreferences ? userPreferences : null}
         initialFilters={filters}
+        availableAmenities={availableAmenities}
       />
 
       {/* Scrollable Content Area */}

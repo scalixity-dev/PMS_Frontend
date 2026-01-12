@@ -25,6 +25,7 @@ interface PropertyFiltersProps {
     onReset: () => void;
     userPreferences?: UserPreferences | null;
     initialFilters: FilterState;
+    availableAmenities?: string[];
 }
 
 
@@ -34,7 +35,8 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
     onApply,
     onReset,
     userPreferences,
-    initialFilters
+    initialFilters,
+    availableAmenities = []
 }) => {
     // Initialize state with preferences or initial filters
     const getInitialMinPrice = () => {
@@ -243,7 +245,9 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
         "With in 1 year",
         "More than one year",
     ];
-    const allAmenities = [
+
+    // Use availableAmenities from props if provided, otherwise use hardcoded list
+    const hardcodedAmenities = [
         "Air Conditioning",
         "Heating",
         "Dishwasher",
@@ -261,6 +265,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
         "WiFi/Internet",
         "Cable TV"
     ];
+    const allAmenities = availableAmenities.length > 0 ? availableAmenities : hardcodedAmenities;
     const commonAmenities = allAmenities.slice(0, 6);
 
     return (
