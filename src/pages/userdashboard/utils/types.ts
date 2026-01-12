@@ -55,7 +55,7 @@ export interface Lease {
 
 export type TabType = "Outstanding" | "Leases" | "Service providers" | "Applications";
 
-export type DashboardStage = 'no_lease' | 'application_submitted' | 'move_in';
+export type DashboardStage = 'loading' | 'error' | 'no_lease' | 'application_submitted' | 'move_in';
 
 
 export interface PropertyFeature {

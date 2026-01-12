@@ -25,7 +25,7 @@ const Applications: React.FC = () => {
   const [deleteModalState, setDeleteModalState] = useState<{
     isOpen: boolean;
     type: 'invitation' | 'application';
-    targetId?: number | string;
+    targetId?: string;
   }>({ isOpen: false, type: 'invitation' });
 
   const [errorToast, setErrorToast] = useState<string | null>(null);
@@ -171,7 +171,7 @@ const Applications: React.FC = () => {
               : "Address not available";
 
             return {
-              id: app.id,
+              id: String(app.id),
               name: applicantName,
               phone: applicantPhone,
               status: normalizeStatus(app.status), // Normalized status
@@ -320,7 +320,7 @@ const Applications: React.FC = () => {
                 }
 
                 // Update UI immediately
-                setInvitations(prev => prev.filter(inv => inv.id !== invId));
+                setInvitations(prev => prev.filter(inv => String(inv.id) !== String(invId)));
               } else if (deleteModalState.type === 'application' && deleteModalState.targetId) {
                 const appId = deleteModalState.targetId;
 
@@ -336,7 +336,7 @@ const Applications: React.FC = () => {
 
                   if (deleteResponse.ok) {
                     // Remove from state only after successful API deletion
-                    setApplications(prev => prev.filter(app => app.id !== appId));
+                    setApplications(prev => prev.filter(app => String(app.id) !== String(appId)));
                   } else {
                     const errorData = await deleteResponse.json().catch(() => ({ message: 'Failed to delete application' }));
                     setErrorToast(errorData.message || 'Failed to delete application. Please try again.');
@@ -371,7 +371,7 @@ const Applications: React.FC = () => {
             <UserApplicationCard
               key={app.id}
               app={app}
-              onDelete={(id) => setDeleteModalState({ isOpen: true, type: 'application', targetId: id })}
+              onDelete={(id) => setDeleteModalState({ isOpen: true, type: 'application', targetId: String(id) })}
               onNavigate={() => navigate(
                 app.status === "Draft" ? "/userdashboard/new-application" : `/userdashboard/applications/${app.id}`,
                 {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
 import { useDashboardStore } from "../../store/dashboardStore";
@@ -29,10 +29,15 @@ const FinancialCard = ({ title, amount, currency, action }: { title: string; amo
 );
 
 export const Sidebar = () => {
-    const { finances, dashboardStage } = useDashboardStore();
+    const { finances, dashboardStage, roommates } = useDashboardStore();
     const { userInfo } = useAuthStore();
 
     const [imageError, setImageError] = useState(false);
+
+    // Reset image error state when profile picture changes
+    useEffect(() => {
+        setImageError(false);
+    }, [userInfo?.profileImage]);
 
     if (!userInfo) return null;
 
@@ -72,13 +77,29 @@ export const Sidebar = () => {
                     <FinancialCard title="Credits" amount={credits} currency="INR" />
 
                     {/* Roommates Card */}
-                    <div className="bg-white rounded-lg px-3 py-2 shadow-sm border border-gray-50">
-                        <p className="text-[#4B5563] text-sm font-semibold tracking-wide mb-3">Roommates</p>
-                        <div className="w-12 h-12 bg-[#E0F2FE] rounded-full flex items-center justify-center border-2 border-white shadow-md hover:scale-110 transition-transform cursor-pointer overflow-hidden">
-                            <span className="text-sm font-bold text-[#1565C0]">A</span>
+                    {roommates.length > 0 && (
+                        <div className="bg-white rounded-lg px-3 py-2 shadow-sm border border-gray-50">
+                            <p className="text-[#4B5563] text-sm font-semibold tracking-wide mb-3">Roommates</p>
+                            <div className="flex -space-x-2 overflow-hidden">
+                                {roommates.map((roommate) => {
+                                    const fullName = `${roommate.firstName} ${roommate.lastName}`;
+                                    return (
+                                        <div
+                                            key={roommate.id}
+                                            className="w-10 h-10 bg-[#E0F2FE] rounded-full flex items-center justify-center border-2 border-white shadow-md hover:scale-110 transition-transform cursor-pointer overflow-hidden group relative"
+                                            title={fullName}
+                                        >
+                                            <span className="text-xs font-bold text-[#1565C0] uppercase">
+                                                {getInitials(fullName)}
+                                            </span>
+                                            {/* Subtle hover effect */}
+                                            <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </div>
-
-                    </div>
+                    )}
                 </div>
             )}
 

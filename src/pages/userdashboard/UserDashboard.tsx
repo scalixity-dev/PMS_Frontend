@@ -23,12 +23,12 @@ import { UserApplicationCard } from "./features/Applications/components/UserAppl
 
 const UserDashboard = () => {
     const navigate = useNavigate();
-    const { activeTab, setActiveTab, setFinances, dashboardStage, setDashboardStage } = useDashboardStore();
-    const { setUserInfo } = useAuthStore();
+    const { activeTab, setActiveTab, setFinances, dashboardStage, setDashboardStage, setRoommates } = useDashboardStore();
+    const { userInfo, setUserInfo } = useAuthStore();
     const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [applications, setApplications] = useState<any[]>([]);
-    const [deleteModalState, setDeleteModalState] = useState<{ isOpen: boolean; targetId?: string | number }>({ isOpen: false });
+    const [deleteModalState, setDeleteModalState] = useState<{ isOpen: boolean; targetId?: string }>({ isOpen: false });
     const [errorToast, setErrorToast] = useState<string | null>(null);
 
 
@@ -67,7 +67,7 @@ const UserDashboard = () => {
                         dob: "1990-01-01", // Default placeholder for missing field
                     });
 
-                    setIsLoading(false);
+                    // Stage detection will handle setting isLoading(false) for successful auth (line 148)
                 } else {
                     console.warn('UserDashboard: Access denied - user is not a tenant or account not active');
                     setIsAuthenticated(false);
@@ -96,18 +96,25 @@ const UserDashboard = () => {
         const fetchData = async () => {
             try {
                 const [leases, apps] = await Promise.all([
-                    leasingService.getAll().catch(() => []),
-                    applicationService.getAll().catch(() => [])
+                    leasingService.getAll(),
+                    applicationService.getAll()
                 ]);
 
                 // Filter for truly active leases
-                const activeLeases = leases.filter((l: any) => l.status === 'Active' || l.status === 'ACTIVE');
-
-
+                const activeLeases = (leases || []).filter((l: any) => l.status === 'Active' || l.status === 'ACTIVE');
 
                 if (activeLeases.length > 0) {
                     setDashboardStage('move_in');
-                } else if (apps.length > 0) {
+
+                    // For now, populate roommates from mockLeases to align with the rest of the dashboard UI
+                    // In a real scenario, this would come from the API (primaryLease.tenants)
+                    const primaryMockLease = mockLeases.find(l => l.status === 'Active');
+                    if (primaryMockLease && primaryMockLease.tenants) {
+                        const currentEmail = userInfo?.email;
+                        const otherTenants = primaryMockLease.tenants.filter(t => t.email !== currentEmail);
+                        setRoommates(otherTenants);
+                    }
+                } else if ((apps || []).length > 0) {
                     setDashboardStage('application_submitted');
                     setActiveTab('Applications');
 
@@ -132,7 +139,7 @@ const UserDashboard = () => {
                             : "Address not available";
 
                         return {
-                            id: app.id,
+                            id: String(app.id),
                             name: applicantName,
                             status: normalizeStatus(app.status),
                             appliedDate: app.createdAt ? app.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
@@ -147,6 +154,10 @@ const UserDashboard = () => {
                 }
             } catch (error) {
                 console.error("Error fetching stage data:", error);
+                setDashboardStage('error');
+                setErrorToast("Failed to load dashboard data. Please try refreshing the page.");
+            } finally {
+                setIsLoading(false);
             }
         };
 
@@ -161,7 +172,7 @@ const UserDashboard = () => {
             await applicationService.delete(String(targetId));
 
             setApplications(prev => {
-                const nextApps = prev.filter(app => app.id !== targetId);
+                const nextApps = prev.filter(app => String(app.id) !== String(targetId));
                 if (nextApps.length === 0) {
                     setDashboardStage('no_lease');
                 }
@@ -294,13 +305,32 @@ const UserDashboard = () => {
                     )}
 
 
+                    {dashboardStage === 'error' && (
+                        <div className="flex flex-col items-center justify-center py-32 text-center px-4 bg-red-50/50 rounded-3xl border border-dashed border-red-200">
+                            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-6 text-red-500">
+                                <X size={40} />
+                            </div>
+                            <h2 className="text-3xl font-semibold text-gray-900 mb-4 tracking-tight">Something went wrong</h2>
+                            <p className="text-lg text-gray-600 max-w-md leading-relaxed">
+                                We encountered an error while loading your dashboard data. <br />
+                                <span className="text-sm font-medium text-gray-400 mt-2 block">Please try refreshing the page or contact support if the problem persists.</span>
+                            </p>
+                            <PrimaryActionButton
+                                text="Refresh Page"
+                                onClick={() => window.location.reload()}
+                                className="mt-8 bg-[var(--dashboard-accent)]"
+                            />
+                        </div>
+                    )}
+
+
                     {dashboardStage === 'application_submitted' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
                             {applications.map((app) => (
                                 <UserApplicationCard
                                     key={app.id}
                                     app={app}
-                                    onDelete={(id) => setDeleteModalState({ isOpen: true, targetId: id })}
+                                    onDelete={(id) => setDeleteModalState({ isOpen: true, targetId: String(id) })}
                                     onNavigate={() => navigate(app.status === "Draft" ? "/userdashboard/new-application" : `/userdashboard/applications/${app.id}`)}
                                 />
                             ))}

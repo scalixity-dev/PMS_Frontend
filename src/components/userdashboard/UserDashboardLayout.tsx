@@ -18,13 +18,7 @@ export default function UserDashboardLayout({ children }: UserDashboardLayoutPro
                 <UserDashboardNavbar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
             </div>
 
-            {/* Mobile Backdrop */}
-            {sidebarOpen && (
-                <div
-                    className="fixed inset-0 z-30 bg-black/50 lg:hidden backdrop-blur-sm transition-opacity"
-                    onClick={() => setSidebarOpen(false)}
-                />
-            )}
+
 
             <div className="flex flex-1 pt-16">
                 <div className={`fixed left-0 top-16 bottom-0 z-40 h-[calc(100vh-64px)] transition-transform duration-300 print:hidden ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 ${sidebarCollapsed ? 'w-20' : 'w-64'}`}>

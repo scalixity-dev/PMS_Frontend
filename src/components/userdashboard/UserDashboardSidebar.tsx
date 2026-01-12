@@ -172,17 +172,12 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
     const toggleDownloads = () => {
         if (!isDownloadPopupOpen && downloadButtonRef.current) {
             const rect = downloadButtonRef.current.getBoundingClientRect();
-            if (isMobile) {
-                setDownloadPopupPosition({
-                    top: rect.top - 200,
-                    left: 20
-                });
-            } else {
-                setDownloadPopupPosition({
-                    top: rect.top - 150,
-                    left: rect.right + 15
-                });
-            }
+            const offset = isMobile ? 220 : 150;
+            const top = Math.max(10, rect.top - offset);
+            setDownloadPopupPosition({
+                top: top,
+                left: isMobile ? 20 : rect.right + 15
+            });
             setIsCreateNewOpen(false);
         }
         setIsDownloadPopupOpen(!isDownloadPopupOpen);
@@ -209,8 +204,10 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
             }
             if (isDownloadPopupOpen && downloadButtonRef.current) {
                 const rect = downloadButtonRef.current.getBoundingClientRect();
+                const offset = isMobile ? 220 : 150;
+                const top = Math.max(10, rect.top - offset);
                 setDownloadPopupPosition({
-                    top: rect.top - 150,
+                    top: top,
                     left: isMobile ? 20 : rect.right + 15
                 });
             }
