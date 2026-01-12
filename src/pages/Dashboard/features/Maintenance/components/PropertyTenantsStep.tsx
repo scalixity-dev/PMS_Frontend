@@ -49,6 +49,16 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
     const [accessCode, setAccessCode] = useState(initialData?.accessCode || '');
     const [petsInResidence, setPetsInResidence] = useState(initialData?.petsInResidence || '');
     const [selectedPets, setSelectedPets] = useState<string[]>(initialData?.selectedPets || []);
+    const [validationError, setValidationError] = useState('');
+
+    const handleContinue = () => {
+        if (petsInResidence === 'yes' && selectedPets.length === 0) {
+            setValidationError('Please select at least one pet type');
+            return;
+        }
+        setValidationError('');
+        onNext();
+    };
 
     // Disable body scroll when modal is open
     useEffect(() => {
@@ -411,18 +421,13 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                 {/* Code & Pets Dropdowns */}
                 <div className="flex flex-col md:flex-row gap-6 mb-6">
                     <div className="w-full md:w-1/2">
-                        <CustomDropdown
-                            label="Code*"
+                        <label className="block text-sm font-bold text-gray-700 mb-2">Code*</label>
+                        <input
+                            type="text"
                             value={accessCode}
-                            onChange={setAccessCode}
-                            options={[
-                                { value: 'code1', label: '**********' },
-                                { value: 'code2', label: '**********' },
-                                { value: 'code3', label: '**********' }
-                            ]}
+                            onChange={(e) => setAccessCode(e.target.value)}
                             placeholder="**********"
-                            required
-                            buttonClassName="!bg-white !border-none !rounded-md !py-3"
+                            className="w-full bg-white rounded-md px-4 py-3 outline-none text-gray-700 font-medium placeholder-gray-400"
                         />
                     </div>
                     <div className="w-full md:w-1/2">
@@ -438,36 +443,43 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                             required
                             buttonClassName="!bg-white !border-none !rounded-md !py-3"
                         />
+
+                        {/* Pet Type Checkboxes */}
+                        {petsInResidence === 'yes' && (
+                            <div className="flex flex-col mt-4">
+                                <div className="flex items-center gap-8">
+                                    {['Cat', 'Dog', 'Others'].map((pet) => (
+                                        <label key={pet} className="flex items-center gap-2 cursor-pointer">
+                                            <div
+                                                onClick={() => {
+                                                    setSelectedPets(prev => {
+                                                        const newSelection = prev.includes(pet)
+                                                            ? prev.filter(p => p !== pet)
+                                                            : [...prev, pet];
+                                                        if (newSelection.length > 0) setValidationError('');
+                                                        return newSelection;
+                                                    });
+                                                }}
+                                                className={`w-5 h-5 rounded-sm flex items-center justify-center transition-colors ${selectedPets.includes(pet) ? 'bg-[#7BD747]' : 'bg-white border border-gray-300'
+                                                    }`}
+                                            >
+                                                {selectedPets.includes(pet) && (
+                                                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                )}
+                                            </div>
+                                            <span className="text-gray-700 font-medium">{pet}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                                {validationError && (
+                                    <p className="text-red-500 text-xs mt-2 font-medium">{validationError}</p>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
-
-                {/* Pet Type Checkboxes */}
-                {petsInResidence === 'yes' && (
-                    <div className="flex items-center gap-8">
-                        {['Cat', 'Dog', 'Others'].map((pet) => (
-                            <label key={pet} className="flex items-center gap-2 cursor-pointer">
-                                <div
-                                    onClick={() => {
-                                        setSelectedPets(prev =>
-                                            prev.includes(pet)
-                                                ? prev.filter(p => p !== pet)
-                                                : [...prev, pet]
-                                        );
-                                    }}
-                                    className={`w-5 h-5 rounded-sm flex items-center justify-center transition-colors ${selectedPets.includes(pet) ? 'bg-[#7BD747]' : 'bg-white border border-gray-300'
-                                        }`}
-                                >
-                                    {selectedPets.includes(pet) && (
-                                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                        </svg>
-                                    )}
-                                </div>
-                                <span className="text-gray-700 font-medium">{pet}</span>
-                            </label>
-                        ))}
-                    </div>
-                )}
             </div>
 
             {/* Footer Buttons */}
@@ -479,7 +491,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
                     Back
                 </button>
                 <button
-                    onClick={onNext}
+                    onClick={handleContinue}
                     className="flex-1 md:flex-none px-12 py-3 rounded-lg bg-[#3D7475] text-white font-bold hover:opacity-90 transition-opacity shadow-md"
                 >
                     Continue

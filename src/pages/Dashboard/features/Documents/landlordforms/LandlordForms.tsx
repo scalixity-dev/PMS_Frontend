@@ -7,68 +7,84 @@ import { handleDocumentPrint } from '../utils/printPreviewUtils';
 
 // Mock data for forms
 const MOCK_FORMS = [
+    // Notices (Informational)
     {
         id: 1,
         template: '24-Hour Notice to Enter',
-        type: 'Tenant Notice',
+        type: 'Notice',
         state: 'All State',
-        property: 'Property 1' // Added for filtering demonstration
+        property: 'Property 1'
     },
     {
         id: 2,
-        template: 'Basic Residential Lease Agreement',
-        type: 'Tenant Notice',
+        template: 'Inspection Checklist Addendum',
+        type: 'Notice',
         state: 'All State',
-        property: 'Property 2' // Added for filtering demonstration
+        property: 'Property 1'
     },
     {
         id: 3,
-        template: 'Inspection Checklist Addendum',
-        type: 'Tenant Notice',
+        template: 'Notice of Rent Increase',
+        type: 'Notice',
         state: 'All State',
-        property: 'Property 1' // Added for filtering demonstration
+        property: 'Property 3'
     },
     {
         id: 4,
-        template: 'Lead-Based Paint Disclosure',
-        type: 'Tenant Notice',
+        template: 'Security Deposit Receipt',
+        type: 'Notice',
         state: 'All State',
-        property: 'Property 3' // Added for filtering demonstration
+        property: 'Property 2'
     },
     {
         id: 5,
-        template: 'Lease Agreement',
-        type: 'Tenant Notice',
+        template: 'Welcome Letter',
+        type: 'Notice',
         state: 'All State',
-        property: 'Property 2' // Added for filtering demonstration
+        property: 'Property 1'
     },
+    // Agreements & Addendums (Contractual)
     {
         id: 6,
-        template: 'Lead-Based Paint Disclosure',
-        type: 'Tenant Notice',
+        template: 'Basic Residential Lease Agreement',
+        type: 'Agreement',
         state: 'All State',
-        property: 'Property 1' // Added for filtering demonstration
+        property: 'Property 2'
     },
     {
         id: 7,
-        template: 'Notice of Rent Increase',
-        type: 'Tenant Notice',
+        template: 'Lease Agreement',
+        type: 'Agreement',
         state: 'All State',
-        property: 'Property 3' // Added for filtering demonstration
+        property: 'Property 2'
     },
     {
         id: 8,
-        template: 'Pet Addendum to Rental Agreement',
-        type: 'Tenant Notice',
+        template: 'Lead-Based Paint Disclosure',
+        type: 'Agreement',
         state: 'All State',
-        property: 'Property 2' // Added for filtering demonstration
+        property: 'Property 3'
     },
     {
         id: 9,
-        template: 'Rules Addendum',
-        type: 'Tenant Notice',
+        template: 'Pet Addendum to Rental Agreement',
+        type: 'Agreement',
         state: 'All State',
-        property: 'Property 1' // Added for filtering demonstration
+        property: 'Property 2'
+    },
+    {
+        id: 10,
+        template: 'Rules Addendum',
+        type: 'Agreement',
+        state: 'All State',
+        property: 'Property 1'
+    },
+    {
+        id: 11,
+        template: 'Smoke-Free Addendum',
+        type: 'Agreement',
+        state: 'All State',
+        property: 'Property 3'
     }
 ];
 

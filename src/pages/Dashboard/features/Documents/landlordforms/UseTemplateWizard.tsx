@@ -251,6 +251,8 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
 interface LocationState {
     returnPath?: string;
     selectedProperty?: string;
+    selectedLease?: string;
+    selectedTenants?: string[];
 }
 
 // --- Main Component ---
@@ -266,9 +268,13 @@ const UseTemplateWizard: React.FC = () => {
     const templatesList = isAgreement ? MOCK_AGREEMENT_TEMPLATES : MOCK_NOTICE_TEMPLATES;
 
     const [currentStep, setCurrentStep] = useState<StepNumber>(1);
-    const [selectedLease, setSelectedLease] = useState(id ? `Lease ${id}` : '');
+    const [selectedLease, setSelectedLease] = useState(state?.selectedLease || (id ? `Lease ${id}` : ''));
 
-    const [selectedTenants, setSelectedTenants] = useState<string[]>(id ? ['John Doe'] : []); // Mock pre-selection for lease context
+    const [selectedTenants, setSelectedTenants] = useState<string[]>(
+        state?.selectedTenants
+            ? state.selectedTenants
+            : (id ? ['John Doe'] : [])
+    );
     const [templates, setTemplates] = useState(['Template 1', 'Template 2', 'Template 3']);
     const [activeTemplateIndex, setActiveTemplateIndex] = useState(0);
     const [templateContents, setTemplateContents] = useState<string[]>(() => {

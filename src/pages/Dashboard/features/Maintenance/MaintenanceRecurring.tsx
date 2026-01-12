@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { ChevronLeft, Plus, Check, Trash2 } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
-import ConfirmationModal from '../KeysLocks/ConfirmationModal';
+import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import MakeRecurringModal from './components/MakeRecurringModal';
 
 // Mock Data for recurring maintenance requests
@@ -53,7 +53,7 @@ const MaintenanceRecurring: React.FC = () => {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [requestToDelete, setRequestToDelete] = useState<string | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
-    const [isDeleting, setIsDeleting] = useState(false);
+
     const [recurringRequests, setRecurringRequests] = useState(MOCK_RECURRING_REQUESTS);
     const [filters, setFilters] = useState<{
         display: string[];
@@ -74,8 +74,6 @@ const MaintenanceRecurring: React.FC = () => {
 
     const confirmDelete = async () => {
         if (!requestToDelete) return;
-
-        setIsDeleting(true);
 
         // Optimistically remove from UI
         const previousRequests = recurringRequests;
@@ -105,7 +103,7 @@ const MaintenanceRecurring: React.FC = () => {
             // TODO: Show error toast/notification to user
             alert('Failed to delete recurring request. Please try again.');
         } finally {
-            setIsDeleting(false);
+
             setIsDeleteModalOpen(false);
             setRequestToDelete(null);
         }
@@ -354,15 +352,12 @@ const MaintenanceRecurring: React.FC = () => {
                 onSave={handleCreateRecurring}
             />
 
-            <ConfirmationModal
+            <DeleteConfirmationModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={confirmDelete}
                 title="Delete Recurring Request"
-                message="Are you sure you want to delete this recurring maintenance request? This action cannot be undone."
-                confirmLabel="Delete"
-                cancelLabel="Cancel"
-                isLoading={isDeleting}
+                itemName="this recurring maintenance request"
             />
         </div>
     );
