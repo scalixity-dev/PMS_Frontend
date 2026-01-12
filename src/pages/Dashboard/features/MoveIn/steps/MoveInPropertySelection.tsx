@@ -1,18 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Building, Loader2 } from 'lucide-react';
 import { useGetAllProperties } from '../../../../../hooks/usePropertyQueries';
+import { useMoveInStore } from '../store/moveInStore';
 
 interface MoveInPropertySelectionProps {
-    selectedPropertyId: string | null;
-    onSelect: (propertyId: string) => void;
     onNext: () => void;
 }
 
 const MoveInPropertySelection: React.FC<MoveInPropertySelectionProps> = ({
-    selectedPropertyId,
-    onSelect,
     onNext
 }) => {
+    const { formData, setPropertyId } = useMoveInStore();
+    const selectedPropertyId = formData.propertyId;
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -40,7 +39,7 @@ const MoveInPropertySelection: React.FC<MoveInPropertySelectionProps> = ({
     }, []);
 
     const handleSelect = (propertyId: string) => {
-        onSelect(propertyId);
+        setPropertyId(propertyId);
         setIsOpen(false);
     };
 

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import DeleteConfirmationModal from '../../../../../components/common/modals/DeleteConfirmationModal';
 
 interface ApplicationCardProps {
     id: string | number;
@@ -8,7 +9,12 @@ interface ApplicationCardProps {
     name: string;
     appliedDate: string;
     status: 'Approved' | 'Pending' | 'Rejected';
+    backendStatus: string;
+    propertyId?: string;
+    applicantEmail?: string;
     onView?: () => void;
+    onStatusChange?: (id: string | number, newStatus: 'APPROVED' | 'REVIEWING' | 'REJECTED') => Promise<void>;
+    onMoveIn?: (propertyId: string, applicantEmail?: string) => void;
 }
 
 // Helper to generate a consistent color from a string
@@ -36,10 +42,20 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
     name,
     appliedDate,
     status,
-    onView
+    backendStatus,
+    propertyId,
+    applicantEmail,
+    onView,
+    onStatusChange,
+    onMoveIn
 }) => {
     const navigate = useNavigate();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [confirmModal, setConfirmModal] = useState<{
+        type: 'approve' | 'review' | 'decline' | null;
+        isOpen: boolean;
+    }>({ type: null, isOpen: false });
+    const [isUpdating, setIsUpdating] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -58,9 +74,56 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
         };
     }, [isMenuOpen]);
 
+    const handleStatusChange = async (newStatus: 'APPROVED' | 'REVIEWING' | 'REJECTED') => {
+        if (!onStatusChange || isUpdating) return;
+        
+        setIsUpdating(true);
+        try {
+            await onStatusChange(id, newStatus);
+            setConfirmModal({ type: null, isOpen: false });
+        } catch (error) {
+            console.error('Failed to update application status:', error);
+            alert('Failed to update application status. Please try again.');
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
+    const handleMoveIn = () => {
+        if (propertyId && onMoveIn) {
+            onMoveIn(propertyId, applicantEmail);
+        } else if (propertyId) {
+            navigate('/dashboard/movein', { 
+                state: { 
+                    preSelectedPropertyId: propertyId,
+                    preSelectedTenantEmail: applicantEmail 
+                } 
+            });
+        }
+        setIsMenuOpen(false);
+    };
+
     const menuItems = [
-        { label: 'Edit', action: () => { } },
-        { label: 'Delete', action: () => { }, isDestructive: true },
+        ...(backendStatus !== 'APPROVED' ? [{ 
+            label: 'Approve', 
+            action: () => setConfirmModal({ type: 'approve', isOpen: true }),
+            color: 'text-green-600'
+        }] : []),
+        ...(backendStatus !== 'REVIEWING' ? [{ 
+            label: 'In Review', 
+            action: () => setConfirmModal({ type: 'review', isOpen: true }),
+            color: 'text-blue-600'
+        }] : []),
+        ...(backendStatus !== 'REJECTED' ? [{ 
+            label: 'Decline', 
+            action: () => setConfirmModal({ type: 'decline', isOpen: true }),
+            isDestructive: true
+        }] : []),
+        ...(backendStatus === 'APPROVED' && propertyId ? [{ 
+            label: 'Move in', 
+            action: handleMoveIn,
+            color: 'text-[#3A6D6C]'
+        }] : []),
     ];
 
     const getStatusColor = (status: string) => {
@@ -97,7 +160,7 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
                                 className={`w-full text-left px-4 py-2.5 text-sm transition-colors border-b border-gray-50 last:border-none
                                     ${item.isDestructive
                                         ? 'text-red-600 hover:bg-red-50'
-                                        : 'text-gray-700 hover:bg-gray-50'
+                                        : (item as any).color || 'text-gray-700 hover:bg-gray-50'
                                     }`}
                             >
                                 {item.label}
@@ -152,6 +215,64 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
                     View
                 </button>
             </div>
+
+            {/* Confirmation Modals */}
+            {confirmModal.type === 'approve' && (
+                <DeleteConfirmationModal
+                    isOpen={confirmModal.isOpen}
+                    onClose={() => !isUpdating && setConfirmModal({ type: null, isOpen: false })}
+                    onConfirm={() => handleStatusChange('APPROVED')}
+                    title="Approve Application"
+                    message={
+                        <>
+                            Are you sure you want to approve the application for <span className="font-bold text-gray-800">{name}</span>?
+                            <br />
+                            This action will mark the application as approved.
+                        </>
+                    }
+                    confirmText={isUpdating ? 'Approving...' : 'Approve'}
+                    confirmButtonClass={`bg-green-600 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-green-700 transition-colors shadow-sm ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    headerClassName="bg-green-600"
+                />
+            )}
+
+            {confirmModal.type === 'review' && (
+                <DeleteConfirmationModal
+                    isOpen={confirmModal.isOpen}
+                    onClose={() => !isUpdating && setConfirmModal({ type: null, isOpen: false })}
+                    onConfirm={() => handleStatusChange('REVIEWING')}
+                    title="Mark as In Review"
+                    message={
+                        <>
+                            Are you sure you want to mark the application for <span className="font-bold text-gray-800">{name}</span> as "In Review"?
+                            <br />
+                            This action will change the application status to under review.
+                        </>
+                    }
+                    confirmText={isUpdating ? 'Updating...' : 'Mark as In Review'}
+                    confirmButtonClass={`bg-blue-600 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-blue-700 transition-colors shadow-sm ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    headerClassName="bg-blue-600"
+                />
+            )}
+
+            {confirmModal.type === 'decline' && (
+                <DeleteConfirmationModal
+                    isOpen={confirmModal.isOpen}
+                    onClose={() => !isUpdating && setConfirmModal({ type: null, isOpen: false })}
+                    onConfirm={() => handleStatusChange('REJECTED')}
+                    title="Decline Application"
+                    message={
+                        <>
+                            Are you sure you want to decline the application for <span className="font-bold text-gray-800">{name}</span>?
+                            <br />
+                            This action cannot be undone.
+                        </>
+                    }
+                    confirmText={isUpdating ? 'Declining...' : 'Decline'}
+                    confirmButtonClass={`bg-red-600 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-red-700 transition-colors shadow-sm ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    headerClassName="bg-red-600"
+                />
+            )}
         </div>
     );
 };

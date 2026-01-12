@@ -55,10 +55,13 @@ const TenantApplicationsSection = ({ tenantId: _tenantId, tenantUserId }: Tenant
                 const statusMap: Record<string, string> = {
                     'APPROVED': 'Approved',
                     'SUBMITTED': 'Pending',
-                    'UNDER_REVIEW': 'Pending',
+                    'REVIEWING': 'Pending',
                     'DRAFT': 'Draft',
                     'REJECTED': 'Rejected',
-                    'WITHDRAWN': 'Withdrawn',
+                    'CANCELLED': 'Cancelled',
+                    // Backward compatibility for old values
+                    'UNDER_REVIEW': 'Pending',
+                    'WITHDRAWN': 'Cancelled',
                 };
                 const status = statusMap[app.status] || 'Pending';
 

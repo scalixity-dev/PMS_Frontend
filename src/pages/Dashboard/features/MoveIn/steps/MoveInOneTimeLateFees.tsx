@@ -1,18 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CustomDropdown from '../../../components/CustomDropdown';
 import TimePicker from '@/components/ui/TimePicker';
+import { useMoveInStore } from '../store/moveInStore';
 
 interface MoveInOneTimeLateFeesProps {
     onNext: () => void;
     onBack: () => void;
-    recurringRentAmount: string;
 }
 
-const MoveInOneTimeLateFees: React.FC<MoveInOneTimeLateFeesProps> = ({ onNext, recurringRentAmount }) => {
-    const [lateFeeType, setLateFeeType] = useState<string>('fixed');
-    const [amount, setAmount] = useState<string>('');
-    const [gracePeriod, setGracePeriod] = useState<string>('0');
-    const [time, setTime] = useState<string>('8:00 AM');
+const MoveInOneTimeLateFees: React.FC<MoveInOneTimeLateFeesProps> = ({ onNext }) => {
+    const { formData, setLateFees } = useMoveInStore();
+    const recurringRentAmount = formData.recurringRent.amount || '0';
+    
+    // Initialize from store or defaults
+    const existingOneTimeFee = formData.lateFees.oneTimeFee;
+    const [lateFeeType, setLateFeeType] = useState<string>(existingOneTimeFee?.type || 'fixed');
+    const [amount, setAmount] = useState<string>(existingOneTimeFee?.amount || '');
+    const [gracePeriod, setGracePeriod] = useState<string>(existingOneTimeFee?.gracePeriodDays || '0');
+    const [time, setTime] = useState<string>(existingOneTimeFee?.time || '8:00 AM');
+
+    // Update store when values change
+    useEffect(() => {
+        setLateFees({
+            oneTimeFee: {
+                type: lateFeeType,
+                amount,
+                gracePeriodDays: gracePeriod,
+                time,
+            },
+        });
+    }, [lateFeeType, amount, gracePeriod, time, setLateFees]);
 
     const typeOptions = [
         { value: 'fixed', label: 'Fixed amount' },

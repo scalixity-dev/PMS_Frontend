@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useMoveInStore } from '../store/moveInStore';
 
 interface MoveInRecurringRentProps {
     onNext: (enableRecurring: boolean) => void;
@@ -6,33 +7,14 @@ interface MoveInRecurringRentProps {
 }
 
 const MoveInRecurringRent: React.FC<MoveInRecurringRentProps> = ({ onNext }) => {
+    const { setRecurringRent } = useMoveInStore();
     const [selection, setSelection] = useState<'yes' | 'no' | null>(null);
 
     const handleSelect = (value: 'yes' | 'no') => {
         setSelection(value);
-        // Auto-advance or wait for next button? 
-        // Screenshot shows just the selection buttons in a container. 
-        // Usually these act as the "Next" action triggers themselves or set state.
-        // Given the design (big toggle-like buttons), let's make them selectable first, 
-        // but looking closely they look like action buttons.
-        // However, usually wizard steps have an explicit Next. 
-        // But the design shows them inside a pill-shaped container.
-        // Let's assume clicking them selects the value, and we might need a Next button or they trigger next immediately.
-        // Re-reading user request: "Do you want to add... Yes / No".
-        // I will implement them as a toggle.
-
-        // Actually, looking at the UI, it looks like a single choice question. 
-        // Clicking Yes or No likely proceeds. I'll add an explicit Next for safety or trigger on click.
-        // Let's assume trigger on click for "Easy" flow feels right, but consistent navigation usually needs "Next".
-        // Wait, the previous steps had a "Next" button. This screen doesn't show one in the screenshot?
-        // The previous screenshot for Share Lease had a Next button.
-        // This screenshot DOES NOT show a Next button below the pill. 
-        // It implies clicking Yes/No might be the action. 
-        // OR the Next button is cropped out. 
-        // I will implement selection state and auto-advance for now, or add a Next button if needed.
-        // Let's stick to the screenshot: The pill container holds the Yes/No buttons.
-
-        onNext(value === 'yes');
+        const enabled = value === 'yes';
+        setRecurringRent({ enabled });
+        onNext(enabled);
     };
 
     return (

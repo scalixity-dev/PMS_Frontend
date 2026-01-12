@@ -1,28 +1,55 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CustomDropdown from '../../../components/CustomDropdown';
 import TimePicker from '@/components/ui/TimePicker';
+import { useMoveInStore } from '../store/moveInStore';
 
 interface MoveInBothLateFeesProps {
     onNext: () => void;
     onBack: () => void;
-    recurringRentAmount: string;
 }
 
-const MoveInBothLateFees: React.FC<MoveInBothLateFeesProps> = ({ onNext, recurringRentAmount }) => {
+const MoveInBothLateFees: React.FC<MoveInBothLateFeesProps> = ({ onNext }) => {
+    const { formData, setLateFees } = useMoveInStore();
+    const recurringRentAmount = formData.recurringRent.amount || '0';
+    
+    // Initialize from store or defaults
+    const existingOneTimeFee = formData.lateFees.oneTimeFee;
+    const existingDailyFee = formData.lateFees.dailyFee;
+    
     // One Time Fee State
-    const [oneTimeType, setOneTimeType] = useState<string>('fixed');
-    const [oneTimeAmount, setOneTimeAmount] = useState<string>('');
-    const [oneTimeGracePeriod, setOneTimeGracePeriod] = useState<string>('0');
-    const [oneTimeTime, setOneTimeTime] = useState<string>('8:00 AM');
+    const [oneTimeType, setOneTimeType] = useState<string>(existingOneTimeFee?.type || 'fixed');
+    const [oneTimeAmount, setOneTimeAmount] = useState<string>(existingOneTimeFee?.amount || '');
+    const [oneTimeGracePeriod, setOneTimeGracePeriod] = useState<string>(existingOneTimeFee?.gracePeriodDays || '0');
+    const [oneTimeTime, setOneTimeTime] = useState<string>(existingOneTimeFee?.time || '8:00 AM');
 
     // Daily Fee State
-    // Daily Fee State
-    const [dailyType, setDailyType] = useState<string>('fixed');
-    const [dailyAmount, setDailyAmount] = useState<string>('');
-    const [maxMonthlyBalance, setMaxMonthlyBalance] = useState<string>('');
-    const [dailyTime, setDailyTime] = useState<string>('06:00 PM'); // Usually same as one-time, but let's keep separate for flexibility
+    const [dailyType, setDailyType] = useState<string>(existingDailyFee?.type || 'fixed');
+    const [dailyAmount, setDailyAmount] = useState<string>(existingDailyFee?.amount || '');
+    const [maxMonthlyBalance, setMaxMonthlyBalance] = useState<string>(existingDailyFee?.maxMonthlyBalance || '');
+    const [dailyTime, setDailyTime] = useState<string>(existingDailyFee?.time || '06:00 PM');
+    // Grace period for daily fee (stored but not shown in "both" mode UI - defaults to 'none')
+    const gracePeriod = existingDailyFee?.gracePeriod || 'none';
 
     const [errors, setErrors] = useState<Record<string, string>>({});
+
+    // Update store when values change
+    useEffect(() => {
+        setLateFees({
+            oneTimeFee: {
+                type: oneTimeType,
+                amount: oneTimeAmount,
+                gracePeriodDays: oneTimeGracePeriod,
+                time: oneTimeTime,
+            },
+            dailyFee: {
+                type: dailyType,
+                amount: dailyAmount,
+                maxMonthlyBalance,
+                gracePeriod,
+                time: dailyTime,
+            },
+        });
+    }, [oneTimeType, oneTimeAmount, oneTimeGracePeriod, oneTimeTime, dailyType, dailyAmount, maxMonthlyBalance, gracePeriod, dailyTime, setLateFees]);
 
     const validateForm = () => {
         const newErrors: Record<string, string> = {};

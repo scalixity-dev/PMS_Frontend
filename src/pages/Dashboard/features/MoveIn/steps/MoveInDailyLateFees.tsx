@@ -1,19 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CustomDropdown from '../../../components/CustomDropdown';
 import TimePicker from '@/components/ui/TimePicker';
+import { useMoveInStore } from '../store/moveInStore';
 
 interface MoveInDailyLateFeesProps {
     onNext: () => void;
     onBack: () => void;
-    recurringRentAmount: string;
 }
 
-const MoveInDailyLateFees: React.FC<MoveInDailyLateFeesProps> = ({ onNext, recurringRentAmount }) => {
-    const [lateFeeType, setLateFeeType] = useState<string>('fixed');
-    const [amount, setAmount] = useState<string>('');
-    const [maxMonthlyBalance, setMaxMonthlyBalance] = useState<string>('');
-    const [gracePeriod, setGracePeriod] = useState<string>('none');
-    const [time, setTime] = useState<string>('06:00 PM');
+const MoveInDailyLateFees: React.FC<MoveInDailyLateFeesProps> = ({ onNext }) => {
+    const { formData, setLateFees } = useMoveInStore();
+    const recurringRentAmount = formData.recurringRent.amount || '0';
+    
+    // Initialize from store or defaults
+    const existingDailyFee = formData.lateFees.dailyFee;
+    const [lateFeeType, setLateFeeType] = useState<string>(existingDailyFee?.type || 'fixed');
+    const [amount, setAmount] = useState<string>(existingDailyFee?.amount || '');
+    const [maxMonthlyBalance, setMaxMonthlyBalance] = useState<string>(existingDailyFee?.maxMonthlyBalance || '');
+    const [gracePeriod, setGracePeriod] = useState<string>(existingDailyFee?.gracePeriod || 'none');
+    const [time, setTime] = useState<string>(existingDailyFee?.time || '06:00 PM');
+
+    // Update store when values change
+    useEffect(() => {
+        setLateFees({
+            dailyFee: {
+                type: lateFeeType,
+                amount,
+                maxMonthlyBalance,
+                gracePeriod,
+                time,
+            },
+        });
+    }, [lateFeeType, amount, maxMonthlyBalance, gracePeriod, time, setLateFees]);
 
     const typeOptions = [
         { value: 'fixed', label: 'Fixed amount' },

@@ -542,11 +542,12 @@ const ApplicationDetail = () => {
             'DRAFT': 'Draft',
             'SUBMITTED': 'Submitted',
             'REVIEWING': 'In Review',
-            'UNDER_REVIEW': 'In Review',
             'APPROVED': 'Approved',
             'REJECTED': 'Rejected',
             'CANCELLED': 'Cancelled',
-            'WITHDRAWN': 'Withdrawn'
+            // Backward compatibility for old values
+            'UNDER_REVIEW': 'In Review',
+            'WITHDRAWN': 'Cancelled'
         };
         return statusMap[status] || status;
     };
