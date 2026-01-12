@@ -252,7 +252,7 @@ interface LocationState {
     returnPath?: string;
     selectedProperty?: string;
     selectedLease?: string;
-    selectedTenants?: string;
+    selectedTenants?: string[];
 }
 
 // --- Main Component ---
@@ -272,7 +272,7 @@ const UseTemplateWizard: React.FC = () => {
 
     const [selectedTenants, setSelectedTenants] = useState<string[]>(
         state?.selectedTenants
-            ? [state.selectedTenants]
+            ? state.selectedTenants
             : (id ? ['John Doe'] : [])
     );
     const [templates, setTemplates] = useState(['Template 1', 'Template 2', 'Template 3']);

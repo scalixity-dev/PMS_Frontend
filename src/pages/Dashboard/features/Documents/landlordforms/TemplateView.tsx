@@ -342,7 +342,7 @@ const TemplateView: React.FC = () => {
                                             state: {
                                                 selectedProperty,
                                                 selectedLease,
-                                                selectedTenants
+                                                selectedTenants: [selectedTenants]
                                             }
                                         });
                                     }}

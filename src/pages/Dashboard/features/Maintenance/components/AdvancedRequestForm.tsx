@@ -8,6 +8,12 @@ interface AdvancedRequestFormProps {
     initialData?: any;
 }
 
+interface MediaFile {
+    id: string;
+    file: File;
+    previewUrl: string;
+}
+
 const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDiscard, initialData }) => {
     const [formData, setFormData] = useState({
         category: initialData?.category || '',
@@ -18,7 +24,7 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
         details: initialData?.details || ''
     });
 
-    const [mediaFiles, setMediaFiles] = useState<File[]>([]);
+    const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
 
     // Track if user has edited the form to avoid clobbering their changes
     const formTouchedRef = useRef(false);
@@ -36,6 +42,36 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
             });
         }
     }, [initialData]);
+
+    // Cleanup object URLs on unmount
+    useEffect(() => {
+        return () => {
+            mediaFiles.forEach(media => URL.revokeObjectURL(media.previewUrl));
+        };
+    }, [mediaFiles]);
+
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            const newMediaFile: MediaFile = {
+                id: crypto.randomUUID(),
+                file,
+                previewUrl: URL.createObjectURL(file)
+            };
+            setMediaFiles(prev => [...prev, newMediaFile]);
+            e.target.value = '';
+        }
+    };
+
+    const handleRemoveFile = (id: string) => {
+        setMediaFiles(prev => {
+            const fileToRemove = prev.find(f => f.id === id);
+            if (fileToRemove) {
+                URL.revokeObjectURL(fileToRemove.previewUrl);
+            }
+            return prev.filter(f => f.id !== id);
+        });
+    };
 
     // Category to SubCategories mapping
     const categorySubCategories: Record<string, Array<{ value: string; label: string }>> = {
@@ -279,12 +315,7 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
                                 type="file"
                                 className="hidden"
                                 accept="image/*"
-                                onChange={(e) => {
-                                    if (e.target.files && e.target.files[0]) {
-                                        setMediaFiles([...mediaFiles, e.target.files[0]]);
-                                        e.target.value = '';
-                                    }
-                                }}
+                                onChange={handleFileSelect}
                             />
                         </label>
                     </div>
@@ -304,12 +335,7 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
                                 type="file"
                                 className="hidden"
                                 accept="video/*"
-                                onChange={(e) => {
-                                    if (e.target.files && e.target.files[0]) {
-                                        setMediaFiles([...mediaFiles, e.target.files[0]]);
-                                        e.target.value = '';
-                                    }
-                                }}
+                                onChange={handleFileSelect}
                             />
                         </label>
                     </div>
@@ -319,27 +345,23 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
             {/* File Previews */}
             {mediaFiles.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-                    {mediaFiles.map((file, index) => (
-                        <div key={index} className="relative aspect-square rounded-xl overflow-hidden bg-gray-100 border border-gray-200 group">
-                            {file.type.startsWith('video/') ? (
+                    {mediaFiles.map((media) => (
+                        <div key={media.id} className="relative aspect-square rounded-xl overflow-hidden bg-gray-100 border border-gray-200 group">
+                            {media.file.type.startsWith('video/') ? (
                                 <video
-                                    src={URL.createObjectURL(file)}
+                                    src={media.previewUrl}
                                     className="w-full h-full object-cover"
                                     controls
                                 />
                             ) : (
                                 <img
-                                    src={URL.createObjectURL(file)}
-                                    alt={`preview-${index}`}
+                                    src={media.previewUrl}
+                                    alt="preview"
                                     className="w-full h-full object-cover"
                                 />
                             )}
                             <button
-                                onClick={() => {
-                                    const newFiles = [...mediaFiles];
-                                    newFiles.splice(index, 1);
-                                    setMediaFiles(newFiles);
-                                }}
+                                onClick={() => handleRemoveFile(media.id)}
                                 className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
                             >
                                 <X size={16} />
@@ -358,7 +380,7 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
                     Discard
                 </button>
                 <button
-                    onClick={() => onNext({ ...formData, files: mediaFiles })}
+                    onClick={() => onNext({ ...formData, files: mediaFiles.map(m => m.file) })}
                     className="flex-1 md:flex-none px-8 py-3 rounded-lg bg-[#3D7475] text-white font-bold hover:opacity-90 transition-opacity shadow-md"
                 >
                     Continue

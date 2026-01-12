@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Upload, Video } from 'lucide-react';
 
 interface MediaUploadProps {
@@ -9,6 +9,42 @@ interface MediaUploadProps {
 }
 
 const MediaUpload: React.FC<MediaUploadProps> = ({ onFileSelect, files, onRemove, onNext }) => {
+    const [previewUrls, setPreviewUrls] = useState<Map<File, string>>(new Map());
+
+    // Manage object URLs
+    useEffect(() => {
+        const newPreviewUrls = new Map(previewUrls);
+        let changed = false;
+
+        // Create URLs for new files
+        files.forEach(file => {
+            if (!newPreviewUrls.has(file)) {
+                newPreviewUrls.set(file, URL.createObjectURL(file));
+                changed = true;
+            }
+        });
+
+        // Revoke URLs for removed files
+        for (const [file, url] of newPreviewUrls.entries()) {
+            if (!files.includes(file)) {
+                URL.revokeObjectURL(url);
+                newPreviewUrls.delete(file);
+                changed = true;
+            }
+        }
+
+        if (changed) {
+            setPreviewUrls(newPreviewUrls);
+        }
+    }, [files]);
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            previewUrls.forEach(url => URL.revokeObjectURL(url));
+        };
+    }, []);
+
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files[0]) {
             onFileSelect(event.target.files[0]);
@@ -73,13 +109,13 @@ const MediaUpload: React.FC<MediaUploadProps> = ({ onFileSelect, files, onRemove
                         <div key={index} className="relative aspect-square rounded-xl overflow-hidden bg-gray-100 border border-gray-200 group">
                             {file.type.startsWith('video/') ? (
                                 <video
-                                    src={URL.createObjectURL(file)}
+                                    src={previewUrls.get(file)}
                                     className="w-full h-full object-cover"
                                     controls
                                 />
                             ) : (
                                 <img
-                                    src={URL.createObjectURL(file)}
+                                    src={previewUrls.get(file)}
                                     alt={`preview-${index}`}
                                     className="w-full h-full object-cover"
                                 />
