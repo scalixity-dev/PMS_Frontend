@@ -3,11 +3,12 @@ import { createPortal } from 'react-dom';
 import { X, ChevronDown, Check, Plus, Trash2 } from 'lucide-react';
 import { useGetAllProperties } from '@/hooks/usePropertyQueries';
 import { authService } from '@/services/auth.service';
+import { applicationService } from '@/services/application.service';
 
 interface InviteToApplyModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSend: (emails: string[], propertyId: string) => Promise<void>;
+    onSend?: (emails: string[], propertyId: string) => Promise<void>; // Optional for backward compatibility
 }
 
 interface EmailInput {
@@ -164,12 +165,32 @@ const InviteToApplyModal: React.FC<InviteToApplyModalProps> = ({ isOpen, onClose
         // All validation passed, send invitation
         setIsSending(true);
         try {
-            await onSend(validEmails, selectedPropertyId);
-            // Reset form only after successful send
-            setEmails([{ id: '1', value: '', error: '', checking: false, exists: null }]);
-            setSelectedPropertyId('');
-            setGeneralError('');
-            onClose();
+            // Call the backend API to save and send invitations
+            // This will save the invitation data to the database so only invited users see the invitations
+            const result = await applicationService.inviteToApply(validEmails, selectedPropertyId);
+            
+            // Show success message with details
+            if (result.nonExistingEmails.length > 0) {
+                setGeneralError(`Warning: Some emails (${result.nonExistingEmails.join(', ')}) are not registered as tenants. Invitations were only sent to registered tenants.`);
+                // Don't close modal if there were non-existing emails, so user can see the warning
+            } else {
+                // Success - reset form and close modal
+                setEmails([{ id: '1', value: '', error: '', checking: false, exists: null }]);
+                setSelectedPropertyId('');
+                setGeneralError('');
+                onClose();
+            }
+            
+            // If parent component provided onSend callback, call it for backward compatibility
+            // This allows parent components to handle additional logic (like showing toasts, refreshing data, etc.)
+            if (onSend) {
+                try {
+                    await onSend(validEmails, selectedPropertyId);
+                } catch (callbackError) {
+                    // Don't fail the whole operation if callback fails
+                    console.warn('onSend callback failed:', callbackError);
+                }
+            }
         } catch (error) {
             // Error handling - show error message to user
             const errorMessage = error instanceof Error ? error.message : 'Failed to send invitation. Please try again.';

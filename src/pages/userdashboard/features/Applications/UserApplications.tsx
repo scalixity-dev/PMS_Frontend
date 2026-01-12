@@ -178,17 +178,18 @@ const Applications: React.FC = () => {
     }
   }, [location, navigate]);
 
-  // Fetch properties for invitations
+  // Fetch invitations for the current user
   useEffect(() => {
     const controller = new AbortController();
 
     const fetchInvitations = async () => {
       try {
-        const response = await fetch(API_ENDPOINTS.PROPERTY.GET_PUBLIC_LISTINGS, {
+        const response = await fetch(API_ENDPOINTS.APPLICATION.GET_INVITATIONS, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
           },
+          credentials: 'include',
           signal: controller.signal,
         });
 
@@ -198,40 +199,49 @@ const Applications: React.FC = () => {
 
           // Filter out hidden properties, then limit to 4
           const mappedInvitations: InvitationItem[] = data
-            .filter((item: any) => !hiddenProps.includes(item.id))
+            .filter((invitation: any) => !hiddenProps.includes(invitation.property?.id))
             .slice(0, 4)
-            .map((item: any) => {
-              const address = item.address;
+            .map((invitation: any) => {
+              const property = invitation.property;
+              const address = property?.address;
               const addressString = address
                 ? `${address.streetAddress || ''}, ${address.city || ''}, ${address.stateRegion || ''}, ${address.zipCode || ''}, ${address.country || ''}`.replace(/^, |, $/g, '').replace(/, ,/g, ',')
                 : '';
 
-              const beds = item.singleUnitDetail?.beds ?? null;
-              const propertyName = item.listing?.title ||
-                (beds !== null ? `${beds} Bedroom ${item.propertyType === 'SINGLE' ? 'Property' : 'Unit'}` : item.propertyName);
+              const beds = property?.leasing?.singleUnitDetail?.beds ?? property?.leasing?.unit?.beds ?? null;
+              // Get listing title from property listings (first active listing)
+              const listingTitle = property?.listings && property.listings.length > 0 
+                ? property.listings[0]?.title 
+                : null;
+              const propertyName = listingTitle ||
+                (beds !== null ? `${beds} Bedroom ${property?.propertyType === 'SINGLE' ? 'Property' : 'Unit'}` : property?.propertyName);
 
-              // Use logic from property detail to get landlord/agent name
-              const inviterName = item.listingAgent?.fullName || item.listingContactName || item.manager?.fullName || "Property Manager";
+              // Use inviter name from invitation
+              const inviterName = invitation.invitedBy?.fullName || property?.manager?.fullName || "Property Manager";
               const initials = (inviterName?.trim() || 'P').split(/\s+/).map((n: string) => n[0]).join('').substring(0, 2).toUpperCase();
 
               return {
-                id: `inv_${item.id}`,
+                id: `inv_${invitation.id}`,
                 inviterName: inviterName,
                 propertyName: propertyName,
                 propertyAddress: addressString,
-                propertyId: item.id,
+                propertyId: property?.id,
                 initials: initials
               };
             });
 
           setInvitations(mappedInvitations);
+        } else if (response.status === 401) {
+          // User not authenticated - no invitations
+          setInvitations([]);
         }
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {
           // Request was aborted, this is expected on unmount
           return;
         }
-        console.error("Failed to fetch invitation properties:", error);
+        console.error("Failed to fetch invitations:", error);
+        setInvitations([]);
       }
     };
 
@@ -428,7 +438,7 @@ const Applications: React.FC = () => {
 
                 // Find property ID from the invitation to hide it persistently
                 const invitation = invitations.find(inv => inv.id === invId);
-                if (invitation) {
+                if (invitation && invitation.propertyId) {
                   const hiddenProps = JSON.parse(localStorage.getItem('hidden_invitation_properties') || '[]');
                   if (!hiddenProps.includes(invitation.propertyId)) {
                     hiddenProps.push(invitation.propertyId);
