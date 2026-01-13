@@ -93,7 +93,7 @@ const LeaseDetails = () => {
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-4">
+                <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
                     <PrimaryActionButton
                         text="Pay Online"
                         className="bg-[var(--dashboard-secondary)] hover:opacity-90 rounded-lg font-bold"
@@ -126,7 +126,7 @@ const LeaseDetails = () => {
                             <button
                                 key={tab.key}
                                 onClick={() => setActiveTab(tab.key)}
-                                className={`px-4 py-2 font-semibold text-[15px] transition-all relative ${activeTab === tab.key ? "text-white bg-[#7ED957] rounded-t-lg -mb-[1px]" : "text-gray-400 hover:text-gray-600"}`}
+                                className={`px-4 py-2 font-medium text-[15px] transition-all relative ${activeTab === tab.key ? "text-white bg-[#7ED957] rounded-t-lg -mb-[1px]" : "text-gray-400 hover:text-gray-600"}`}
                             >
                                 {tab.label}
                                 {activeTab === tab.key && (

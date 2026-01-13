@@ -7,7 +7,7 @@ interface LeaseListProps {
 
 export const LeaseList = ({ leases }: LeaseListProps) => {
     return (
-        <div className="flex flex-col gap-6">
+        <div className="grid grid-cols-1 lg:flex lg:flex-col gap-6">
             {leases.map((lease) => (
                 <LeaseCard key={lease.id} lease={lease} />
             ))}

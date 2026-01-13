@@ -124,7 +124,7 @@ export const TransactionTable = ({ transactions }: TransactionTableProps) => {
     };
 
     return (
-        <div className="bg-white rounded-[1rem] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] border border-gray-200 flex flex-col overflow-hidden">
+        <div className="flex flex-col lg:bg-white lg:rounded-[1rem] lg:shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] lg:border lg:border-gray-200 lg:overflow-hidden">
             {/* Desktop Table Header */}
             <div className="hidden lg:flex bg-[var(--dashboard-accent)] justify-between px-6 lg:px-10 py-3 rounded-t-[1rem]">
                 <span className="text-white font-normal text-base lg:text-lg flex-[1.2]">Status</span>
@@ -135,7 +135,7 @@ export const TransactionTable = ({ transactions }: TransactionTableProps) => {
             </div>
 
             {/* Filter Section */}
-            <div className="px-6 lg:px-8 py-3 border-b border-gray-200 relative overflow-visible">
+            <div className="mb-4 lg:px-8 lg:py-3 lg:mb-0 lg:border-b lg:border-gray-200 relative overflow-visible">
                 <FilterDropdown
                     value={selectedTimeFilter}
                     options={TIME_FILTER_OPTIONS}
@@ -150,15 +150,13 @@ export const TransactionTable = ({ transactions }: TransactionTableProps) => {
                 {paginatedTransactions.length > 0 ? (
                     <>
                         {/* Mobile Card View */}
-                        <div className="flex lg:hidden flex-col gap-0">
-                            {paginatedTransactions.map((transaction, index) => (
-                                <div key={`card-container-${transaction.id}`} className={index !== paginatedTransactions.length - 1 ? "border-b border-gray-100" : ""}>
-                                    <TransactionCard
-                                        transaction={transaction}
-                                        onClick={() => navigate(`/userdashboard/transactions/${transaction.id}`)}
-                                        isInsideContainer={true}
-                                    />
-                                </div>
+                        <div className="flex lg:hidden flex-col gap-4">
+                            {paginatedTransactions.map((transaction) => (
+                                <TransactionCard
+                                    key={transaction.id}
+                                    transaction={transaction}
+                                    onClick={() => navigate(`/userdashboard/transactions/${transaction.id}`)}
+                                />
                             ))}
                         </div>
 
@@ -183,7 +181,7 @@ export const TransactionTable = ({ transactions }: TransactionTableProps) => {
 
             {/* Pagination */}
             {filteredTransactions.length > ROWS_PER_PAGE && (
-                <div className="px-4 lg:px-8 py-4 border-t border-gray-200 flex flex-wrap justify-center items-center gap-2">
+                <div className="py-4 lg:px-8 lg:border-t lg:border-gray-200 flex flex-wrap justify-center items-center gap-2">
                     <button
                         onClick={() => handlePageChange(currentPage - 1)}
                         disabled={currentPage === 1}
