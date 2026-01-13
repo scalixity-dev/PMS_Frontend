@@ -24,13 +24,16 @@ const transformApplicationToCard = (app: BackendApplication) => {
     });
 
     // Map status
-    const statusMap: Record<string, 'Approved' | 'Pending' | 'Rejected'> = {
+    const statusMap: Record<string, 'Approved' | 'Pending' | 'Rejected' | 'In Review' | 'Draft' | 'Submitted' | 'Cancelled'> = {
         'APPROVED': 'Approved',
-        'SUBMITTED': 'Pending',
-        'REVIEWING': 'Pending',
-        'DRAFT': 'Pending',
+        'SUBMITTED': 'Submitted',
+        'REVIEWING': 'In Review',
+        'DRAFT': 'Draft',
         'REJECTED': 'Rejected',
-        'CANCELLED': 'Pending',
+        'CANCELLED': 'Cancelled',
+        // Backward compatibility for old values
+        'UNDER_REVIEW': 'In Review',
+        'WITHDRAWN': 'Cancelled',
     };
     const status = statusMap[app.status] || 'Pending';
 

@@ -8,7 +8,7 @@ interface ApplicationCardProps {
     image: string;
     name: string;
     appliedDate: string;
-    status: 'Approved' | 'Pending' | 'Rejected';
+    status: 'Approved' | 'Pending' | 'Rejected' | 'In Review' | 'Draft' | 'Submitted' | 'Cancelled';
     backendStatus: string;
     propertyId?: string;
     applicantEmail?: string;
@@ -132,6 +132,8 @@ const ApplicationCard: React.FC<ApplicationCardProps> = ({
                 return 'bg-[#7BD747] text-white';
             case 'rejected':
                 return 'bg-red-500 text-white';
+            case 'in review':
+                return 'bg-blue-500 text-white';
             default:
                 return 'bg-yellow-500 text-white';
         }
