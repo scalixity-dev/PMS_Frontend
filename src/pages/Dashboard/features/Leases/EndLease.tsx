@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { MoreHorizontal, Plus } from 'lucide-react';
-import { MOCK_LEASE_DETAIL } from './LeaseDetail';
+import { MoreHorizontal, Plus, Loader2 } from 'lucide-react';
+import { useGetLease, useUpdateLease } from '../../../../hooks/useLeaseQueries';
 import DatePicker from '../../../../components/ui/DatePicker';
 import CustomTextBox from '../../components/CustomTextBox';
 
@@ -17,46 +17,120 @@ interface UnpaidInvoice {
     paid: string;
 }
 
-interface DepositItems {
-    category: string;
-    payer: string;
-    availableAmount: string;
-}
-
-// --- Mock Data ---
-// --- Mock Data ---
-
-// Using MOCK_LEASE_DETAIL from LeaseDetail.tsx
-const leaseData = {
-    property: typeof MOCK_LEASE_DETAIL.property === 'object' ? MOCK_LEASE_DETAIL.property.name : MOCK_LEASE_DETAIL.property,
-    type: 'Fixed', // Default value as it's not in the shared mock
-    invoicing: 'Separated', // Default value
-    startDate: typeof MOCK_LEASE_DETAIL.property === 'object' ? MOCK_LEASE_DETAIL.property.startDate : 'N/A',
-    endDate: typeof MOCK_LEASE_DETAIL.property === 'object' ? MOCK_LEASE_DETAIL.property.endDate : 'N/A'
+// Helper function to format dates
+const formatDate = (dateString: string | null | undefined): string => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 };
 
-const MOCK_UNPAID_INVOICES: UnpaidInvoice[] = [
-    { id: '1', dueDate: '29 Dec, 2025', category: 'Late payment fee', payer: 'Atul rawat', total: '₹120.00', paid: '₹0.00' },
-    { id: '2', dueDate: '24 Dec, 2025', category: 'Rent', payer: 'Atul rawat', total: '₹12,000.00', paid: '₹0.00' }
-];
-
-const MOCK_DEPOSIT: DepositItems = {
-    category: 'Deposit',
-    payer: 'Atul rawat',
-    availableAmount: '₹4.00'
+// Helper function to format currency
+const formatCurrency = (amount: string | number | null | undefined): string => {
+    if (!amount) return '₹0.00';
+    const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+    if (isNaN(numAmount)) return '₹0.00';
+    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(numAmount);
 };
 
 // --- Component ---
 const EndLease: React.FC = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
-    const [endDate, setEndDate] = useState<Date | undefined>(new Date('2026-01-08')); // Default to specific date
+    const [endDate, setEndDate] = useState<Date | undefined>(new Date());
 
-    const handleEndLease = () => {
-        // Implementation for ending lease would go here
-        console.log('Ending lease:', id, 'on date:', endDate);
-        navigate('/dashboard/portfolio/leases');
+    // Fetch lease data
+    const { data: backendLease, isLoading, error } = useGetLease(id);
+    const updateLeaseMutation = useUpdateLease();
+
+    // Transform lease data for display
+    const leaseData = useMemo(() => {
+        if (!backendLease) return null;
+
+        return {
+            property: backendLease.property?.propertyName || 'Unknown Property',
+            type: backendLease.recurringRent?.isMonthToMonth ? 'Month-to-Month' : 'Fixed',
+            invoicing: 'Separated', // Default value - can be enhanced with actual data
+            startDate: formatDate(backendLease.startDate),
+            endDate: formatDate(backendLease.endDate || undefined),
+            tenantName: backendLease.tenant?.fullName || 'Unknown Tenant',
+            leaseNumber: `Lease ${backendLease.id.slice(-4)}`,
+        };
+    }, [backendLease]);
+
+    // Transform deposits for display
+    const depositData = useMemo(() => {
+        if (!backendLease?.deposits || backendLease.deposits.length === 0) {
+            return null;
+        }
+
+        const deposit = backendLease.deposits[0]; // Use first deposit
+        return {
+            category: deposit.category || 'Deposit',
+            payer: backendLease.tenant?.fullName || 'Unknown Tenant',
+            availableAmount: formatCurrency(deposit.amount),
+        };
+    }, [backendLease]);
+
+    // TODO: Fetch unpaid invoices from accounting/invoice service
+    // For now, using empty array - this should be replaced with actual invoice data
+    const unpaidInvoices: UnpaidInvoice[] = [];
+
+    // Calculate total unpaid
+    const totalUnpaid = useMemo(() => {
+        return unpaidInvoices.reduce((sum, invoice) => {
+            const total = parseFloat(invoice.total.replace(/[₹,]/g, '')) || 0;
+            return sum + total;
+        }, 0);
+    }, [unpaidInvoices]);
+
+    const handleEndLease = async () => {
+        if (!id || !endDate) return;
+
+        try {
+            await updateLeaseMutation.mutateAsync({
+                id,
+                data: {
+                    status: 'TERMINATED' as const,
+                    endDate: endDate.toISOString(),
+                },
+            });
+            navigate('/dashboard/portfolio/leases');
+        } catch (error) {
+            console.error('Failed to end lease:', error);
+            alert(error instanceof Error ? error.message : 'Failed to end lease. Please try again.');
+        }
     };
+
+    // Loading state
+    if (isLoading) {
+        return (
+            <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-10 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="w-8 h-8 animate-spin text-[#3A6D6C]" />
+                    <p className="text-gray-600">Loading lease details...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Error state
+    if (error || !leaseData) {
+        return (
+            <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-10">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                    <p className="text-red-800 text-sm">
+                        {error instanceof Error ? error.message : 'Failed to load lease details. Please try again.'}
+                    </p>
+                    <button
+                        onClick={() => navigate('/dashboard/portfolio/leases')}
+                        className="mt-4 text-red-600 hover:text-red-800 underline text-sm"
+                    >
+                        Back to Leases
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-10">
@@ -120,7 +194,7 @@ const EndLease: React.FC = () => {
                         <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider">UNPAID INVOICES</h2>
                         <div className="flex items-center gap-2 border border-red-200 bg-red-50 px-3 py-1.5 rounded-md text-red-600 text-xs font-bold">
                             <span>Total unpaid</span>
-                            <span className="text-red-600">₹12,120.00</span>
+                            <span className="text-red-600">{formatCurrency(totalUnpaid)}</span>
                         </div>
                     </div>
 
@@ -140,7 +214,8 @@ const EndLease: React.FC = () => {
 
                         {/* Body */}
                         <div className="flex flex-col gap-3 md:bg-[#F0F0F6] md:p-4 md:rounded-[2rem] md:rounded-t-none">
-                            {MOCK_UNPAID_INVOICES.map((invoice) => (
+                            {unpaidInvoices.length > 0 ? (
+                                unpaidInvoices.map((invoice) => (
                                 <div key={invoice.id} className="bg-white rounded-2xl px-4 md:px-6 py-4 grid grid-cols-1 md:grid-cols-[1fr_1.5fr_1fr_1fr_1fr_50px] gap-2 md:gap-4 items-center shadow-sm hover:shadow-md transition-shadow">
                                     <div className="text-gray-600 text-sm">{invoice.dueDate}</div>
                                     <div className="text-gray-800 font-medium text-sm">
@@ -165,7 +240,12 @@ const EndLease: React.FC = () => {
                                         </button>
                                     </div>
                                 </div>
-                            ))}
+                                ))
+                            ) : (
+                                <div className="bg-white rounded-2xl px-6 py-8 text-center text-gray-500">
+                                    <p className="text-sm">No unpaid invoices</p>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -173,8 +253,8 @@ const EndLease: React.FC = () => {
                         <button
                             onClick={() => navigate('/dashboard/accounting/transactions/income/add', {
                                 state: {
-                                    prefilledPayer: { label: MOCK_LEASE_DETAIL.tenant.name },
-                                    prefilledLease: MOCK_LEASE_DETAIL.lease,
+                                    prefilledPayer: { label: leaseData.tenantName },
+                                    prefilledLease: leaseData.leaseNumber,
                                     prefilledDate: new Date()
                                 }
                             })}
@@ -187,8 +267,8 @@ const EndLease: React.FC = () => {
                             <button
                                 onClick={() => navigate('/dashboard/accounting/transactions/apply-deposit', {
                                     state: {
-                                        prefilledPayer: { label: MOCK_LEASE_DETAIL.tenant.name },
-                                        prefilledLease: MOCK_LEASE_DETAIL.lease
+                                        prefilledPayer: { label: leaseData.tenantName },
+                                        prefilledLease: leaseData.leaseNumber
                                     }
                                 })}
                                 className="flex-1 sm:flex-none bg-[#3A6D6C] hover:bg-[#2c5251] text-white px-4 py-2 rounded-md text-sm font-bold transition-colors shadow-sm whitespace-nowrap"
@@ -198,8 +278,8 @@ const EndLease: React.FC = () => {
                             <button
                                 onClick={() => navigate('/dashboard/accounting/transactions/bulk-payments-income', {
                                     state: {
-                                        prefilledPayer: { label: MOCK_LEASE_DETAIL.tenant.name },
-                                        prefilledProperty: MOCK_LEASE_DETAIL.property
+                                        prefilledPayer: { label: leaseData.tenantName },
+                                        prefilledProperty: leaseData.property
                                     }
                                 })}
                                 className="flex-1 sm:flex-none bg-[#3A6D6C] hover:bg-[#2c5251] text-white px-4 py-2 rounded-md text-sm font-bold transition-colors shadow-sm whitespace-nowrap"
@@ -228,20 +308,26 @@ const EndLease: React.FC = () => {
 
                         {/* Body */}
                         <div className="flex flex-col gap-3 md:bg-[#F0F0F6] md:p-4 md:rounded-[2rem] md:rounded-t-none">
-                            <div className="bg-white rounded-2xl px-4 md:px-6 py-4 grid grid-cols-1 md:grid-cols-[1fr_1fr_1fr] gap-2 md:gap-4 items-center shadow-sm hover:shadow-md transition-shadow">
-                                <div className="text-gray-800 font-medium text-sm">
-                                    <span className="md:hidden text-gray-400 text-xs block mb-1">Category</span>
-                                    {MOCK_DEPOSIT.category}
+                            {depositData ? (
+                                <div className="bg-white rounded-2xl px-4 md:px-6 py-4 grid grid-cols-1 md:grid-cols-[1fr_1fr_1fr] gap-2 md:gap-4 items-center shadow-sm hover:shadow-md transition-shadow">
+                                    <div className="text-gray-800 font-medium text-sm">
+                                        <span className="md:hidden text-gray-400 text-xs block mb-1">Category</span>
+                                        {depositData.category}
+                                    </div>
+                                    <div className="text-gray-600 text-sm">
+                                        <span className="md:hidden text-gray-400 text-xs block mb-1">Payer</span>
+                                        {depositData.payer}
+                                    </div>
+                                    <div className="text-gray-800 font-medium text-sm md:text-right">
+                                        <span className="md:hidden text-gray-400 text-xs block mb-1">Available Amount</span>
+                                        {depositData.availableAmount}
+                                    </div>
                                 </div>
-                                <div className="text-gray-600 text-sm">
-                                    <span className="md:hidden text-gray-400 text-xs block mb-1">Payer</span>
-                                    {MOCK_DEPOSIT.payer}
+                            ) : (
+                                <div className="bg-white rounded-2xl px-6 py-8 text-center text-gray-500">
+                                    <p className="text-sm">No deposits available</p>
                                 </div>
-                                <div className="text-gray-800 font-medium text-sm md:text-right">
-                                    <span className="md:hidden text-gray-400 text-xs block mb-1">Available Amount</span>
-                                    {MOCK_DEPOSIT.availableAmount}
-                                </div>
-                            </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -249,7 +335,7 @@ const EndLease: React.FC = () => {
                     <button
                         onClick={() => navigate('/dashboard/accounting/transactions/return-deposit', {
                             state: {
-                                prefilledPayer: { label: MOCK_LEASE_DETAIL.tenant.name },
+                                prefilledPayer: { label: leaseData.tenantName },
                                 prefilledDepositCategory: 'security_deposit'
                             }
                         })}
@@ -285,9 +371,17 @@ const EndLease: React.FC = () => {
                     </div>
                     <button
                         onClick={handleEndLease}
-                        className="bg-[#EF4444] hover:bg-[#DC2626] text-white px-6 py-2.5 rounded-md font-bold transition-colors shadow-sm w-full md:w-auto h-[42px] mt-auto"
+                        disabled={updateLeaseMutation.isPending || !endDate}
+                        className="bg-[#EF4444] hover:bg-[#DC2626] disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-md font-bold transition-colors shadow-sm w-full md:w-auto h-[42px] mt-auto flex items-center justify-center gap-2"
                     >
-                        End the Lease
+                        {updateLeaseMutation.isPending ? (
+                            <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                Ending...
+                            </>
+                        ) : (
+                            'End the Lease'
+                        )}
                     </button>
                 </div>
             </div>

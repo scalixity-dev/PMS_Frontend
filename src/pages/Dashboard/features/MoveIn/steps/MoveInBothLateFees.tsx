@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import CustomDropdown from '../../../components/CustomDropdown';
 import TimePicker from '@/components/ui/TimePicker';
 import { useMoveInStore } from '../store/moveInStore';
+import { useCreateLease } from '../../../../../hooks/useLeaseQueries';
+import { Loader2 } from 'lucide-react';
 
 interface MoveInBothLateFeesProps {
     onNext: () => void;
@@ -10,6 +12,7 @@ interface MoveInBothLateFeesProps {
 
 const MoveInBothLateFees: React.FC<MoveInBothLateFeesProps> = ({ onNext }) => {
     const { formData, setLateFees } = useMoveInStore();
+    const createLeaseMutation = useCreateLease();
     const recurringRentAmount = formData.recurringRent.amount || '0';
     
     // Initialize from store or defaults
@@ -70,10 +73,30 @@ const MoveInBothLateFees: React.FC<MoveInBothLateFeesProps> = ({ onNext }) => {
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleNext = () => {
-        if (validateForm()) {
-            onNext();
+    const handleNext = async () => {
+        if (!validateForm()) {
+            return;
         }
+
+        // Update store with final values
+        setLateFees({
+            oneTimeFee: {
+                type: oneTimeType,
+                amount: oneTimeAmount,
+                gracePeriodDays: oneTimeGracePeriod,
+                time: oneTimeTime,
+            },
+            dailyFee: {
+                type: dailyType,
+                amount: dailyAmount,
+                maxMonthlyBalance,
+                gracePeriod,
+                time: dailyTime,
+            },
+        });
+
+        // Proceed to next step (which will trigger handleCompleteMoveIn)
+        onNext();
     };
 
     const typeOptions = [
@@ -356,12 +379,41 @@ const MoveInBothLateFees: React.FC<MoveInBothLateFeesProps> = ({ onNext }) => {
                 </div>
             </div>
 
-            <div className="mt-16">
+            <div className="mt-16 flex flex-col items-center gap-4">
+                {Object.keys(errors).length > 0 && (
+                    <div className="w-full max-w-4xl bg-red-50 border border-red-200 rounded-lg p-4">
+                        <p className="text-red-800 text-sm font-medium mb-2">Please fix the following errors:</p>
+                        <ul className="list-disc list-inside text-red-700 text-sm space-y-1">
+                            {Object.values(errors).map((error, index) => (
+                                <li key={index}>{error}</li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+                
+                {createLeaseMutation.isError && (
+                    <div className="w-full max-w-4xl bg-red-50 border border-red-200 rounded-lg p-4">
+                        <p className="text-red-800 text-sm">
+                            {createLeaseMutation.error instanceof Error 
+                                ? createLeaseMutation.error.message 
+                                : 'An error occurred while saving'}
+                        </p>
+                    </div>
+                )}
+
                 <button
                     onClick={handleNext}
-                    className="px-8 py-3 bg-[#3D7475] text-white rounded-lg font-bold text-lg hover:opacity-90 transition-opacity shadow-sm min-w-[200px]"
+                    disabled={createLeaseMutation.isPending}
+                    className="px-8 py-3 bg-[#3D7475] text-white rounded-lg font-bold text-lg hover:opacity-90 transition-opacity shadow-sm min-w-[200px] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                    Complete Move In
+                    {createLeaseMutation.isPending ? (
+                        <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Saving...
+                        </>
+                    ) : (
+                        'Complete Move In'
+                    )}
                 </button>
             </div>
         </div>
