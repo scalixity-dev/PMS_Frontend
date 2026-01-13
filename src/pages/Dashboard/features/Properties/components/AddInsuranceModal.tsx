@@ -8,6 +8,19 @@ import { cn } from '../../../../../lib/utils';
 interface AddInsuranceModalProps {
     isOpen: boolean;
     onClose: () => void;
+    initialData?: {
+        companyName: string;
+        companyWebsite: string;
+        agentName: string;
+        agentEmail: string;
+        agentPhone: string;
+        policyNumber: string;
+        price: string;
+        effectiveDate: string;
+        expirationDate: string;
+        details: string;
+        emailNotification: boolean;
+    };
     onAdd: (data: {
         companyName: string;
         companyWebsite: string;
@@ -23,7 +36,7 @@ interface AddInsuranceModalProps {
     }) => void;
 }
 
-const AddInsuranceModal: React.FC<AddInsuranceModalProps> = ({ isOpen, onClose, onAdd }) => {
+const AddInsuranceModal: React.FC<AddInsuranceModalProps> = ({ isOpen, onClose, onAdd, initialData }) => {
     // Form State
     const [companyName, setCompanyName] = useState('');
     const [companyWebsite, setCompanyWebsite] = useState('');
@@ -36,6 +49,49 @@ const AddInsuranceModal: React.FC<AddInsuranceModalProps> = ({ isOpen, onClose, 
     const [expirationDate, setExpirationDate] = useState<Date>();
     const [details, setDetails] = useState('');
     const [emailNotification, setEmailNotification] = useState(false);
+
+    // Effect to populate data on open
+    React.useEffect(() => {
+        if (isOpen && initialData) {
+            setCompanyName(initialData.companyName || '');
+            setCompanyWebsite(initialData.companyWebsite || '');
+            setAgentName(initialData.agentName || '');
+            setAgentEmail(initialData.agentEmail || '');
+            setAgentPhone(initialData.agentPhone || '');
+            setPolicyNumber(initialData.policyNumber || '');
+            setPrice(initialData.price || '');
+            setEffectiveDate(initialData.effectiveDate ? new Date(initialData.effectiveDate) : undefined);
+            setExpirationDate(initialData.expirationDate ? new Date(initialData.expirationDate) : undefined);
+            setDetails(initialData.details || '');
+            setEmailNotification(initialData.emailNotification || false);
+        } else if (isOpen) {
+            // Reset if opening in add mode
+            setCompanyName('');
+            setCompanyWebsite('');
+            setAgentName('');
+            setAgentEmail('');
+            setAgentPhone('');
+            setPolicyNumber('');
+            setPrice('');
+            setEffectiveDate(undefined);
+            setExpirationDate(undefined);
+            setDetails('');
+            setEmailNotification(false);
+            setErrors({});
+        }
+    }, [isOpen, initialData]);
+
+    // Prevent background scrolling when modal is open
+    React.useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [isOpen]);
 
     // Validation State
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -68,19 +124,7 @@ const AddInsuranceModal: React.FC<AddInsuranceModalProps> = ({ isOpen, onClose, 
             emailNotification
         });
 
-        // Reset and close
-        setCompanyName('');
-        setCompanyWebsite('');
-        setAgentName('');
-        setAgentEmail('');
-        setAgentPhone('');
-        setPolicyNumber('');
-        setPrice('');
-        setEffectiveDate(undefined);
-        setExpirationDate(undefined);
-        setDetails('');
-        setEmailNotification(false);
-        setErrors({});
+        // Reset and close (optional, as effect handles it)
         onClose();
     };
 
@@ -93,7 +137,7 @@ const AddInsuranceModal: React.FC<AddInsuranceModalProps> = ({ isOpen, onClose, 
             <div className="bg-[#dfe5e3] rounded-[1.5rem] w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
                 {/* Header */}
                 <div className="bg-[#3A6D6C] px-6 py-4 flex items-center justify-between shrink-0">
-                    <h2 className="text-white text-lg font-medium">Add insurance</h2>
+                    <h2 className="text-white text-lg font-medium">{initialData ? 'Edit insurance' : 'Add insurance'}</h2>
                     <button onClick={onClose} className="text-white/80 hover:text-white transition-colors p-1 hover:bg-white/10 rounded-full">
                         <X size={20} />
                     </button>
@@ -272,7 +316,7 @@ const AddInsuranceModal: React.FC<AddInsuranceModalProps> = ({ isOpen, onClose, 
                             onClick={handleAdd}
                             className="w-full sm:flex-1 bg-[#3A6D6C] text-white py-3 rounded-lg text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm"
                         >
-                            Create
+                            {initialData ? 'Update' : 'Create'}
                         </button>
                     </div>
                 </div>
