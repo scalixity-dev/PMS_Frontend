@@ -36,15 +36,20 @@ const MoveInTenantSelection: React.FC<MoveInTenantSelectionProps> = ({
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     // Fetch applications to get approved applicants for the property
-    const { data: applications = [], isLoading: isLoadingApplications } = useGetAllApplications();
+    const { 
+        data: applications = [], 
+        isLoading: isLoadingApplications,
+        error: applicationsError 
+    } = useGetAllApplications();
     
     // Fetch tenants from contact book (for matching)
-    const { data: backendTenants = [], isLoading: isLoadingTenants } = useGetAllTenants();
+    const { 
+        data: backendTenants = [], 
+        isLoading: isLoadingTenants,
+        error: tenantsError 
+    } = useGetAllTenants();
 
     const isLoading = isLoadingApplications || isLoadingTenants;
-    // Get errors from queries if any
-    const { error: applicationsError } = useGetAllApplications();
-    const { error: tenantsError } = useGetAllTenants();
     const error = applicationsError || tenantsError;
 
     // Transform approved applications to tenants for the selected property
