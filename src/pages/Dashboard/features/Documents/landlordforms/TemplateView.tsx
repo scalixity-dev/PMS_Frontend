@@ -338,7 +338,13 @@ const TemplateView: React.FC = () => {
                                     onClick={() => {
                                         // Close modal and navigate to wizard page
                                         setIsUseTemplateModalOpen(false);
-                                        navigate(`/dashboard/documents/landlord-forms/use-template/${encodeURIComponent(decodedTemplateName)}`);
+                                        navigate(`/dashboard/documents/landlord-forms/use-template/${encodeURIComponent(decodedTemplateName)}`, {
+                                            state: {
+                                                selectedProperty,
+                                                selectedLease,
+                                                selectedTenants: [selectedTenants]
+                                            }
+                                        });
                                     }}
                                     className="w-full md:w-auto bg-[#3A6D6C] text-white px-8 py-3 rounded-lg text-sm font-medium hover:bg-[#2d5650] transition-colors"
                                 >

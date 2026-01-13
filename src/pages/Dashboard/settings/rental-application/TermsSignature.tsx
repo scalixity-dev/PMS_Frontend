@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { ReactNode } from "react";
 import Toggle from "../../../../components/Toggle";
 
@@ -65,6 +66,7 @@ const SettingSection = ({ config, isFirst = false, toggleState, onToggleChange }
 
 export default function TermsSignature() {
     const [eSignEnabled, setESignEnabled] = useState(true);
+    const navigate = useNavigate();
 
     const sections: SectionConfig[] = [
         {
@@ -74,7 +76,7 @@ export default function TermsSignature() {
             actionType: "button",
             buttonText: "Create",
             buttonAction: () => {
-                // TODO: Implement create action
+                navigate('/dashboard/settings/rental-application/background-questions');
             }
         },
         {

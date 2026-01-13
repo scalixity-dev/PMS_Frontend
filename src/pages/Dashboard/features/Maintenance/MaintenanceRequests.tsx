@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate, useOutletContext, useLocation } from 'react-router-dom';
-import { ChevronLeft, Plus, Check, MessageSquare, MoreHorizontal } from 'lucide-react';
+import { ChevronLeft, Plus, Check, MessageSquare, MoreHorizontal, Edit, Repeat, Printer, Trash2 } from 'lucide-react';
+import MakeRecurringModal from './components/MakeRecurringModal';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
-import ConfirmationModal from '../KeysLocks/ConfirmationModal';
+import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import Pagination from '../../components/Pagination';
 
 // Row Action Dropdown Component
@@ -46,6 +47,7 @@ const RowActionDropdown: React.FC<RowActionDropdownProps> = ({
     return (
         <div
             ref={dropdownRef}
+            onMouseDown={(e) => e.stopPropagation()}
             className="absolute right-0 top-full mt-2 w-48 bg-white rounded-2xl shadow-lg border border-gray-100 py-2 z-50"
         >
             <button
@@ -54,8 +56,9 @@ const RowActionDropdown: React.FC<RowActionDropdownProps> = ({
                     onEdit();
                     onClose();
                 }}
-                className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 transition-colors font-medium border-b border-gray-100"
+                className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 transition-colors font-medium border-b border-gray-100 flex items-center gap-2"
             >
+                <Edit size={16} className="text-[#3A6D6C]" />
                 Edit
             </button>
             <button
@@ -64,8 +67,9 @@ const RowActionDropdown: React.FC<RowActionDropdownProps> = ({
                     onMakeRecurring();
                     onClose();
                 }}
-                className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 transition-colors font-medium border-b border-gray-100"
+                className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 transition-colors font-medium border-b border-gray-100 flex items-center gap-2"
             >
+                <Repeat size={16} className="text-[#3A6D6C]" />
                 Make Recurring
             </button>
             <button
@@ -74,8 +78,9 @@ const RowActionDropdown: React.FC<RowActionDropdownProps> = ({
                     onPrint();
                     onClose();
                 }}
-                className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 transition-colors font-medium border-b border-gray-100"
+                className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50 transition-colors font-medium border-b border-gray-100 flex items-center gap-2"
             >
+                <Printer size={16} className="text-[#3A6D6C]" />
                 Print
             </button>
             <button
@@ -84,8 +89,9 @@ const RowActionDropdown: React.FC<RowActionDropdownProps> = ({
                     onDelete();
                     onClose();
                 }}
-                className="w-full px-4 py-3 text-left text-red-500 hover:bg-gray-50 transition-colors font-medium"
+                className="w-full px-4 py-3 text-left text-red-500 hover:bg-gray-50 transition-colors font-medium flex items-center gap-2"
             >
+                <Trash2 size={16} />
                 Delete
             </button>
         </div>
@@ -195,6 +201,8 @@ const Requests: React.FC = () => {
     const [requestToDelete, setRequestToDelete] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+    const [isRecurringModalOpen, setIsRecurringModalOpen] = useState(false);
+    const [selectedRequestForRecurring, setSelectedRequestForRecurring] = useState<typeof MOCK_REQUESTS[0] | null>(null);
     const [filters, setFilters] = useState<{
         status: string[];
         assignee: string[];
@@ -226,17 +234,28 @@ const Requests: React.FC = () => {
     };
 
     const handleEdit = (id: string) => {
+        console.log('Edit clicked for:', id);
         navigate('/dashboard/maintenance/request', { state: { editMode: true, id } });
     };
 
     const handleMakeRecurring = (id: string) => {
-        console.log('Make recurring:', id);
-        // TODO: Implement make recurring functionality
+        console.log('Make Recurring clicked for:', id);
+        const request = MOCK_REQUESTS.find(r => r.id === id);
+        if (request) {
+            setSelectedRequestForRecurring(request);
+            setIsRecurringModalOpen(true);
+        }
     };
 
-    const handlePrint = (id: string) => {
-        console.log('Print request:', id);
-        // TODO: Implement print functionality
+    const handlePrint = (_id: string) => {
+        console.log('Print clicked for:', _id);
+        window.print();
+    };
+
+    const handleRecurringCreate = (data: any) => {
+        console.log('Creating recurring request:', data);
+        setIsRecurringModalOpen(false);
+        // TODO: Implement API call
     };
 
     const confirmDelete = () => {
@@ -349,11 +368,6 @@ const Requests: React.FC = () => {
                             <Plus className="w-4 h-4" />
                         </button>
                         <button
-                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-2 flex-grow md:flex-grow-0 justify-center"
-                        >
-                            Money In
-                        </button>
-                        <button
                             onClick={() => navigate('/dashboard/settings/request-settings/request-settings')}
                             className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-2 flex-grow md:flex-grow-0 justify-center"
                         >
@@ -464,7 +478,7 @@ const Requests: React.FC = () => {
                                                     >
                                                         <MessageSquare className="w-5 h-5" />
                                                     </button>
-                                                    <div className="relative">
+                                                    <div className={`relative ${openDropdownId === item.id ? 'z-[100]' : ''}`}>
                                                         <button
                                                             className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
                                                             onClick={(e) => {
@@ -522,7 +536,7 @@ const Requests: React.FC = () => {
                                                 >
                                                     <MessageSquare className="w-5 h-5" />
                                                 </button>
-                                                <div className="relative">
+                                                <div className={`relative ${openDropdownId === item.id ? 'z-[100]' : ''}`}>
                                                     <button
                                                         className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
                                                         onClick={(e) => {
@@ -561,15 +575,28 @@ const Requests: React.FC = () => {
                 )}
             </div>
 
-            <ConfirmationModal
+            <DeleteConfirmationModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={confirmDelete}
                 title="Delete Request"
-                message="Are you sure you want to delete this maintenance request? This action cannot be undone."
-                confirmLabel="Delete"
-                cancelLabel="Cancel"
+                itemName="this maintenance request"
             />
+
+            {isRecurringModalOpen && selectedRequestForRecurring && (
+                <MakeRecurringModal
+                    isOpen={isRecurringModalOpen}
+                    onClose={() => setIsRecurringModalOpen(false)}
+                    requestDetails={{
+                        category: selectedRequestForRecurring.category,
+                        subCategory: selectedRequestForRecurring.subCategory,
+                        title: `${selectedRequestForRecurring.category} / ${selectedRequestForRecurring.subCategory}`,
+                        issue: 'Detailed Issue',
+                        subIssue: 'Specific Sub-issue'
+                    }}
+                    onSave={handleRecurringCreate}
+                />
+            )}
         </div>
     );
 };

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { ChevronLeft, ChevronDown, Trash2 } from 'lucide-react';
 import CustomTextBox from '../../components/CustomTextBox';
-import ConfirmationModal from '../KeysLocks/ConfirmationModal';
+import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 
 // Mock Data
 const MOCK_RELATED_REQUESTS = [
@@ -276,14 +276,12 @@ const MaintenanceRecurringDetail: React.FC = () => {
 
             </div>
 
-            <ConfirmationModal
+            <DeleteConfirmationModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={handleDelete}
                 title="Delete Recurring Request"
-                message="Are you sure you want to delete this recurring maintenance request? This action cannot be undone."
-                confirmLabel="Delete"
-                cancelLabel="Cancel"
+                itemName="this recurring maintenance request"
             />
         </div>
     );

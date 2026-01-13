@@ -4,6 +4,7 @@ import { Tv, Zap, Home, PaintBucket, Trees, Droplets, Check } from 'lucide-react
 interface CategorySelectionProps {
     selectedCategory: string | null;
     onSelect: (category: string) => void;
+    onNext: () => void;
 }
 
 const categories = [
@@ -45,15 +46,15 @@ const categories = [
     },
 ];
 
-const CategorySelection: React.FC<CategorySelectionProps> = ({ selectedCategory, onSelect }) => {
+const CategorySelection: React.FC<CategorySelectionProps> = ({ selectedCategory, onSelect, onNext }) => {
     return (
-        <div className="w-full max-w-4xl mx-auto">
+        <div className="w-full max-w-4xl mx-auto flex flex-col items-center">
             <div className="text-center mb-6 md:mb-8">
                 <h2 className="text-lg md:text-xl font-bold text-gray-800 mb-2">What is this request about?</h2>
                 <p className="text-sm md:text-base text-gray-500 max-w-md mx-auto">Start selecting the category to define the issue or use the smart search.</p>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 bg-[#F0F0F6] p-4 md:p-10 rounded-[1.5rem] md:rounded-4xl">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 bg-[#F0F0F6] p-4 md:p-10 rounded-[1.5rem] md:rounded-4xl w-full">
                 {categories.map((category) => {
                     const isSelected = selectedCategory === category.id;
                     const Icon = category.icon;
@@ -97,6 +98,19 @@ const CategorySelection: React.FC<CategorySelectionProps> = ({ selectedCategory,
                         </div>
                     );
                 })}
+            </div>
+
+            <div className="mt-8 w-full flex justify-center">
+                <button
+                    onClick={onNext}
+                    disabled={!selectedCategory}
+                    className={`
+                        bg-[#3D7475] text-white px-12 py-3 rounded-lg font-bold transition-all shadow-md
+                        ${!selectedCategory ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#2c5251] hover:shadow-lg'}
+                    `}
+                >
+                    Next
+                </button>
             </div>
         </div>
     );

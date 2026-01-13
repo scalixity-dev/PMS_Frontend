@@ -56,7 +56,8 @@ const UseTemplateModal: React.FC<UseTemplateModalProps> = ({ isOpen, onClose, te
             state: {
                 returnPath: `/dashboard/documents/my-templates/${templateId}`,
                 selectedProperty,
-                selectedLease
+                selectedLease,
+                selectedTenants: [selectedTenants]
             }
         });
     };

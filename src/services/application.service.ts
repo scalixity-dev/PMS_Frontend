@@ -278,8 +278,8 @@ class ApplicationService {
     return {
       leasingId,
       status: 'SUBMITTED',
-      moveInDate: formData.moveInDate instanceof Date 
-        ? formData.moveInDate.toISOString() 
+      moveInDate: formData.moveInDate instanceof Date
+        ? formData.moveInDate.toISOString()
         : (typeof formData.moveInDate === 'string' ? formData.moveInDate : new Date().toISOString()),
       bio: formData.shortBio || undefined,
       additionalResidenceInfo: formData.additionalResidenceInfo || undefined,
@@ -292,8 +292,8 @@ class ApplicationService {
           lastName: formData.lastName,
           email: formData.email,
           phoneNumber: formData.phoneNumber,
-          dateOfBirth: formData.dob instanceof Date 
-            ? formData.dob.toISOString() 
+          dateOfBirth: formData.dob instanceof Date
+            ? formData.dob.toISOString()
             : (typeof formData.dob === 'string' ? formData.dob : new Date().toISOString()),
           isPrimary: true,
         },
@@ -303,8 +303,8 @@ class ApplicationService {
         lastName: o.lastName,
         email: o.email,
         phoneNumber: o.phoneNumber,
-        dateOfBirth: o.dob instanceof Date 
-          ? o.dob.toISOString() 
+        dateOfBirth: o.dob instanceof Date
+          ? o.dob.toISOString()
           : (typeof o.dob === 'string' ? o.dob : new Date().toISOString()),
         relationship: o.relationship,
       })),
@@ -431,7 +431,7 @@ class ApplicationService {
     const formatPhoneNumber = (phoneNumber: string, countryCode?: string): string => {
       if (!phoneNumber) return '';
       if (!countryCode) return phoneNumber;
-      
+
       // Parse country code format: "isoCode|phonecode" (e.g., "US|+1")
       let phonecode = countryCode;
       if (countryCode.includes('|')) {
@@ -440,12 +440,12 @@ class ApplicationService {
           phonecode = parts[1];
         }
       }
-      
+
       // If phonecode is just letters (ISO code), return phone number without code
       if (/^[A-Za-z]+$/.test(phonecode)) {
         return phoneNumber;
       }
-      
+
       // Ensure phonecode starts with '+'
       const formattedCode = phonecode.startsWith('+') ? phonecode : `+${phonecode}`;
       return `${formattedCode} ${phoneNumber}`;
@@ -505,7 +505,7 @@ class ApplicationService {
       })) : undefined,
       residenceHistory: formData.residences?.length > 0 ? formData.residences.map((r) => {
         const cityValue = r.city && r.city.trim() !== '' ? r.city.trim() : r.state;
-        
+
         return {
           residenceType: r.residencyType === 'Rent' ? 'RENTED' : r.residencyType === 'Own' ? 'OWNED' : 'FAMILY',
           monthlyRent: r.rentAmount ? parseFloat(r.rentAmount) : undefined,
@@ -776,13 +776,13 @@ class ApplicationService {
   /**
    * Send invitation to apply for a property (supports multiple emails, max 5)
    */
-  async inviteToApply(emails: string[], propertyId: string): Promise<{ 
-    message: string; 
+  async inviteToApply(emails: string[], propertyId: string): Promise<{
+    message: string;
     successful: number;
     failed: number;
     existingEmails: string[];
     nonExistingEmails: string[];
-    propertyName: string; 
+    propertyName: string;
     propertyManagerName: string;
   }> {
     const response = await fetch(API_ENDPOINTS.APPLICATION.INVITE, {
@@ -813,7 +813,37 @@ class ApplicationService {
 
     return response.json();
   }
+  /**
+   * Delete an application
+   */
+  async delete(id: string): Promise<void> {
+    const response = await fetch(API_ENDPOINTS.APPLICATION.DELETE(id), {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      let errorMessage = "Failed to delete application";
+      try {
+        const errorData = await response.json();
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join(". ");
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+      } catch (parseError) {
+        errorMessage = `Failed to delete application: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+  }
 }
+
 
 export const applicationService = new ApplicationService();
 
