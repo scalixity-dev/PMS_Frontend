@@ -15,9 +15,21 @@ interface LeaseTransaction {
     nextInvoice: string;
     amount: number;
     currency: string;
+    paidAmount?: number;
 }
 
 const ROWS_PER_PAGE = 5;
+
+const getOutstandingAmount = (transaction: LeaseTransaction) => {
+    const totalAmount = Math.abs(transaction.amount);
+    let paidAmount = 0;
+    if (transaction.status === 'Paid') {
+        paidAmount = totalAmount;
+    } else if (transaction.status === 'Partial') {
+        paidAmount = transaction.paidAmount ?? 0;
+    }
+    return Math.max(0, totalAmount - paidAmount);
+};
 
 /**
  * LeaseTransactionsTable
@@ -109,9 +121,11 @@ export const LeaseTransactionsTable = () => {
                                         <span className="text-[var(--dashboard-text-main)] font-medium text-base">
                                             {item.amount < 0 ? '-' : ''} {formatMoney(Math.abs(item.amount), item.currency)}
                                         </span>
-                                        <span className="text-[#FF2D55] font-semibold text-xs">
-                                            {formatMoney(Math.abs(item.amount), item.currency)}
-                                        </span>
+                                        {getOutstandingAmount(item) > 0 && (
+                                            <span className="text-[#FF2D55] font-semibold text-xs">
+                                                Outstanding: {formatMoney(getOutstandingAmount(item), item.currency)}
+                                            </span>
+                                        )}
                                     </div>
                                     <span className="text-gray-400 font-bold text-xs tracking-widest min-w-[30px]">{item.currency}</span>
                                 </div>
@@ -140,9 +154,11 @@ export const LeaseTransactionsTable = () => {
                                     <div className="text-[var(--dashboard-text-main)] font-semibold text-lg tracking-tight">
                                         {item.amount < 0 ? '-' : ''} {formatMoney(Math.abs(item.amount), item.currency)}
                                     </div>
-                                    <div className="text-[#FF2D55] font-medium text-xs mt-1">
-                                        {formatMoney(Math.abs(item.amount), item.currency)}
-                                    </div>
+                                    {getOutstandingAmount(item) > 0 && (
+                                        <div className="text-[#FF2D55] font-medium text-xs mt-1">
+                                            Outstanding: {formatMoney(getOutstandingAmount(item), item.currency)}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 

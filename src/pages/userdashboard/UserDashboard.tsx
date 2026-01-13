@@ -95,22 +95,10 @@ const UserDashboard = () => {
 
         const fetchData = async () => {
             try {
-                const [leasesFromApi, apps] = await Promise.all([
+                const [leases, apps] = await Promise.all([
                     leasingService.getAll().catch(() => []),
                     applicationService.getAll().catch(() => [])
                 ]);
-
-                // For demonstration: Inject a mock active lease to show Stage 3
-                const leases = leasesFromApi.length > 0 ? leasesFromApi : [
-                    {
-                        id: 'mock-lease-1',
-                        status: 'Active',
-                        property: {
-                            name: 'Luxury Villa',
-                            address: { streetAddress: '789 Grand Road', city: 'Indore', stateRegion: 'MP' }
-                        }
-                    }
-                ];
 
                 // Filter for truly active leases
                 const activeLeases = (leases || []).filter((l: any) => l.status === 'Active' || l.status === 'ACTIVE');
@@ -250,7 +238,7 @@ const UserDashboard = () => {
                 {dashboardStage !== 'no_lease' && (
                     <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end mb-8 xl:mb-10 gap-6">
                         {/* Navigation Tabs */}
-                        <div className="flex-1 w-full relative overflow-x-auto no-scrollbar">
+                        <div className="flex-1 w-full relative overflow-x-auto scrollbar-hide">
                             <div className="flex items-end gap-1 sm:gap-3 border-b-[0.5px] border-[var(--dashboard-border)] w-full sm:w-fit relative sm:pr-4">
                                 {dashboardStage === 'move_in' ? (
                                     tabs.map((tab) => (
