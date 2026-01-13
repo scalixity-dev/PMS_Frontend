@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DatePicker from '../../../../../components/ui/DatePicker';
 import SearchableDropdown from '../../../../../components/ui/SearchableDropdown';
+import { useMoveInStore } from '../store/moveInStore';
 
 // Options from screenshot
 const DEPOSIT_CATEGORIES = [
@@ -19,21 +20,27 @@ const DEPOSIT_CATEGORIES = [
     'Security Deposit'
 ];
 
-interface DepositData {
-    category: string;
-    amount: string;
-    invoiceDate: Date | undefined;
-}
-
 interface MoveInDepositSettingsProps {
-    onNext: (data: DepositData) => void;
+    onNext: () => void;
     onBack: () => void;
 }
 
 const MoveInDepositSettings: React.FC<MoveInDepositSettingsProps> = ({ onNext }) => {
-    const [selectedCategory, setSelectedCategory] = useState('Deposit');
-    const [amount, setAmount] = useState('');
-    const [invoiceDate, setInvoiceDate] = useState<Date | undefined>(undefined);
+    const { formData, setDeposit } = useMoveInStore();
+    
+    // Initialize local state from store
+    const [selectedCategory, setSelectedCategory] = useState(formData.deposit.category || 'Deposit');
+    const [amount, setAmount] = useState(formData.deposit.amount || '');
+    const [invoiceDate, setInvoiceDate] = useState<Date | undefined>(formData.deposit.invoiceDate);
+
+    // Update store when local state changes
+    useEffect(() => {
+        setDeposit({
+            category: selectedCategory,
+            amount,
+            invoiceDate,
+        });
+    }, [selectedCategory, amount, invoiceDate, setDeposit]);
 
     return (
         <div className="w-full flex flex-col items-center">
@@ -94,11 +101,14 @@ const MoveInDepositSettings: React.FC<MoveInDepositSettingsProps> = ({ onNext })
 
             <div className="w-full max-w-md mt-16 flex justify-center">
                 <button
-                    onClick={() => onNext({
-                        category: selectedCategory,
-                        amount,
-                        invoiceDate,
-                    })}
+                    onClick={() => {
+                        setDeposit({
+                            category: selectedCategory,
+                            amount,
+                            invoiceDate,
+                        });
+                        onNext();
+                    }}
                     className="px-12 py-3 rounded-lg font-medium text-white transition-all bg-[#3D7475] hover:bg-[#2c5554] shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
                 >
                     Next

@@ -4,7 +4,7 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import Pagination from '../../components/Pagination';
 import ApplicationCard from './components/ApplicationCard';
 import { Plus, ChevronLeft, Loader2 } from 'lucide-react';
-import { useGetAllApplications } from '../../../../hooks/useApplicationQueries';
+import { useGetAllApplications, useUpdateApplication } from '../../../../hooks/useApplicationQueries';
 import type { BackendApplication } from '../../../../services/application.service';
 import InviteToApplyModal from './components/InviteToApplyModal';
 
@@ -24,13 +24,16 @@ const transformApplicationToCard = (app: BackendApplication) => {
     });
 
     // Map status
-    const statusMap: Record<string, 'Approved' | 'Pending' | 'Rejected'> = {
+    const statusMap: Record<string, 'Approved' | 'Pending' | 'Rejected' | 'In Review' | 'Draft' | 'Submitted' | 'Cancelled'> = {
         'APPROVED': 'Approved',
-        'SUBMITTED': 'Pending',
-        'UNDER_REVIEW': 'Pending',
-        'DRAFT': 'Pending',
+        'SUBMITTED': 'Submitted',
+        'REVIEWING': 'In Review',
+        'DRAFT': 'Draft',
         'REJECTED': 'Rejected',
-        'WITHDRAWN': 'Pending',
+        'CANCELLED': 'Cancelled',
+        // Backward compatibility for old values
+        'UNDER_REVIEW': 'In Review',
+        'WITHDRAWN': 'Cancelled',
     };
     const status = statusMap[app.status] || 'Pending';
 
@@ -49,6 +52,9 @@ const transformApplicationToCard = (app: BackendApplication) => {
     // Get image from application or use empty string
     const image = app.imageUrl || '';
 
+    // Get primary applicant email for move-in pre-selection
+    const applicantEmail = primaryApplicant?.email;
+
     return {
         id: app.id,
         name,
@@ -59,6 +65,7 @@ const transformApplicationToCard = (app: BackendApplication) => {
         propertyUnit,
         propertyId: property?.id,
         unitId: unit?.id,
+        applicantEmail, // Add email for tenant pre-selection
     };
 };
 
@@ -74,6 +81,9 @@ const Application = () => {
 
     // Fetch applications from API
     const { data: applications = [], isLoading, error } = useGetAllApplications();
+    
+    // Mutation for updating application status
+    const updateApplicationMutation = useUpdateApplication();
 
     const handleSearchChange = (search: string) => {
         setSearchQuery(search);
@@ -190,6 +200,27 @@ const Application = () => {
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
         window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleStatusChange = async (id: string | number, newStatus: 'APPROVED' | 'REVIEWING' | 'REJECTED') => {
+        try {
+            await updateApplicationMutation.mutateAsync({
+                id: String(id),
+                updateData: { status: newStatus }
+            });
+        } catch (error) {
+            console.error('Failed to update application status:', error);
+            throw error; // Re-throw to be handled by ApplicationCard
+        }
+    };
+
+    const handleMoveIn = (propertyId: string, applicantEmail?: string) => {
+        navigate('/dashboard/movein', { 
+            state: { 
+                preSelectedPropertyId: propertyId,
+                preSelectedTenantEmail: applicantEmail 
+            } 
+        });
     };
 
     return (
@@ -322,7 +353,16 @@ const Application = () => {
                             currentApplications.map((app) => (
                                 <ApplicationCard
                                     key={app.id}
-                                    {...app}
+                                    id={app.id}
+                                    image={app.image}
+                                    name={app.name}
+                                    appliedDate={app.appliedDate}
+                                    status={app.status}
+                                    backendStatus={app.backendStatus}
+                                    propertyId={app.propertyId}
+                                    applicantEmail={app.applicantEmail}
+                                    onStatusChange={handleStatusChange}
+                                    onMoveIn={handleMoveIn}
                                 />
                             ))
                         ) : (

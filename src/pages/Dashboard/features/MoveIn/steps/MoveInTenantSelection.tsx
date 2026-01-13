@@ -1,62 +1,187 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, User } from 'lucide-react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { ChevronDown, User, Loader2 } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { useMoveInStore } from '../store/moveInStore';
+import { useGetAllApplications } from '../../../../../hooks/useApplicationQueries';
+import { useGetAllTenants } from '../../../../../hooks/useTenantQueries';
+import { tenantService, type BackendTenantProfile } from '../../../../../services/tenant.service';
+import type { BackendApplication } from '../../../../../services/application.service';
 
 interface Tenant {
-    id: string;
+    id: string; // User ID, tenant profile ID, or application ID (for backend API)
+    applicationId?: string; // Application ID if from application
+    tenantProfileId?: string; // Tenant profile ID (if found in contact book)
     name: string;
     email: string;
     phone: string;
     image?: string;
+    status?: 'Pending' | 'Accepted' | 'Declined' | 'Approved'; // Contact book status or application status
+    hasUserAccount: boolean; // Whether tenant has a user account
+    source: 'application' | 'contactBook'; // Where the tenant comes from
 }
 
 interface MoveInTenantSelectionProps {
-    selectedTenantId: string | null;
-    onSelect: (tenantId: string) => void;
     onNext: () => void;
     onBack: () => void;
 }
 
-// Mock data based on Tenants.tsx structure
-const MOCK_TENANTS: Tenant[] = [
-    {
-        id: '1',
-        name: 'Anjali Vyas',
-        phone: '+91 8569325417',
-        email: 'Anjli57474@gmail.com',
-        image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200&h=200'
-    },
-    {
-        id: '2',
-        name: 'Sam Curren',
-        phone: '+91 8569325417',
-        email: 'Currensam@gmail.com',
-        image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200&h=200'
-    },
-    {
-        id: '3',
-        name: 'Herry Gurney',
-        phone: '+91 8569325417',
-        email: 'Herrygurnwe@gmail.com',
-        image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=200&h=200'
-    },
-    {
-        id: '4',
-        name: 'James Fos',
-        phone: '+91 8569325417',
-        email: 'Jamesfos@gmail.com',
-        image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200&h=200'
-    }
-];
-
 const MoveInTenantSelection: React.FC<MoveInTenantSelectionProps> = ({
-    selectedTenantId,
-    onSelect,
     onNext
 }) => {
+    const location = useLocation();
+    const { formData, setTenantId } = useMoveInStore();
+    const selectedTenantId = formData.tenantId;
+    const propertyId = formData.propertyId;
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    const selectedTenant = MOCK_TENANTS.find(t => t.id === selectedTenantId);
+    // Fetch applications to get approved applicants for the property
+    const { 
+        data: applications = [], 
+        isLoading: isLoadingApplications,
+        error: applicationsError 
+    } = useGetAllApplications();
+    
+    // Fetch tenants from contact book (for matching)
+    const { 
+        data: backendTenants = [], 
+        isLoading: isLoadingTenants,
+        error: tenantsError 
+    } = useGetAllTenants();
+
+    const isLoading = isLoadingApplications || isLoadingTenants;
+    const error = applicationsError || tenantsError;
+
+    // Transform approved applications to tenants for the selected property
+    const tenantsFromApplications: Tenant[] = useMemo(() => {
+        if (!propertyId) return [];
+
+        // Filter approved applications for the selected property
+        const approvedApps = applications.filter((app: BackendApplication) => {
+            // Check if application has leasing and property data
+            if (!app.leasing || !app.leasing.property) {
+                return false;
+            }
+            
+            const appPropertyId = app.leasing.property.id;
+            const isApproved = app.status === 'APPROVED';
+            
+            // Ensure we have applicants
+            if (!app.applicants || app.applicants.length === 0) {
+                return false;
+            }
+            
+            return appPropertyId === propertyId && isApproved;
+        });
+
+        // Extract primary applicants from approved applications
+        const tenantList: Tenant[] = [];
+        
+        for (const app of approvedApps) {
+            const primaryApplicant = app.applicants.find(a => a.isPrimary) || app.applicants[0];
+            if (!primaryApplicant || !primaryApplicant.email) continue;
+
+            // Try to find matching tenant profile by email
+            const matchingTenant = backendTenants.find((tenant: BackendTenantProfile) => {
+                const tenantEmail = tenant.user?.email || tenant.contactBookEntry?.email;
+                return tenantEmail?.toLowerCase() === primaryApplicant.email.toLowerCase();
+            });
+
+            // Construct phone number
+            const phone = primaryApplicant.phoneNumber || 'N/A';
+
+            // Determine tenant ID and account status
+            let tenantId: string;
+            let hasUserAccount = false;
+            let tenantProfileId: string | undefined;
+
+            if (matchingTenant) {
+                // Found in contact book - use user ID if available, otherwise tenant profile ID
+                tenantId = matchingTenant.userId || matchingTenant.id;
+                hasUserAccount = !!matchingTenant.userId;
+                tenantProfileId = matchingTenant.id;
+            } else {
+                // Not in contact book yet - applicant from approved application
+                // Since they submitted an application, they should have a user account
+                // We'll use the applicant email to find/create tenant profile in backend
+                // For now, use a placeholder that backend can resolve by email
+                // The backend moveInTenant can look up by email if needed
+                tenantId = `email:${primaryApplicant.email}`; // Backend will need to resolve this
+                hasUserAccount = true; // Assume they have account since they submitted application
+                tenantProfileId = undefined;
+            }
+
+            tenantList.push({
+                id: tenantId,
+                applicationId: app.id,
+                tenantProfileId,
+                name: `${primaryApplicant.firstName} ${primaryApplicant.middleName || ''} ${primaryApplicant.lastName}`.trim(),
+                email: primaryApplicant.email,
+                phone,
+                image: app.imageUrl || undefined,
+                status: 'Approved' as const,
+                hasUserAccount,
+                source: 'application' as const,
+            });
+        }
+        
+        return tenantList;
+    }, [applications, propertyId, backendTenants]);
+
+    // Combine tenants from applications (prioritized) and contact book
+    const tenants: Tenant[] = useMemo(() => {
+        const applicationEmails = new Set(
+            tenantsFromApplications
+                .filter(t => t.email) // Filter out tenants without email
+                .map(t => t.email.toLowerCase())
+        );
+        
+        // Add contact book tenants that aren't already in applications list
+        const contactBookTenants: Tenant[] = backendTenants
+            .filter((tenant: any) => {
+                const tenantEmail = tenant.user?.email || tenant.contactBookEntry?.email;
+                return tenantEmail && !applicationEmails.has(tenantEmail.toLowerCase());
+            })
+            .map((tenant: any) => {
+                const transformed = tenantService.transformTenant(tenant);
+                const hasUserAccount = !!tenant.userId;
+                
+                return {
+                    id: tenant.userId || tenant.id,
+                    tenantProfileId: tenant.id,
+                    name: transformed.name,
+                    email: transformed.email,
+                    phone: transformed.phone,
+                    image: transformed.image,
+                    status: tenant.contactBookEntry?.status === 'PENDING' 
+                        ? 'Pending' 
+                        : tenant.contactBookEntry?.status === 'ACCEPTED' 
+                        ? 'Accepted' 
+                        : 'Declined',
+                    hasUserAccount,
+                    source: 'contactBook' as const,
+                };
+            });
+
+        // Applications first (approved tenants), then contact book
+        return [...tenantsFromApplications, ...contactBookTenants];
+    }, [tenantsFromApplications, backendTenants]);
+
+    const selectedTenant = tenants.find(t => t.id === selectedTenantId);
+
+    // Pre-select tenant from application if email is provided in navigation state
+    useEffect(() => {
+        const state = location.state as { preSelectedTenantEmail?: string } | null;
+        if (state?.preSelectedTenantEmail && !selectedTenantId && tenants.length > 0) {
+            // Find tenant by email
+            const tenantByEmail = tenants.find(
+                t => t.email.toLowerCase() === state.preSelectedTenantEmail!.toLowerCase()
+            );
+            if (tenantByEmail) {
+                setTenantId(tenantByEmail.id);
+            }
+        }
+    }, [location.state, tenants, selectedTenantId, setTenantId]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -72,9 +197,32 @@ const MoveInTenantSelection: React.FC<MoveInTenantSelectionProps> = ({
     }, []);
 
     const handleSelect = (tenantId: string) => {
-        onSelect(tenantId);
+        setTenantId(tenantId);
         setIsOpen(false);
     };
+
+    // Loading state
+    if (isLoading) {
+        return (
+            <div className="w-full flex flex-col items-center justify-center min-h-[200px]">
+                <Loader2 className="w-8 h-8 animate-spin text-[#3D7475]" />
+                <p className="mt-4 text-gray-600">Loading tenants...</p>
+            </div>
+        );
+    }
+
+    // Error state
+    if (error) {
+        return (
+            <div className="w-full flex flex-col items-center">
+                <div className="w-full max-w-md bg-red-50 border border-red-200 rounded-lg p-4">
+                    <p className="text-red-800 text-sm">
+                        {error instanceof Error ? error.message : 'Failed to load tenants'}
+                    </p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="w-full flex flex-col items-center">
@@ -118,29 +266,61 @@ const MoveInTenantSelection: React.FC<MoveInTenantSelectionProps> = ({
                 {/* Dropdown Menu */}
                 {isOpen && (
                     <div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden animate-in fade-in zoom-in-95 duration-100 max-h-60 overflow-y-auto">
-                        {MOCK_TENANTS.map((tenant) => (
-                            <button
-                                key={tenant.id}
-                                onClick={() => handleSelect(tenant.id)}
-                                className="w-full flex items-center justify-between p-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full overflow-hidden border border-gray-200">
-                                        {tenant.image ? (
-                                            <img src={tenant.image} alt={tenant.name} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-500">
-                                                <User size={16} />
-                                            </div>
-                                        )}
+                        {tenants.length === 0 ? (
+                            <div className="p-4 text-center text-gray-500 text-sm">
+                                {propertyId 
+                                    ? `No approved applications found for this property. Please approve an application for property ${propertyId} first.`
+                                    : 'No tenants found. Select a property first or add tenants to your contact book.'}
+                            </div>
+                        ) : (
+                            tenants.map((tenant) => (
+                                <button
+                                    key={tenant.id}
+                                    onClick={() => tenant.hasUserAccount && handleSelect(tenant.id)}
+                                    disabled={!tenant.hasUserAccount}
+                                    className={`w-full flex items-center justify-between p-3 transition-colors border-b border-gray-50 last:border-0 ${
+                                        tenant.hasUserAccount 
+                                            ? 'hover:bg-gray-50 cursor-pointer' 
+                                            : 'opacity-60 cursor-not-allowed'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-3 flex-1">
+                                        <div className="w-8 h-8 rounded-full overflow-hidden border border-gray-200">
+                                            {tenant.image ? (
+                                                <img src={tenant.image} alt={tenant.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-500">
+                                                    <User size={16} />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="text-left flex-1">
+                                            <p className="text-sm font-medium text-gray-900">{tenant.name}</p>
+                                            <p className="text-xs text-gray-500">{tenant.email}</p>
+                                            {tenant.source === 'application' && (
+                                                <p className="text-xs text-blue-600 mt-0.5">From approved application</p>
+                                            )}
+                                            {!tenant.hasUserAccount && tenant.source === 'contactBook' && (
+                                                <p className="text-xs text-orange-600 mt-0.5">Invitation pending</p>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            {tenant.status && (
+                                                <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                    tenant.status === 'Approved' || tenant.status === 'Accepted'
+                                                        ? 'bg-green-100 text-green-700' 
+                                                        : tenant.status === 'Pending'
+                                                        ? 'bg-yellow-100 text-yellow-700'
+                                                        : 'bg-gray-100 text-gray-700'
+                                                }`}>
+                                                    {tenant.status}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                    <div className="text-left">
-                                        <p className="text-sm font-medium text-gray-900">{tenant.name}</p>
-                                        <p className="text-xs text-gray-500">{tenant.email}</p>
-                                    </div>
-                                </div>
-                            </button>
-                        ))}
+                                </button>
+                            ))
+                        )}
                     </div>
                 )}
             </div>

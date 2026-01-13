@@ -16,6 +16,7 @@ import MoveInOneTimeLateFees from './steps/MoveInOneTimeLateFees';
 import MoveInDailyLateFees from './steps/MoveInDailyLateFees';
 import MoveInBothLateFees from './steps/MoveInBothLateFees';
 import MoveInSuccessModal from './components/MoveInSuccessModal';
+import { useMoveInStore } from './store/moveInStore';
 
 interface MoveInScenarioCardProps {
     type: 'easy' | 'advanced';
@@ -73,22 +74,23 @@ const getVisualStep = (step: number) => {
 const MoveIn: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const [selectedScenario, setSelectedScenario] = useState<{ type: 'easy' | 'advanced' } | null>(null);
-    const [currentStep, setCurrentStep] = useState(0); // 0 = Selection, 1 = Property, 2 = Tenant, 3 = Share Lease, 4 = Recurring Rent, 5 = Recurring Rent Settings, 6 = Deposit, 7 = Deposit Settings, 8 = Late Fees, 9 = Late Fees Type, 10 = Lease, 11 = Fees
-    const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
-    const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
-
-    const [recurringRentAmount, setRecurringRentAmount] = useState<string>('');
-    const [lateFeeType, setLateFeeType] = useState<'one-time' | 'daily' | 'both'>('one-time');
+    const {
+        formData,
+        currentStep,
+        setCurrentStep,
+        setSelectedScenario,
+        setPropertyId,
+    } = useMoveInStore();
+    
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 
     // Handle pre-selection from navigation state
     useEffect(() => {
         const state = location.state as { preSelectedPropertyId?: string } | null;
         if (state?.preSelectedPropertyId) {
-            setSelectedPropertyId(state.preSelectedPropertyId);
+            setPropertyId(state.preSelectedPropertyId);
         }
-    }, [location.state]);
+    }, [location.state, setPropertyId]);
 
     const handleBack = () => {
         if (currentStep > 0) {
@@ -99,7 +101,7 @@ const MoveIn: React.FC = () => {
     };
 
     const handleGetStarted = () => {
-        if (!selectedScenario) return;
+        if (!formData.selectedScenario) return;
         // Proceed to Step 1 (Property)
         setCurrentStep(1);
     };
@@ -120,7 +122,6 @@ const MoveIn: React.FC = () => {
     };
 
     const handleRecurringRentNext = (enabled: boolean) => {
-
         if (enabled) {
             // Proceed to Step 5 (Recurring Rent Settings)
             setCurrentStep(5);
@@ -146,7 +147,6 @@ const MoveIn: React.FC = () => {
     }
 
     const handleDepositSettingsNext = () => {
-        // TODO: Store deposit data if needed
         // Proceed to Step 8 (Late Fees)
         setCurrentStep(8);
     }
@@ -161,8 +161,7 @@ const MoveIn: React.FC = () => {
         }
     }
 
-    const handleLateFeesTypeNext = (type: 'one-time' | 'daily' | 'both') => {
-        setLateFeeType(type);
+    const handleLateFeesTypeNext = () => {
         // Proceed to Step 10 (One Time Late Fee or Daily Late Fee)
         setCurrentStep(10);
     }
@@ -199,12 +198,12 @@ const MoveIn: React.FC = () => {
                             <div className="flex flex-col md:flex-row gap-8 mb-16 w-full justify-center items-center md:items-stretch">
                                 <MoveInScenarioCard
                                     type="easy"
-                                    selected={selectedScenario?.type === 'easy'}
+                                    selected={formData.selectedScenario?.type === 'easy'}
                                     onClick={() => setSelectedScenario({ type: 'easy' })}
                                 />
                                 <MoveInScenarioCard
                                     type="advanced"
-                                    selected={selectedScenario?.type === 'advanced'}
+                                    selected={formData.selectedScenario?.type === 'advanced'}
                                     onClick={() => setSelectedScenario({ type: 'advanced' })}
                                 />
                             </div>
@@ -213,7 +212,7 @@ const MoveIn: React.FC = () => {
                                 text="Get Started"
                                 widthClass="w-full sm:w-auto px-12"
                                 onClick={handleGetStarted}
-                                disabled={!selectedScenario}
+                                disabled={!formData.selectedScenario}
                             />
                         </div>
                     )}
@@ -226,16 +225,12 @@ const MoveIn: React.FC = () => {
                             <div className="w-full mt-12">
                                 {currentStep === 1 && (
                                     <MoveInPropertySelection
-                                        selectedPropertyId={selectedPropertyId}
-                                        onSelect={setSelectedPropertyId}
                                         onNext={handlePropertyNext}
                                     />
                                 )}
 
                                 {currentStep === 2 && (
                                     <MoveInTenantSelection
-                                        selectedTenantId={selectedTenantId}
-                                        onSelect={setSelectedTenantId}
                                         onNext={handleTenantNext}
                                         onBack={handleBack}
                                     />
@@ -258,8 +253,6 @@ const MoveIn: React.FC = () => {
                                     <MoveInRecurringRentSettings
                                         onNext={handleRecurringRentSettingsNext}
                                         onBack={handleBack}
-                                        amount={recurringRentAmount}
-                                        onAmountChange={setRecurringRentAmount}
                                     />
                                 )}
 
@@ -291,27 +284,24 @@ const MoveIn: React.FC = () => {
                                     />
                                 )}
 
-                                {currentStep === 10 && lateFeeType === 'one-time' && (
+                                {currentStep === 10 && formData.lateFees.scheduleType === 'one-time' && (
                                     <MoveInOneTimeLateFees
                                         onNext={handleCompleteMoveIn}
                                         onBack={handleBack}
-                                        recurringRentAmount={recurringRentAmount}
                                     />
                                 )}
 
-                                {currentStep === 10 && lateFeeType === 'daily' && (
+                                {currentStep === 10 && formData.lateFees.scheduleType === 'daily' && (
                                     <MoveInDailyLateFees
                                         onNext={handleCompleteMoveIn}
                                         onBack={handleBack}
-                                        recurringRentAmount={recurringRentAmount}
                                     />
                                 )}
 
-                                {currentStep === 10 && lateFeeType === 'both' && (
+                                {currentStep === 10 && formData.lateFees.scheduleType === 'both' && (
                                     <MoveInBothLateFees
                                         onNext={handleCompleteMoveIn}
                                         onBack={handleBack}
-                                        recurringRentAmount={recurringRentAmount}
                                     />
                                 )}
 

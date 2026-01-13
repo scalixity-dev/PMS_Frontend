@@ -1,21 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DatePicker from '../../../../../components/ui/DatePicker';
 import CustomCheckbox from '../../../../../components/ui/CustomCheckbox';
 import SearchableDropdown from '../../../../../components/ui/SearchableDropdown';
-
-interface RecurringRentData {
-    invoiceSchedule: string;
-    startOn: Date | undefined;
-    endOn: Date | undefined;
-    isMonthToMonth: boolean;
-    markPastPaid: boolean;
-}
+import { useMoveInStore } from '../store/moveInStore';
 
 interface MoveInRecurringRentSettingsProps {
-    onNext: (data: RecurringRentData) => void;
+    onNext: () => void;
     onBack: () => void;
-    amount: string;
-    onAmountChange: (amount: string) => void;
 }
 
 const SCHEDULE_OPTIONS = [
@@ -30,13 +21,28 @@ const SCHEDULE_OPTIONS = [
 ];
 
 
-const MoveInRecurringRentSettings: React.FC<MoveInRecurringRentSettingsProps> = ({ onNext, amount, onAmountChange }) => {
-    // State for form fields
-    const [invoiceSchedule, setInvoiceSchedule] = useState('Monthly');
-    const [startOn, setStartOn] = useState<Date | undefined>(undefined);
-    const [endOn, setEndOn] = useState<Date | undefined>(undefined);
-    const [isMonthToMonth, setIsMonthToMonth] = useState(false);
-    const [markPastPaid, setMarkPastPaid] = useState(false);
+const MoveInRecurringRentSettings: React.FC<MoveInRecurringRentSettingsProps> = ({ onNext }) => {
+    const { formData, setRecurringRent } = useMoveInStore();
+    
+    // Initialize local state from store
+    const [invoiceSchedule, setInvoiceSchedule] = useState(formData.recurringRent.invoiceSchedule || 'Monthly');
+    const [startOn, setStartOn] = useState<Date | undefined>(formData.recurringRent.startOn);
+    const [endOn, setEndOn] = useState<Date | undefined>(formData.recurringRent.endOn);
+    const [isMonthToMonth, setIsMonthToMonth] = useState(formData.recurringRent.isMonthToMonth || false);
+    const [markPastPaid, setMarkPastPaid] = useState(formData.recurringRent.markPastPaid || false);
+    const [amount, setAmount] = useState(formData.recurringRent.amount || '');
+
+    // Update store when local state changes
+    useEffect(() => {
+        setRecurringRent({
+            amount,
+            invoiceSchedule,
+            startOn,
+            endOn,
+            isMonthToMonth,
+            markPastPaid,
+        });
+    }, [amount, invoiceSchedule, startOn, endOn, isMonthToMonth, markPastPaid, setRecurringRent]);
 
     return (
         <div className="w-full flex flex-col items-center">
@@ -58,7 +64,7 @@ const MoveInRecurringRentSettings: React.FC<MoveInRecurringRentSettingsProps> = 
                                     type="number"
                                     placeholder="0.00"
                                     value={amount}
-                                    onChange={(e) => onAmountChange(e.target.value)}
+                                    onChange={(e) => setAmount(e.target.value)}
                                     min="0"
                                     step="0.01"
                                     required
@@ -133,13 +139,17 @@ const MoveInRecurringRentSettings: React.FC<MoveInRecurringRentSettingsProps> = 
 
             <div className="w-full max-w-md mt-16 flex justify-center">
                 <button
-                    onClick={() => onNext({
-                        invoiceSchedule,
-                        startOn,
-                        endOn,
-                        isMonthToMonth,
-                        markPastPaid,
-                    })}
+                    onClick={() => {
+                        setRecurringRent({
+                            amount,
+                            invoiceSchedule,
+                            startOn,
+                            endOn,
+                            isMonthToMonth,
+                            markPastPaid,
+                        });
+                        onNext();
+                    }}
                     className="px-12 py-3 rounded-lg font-medium text-white transition-all bg-[#3D7475] hover:bg-[#2c5554] shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
                 >
                     Next

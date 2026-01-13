@@ -7,7 +7,7 @@ export interface BackendApplication {
   id: string;
   leasingId: string;
   invitedById?: string | null;
-  status: 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'WITHDRAWN';
+  status: 'DRAFT' | 'SUBMITTED' | 'REVIEWING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
   applicationDate: string;
   moveInDate: string;
   bio?: string | null;
@@ -170,7 +170,7 @@ export interface BackendReferenceContact {
 export interface CreateApplicationDto {
   leasingId: string;
   invitedById?: string;
-  status?: 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'WITHDRAWN';
+  status?: 'DRAFT' | 'SUBMITTED' | 'REVIEWING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
   moveInDate: string;
   bio?: string;
   additionalResidenceInfo?: string;
