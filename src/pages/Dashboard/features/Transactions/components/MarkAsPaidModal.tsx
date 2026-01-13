@@ -191,11 +191,12 @@ const MarkAsPaidModal: React.FC<MarkAsPaidModalProps> = ({ onConfirm }) => {
                                 onChange={setMethod}
                                 placeholder="Type here"
                                 options={[
-                                    { value: 'Cash', label: 'Cash' },
-                                    { value: 'Bank Transfer', label: 'Bank Transfer' },
-                                    { value: 'Cheque', label: 'Cheque' },
+                                    { value: 'CASH', label: 'Cash' },
+                                    { value: 'BANK_TRANSFER', label: 'Bank Transfer' },
+                                    { value: 'CHEQUE', label: 'Cheque' },
                                     { value: 'UPI', label: 'UPI' },
-                                    { value: 'Others', label: 'Others' },
+                                    { value: 'CARD', label: 'Card' },
+                                    { value: 'OTHERS', label: 'Others' },
                                 ]}
                                 buttonClassName={inputClasses}
                                 dropdownClassName="z-50"
