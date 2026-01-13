@@ -1,21 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DatePicker from '../../../../../components/ui/DatePicker';
 import CustomCheckbox from '../../../../../components/ui/CustomCheckbox';
 import SearchableDropdown from '../../../../../components/ui/SearchableDropdown';
-
-interface RecurringRentData {
-    invoiceSchedule: string;
-    startOn: Date | undefined;
-    endOn: Date | undefined;
-    isMonthToMonth: boolean;
-    markPastPaid: boolean;
-}
+import { useMoveInStore } from '../store/moveInStore';
+import { useCreateLease } from '../../../../../hooks/useLeaseQueries';
+import { Loader2 } from 'lucide-react';
 
 interface MoveInRecurringRentSettingsProps {
-    onNext: (data: RecurringRentData) => void;
+    onNext: () => void;
     onBack: () => void;
-    amount: string;
-    onAmountChange: (amount: string) => void;
 }
 
 const SCHEDULE_OPTIONS = [
@@ -30,13 +23,66 @@ const SCHEDULE_OPTIONS = [
 ];
 
 
-const MoveInRecurringRentSettings: React.FC<MoveInRecurringRentSettingsProps> = ({ onNext, amount, onAmountChange }) => {
-    // State for form fields
-    const [invoiceSchedule, setInvoiceSchedule] = useState('Monthly');
-    const [startOn, setStartOn] = useState<Date | undefined>(undefined);
-    const [endOn, setEndOn] = useState<Date | undefined>(undefined);
-    const [isMonthToMonth, setIsMonthToMonth] = useState(false);
-    const [markPastPaid, setMarkPastPaid] = useState(false);
+const MoveInRecurringRentSettings: React.FC<MoveInRecurringRentSettingsProps> = ({ onNext }) => {
+    const { formData, setRecurringRent } = useMoveInStore();
+    const createLeaseMutation = useCreateLease();
+    
+    // Initialize local state from store
+    const [invoiceSchedule, setInvoiceSchedule] = useState(formData.recurringRent.invoiceSchedule || 'Monthly');
+    const [startOn, setStartOn] = useState<Date | undefined>(formData.recurringRent.startOn);
+    const [endOn, setEndOn] = useState<Date | undefined>(formData.recurringRent.endOn);
+    const [isMonthToMonth, setIsMonthToMonth] = useState(formData.recurringRent.isMonthToMonth || false);
+    const [markPastPaid, setMarkPastPaid] = useState(formData.recurringRent.markPastPaid || false);
+    const [amount, setAmount] = useState(formData.recurringRent.amount || '');
+    const [errors, setErrors] = useState<Record<string, string>>({});
+
+    // Update store when local state changes
+    useEffect(() => {
+        setRecurringRent({
+            amount,
+            invoiceSchedule,
+            startOn,
+            endOn,
+            isMonthToMonth,
+            markPastPaid,
+        });
+    }, [amount, invoiceSchedule, startOn, endOn, isMonthToMonth, markPastPaid, setRecurringRent]);
+
+    const validateForm = () => {
+        const newErrors: Record<string, string> = {};
+        
+        if (!amount || parseFloat(amount) <= 0) {
+            newErrors.amount = 'Amount is required and must be greater than zero';
+        }
+        if (!startOn) {
+            newErrors.startOn = 'Start date is required';
+        }
+        if (!isMonthToMonth && !endOn) {
+            newErrors.endOn = 'End date is required when not month-to-month';
+        }
+        
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const handleNext = async () => {
+        if (!validateForm()) {
+            return;
+        }
+
+        // Update store with final values
+        setRecurringRent({
+            amount,
+            invoiceSchedule,
+            startOn,
+            endOn,
+            isMonthToMonth,
+            markPastPaid,
+        });
+
+        // Proceed to next step
+        onNext();
+    };
 
     return (
         <div className="w-full flex flex-col items-center">
@@ -58,7 +104,7 @@ const MoveInRecurringRentSettings: React.FC<MoveInRecurringRentSettingsProps> = 
                                     type="number"
                                     placeholder="0.00"
                                     value={amount}
-                                    onChange={(e) => onAmountChange(e.target.value)}
+                                    onChange={(e) => setAmount(e.target.value)}
                                     min="0"
                                     step="0.01"
                                     required
@@ -131,18 +177,41 @@ const MoveInRecurringRentSettings: React.FC<MoveInRecurringRentSettingsProps> = 
                 </div>
             </div>
 
-            <div className="w-full max-w-md mt-16 flex justify-center">
+            <div className="w-full max-w-md mt-16 flex flex-col items-center gap-4">
+                {Object.keys(errors).length > 0 && (
+                    <div className="w-full max-w-2xl bg-red-50 border border-red-200 rounded-lg p-4">
+                        <p className="text-red-800 text-sm font-medium mb-2">Please fix the following errors:</p>
+                        <ul className="list-disc list-inside text-red-700 text-sm space-y-1">
+                            {Object.values(errors).map((error, index) => (
+                                <li key={index}>{error}</li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+                
+                {createLeaseMutation.isError && (
+                    <div className="w-full max-w-2xl bg-red-50 border border-red-200 rounded-lg p-4">
+                        <p className="text-red-800 text-sm">
+                            {createLeaseMutation.error instanceof Error 
+                                ? createLeaseMutation.error.message 
+                                : 'An error occurred while saving'}
+                        </p>
+                    </div>
+                )}
+
                 <button
-                    onClick={() => onNext({
-                        invoiceSchedule,
-                        startOn,
-                        endOn,
-                        isMonthToMonth,
-                        markPastPaid,
-                    })}
-                    className="px-12 py-3 rounded-lg font-medium text-white transition-all bg-[#3D7475] hover:bg-[#2c5554] shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                    onClick={handleNext}
+                    disabled={createLeaseMutation.isPending}
+                    className="px-12 py-3 rounded-lg font-medium text-white transition-all bg-[#3D7475] hover:bg-[#2c5554] shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center gap-2"
                 >
-                    Next
+                    {createLeaseMutation.isPending ? (
+                        <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Saving...
+                        </>
+                    ) : (
+                        'Next'
+                    )}
                 </button>
             </div>
         </div>

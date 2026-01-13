@@ -1,12 +1,13 @@
 import { API_ENDPOINTS } from '../config/api.config';
 import type { ApplicationFormData } from '../pages/Dashboard/features/Application/store/applicationStore';
+import type { UserApplicationFormData } from '../pages/userdashboard/features/Applications/store/types';
 
 // Backend Application Types
 export interface BackendApplication {
   id: string;
   leasingId: string;
   invitedById?: string | null;
-  status: 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'WITHDRAWN';
+  status: 'DRAFT' | 'SUBMITTED' | 'REVIEWING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
   applicationDate: string;
   moveInDate: string;
   bio?: string | null;
@@ -169,7 +170,7 @@ export interface BackendReferenceContact {
 export interface CreateApplicationDto {
   leasingId: string;
   invitedById?: string;
-  status?: 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'WITHDRAWN';
+  status?: 'DRAFT' | 'SUBMITTED' | 'REVIEWING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
   moveInDate: string;
   bio?: string;
   additionalResidenceInfo?: string;
@@ -255,6 +256,18 @@ export interface CreateApplicationDto {
     relationship: string;
     yearsKnown: number;
   }[];
+  backgroundQuestions?: {
+    smoke: boolean;
+    militaryMember: boolean;
+    criminalRecord: boolean;
+    bankruptcy: boolean;
+    refusedRent: boolean;
+    evicted: boolean;
+  };
+  customBackgroundAnswers?: {
+    questionId: string;
+    answer: boolean;
+  }[];
 }
 
 class ApplicationService {
@@ -265,13 +278,13 @@ class ApplicationService {
     return {
       leasingId,
       status: 'SUBMITTED',
-      moveInDate: formData.moveInDate instanceof Date 
-        ? formData.moveInDate.toISOString() 
+      moveInDate: formData.moveInDate instanceof Date
+        ? formData.moveInDate.toISOString()
         : (typeof formData.moveInDate === 'string' ? formData.moveInDate : new Date().toISOString()),
       bio: formData.shortBio || undefined,
       additionalResidenceInfo: formData.additionalResidenceInfo || undefined,
       additionalIncomeInfo: formData.additionalIncomeInfo || undefined,
-      imageUrl: undefined, // TODO: Handle photo upload if needed
+      imageUrl: (formData as any).photoUrl || undefined, // Use uploaded photo URL if available
       applicants: [
         {
           firstName: formData.firstName,
@@ -279,8 +292,8 @@ class ApplicationService {
           lastName: formData.lastName,
           email: formData.email,
           phoneNumber: formData.phoneNumber,
-          dateOfBirth: formData.dob instanceof Date 
-            ? formData.dob.toISOString() 
+          dateOfBirth: formData.dob instanceof Date
+            ? formData.dob.toISOString()
             : (typeof formData.dob === 'string' ? formData.dob : new Date().toISOString()),
           isPrimary: true,
         },
@@ -290,8 +303,8 @@ class ApplicationService {
         lastName: o.lastName,
         email: o.email,
         phoneNumber: o.phoneNumber,
-        dateOfBirth: o.dob instanceof Date 
-          ? o.dob.toISOString() 
+        dateOfBirth: o.dob instanceof Date
+          ? o.dob.toISOString()
           : (typeof o.dob === 'string' ? o.dob : new Date().toISOString()),
         relationship: o.relationship,
       })),
@@ -396,6 +409,154 @@ class ApplicationService {
         relationship: c.relationship,
         details: c.details || undefined,
       })),
+      backgroundQuestions: formData.backgroundQuestions && Object.keys(formData.backgroundQuestions).length > 0 ? {
+        smoke: formData.backgroundQuestions.smoke === true,
+        militaryMember: formData.backgroundQuestions.military === true,
+        criminalRecord: formData.backgroundQuestions.crime === true,
+        bankruptcy: formData.backgroundQuestions.bankruptcy === true,
+        refusedRent: formData.backgroundQuestions.refuseRent === true,
+        evicted: formData.backgroundQuestions.evicted === true,
+      } : undefined,
+      customBackgroundAnswers: (formData as any).customBackgroundAnswers && (formData as any).customBackgroundAnswers.length > 0
+        ? (formData as any).customBackgroundAnswers
+        : undefined,
+    };
+  }
+
+  /**
+   * Transform user application form data to backend DTO format
+   */
+  private transformUserFormDataToDto(formData: UserApplicationFormData, leasingId: string): CreateApplicationDto {
+    // Helper to format phone number with country code
+    const formatPhoneNumber = (phoneNumber: string, countryCode?: string): string => {
+      if (!phoneNumber) return '';
+      if (!countryCode) return phoneNumber;
+
+      // Parse country code format: "isoCode|phonecode" (e.g., "US|+1")
+      let phonecode = countryCode;
+      if (countryCode.includes('|')) {
+        const parts = countryCode.split('|');
+        if (parts.length > 1 && parts[1]) {
+          phonecode = parts[1];
+        }
+      }
+
+      // If phonecode is just letters (ISO code), return phone number without code
+      if (/^[A-Za-z]+$/.test(phonecode)) {
+        return phoneNumber;
+      }
+
+      // Ensure phonecode starts with '+'
+      const formattedCode = phonecode.startsWith('+') ? phonecode : `+${phonecode}`;
+      return `${formattedCode} ${phoneNumber}`;
+    };
+
+    // Helper to format date
+    const formatDate = (date: Date | undefined): string => {
+      if (!date) return new Date().toISOString();
+      if (date instanceof Date) {
+        return date.toISOString();
+      }
+      return typeof date === 'string' ? date : new Date().toISOString();
+    };
+
+    return {
+      leasingId,
+      status: 'SUBMITTED',
+      moveInDate: formatDate(formData.moveInDate),
+      bio: formData.shortBio || undefined,
+      additionalResidenceInfo: formData.additionalResidenceInfo || undefined,
+      additionalIncomeInfo: formData.additionalIncomeInfo || undefined,
+      imageUrl: formData.photoUrl || undefined,
+      applicants: [
+        {
+          firstName: formData.firstName,
+          middleName: formData.middleName || undefined,
+          lastName: formData.lastName,
+          email: formData.email,
+          phoneNumber: formatPhoneNumber(formData.phoneNumber, formData.phoneCountryCode),
+          dateOfBirth: formatDate(formData.dob),
+          isPrimary: true,
+        },
+      ],
+      occupants: formData.occupants?.length > 0 ? formData.occupants.map((o) => ({
+        firstName: o.firstName || undefined,
+        lastName: o.lastName || undefined,
+        email: o.email || undefined,
+        phoneNumber: o.phoneNumber ? formatPhoneNumber(o.phoneNumber, o.phoneCountryCode) : undefined,
+        dateOfBirth: formatDate(o.dob),
+        relationship: o.relationship,
+      })) : undefined,
+      pets: formData.pets?.length > 0 ? formData.pets.map((p) => ({
+        type: p.type,
+        name: p.name,
+        weight: p.weight ? parseFloat(p.weight) : undefined,
+        breed: p.breed,
+        photoUrl: p.existingPhotoUrl || undefined,
+      })) : undefined,
+      vehicles: formData.vehicles?.length > 0 ? formData.vehicles.map((v) => ({
+        type: v.type,
+        make: v.make,
+        model: v.model,
+        year: parseInt(v.year, 10),
+        color: v.color,
+        licensePlate: v.licensePlate,
+        registeredIn: v.registeredIn,
+      })) : undefined,
+      residenceHistory: formData.residences?.length > 0 ? formData.residences.map((r) => {
+        const cityValue = r.city && r.city.trim() !== '' ? r.city.trim() : r.state;
+
+        return {
+          residenceType: r.residencyType === 'Rent' ? 'RENTED' : r.residencyType === 'Own' ? 'OWNED' : 'FAMILY',
+          monthlyRent: r.rentAmount ? parseFloat(r.rentAmount) : undefined,
+          moveInDate: formatDate(r.moveInDate),
+          moveOutDate: r.moveOutDate ? formatDate(r.moveOutDate) : undefined,
+          isCurrent: r.isCurrent,
+          landlordName: r.landlordName || 'N/A',
+          landlordEmail: r.landlordEmail || undefined,
+          landlordPhone: r.landlordPhone || '',
+          address: r.address,
+          city: cityValue,
+          state: r.state,
+          zipCode: r.zip,
+          country: r.country,
+          additionalInfo: r.reason || undefined,
+        };
+      }) : undefined,
+      incomeDetails: formData.incomes?.length > 0 ? formData.incomes.map((i) => ({
+        incomeType: i.incomeType,
+        companyName: i.company,
+        positionTitle: i.position,
+        startDate: formatDate(i.startDate),
+        endDate: i.endDate ? formatDate(i.endDate) : undefined,
+        currentEmployment: i.currentEmployment ?? false,
+        monthlyIncome: parseFloat(i.monthlyAmount) || 0,
+        officeAddress: i.address,
+        office: i.office || undefined,
+        companyPhone: i.companyPhone || undefined,
+        supervisorName: i.supervisorName,
+        supervisorPhone: i.supervisorPhone,
+        supervisorEmail: i.supervisorEmail || undefined,
+        additionalInfo: undefined,
+      })) : undefined,
+      emergencyContacts: formData.emergencyContacts?.length > 0 ? formData.emergencyContacts.map((c) => ({
+        contactName: c.fullName,
+        phoneNumber: formatPhoneNumber(c.phoneNumber, c.phoneCountryCode),
+        email: c.email,
+        relationship: c.relationship,
+        details: c.details || undefined,
+      })) : undefined,
+      backgroundQuestions: formData.backgroundQuestions && Object.keys(formData.backgroundQuestions).length > 0 ? {
+        smoke: formData.backgroundQuestions.smoke === true,
+        militaryMember: formData.backgroundQuestions.military === true,
+        criminalRecord: formData.backgroundQuestions.crime === true,
+        bankruptcy: formData.backgroundQuestions.bankruptcy === true,
+        refusedRent: formData.backgroundQuestions.refuseRent === true,
+        evicted: formData.backgroundQuestions.evicted === true,
+      } : undefined,
+      customBackgroundAnswers: formData.customBackgroundAnswers && formData.customBackgroundAnswers.length > 0
+        ? formData.customBackgroundAnswers
+        : undefined,
     };
   }
 
@@ -404,6 +565,48 @@ class ApplicationService {
    */
   async create(formData: ApplicationFormData, leasingId: string): Promise<BackendApplication> {
     const dto = this.transformFormDataToDto(formData, leasingId);
+
+    const response = await fetch(API_ENDPOINTS.APPLICATION.CREATE, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(dto),
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to create application';
+      let errorMessages: string[] = [];
+      try {
+        const errorData = await response.json();
+        if (Array.isArray(errorData.message)) {
+          errorMessages = errorData.message;
+          errorMessage = errorData.message.join('. ');
+        } else if (errorData.message) {
+          errorMessages = [errorData.message];
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessages = [errorData.error];
+          errorMessage = errorData.error;
+        }
+      } catch (parseError) {
+        errorMessage = `Failed to create application: ${response.statusText}`;
+        errorMessages = [errorMessage];
+      }
+      const error = new Error(errorMessage) as Error & { messages?: string[] };
+      error.messages = errorMessages;
+      throw error;
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Create a new application from user application form data
+   */
+  async createUserApplication(formData: UserApplicationFormData, leasingId: string): Promise<BackendApplication> {
+    const dto = this.transformUserFormDataToDto(formData, leasingId);
 
     const response = await fetch(API_ENDPOINTS.APPLICATION.CREATE, {
       method: 'POST',
@@ -573,13 +776,13 @@ class ApplicationService {
   /**
    * Send invitation to apply for a property (supports multiple emails, max 5)
    */
-  async inviteToApply(emails: string[], propertyId: string): Promise<{ 
-    message: string; 
+  async inviteToApply(emails: string[], propertyId: string): Promise<{
+    message: string;
     successful: number;
     failed: number;
     existingEmails: string[];
     nonExistingEmails: string[];
-    propertyName: string; 
+    propertyName: string;
     propertyManagerName: string;
   }> {
     const response = await fetch(API_ENDPOINTS.APPLICATION.INVITE, {
@@ -610,7 +813,37 @@ class ApplicationService {
 
     return response.json();
   }
+  /**
+   * Delete an application
+   */
+  async delete(id: string): Promise<void> {
+    const response = await fetch(API_ENDPOINTS.APPLICATION.DELETE(id), {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      let errorMessage = "Failed to delete application";
+      try {
+        const errorData = await response.json();
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join(". ");
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+      } catch (parseError) {
+        errorMessage = `Failed to delete application: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+  }
 }
+
 
 export const applicationService = new ApplicationService();
 

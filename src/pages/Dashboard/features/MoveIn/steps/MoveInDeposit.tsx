@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useMoveInStore } from '../store/moveInStore';
 
 interface MoveInDepositProps {
     onNext: (hasDeposit: boolean) => void;
@@ -6,11 +7,14 @@ interface MoveInDepositProps {
 }
 
 const MoveInDeposit: React.FC<MoveInDepositProps> = ({ onNext }) => {
+    const { setDeposit } = useMoveInStore();
     const [selection, setSelection] = useState<'yes' | 'no' | null>(null);
 
     const handleSelect = (value: 'yes' | 'no') => {
         setSelection(value);
-        onNext(value === 'yes');
+        const hasDeposit = value === 'yes';
+        setDeposit({ hasDeposit });
+        onNext(hasDeposit);
     };
 
     return (

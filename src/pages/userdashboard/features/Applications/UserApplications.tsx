@@ -1,19 +1,11 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Bell, Trash2, X } from "lucide-react";
+import { Bell, X } from "lucide-react";
 import ApplicationSubmittedModal from "./components/ApplicationSubmittedModal";
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
 import DeleteConfirmationModal from "../../../../components/common/modals/DeleteConfirmationModal";
-
-interface ApplicationItem {
-  id: number | string;
-  name: string;
-  phone: string;
-  status: "Approved" | "Rejected" | "Submitted" | "Draft";
-  appliedDate: string;
-  address: string;
-  propertyId?: string;
-}
+import { UserApplicationCard, type ApplicationItem } from "./components/UserApplicationCard";
+import { API_ENDPOINTS } from "../../../../config/api.config";
 
 interface InvitationItem {
   id: string;
@@ -24,123 +16,7 @@ interface InvitationItem {
   initials: string;
 }
 
-// Helper function to generate avatar seed from name
-const getAvatarSeed = (name: string): string => {
-  return name.toLowerCase().replace(/\s+/g, "-");
-};
 
-// Helper function to format date - handles both YYYY-MM-DD and ISO strings
-const formatDate = (dateString: string): string => {
-  if (!dateString) return '-';
-
-  let date: Date;
-  // If explicitly YYYY-MM-DD, parse components to start at local midnight
-  // (Avoids UTC midnight shifting to previous day in Western timezones)
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-    const [year, month, day] = dateString.split('-').map(Number);
-    date = new Date(year, month - 1, day);
-  } else {
-    date = new Date(dateString);
-  }
-
-  if (isNaN(date.getTime())) return '-';
-
-  const months = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-  ];
-  return `${date.getDate()} ${months[date.getMonth()]}, ${date.getFullYear()}`;
-};
-
-import { API_ENDPOINTS } from "../../../../config/api.config";
-
-// Application Card Component with memoized avatar
-interface ApplicationCardProps {
-  app: ApplicationItem;
-  onDelete: (id: number | string) => void;
-  onNavigate: () => void;
-}
-
-const ApplicationCard: React.FC<ApplicationCardProps> = ({ app, onDelete, onNavigate }) => {
-  // Memoize avatar URL to prevent unnecessary API calls
-  const avatarUrl = useMemo(
-    () => `https://api.dicebear.com/7.x/personas/svg?seed=${getAvatarSeed(app.name)}`,
-    [app.name]
-  );
-
-  return (
-    <div className="bg-[#F7F7F7] rounded-2xl border border-[#F3F4F6] shadow-[0px_4px_4px_0px_#00000040] w-full flex flex-col relative">
-      {/* Status Badge */}
-      <div className="absolute top-4 left-4 z-10">
-        <span
-          className={`px-3 py-1 rounded-full text-xs font-semibold ${app.status === "Approved"
-            ? "bg-[#E8F5E9] text-[#2E7D32]"
-            : app.status === "Submitted"
-              ? "bg-[#FFF3E0] text-[#F57C00]"
-              : app.status === "Draft"
-                ? "bg-[#F3F4F6] text-[#71717A]"
-                : "bg-[#FFEBEE] text-[#C62828]"
-            }`}
-        >
-          {app.status}
-        </span>
-      </div>
-
-      {/* Delete Application Button */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete(app.id);
-        }}
-        className="absolute top-4 right-4 z-10 p-1.5 bg-white rounded-full text-gray-400 hover:text-red-500 transition-all shadow-sm"
-      >
-        <Trash2 size={16} />
-      </button>
-
-      {/* Main Content */}
-      <div className="flex flex-col items-center pt-12 px-6">
-        {/* Avatar */}
-        <div className="w-20 h-20 rounded-full bg-[#E0F2FE] mb-3 overflow-hidden">
-          <img
-            src={avatarUrl}
-            alt={app.name}
-            className="w-full h-full object-cover"
-          />
-        </div>
-
-        {/* Name */}
-        <h3 className="text-lg font-semibold text-[#1A1A1A] mb-1">
-          {app.name}
-        </h3>
-
-        {/* Applied Date */}
-        <p className="text-sm text-[#71717A] mb-4">
-          Applied on {formatDate(app.appliedDate)}
-        </p>
-
-        {/* Address */}
-        <div className="w-full bg-[#E3F2FD] rounded-lg px-3 py-2 mb-4">
-          <p className="text-xs text-[#1565C0] font-medium text-center">
-            {app.address}
-          </p>
-        </div>
-      </div>
-
-      {/* Separator */}
-      <div className="border-t border-[#E5E7EB]"></div>
-
-      {/* View Application Link */}
-      <div className="py-4 flex justify-center">
-        <button
-          onClick={onNavigate}
-          className="text-[#7ED957] text-sm font-semibold hover:opacity-80 transition-opacity"
-        >
-          {app.status === "Draft" ? "Continue application" : "View application"}
-        </button>
-      </div>
-    </div>
-  );
-};
 
 const Applications: React.FC = () => {
   const navigate = useNavigate();
@@ -149,7 +25,7 @@ const Applications: React.FC = () => {
   const [deleteModalState, setDeleteModalState] = useState<{
     isOpen: boolean;
     type: 'invitation' | 'application';
-    targetId?: number | string;
+    targetId?: string;
   }>({ isOpen: false, type: 'invitation' });
 
   const [errorToast, setErrorToast] = useState<string | null>(null);
@@ -178,17 +54,18 @@ const Applications: React.FC = () => {
     }
   }, [location, navigate]);
 
-  // Fetch properties for invitations
+  // Fetch invitations for the current user
   useEffect(() => {
     const controller = new AbortController();
 
     const fetchInvitations = async () => {
       try {
-        const response = await fetch(API_ENDPOINTS.PROPERTY.GET_PUBLIC_LISTINGS, {
+        const response = await fetch(API_ENDPOINTS.APPLICATION.GET_INVITATIONS, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
           },
+          credentials: 'include',
           signal: controller.signal,
         });
 
@@ -198,40 +75,49 @@ const Applications: React.FC = () => {
 
           // Filter out hidden properties, then limit to 4
           const mappedInvitations: InvitationItem[] = data
-            .filter((item: any) => !hiddenProps.includes(item.id))
+            .filter((invitation: any) => !hiddenProps.includes(invitation.property?.id))
             .slice(0, 4)
-            .map((item: any) => {
-              const address = item.address;
+            .map((invitation: any) => {
+              const property = invitation.property;
+              const address = property?.address;
               const addressString = address
                 ? `${address.streetAddress || ''}, ${address.city || ''}, ${address.stateRegion || ''}, ${address.zipCode || ''}, ${address.country || ''}`.replace(/^, |, $/g, '').replace(/, ,/g, ',')
                 : '';
 
-              const beds = item.singleUnitDetail?.beds ?? null;
-              const propertyName = item.listing?.title ||
-                (beds !== null ? `${beds} Bedroom ${item.propertyType === 'SINGLE' ? 'Property' : 'Unit'}` : item.propertyName);
+              const beds = property?.leasing?.singleUnitDetail?.beds ?? property?.leasing?.unit?.beds ?? null;
+              // Get listing title from property listings (first active listing)
+              const listingTitle = property?.listings && property.listings.length > 0
+                ? property.listings[0]?.title
+                : null;
+              const propertyName = listingTitle ||
+                (beds !== null ? `${beds} Bedroom ${property?.propertyType === 'SINGLE' ? 'Property' : 'Unit'}` : property?.propertyName);
 
-              // Use logic from property detail to get landlord/agent name
-              const inviterName = item.listingAgent?.fullName || item.listingContactName || item.manager?.fullName || "Property Manager";
+              // Use inviter name from invitation
+              const inviterName = invitation.invitedBy?.fullName || property?.manager?.fullName || "Property Manager";
               const initials = (inviterName?.trim() || 'P').split(/\s+/).map((n: string) => n[0]).join('').substring(0, 2).toUpperCase();
 
               return {
-                id: `inv_${item.id}`,
+                id: `inv_${invitation.id}`,
                 inviterName: inviterName,
                 propertyName: propertyName,
                 propertyAddress: addressString,
-                propertyId: item.id,
+                propertyId: property?.id,
                 initials: initials
               };
             });
 
           setInvitations(mappedInvitations);
+        } else if (response.status === 401) {
+          // User not authenticated - no invitations
+          setInvitations([]);
         }
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {
           // Request was aborted, this is expected on unmount
           return;
         }
-        console.error("Failed to fetch invitation properties:", error);
+        console.error("Failed to fetch invitations:", error);
+        setInvitations([]);
       }
     };
 
@@ -240,15 +126,7 @@ const Applications: React.FC = () => {
     return () => controller.abort();
   }, []);
 
-  const [applications, setApplications] = useState<ApplicationItem[]>(() => {
-    try {
-      const localApps = JSON.parse(localStorage.getItem('user_applications') || '[]');
-      return Array.isArray(localApps) ? localApps : [];
-    } catch (e) {
-      console.warn("Failed to parse user_applications from localStorage", e);
-      return [];
-    }
-  });
+  const [applications, setApplications] = useState<ApplicationItem[]>([]);
 
   // Fetch applications from API
   useEffect(() => {
@@ -261,6 +139,7 @@ const Applications: React.FC = () => {
           headers: {
             'Content-Type': 'application/json',
           },
+          credentials: 'include',
           signal: controller.signal,
         });
 
@@ -276,39 +155,43 @@ const Applications: React.FC = () => {
             return "Submitted"; // Default fallback
           };
 
-          // Map API data to ApplicationItem structure
+          // Map API data to ApplicationItem structure - only backend applications
           const apiApps: ApplicationItem[] = data.map((app: any) => {
-            // Safe nested access and default values
-            const applicantName = app.applicant?.fullName || app.primaryApplicantName || "Unknown Applicant";
-            const applicantPhone = app.applicant?.phoneNumber || app.primaryApplicantPhone || "N/A";
-            const propertyAddress = app.property?.address
-              ? `${app.property.address.streetAddress || ''}, ${app.property.address.city || ''}, ${app.property.address.stateRegion || ''}`
+            // Get primary applicant (first one or the one marked as primary)
+            const primaryApplicant = app.applicants?.find((a: any) => a.isPrimary) || app.applicants?.[0];
+            const applicantName = primaryApplicant
+              ? `${primaryApplicant.firstName || ''} ${primaryApplicant.middleName || ''} ${primaryApplicant.lastName || ''}`.trim() || "Unknown Applicant"
+              : "Unknown Applicant";
+            const applicantPhone = primaryApplicant?.phoneNumber || "N/A";
+
+            // Get property address from leasing property
+            const propertyAddress = app.leasing?.property?.address
+              ? `${app.leasing.property.address.streetAddress || ''}, ${app.leasing.property.address.city || ''}, ${app.leasing.property.address.stateRegion || ''}`
                 .replace(/^, |, $/g, '').replace(/, ,/g, ',')
-              : app.propertyAddress || "Address not available";
+              : "Address not available";
 
             return {
-              id: app.id,
+              id: String(app.id),
               name: applicantName,
               phone: applicantPhone,
               status: normalizeStatus(app.status), // Normalized status
               appliedDate: app.createdAt ? app.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
               address: propertyAddress,
-              propertyId: app.propertyId
+              propertyId: app.leasing?.property?.id,
+              imageUrl: app.imageUrl || null
             };
           });
 
-          setApplications(prev => {
-            // Keep all local applications (drafts and local submissions)
-            // Filter out any local apps that are already returned by the API (matching by ID)
-            const apiIds = new Set(apiApps.map(a => String(a.id)));
-            const uniqueLocal = prev.filter(app => !apiIds.has(String(app.id)));
-
-            return [...uniqueLocal, ...apiApps];
-          });
+          // Set only backend applications, no local storage merging
+          setApplications(apiApps);
+        } else if (response.status === 401) {
+          // User not authenticated - no applications
+          setApplications([]);
         }
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') return;
         console.error("Failed to fetch applications:", error);
+        setApplications([]);
       }
     };
 
@@ -421,14 +304,14 @@ const Applications: React.FC = () => {
         <DeleteConfirmationModal
           isOpen={deleteModalState.isOpen}
           onClose={() => setDeleteModalState({ ...deleteModalState, isOpen: false })}
-          onConfirm={() => {
+          onConfirm={async () => {
             try {
               if (deleteModalState.type === 'invitation' && deleteModalState.targetId) {
                 const invId = deleteModalState.targetId;
 
                 // Find property ID from the invitation to hide it persistently
                 const invitation = invitations.find(inv => inv.id === invId);
-                if (invitation) {
+                if (invitation && invitation.propertyId) {
                   const hiddenProps = JSON.parse(localStorage.getItem('hidden_invitation_properties') || '[]');
                   if (!hiddenProps.includes(invitation.propertyId)) {
                     hiddenProps.push(invitation.propertyId);
@@ -437,35 +320,37 @@ const Applications: React.FC = () => {
                 }
 
                 // Update UI immediately
-                setInvitations(prev => prev.filter(inv => inv.id !== invId));
+                setInvitations(prev => prev.filter(inv => String(inv.id) !== String(invId)));
               } else if (deleteModalState.type === 'application' && deleteModalState.targetId) {
                 const appId = deleteModalState.targetId;
 
-                // ⚠️ WARNING: This only deletes locally. API applications will reappear on refresh.
-                // TODO: Implement proper API deletion when backend endpoint is ready:
-                // if (typeof appId === 'number') {
-                //   await fetch(`${API_ENDPOINTS.APPLICATION.DELETE}/${appId}`, {
-                //     method: 'DELETE'
-                //   });
-                // }
+                // Delete from backend API
+                try {
+                  const deleteResponse = await fetch(API_ENDPOINTS.APPLICATION.DELETE(String(appId)), {
+                    method: 'DELETE',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                  });
 
-                setApplications(prev => prev.filter(app => app.id !== appId));
-
-                // Update local storage with error handling
-                const stored = localStorage.getItem('user_applications');
-                const localApps = stored ? JSON.parse(stored) : [];
-                const updatedLocalApps = localApps.filter((app: any) => app.id !== appId);
-                localStorage.setItem('user_applications', JSON.stringify(updatedLocalApps));
-
-                // If it's a draft, clear the full data too
-                if (typeof appId === 'string' && appId.startsWith('draft_')) {
-                  localStorage.removeItem(`application_draft_data_${appId}`);
+                  if (deleteResponse.ok) {
+                    // Remove from state only after successful API deletion
+                    setApplications(prev => prev.filter(app => String(app.id) !== String(appId)));
+                  } else {
+                    const errorData = await deleteResponse.json().catch(() => ({ message: 'Failed to delete application' }));
+                    setErrorToast(errorData.message || 'Failed to delete application. Please try again.');
+                    setTimeout(() => setErrorToast(null), 5000);
+                  }
+                } catch (error) {
+                  console.error('Failed to delete application:', error);
+                  setErrorToast('Failed to delete application. Please try again.');
+                  setTimeout(() => setErrorToast(null), 5000);
                 }
               }
             } catch (error) {
-              console.error('Failed to update local storage:', error);
-              setErrorToast('Failed to save changes. Your browser storage might be full or restricted.');
-              // Auto-dismiss after 5 seconds
+              console.error('Failed to process deletion:', error);
+              setErrorToast('Failed to process deletion. Please try again.');
               setTimeout(() => setErrorToast(null), 5000);
             } finally {
               setDeleteModalState(prev => ({ ...prev, isOpen: false }));
@@ -483,10 +368,10 @@ const Applications: React.FC = () => {
         {/* Application List */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {applications.map((app) => (
-            <ApplicationCard
+            <UserApplicationCard
               key={app.id}
               app={app}
-              onDelete={(id) => setDeleteModalState({ isOpen: true, type: 'application', targetId: id })}
+              onDelete={(id) => setDeleteModalState({ isOpen: true, type: 'application', targetId: String(id) })}
               onNavigate={() => navigate(
                 app.status === "Draft" ? "/userdashboard/new-application" : `/userdashboard/applications/${app.id}`,
                 {
@@ -495,6 +380,7 @@ const Applications: React.FC = () => {
               )}
             />
           ))}
+
           {
             applications.length === 0 && (
               <div className="col-span-full w-full py-20 flex flex-col items-center justify-center text-gray-400">

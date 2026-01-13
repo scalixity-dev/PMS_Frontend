@@ -1,8 +1,6 @@
-// src/components/userdashboard/UserDashboardSidebar.tsx
-
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, Fragment } from 'react';
 import { createPortal } from 'react-dom';
-import { SquarePen, ChevronLeft, ChevronRight, ListPlus } from "lucide-react";
+import { SquarePen, ChevronLeft, ChevronRight, ListPlus, X } from "lucide-react";
 import PrimaryActionButton from '../common/buttons/PrimaryActionButton';
 import {
     PiChartLineUpFill,
@@ -14,7 +12,8 @@ import {
     PiCloudArrowDownFill,
     PiClipboardTextFill
 } from "react-icons/pi";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, NavLink } from "react-router-dom";
+import { Dialog, Transition } from '@headlessui/react';
 import artworkImage from "../../assets/images/Artwork.png";
 
 const SidebarContext = React.createContext<{ collapsed: boolean }>({ collapsed: false });
@@ -63,19 +62,28 @@ function SidebarLink({ label, to, icon, isCurrentPath, onClick, linkRef }: Sideb
     }
 
     return (
-        <Link
+        <NavLink
             to={to!}
-            className={commonClasses}
+            end
+            className={({ isActive }) =>
+                `flex items-center px-3 py-2.5 rounded-md transition-colors cursor-pointer
+                ${isActive ? "bg-gray-100 font-semibold text-black" : "text-gray-700 hover:bg-gray-100 group"}
+                ${collapsed ? "justify-center" : "justify-start"}`
+            }
         >
-            <span className={`${isActive ? "text-green-600" : "text-black group-hover:text-black"} ${collapsed ? "" : "mr-3"}`}>
-                {icon}
-            </span>
-            {!collapsed && (
-                <span className={`${isActive ? "text-green-600" : "text-black group-hover:text-black"} text-sm font-medium`}>
-                    {label}
-                </span>
+            {({ isActive }) => (
+                <>
+                    <span className={`${isActive ? "text-green-600" : "text-black group-hover:text-black"} ${collapsed ? "" : "mr-3"}`}>
+                        {icon}
+                    </span>
+                    {!collapsed && (
+                        <span className={`${isActive ? "text-green-600" : "text-black group-hover:text-black"} text-sm font-medium`}>
+                            {label}
+                        </span>
+                    )}
+                </>
             )}
-        </Link>
+        </NavLink>
     );
 }
 
@@ -100,7 +108,6 @@ const DownloadPopup: React.FC<DownloadPopupProps> = ({ isOpen, onClose, position
         >
             <div className="p-4 border-b border-gray-100 flex justify-between items-center">
                 <h3 className="text-base font-bold text-[#111827]">Downloads</h3>
-
             </div>
             <div className="p-8 flex flex-col items-center justify-center text-center space-y-4 min-h-[250px]">
                 <div className="mb-2 p-4 bg-gray-50 rounded-full">
@@ -125,12 +132,16 @@ const DownloadPopup: React.FC<DownloadPopupProps> = ({ isOpen, onClose, position
     );
 };
 
-export default function UserDashboardSidebar({ open, setOpen, collapsed, setCollapsed }: SidebarProps) {
+function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobileDrawer }: {
+    collapsed: boolean;
+    setCollapsed?: (collapsed: boolean) => void;
+    isMobile?: boolean;
+    closeMobileDrawer?: () => void;
+}) {
     const location = useLocation();
     const navigate = useNavigate();
     const [isCreateNewOpen, setIsCreateNewOpen] = useState(false);
     const [isDownloadPopupOpen, setIsDownloadPopupOpen] = useState(false);
-
     const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
     const [downloadPopupPosition, setDownloadPopupPosition] = useState({ top: 0, left: 0 });
 
@@ -142,10 +153,17 @@ export default function UserDashboardSidebar({ open, setOpen, collapsed, setColl
     const toggleCreateNew = () => {
         if (!isCreateNewOpen && createNewRef.current) {
             const rect = createNewRef.current.getBoundingClientRect();
-            setMenuPosition({
-                top: rect.top + 14,
-                left: rect.right + 10
-            });
+            if (isMobile) {
+                setMenuPosition({
+                    top: rect.bottom + 5,
+                    left: rect.left
+                });
+            } else {
+                setMenuPosition({
+                    top: rect.top + 14,
+                    left: rect.right + 10
+                });
+            }
             setIsDownloadPopupOpen(false);
         }
         setIsCreateNewOpen(!isCreateNewOpen);
@@ -154,35 +172,24 @@ export default function UserDashboardSidebar({ open, setOpen, collapsed, setColl
     const toggleDownloads = () => {
         if (!isDownloadPopupOpen && downloadButtonRef.current) {
             const rect = downloadButtonRef.current.getBoundingClientRect();
+            const offset = isMobile ? 220 : 150;
+            const top = Math.max(10, rect.top - offset);
             setDownloadPopupPosition({
-                top: rect.top - 150,
-                left: rect.right + 15
+                top: top,
+                left: isMobile ? 20 : rect.right + 15
             });
             setIsCreateNewOpen(false);
         }
         setIsDownloadPopupOpen(!isDownloadPopupOpen);
     }
 
-
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             const target = event.target as Node;
-
-            if (
-                createNewRef.current &&
-                !createNewRef.current.contains(target) &&
-                menuRef.current &&
-                !menuRef.current.contains(target)
-            ) {
+            if (createNewRef.current && !createNewRef.current.contains(target) && menuRef.current && !menuRef.current.contains(target)) {
                 setIsCreateNewOpen(false);
             }
-
-            if (
-                downloadButtonRef.current &&
-                !downloadButtonRef.current.contains(target) &&
-                downloadPopupRef.current &&
-                !downloadPopupRef.current.contains(target)
-            ) {
+            if (downloadButtonRef.current && !downloadButtonRef.current.contains(target) && downloadPopupRef.current && !downloadPopupRef.current.contains(target)) {
                 setIsDownloadPopupOpen(false);
             }
         };
@@ -191,15 +198,17 @@ export default function UserDashboardSidebar({ open, setOpen, collapsed, setColl
             if (isCreateNewOpen && createNewRef.current) {
                 const rect = createNewRef.current.getBoundingClientRect();
                 setMenuPosition({
-                    top: rect.top + 20,
-                    left: rect.right + 10
+                    top: isMobile ? rect.bottom + 5 : rect.top + 20,
+                    left: isMobile ? rect.left : rect.right + 10
                 });
             }
             if (isDownloadPopupOpen && downloadButtonRef.current) {
                 const rect = downloadButtonRef.current.getBoundingClientRect();
+                const offset = isMobile ? 220 : 150;
+                const top = Math.max(10, rect.top - offset);
                 setDownloadPopupPosition({
-                    top: rect.top - 150,
-                    left: rect.right + 15
+                    top: top,
+                    left: isMobile ? 20 : rect.right + 15
                 });
             }
         }
@@ -213,154 +222,155 @@ export default function UserDashboardSidebar({ open, setOpen, collapsed, setColl
             window.removeEventListener('scroll', handleScroll, true);
             window.removeEventListener('resize', handleScroll);
         };
-    }, [isCreateNewOpen, isDownloadPopupOpen]);
+    }, [isCreateNewOpen, isDownloadPopupOpen, isMobile]);
 
     const isCurrentPath = (path: string) => location.pathname === path;
 
+    const onNavigate = (path: string) => {
+        navigate(path);
+        if (isMobile && closeMobileDrawer) closeMobileDrawer();
+    }
+
     return (
         <SidebarContext.Provider value={{ collapsed }}>
-            {open && (
-                <div
-                    className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
-                    onClick={() => setOpen(false)}
-                />
-            )}
-            <aside
-                className={`fixed lg:static z-50 top-16 left-0 h-[calc(100vh-32px)] 
-        bg-white shadow-md transform lg:translate-x-0 transition-all duration-300 overflow-y-auto scrollbar-hide
-        ${open ? "translate-x-0" : "-translate-x-full"}
-        ${collapsed ? "w-20" : "w-55"}`}
-            >
-                <div className="relative h-full flex flex-col justify-between">
+            <div className="relative h-full flex flex-col justify-between">
+                {/* Desktop Collapse Toggle */}
+                {!isMobile && setCollapsed && (
                     <div className="flex justify-end px-3 pt-3">
                         <button
                             onClick={() => setCollapsed(!collapsed)}
                             className={`p-1.5 rounded-lg text-gray-400 hover:text-[#1BCB40] hover:bg-green-50 transition-all duration-200 ${collapsed ? 'mx-auto' : ''}`}
                         >
-                            {collapsed ? (
-                                <ChevronRight size={20} />
-                            ) : (
-                                <ChevronLeft size={20} />
-                            )}
+                            {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
                         </button>
                     </div>
-                    <div className="flex-grow">
-                        <div className={`relative pt-4 pb-2 transition-all ${collapsed ? 'px-2' : 'px-4'}`} ref={createNewRef}>
-                            <button
-                                onClick={toggleCreateNew}
-                                className={`bg-gradient-to-r from-[#1BCB40] to-[#7CD947] hover:opacity-95 text-white font-semibold flex items-center justify-center transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#1BCB40]/40 shadow-[0_20px_60px_rgba(27,203,64,0.32)] hover:shadow-[0_28px_90px_rgba(27,203,64,0.44)] overflow-hidden
+                )}
+
+                {/* Mobile Close Button */}
+                {isMobile && closeMobileDrawer && (
+                    <div className="flex justify-between items-center px-4 pt-4 pb-2">
+                        <span className="font-bold text-lg text-gray-800">Menu</span>
+                        <button
+                            onClick={closeMobileDrawer}
+                            className="p-2 -mr-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full"
+                        >
+                            <X size={20} />
+                        </button>
+                    </div>
+                )}
+
+                <div className="flex-grow">
+                    <div className={`relative pt-4 pb-2 transition-all ${collapsed ? 'px-2' : 'px-4'}`} ref={createNewRef}>
+                        <button
+                            onClick={toggleCreateNew}
+                            className={`bg-gradient-to-r from-[#1BCB40] to-[#7CD947] hover:opacity-95 text-white font-semibold flex items-center justify-center transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#1BCB40]/40 shadow-[0_20px_60px_rgba(27,203,64,0.32)] hover:shadow-[0_28px_90px_rgba(27,203,64,0.44)] overflow-hidden
                   ${collapsed ? 'w-12 h-12 rounded-xl mx-auto' : 'w-full py-3 px-4 rounded-lg'}`}
+                        >
+                            <div className={`flex items-center justify-center transition-all duration-300 ${collapsed ? '' : 'gap-2'}`}>
+                                <span className={`whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out ${collapsed ? 'max-w-0 opacity-0 w-0' : 'max-w-[150px] opacity-100 w-auto'}`}>
+                                    Create New
+                                </span>
+                                <SquarePen className={`text-white transition-all duration-300 ${collapsed ? 'w-6 h-6' : 'w-5 h-5'}`} />
+                            </div>
+                        </button>
+
+                        {isCreateNewOpen && createPortal(
+                            <div
+                                ref={menuRef}
+                                className="fixed w-56 bg-white rounded-lg shadow-xl border border-gray-100 z-[9999] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+                                style={{ top: menuPosition.top, left: menuPosition.left }}
                             >
-                                <div className={`flex items-center justify-center transition-all duration-300 ${collapsed ? '' : 'gap-2'}`}>
-                                    <span
-                                        className={`whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out ${collapsed ? 'max-w-0 opacity-0 w-0' : 'max-w-[150px] opacity-100 w-auto'
-                                            }`}
+                                <div className="flex flex-col py-1">
+                                    <button
+                                        onClick={() => onNavigate("/userdashboard/new-request")}
+                                        className="px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-green-600 border-b border-gray-100 transition-colors text-left"
                                     >
-                                        Create New
-                                    </span>
-                                    <SquarePen className={`text-white transition-all duration-300 ${collapsed ? 'w-6 h-6' : 'w-5 h-5'}`} />
+                                        New Request
+                                    </button>
                                 </div>
-                            </button>
+                            </div>,
+                            document.body
+                        )}
 
-                            {isCreateNewOpen && createPortal(
-                                <div
-                                    ref={menuRef}
-                                    className="fixed w-56 bg-white rounded-lg shadow-xl border border-gray-100 z-[9999] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
-                                    style={{ top: menuPosition.top, left: menuPosition.left }}
-                                >
-                                    <div className="flex flex-col py-1">
-                                        <button
-                                            onClick={() => {
-                                                navigate("/userdashboard/new-request");
-                                                setIsCreateNewOpen(false);
-                                            }}
-                                            className="px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-green-600 border-b border-gray-100 transition-colors text-left"
-                                        >
-                                            New Request
-                                        </button>
-                                    </div>
-                                </div>,
-                                document.body
-                            )}
-
-                            {!collapsed && (
-                                <div className="pointer-events-none absolute left-4 right-4 top-[64px] h-28">
-                                    <div className="w-full h-full rounded-xl bg-gradient-to-b from-[#1BCB40]/40 to-transparent filter blur-[20px] opacity-40" />
-                                </div>
-                            )}
-                        </div>
-
-                        <nav className="px-1 py-2 space-y-1">
-                            <SidebarLink
-                                label="Dashboard"
-                                to="/userdashboard"
-                                icon={<PiChartLineUpFill size={22} />}
-                                isCurrentPath={isCurrentPath}
-                            />
-                            <SidebarLink
-                                label="Rent"
-                                to="/userdashboard/rent"
-                                icon={<PiCurrencyDollarFill size={22} />}
-                                isCurrentPath={isCurrentPath}
-                            />
-                            <SidebarLink
-                                label="Requests"
-                                to="/userdashboard/requests"
-                                icon={<PiWrenchFill size={22} />}
-                                isCurrentPath={isCurrentPath}
-                            />
-                            <SidebarLink
-                                label="Utility Providers"
-                                to="/userdashboard/utility-providers"
-                                icon={<PiPlugsConnectedFill size={22} />}
-                                isCurrentPath={isCurrentPath}
-                            />
-                            <SidebarLink
-                                label="Properties"
-                                to="/userdashboard/properties"
-                                icon={<PiHouseLineFill size={22} />}
-                                isCurrentPath={isCurrentPath}
-                            />
-                            <SidebarLink
-                                label="Applications"
-                                to="/userdashboard/applications"
-                                icon={<PiClipboardTextFill size={22} />}
-                                isCurrentPath={isCurrentPath}
-                            />
-                            <SidebarLink
-                                label="File Manager"
-                                to="/userdashboard/file-manager"
-                                icon={<PiFolderSimpleFill size={22} />}
-                                isCurrentPath={isCurrentPath}
-                            />
-
-                            {/* Separator line */}
-                            <div className={`my-2 border-t border-gray-200 ${collapsed ? 'mx-2' : 'mx-3'}`} />
-
-                            <SidebarLink
-                                linkRef={downloadButtonRef}
-                                label="Downloads"
-                                onClick={toggleDownloads}
-                                icon={<PiCloudArrowDownFill size={22} />}
-                            />
-                        </nav>
+                        {!collapsed && (
+                            <div className="pointer-events-none absolute left-4 right-4 top-[64px] h-28">
+                                <div className="w-full h-full rounded-xl bg-gradient-to-b from-[#1BCB40]/40 to-transparent filter blur-[20px] opacity-40" />
+                            </div>
+                        )}
                     </div>
 
-                    <div className={`p-4 mt-auto transition-all duration-300 ${collapsed ? 'opacity-0 scale-0 h-0 p-0 overflow-hidden' : 'opacity-100'}`}>
-                        <img
-                            src={artworkImage}
-                            alt="Decorative artwork"
-                            className="mx-auto object-fill opacity-90 blur-[3px]"
-                        />
-                    </div>
+                    <nav className="px-1 py-2 space-y-1">
+                        <SidebarLink label="Dashboard" to="/userdashboard" icon={<PiChartLineUpFill size={22} />} isCurrentPath={isCurrentPath} onClick={isMobile ? () => onNavigate("/userdashboard") : undefined} />
+                        <SidebarLink label="Rent" to="/userdashboard/rent" icon={<PiCurrencyDollarFill size={22} />} isCurrentPath={isCurrentPath} onClick={isMobile ? () => onNavigate("/userdashboard/rent") : undefined} />
+                        <SidebarLink label="Requests" to="/userdashboard/requests" icon={<PiWrenchFill size={22} />} isCurrentPath={isCurrentPath} onClick={isMobile ? () => onNavigate("/userdashboard/requests") : undefined} />
+                        <SidebarLink label="Utility Providers" to="/userdashboard/utility-providers" icon={<PiPlugsConnectedFill size={22} />} isCurrentPath={isCurrentPath} onClick={isMobile ? () => onNavigate("/userdashboard/utility-providers") : undefined} />
+                        <SidebarLink label="Properties" to="/userdashboard/properties" icon={<PiHouseLineFill size={22} />} isCurrentPath={isCurrentPath} onClick={isMobile ? () => onNavigate("/userdashboard/properties") : undefined} />
+                        <SidebarLink label="Applications" to="/userdashboard/applications" icon={<PiClipboardTextFill size={22} />} isCurrentPath={isCurrentPath} onClick={isMobile ? () => onNavigate("/userdashboard/applications") : undefined} />
+                        <SidebarLink label="File Manager" to="/userdashboard/file-manager" icon={<PiFolderSimpleFill size={22} />} isCurrentPath={isCurrentPath} onClick={isMobile ? () => onNavigate("/userdashboard/file-manager") : undefined} />
+                        <div className={`my-2 border-t border-gray-200 ${collapsed ? 'mx-2' : 'mx-3'}`} />
+                        <SidebarLink linkRef={downloadButtonRef} label="Downloads" onClick={toggleDownloads} icon={<PiCloudArrowDownFill size={22} />} />
+                    </nav>
                 </div>
-            </aside >
-            <DownloadPopup
-                isOpen={isDownloadPopupOpen}
-                onClose={() => setIsDownloadPopupOpen(false)}
-                position={downloadPopupPosition}
-                popupRef={downloadPopupRef}
-            />
+
+                <div className={`p-4 mt-auto transition-all duration-300 ${collapsed ? 'opacity-0 scale-0 h-0 p-0 overflow-hidden' : 'opacity-100'}`}>
+                    <img src={artworkImage} alt="Decorative artwork" className="mx-auto object-fill opacity-90 blur-[3px]" />
+                </div>
+            </div>
+            <DownloadPopup isOpen={isDownloadPopupOpen} onClose={() => setIsDownloadPopupOpen(false)} position={downloadPopupPosition} popupRef={downloadPopupRef} />
         </SidebarContext.Provider>
+    );
+}
+
+export default function UserDashboardSidebar({ open, setOpen, collapsed, setCollapsed }: SidebarProps) {
+    return (
+        <>
+            {/* Desktop Sidebar */}
+            <aside
+                className={`hidden lg:block h-full
+        bg-white shadow-md transition-all duration-300 overflow-y-auto scrollbar-hide
+        ${collapsed ? "w-20" : "w-64"}`}
+            >
+                <SidebarContent collapsed={collapsed} setCollapsed={setCollapsed} />
+            </aside>
+
+            {/* Mobile Drawer */}
+            <Transition appear show={open} as={Fragment}>
+                <Dialog as="div" className="relative z-[60] lg:hidden" onClose={() => setOpen(false)}>
+                    <Transition.Child
+                        as={Fragment}
+                        enter="ease-out duration-300"
+                        enterFrom="opacity-0"
+                        enterTo="opacity-100"
+                        leave="ease-in duration-200"
+                        leaveFrom="opacity-100"
+                        leaveTo="opacity-0"
+                    >
+                        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" />
+                    </Transition.Child>
+
+                    <div className="fixed inset-0 overflow-y-auto">
+                        <div className="flex min-h-full h-full">
+                            <Transition.Child
+                                as={Fragment}
+                                enter="transform transition ease-in-out duration-300"
+                                enterFrom="-translate-x-full"
+                                enterTo="translate-x-0"
+                                leave="transform transition ease-in-out duration-300"
+                                leaveFrom="translate-x-0"
+                                leaveTo="-translate-x-full"
+                            >
+                                <Dialog.Panel className="relative w-full max-w-xs bg-white shadow-xl h-full flex flex-col overflow-y-auto">
+                                    <SidebarContent
+                                        collapsed={false}
+                                        isMobile={true}
+                                        closeMobileDrawer={() => setOpen(false)}
+                                    />
+                                </Dialog.Panel>
+                            </Transition.Child>
+                        </div>
+                    </div>
+                </Dialog>
+            </Transition>
+        </>
     );
 }

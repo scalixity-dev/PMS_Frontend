@@ -1,9 +1,10 @@
 import React, { useMemo, useEffect, useState, useRef } from 'react';
-import { Upload, Search, ChevronDown, Check } from 'lucide-react';
+import { Upload, Search, ChevronDown, Check, Loader2 } from 'lucide-react';
 import { Country } from 'country-state-city';
 import DatePicker from '@/components/ui/DatePicker';
 import PrimaryActionButton from '@/components/common/buttons/PrimaryActionButton';
 import ImageCropModal from '../../../../../Dashboard/features/Tenants/components/ImageCropModal';
+import { API_ENDPOINTS } from '@/config/api.config';
 
 interface FormData {
     firstName: string;
@@ -44,6 +45,8 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
     const [imageToCrop, setImageToCrop] = useState<string | null>(null);
     const [isPhoneCodeOpen, setIsPhoneCodeOpen] = useState(false);
     const [phoneCodeSearch, setPhoneCodeSearch] = useState('');
+    const [uploadingPhoto, setUploadingPhoto] = useState(false);
+    const [photoUrl, setPhotoUrl] = useState<string | null>(null);
 
     // Phone country codes
     const phoneCountryCodes = useMemo(() => {
@@ -84,14 +87,54 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
     }, []);
 
     useEffect(() => {
-        if (data.photo) {
-            const url = URL.createObjectURL(data.photo);
-            setPreviewUrl(url);
-            return () => URL.revokeObjectURL(url);
+        // Check if data.photo is a File or Blob object
+        const photo = data.photo;
+        if (photo !== null && photo !== undefined) {
+            // Type guard: check if it's a File or Blob using type assertion
+            const photoObj = photo as any;
+            if (photoObj instanceof File || photoObj instanceof Blob) {
+                const url = URL.createObjectURL(photoObj);
+                setPreviewUrl(url);
+                return () => URL.revokeObjectURL(url);
+            } else if (typeof photo === 'string') {
+                // If photo is already a URL string, use it directly
+                setPreviewUrl(photo);
+            }
+        } else if (photoUrl) {
+            setPreviewUrl(photoUrl);
         } else {
             setPreviewUrl(null);
         }
-    }, [data.photo]);
+    }, [data.photo, photoUrl]);
+
+    const uploadPhotoToBackend = async (file: File): Promise<string> => {
+        setUploadingPhoto(true);
+        try {
+            const formDataToSend = new FormData();
+            formDataToSend.append('file', file);
+
+            const response = await fetch(API_ENDPOINTS.UPLOAD.IMAGE, {
+                method: 'POST',
+                credentials: 'include',
+                body: formDataToSend,
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: 'Failed to upload photo' }));
+                throw new Error(errorData.message || 'Failed to upload photo');
+            }
+
+            const data = await response.json();
+            const uploadedUrl = data.url;
+            setPhotoUrl(uploadedUrl);
+            return uploadedUrl;
+        } catch (error) {
+            console.error('Photo upload error:', error);
+            throw error;
+        } finally {
+            setUploadingPhoto(false);
+        }
+    };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -129,10 +172,18 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
         }
     };
 
-    const handleCropComplete = (croppedImageUrl: string, croppedFile: File) => {
+    const handleCropComplete = async (croppedImageUrl: string, croppedFile: File) => {
         onChange('photo', croppedFile);
         setPreviewUrl(croppedImageUrl);
         setImageToCrop(null);
+        
+        // Upload photo to backend asynchronously
+        try {
+            await uploadPhotoToBackend(croppedFile);
+        } catch (error) {
+            console.error('Failed to upload photo:', error);
+            // Don't block user from continuing, photo upload is optional
+        }
     };
 
     const validateField = (key: keyof FormData, value: FormData[keyof FormData]): string => {
@@ -158,7 +209,18 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
             }
         }
         if (key === 'dob' && !value) return 'Date of birth is required';
-        if (key === 'moveInDate' && !value) return 'Preferred move in date is required';
+        if (key === 'moveInDate') {
+            if (!value) return 'Preferred move in date is required';
+            if (value instanceof Date) {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
+                const selectedDate = new Date(value);
+                selectedDate.setHours(0, 0, 0, 0);
+                if (selectedDate < today) {
+                    return 'Preferred move-in date cannot be in the past';
+                }
+            }
+        }
         return '';
     };
 
@@ -201,10 +263,12 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                 <div className="md:col-span-3 flex flex-col items-center">
                     <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
                     <div
-                        onClick={() => fileInputRef.current?.click()}
-                        className="w-32 h-32 rounded-full border-2 border-dashed border-[#E5E7EB] flex items-center justify-center cursor-pointer hover:border-[#7ED957] transition-all overflow-hidden relative group bg-gray-50"
+                        onClick={() => !uploadingPhoto && fileInputRef.current?.click()}
+                        className={`w-32 h-32 rounded-full border-2 border-dashed border-[#E5E7EB] flex items-center justify-center transition-all overflow-hidden relative group bg-gray-50 ${uploadingPhoto ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:border-[#7ED957]'}`}
                     >
-                        {previewUrl ? (
+                        {uploadingPhoto ? (
+                            <Loader2 className="w-6 h-6 text-[#7ED957] animate-spin" />
+                        ) : previewUrl ? (
                             <img src={previewUrl} alt="Profile" className="w-full h-full object-cover" />
                         ) : (
                             <div className="flex flex-col items-center text-[#ADADAD]">
@@ -212,11 +276,14 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                                 <span className="text-[10px] mt-2 font-medium">Upload Photo</span>
                             </div>
                         )}
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <Upload size={20} className="text-white" />
-                        </div>
+                        {!uploadingPhoto && (
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <Upload size={20} className="text-white" />
+                            </div>
+                        )}
                     </div>
                     {errors.photo && <span className="text-red-500 text-[10px] font-medium mt-2 text-center">{errors.photo}</span>}
+                    {uploadingPhoto && <span className="text-[#7ED957] text-[10px] font-medium mt-2 text-center">Uploading...</span>}
                 </div>
 
                 {/* Form Fields Section */}
@@ -356,7 +423,9 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                             onChange={(date) => handleFieldChange('moveInDate', date)}
                             placeholder="Select Date"
                             className={inputClass('moveInDate')}
+                            minDate={new Date()} // Prevent selecting past dates
                         />
+                        {touched.moveInDate && errors.moveInDate && <span className="text-red-500 text-[11px] font-medium">{errors.moveInDate}</span>}
                     </div>
 
                     <div className="col-span-full space-y-1.5">

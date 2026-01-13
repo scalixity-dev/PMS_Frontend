@@ -1,114 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, ChevronDown, SquarePen, Plus, Pencil, Clock, FileText, Edit, Trash2, XCircle, RefreshCw } from 'lucide-react';
+import { ChevronLeft, FileText, ChevronDown, SquarePen, Upload, Edit, Trash2, XCircle, Loader2, RefreshCw, CheckCircle } from 'lucide-react';
 import DetailTabs from '../../components/DetailTabs';
 import CustomTextBox from '../../components/CustomTextBox';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import EditLeaseTermsModal, { type Lease } from './components/EditLeaseTermsModal';
-import ResponsibilityModal, { type ResponsibilityItem } from '../../features/Properties/components/ResponsibilityModal';
-import AddInsuranceModal from '../../features/Properties/components/AddInsuranceModal';
-import FinancialCard, { type FinancialRecord } from './components/FinancialCard';
-import PropertyAttachmentsModal from './components/PropertyAttachmentsModal';
-import AddEditRecurringRentModal from './components/AddEditRecurringRentModal';
-import RentScheduleModal from './components/RentScheduleModal';
-import EditExtraFeesModal from './components/EditExtraFeesModal';
+import { useGetLease, useDeleteLease, useUpdateLease } from '../../../../hooks/useLeaseQueries';
+import type { BackendLease } from '../../../../services/lease.service';
 
-
-
-export interface Tenant {
-    name: string;
-    email?: string;
-    image?: string;
-    description?: string;
-    amount?: number;
-}
-
-export interface RecurringTransaction {
-    id: number;
-    isEnabled: boolean;
-    frequency: string;
-    dueDay: string;
-    tenants: { name: string; amount: number }[];
-    totalAmount: number;
-    category?: string;
-    subcategory?: string;
-    firstInvoiceDate?: Date;
-}
-
-// Mock Data for the view
-export const MOCK_LEASE_DETAIL: Lease = {
-    id: 5,
-    property: {
-        name: 'Luxury Apartment',
-        id: 101,
-        address: '7819 Some Rd, 7819, Indore, MP 452001, IN',
-        image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&q=80&w=400&h=300',
-        startDate: '25-Nov-2025',
-        endDate: '25-Nov-2026'
-    },
-    lease: 'Lease 5', // Added to satisfy Lease interface
-    agreements: {
-        requested: 'No'
-    },
-    notices: {
-        requested: 'No'
-    },
-    tenants: [
-        {
-            name: 'Anil',
-            email: 'Anilyas45754@gmail.com',
-            image: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200',
-            description: 'Tenant has been residing for 2 years. Always pays rent on time. No pets. Works at Tech Corp.'
-        },
-        {
-            name: 'Sarah Smith',
-            email: 'sarah.smith@example.com',
-            image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200',
-            description: 'Joined recently. Works remotely.'
-        }
-    ],
-    extraFees: {
-        label: 'One time',
-        amount: '₹5,856.00 Fixed amount'
-    },
-    recurringRent: [
-        {
-            status: 'Active',
-            firstInvoice: '08-Dec-2025',
-            category: 'Rent',
-            totalSchedule: '₹ 50,000 /M',
-            nextInvoice: '08-Jan-2026'
-        }
-    ]
-};
-
-interface PropertyDetails {
-    name: string;
-    image?: string;
-    address?: string;
-    id?: string | number;
-    startDate?: string;
-    endDate?: string;
-}
-
-const isPropertyObject = (property: Lease['property']): property is PropertyDetails => {
-    return typeof property === 'object' && property !== null;
-};
-
-interface InsuranceData {
-    id: number;
-    companyName: string;
-    companyWebsite: string;
-    agentName: string;
-    agentEmail: string;
-    agentPhone: string;
-    policyNumber: string;
-    price: string;
-    effectiveDate: string;
-    expirationDate: string;
-    details: string;
-    emailNotification: boolean;
-}
 
 const LeaseDetail: React.FC = () => {
     const navigate = useNavigate();
@@ -118,153 +17,162 @@ const LeaseDetail: React.FC = () => {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isEndLeaseModalOpen, setIsEndLeaseModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [isResponsibilityModalOpen, setIsResponsibilityModalOpen] = useState(false);
-    const [responsibilities, setResponsibilities] = useState<ResponsibilityItem[]>([]);
-    const [isAddInsuranceModalOpen, setIsAddInsuranceModalOpen] = useState(false);
-    const [editingInsuranceId, setEditingInsuranceId] = useState<number | null>(null);
-    const [isDeleteInsuranceModalOpen, setIsDeleteInsuranceModalOpen] = useState(false);
-    const [insuranceToDelete, setInsuranceToDelete] = useState<number | null>(null);
-    const [isPropertyAttachmentsModalOpen, setIsPropertyAttachmentsModalOpen] = useState(false);
-    const [attachments, setAttachments] = useState<{ shared: File[], private: File[] }>({ shared: [], private: [] });
-    const [isDeleteAttachmentModalOpen, setIsDeleteAttachmentModalOpen] = useState(false);
-    const [attachmentToDelete, setAttachmentToDelete] = useState<{ index: number, type: 'shared' | 'private' } | null>(null);
-
-    const [isAddEditRecurringRentModalOpen, setIsAddEditRecurringRentModalOpen] = useState(false);
-    const [recurringRentModalMode, setRecurringRentModalMode] = useState<'add' | 'edit'>('add');
-    const [recurringRentToEdit, setRecurringRentToEdit] = useState<any>(null);
-    const [recurringTransactions, setRecurringTransactions] = useState<RecurringTransaction[]>([]);
-    const [lease, setLease] = useState<Lease>(MOCK_LEASE_DETAIL);
-    const [isDeleteTransactionModalOpen, setIsDeleteTransactionModalOpen] = useState(false);
-    const [transactionToDelete, setTransactionToDelete] = useState<RecurringTransaction | null>(null);
-
-    const handleSaveRecurringTransaction = (data: any) => {
-        const newTransaction: RecurringTransaction = {
-            id: Date.now(),
-            ...data
-        };
-        // In a real app, you would make an API call here.
-        // For 'edit' mode, you would update the existing transaction.
-        // For now, we'll just add/update state.
-        if (recurringRentModalMode === 'edit' && recurringRentToEdit) {
-            // Mock update logic if needed, or just add for now as the requirement implies adding. 
-            // But let's be safe and check if we are editing an existing one from the list?
-            // The current Edit flow (from top section) seems to mock editing global lease properties.
-            // The new "Other recurring transactions" are dynamic. 
-            // Let's assume for this specific task of "adding", we just append.
-            // If the user edits an item from the NEW list, we'd need more logic. 
-            // But the request is "when we add... it should be displayed".
-            setRecurringTransactions([...recurringTransactions, newTransaction]);
-        } else {
-            setRecurringTransactions([...recurringTransactions, newTransaction]);
-        }
-        setIsAddEditRecurringRentModalOpen(false);
-    };
-
-    const handleDeleteTransaction = () => {
-        if (transactionToDelete) {
-            setRecurringTransactions(prev => prev.filter(t => t.id !== transactionToDelete.id));
-            setIsDeleteTransactionModalOpen(false);
-            setTransactionToDelete(null);
-        }
-    };
-
-    const [isRentScheduleModalOpen, setIsRentScheduleModalOpen] = useState(false);
-
-    const [isEditExtraFeesModalOpen, setIsEditExtraFeesModalOpen] = useState(false);
-    const handleSaveExtraFees = (data: any) => {
-        setLease(prev => ({
-            ...prev,
-            extraFees: {
-                ...prev.extraFees, // Keep existing fields if any, though we'll likely overwrite main ones
-                ...data,
-                isConfigured: true
-            }
-        }));
-        setIsEditExtraFeesModalOpen(false);
-    };
-
-    const [insurances, setInsurances] = useState<InsuranceData[]>([
-        {
-            id: 1,
-            companyName: 'jay',
-            companyWebsite: 'www.jay343@gmail.com',
-            agentName: 'vedh',
-            agentEmail: 'afsaft@gmail.com',
-            agentPhone: '+91 78541 23698',
-            policyNumber: '12563',
-            price: '1555.00',
-            effectiveDate: '27 Nov, 2025',
-            expirationDate: '30 Nov, 2025',
-            details: '',
-            emailNotification: false
-        }
-    ]);
-
-    const handleSaveInsurance = (data: {
-        companyName: string;
-        companyWebsite: string;
-        agentName: string;
-        agentEmail: string;
-        agentPhone: string;
-        policyNumber: string;
-        price: string;
-        effectiveDate: string;
-        expirationDate: string;
-        details: string;
-        emailNotification: boolean;
-    }) => {
-        if (editingInsuranceId) {
-            // Update existing
-            setInsurances(insurances.map(item =>
-                item.id === editingInsuranceId ? { ...item, ...data } : item
-            ));
-            setEditingInsuranceId(null);
-        } else {
-            // Create new
-            const newRecord: InsuranceData = {
-                id: Date.now(),
-                ...data
-            };
-            setInsurances([...insurances, newRecord]);
-        }
-        setIsAddInsuranceModalOpen(false);
-    };
-
-    const handleEditInsurance = (id: number) => {
-        setEditingInsuranceId(id);
-        setIsAddInsuranceModalOpen(true);
-    };
-
-    const handleDeleteInsurance = () => {
-        if (insuranceToDelete) {
-            setInsurances(insurances.filter(item => item.id !== insuranceToDelete));
-            setIsDeleteInsuranceModalOpen(false);
-            setInsuranceToDelete(null);
-        }
-    };
-
-    // Helper to map InsuranceData to FinancialRecord for display
-    const mapInsuranceToRecord = (data: InsuranceData): FinancialRecord => {
-        return {
-            id: data.id,
-            headerPills: [
-                { label: 'Effective date', value: data.effectiveDate || '-' },
-                { label: 'Expiration date', value: data.expirationDate || '-' },
-                { label: 'Price', value: data.price ? `₹${data.price} ` : '-' },
-            ],
-            details: [
-                { label: 'Company name', value: data.companyName },
-                { label: 'Email notification due to expiration', value: data.emailNotification ? 'Yes' : 'No' },
-                { label: 'Phone number', value: data.agentPhone || '-' },
-                { label: 'Website', value: data.companyWebsite },
-                { label: 'Policy', value: data.policyNumber || '-' },
-                { label: 'Details', value: data.details || '-' },
-                { label: 'Agent', value: data.agentName || '-' },
-                { label: 'Email', value: data.agentEmail || '-' },
-            ]
-        };
-    };
+    const [tenantImageError, setTenantImageError] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Fetch lease data
+    const { data: backendLease, isLoading, error } = useGetLease(id);
+    const deleteLeaseMutation = useDeleteLease();
+    const updateLeaseMutation = useUpdateLease();
+
+    // Helper function to generate initials from name
+    const getInitials = (name: string): string => {
+        if (!name) return '??';
+        const parts = name.trim().split(/\s+/);
+        if (parts.length === 1) {
+            return parts[0].substring(0, 2).toUpperCase();
+        }
+        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    };
+
+    // Transform backend lease to frontend format
+    const transformLease = (lease: BackendLease): Lease => {
+        const formatDate = (dateString: string | null | undefined): string => {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        };
+
+        const formatCurrency = (amount: string | number | null | undefined): string => {
+            if (!amount) return '₹0.00';
+            const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+            if (isNaN(numAmount)) return '₹0.00';
+            return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(numAmount);
+        };
+
+        // Format address
+        const address = lease.property?.address
+            ? `${lease.property.address.streetAddress}, ${lease.property.address.city}, ${lease.property.address.stateRegion} ${lease.property.address.zipCode}, ${lease.property.address.country}`
+            : '';
+
+        // Get property image - prefer primary photo, then coverPhotoUrl, then fallback
+        const propertyImage = lease.property?.photos?.[0]?.photoUrl 
+            || lease.property?.coverPhotoUrl 
+            || 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&q=80&w=400&h=300';
+
+        // Get tenant image - use profilePhotoUrl from tenantProfile, or null if not available
+        const tenantImage = lease.tenant?.tenantProfile?.profilePhotoUrl || null;
+        const tenantName = lease.tenant?.fullName || 'Unknown Tenant';
+        const tenantInitials = getInitials(tenantName);
+
+        // Get lease number from ID (last 4 characters)
+        const leaseNumber = lease.id.slice(-4);
+
+        // Map status
+        const statusMap: Record<string, string> = {
+            'ACTIVE': 'Active',
+            'PENDING': 'Pending',
+            'EXPIRED': 'Expired',
+            'TERMINATED': 'Terminated',
+            'CANCELLED': 'Cancelled',
+        };
+
+        // Transform recurring rent
+        const recurringRentArray = lease.recurringRent && lease.recurringRent.enabled
+            ? [{
+                status: lease.status === 'ACTIVE' ? 'Active' : statusMap[lease.status] || 'Pending',
+                firstInvoice: formatDate(lease.recurringRent.startOn),
+                category: 'Rent',
+                totalSchedule: `${formatCurrency(lease.recurringRent.amount)} /${getScheduleAbbreviation(lease.recurringRent.invoiceSchedule)}`,
+                nextInvoice: lease.recurringRent.endOn ? formatDate(lease.recurringRent.endOn) : '--'
+            }]
+            : [];
+
+        // Transform late fees
+        const extraFees = lease.lateFees && lease.lateFees.enabled
+            ? {
+                label: lease.lateFees.scheduleType === 'one-time' ? 'One time' : lease.lateFees.scheduleType === 'daily' ? 'Daily' : 'Both',
+                amount: lease.lateFees.oneTimeFeeAmount
+                    ? `${formatCurrency(lease.lateFees.oneTimeFeeAmount)} ${lease.lateFees.oneTimeFeeType === 'fixed' ? 'Fixed amount' : lease.lateFees.oneTimeFeeType === 'outstanding' ? 'Outstanding' : 'Recurring'}`
+                    : lease.lateFees.dailyFeeAmount
+                    ? `${formatCurrency(lease.lateFees.dailyFeeAmount)} Daily fee`
+                    : 'No late fees configured'
+            }
+            : {
+                label: 'One time',
+                amount: 'No late fees'
+            };
+
+        return {
+            id: lease.id,
+            property: {
+                name: lease.property?.propertyName || 'Unknown Property',
+                id: lease.propertyId,
+                address: address,
+                image: propertyImage,
+                startDate: formatDate(lease.startDate),
+                endDate: formatDate(lease.endDate || undefined)
+            },
+            lease: `Lease ${leaseNumber}`,
+            agreements: {
+                requested: 'No' // TODO: Add agreements tracking
+            },
+            notices: {
+                requested: 'No' // TODO: Add notices tracking
+            },
+            tenant: {
+                name: tenantName,
+                email: lease.tenant?.email || '',
+                image: tenantImage,
+                initials: tenantInitials,
+                description: `Tenant ID: ${lease.tenantId}${lease.tenant?.phoneNumber ? ` | Phone: ${lease.tenant.phoneNumber}` : ''}`
+            },
+            extraFees,
+            recurringRent: recurringRentArray,
+            startDate: lease.startDate,
+            endDate: lease.endDate || undefined,
+            rentAmount: lease.recurringRent?.amount ? parseFloat(lease.recurringRent.amount) : undefined,
+            tenantId: lease.tenantId,
+            termNotes: lease.notes || undefined
+        };
+    };
+
+    // Helper function to get schedule abbreviation
+    const getScheduleAbbreviation = (schedule: string): string => {
+        const scheduleMap: Record<string, string> = {
+            'DAILY': 'D',
+            'WEEKLY': 'W',
+            'EVERY_TWO_WEEKS': '2W',
+            'EVERY_FOUR_WEEKS': '4W',
+            'MONTHLY': 'M',
+            'EVERY_TWO_MONTHS': '2M',
+            'QUARTERLY': 'Q',
+            'YEARLY': 'Y'
+        };
+        return scheduleMap[schedule] || 'M';
+    };
+
+    // Transform lease data
+    const lease = useMemo(() => {
+        if (!backendLease) return null;
+        const transformed = transformLease(backendLease);
+        // Reset image error state when lease data changes
+        setTenantImageError(false);
+        return transformed;
+    }, [backendLease]);
+
+    // Check if move-in is incomplete (lease status is PENDING)
+    const isMoveInIncomplete = useMemo(() => {
+        return backendLease?.status === 'PENDING';
+    }, [backendLease]);
+
+    // Check if lease is active and can be renewed
+    const canRenew = useMemo(() => {
+        return backendLease?.status === 'ACTIVE' || backendLease?.status === 'EXPIRED';
+    }, [backendLease]);
+
+    const propertyData = lease?.property;
+    const propertyDetails = propertyData && typeof propertyData === 'object' ? propertyData : null;
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -283,45 +191,63 @@ const LeaseDetail: React.FC = () => {
         };
     }, [isActionDropdownOpen]);
 
-    const handleDeleteAttachment = () => {
-        if (attachmentToDelete) {
-            setAttachments(prev => {
-                const newAttachments = { ...prev };
-                if (attachmentToDelete.type === 'shared') {
-                    newAttachments.shared = prev.shared.filter((_, i) => i !== attachmentToDelete.index);
-                } else {
-                    newAttachments.private = prev.private.filter((_, i) => i !== attachmentToDelete.index);
-                }
-                return newAttachments;
-            });
-            setIsDeleteAttachmentModalOpen(false);
-            setAttachmentToDelete(null);
+    const handleDeleteLease = async () => {
+        if (!id) return;
+        
+        try {
+            await deleteLeaseMutation.mutateAsync(id);
+            setIsDeleteModalOpen(false);
+            navigate('/dashboard/portfolio/leases');
+        } catch (error) {
+            console.error('Failed to delete lease:', error);
+            alert(error instanceof Error ? error.message : 'Failed to delete lease. Please try again.');
         }
     };
 
-    const handleDeleteLease = () => {
-        // In a real app, make API call here
-        console.log('Deleting lease', id);
-        setIsDeleteModalOpen(false);
-        navigate('/dashboard/portfolio/leases'); // Navigate back to list
+    const handleEndLease = async () => {
+        if (!id) return;
+        
+        try {
+            await updateLeaseMutation.mutateAsync({
+                id,
+                data: {
+                    status: 'TERMINATED' as const,
+                    endDate: new Date().toISOString(),
+                },
+            });
+            setIsEndLeaseModalOpen(false);
+        } catch (error) {
+            console.error('Failed to end lease:', error);
+            alert(error instanceof Error ? error.message : 'Failed to end lease. Please try again.');
+        }
     };
 
-    const handleEndLease = () => {
-        // In a real app, make API call here
-        console.log('Ending lease', id);
-        setIsEndLeaseModalOpen(false);
+    const handleUpdateLease = async (data: Lease) => {
+        if (!id) return;
+        
+        try {
+            await updateLeaseMutation.mutateAsync({
+                id,
+                data: {
+                    startDate: data.startDate instanceof Date 
+                        ? data.startDate.toISOString() 
+                        : typeof data.startDate === 'string' 
+                        ? data.startDate 
+                        : undefined,
+                    endDate: data.endDate instanceof Date 
+                        ? data.endDate.toISOString() 
+                        : typeof data.endDate === 'string' 
+                        ? data.endDate 
+                        : undefined,
+                    notes: data.termNotes,
+                },
+            });
+            setIsEditModalOpen(false);
+        } catch (error) {
+            console.error('Failed to update lease:', error);
+            alert(error instanceof Error ? error.message : 'Failed to update lease. Please try again.');
+        }
     };
-
-    const handleUpdateLease = (data: Lease) => {
-        console.log('Updating lease data:', data);
-        // API call to update lease
-        setIsEditModalOpen(false);
-    };
-
-    // In a real app, use 'id' to fetch data
-    // Lease data is now in state 'lease'
-    const propertyData = lease.property;
-    const propertyDetails = isPropertyObject(propertyData) ? propertyData : null;
 
     const tabs = [
         { id: 'tenants', label: 'Tenants' },
@@ -331,6 +257,37 @@ const LeaseDetail: React.FC = () => {
         { id: 'utilities', label: 'Utilities' }
     ];
 
+    // Loading state
+    if (isLoading) {
+        return (
+            <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-10 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="w-8 h-8 animate-spin text-[#3A6D6C]" />
+                    <p className="text-gray-600">Loading lease details...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Error state
+    if (error || !lease) {
+        return (
+            <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-10">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                    <p className="text-red-800 text-sm">
+                        {error instanceof Error ? error.message : 'Failed to load lease details. Please try again.'}
+                    </p>
+                    <button
+                        onClick={() => navigate('/dashboard/portfolio/leases')}
+                        className="mt-4 text-red-600 hover:text-red-800 underline text-sm"
+                    >
+                        Back to Leases
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-10">
             {/* Breadcrumb */}
@@ -339,7 +296,7 @@ const LeaseDetail: React.FC = () => {
                 <span className="text-gray-500 text-sm mx-1">/</span>
                 <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard/portfolio/leases')}>Leases</span>
                 <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">{id}</span>
+                <span className="text-gray-600 text-sm font-semibold">{lease.lease}</span>
             </div>
 
             <div className="p-4 sm:p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem]">
@@ -349,9 +306,44 @@ const LeaseDetail: React.FC = () => {
                         <button onClick={() => navigate(-1)} className="p-2 hover:text-gray-600 transition-colors">
                             <ChevronLeft className="w-6 h-6 text-gray-800" />
                         </button>
-                        <h1 className="text-2xl font-bold text-gray-800">{id}</h1>
+                        <div className="flex flex-col">
+                            <h1 className="text-2xl font-bold text-gray-800">{lease.lease}</h1>
+                            {isMoveInIncomplete && (
+                                <div className="flex items-center gap-2 mt-1">
+                                    <div className="bg-yellow-100 text-yellow-800 text-xs font-semibold px-3 py-1 rounded-full">
+                                        Move-In Incomplete
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                    <div className="relative" ref={dropdownRef}>
+                    <div className="flex items-center gap-3">
+                        {isMoveInIncomplete && (
+                            <button
+                                onClick={() => {
+                                    navigate('/dashboard/movein', {
+                                        state: { leaseId: id, existingLease: backendLease }
+                                    });
+                                }}
+                                className="flex items-center gap-2 px-6 py-2 bg-[#7BD747] text-white rounded-full text-sm font-medium hover:bg-[#6bc63a] transition-colors shadow-sm"
+                            >
+                                <CheckCircle className="w-4 h-4" />
+                                Complete Move-In
+                            </button>
+                        )}
+                        {canRenew && !isMoveInIncomplete && (
+                            <button
+                                onClick={() => {
+                                    // TODO: Implement renew lease functionality
+                                    alert('Renew lease functionality coming soon');
+                                }}
+                                className="flex items-center gap-2 px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm"
+                            >
+                                <RefreshCw className="w-4 h-4" />
+                                Renew Lease
+                            </button>
+                        )}
+                        <div className="relative" ref={dropdownRef}>
                         <button
                             onClick={() => setIsActionDropdownOpen(!isActionDropdownOpen)}
                             className="flex items-center gap-2 px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors"
@@ -362,6 +354,33 @@ const LeaseDetail: React.FC = () => {
 
                         {isActionDropdownOpen && (
                             <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50">
+                                {isMoveInIncomplete ? (
+                                    <button
+                                        onClick={() => {
+                                            setIsActionDropdownOpen(false);
+                                            navigate('/dashboard/movein', {
+                                                state: { leaseId: id, existingLease: backendLease }
+                                            });
+                                        }}
+                                        className="flex items-center gap-3 w-full px-4 py-3 text-sm text-[#3A6D6C] hover:bg-[#E0E8E7] transition-colors border-b border-gray-50 font-medium"
+                                    >
+                                        <CheckCircle className="w-4 h-4" />
+                                        Complete Move-In
+                                    </button>
+                                ) : canRenew ? (
+                                    <button
+                                        onClick={() => {
+                                            setIsActionDropdownOpen(false);
+                                            // TODO: Implement renew lease functionality
+                                            alert('Renew lease functionality coming soon');
+                                        }}
+                                        className="flex items-center gap-3 w-full px-4 py-3 text-sm text-[#3A6D6C] hover:bg-[#E0E8E7] transition-colors border-b border-gray-50 font-medium"
+                                    >
+                                        <RefreshCw className="w-4 h-4" />
+                                        Renew Lease
+                                    </button>
+                                ) : null}
+                                
                                 <button
                                     onClick={() => {
                                         setIsActionDropdownOpen(false);
@@ -373,16 +392,19 @@ const LeaseDetail: React.FC = () => {
                                     Edit
                                 </button>
 
-                                <button
-                                    onClick={() => {
-                                        setIsActionDropdownOpen(false);
-                                        navigate(`/ dashboard / leasing / leases / ${id}/end-lease`);
-                                    }}
-                                    className="flex items-center gap-3 w-full px-4 py-3 text-sm text-orange-600 hover:bg-orange-50 transition-colors border-b border-gray-50"
-                                >
-                                    <XCircle className="w-4 h-4" />
-                                    End Lease
-                                </button >
+                                {!isMoveInIncomplete && (
+                                    <button
+                                        onClick={() => {
+                                            setIsActionDropdownOpen(false);
+                                            navigate(`/dashboard/leasing/leases/${id}/end-lease`);
+                                        }}
+                                        className="flex items-center gap-3 w-full px-4 py-3 text-sm text-orange-600 hover:bg-orange-50 transition-colors border-b border-gray-50"
+                                    >
+                                        <XCircle className="w-4 h-4" />
+                                        End Lease
+                                    </button>
+                                )}
+                                
                                 <button
                                     onClick={() => {
                                         setIsActionDropdownOpen(false);
@@ -395,8 +417,9 @@ const LeaseDetail: React.FC = () => {
                                 </button>
                             </div >
                         )}
-                    </div >
-                </div >
+                        </div>
+                    </div>
+                </div>
 
                 {/* Top Section Cards */}
                 < div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8" >
@@ -425,7 +448,7 @@ const LeaseDetail: React.FC = () => {
                                 </div>
 
                                 <button
-                                    onClick={() => propertyDetails && propertyDetails.id ? navigate(`/dashboard/properties/${propertyDetails.id}`) : null}
+                                    onClick={() => propertyDetails && propertyDetails.id ? navigate(`/dashboard/properties/${String(propertyDetails.id)}`) : null}
                                     className={`bg-[#3A6D6C] text-white text-xs py-1.5 px-4 rounded-full w-fit hover:bg-[#2c5251] transition-colors ${(!propertyDetails || !propertyDetails.id) ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     disabled={!propertyDetails || !propertyDetails.id}
                                 >
@@ -508,17 +531,26 @@ const LeaseDetail: React.FC = () => {
                                     <ChevronDown className="w-5 h-5 text-gray-800" />
                                 </div>
 
-                                <div className="grid grid-cols-1 gap-6">
-                                    {lease.tenants.map((tenant: Tenant, index: number) => (
-                                        <div key={index} className="grid grid-cols-1 lg:grid-cols-3 gap-6 bg-[#F0F0F6] rounded-lg p-6">
-                                            {/* Tenant Profile Card */}
-                                            <div className="bg-[#7BD747] rounded-lg p-6 flex flex-col items-center text-center shadow-sm h-full">
-                                                <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white mb-3">
-                                                    <img src={tenant.image} alt={tenant.name} className="w-full h-full object-cover" />
-                                                </div>
-                                                <h3 className="text-white font-bold text-lg mb-1">{tenant.name}</h3>
-                                                <p className="text-white/90 text-xs">{tenant.email}</p>
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 bg-[#F0F0F6] rounded-lg p-6">
+                                {/* Tenant Profile Card */}
+                                <div className="bg-[#7BD747] rounded-lg p-6 flex flex-col items-center text-center shadow-sm h-full">
+                                    <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white mb-3 flex items-center justify-center bg-white/20">
+                                        {lease.tenant.image && !tenantImageError ? (
+                                            <img 
+                                                src={lease.tenant.image} 
+                                                alt={lease.tenant.name} 
+                                                className="w-full h-full object-cover"
+                                                onError={() => setTenantImageError(true)}
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-white font-bold text-xl">
+                                                {lease.tenant.initials || '??'}
                                             </div>
+                                        )}
+                                    </div>
+                                    <h3 className="text-white font-bold text-lg mb-1">{lease.tenant.name}</h3>
+                                    <p className="text-white/90 text-xs">{lease.tenant.email}</p>
+                                </div>
 
                                             {/* Details Section */}
                                             <div className="md:col-span-2">
@@ -743,149 +775,51 @@ const LeaseDetail: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Extra fees */}
-                            <div>
-                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-4 sm:gap-0">
-                                    <div className="flex items-center gap-2 cursor-pointer">
-                                        <h2 className="text-lg font-bold text-gray-800">Extra fees</h2>
-                                        <ChevronDown className="w-5 h-5 text-gray-800" />
+                        {/* Extra fees */}
+                        <div>
+                            <div className="flex items-center gap-2 mb-4 cursor-pointer">
+                                <h2 className="text-lg font-bold text-gray-800">Extra fees</h2>
+                                <ChevronDown className="w-5 h-5 text-gray-800" />
+                            </div>
+                            <div className="bg-[#F0F2F5] rounded-[2rem] p-4">
+                                <div className="bg-white/50 rounded-[2rem] sm:rounded-full px-6 py-4 sm:py-3 flex flex-col sm:flex-row items-center sm:justify-start gap-4 sm:gap-12 shadow-sm">
+                                    <div className="bg-[#b5e39e] text-[#3D7475] text-xs font-bold px-6 py-2 rounded-full min-w-[100px] text-center mb-2 sm:mb-0">
+                                        Late fees
                                     </div>
-                                    <button
-                                        onClick={() => setIsEditExtraFeesModalOpen(true)}
-                                        className="bg-[#3A6D6C] text-white px-4 py-1.5 rounded-full text-xs font-bold hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-2"
-                                    >
-                                        <Pencil className="w-3 h-3" />
-                                        Edit
-                                    </button>
-                                </div>
-                                <div className="bg-[#F0F2F5] rounded-[2rem] p-4">
-                                    <div className="bg-white/50 rounded-[2rem] sm:rounded-full px-6 py-4 sm:py-3 flex flex-col sm:flex-row items-center sm:justify-start gap-4 sm:gap-12 shadow-sm min-h-[80px]">
-                                        <div className="bg-[#b5e39e] text-[#3D7475] text-xs font-bold px-6 py-2 rounded-full min-w-[100px] text-center mb-2 sm:mb-0">
-                                            Late fees
-                                        </div>
-                                        <div className="flex-1 w-full sm:w-auto text-sm text-gray-700">
-                                            {(lease.extraFees as any).isConfigured || (lease.extraFees as any).oneTimeFee ? (
-                                                <div className="flex flex-col gap-1 w-full">
-                                                    {(lease.extraFees as any).oneTimeFee?.enabled && (
-                                                        <div className="flex justify-between w-full">
-                                                            <span><span className="font-semibold">One Time:</span> {(lease.extraFees as any).oneTimeFee.amount}{(lease.extraFees as any).oneTimeFee.type.includes('Percentage') ? '%' : ''} ({(lease.extraFees as any).oneTimeFee.type})</span>
-                                                        </div>
-                                                    )}
-                                                    {(lease.extraFees as any).dailyFee?.enabled && (
-                                                        <div className="flex justify-between w-full">
-                                                            <span><span className="font-semibold">Daily:</span> {(lease.extraFees as any).dailyFee.amount}{(lease.extraFees as any).dailyFee.type.includes('Percentage') ? '%' : ''} ({(lease.extraFees as any).dailyFee.type})</span>
-                                                            {Number((lease.extraFees as any).dailyFee.maxBalance) > 0 && <span className="text-gray-500 text-xs ml-2">(Max: ₹{(lease.extraFees as any).dailyFee.maxBalance})</span>}
-                                                        </div>
-                                                    )}
-                                                    {!((lease.extraFees as any).oneTimeFee?.enabled) && !((lease.extraFees as any).dailyFee?.enabled) && (
-                                                        <span className="text-gray-500 italic">No active late fees</span>
-                                                    )}
-                                                </div>
-                                            ) : (
-                                                <div className="flex flex-col sm:flex-row gap-2">
-                                                    <span className="font-semibold">{lease.extraFees?.label}:</span>
-                                                    <span>{lease.extraFees?.amount}</span>
-                                                </div>
-                                            )}
-                                        </div>
+                                    <div className="flex-1 w-full sm:w-auto">
+                                        <CustomTextBox
+                                            label={lease.extraFees.label}
+                                            value={lease.extraFees.amount}
+                                            onChange={() => { }}
+                                            labelClassName="text-xs font-medium text-gray-600 !w-auto"
+                                            valueClassName="text-xs font-medium text-gray-600 !w-auto !overflow-visible !whitespace-normal sm:!whitespace-nowrap"
+                                            className="px-4 py-2 gap-2 sm:gap-4 rounded-full w-full sm:w-auto flex-col sm:flex-row items-start sm:items-center"
+                                        />
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    )
-                }
+                    </div>
+                )}
 
                 {/* Tab Content - Agreements & Notices */}
-                {
-                    activeTab === 'agreements' && (
-                        <div className="space-y-6">
-                            <div>
-                                <div className="flex items-center gap-4 mb-4">
-                                    <div className="flex items-center gap-2 cursor-pointer">
-                                        <h2 className="text-lg font-bold text-gray-800">Property Attachments</h2>
-                                        <ChevronDown className="w-5 h-5 text-gray-800" />
-                                    </div>
-                                    <button
-                                        onClick={() => setIsPropertyAttachmentsModalOpen(true)}
-                                        className="bg-[#3A6D6C] text-white px-4 py-1.5 rounded-full text-xs font-bold hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-2"
-                                    >
-                                        <Plus className="w-3 h-3" />
-                                        Add
-                                    </button>
+                {activeTab === 'agreements' && (
+                    <div className="space-y-6">
+                        <div>
+                            <div className="flex items-center gap-2 mb-4 cursor-pointer">
+                                <h2 className="text-lg font-bold text-gray-800">Property Attachments</h2>
+                                <ChevronDown className="w-5 h-5 text-gray-800" />
+                            </div>
+
+                            <div className="bg-[#F0F2F5] rounded-[2rem] p-8 min-h-[300px] flex items-center justify-center">
+                                <div className="bg-[#EAEAEA] w-full max-w-md rounded-2xl p-12 flex flex-col items-center justify-center cursor-pointer hover:bg-opacity-80 transition-colors border-2 border-dashed border-gray-300 hover:border-[#3A6D6C]">
+                                    <Upload className="w-8 h-8 text-[#3A6D6C] mb-3" />
+                                    <p className="text-[#3A6D6C] font-medium text-xs">Upload Cover Photos</p>
                                 </div>
-
-                                {(attachments.shared.length === 0 && attachments.private.length === 0) ? (
-                                    <div className="bg-[#F0F2F5] rounded-[2rem] p-8 min-h-[300px] flex items-center justify-center">
-                                        <div className="bg-[#EAEAEA] w-full max-w-md rounded-2xl p-12 flex flex-col items-center justify-center">
-                                            <SquarePen className="w-8 h-8 text-[#3A6D6C] mb-3" />
-                                            <p className="text-[#3A6D6C] font-medium text-xs">No documents</p>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-6">
-                                        {/* Shared Attachments List */}
-                                        {attachments.shared.length > 0 && (
-                                            <div className="bg-[#F0F2F5] rounded-[2rem] p-6">
-                                                <h3 className="font-bold text-gray-800 mb-4 ml-2">Shared Attachments</h3>
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                                    {attachments.shared.map((file, index) => (
-                                                        <div key={`shared-${index}`} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-3 group relative">
-                                                            <div className="w-10 h-10 rounded-full bg-[#E3EBDE] flex items-center justify-center text-[#3A6D6C] shrink-0">
-                                                                <FileText className="w-5 h-5" />
-                                                            </div>
-                                                            <div className="min-w-0 flex-1">
-                                                                <p className="text-sm font-bold text-gray-800 truncate">{file.name}</p>
-                                                                <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(1)} KB</p>
-                                                            </div>
-                                                            <button
-                                                                onClick={() => {
-                                                                    setAttachmentToDelete({ index, type: 'shared' });
-                                                                    setIsDeleteAttachmentModalOpen(true);
-                                                                }}
-                                                                className="opacity-0 group-hover:opacity-100 transition-opacity p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </button>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Private Attachments List */}
-                                        {attachments.private.length > 0 && (
-                                            <div className="bg-[#F0F2F5] rounded-[2rem] p-6">
-                                                <h3 className="font-bold text-gray-800 mb-4 ml-2">Private Attachments</h3>
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                                    {attachments.private.map((file, index) => (
-                                                        <div key={`private-${index}`} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-3 group relative">
-                                                            <div className="w-10 h-10 rounded-full bg-[#E3EBDE] flex items-center justify-center text-[#3A6D6C] shrink-0">
-                                                                <FileText className="w-5 h-5" />
-                                                            </div>
-                                                            <div className="min-w-0 flex-1">
-                                                                <p className="text-sm font-bold text-gray-800 truncate">{file.name}</p>
-                                                                <p className="text-xs text-gray-500">{(file.size / 1024).toFixed(1)} KB</p>
-                                                            </div>
-                                                            <button
-                                                                onClick={() => {
-                                                                    setAttachmentToDelete({ index, type: 'private' });
-                                                                    setIsDeleteAttachmentModalOpen(true);
-                                                                }}
-                                                                className="opacity-0 group-hover:opacity-100 transition-opacity p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </button>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
                             </div>
                         </div>
-                    )
-                }
+                    </div>
+                )}
 
                 {/* Tab Content - Insurance */}
                 {
@@ -910,112 +844,69 @@ const LeaseDetail: React.FC = () => {
                                     </button>
                                 </div>
 
-                                {insurances.length === 0 ? (
-                                    <div className="bg-[#F0F2F5] rounded-[2rem] p-8 min-h-[300px] flex items-center justify-center">
-                                        <div className="bg-[#EAEAEA] w-full max-w-md rounded-2xl p-12 flex flex-col items-center justify-center">
-                                            <SquarePen className="w-8 h-8 text-[#3A6D6C] mb-3" />
-                                            <p className="text-[#3A6D6C] font-medium text-xs">No insurances</p>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="bg-[#F0F2F5] rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6 shadow-sm">
-                                        {insurances.map(item => (
-                                            <FinancialCard
-                                                key={item.id}
-                                                record={mapInsuranceToRecord(item)}
-                                                onEdit={() => handleEditInsurance(item.id)}
-                                                onDelete={() => {
-                                                    setInsuranceToDelete(item.id);
-                                                    setIsDeleteInsuranceModalOpen(true);
-                                                }}
-                                            />
-                                        ))}
-                                    </div>
-                                )}
+                            <div className="bg-[#F0F2F5] rounded-[2rem] p-8 min-h-[300px] flex items-center justify-center">
+                                <div className="bg-[#EAEAEA] w-full max-w-md rounded-2xl p-12 flex flex-col items-center justify-center">
+                                    <SquarePen className="w-8 h-8 text-[#3A6D6C] mb-3" />
+                                    <p className="text-[#3A6D6C] font-medium text-xs">No insurances</p>
+                                </div>
                             </div>
                         </div>
-                    )
-                }
+                    </div>
+                )}
 
                 {/* Tab Content - Utilities */}
-                {
-                    activeTab === 'utilities' && (
-                        <div className="space-y-6">
-                            <div>
-                                <div className="flex items-center gap-4 mb-4">
-                                    <div className="flex items-center gap-2 cursor-pointer">
-                                        <h2 className="text-lg font-bold text-gray-800">Responsibility</h2>
-                                        <ChevronDown className="w-5 h-5 text-gray-800" />
-                                    </div>
-                                    <button
-                                        onClick={() => setIsResponsibilityModalOpen(true)}
-                                        className="bg-[#3A6D6C] text-white px-4 py-1.5 rounded-full text-xs font-bold hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-2"
-                                    >
-                                        {responsibilities.length > 0 ? <Edit className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
-                                        {responsibilities.length > 0 ? "Edit" : "Add"}
-                                    </button>
-                                </div>
+                {activeTab === 'utilities' && (
+                    <div className="space-y-6">
+                        <div>
+                            <div className="flex items-center gap-2 mb-4 cursor-pointer">
+                                <h2 className="text-lg font-bold text-gray-800">Responsibility</h2>
+                                <ChevronDown className="w-5 h-5 text-gray-800" />
+                            </div>
 
-                                {responsibilities.length === 0 ? (
-                                    <div className="bg-[#F0F2F5] rounded-[2rem] p-8 min-h-[300px] flex items-center justify-center">
-                                        <div className="bg-[#EAEAEA] w-full max-w-md rounded-2xl p-12 flex flex-col items-center justify-center">
-                                            <RefreshCw className="w-8 h-8 text-[#3A6D6C] mb-3" />
-                                            <p className="text-[#3A6D6C] font-medium text-xs">No utilities added</p>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="bg-[#F0F2F5] rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6 shadow-sm">
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-                                            {responsibilities.map((item, index) => (
-                                                <div key={index} className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 flex items-center justify-between">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 rounded-full bg-[#E3EBDE] flex items-center justify-center text-[#3A6D6C]">
-                                                            <span className="font-bold text-xs">{item.utility.charAt(0)}</span>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-sm font-bold text-gray-800">{item.utility}</p>
-                                                            <p className="text-xs font-medium text-gray-500">{item.payer}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className={`w-2 h-2 rounded-full ${item.payer === 'Landlord' ? 'bg-[#4CAF50]' : 'bg-blue-500'}`}></div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
+                            <div className="bg-[#F0F2F5] rounded-[2rem] p-8 min-h-[300px] flex items-center justify-center">
+                                <div className="bg-[#EAEAEA] w-full max-w-md rounded-2xl p-12 flex flex-col items-center justify-center">
+                                    <SquarePen className="w-8 h-8 text-[#3A6D6C] mb-3" />
+                                    <p className="text-[#3A6D6C] font-medium text-xs">No utilities</p>
+                                </div>
                             </div>
                         </div>
-                    )
-                }
-            </div >
+                    </div>
+                )}
+            </div>
             {/* Confirmation Modals */}
             < DeleteConfirmationModal
                 isOpen={isDeleteModalOpen}
-                onClose={() => setIsDeleteModalOpen(false)}
+                onClose={() => {
+                    if (!deleteLeaseMutation.isPending) {
+                        setIsDeleteModalOpen(false);
+                    }
+                }}
                 onConfirm={handleDeleteLease}
                 title="Delete Lease"
                 message="Are you sure you want to delete this lease? This action cannot be undone."
-                itemName={`Lease #${id}`}
+                itemName={lease?.lease ? String(lease.lease) : 'Lease'}
+                isLoading={deleteLeaseMutation.isPending}
             />
 
             < DeleteConfirmationModal
                 isOpen={isEndLeaseModalOpen}
-                onClose={() => setIsEndLeaseModalOpen(false)}
+                onClose={() => {
+                    if (!updateLeaseMutation.isPending) {
+                        setIsEndLeaseModalOpen(false);
+                    }
+                }}
                 onConfirm={handleEndLease}
                 title="End Lease"
-                message="Are you sure you want to end this lease? This will change the status to historical."
+                message="Are you sure you want to end this lease? This will change the status to terminated."
                 confirmText="End Lease"
-                confirmButtonClass="bg-orange-600 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-orange-700 transition-colors shadow-sm"
+                confirmButtonClass="bg-orange-600 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-orange-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                isLoading={updateLeaseMutation.isPending}
             />
 
             <EditLeaseTermsModal
                 isOpen={isEditModalOpen}
                 onClose={() => setIsEditModalOpen(false)}
-                initialData={{
-                    ...lease,
-                    property: typeof lease.property === 'object' ? lease.property.name : lease.property,
-                    lease: lease.lease
-                }}
+                initialData={lease || undefined}
                 onUpdate={handleUpdateLease}
             />
 

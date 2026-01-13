@@ -4,9 +4,8 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import Pagination from '../../components/Pagination';
 import ApplicationCard from './components/ApplicationCard';
 import { Plus, ChevronLeft, Loader2 } from 'lucide-react';
-import { useGetAllApplications } from '../../../../hooks/useApplicationQueries';
+import { useGetAllApplications, useUpdateApplication } from '../../../../hooks/useApplicationQueries';
 import type { BackendApplication } from '../../../../services/application.service';
-import { applicationService } from '../../../../services/application.service';
 import InviteToApplyModal from './components/InviteToApplyModal';
 
 // Transform backend application to card format
@@ -25,13 +24,16 @@ const transformApplicationToCard = (app: BackendApplication) => {
     });
 
     // Map status
-    const statusMap: Record<string, 'Approved' | 'Pending' | 'Rejected'> = {
+    const statusMap: Record<string, 'Approved' | 'Pending' | 'Rejected' | 'In Review' | 'Draft' | 'Submitted' | 'Cancelled'> = {
         'APPROVED': 'Approved',
-        'SUBMITTED': 'Pending',
-        'UNDER_REVIEW': 'Pending',
-        'DRAFT': 'Pending',
+        'SUBMITTED': 'Submitted',
+        'REVIEWING': 'In Review',
+        'DRAFT': 'Draft',
         'REJECTED': 'Rejected',
-        'WITHDRAWN': 'Pending',
+        'CANCELLED': 'Cancelled',
+        // Backward compatibility for old values
+        'UNDER_REVIEW': 'In Review',
+        'WITHDRAWN': 'Cancelled',
     };
     const status = statusMap[app.status] || 'Pending';
 
@@ -50,6 +52,9 @@ const transformApplicationToCard = (app: BackendApplication) => {
     // Get image from application or use empty string
     const image = app.imageUrl || '';
 
+    // Get primary applicant email for move-in pre-selection
+    const applicantEmail = primaryApplicant?.email;
+
     return {
         id: app.id,
         name,
@@ -60,6 +65,7 @@ const transformApplicationToCard = (app: BackendApplication) => {
         propertyUnit,
         propertyId: property?.id,
         unitId: unit?.id,
+        applicantEmail, // Add email for tenant pre-selection
     };
 };
 
@@ -75,6 +81,9 @@ const Application = () => {
 
     // Fetch applications from API
     const { data: applications = [], isLoading, error } = useGetAllApplications();
+    
+    // Mutation for updating application status
+    const updateApplicationMutation = useUpdateApplication();
 
     const handleSearchChange = (search: string) => {
         setSearchQuery(search);
@@ -191,6 +200,27 @@ const Application = () => {
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
         window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleStatusChange = async (id: string | number, newStatus: 'APPROVED' | 'REVIEWING' | 'REJECTED') => {
+        try {
+            await updateApplicationMutation.mutateAsync({
+                id: String(id),
+                updateData: { status: newStatus }
+            });
+        } catch (error) {
+            console.error('Failed to update application status:', error);
+            throw error; // Re-throw to be handled by ApplicationCard
+        }
+    };
+
+    const handleMoveIn = (propertyId: string, applicantEmail?: string) => {
+        navigate('/dashboard/movein', { 
+            state: { 
+                preSelectedPropertyId: propertyId,
+                preSelectedTenantEmail: applicantEmail 
+            } 
+        });
     };
 
     return (
@@ -323,7 +353,16 @@ const Application = () => {
                             currentApplications.map((app) => (
                                 <ApplicationCard
                                     key={app.id}
-                                    {...app}
+                                    id={app.id}
+                                    image={app.image}
+                                    name={app.name}
+                                    appliedDate={app.appliedDate}
+                                    status={app.status}
+                                    backendStatus={app.backendStatus}
+                                    propertyId={app.propertyId}
+                                    applicantEmail={app.applicantEmail}
+                                    onStatusChange={handleStatusChange}
+                                    onMoveIn={handleMoveIn}
                                 />
                             ))
                         ) : (
@@ -351,20 +390,10 @@ const Application = () => {
                 isOpen={isInviteModalOpen}
                 onClose={() => setIsInviteModalOpen(false)}
                 onSend={async (emails, propertyId) => {
-                    try {
-                        const result = await applicationService.inviteToApply(emails, propertyId);
-                        setIsInviteModalOpen(false);
-                        // Optionally show success message with details
-                        if (result.nonExistingEmails.length > 0) {
-                            console.warn('Some emails do not exist:', result.nonExistingEmails);
-                        }
-                        console.log(`Successfully sent ${result.successful} invitation(s)`);
-                    } catch (error) {
-                        console.error('Failed to send invitation:', error);
-                        // Optionally show error message to user
-                        // You might want to add a toast notification here
-                        throw error; // Re-throw to let modal handle it
-                    }
+                    // Optional callback for additional side effects (e.g., showing toasts, refreshing data)
+                    // The modal now handles the API call directly to save invitation data
+                    console.log(`Invitations sent successfully for property ${propertyId} to ${emails.length} user(s)`);
+                   
                 }}
             />
         </div>

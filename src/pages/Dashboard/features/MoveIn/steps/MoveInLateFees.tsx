@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useMoveInStore } from '../store/moveInStore';
 
 interface MoveInLateFeesProps {
     onNext: (enableLateFees: boolean) => void;
@@ -6,11 +7,14 @@ interface MoveInLateFeesProps {
 }
 
 const MoveInLateFees: React.FC<MoveInLateFeesProps> = ({ onNext }) => {
+    const { setLateFees } = useMoveInStore();
     const [selection, setSelection] = useState<'yes' | 'no' | null>(null);
 
     const handleSelect = (value: 'yes' | 'no') => {
         setSelection(value);
-        onNext(value === 'yes');
+        const enabled = value === 'yes';
+        setLateFees({ enabled });
+        onNext(enabled);
     };
 
     return (

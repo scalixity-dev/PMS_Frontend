@@ -16,6 +16,8 @@ import MoveInOneTimeLateFees from './steps/MoveInOneTimeLateFees';
 import MoveInDailyLateFees from './steps/MoveInDailyLateFees';
 import MoveInBothLateFees from './steps/MoveInBothLateFees';
 import MoveInSuccessModal from './components/MoveInSuccessModal';
+import { useMoveInStore } from './store/moveInStore';
+import { useCreateLease, useUpdateLease } from '../../../../hooks/useLeaseQueries';
 
 interface MoveInScenarioCardProps {
     type: 'easy' | 'advanced';
@@ -73,22 +75,44 @@ const getVisualStep = (step: number) => {
 const MoveIn: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const [selectedScenario, setSelectedScenario] = useState<{ type: 'easy' | 'advanced' } | null>(null);
-    const [currentStep, setCurrentStep] = useState(0); // 0 = Selection, 1 = Property, 2 = Tenant, 3 = Share Lease, 4 = Recurring Rent, 5 = Recurring Rent Settings, 6 = Deposit, 7 = Deposit Settings, 8 = Late Fees, 9 = Late Fees Type, 10 = Lease, 11 = Fees
-    const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
-    const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
-
-    const [recurringRentAmount, setRecurringRentAmount] = useState<string>('');
-    const [lateFeeType, setLateFeeType] = useState<'one-time' | 'daily' | 'both'>('one-time');
+    const {
+        formData,
+        currentStep,
+        setCurrentStep,
+        setSelectedScenario,
+        setPropertyId,
+        resetForm,
+        loadExistingLease,
+    } = useMoveInStore();
+    
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+    const [createdLeaseId, setCreatedLeaseId] = useState<string | null>(null);
+    const [existingLeaseId, setExistingLeaseId] = useState<string | null>(null);
+    const [propertyName, setPropertyName] = useState<string>('Property');
+    const createLeaseMutation = useCreateLease();
+    const updateLeaseMutation = useUpdateLease();
 
-    // Handle pre-selection from navigation state
+    // Handle pre-selection from navigation state or existing lease
     useEffect(() => {
-        const state = location.state as { preSelectedPropertyId?: string } | null;
-        if (state?.preSelectedPropertyId) {
-            setSelectedPropertyId(state.preSelectedPropertyId);
+        const state = location.state as { 
+            preSelectedPropertyId?: string;
+            leaseId?: string;
+            existingLease?: any;
+        } | null;
+        
+        if (state?.existingLease) {
+            // Load existing lease data and determine starting step
+            loadExistingLease(state.existingLease);
+            const leaseId = state.leaseId || state.existingLease.id || null;
+            setExistingLeaseId(leaseId);
+            // Set property name from existing lease
+            if (state.existingLease.property?.propertyName) {
+                setPropertyName(state.existingLease.property.propertyName);
+            }
+        } else if (state?.preSelectedPropertyId) {
+            setPropertyId(state.preSelectedPropertyId);
         }
-    }, [location.state]);
+    }, [location.state, setPropertyId, loadExistingLease]);
 
     const handleBack = () => {
         if (currentStep > 0) {
@@ -99,7 +123,7 @@ const MoveIn: React.FC = () => {
     };
 
     const handleGetStarted = () => {
-        if (!selectedScenario) return;
+        if (!formData.selectedScenario) return;
         // Proceed to Step 1 (Property)
         setCurrentStep(1);
     };
@@ -120,7 +144,6 @@ const MoveIn: React.FC = () => {
     };
 
     const handleRecurringRentNext = (enabled: boolean) => {
-
         if (enabled) {
             // Proceed to Step 5 (Recurring Rent Settings)
             setCurrentStep(5);
@@ -146,7 +169,6 @@ const MoveIn: React.FC = () => {
     }
 
     const handleDepositSettingsNext = () => {
-        // TODO: Store deposit data if needed
         // Proceed to Step 8 (Late Fees)
         setCurrentStep(8);
     }
@@ -161,14 +183,86 @@ const MoveIn: React.FC = () => {
         }
     }
 
-    const handleLateFeesTypeNext = (type: 'one-time' | 'daily' | 'both') => {
-        setLateFeeType(type);
+    const handleLateFeesTypeNext = () => {
         // Proceed to Step 10 (One Time Late Fee or Daily Late Fee)
         setCurrentStep(10);
     }
 
-    const handleCompleteMoveIn = () => {
-        setIsSuccessModalOpen(true);
+    const handleCompleteMoveIn = async () => {
+        // Validate required fields
+        if (!formData.tenantId || !formData.propertyId) {
+            alert('Please complete all required fields (Property and Tenant)');
+            return;
+        }
+
+        // Prepare lease data from form
+        const leaseData = {
+            tenantId: formData.tenantId,
+            propertyId: formData.propertyId,
+            unitId: formData.unitId || undefined,
+            sharedTenantIds: formData.sharedTenantIds.length > 0 ? formData.sharedTenantIds : undefined,
+            deposit: formData.deposit.hasDeposit ? {
+                category: formData.deposit.category,
+                amount: parseFloat(formData.deposit.amount) || 0,
+                invoiceDate: formData.deposit.invoiceDate?.toISOString(),
+            } : undefined,
+            recurringRent: formData.recurringRent.enabled ? {
+                enabled: true,
+                amount: parseFloat(formData.recurringRent.amount) || 0,
+                invoiceSchedule: formData.recurringRent.invoiceSchedule,
+                startOn: formData.recurringRent.startOn?.toISOString() || new Date().toISOString(),
+                endOn: formData.recurringRent.endOn?.toISOString(),
+                isMonthToMonth: formData.recurringRent.isMonthToMonth,
+                markPastPaid: formData.recurringRent.markPastPaid,
+            } : undefined,
+            lateFees: formData.lateFees.enabled ? {
+                enabled: true,
+                scheduleType: formData.lateFees.scheduleType || undefined,
+                oneTimeFee: formData.lateFees.oneTimeFee ? {
+                    type: formData.lateFees.oneTimeFee.type,
+                    amount: parseFloat(formData.lateFees.oneTimeFee.amount) || 0,
+                    gracePeriodDays: formData.lateFees.oneTimeFee.gracePeriodDays,
+                    time: formData.lateFees.oneTimeFee.time,
+                } : undefined,
+                dailyFee: formData.lateFees.dailyFee ? {
+                    type: formData.lateFees.dailyFee.type,
+                    amount: parseFloat(formData.lateFees.dailyFee.amount) || 0,
+                    maxMonthlyBalance: parseFloat(formData.lateFees.dailyFee.maxMonthlyBalance) || 0,
+                    gracePeriod: formData.lateFees.dailyFee.gracePeriod,
+                    time: formData.lateFees.dailyFee.time,
+                } : undefined,
+            } : undefined,
+        };
+
+        try {
+            let result;
+            if (existingLeaseId) {
+                
+                result = await updateLeaseMutation.mutateAsync({
+                    id: existingLeaseId,
+                    data: {
+                        status: 'ACTIVE' as const,
+                        startDate: leaseData.recurringRent?.startOn || undefined,
+                        endDate: leaseData.recurringRent?.endOn || undefined,
+                    },
+                });
+                setCreatedLeaseId(existingLeaseId);
+            } else {
+                // Create new lease
+                result = await createLeaseMutation.mutateAsync(leaseData);
+                setCreatedLeaseId(result.id);
+                // Set property name from result
+                if (result.property?.propertyName) {
+                    setPropertyName(result.property.propertyName);
+                }
+            }
+            setIsSuccessModalOpen(true);
+            // Reset form after successful creation/update
+            resetForm();
+        } catch (error) {
+            console.error('Failed to create/update lease:', error);
+            alert(error instanceof Error ? error.message : 'Failed to create/update lease. Please try again.');
+        }
     }
 
     return (
@@ -199,12 +293,12 @@ const MoveIn: React.FC = () => {
                             <div className="flex flex-col md:flex-row gap-8 mb-16 w-full justify-center items-center md:items-stretch">
                                 <MoveInScenarioCard
                                     type="easy"
-                                    selected={selectedScenario?.type === 'easy'}
+                                    selected={formData.selectedScenario?.type === 'easy'}
                                     onClick={() => setSelectedScenario({ type: 'easy' })}
                                 />
                                 <MoveInScenarioCard
                                     type="advanced"
-                                    selected={selectedScenario?.type === 'advanced'}
+                                    selected={formData.selectedScenario?.type === 'advanced'}
                                     onClick={() => setSelectedScenario({ type: 'advanced' })}
                                 />
                             </div>
@@ -213,7 +307,7 @@ const MoveIn: React.FC = () => {
                                 text="Get Started"
                                 widthClass="w-full sm:w-auto px-12"
                                 onClick={handleGetStarted}
-                                disabled={!selectedScenario}
+                                disabled={!formData.selectedScenario}
                             />
                         </div>
                     )}
@@ -226,16 +320,12 @@ const MoveIn: React.FC = () => {
                             <div className="w-full mt-12">
                                 {currentStep === 1 && (
                                     <MoveInPropertySelection
-                                        selectedPropertyId={selectedPropertyId}
-                                        onSelect={setSelectedPropertyId}
                                         onNext={handlePropertyNext}
                                     />
                                 )}
 
                                 {currentStep === 2 && (
                                     <MoveInTenantSelection
-                                        selectedTenantId={selectedTenantId}
-                                        onSelect={setSelectedTenantId}
                                         onNext={handleTenantNext}
                                         onBack={handleBack}
                                     />
@@ -258,8 +348,6 @@ const MoveIn: React.FC = () => {
                                     <MoveInRecurringRentSettings
                                         onNext={handleRecurringRentSettingsNext}
                                         onBack={handleBack}
-                                        amount={recurringRentAmount}
-                                        onAmountChange={setRecurringRentAmount}
                                     />
                                 )}
 
@@ -291,27 +379,24 @@ const MoveIn: React.FC = () => {
                                     />
                                 )}
 
-                                {currentStep === 10 && lateFeeType === 'one-time' && (
+                                {currentStep === 10 && formData.lateFees.scheduleType === 'one-time' && (
                                     <MoveInOneTimeLateFees
                                         onNext={handleCompleteMoveIn}
                                         onBack={handleBack}
-                                        recurringRentAmount={recurringRentAmount}
                                     />
                                 )}
 
-                                {currentStep === 10 && lateFeeType === 'daily' && (
+                                {currentStep === 10 && formData.lateFees.scheduleType === 'daily' && (
                                     <MoveInDailyLateFees
                                         onNext={handleCompleteMoveIn}
                                         onBack={handleBack}
-                                        recurringRentAmount={recurringRentAmount}
                                     />
                                 )}
 
-                                {currentStep === 10 && lateFeeType === 'both' && (
+                                {currentStep === 10 && formData.lateFees.scheduleType === 'both' && (
                                     <MoveInBothLateFees
                                         onNext={handleCompleteMoveIn}
                                         onBack={handleBack}
-                                        recurringRentAmount={recurringRentAmount}
                                     />
                                 )}
 
@@ -338,18 +423,29 @@ const MoveIn: React.FC = () => {
             </div>
             <MoveInSuccessModal
                 isOpen={isSuccessModalOpen}
-                onClose={() => setIsSuccessModalOpen(false)}
+                onClose={() => {
+                    setIsSuccessModalOpen(false);
+                    navigate('/dashboard/application');
+                }}
                 onBackToLease={() => {
                     setIsSuccessModalOpen(false);
-                    // Logic to go back to lease details? For now just close or navigate.
-                    // navigate('/dashboard/leases/9'); 
+                    const leaseId = createdLeaseId || existingLeaseId;
+                    if (leaseId) {
+                        navigate(`/dashboard/portfolio/leases/${leaseId}`);
+                    } else {
+                        navigate('/dashboard/application');
+                    }
                 }}
                 onRequestSignature={() => {
                     setIsSuccessModalOpen(false);
                     // Logic for e-signature request
+                    const leaseId = createdLeaseId || existingLeaseId;
+                    if (leaseId) {
+                        navigate(`/dashboard/portfolio/leases/${leaseId}/signature`);
+                    }
                 }}
-                propertyName="abc"
-                leaseNumber="9"
+                propertyName={propertyName}
+                leaseNumber={createdLeaseId ? createdLeaseId.slice(-4) : (existingLeaseId ? existingLeaseId.slice(-4) : '')}
             />
         </div>
     );

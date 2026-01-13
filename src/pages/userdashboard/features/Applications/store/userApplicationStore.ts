@@ -42,7 +42,10 @@ const initialFormData: UserApplicationFormData = {
   emergencyContacts: [],
   backgroundQuestions: {},
   backgroundExplanations: {},
-  documents: []
+  customBackgroundAnswers: [],
+  documents: [],
+  documentUrls: [],
+  photoUrl: null
 };
 
 export const useUserApplicationStore = create<UserApplicationState>((set) => ({

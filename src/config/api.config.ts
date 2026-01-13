@@ -105,6 +105,8 @@ export const API_ENDPOINTS = {
     GET_ALL: `${API_BASE_URL}/application`,
     GET_ONE: (id: string) => `${API_BASE_URL}/application/${id}`,
     GET_BY_LEASING: (leasingId: string) => `${API_BASE_URL}/application/leasing/${leasingId}`,
+    GET_INVITATIONS: `${API_BASE_URL}/application/invitations`,
+    GET_BACKGROUND_QUESTIONS: (propertyId: string) => `${API_BASE_URL}/application/property/${propertyId}/background-questions`,
     CREATE: `${API_BASE_URL}/application`,
     UPDATE: (id: string) => `${API_BASE_URL}/application/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/application/${id}`,
@@ -193,6 +195,15 @@ export const API_ENDPOINTS = {
     CHANGE_PLAN: `${API_BASE_URL}/subscription/change-plan`,
     RENEW: `${API_BASE_URL}/subscription/renew`,
     BILLING_HISTORY: `${API_BASE_URL}/subscription/billing-history`,
+  },
+  LEASE: {
+    GET_ALL: `${API_BASE_URL}/leases`,
+    GET_ONE: (id: string) => `${API_BASE_URL}/leases/${id}`,
+    GET_BY_PROPERTY: (propertyId: string) => `${API_BASE_URL}/leases?propertyId=${propertyId}`,
+    GET_BY_TENANT: (tenantId: string) => `${API_BASE_URL}/leases?tenantId=${tenantId}`,
+    CREATE: `${API_BASE_URL}/leases`,
+    UPDATE: (id: string) => `${API_BASE_URL}/leases/${id}`,
+    DELETE: (id: string) => `${API_BASE_URL}/leases/${id}`,
   },
 };
 

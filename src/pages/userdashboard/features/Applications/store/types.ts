@@ -109,8 +109,11 @@ export interface UserApplicationFormData {
     emergencyContacts: Array<EmergencyContactFormData & { id: string }>;
     backgroundQuestions: Record<string, boolean | null>;
     backgroundExplanations: Record<string, string>;
+    customBackgroundAnswers: Array<{ questionId: string; answer: boolean }>;
     documents: FileMetadata[];
     // Runtime-only: actual File objects (not persisted to localStorage)
     documentFiles?: File[];
+    documentUrls?: string[]; // URLs of uploaded documents from backend
     photoFile?: File | null;
+    photoUrl?: string | null; // URL of uploaded photo from backend
 }
