@@ -12,95 +12,27 @@ import AddDiscountModal from './components/AddDiscountModal';
 import MarkAsPaidModal from './components/MarkAsPaidModal';
 import VoidTransactionModal from './components/VoidTransactionModal';
 import { utils, writeFile } from 'xlsx';
-
-// Mock Data
-const MOCK_TRANSACTIONS = [
-    {
-        id: 1,
-        status: 'Paid',
-        dueDate: '10 Nov',
-        date: '2025-12-25',
-        category: 'Exterior / Roof & Gutters',
-        property: 'Luxury',
-        contact: 'Sam',
-        total: 88210.00,
-        balance: 88210.00,
-        type: 'income'
-    },
-    {
-        id: 2,
-        status: 'Paid',
-        dueDate: '10 Nov',
-        date: '2025-12-10',
-        category: 'Exterior / Roof & Gutters',
-        property: 'Luxury',
-        contact: 'Sam',
-        total: 88210.00,
-        balance: 88210.00,
-        type: 'income'
-    },
-    {
-        id: 3,
-        status: 'Pending',
-        dueDate: '15 Dec',
-        date: '2025-12-15',
-        category: 'Plumbing',
-        property: 'Seaside Villa',
-        contact: 'Mike',
-        total: 1250.00,
-        balance: 1250.00,
-        type: 'expense'
-    },
-    {
-        id: 4,
-        status: 'Paid',
-        dueDate: '10 Nov',
-        date: '2025-10-05',
-        category: 'Exterior / Roof & Gutters',
-        property: 'Luxury',
-        contact: 'Sam',
-        total: 88210.00,
-        balance: 88210.00,
-        type: 'income'
-    },
-    {
-        id: 5,
-        status: 'Pending',
-        dueDate: '20 Dec',
-        date: '2025-12-20',
-        category: 'Landscaping',
-        property: 'Green Acres',
-        contact: 'GreenThumb Landscaping',
-        total: 4500.00,
-        balance: 4500.00,
-        type: 'expense'
-    },
-    {
-        id: 6,
-        status: 'Void',
-        dueDate: '01 Nov',
-        date: '2025-11-01',
-        category: 'Maintenance',
-        property: 'Urban Loft',
-        contact: 'FixIt All',
-        total: 300.00,
-        balance: 0.00,
-        type: 'expense'
-    }
-];
+import { useGetTransactions, useMarkAsPaid, useDeleteTransaction } from '../../../../hooks/useTransactionQueries';
+import type { Transaction } from '../../../../services/transaction.service';
 
 const Transactions: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
     const [activeTab, setActiveTab] = useState<'All' | 'Income' | 'Expense'>('All');
-    const [selectedItems, setSelectedItems] = useState<number[]>([]);
-    const [moreMenuOpenId, setMoreMenuOpenId] = useState<number | null>(null);
+    const [selectedItems, setSelectedItems] = useState<string[]>([]);
+    const [moreMenuOpenId, setMoreMenuOpenId] = useState<string | null>(null);
     const moreMenuRef = useRef<HTMLDivElement>(null);
+
+    // Fetch transactions from backend
+    const { data: transactions = [], isLoading, error } = useGetTransactions();
+    const markAsPaidMutation = useMarkAsPaid();
+    const deleteTransactionMutation = useDeleteTransaction();
 
     const {
         setEditInvoiceOpen,
         setDeleteTransactionOpen,
+        selectedTransactionId,
         setSelectedTransactionId,
         setClonedTransactionData,
         setApplyDepositsOpen,
@@ -177,8 +109,8 @@ const Transactions: React.FC = () => {
 
     // Filter Logic
     const filteredTransactions = useMemo(() => {
-        return MOCK_TRANSACTIONS.filter(item => {
-            // Tab Filter (Simple check for demonstration)
+        return transactions.filter((item: Transaction) => {
+            // Tab Filter
             if (activeTab !== 'All' && item.type.toLowerCase() !== activeTab.toLowerCase()) return false;
 
             // Search Filter
@@ -194,13 +126,13 @@ const Transactions: React.FC = () => {
 
             return matchesSearch && matchesClient && matchesProperty && matchesCategory;
         });
-    }, [activeTab, searchQuery, filters]);
+    }, [activeTab, searchQuery, filters, transactions]);
 
     // Group items by date
     const groupedTransactions = useMemo(() => {
-        const groups: Record<string, typeof MOCK_TRANSACTIONS> = {};
+        const groups: Record<string, Transaction[]> = {};
 
-        filteredTransactions.forEach(item => {
+        filteredTransactions.forEach((item: Transaction) => {
             if (!groups[item.date]) {
                 groups[item.date] = [];
             }
@@ -212,11 +144,11 @@ const Transactions: React.FC = () => {
             .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
             .map(date => ({
                 date,
-                items: groups[date].sort((a, b) => b.id - a.id)
+                items: groups[date].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
             }));
     }, [filteredTransactions]);
 
-    const toggleSelection = (id: number) => {
+    const toggleSelection = (id: string) => {
         if (selectedItems.includes(id)) {
             setSelectedItems(selectedItems.filter(item => item !== id));
         } else {
@@ -228,7 +160,7 @@ const Transactions: React.FC = () => {
         if (selectedItems.length === filteredTransactions.length) {
             setSelectedItems([]);
         } else {
-            setSelectedItems(filteredTransactions.map(item => item.id));
+            setSelectedItems(filteredTransactions.map((item: Transaction) => item.id));
         }
     };
 
@@ -285,10 +217,24 @@ const Transactions: React.FC = () => {
                 }}
             />
             <DeleteTransactionModal
-                onConfirm={() => {
-                    setDeleteTransactionOpen(false);
-                    setSelectedTransactionId(null);
+                onConfirm={async () => {
+                    const transactionId = selectedTransactionId;
+                    if (!transactionId) {
+                        console.error('No transaction selected');
+                        return;
+                    }
+
+                    try {
+                        await deleteTransactionMutation.mutateAsync(transactionId.toString());
+                        setDeleteTransactionOpen(false);
+                        setSelectedTransactionId(null);
+                    } catch (error) {
+                        console.error('Error deleting transaction:', error);
+                        // Error will be handled by the mutation - don't close modal on error
+                        // The user can see the error and try again
+                    }
                 }}
+                isLoading={deleteTransactionMutation.isPending}
             />
             <ApplyDepositsModal
                 onConfirm={(data) => {
@@ -309,9 +255,32 @@ const Transactions: React.FC = () => {
                 }}
             />
             <MarkAsPaidModal
-                onConfirm={(data) => {
-                    console.log('Mark As Paid data:', data);
-                    setMarkAsPaidOpen(false);
+                onConfirm={async (data) => {
+                    const transactionId = selectedTransactionId;
+                    if (!transactionId) {
+                        console.error('No transaction selected');
+                        return;
+                    }
+
+                    try {
+                        await markAsPaidMutation.mutateAsync({
+                            transactionId: transactionId.toString(),
+                            data: {
+                                datePaid: data.datePaid?.toISOString() || new Date().toISOString(),
+                                amountPaid: parseFloat(data.amountPaid.replace(/[₹,]/g, '')) || parseFloat(data.amountPaid),
+                                method: data.method,
+                                paymentDetails: data.paymentDetails,
+                                notes: data.paymentDetails, // Use paymentDetails as notes if notes not provided
+                            },
+                            file: data.selectedFile || undefined,
+                        });
+                        setMarkAsPaidOpen(false);
+                        setSelectedTransactionId(null);
+                    } catch (error) {
+                        console.error('Error marking transaction as paid:', error);
+                        // Error will be handled by the mutation - don't close modal on error
+                        // The user can see the error and try again
+                    }
                 }}
             />
             <VoidTransactionModal
@@ -362,11 +331,16 @@ const Transactions: React.FC = () => {
                 {/* Stats Cards */}
                 <div className="bg-[#f0f0f6] rounded-[2rem] p-4 mb-8 shadow-sm">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        {/* Outstanding / Paid Income */}
+                        {/* Paid Income */}
                         <div className="p-4 bg-[#7BD747] rounded-[1.5rem] sm:rounded-full flex flex-col justify-center items-center h-24">
                             <span className="text-white text-sm font-medium mb-2">Paid Income</span>
                             <div className="bg-[#E3EBDE] px-6 py-2 rounded-full w-full sm:w-[80%] text-center shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.15)]">
-                                <span className="text-gray-600 text-lg font-bold">₹45,000.00</span>
+                                <span className="text-gray-600 text-lg font-bold">
+                                    ₹{transactions
+                                        .filter(t => t.type === 'income' && t.status === 'Paid')
+                                        .reduce((sum, t) => sum + t.total, 0)
+                                        .toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                </span>
                             </div>
                         </div>
 
@@ -374,7 +348,12 @@ const Transactions: React.FC = () => {
                         <div className="p-4 bg-[#7BD747] rounded-[1.5rem] sm:rounded-full flex flex-col justify-center items-center h-24">
                             <span className="text-white text-sm font-medium mb-2">Paid Expense</span>
                             <div className="bg-[#E3EBDE] px-6 py-2 rounded-full w-full sm:w-[80%] text-center shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.15)]">
-                                <span className="text-gray-600 text-lg font-bold">₹45,000.00</span>
+                                <span className="text-gray-600 text-lg font-bold">
+                                    ₹{transactions
+                                        .filter(t => t.type === 'expense' && t.status === 'Paid')
+                                        .reduce((sum, t) => sum + t.total, 0)
+                                        .toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                </span>
                             </div>
                         </div>
 
@@ -382,7 +361,12 @@ const Transactions: React.FC = () => {
                         <div className="p-4 bg-[#7BD747] rounded-[1.5rem] sm:rounded-full flex flex-col justify-center items-center h-24">
                             <span className="text-white text-sm font-medium mb-2">Paid Refund</span>
                             <div className="bg-[#E3EBDE] px-6 py-2 rounded-full w-full sm:w-[80%] text-center shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.15)]">
-                                <span className="text-gray-600 text-lg font-bold">₹ 00.00</span>
+                                <span className="text-gray-600 text-lg font-bold">
+                                    ₹{transactions
+                                        .filter(t => t.type === 'refund' && t.status === 'Paid')
+                                        .reduce((sum, t) => sum + t.total, 0)
+                                        .toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -437,7 +421,17 @@ const Transactions: React.FC = () => {
 
                 {/* Table Body - Grouped by Date */}
                 <div className="flex flex-col gap-6 bg-[#F0F0F6] p-4 rounded-[2rem] rounded-t min-h-[400px]">
-                    {groupedTransactions.map((group) => (
+                    {isLoading && (
+                        <div className="text-center py-10 text-gray-500">
+                            Loading transactions...
+                        </div>
+                    )}
+                    {error && (
+                        <div className="text-center py-10 text-red-500">
+                            Error loading transactions. Please try again.
+                        </div>
+                    )}
+                    {!isLoading && !error && groupedTransactions.map((group) => (
                         <div key={group.date}>
                             {/* Date Pill */}
                             <div className="mb-4">
