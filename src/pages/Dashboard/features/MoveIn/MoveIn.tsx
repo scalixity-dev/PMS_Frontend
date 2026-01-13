@@ -17,7 +17,7 @@ import MoveInDailyLateFees from './steps/MoveInDailyLateFees';
 import MoveInBothLateFees from './steps/MoveInBothLateFees';
 import MoveInSuccessModal from './components/MoveInSuccessModal';
 import { useMoveInStore } from './store/moveInStore';
-import { useCreateLease } from '../../../../hooks/useLeaseQueries';
+import { useCreateLease, useUpdateLease } from '../../../../hooks/useLeaseQueries';
 
 interface MoveInScenarioCardProps {
     type: 'easy' | 'advanced';
@@ -82,19 +82,37 @@ const MoveIn: React.FC = () => {
         setSelectedScenario,
         setPropertyId,
         resetForm,
+        loadExistingLease,
     } = useMoveInStore();
     
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
     const [createdLeaseId, setCreatedLeaseId] = useState<string | null>(null);
+    const [existingLeaseId, setExistingLeaseId] = useState<string | null>(null);
+    const [propertyName, setPropertyName] = useState<string>('Property');
     const createLeaseMutation = useCreateLease();
+    const updateLeaseMutation = useUpdateLease();
 
-    // Handle pre-selection from navigation state
+    // Handle pre-selection from navigation state or existing lease
     useEffect(() => {
-        const state = location.state as { preSelectedPropertyId?: string } | null;
-        if (state?.preSelectedPropertyId) {
+        const state = location.state as { 
+            preSelectedPropertyId?: string;
+            leaseId?: string;
+            existingLease?: any;
+        } | null;
+        
+        if (state?.existingLease) {
+            // Load existing lease data and determine starting step
+            loadExistingLease(state.existingLease);
+            const leaseId = state.leaseId || state.existingLease.id || null;
+            setExistingLeaseId(leaseId);
+            // Set property name from existing lease
+            if (state.existingLease.property?.propertyName) {
+                setPropertyName(state.existingLease.property.propertyName);
+            }
+        } else if (state?.preSelectedPropertyId) {
             setPropertyId(state.preSelectedPropertyId);
         }
-    }, [location.state, setPropertyId]);
+    }, [location.state, setPropertyId, loadExistingLease]);
 
     const handleBack = () => {
         if (currentStep > 0) {
@@ -217,14 +235,33 @@ const MoveIn: React.FC = () => {
         };
 
         try {
-            const result = await createLeaseMutation.mutateAsync(leaseData);
-            setCreatedLeaseId(result.id);
+            let result;
+            if (existingLeaseId) {
+                
+                result = await updateLeaseMutation.mutateAsync({
+                    id: existingLeaseId,
+                    data: {
+                        status: 'ACTIVE' as const,
+                        startDate: leaseData.recurringRent?.startOn || undefined,
+                        endDate: leaseData.recurringRent?.endOn || undefined,
+                    },
+                });
+                setCreatedLeaseId(existingLeaseId);
+            } else {
+                // Create new lease
+                result = await createLeaseMutation.mutateAsync(leaseData);
+                setCreatedLeaseId(result.id);
+                // Set property name from result
+                if (result.property?.propertyName) {
+                    setPropertyName(result.property.propertyName);
+                }
+            }
             setIsSuccessModalOpen(true);
-            // Reset form after successful creation
+            // Reset form after successful creation/update
             resetForm();
         } catch (error) {
-            console.error('Failed to create lease:', error);
-            alert(error instanceof Error ? error.message : 'Failed to create lease. Please try again.');
+            console.error('Failed to create/update lease:', error);
+            alert(error instanceof Error ? error.message : 'Failed to create/update lease. Please try again.');
         }
     }
 
@@ -392,8 +429,9 @@ const MoveIn: React.FC = () => {
                 }}
                 onBackToLease={() => {
                     setIsSuccessModalOpen(false);
-                    if (createdLeaseId) {
-                        navigate(`/dashboard/leases/${createdLeaseId}`);
+                    const leaseId = createdLeaseId || existingLeaseId;
+                    if (leaseId) {
+                        navigate(`/dashboard/portfolio/leases/${leaseId}`);
                     } else {
                         navigate('/dashboard/application');
                     }
@@ -401,12 +439,13 @@ const MoveIn: React.FC = () => {
                 onRequestSignature={() => {
                     setIsSuccessModalOpen(false);
                     // Logic for e-signature request
-                    if (createdLeaseId) {
-                        navigate(`/dashboard/leases/${createdLeaseId}/signature`);
+                    const leaseId = createdLeaseId || existingLeaseId;
+                    if (leaseId) {
+                        navigate(`/dashboard/portfolio/leases/${leaseId}/signature`);
                     }
                 }}
-                propertyName={formData.propertyId || 'Property'}
-                leaseNumber={createdLeaseId || ''}
+                propertyName={propertyName}
+                leaseNumber={createdLeaseId ? createdLeaseId.slice(-4) : (existingLeaseId ? existingLeaseId.slice(-4) : '')}
             />
         </div>
     );

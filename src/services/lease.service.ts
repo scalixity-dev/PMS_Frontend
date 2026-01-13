@@ -19,10 +19,15 @@ export interface BackendLease {
     email: string;
     fullName: string;
     phoneNumber?: string | null;
+    tenantProfile?: {
+      id: string;
+      profilePhotoUrl?: string | null;
+    } | null;
   };
   property?: {
     id: string;
     propertyName: string;
+    coverPhotoUrl?: string | null;
     address?: {
       streetAddress: string;
       city: string;
@@ -30,6 +35,11 @@ export interface BackendLease {
       zipCode: string;
       country: string;
     } | null;
+    photos?: Array<{
+      id: string;
+      photoUrl: string;
+      isPrimary: boolean;
+    }>;
   };
   unit?: {
     id: string;
@@ -43,6 +53,10 @@ export interface BackendLease {
       id: string;
       email: string;
       fullName: string;
+      tenantProfile?: {
+        id: string;
+        profilePhotoUrl?: string | null;
+      } | null;
     };
   }>;
   deposits?: Array<{
