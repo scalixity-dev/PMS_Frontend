@@ -6,7 +6,7 @@ interface TenantCardProps {
 
 export const TenantCard = ({ tenant }: TenantCardProps) => {
     return (
-        <div className="bg-[#F7F7F7] p-6 rounded-2xl border border-[#F3F4F6] flex items-center gap-5 min-w-[340px] shadow-[0px_4px_4px_0px_#00000040]">
+        <div className="bg-[#F7F7F7] p-6 rounded-2xl border border-[#F3F4F6] flex items-center gap-5 w-full md:w-auto md:min-w-[340px] shadow-[0px_4px_4px_0px_#00000040]">
             <div className="relative">
                 <img
                     src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${tenant.avatarSeed}`}

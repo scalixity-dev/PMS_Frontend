@@ -89,7 +89,7 @@ const TransactionDetails = () => {
         <div className="flex flex-col gap-6 w-full min-h-screen bg-white p-4 lg:p-8">
             {/* Breadcrumbs */}
             <nav aria-label="Breadcrumb">
-                <ol className="flex items-center gap-2 text-base font-medium">
+                <ol className="flex items-center flex-wrap gap-2 text-base font-medium">
                     <li>
                         <Link to="/userdashboard" className="text-[var(--dashboard-accent)] font-medium hover:opacity-80 transition-opacity">Dashboard</Link>
                     </li>
@@ -115,7 +115,7 @@ const TransactionDetails = () => {
                             >
                                 <ChevronLeft size={24} className="text-gray-900" />
                             </button>
-                            <h1 className="text-2xl font-semibold text-gray-900">Transaction</h1>
+                            <h1 className="text-xl lg:text-2xl font-semibold text-gray-900">Transaction</h1>
                         </div>
                         <button
                             onClick={handlePrint}
@@ -125,15 +125,15 @@ const TransactionDetails = () => {
                         </button>
                     </div>
 
-                    <div className="p-8 space-y-6">
+                    <div className="p-6 lg:p-8 space-y-6">
                         {/* Due Date & Description */}
                         <div>
                             <div className="flex items-center gap-2 text-gray-900 font-medium mb-3">
                                 <Calendar size={20} />
                                 <span>Due on {transaction.dueDate}</span>
                             </div>
-                            <div className="flex items-center gap-4">
-                                <h2 className="text-2xl font-semibold text-gray-900">
+                            <div className="flex flex-col sm:flex-row sm:items-center items-start gap-4">
+                                <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">
                                     {transaction.category} / {transaction.subCategory} for {formatMoney(transaction.totalAmount, transaction.currency)}
                                 </h2>
                                 <span className={`px-3 py-1 rounded-full text-xs font-bold border ${transaction.status === 'Open' ? 'bg-blue-50 text-blue-600 border-blue-100' :
@@ -148,7 +148,7 @@ const TransactionDetails = () => {
                         </div>
 
                         {/* Progress Bar */}
-                        <div className="space-y-4 max-w-[75%]">
+                        <div className="space-y-4 w-full lg:max-w-[75%]">
                             <div className={`w-full h-3 rounded-full overflow-hidden ${transaction.status === 'Open' ? 'bg-blue-100' :
                                 transaction.status === 'Overdue' ? 'bg-red-100' :
                                     transaction.status === 'Partial' ? 'bg-yellow-100' :
@@ -234,27 +234,29 @@ const TransactionDetails = () => {
                         <div className="p-4">
                             <div className="rounded-lg border border-gray-100 overflow-hidden bg-white">
                                 {paymentRecords.map((record) => (
-                                    <div key={record.id} className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+                                    <div key={record.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-gray-50 transition-colors gap-4 sm:gap-0">
                                         <div className="flex items-center gap-4">
                                             <div className="p-1.5 rounded-full border border-gray-900 text-gray-900">
                                                 <DollarSign size={16} strokeWidth={3} />
                                             </div>
                                             <span className="font-semibold text-gray-900 text-lg">{record.date}</span>
                                         </div>
-                                        <div className="flex items-center gap-4">
-                                            <span className="font-semibold text-gray-900">
-                                                {formatMoney(record.amount, transaction.currency)}
-                                            </span>
-                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#DCFCE7] text-[#16A34A] rounded-full text-xs font-bold">
-                                                <CheckCircle2 size={12} strokeWidth={3} />
-                                                {record.status}
-                                            </span>
-                                            <div className="w-8 h-8 rounded-full overflow-hidden border border-gray-200">
-                                                <img
-                                                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${transaction.contact.name}`}
-                                                    alt={transaction.contact.name}
-                                                    className="w-full h-full object-cover"
-                                                />
+                                        <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
+                                            <div className="flex items-center gap-4">
+                                                <span className="font-semibold text-gray-900">
+                                                    {formatMoney(record.amount, transaction.currency)}
+                                                </span>
+                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#DCFCE7] text-[#16A34A] rounded-full text-xs font-bold">
+                                                    <CheckCircle2 size={12} strokeWidth={3} />
+                                                    {record.status}
+                                                </span>
+                                                <div className="w-8 h-8 rounded-full overflow-hidden border border-gray-200">
+                                                    <img
+                                                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${transaction.contact.name}`}
+                                                        alt={transaction.contact.name}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                </div>
                                             </div>
                                             <button className="p-1 hover:bg-gray-100 rounded-md transition-colors print:hidden">
                                                 <ChevronDown size={20} className="text-gray-900" />

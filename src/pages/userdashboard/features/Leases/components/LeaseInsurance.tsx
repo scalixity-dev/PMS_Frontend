@@ -269,7 +269,7 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="flex flex-col gap-1">
                             <span className="text-xs font-semibold text-gray-500 uppercase">Company Name</span>
                             <span className="text-sm font-medium text-[#1A1A1A]">{insuranceData.companyName || '-'}</span>
@@ -336,7 +336,7 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
                 padding="px-6 py-4 !overflow-visible"
             >
                 <div className="flex flex-col gap-3 overflow-visible">
-                    <div className="grid grid-cols-2 gap-4 overflow-visible">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 overflow-visible">
                         <div className="flex flex-col gap-1.5">
                             <label className="text-[13px] font-medium text-[#1A1A1A]">Company name</label>
                             <input
@@ -361,7 +361,7 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-3 overflow-visible">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 overflow-visible">
                         <div className="flex flex-col gap-1.5 overflow-visible">
                             <label className="text-[13px] font-medium text-[#1A1A1A]">Policy</label>
                             <input

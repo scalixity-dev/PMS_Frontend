@@ -49,8 +49,8 @@ export const Sidebar = () => {
     return (
         <div className="w-full lg:w-64 flex flex-col gap-4">
             {/* Profile Card */}
-            <div className="bg-[var(--dashboard-bg-light)] rounded-[1rem] p-3 flex flex-col items-center shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] border border-gray-50">
-                <div className="w-20 h-20 rounded-full bg-[#E0F2FE] flex items-center justify-center overflow-hidden transition-transform hover:scale-105 cursor-pointer shadow-lg mb-6 group relative border-2 border-white">
+            <div className="bg-[var(--dashboard-bg-light)] rounded-[1rem] p-3 flex flex-row lg:flex-col items-center gap-4 lg:gap-0 shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] border border-gray-50">
+                <div className="w-16 h-16 lg:w-20 lg:h-20 rounded-full bg-[#E0F2FE] flex items-center justify-center overflow-hidden transition-transform  cursor-pointer shadow-lg mb-0 lg:mb-6 group relative border-2 border-white shrink-0">
                     {userInfo.profileImage && !imageError ? (
                         <img
                             src={userInfo.profileImage}
@@ -59,34 +59,36 @@ export const Sidebar = () => {
                             onError={() => setImageError(true)}
                         />
                     ) : (
-                        <span className="text-2xl font-bold text-[#1565C0] tracking-tighter">
+                        <span className="text-xl lg:text-2xl font-bold text-[#1565C0] tracking-tighter">
                             {getInitials(userName)}
                         </span>
                     )}
                 </div>
 
-                <h2 className="text-3xl font-medium text-[var(--dashboard-text-main)] mb-1">{userName}</h2>
-                <p className="text-gray-500 text-sm font-normal">{userEmail}</p>
+                <div className="text-left lg:text-center overflow-hidden">
+                    <h2 className="text-xl lg:text-3xl font-medium text-[var(--dashboard-text-main)] mb-1 truncate">{userName}</h2>
+                    <p className="text-gray-500 text-sm font-normal truncate">{userEmail}</p>
+                </div>
             </div>
 
             {/* Info Cards Container */}
             {dashboardStage !== 'no_lease' && (
-                <div className="bg-[var(--dashboard-bg-light)] rounded-[1rem] p-4 flex flex-col gap-4 shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] border border-gray-50">
+                <div className="bg-[var(--dashboard-bg-light)] rounded-[1rem] p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:flex lg:flex-col gap-4 shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] border border-gray-50">
                     <FinancialCard title="Outstanding" amount={outstanding} currency="INR" action="Pay online" />
                     <FinancialCard title="Deposits" amount={deposits} currency="INR" />
                     <FinancialCard title="Credits" amount={credits} currency="INR" />
 
                     {/* Roommates Card */}
                     {roommates.length > 0 && (
-                        <div className="bg-white rounded-lg px-3 py-2 shadow-sm border border-gray-50">
+                        <div className="bg-white rounded-lg px-3 py-2 shadow-sm border border-gray-50 h-full">
                             <p className="text-[#4B5563] text-sm font-semibold tracking-wide mb-3">Roommates</p>
-                            <div className="flex -space-x-2 overflow-hidden">
+                            <div className="flex -space-x-2 overflow-visible pl-1 pb-1">
                                 {roommates.map((roommate) => {
                                     const fullName = `${roommate.firstName} ${roommate.lastName}`;
                                     return (
                                         <div
                                             key={roommate.id}
-                                            className="w-10 h-10 bg-[#E0F2FE] rounded-full flex items-center justify-center border-2 border-white shadow-md hover:scale-110 transition-transform cursor-pointer overflow-hidden group relative"
+                                            className="w-10 h-10 bg-[#E0F2FE] rounded-full flex items-center justify-center border-2 border-white shadow-md  transition-transform cursor-pointer overflow-hidden group relative shrink-0"
                                             title={fullName}
                                         >
                                             <span className="text-xs font-bold text-[#1565C0] uppercase">
