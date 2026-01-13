@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import CustomDropdown from '../../../components/CustomDropdown';
 import TimePicker from '@/components/ui/TimePicker';
 import { useMoveInStore } from '../store/moveInStore';
+import { useCreateLease } from '../../../../../hooks/useLeaseQueries';
+import { Loader2 } from 'lucide-react';
 
 interface MoveInDailyLateFeesProps {
     onNext: () => void;
@@ -10,6 +12,7 @@ interface MoveInDailyLateFeesProps {
 
 const MoveInDailyLateFees: React.FC<MoveInDailyLateFeesProps> = ({ onNext }) => {
     const { formData, setLateFees } = useMoveInStore();
+    const createLeaseMutation = useCreateLease();
     const recurringRentAmount = formData.recurringRent.amount || '0';
     
     // Initialize from store or defaults
@@ -19,6 +22,7 @@ const MoveInDailyLateFees: React.FC<MoveInDailyLateFeesProps> = ({ onNext }) => 
     const [maxMonthlyBalance, setMaxMonthlyBalance] = useState<string>(existingDailyFee?.maxMonthlyBalance || '');
     const [gracePeriod, setGracePeriod] = useState<string>(existingDailyFee?.gracePeriod || 'none');
     const [time, setTime] = useState<string>(existingDailyFee?.time || '06:00 PM');
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
     // Update store when values change
     useEffect(() => {
@@ -32,6 +36,43 @@ const MoveInDailyLateFees: React.FC<MoveInDailyLateFeesProps> = ({ onNext }) => 
             },
         });
     }, [lateFeeType, amount, maxMonthlyBalance, gracePeriod, time, setLateFees]);
+
+    const validateForm = () => {
+        const newErrors: Record<string, string> = {};
+        
+        if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+            newErrors.amount = 'Amount is required and must be greater than zero';
+        }
+        if (!maxMonthlyBalance || isNaN(Number(maxMonthlyBalance)) || Number(maxMonthlyBalance) <= 0) {
+            newErrors.maxMonthlyBalance = 'Maximum monthly balance is required and must be greater than zero';
+        }
+        if (!time) {
+            newErrors.time = 'Time is required';
+        }
+        
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const handleNext = async () => {
+        if (!validateForm()) {
+            return;
+        }
+
+        // Update store with final values
+        setLateFees({
+            dailyFee: {
+                type: lateFeeType,
+                amount,
+                maxMonthlyBalance,
+                gracePeriod,
+                time,
+            },
+        });
+
+        // Proceed to next step (which will trigger handleCompleteMoveIn)
+        onNext();
+    };
 
     const typeOptions = [
         { value: 'fixed', label: 'Fixed amount' },
@@ -80,11 +121,24 @@ const MoveInDailyLateFees: React.FC<MoveInDailyLateFeesProps> = ({ onNext }) => 
                             <input
                                 type="text"
                                 value={amount}
-                                onChange={(e) => setAmount(e.target.value)}
-                                className="w-full bg-[#7BD747] text-white font-medium text-base placeholder-white/70 px-6 py-3 rounded-[1.5rem] border-none outline-none ring-0 h-[52px]"
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (/^\d*\.?\d*$/.test(val)) {
+                                        setAmount(val);
+                                        if (errors.amount) {
+                                            setErrors(prev => {
+                                                const next = { ...prev };
+                                                delete next.amount;
+                                                return next;
+                                            });
+                                        }
+                                    }
+                                }}
+                                className={`w-full bg-[#7BD747] text-white font-medium text-base placeholder-white/70 px-6 py-3 rounded-[1.5rem] border-none outline-none ring-0 h-[52px] ${errors.amount ? 'ring-2 ring-red-500' : ''}`}
                                 placeholder="00.00"
                             />
                         </div>
+                        {errors.amount && <span className="text-red-500 text-xs ml-2">{errors.amount}</span>}
                     </div>
 
                     {/* Maximum monthly balance */}
@@ -94,11 +148,24 @@ const MoveInDailyLateFees: React.FC<MoveInDailyLateFeesProps> = ({ onNext }) => 
                             <input
                                 type="text"
                                 value={maxMonthlyBalance}
-                                onChange={(e) => setMaxMonthlyBalance(e.target.value)}
-                                className="w-full bg-[#7BD747] text-white font-medium text-base placeholder-white/70 px-6 py-3 rounded-[1.5rem] border-none outline-none ring-0 h-[52px]"
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (/^\d*\.?\d*$/.test(val)) {
+                                        setMaxMonthlyBalance(val);
+                                        if (errors.maxMonthlyBalance) {
+                                            setErrors(prev => {
+                                                const next = { ...prev };
+                                                delete next.maxMonthlyBalance;
+                                                return next;
+                                            });
+                                        }
+                                    }
+                                }}
+                                className={`w-full bg-[#7BD747] text-white font-medium text-base placeholder-white/70 px-6 py-3 rounded-[1.5rem] border-none outline-none ring-0 h-[52px] ${errors.maxMonthlyBalance ? 'ring-2 ring-red-500' : ''}`}
                                 placeholder="00.00"
                             />
                         </div>
+                        {errors.maxMonthlyBalance && <span className="text-red-500 text-xs ml-2">{errors.maxMonthlyBalance}</span>}
                     </div>
                 </div>
 
@@ -172,12 +239,41 @@ const MoveInDailyLateFees: React.FC<MoveInDailyLateFeesProps> = ({ onNext }) => 
                 )}
             </div>
 
-            <div className="mt-16">
+            <div className="mt-16 flex flex-col items-center gap-4">
+                {Object.keys(errors).length > 0 && (
+                    <div className="w-full max-w-2xl bg-red-50 border border-red-200 rounded-lg p-4">
+                        <p className="text-red-800 text-sm font-medium mb-2">Please fix the following errors:</p>
+                        <ul className="list-disc list-inside text-red-700 text-sm space-y-1">
+                            {Object.values(errors).map((error, index) => (
+                                <li key={index}>{error}</li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+                
+                {createLeaseMutation.isError && (
+                    <div className="w-full max-w-2xl bg-red-50 border border-red-200 rounded-lg p-4">
+                        <p className="text-red-800 text-sm">
+                            {createLeaseMutation.error instanceof Error 
+                                ? createLeaseMutation.error.message 
+                                : 'An error occurred while saving'}
+                        </p>
+                    </div>
+                )}
+
                 <button
-                    onClick={onNext}
-                    className="px-8 py-3 bg-[#3D7475] text-white rounded-lg font-bold text-lg hover:opacity-90 transition-opacity shadow-sm min-w-[200px]"
+                    onClick={handleNext}
+                    disabled={createLeaseMutation.isPending}
+                    className="px-8 py-3 bg-[#3D7475] text-white rounded-lg font-bold text-lg hover:opacity-90 transition-opacity shadow-sm min-w-[200px] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                    Complete Move In
+                    {createLeaseMutation.isPending ? (
+                        <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Saving...
+                        </>
+                    ) : (
+                        'Complete Move In'
+                    )}
                 </button>
             </div>
         </div>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { X, AlertTriangle } from 'lucide-react';
+import { X, AlertTriangle, Loader2 } from 'lucide-react';
 
 interface DeleteConfirmationModalProps {
     isOpen: boolean;
@@ -12,6 +12,7 @@ interface DeleteConfirmationModalProps {
     confirmText?: string;
     confirmButtonClass?: string;
     headerClassName?: string;
+    isLoading?: boolean;
 }
 
 const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
@@ -23,7 +24,8 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
     itemName,
     confirmText = 'Delete',
     confirmButtonClass = 'bg-red-600 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-red-700 transition-colors shadow-sm',
-    headerClassName = 'bg-red-600'
+    headerClassName = 'bg-red-600',
+    isLoading = false
 }) => {
     if (!isOpen) return null;
 
@@ -56,15 +58,24 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
                     <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                         <button
                             onClick={onClose}
-                            className="flex-1 bg-gray-100 text-gray-700 px-4 py-2.5 rounded-lg font-bold hover:bg-gray-200 transition-colors order-2 sm:order-1"
+                            disabled={isLoading}
+                            className="flex-1 bg-gray-100 text-gray-700 px-4 py-2.5 rounded-lg font-bold hover:bg-gray-200 transition-colors order-2 sm:order-1 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Cancel
                         </button>
                         <button
                             onClick={onConfirm}
-                            className={`flex-1 ${confirmButtonClass} order-1 sm:order-2`}
+                            disabled={isLoading}
+                            className={`flex-1 ${confirmButtonClass} order-1 sm:order-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
                         >
-                            {confirmText}
+                            {isLoading ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    Deleting...
+                                </>
+                            ) : (
+                                confirmText
+                            )}
                         </button>
                     </div>
                 </div>

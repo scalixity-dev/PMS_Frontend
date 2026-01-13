@@ -17,6 +17,7 @@ import MoveInDailyLateFees from './steps/MoveInDailyLateFees';
 import MoveInBothLateFees from './steps/MoveInBothLateFees';
 import MoveInSuccessModal from './components/MoveInSuccessModal';
 import { useMoveInStore } from './store/moveInStore';
+import { useCreateLease } from '../../../../hooks/useLeaseQueries';
 
 interface MoveInScenarioCardProps {
     type: 'easy' | 'advanced';
@@ -80,9 +81,12 @@ const MoveIn: React.FC = () => {
         setCurrentStep,
         setSelectedScenario,
         setPropertyId,
+        resetForm,
     } = useMoveInStore();
     
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+    const [createdLeaseId, setCreatedLeaseId] = useState<string | null>(null);
+    const createLeaseMutation = useCreateLease();
 
     // Handle pre-selection from navigation state
     useEffect(() => {
@@ -166,8 +170,62 @@ const MoveIn: React.FC = () => {
         setCurrentStep(10);
     }
 
-    const handleCompleteMoveIn = () => {
-        setIsSuccessModalOpen(true);
+    const handleCompleteMoveIn = async () => {
+        // Validate required fields
+        if (!formData.tenantId || !formData.propertyId) {
+            alert('Please complete all required fields (Property and Tenant)');
+            return;
+        }
+
+        // Prepare lease data from form
+        const leaseData = {
+            tenantId: formData.tenantId,
+            propertyId: formData.propertyId,
+            unitId: formData.unitId || undefined,
+            sharedTenantIds: formData.sharedTenantIds.length > 0 ? formData.sharedTenantIds : undefined,
+            deposit: formData.deposit.hasDeposit ? {
+                category: formData.deposit.category,
+                amount: parseFloat(formData.deposit.amount) || 0,
+                invoiceDate: formData.deposit.invoiceDate?.toISOString(),
+            } : undefined,
+            recurringRent: formData.recurringRent.enabled ? {
+                enabled: true,
+                amount: parseFloat(formData.recurringRent.amount) || 0,
+                invoiceSchedule: formData.recurringRent.invoiceSchedule,
+                startOn: formData.recurringRent.startOn?.toISOString() || new Date().toISOString(),
+                endOn: formData.recurringRent.endOn?.toISOString(),
+                isMonthToMonth: formData.recurringRent.isMonthToMonth,
+                markPastPaid: formData.recurringRent.markPastPaid,
+            } : undefined,
+            lateFees: formData.lateFees.enabled ? {
+                enabled: true,
+                scheduleType: formData.lateFees.scheduleType || undefined,
+                oneTimeFee: formData.lateFees.oneTimeFee ? {
+                    type: formData.lateFees.oneTimeFee.type,
+                    amount: parseFloat(formData.lateFees.oneTimeFee.amount) || 0,
+                    gracePeriodDays: formData.lateFees.oneTimeFee.gracePeriodDays,
+                    time: formData.lateFees.oneTimeFee.time,
+                } : undefined,
+                dailyFee: formData.lateFees.dailyFee ? {
+                    type: formData.lateFees.dailyFee.type,
+                    amount: parseFloat(formData.lateFees.dailyFee.amount) || 0,
+                    maxMonthlyBalance: parseFloat(formData.lateFees.dailyFee.maxMonthlyBalance) || 0,
+                    gracePeriod: formData.lateFees.dailyFee.gracePeriod,
+                    time: formData.lateFees.dailyFee.time,
+                } : undefined,
+            } : undefined,
+        };
+
+        try {
+            const result = await createLeaseMutation.mutateAsync(leaseData);
+            setCreatedLeaseId(result.id);
+            setIsSuccessModalOpen(true);
+            // Reset form after successful creation
+            resetForm();
+        } catch (error) {
+            console.error('Failed to create lease:', error);
+            alert(error instanceof Error ? error.message : 'Failed to create lease. Please try again.');
+        }
     }
 
     return (
@@ -328,18 +386,27 @@ const MoveIn: React.FC = () => {
             </div>
             <MoveInSuccessModal
                 isOpen={isSuccessModalOpen}
-                onClose={() => setIsSuccessModalOpen(false)}
+                onClose={() => {
+                    setIsSuccessModalOpen(false);
+                    navigate('/dashboard/application');
+                }}
                 onBackToLease={() => {
                     setIsSuccessModalOpen(false);
-                    // Logic to go back to lease details? For now just close or navigate.
-                    // navigate('/dashboard/leases/9'); 
+                    if (createdLeaseId) {
+                        navigate(`/dashboard/leases/${createdLeaseId}`);
+                    } else {
+                        navigate('/dashboard/application');
+                    }
                 }}
                 onRequestSignature={() => {
                     setIsSuccessModalOpen(false);
                     // Logic for e-signature request
+                    if (createdLeaseId) {
+                        navigate(`/dashboard/leases/${createdLeaseId}/signature`);
+                    }
                 }}
-                propertyName="abc"
-                leaseNumber="9"
+                propertyName={formData.propertyId || 'Property'}
+                leaseNumber={createdLeaseId || ''}
             />
         </div>
     );
