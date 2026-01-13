@@ -14,61 +14,31 @@ import VoidTransactionModal from '../Transactions/components/VoidTransactionModa
 import EditPaymentModal from './components/EditPaymentModal';
 import RefundPaymentModal from './components/RefundPaymentModal';
 import { utils, writeFile } from 'xlsx';
-
-// Mock Data
-const MOCK_PAYMENTS = [
-    {
-        id: 1,
-        status: 'Success',
-        datePaid: '10 Nov 2025',
-        category: 'Exterior / Roof & Gutters',
-        property: 'Luxury',
-        contact: 'Sam',
-        amount: 88210.00,
-        type: 'income'
-    },
-    {
-        id: 2,
-        status: 'Success',
-        datePaid: '10 Nov 2025',
-        category: 'Exterior / Roof & Gutters',
-        property: 'Luxury',
-        contact: 'Abc',
-        amount: 88210.00,
-        type: 'income'
-    },
-    {
-        id: 3,
-        status: 'Failed',
-        datePaid: '09 Nov 2025',
-        category: 'Maintenance',
-        property: 'Seaside Villa',
-        contact: 'John Doe',
-        amount: 1200.00,
-        type: 'expense'
-    },
-    {
-        id: 4,
-        status: 'Success',
-        datePaid: '08 Nov 2025',
-        category: 'Rent',
-        property: 'Urban Loft',
-        contact: 'Jane Smith',
-        amount: 2500.00,
-        type: 'income'
-    }
-];
+import { useGetPayments } from '../../../../hooks/useTransactionQueries';
+import type { Payment } from '../../../../services/transaction.service';
 
 const Payments: React.FC = () => {
     const navigate = useNavigate();
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
     const [activeTab, setActiveTab] = useState<'All' | 'Income' | 'Expense' | 'Refund'>('All');
-    const [selectedItems, setSelectedItems] = useState<number[]>([]);
+    const [selectedItems, setSelectedItems] = useState<string[]>([]);
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
     const dropdownContainerRef = useRef<HTMLDivElement>(null);
-    const [moreMenuOpenId, setMoreMenuOpenId] = useState<number | null>(null);
+    const [moreMenuOpenId, setMoreMenuOpenId] = useState<string | null>(null);
     const moreMenuRefDesktop = useRef<HTMLDivElement>(null);
     const moreMenuRefMobile = useRef<HTMLDivElement>(null);
+
+    // Fetch payments from backend
+    const { data: payments = [], isLoading, error } = useGetPayments();
+
+    // Helper to convert Payment to PaymentData for modals
+    const convertPaymentToPaymentData = (payment: Payment) => ({
+        id: payment.id,
+        status: payment.status,
+        datePaid: typeof payment.datePaid === 'string' ? payment.datePaid : payment.datePaid.toISOString(),
+        category: payment.category,
+        amount: payment.amount,
+    });
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -143,9 +113,17 @@ const Payments: React.FC = () => {
         property: 'Property & Units',
     };
 
+    // Format date helper
+    const formatDate = (date: string | Date): string => {
+        if (!date) return 'N/A';
+        const dateObj = typeof date === 'string' ? new Date(date) : date;
+        if (isNaN(dateObj.getTime())) return 'N/A';
+        return dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    };
+
     // Filter Logic
     const filteredPayments = useMemo(() => {
-        return MOCK_PAYMENTS.filter(item => {
+        return payments.filter((item: Payment) => {
             // Tab Filter
             if (activeTab !== 'All') {
                 if (activeTab === 'Income' && item.type !== 'income') return false;
@@ -162,13 +140,12 @@ const Payments: React.FC = () => {
             // Dropdown Filters
             const matchesClient = filters.client.length === 0 || filters.client.some(c => item.contact.toLowerCase().includes(c.toLowerCase()));
             const matchesProperty = filters.property.length === 0 || filters.property.some(p => item.property.toLowerCase().includes(p.toLowerCase()));
-            // Adding a mock date filter logic if needed, but for now simple string match or ignore
 
             return matchesSearch && matchesClient && matchesProperty;
         });
-    }, [activeTab, searchQuery, filters]);
+    }, [activeTab, searchQuery, filters, payments]);
 
-    const toggleSelection = (id: number) => {
+    const toggleSelection = (id: string) => {
         if (selectedItems.includes(id)) {
             setSelectedItems(selectedItems.filter(item => item !== id));
         } else {
@@ -196,7 +173,7 @@ const Payments: React.FC = () => {
         // Create a cleaner version of the data for export
         const exportData = filteredPayments.map(item => ({
             Status: item.status,
-            'Date Paid': item.datePaid,
+            'Date Paid': formatDate(item.datePaid),
             Category: item.category,
             Property: item.property,
             Contact: item.contact,
@@ -323,7 +300,12 @@ const Payments: React.FC = () => {
                         <div className="p-4 bg-[#7BD747] rounded-[1.5rem] sm:rounded-full flex flex-col justify-center items-center h-24">
                             <span className="text-white text-sm font-medium mb-2">Paid Income</span>
                             <div className="bg-[#E3EBDE] px-6 py-2 rounded-full w-full sm:w-[80%] text-center shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.15)]">
-                                <span className="text-gray-600 text-lg font-bold">₹45,000.00</span>
+                                <span className="text-gray-600 text-lg font-bold">
+                                    ₹{payments
+                                        .filter(p => p.type === 'income' && p.status === 'Success')
+                                        .reduce((sum, p) => sum + p.amount, 0)
+                                        .toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                </span>
                             </div>
                         </div>
 
@@ -331,7 +313,12 @@ const Payments: React.FC = () => {
                         <div className="p-4 bg-[#7BD747] rounded-[1.5rem] sm:rounded-full flex flex-col justify-center items-center h-24">
                             <span className="text-white text-sm font-medium mb-2">Paid Expense</span>
                             <div className="bg-[#E3EBDE] px-6 py-2 rounded-full w-full sm:w-[80%] text-center shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.15)]">
-                                <span className="text-gray-600 text-lg font-bold">₹45,000.00</span>
+                                <span className="text-gray-600 text-lg font-bold">
+                                    ₹{payments
+                                        .filter(p => p.type === 'expense' && p.status === 'Success')
+                                        .reduce((sum, p) => sum + p.amount, 0)
+                                        .toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                </span>
                             </div>
                         </div>
 
@@ -339,7 +326,12 @@ const Payments: React.FC = () => {
                         <div className="p-4 bg-[#7BD747] rounded-[1.5rem] sm:rounded-full flex flex-col justify-center items-center h-24">
                             <span className="text-white text-sm font-medium mb-2">Paid Refund</span>
                             <div className="bg-[#E3EBDE] px-6 py-2 rounded-full w-full sm:w-[80%] text-center shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.15)]">
-                                <span className="text-gray-600 text-lg font-bold">₹ 00.00</span>
+                                <span className="text-gray-600 text-lg font-bold">
+                                    ₹{payments
+                                        .filter(p => p.type === 'refund' && p.status === 'Success')
+                                        .reduce((sum, p) => sum + p.amount, 0)
+                                        .toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -393,7 +385,17 @@ const Payments: React.FC = () => {
 
                 {/* Table Body */}
                 <div className="flex flex-col gap-3 bg-[#F0F0F6] p-4 rounded-[2rem] rounded-t min-h-[400px]">
-                    {filteredPayments.map((item) => (
+                    {isLoading && (
+                        <div className="text-center py-10 text-gray-500">
+                            Loading payments...
+                        </div>
+                    )}
+                    {error && (
+                        <div className="text-center py-10 text-red-500">
+                            Error loading payments. Please try again.
+                        </div>
+                    )}
+                    {!isLoading && !error && filteredPayments.map((item) => (
                         <div
                             key={item.id}
                             className="bg-white rounded-[1.5rem] sm:rounded-2xl px-4 sm:px-6 py-4 flex flex-col lg:grid lg:grid-cols-[40px_1fr_1fr_1.5fr_1fr_1fr_1fr_50px] gap-3 lg:gap-4 items-start lg:items-center shadow-sm hover:shadow-md transition-shadow relative"
@@ -438,7 +440,7 @@ const Payments: React.FC = () => {
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         setEditPaymentModalOpen(true);
-                                                        setSelectedPayment(item);
+                                                        setSelectedPayment(convertPaymentToPaymentData(item));
                                                         setSelectedTransactionId(item.id);
                                                         setMoreMenuOpenId(null);
                                                     }}
@@ -450,7 +452,7 @@ const Payments: React.FC = () => {
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        setSelectedPayment(item);
+                                                        setSelectedPayment(convertPaymentToPaymentData(item));
                                                         setRefundModalOpen(true);
                                                         setMoreMenuOpenId(null);
                                                     }}
@@ -485,7 +487,7 @@ const Payments: React.FC = () => {
                             {/* Date Paid */}
                             <div className="w-full lg:w-auto flex justify-between lg:block">
                                 <span className="lg:hidden text-xs text-gray-500 font-bold uppercase tracking-wider">Date Paid</span>
-                                <div className="text-gray-800 text-sm font-medium">{item.datePaid}</div>
+                                <div className="text-gray-800 text-sm font-medium">{formatDate(item.datePaid)}</div>
                             </div>
 
                             {/* Category */}
@@ -535,7 +537,7 @@ const Payments: React.FC = () => {
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 setEditPaymentModalOpen(true);
-                                                setSelectedPayment(item);
+                                                setSelectedPayment(convertPaymentToPaymentData(item));
                                                 setSelectedTransactionId(item.id);
                                                 setMoreMenuOpenId(null);
                                             }}
@@ -547,7 +549,7 @@ const Payments: React.FC = () => {
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                setSelectedPayment(item);
+                                                setSelectedPayment(convertPaymentToPaymentData(item));
                                                 setRefundModalOpen(true);
                                                 setMoreMenuOpenId(null);
                                             }}

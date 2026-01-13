@@ -205,5 +205,14 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `${API_BASE_URL}/leases/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/leases/${id}`,
   },
+  TRANSACTION: {
+    CREATE_INCOME_INVOICE: `${API_BASE_URL}/transactions/income-invoice`,
+    CREATE_EXPENSE_INVOICE: `${API_BASE_URL}/transactions/expense-invoice`,
+    GET_TAGS: `${API_BASE_URL}/transactions/tags`,
+    GET_PAYMENTS: `${API_BASE_URL}/transactions/payments`,
+    GET_ALL: `${API_BASE_URL}/transactions`,
+    MARK_AS_PAID: (id: string) => `${API_BASE_URL}/transactions/${id}/mark-as-paid`,
+    DELETE: (id: string) => `${API_BASE_URL}/transactions/${id}`,
+  },
 };
 
