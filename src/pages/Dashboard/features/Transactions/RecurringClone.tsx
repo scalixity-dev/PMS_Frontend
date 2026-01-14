@@ -26,6 +26,7 @@ const RecurringClone: React.FC = () => {
     const [isAddTenantModalOpen, setIsAddTenantModalOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [uploadError, setUploadError] = useState<string>('');
+    const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     const { clonedTransactionData } = useTransactionStore();
@@ -77,6 +78,18 @@ const RecurringClone: React.FC = () => {
     };
 
     const handleCreate = () => {
+        const errors: { [key: string]: string } = {};
+        if (!startDate) errors.startDate = 'Start date is required';
+        if (!endDate) errors.endDate = 'End date is required';
+        if (!amount) errors.amount = 'Amount is required';
+        if (!payer) errors.payer = 'Payer / Payee is required';
+
+        setFormErrors(errors);
+
+        if (Object.keys(errors).length > 0) {
+            return;
+        }
+
         console.log({
             incomeType,
             startDate,
@@ -145,6 +158,7 @@ const RecurringClone: React.FC = () => {
                         <div className="relative">
                             <DatePicker value={startDate} onChange={setStartDate} placeholder="dd/mm/yy" />
                         </div>
+                        {formErrors.startDate && <p className="text-red-500 text-xs mt-1 ml-1">{formErrors.startDate}</p>}
                     </div>
 
                     {/* Frequency */}
@@ -172,6 +186,7 @@ const RecurringClone: React.FC = () => {
                         <div className="relative">
                             <DatePicker value={endDate} onChange={setEndDate} placeholder="dd/mm/yy" />
                         </div>
+                        {formErrors.endDate && <p className="text-red-500 text-xs mt-1 ml-1">{formErrors.endDate}</p>}
                     </div>
 
                     {/* Amount */}
@@ -186,6 +201,7 @@ const RecurringClone: React.FC = () => {
                                 className="w-full rounded-md bg-white px-4 py-3 text-sm text-gray-700 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#7BD747]/20 transition-all shadow-sm"
                             />
                         </div>
+                        {formErrors.amount && <p className="text-red-500 text-xs mt-1 ml-1">{formErrors.amount}</p>}
                     </div>
 
                     {/* Payer / Payee */}
@@ -200,9 +216,10 @@ const RecurringClone: React.FC = () => {
                                     { id: '2', label: 'Service Pro', type: 'Service Pro' },
                                 ]}
                                 onAddTenant={() => setIsAddTenantModalOpen(true)}
-                                placeholder="Paye"
+                                placeholder="Payer"
                             />
                         </div>
+                        {formErrors.payer && <p className="text-red-500 text-xs mt-1 ml-1">{formErrors.payer}</p>}
                     </div>
 
                     {/* Lease */}
