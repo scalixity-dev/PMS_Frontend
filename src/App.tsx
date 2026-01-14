@@ -16,11 +16,14 @@ import LoginPage from './pages/basewebsite/auth/login';
 import SignUpPage from './pages/basewebsite/auth/signUp';
 import ServiceDashboardLogin from './pages/ServiceDashboard/pages/auth/Login';
 import ServiceDashboardSignup from './pages/ServiceDashboard/pages/auth/Signup';
+import ForgotPassword from './pages/ServiceDashboard/pages/auth/ForgotPassword';
 import Welcome from './pages/ServiceDashboard/pages/onboarding/Welcome';
 import SelectProfession from './pages/ServiceDashboard/pages/onboarding/SelectProfession';
 import ProfessionDetails from './pages/ServiceDashboard/pages/onboarding/ProfessionDetails';
 import ServiceDashboardLayout from './components/service-dashboard/layout/ServiceDashboardLayout';
 import ServiceDashboard from './pages/ServiceDashboard/pages/Dashboard/ServiceDashboard';
+import ServiceDashboardSettings from './pages/ServiceDashboard/pages/Dashboard/ServiceDashboardSettings';
+import ServiceDashboardProfileSettings from './pages/ServiceDashboard/pages/Dashboard/ProfileSettings';
 import OtpPage from './pages/basewebsite/auth/otp';
 import OAuthCallbackPage from './pages/basewebsite/auth/otp'; // Note: This might have been a mistake in the original or I misread, checking...
 import OAuthCompletePage from './pages/basewebsite/auth/signUp/oauth-complete';
@@ -195,6 +198,7 @@ const App: React.FC = () => {
             {/* Service Dashboard Auth - Standalone Pages */}
             <Route path="/service-dashboard/login" element={<ServiceDashboardLogin />} />
             <Route path="/service-dashboard/signup" element={<ServiceDashboardSignup />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
 
             {/* Service Dashboard Onboarding */}
             <Route path="/service-dashboard/welcome" element={<Welcome />} />
@@ -203,8 +207,9 @@ const App: React.FC = () => {
 
             {/* Service Dashboard Routes */}
             <Route element={<ServiceDashboardLayout />}>
-              <Route path="/service-dashboard/dashboard" element={<ServiceDashboard />} />
-              {/* Add other service dashboard routes here */}
+              <Route path="/service-dashboard/dashboard" element={<ProtectedRoute><ServiceDashboard /></ProtectedRoute>} />
+              <Route path="/service-dashboard/settings" element={<ProtectedRoute><ServiceDashboardSettings /></ProtectedRoute>} />
+              <Route path="/service-dashboard/settings/profile" element={<ProtectedRoute><ServiceDashboardProfileSettings /></ProtectedRoute>} />
             </Route>
 
             <Route element={<AppLayout />}>

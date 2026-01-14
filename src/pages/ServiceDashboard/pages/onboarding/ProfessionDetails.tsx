@@ -30,8 +30,8 @@ const ProfessionDetails: React.FC = () => {
     };
 
     const handleFinish = () => {
-        // Here you would typically save the user's profile and services
-        navigate('/service-dashboard/dashboard'); // Or wherever the main dashboard is
+        // Here you would typically save the user's profession and services to the backend
+        navigate('/service-dashboard/dashboard', { state: { selectedServices } }); // Or wherever the main dashboard is
     };
 
     return (

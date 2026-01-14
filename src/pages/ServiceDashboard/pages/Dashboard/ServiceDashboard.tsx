@@ -95,7 +95,7 @@ const ServiceDashboard: React.FC = () => {
                     {/* Calendar Reminder */}
                     <div className="flex items-center justify-between p-2">
                         <div>
-                            <p className="text-gray-500 text-sm mb-1">Calender Reminder</p>
+                            <p className="text-gray-500 text-sm mb-1">Calendar Reminder</p>
                             <p className="text-xl font-bold text-gray-900">0</p>
                         </div>
                         <button className="text-[#7BD747] text-sm font-medium hover:underline">View</button>

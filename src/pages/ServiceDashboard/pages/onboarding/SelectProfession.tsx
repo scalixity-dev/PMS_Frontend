@@ -20,8 +20,18 @@ const SelectProfession: React.FC = () => {
         { id: 'plumbing', label: 'Plumbing', icon: Wrench }, // Using Wrench (Faucet not standard)
     ];
 
-    const handleSelect = (id: string) => {
-        setSelectedProfession(id);
+    interface ProfessionOption {
+        id: string;
+        label: string;
+        icon: any;
+    }
+
+    const handleSelect = (option: ProfessionOption) => {
+        setSelectedProfession(option.id);
+        // data persistence logic here if needed
+        setTimeout(() => {
+            navigate('/service-dashboard/profession-details', { state: { ...userData, profession: option } });
+        }, 300); // 300ms delay for visual feedback
     };
 
     return (
@@ -49,8 +59,7 @@ const SelectProfession: React.FC = () => {
                         <div
                             key={prof.id}
                             onClick={() => {
-                                handleSelect(prof.id);
-                                navigate('/service-dashboard/profession-details', { state: { ...userData, professionId: prof.id, professionLabel: prof.label } });
+                                handleSelect(prof);
                             }}
                             className={`relative flex h-28 w-36 cursor-pointer flex-col items-center justify-center rounded-xl border-2 shadow-sm transition-all hover:shadow-md md:h-36 md:w-48 bg-white ${selectedProfession === prof.id ? 'border-[#4CAF50]' : 'border-gray-200'}`}
                         >

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 // Placeholder for random avatar generation
@@ -20,7 +20,8 @@ const Welcome: React.FC = () => {
 
     // Extract First Name for the Title
     const firstName = fullName.split(' ')[0];
-    const avatar = getRandomAvatar();
+    // Generate avatar once on mount
+    const [avatar] = useState(() => getRandomAvatar());
 
     return (
         <div className="relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden bg-white px-6">

@@ -15,6 +15,7 @@ const Signup: React.FC = () => {
     });
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     const [errors, setErrors] = useState({
         fullName: '',
@@ -111,12 +112,24 @@ const Signup: React.FC = () => {
         return isValid;
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (validateForm()) {
-            // TODO: Implement registration logic
-            console.log('Register data:', formData);
-            navigate('/service-dashboard/login');
+            setIsLoading(true);
+            try {
+                // Mock API call
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // TODO: Replace with actual API call
+                // await authService.register(formData);
+
+                navigate('/service-dashboard/login');
+            } catch (error) {
+                console.error('Registration failed:', error);
+                // Handle error state here
+            } finally {
+                setIsLoading(false);
+            }
         }
     };
 

@@ -316,7 +316,7 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
                         />
 
                         <SidebarLink
-                            label="Calender"
+                            label="Calendar"
                             icon={<PiCalendarFill size={24} />}
                             to="/service-dashboard/calendar"
                             activeDropdown={activeDropdown}
