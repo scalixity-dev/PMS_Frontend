@@ -23,6 +23,10 @@ const RecurringClone: React.FC = () => {
     const [details, setDetails] = useState<string>('');
     const [frequency, setFrequency] = useState<string>('');
     const [tags, setTags] = useState<string>('');
+    const [payerOptions, setPayerOptions] = useState<{ id: string; label: string; type: 'tenant' | 'Service Pro' | 'other' }[]>([
+        { id: '1', label: 'Tenant', type: 'tenant' },
+        { id: '2', label: 'Service Pro', type: 'Service Pro' },
+    ]);
     const [isAddTenantModalOpen, setIsAddTenantModalOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [uploadError, setUploadError] = useState<string>('');
@@ -83,6 +87,10 @@ const RecurringClone: React.FC = () => {
         if (!endDate) errors.endDate = 'End date is required';
         if (!amount) errors.amount = 'Amount is required';
         if (!payer) errors.payer = 'Payer / Payee is required';
+
+        if (startDate && endDate && endDate < startDate) {
+            errors.endDate = 'End date must be after start date';
+        }
 
         setFormErrors(errors);
 
@@ -211,10 +219,7 @@ const RecurringClone: React.FC = () => {
                             <PayerPayeeDropdown
                                 value={payer}
                                 onChange={setPayer}
-                                options={[
-                                    { id: '1', label: 'Tenant', type: 'tenant' },
-                                    { id: '2', label: 'Service Pro', type: 'Service Pro' },
-                                ]}
+                                options={payerOptions}
                                 onAddTenant={() => setIsAddTenantModalOpen(true)}
                                 placeholder="Payer"
                             />
@@ -308,7 +313,15 @@ const RecurringClone: React.FC = () => {
                 <AddTenantModal
                     isOpen={isAddTenantModalOpen}
                     onClose={() => setIsAddTenantModalOpen(false)}
-                    onSave={(data) => console.log('New Tenant Data:', data)}
+                    onSave={(data) => {
+                        const newOption: { id: string; label: string; type: 'tenant' | 'Service Pro' | 'other' } = {
+                            id: `new-${Date.now()}`,
+                            label: `${data.firstName} ${data.lastName}`,
+                            type: 'tenant'
+                        };
+                        setPayerOptions(prev => [...prev, newOption]);
+                        setIsAddTenantModalOpen(false);
+                    }}
                 />
 
             </div>
