@@ -1,10 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Check, Search } from 'lucide-react';
 
+interface GroupedOption {
+    label: string;
+    options: string[];
+}
+
 interface SearchableDropdownProps {
     label?: string;
     value: string;
-    options: string[];
+    options: (string | GroupedOption)[];
     onChange: (value: string) => void;
     placeholder?: string;
     className?: string;
@@ -30,9 +35,19 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
     const [searchTerm, setSearchTerm] = useState('');
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    const filteredOptions = options.filter(option =>
-        option.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredOptions = options.reduce<(string | GroupedOption)[]>((acc, option) => {
+        if (typeof option === 'string') {
+            if (option.toLowerCase().includes(searchTerm.toLowerCase())) {
+                acc.push(option);
+            }
+        } else {
+            const requestOptions = option.options.filter(opt => opt.toLowerCase().includes(searchTerm.toLowerCase()));
+            if (requestOptions.length > 0) {
+                acc.push({ label: option.label, options: requestOptions });
+            }
+        }
+        return acc;
+    }, []);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -83,25 +98,56 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
                             {filteredOptions.length === 0 ? (
                                 <div className="px-4 py-3 text-sm text-gray-500 text-center">No options found</div>
                             ) : (
-                                filteredOptions.map((option) => (
-                                    <button
-                                        key={option}
-                                        onClick={() => {
-                                            onChange(option);
-                                            setIsOpen(false);
-                                            setSearchTerm('');
-                                            onToggle?.(false);
-                                        }}
-                                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-left transition-colors"
-                                    >
-                                        <div className="w-5 flex justify-center">
-                                            {value === option && <Check size={16} className="text-[#3A6D6C]" />}
-                                        </div>
-                                        <span className={`text-base sm:text-sm ${value === option ? 'text-[#3A6D6C] font-semibold' : 'text-gray-700'}`}>
-                                            {option}
-                                        </span>
-                                    </button>
-                                ))
+                                filteredOptions.map((option, index) => {
+                                    if (typeof option === 'string') {
+                                        return (
+                                            <button
+                                                key={index}
+                                                onClick={() => {
+                                                    onChange(option);
+                                                    setIsOpen(false);
+                                                    setSearchTerm('');
+                                                    onToggle?.(false);
+                                                }}
+                                                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-left transition-colors"
+                                            >
+                                                <div className="w-5 flex justify-center">
+                                                    {value === option && <Check size={16} className="text-[#3A6D6C]" />}
+                                                </div>
+                                                <span className={`text-base sm:text-sm ${value === option ? 'text-[#3A6D6C] font-semibold' : 'text-gray-700'}`}>
+                                                    {option}
+                                                </span>
+                                            </button>
+                                        );
+                                    } else {
+                                        return (
+                                            <div key={index}>
+                                                <div className="px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider bg-gray-50/50">
+                                                    {option.label}
+                                                </div>
+                                                {option.options.map((subOption, subIndex) => (
+                                                    <button
+                                                        key={`${index}-${subIndex}`}
+                                                        onClick={() => {
+                                                            onChange(subOption);
+                                                            setIsOpen(false);
+                                                            setSearchTerm('');
+                                                            onToggle?.(false);
+                                                        }}
+                                                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-left transition-colors"
+                                                    >
+                                                        <div className="w-5 flex justify-center">
+                                                            {value === subOption && <Check size={16} className="text-[#3A6D6C]" />}
+                                                        </div>
+                                                        <span className={`text-base sm:text-sm ${value === subOption ? 'text-[#3A6D6C] font-semibold' : 'text-gray-700'}`}>
+                                                            {subOption}
+                                                        </span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        );
+                                    }
+                                })
                             )}
                         </div>
                     </div>
