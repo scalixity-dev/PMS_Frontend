@@ -96,8 +96,8 @@ const UserDashboard = () => {
         const fetchData = async () => {
             try {
                 const [leases, apps] = await Promise.all([
-                    leasingService.getAll(),
-                    applicationService.getAll()
+                    leasingService.getAll().catch(() => []),
+                    applicationService.getAll().catch(() => [])
                 ]);
 
                 // Filter for truly active leases
@@ -233,19 +233,19 @@ const UserDashboard = () => {
             </div>
 
             {/* Main Content Area */}
-            <div className="flex-1 mt-6 lg:mt-12 overflow-hidden">
+            <div className="flex-1 mt-6 lg:mt-12 min-w-0">
                 {/* Header Section */}
                 {dashboardStage !== 'no_lease' && (
                     <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end mb-8 xl:mb-10 gap-6">
                         {/* Navigation Tabs */}
-                        <div className="flex-1 w-full relative">
-                            <div className="flex items-end gap-3 border-b-[0.5px] border-[var(--dashboard-border)] w-max sm:w-fit relative">
+                        <div className="flex-1 w-full relative overflow-x-auto scrollbar-hide">
+                            <div className="flex items-end gap-1 sm:gap-3 border-b-[0.5px] border-[var(--dashboard-border)] w-full sm:w-fit relative sm:pr-4">
                                 {dashboardStage === 'move_in' ? (
                                     tabs.map((tab) => (
                                         <button
                                             key={tab}
                                             onClick={() => setActiveTab(tab as TabType)}
-                                            className={`relative px-4 sm:px-5 py-2 font-medium text-sm sm:text-base transition-all duration-200 whitespace-nowrap ${activeTab === tab
+                                            className={`relative flex-1 sm:flex-none px-1 sm:px-5 py-2 font-medium text-xs sm:text-base transition-all duration-200 whitespace-nowrap text-center ${activeTab === tab
                                                 ? "bg-[var(--dashboard-accent)] text-white rounded-t-2xl z-10"
                                                 : "text-gray-400 hover:text-gray-600"
                                                 }`}
