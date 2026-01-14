@@ -28,10 +28,21 @@ const SelectProfession: React.FC = () => {
 
     const handleSelect = (option: ProfessionOption) => {
         setSelectedProfession(option.id);
-        // data persistence logic here if needed
-        setTimeout(() => {
-            navigate('/service-dashboard/profession-details', { state: { ...userData, profession: option } });
-        }, 300); // 300ms delay for visual feedback
+    };
+
+    const handleNext = () => {
+        if (selectedProfession) {
+            const professionOption = professions.find(p => p.id === selectedProfession);
+            if (professionOption) {
+                navigate('/service-dashboard/profession-details', {
+                    state: {
+                        ...userData,
+                        professionId: professionOption.id,
+                        professionLabel: professionOption.label
+                    }
+                });
+            }
+        }
     };
 
     return (
@@ -76,7 +87,17 @@ const SelectProfession: React.FC = () => {
                     ))}
                 </div>
 
-                <div className="mt-12">
+                <div className="mt-12 w-full max-w-40 flex flex-col items-center gap-4">
+                    <button
+                        onClick={handleNext}
+                        disabled={!selectedProfession}
+                        className={`w-full rounded-lg py-3 font-semibold text-white shadow-lg transition-transform focus:outline-none ${selectedProfession
+                            ? 'bg-[#7CD947] border border-white border-2 hover:scale-105 hover:bg-[#7CB342]'
+                            : 'bg-gray-300 cursor-not-allowed'
+                            }`}
+                    >
+                        Next
+                    </button>
                     <button className="text-[#8BC34A] hover:underline">Other</button>
                 </div>
             </div>

@@ -242,9 +242,10 @@ const Signup: React.FC = () => {
 
                     <button
                         type="submit"
-                        className="w-full rounded-lg bg-[#4CAF50] py-3 font-semibold text-white shadow-[0_10px_20px_-10px_rgba(76,175,80,1)] transition-transform hover:scale-[1.02] hover:bg-[#388E3C] outline-none"
+                        disabled={isLoading}
+                        className={`w-full rounded-lg bg-[#4CAF50] py-3 font-semibold text-white shadow-[0_10px_20px_-10px_rgba(76,175,80,1)] transition-transform hover:scale-[1.02] hover:bg-[#388E3C] outline-none ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                     >
-                        Register
+                        {isLoading ? 'Registering...' : 'Register'}
                     </button>
                 </form>
 
