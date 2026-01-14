@@ -398,12 +398,16 @@ const Payments: React.FC = () => {
                     {!isLoading && !error && filteredPayments.map((item) => (
                         <div
                             key={item.id}
-                            className="bg-white rounded-[1.5rem] sm:rounded-2xl px-4 sm:px-6 py-4 flex flex-col lg:grid lg:grid-cols-[40px_1fr_1fr_1.5fr_1fr_1fr_1fr_50px] gap-3 lg:gap-4 items-start lg:items-center shadow-sm hover:shadow-md transition-shadow relative"
+                            onClick={() => navigate(`/dashboard/accounting/transactions/${item.id}`)}
+                            className="bg-white rounded-[1.5rem] sm:rounded-2xl px-4 sm:px-6 py-4 flex flex-col lg:grid lg:grid-cols-[40px_1fr_1fr_1.5fr_1fr_1fr_1fr_50px] gap-3 lg:gap-4 items-start lg:items-center shadow-sm hover:shadow-md transition-shadow relative cursor-pointer"
                         >
                             <div className="flex items-center justify-between w-full lg:w-auto mb-2 lg:mb-0">
                                 <div className="flex items-center gap-3 lg:justify-center">
                                     <button
-                                        onClick={() => toggleSelection(item.id)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            toggleSelection(item.id);
+                                        }}
                                         className="flex items-center justify-center"
                                     >
                                         <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${selectedItems.includes(item.id) ? 'bg-[#7BD747]' : 'bg-gray-200'}`}>

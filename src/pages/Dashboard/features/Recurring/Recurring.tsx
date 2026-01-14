@@ -297,12 +297,19 @@ const Recurring: React.FC = () => {
                 {/* Table Body */}
                 <div className="flex flex-col gap-3 bg-[#F0F0F6] p-4 rounded-b-[2rem] rounded-t min-h-[400px]">
                     {filteredRecurring.map((item) => (
-                        <div key={item.id} className="relative transition-shadow hover:shadow-md rounded-2xl bg-white shadow-sm">
+                        <div
+                            key={item.id}
+                            onClick={() => navigate(`/dashboard/accounting/recurring/${item.id}`)}
+                            className="relative transition-shadow hover:shadow-md rounded-2xl bg-white shadow-sm cursor-pointer"
+                        >
                             {/* Desktop View */}
                             <div className="hidden md:grid px-6 py-4 grid-cols-[40px_0.5fr_1fr_1fr_1.5fr_1fr_1fr_50px] gap-4 items-center">
                                 <div className="flex items-center justify-center">
                                     <button
-                                        onClick={() => toggleSelection(item.id)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            toggleSelection(item.id);
+                                        }}
                                         className="flex items-center justify-center"
                                     >
                                         <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${selectedItems.includes(item.id) ? 'bg-[#7BD747]' : 'bg-gray-200'}`}>
@@ -334,7 +341,10 @@ const Recurring: React.FC = () => {
                                 {/* Actions */}
                                 <div className="flex justify-end relative">
                                     <button
-                                        onClick={() => setMoreMenuOpenId(moreMenuOpenId === item.id ? null : item.id)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setMoreMenuOpenId(moreMenuOpenId === item.id ? null : item.id);
+                                        }}
                                         className="text-gray-600 hover:text-gray-600"
                                     >
                                         <MoreHorizontal className="w-10 h-6 bg-gray-200 rounded-full p-0.5" />
@@ -347,7 +357,10 @@ const Recurring: React.FC = () => {
                                 <div className="flex justify-between items-start">
                                     <div className="flex items-center gap-3">
                                         <button
-                                            onClick={() => toggleSelection(item.id)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                toggleSelection(item.id);
+                                            }}
                                             className="flex items-center justify-center"
                                         >
                                             <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${selectedItems.includes(item.id) ? 'bg-[#7BD747]' : 'bg-gray-200'}`}>
@@ -359,7 +372,10 @@ const Recurring: React.FC = () => {
                                         </span>
                                     </div>
                                     <button
-                                        onClick={() => setMoreMenuOpenId(moreMenuOpenId === item.id ? null : item.id)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setMoreMenuOpenId(moreMenuOpenId === item.id ? null : item.id);
+                                        }}
                                         className="text-gray-600"
                                     >
                                         <MoreHorizontal className="w-8 h-8 bg-gray-100 rounded-full p-1.5" />
