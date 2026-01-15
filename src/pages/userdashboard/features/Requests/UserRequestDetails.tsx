@@ -146,10 +146,10 @@ const RequestDetails = () => {
     };
 
     return (
-        <div className="flex flex-col gap-6 w-full min-h-screen bg-white p-4 lg:p-8">
+        <div className="flex flex-col gap-4 md:gap-6 w-full min-h-screen bg-white p-4 md:p-8">
             {/* Breadcrumbs */}
             <nav aria-label="Breadcrumb">
-                <ol className="flex items-center gap-2 text-base font-medium">
+                <ol className="flex items-center flex-wrap gap-2 text-base font-medium">
                     <li>
                         <Link to="/userdashboard" className="text-[var(--dashboard-accent)] font-medium hover:opacity-80 transition-opacity">Dashboard</Link>
                     </li>
@@ -166,15 +166,15 @@ const RequestDetails = () => {
 
                 {/* Header / Main Info Card */}
                 <div className="bg-[#F4F4F4] rounded-2xl border border-gray-200 shadow-[0px_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
-                    <div className="px-4 py-3 border-b border-[#E5E7EB] flex items-center justify-between">
-                        <div className="flex items-center gap-2">
+                    <div className="px-2 py-3 border-b border-[#E5E7EB] flex items-center justify-between">
+                        <div className="flex items-center gap-1 lg:gap-2">
                             <button
                                 onClick={() => navigate(-1)}
                                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                             >
                                 <ChevronLeft size={24} className="text-gray-900" />
                             </button>
-                            <h1 className="text-xl font-semibold text-gray-900">Maintenance request</h1>
+                            <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">Maintenance request</h1>
                         </div>
                         <div className="flex items-center gap-3">
                             <button
@@ -205,10 +205,10 @@ const RequestDetails = () => {
                             <div className="flex-1 space-y-4">
                                 {/* Request ID & Title */}
                                 <div className="space-y-2">
-                                    <div className="text-gray-900 font-medium">
+                                    <div className="text-gray-900 font-medium text-sm md:text-base">
                                         No. {request.requestId.replace('REQ-', '')}
                                     </div>
-                                    <h2 className="text-2xl font-medium text-gray-900">
+                                    <h2 className="text-xl md:text-2xl font-semibold text-gray-900 leading-tight">
                                         {request.category} / {request.subCategory} / {request.problem}
                                     </h2>
                                 </div>
@@ -217,15 +217,15 @@ const RequestDetails = () => {
                                 <div className="flex gap-4">
 
                                     <div className="flex-1 space-y-1">
-                                        <p className="text-gray-500 text-sm font-medium">Property</p>
-                                        <p className="text-xl font-medium text-gray-900">{request.property}</p>
+                                        <p className="text-gray-500 text-xs md:text-sm font-medium uppercase tracking-wider">Property</p>
+                                        <p className="text-lg md:text-xl font-semibold text-gray-900">{request.property}</p>
                                     </div>
                                 </div>
 
                                 {/* Description */}
                                 <div className="space-y-1">
-                                    <p className="text-gray-500 text-sm font-medium">Description</p>
-                                    <p className="text-gray-900 font-medium text-xl">{request.description}</p>
+                                    <p className="text-gray-500 text-xs md:text-sm font-medium uppercase tracking-wider">Description</p>
+                                    <p className="text-gray-900 font-medium text-lg md:text-xl leading-relaxed">{request.description}</p>
                                 </div>
                             </div>
                         </div>
@@ -280,10 +280,10 @@ const RequestDetails = () => {
                             <span>Assignee Information</span>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-y-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-4">
                             <div>
-                                <p className="text-gray-500 text-sm font-medium mb-1">Type</p>
-                                <p className="text-gray-900 font-medium">{request.assigneeInfo.type}</p>
+                                <p className="text-gray-500 text-xs font-medium mb-1 uppercase tracking-wider">Type</p>
+                                <p className="text-[var(--dashboard-text-main)] font-semibold">{request.assigneeInfo.type}</p>
                             </div>
                             {/* Profile Card */}
                             <div className="row-span-3">
@@ -301,21 +301,21 @@ const RequestDetails = () => {
                             </div>
 
                             <div>
-                                <p className="text-gray-500 text-sm font-medium mb-1">Priority</p>
-                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${getPriorityColor(request.priority)}`}>
-                                    <div className="w-1.5 h-1.5 bg-current rounded-full"></div>
+                                <p className="text-gray-500 text-xs font-medium mb-1 uppercase tracking-wider">Priority</p>
+                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getPriorityColor(request.priority)}`}>
+                                    <div className="w-1 h-1 bg-current rounded-full"></div>
                                     {request.priority}
                                 </span>
                             </div>
 
                             <div>
-                                <p className="text-gray-500 text-sm font-medium mb-1">Date Initiated</p>
-                                <p className="text-gray-900 font-medium">{request.assigneeInfo.dateInitiated}</p>
+                                <p className="text-gray-500 text-xs font-medium mb-1 uppercase tracking-wider">Date Initiated</p>
+                                <p className="text-[var(--dashboard-text-main)] font-semibold text-sm">{request.assigneeInfo.dateInitiated}</p>
                             </div>
 
                             <div>
-                                <p className="text-gray-500 text-sm font-medium mb-1">Date Due</p>
-                                <p className="text-gray-900 font-medium">{request.assigneeInfo.dateDue}</p>
+                                <p className="text-gray-500 text-xs font-medium mb-1 uppercase tracking-wider">Date Due</p>
+                                <p className="text-[var(--dashboard-text-main)] font-semibold text-sm">{request.assigneeInfo.dateDue}</p>
                             </div>
                         </div>
                     </div>
@@ -327,9 +327,9 @@ const RequestDetails = () => {
                             <span>Tenant Information</span>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-y-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-4">
                             <div>
-                                <p className="text-gray-500 text-sm font-medium mb-1">Authorization to Enter</p>
+                                <p className="text-gray-500 text-xs font-medium mb-1 uppercase tracking-wider">Authorization to Enter</p>
                                 <p className="text-gray-900 font-medium">
                                     {foundRequest.authorizationToEnter
                                         ? (foundRequest.authorizationToEnter.toLowerCase() === "yes"
@@ -341,11 +341,11 @@ const RequestDetails = () => {
                                 </p>
                             </div>
                             <div>
-                                <p className="text-gray-500 text-sm font-medium mb-1">Authorization Code</p>
+                                <p className="text-gray-500 text-xs font-medium mb-1 uppercase tracking-wider">Authorization Code</p>
                                 <p className="text-gray-900 font-medium">{foundRequest.authorizationCode || "N/A"}</p>
                             </div>
                             <div>
-                                <p className="text-gray-500 text-sm font-medium mb-1">Pets</p>
+                                <p className="text-gray-500 text-xs font-medium mb-1 uppercase tracking-wider">Pets</p>
                                 <p className="text-gray-900 font-medium">
                                     {foundRequest.pets && foundRequest.pets.length > 0
                                         ? foundRequest.pets.join(", ")
@@ -353,17 +353,17 @@ const RequestDetails = () => {
                                 </p>
                             </div>
                             <div>
-                                <p className="text-gray-500 text-sm font-medium mb-1">Set Up Date/Time</p>
+                                <p className="text-gray-500 text-xs font-medium mb-1 uppercase tracking-wider">Set Up Date/Time</p>
                                 <p className="text-gray-900 font-medium">{foundRequest.setUpDateTime || "Not specified"}</p>
                             </div>
                             {foundRequest.availability && foundRequest.availability.length > 0 && (
                                 <>
                                     {foundRequest.availability.map((slot, index) => (
-                                        <div key={slot.id || index} className="col-span-2">
-                                            <p className="text-gray-500 text-sm font-medium mb-1">
+                                        <div key={slot.id || index} className="sm:col-span-2">
+                                            <p className="text-gray-500 text-xs font-medium mb-1 uppercase tracking-wider">
                                                 Availability {index + 1 > 0 ? `(${index + 1})` : ""}
                                             </p>
-                                            <div className="text-gray-900 font-medium">
+                                            <div className="text-[var(--dashboard-text-main)] font-semibold text-sm">
                                                 {slot.date && (
                                                     <p>Date: {(() => {
                                                         const [year, month, day] = slot.date.split("-").map(Number);
@@ -373,17 +373,14 @@ const RequestDetails = () => {
                                                 {slot.timeSlots && slot.timeSlots.length > 0 && (
                                                     <p>Time: {slot.timeSlots.join(", ")}</p>
                                                 )}
-                                                {!slot.date && (!slot.timeSlots || slot.timeSlots.length === 0) && (
-                                                    <p className="text-gray-400">Not specified</p>
-                                                )}
                                             </div>
                                         </div>
                                     ))}
                                 </>
                             )}
                             {(!foundRequest.availability || foundRequest.availability.length === 0) && (
-                                <div className="col-span-2">
-                                    <p className="text-gray-500 text-sm font-medium mb-1">Availability</p>
+                                <div className="sm:col-span-2">
+                                    <p className="text-gray-500 text-xs font-medium mb-1 uppercase tracking-wider">Availability</p>
                                     <p className="text-gray-900 font-medium">Not specified</p>
                                 </div>
                             )}
@@ -429,7 +426,7 @@ const RequestDetails = () => {
                     {expandedSections.attachments && (
                         <div className="p-6 border-t border-gray-200">
                             {request.attachments && request.attachments.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {request.attachments.map((file: File | string, index: number) => {
                                         const fileName = file instanceof File ? file.name : `attachment-${index + 1}`;
                                         const fileSize = file instanceof File ? `${(file.size / 1024).toFixed(2)} KB` : 'N/A';
@@ -483,18 +480,19 @@ const RequestDetails = () => {
             {/* Media Modal */}
             {selectedMedia && (
                 <div
-                    className="fixed inset-0 bg-black/40 bg-opacity-75 z-50 flex items-center justify-center p-28"
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-2 sm:p-4 md:p-10 lg:p-20"
                     onClick={() => setSelectedMedia(null)}
                 >
                     {/* Media Content */}
-                    <div className="relative max-w-7xl max-h-[90vh] w-full h-full flex items-center justify-center">
+                    <div className="relative max-w-5xl max-h-[90vh] w-full h-full flex items-center justify-center">
                         {/* Close Button - positioned on top-right of content */}
                         <button
                             onClick={() => setSelectedMedia(null)}
-                            className="absolute -top-8 -right-12 bg-white rounded-full p-3 hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl z-50"
+                            className="absolute -top-2 -right-2 sm:-top-4 sm:-right-4 md:-top-8 md:-right-12 bg-white rounded-full p-2 md:p-3 hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl z-[110]"
                             aria-label="Close"
                         >
-                            <X size={24} className="text-gray-700" strokeWidth={2.5} />
+                            <X size={20} className="text-gray-700 md:hidden" strokeWidth={2.5} />
+                            <X size={24} className="text-gray-700 hidden md:block" strokeWidth={2.5} />
                         </button>
 
                         {selectedMedia.type === "video" ? (
@@ -503,16 +501,31 @@ const RequestDetails = () => {
                                 controls
                                 className="max-w-full max-h-full rounded-lg shadow-2xl"
                                 onClick={(e) => e.stopPropagation()}
+                                autoPlay
                             >
                                 Your browser does not support the video tag.
                             </video>
                         ) : (
-                            <img
-                                src={selectedMedia.url}
-                                alt={selectedMedia.name}
-                                className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
-                                onClick={(e) => e.stopPropagation()}
-                            />
+                            <div className="relative w-full h-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                                <img
+                                    src={selectedMedia.url}
+                                    alt={selectedMedia.name}
+                                    className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                                />
+                                {/* Mobile Download Button */}
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        const a = document.createElement('a');
+                                        a.href = selectedMedia.url;
+                                        a.download = selectedMedia.name;
+                                        a.click();
+                                    }}
+                                    className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm p-3 rounded-full shadow-lg md:hidden"
+                                >
+                                    <Download size={20} className="text-gray-700" />
+                                </button>
+                            </div>
                         )}
                     </div>
                 </div>
