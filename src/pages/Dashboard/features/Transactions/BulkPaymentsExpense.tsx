@@ -5,33 +5,8 @@ import PayerPayeeDropdown from './components/PayerPayeeDropdown';
 import TransactionToggle from './components/TransactionToggle';
 import AddTenantModal from '../Tenants/components/AddTenantModal';
 import CustomDropdown from '../../components/CustomDropdown';
-
 import { validateFile } from '../../../../utils/fileValidation';
 import { Upload } from 'lucide-react';
-
-// Mock Data
-const MOCK_PROPERTIES: Record<string, { value: string, label: string }[]> = {
-    '1': [ // Service Pro
-        { value: 'prop_1', label: 'Downtown Apartments' },
-        { value: 'prop_2', label: 'Sunset Villa' },
-    ],
-    '2': [ // Tenant
-        { value: 'prop_3', label: 'Greenwood Estate' },
-    ]
-};
-
-const MOCK_INVOICES: Record<string, any[]> = {
-    'prop_1': [
-        { id: 'INV-20251122-8492', dueOn: '08 Dec', category: 'Maintenance', balance: '+69,0000', amount: '₹ 50,000' },
-        { id: 'INV-20251123-9999', dueOn: '10 Dec', category: 'Repair', balance: '+12,0000', amount: '₹ 10,000' }
-    ],
-    'prop_2': [
-        { id: 'INV-20251201-1111', dueOn: '15 Dec', category: 'Cleaning', balance: '+5,000', amount: '₹ 5,000' }
-    ],
-    'prop_3': [
-        { id: 'INV-20250101-2222', dueOn: '01 Jan', category: 'Rent', balance: '+25,000', amount: '₹ 25,000' }
-    ]
-};
 
 const BulkPaymentsExpense: React.FC = () => {
     const navigate = useNavigate();
@@ -43,13 +18,14 @@ const BulkPaymentsExpense: React.FC = () => {
     const [uploadError, setUploadError] = useState<string>('');
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-    // Dynamic Options and Data
-    const propertyOptions = payerPayee ? (MOCK_PROPERTIES[payerPayee] || []) : [];
-    const tableData = property ? (MOCK_INVOICES[property] || []) : [];
+    // Empty options - no backend integration
+    const payerPayeeOptions: Array<{ id: string; label: string; type: 'tenant' | 'Service Pro' }> = [];
+    const propertyOptions: Array<{ value: string; label: string }> = [];
+    const tableData: any[] = [];
 
     const handlePayerChange = (value: string) => {
         setPayerPayee(value);
-        setProperty(''); // Reset property when payer changes
+        setProperty('');
     };
 
     const handleFileClick = () => {
@@ -69,7 +45,6 @@ const BulkPaymentsExpense: React.FC = () => {
 
         setSelectedFile(file);
         setUploadError('');
-        console.log('Bulk file selected:', file);
     };
 
     const handleEdit = (id: string) => {
@@ -94,8 +69,6 @@ const BulkPaymentsExpense: React.FC = () => {
                 <span className="text-gray-500 text-sm mx-1">/</span>
                 <span className="text-gray-600 text-sm font-semibold">Bulk payments expense</span>
             </div>
-
-
 
             <div className="p-6 bg-[#DFE5E3] min-h-screen rounded-[2rem] overflow-visible">
                 {/* Header */}
@@ -160,12 +133,9 @@ const BulkPaymentsExpense: React.FC = () => {
                                 <PayerPayeeDropdown
                                     value={payerPayee}
                                     onChange={handlePayerChange}
-                                    options={[
-                                        { id: '1', label: 'Service Pro', type: 'Service Pro' },
-                                        { id: '2', label: 'Tenant', type: 'tenant' },
-                                    ]}
+                                    options={payerPayeeOptions}
                                     onAddTenant={() => setIsAddTenantModalOpen(true)}
-                                    placeholder="Paye"
+                                    placeholder="Select Payer/Payee"
                                 />
                             </div>
                         </div>

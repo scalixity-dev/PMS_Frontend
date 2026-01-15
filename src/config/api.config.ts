@@ -208,9 +208,12 @@ export const API_ENDPOINTS = {
   TRANSACTION: {
     CREATE_INCOME_INVOICE: `${API_BASE_URL}/transactions/income-invoice`,
     CREATE_EXPENSE_INVOICE: `${API_BASE_URL}/transactions/expense-invoice`,
+    CREATE_RECURRING_INCOME: `${API_BASE_URL}/transactions/recurring-income`,
+    CREATE_DEPOSIT: `${API_BASE_URL}/transactions/deposit`,
     GET_TAGS: `${API_BASE_URL}/transactions/tags`,
     GET_PAYMENTS: `${API_BASE_URL}/transactions/payments`,
     GET_ALL: `${API_BASE_URL}/transactions`,
+    GET_RECURRING: `${API_BASE_URL}/transactions/recurring`,
     MARK_AS_PAID: (id: string) => `${API_BASE_URL}/transactions/${id}/mark-as-paid`,
     DELETE: (id: string) => `${API_BASE_URL}/transactions/${id}`,
   },

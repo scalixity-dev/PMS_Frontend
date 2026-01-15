@@ -4,6 +4,8 @@ import {
   type BackendTransaction,
   type CreateIncomeInvoiceDto,
   type CreateExpenseInvoiceDto,
+  type CreateRecurringIncomeDto,
+  type CreateDepositDto,
 } from '../services/transaction.service';
 
 // Query keys for React Query
@@ -131,6 +133,19 @@ export const useGetTransactions = () => {
 };
 
 /**
+ * Hook to get all recurring transactions
+ */
+export const useGetRecurringTransactions = () => {
+  return useQuery({
+    queryKey: [...transactionQueryKeys.all, 'recurring'],
+    queryFn: () => transactionService.getRecurringTransactions(),
+    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    retry: 1,
+  });
+};
+
+/**
  * Hook to mark a transaction as paid
  */
 export const useMarkAsPaid = () => {
@@ -172,6 +187,62 @@ export const useMarkAsPaid = () => {
       });
       // Update the specific transaction in cache
       queryClient.setQueryData(transactionQueryKeys.detail(data.id), data);
+    },
+  });
+};
+
+/**
+ * Hook to create a recurring income transaction
+ */
+export const useCreateRecurringIncome = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (recurringData: CreateRecurringIncomeDto): Promise<any> => {
+      return transactionService.createRecurringIncome(recurringData);
+    },
+    onSuccess: () => {
+      // Invalidate and refetch transactions list
+      queryClient.invalidateQueries({ queryKey: transactionQueryKeys.lists() });
+      // Invalidate tags to refresh suggestions
+      queryClient.invalidateQueries({ queryKey: [...transactionQueryKeys.all, 'tags'] });
+    },
+  });
+};
+
+/**
+ * Hook to create a deposit transaction
+ */
+export const useCreateDeposit = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      depositData,
+      file,
+    }: {
+      depositData: CreateDepositDto;
+      file?: File;
+    }): Promise<BackendTransaction> => {
+      return transactionService.createDeposit(depositData, file);
+    },
+    onSuccess: (data) => {
+      // Invalidate and refetch transactions list
+      queryClient.invalidateQueries({ queryKey: transactionQueryKeys.lists() });
+      // Invalidate property-specific transactions
+      if (data.propertyId) {
+        queryClient.invalidateQueries({
+          queryKey: transactionQueryKeys.byProperty(data.propertyId),
+        });
+      }
+      // Invalidate type-specific transactions
+      queryClient.invalidateQueries({
+        queryKey: transactionQueryKeys.byType(data.type),
+      });
+      // Cache the newly created transaction
+      queryClient.setQueryData(transactionQueryKeys.detail(data.id), data);
+      // Invalidate tags to refresh suggestions
+      queryClient.invalidateQueries({ queryKey: [...transactionQueryKeys.all, 'tags'] });
     },
   });
 };
