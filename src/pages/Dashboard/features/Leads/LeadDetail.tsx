@@ -712,7 +712,7 @@ const LeadDetail = () => {
         <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit pb-10 transition-all duration-300 px-0.5 sm:px-0`}>
             {/* Breadcrumb - Hide on very small screens or make more compact */}
             <div className="mb-6">
-                <Breadcrumb items={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Leads', path: '/dashboard/leasing/leads' }, { label: leadInfo.fullName }]} />
+                <Breadcrumb items={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Leads', path: '/dashboard/leasing/leads' }, { label: leadInfo.fullName || 'Lead' }]} />
             </div>
 
             <div className="p-4 sm:p-6 bg-[#DFE5E3] min-h-screen rounded-[1.5rem] sm:rounded-[2.5rem] shadow-sm border border-[#E0E0E0] mx-1">

@@ -258,7 +258,7 @@ const LeaseDetail: React.FC = () => {
         try {
             await deleteLeaseMutation.mutateAsync(id);
             setIsDeleteModalOpen(false);
-            navigate('/dashboard/portfolio/leases');
+            navigate('/dashboard/leasing/leases');
         } catch (error) {
             console.error('Failed to delete lease:', error);
             alert(error instanceof Error ? error.message : 'Failed to delete lease. Please try again.');
@@ -452,7 +452,7 @@ const LeaseDetail: React.FC = () => {
                         {error instanceof Error ? error.message : 'Failed to load lease details. Please try again.'}
                     </p>
                     <button
-                        onClick={() => navigate('/dashboard/portfolio/leases')}
+                        onClick={() => navigate('/dashboard/leasing/leases')}
                         className="mt-4 text-red-600 hover:text-red-800 underline text-sm"
                     >
                         Back to Leases
@@ -464,7 +464,6 @@ const LeaseDetail: React.FC = () => {
 
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-10">
-            {/* Breadcrumb */}
             {/* Breadcrumb */}
             <div className="mb-6">
                 <Breadcrumb items={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Leases', path: '/dashboard/leasing/leases' }, { label: String(lease.lease) }]} />

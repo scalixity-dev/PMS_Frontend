@@ -108,7 +108,6 @@ const TemplateView: React.FC = () => {
         <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-10 print:max-w-none print:pb-0">
             {/* Breadcrumb */}
             {/* Breadcrumb */}
-            {/* Breadcrumb */}
             <div className="flex w-full overflow-x-auto pb-2 md:pb-0 mb-6 print:hidden scrollbar-hide">
                 <Breadcrumb items={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Landlord forms', path: '/dashboard/documents/landlord-forms' }, { label: decodedTemplateName }]} />
             </div>

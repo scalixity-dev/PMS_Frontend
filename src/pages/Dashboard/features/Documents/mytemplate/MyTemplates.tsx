@@ -86,7 +86,6 @@ const MyTemplates: React.FC = () => {
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-10">
             {/* Breadcrumb */}
-            {/* Breadcrumb */}
             <div className="flex w-full overflow-x-auto pb-2 md:pb-0 mb-6 scrollbar-hide">
                 <Breadcrumb items={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'My Template' }]} />
             </div>

@@ -1083,7 +1083,6 @@ const ApplicationDetail = () => {
         <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit pb-20 transition-all duration-300`}>
             {/* Breadcrumb - Matches design style */}
             {/* Breadcrumb - Matches design style */}
-            {/* Breadcrumb - Matches design style */}
             <div className="mb-6">
                 <Breadcrumb items={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Applications', path: '/dashboard/leasing/applications' }, { label: applicantName }]} />
             </div>

@@ -169,7 +169,6 @@ const TenantDetail = () => {
     return (
         <div className="max-w-6xl mx-auto min-h-screen font-outfit pb-10">
             {/* Breadcrumb */}
-            {/* Breadcrumb */}
             <Breadcrumb
                 items={[
                     { label: 'Dashboard', path: '/dashboard' },

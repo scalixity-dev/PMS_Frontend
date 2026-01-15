@@ -752,7 +752,6 @@ const PropertyDetail: React.FC = () => {
     return (
         <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen pb-10 transition-all duration-300`}>
             {/* Breadcrumb */}
-            {/* Breadcrumb */}
             <Breadcrumb
                 items={[
                     { label: 'Dashboard', path: '/dashboard' },

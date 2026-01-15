@@ -137,11 +137,10 @@ const EndLease: React.FC = () => {
         <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-10">
             {/* Breadcrumb */}
             {/* Breadcrumb */}
-            {/* Breadcrumb */}
             <div className="mb-6">
                 <Breadcrumb items={[
                     { label: 'Dashboard', path: '/dashboard' },
-                    { label: 'Leases', path: '/dashboard/leasing/leases' },
+                    { label: 'Leases', path: '/dashboard/portfolio/leases' },
                     { label: id || 'Lease', path: `/dashboard/portfolio/leases/${id}` },
                     { label: 'End lease' }
                 ]} />
