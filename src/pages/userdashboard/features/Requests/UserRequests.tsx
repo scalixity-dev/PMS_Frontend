@@ -197,7 +197,7 @@ const RequestRow: React.FC<RequestRowProps> = ({
           <button
             className="text-[var(--dashboard-accent)] hover:opacity-80 mb-1 transition-opacity"
             onClick={onAttachmentClick}
-            title="Has attachments"
+            title="Download attachments"
           >
             <Paperclip size={18} />
           </button>
@@ -227,6 +227,101 @@ const RequestRow: React.FC<RequestRowProps> = ({
       </div>
     </td>
   </tr>
+);
+
+interface RequestMobileCardProps {
+  request: ServiceRequest;
+  onCardClick: () => void;
+  onAttachmentClick: (e: React.MouseEvent) => void;
+  onChatClick: (e: React.MouseEvent) => void;
+  onMenuClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  isMenuOpen: boolean;
+  menuPosition: MenuPosition | null;
+  onMenuClose: () => void;
+  onPrint: () => void;
+  onCancel: () => void;
+  onDelete: () => void;
+}
+
+const RequestMobileCard: React.FC<RequestMobileCardProps> = ({
+  request,
+  onCardClick,
+  onAttachmentClick,
+  onChatClick,
+  onMenuClick,
+  isMenuOpen,
+  menuPosition,
+  onMenuClose,
+  onPrint,
+  onCancel,
+  onDelete,
+}) => (
+  <div
+    onClick={onCardClick}
+    className="bg-white p-5 rounded-2xl border border-gray-200 shadow-[0_2px_12px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.12)] hover:border-[var(--dashboard-accent)] transition-all duration-300 cursor-pointer space-y-4"
+  >
+    <div className="flex justify-between items-start">
+      <div className="flex items-center gap-2">
+        <div className={`w-2 h-2 rounded-full ${getStatusColor(request.status)}`} />
+        <span className={`text-sm font-medium ${getStatusTextColor(request.status)}`}>
+          {request.status}
+        </span>
+      </div>
+      <div className="flex items-center gap-1">
+        {(request.attachments && request.attachments.length > 0) || request.video ? (
+          <button
+            className="p-2 text-[var(--dashboard-accent)] hover:bg-gray-100 rounded-full transition-colors"
+            onClick={onAttachmentClick}
+            title="Download attachments"
+          >
+            <Paperclip size={18} />
+          </button>
+        ) : null}
+        <button
+          onClick={onChatClick}
+          className="p-2 text-[var(--dashboard-accent)] hover:bg-gray-100 rounded-full transition-colors"
+        >
+          <MessageSquare size={18} />
+        </button>
+        <div className="relative">
+          <button
+            onClick={onMenuClick}
+            className="p-2 text-gray-400 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <MoreVertical size={18} />
+          </button>
+          <ActionMenu
+            isOpen={isMenuOpen}
+            position={menuPosition}
+            onClose={onMenuClose}
+            onPrint={onPrint}
+            onCancel={onCancel}
+            onDelete={onDelete}
+          />
+        </div>
+      </div>
+    </div>
+
+    <div className="space-y-1">
+      <div className="flex justify-between items-baseline gap-2">
+        <h3 className="text-[var(--dashboard-text-main)] font-semibold text-lg truncate">{request.category}</h3>
+        <span className="text-gray-400 text-xs font-medium whitespace-nowrap uppercase tracking-wider">{request.requestId}</span>
+      </div>
+      <p className="text-[var(--dashboard-secondary)] text-sm font-medium line-clamp-1">{request.property}</p>
+    </div>
+
+    <div className="flex justify-between items-center pt-3 border-t border-dashed border-gray-100 mt-1">
+      <span className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${getPriorityColor(request.priority)}`}>
+        {request.priority}
+      </span>
+      <div className="flex items-center gap-2">
+        <span className="text-gray-400 text-xs font-medium uppercase tracking-wider">Assignee</span>
+        <span className="text-[var(--dashboard-text-main)] font-semibold text-xs truncate max-w-[100px]">
+          {request.assignee || "Not Assigned"}
+        </span>
+      </div>
+    </div>
+  </div>
 );
 
 interface PrintableRequestProps {
@@ -401,6 +496,58 @@ const Requests: React.FC = () => {
     }
   }, [deleteRequest]);
 
+  const handleDownloadAttachments = useCallback((e: React.MouseEvent, request: ServiceRequest) => {
+    e.stopPropagation();
+
+    // Helper to trigger download
+    const downloadFile = (file: File | string, fileName: string) => {
+      if (file instanceof File) {
+        const url = URL.createObjectURL(file);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = file.name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } else if (typeof file === 'string') {
+        const a = document.createElement('a');
+        a.href = file;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+    };
+
+    // Download attachments
+    if (request.attachments && request.attachments.length > 0) {
+      request.attachments.forEach((file, index) => {
+        let name = "";
+        if (file instanceof File) {
+          name = file.name;
+        } else {
+          const isVideo = file.startsWith('data:video/');
+          const isPdf = file.startsWith('data:application/pdf');
+          const ext = isVideo ? '.mp4' : isPdf ? '.pdf' : '.jpg';
+          name = `attachment-${request.requestId}-${index + 1}${ext}`;
+        }
+        downloadFile(file, name);
+      });
+    }
+
+    // Download video
+    if (request.video) {
+      let name = "";
+      if (request.video instanceof File) {
+        name = request.video.name;
+      } else {
+        name = `video-${request.requestId}.mp4`;
+      }
+      downloadFile(request.video, name);
+    }
+  }, []);
+
   const handleMenuClick = useCallback((event: React.MouseEvent<HTMLButtonElement>, id: number) => {
     event.stopPropagation();
     if (activeMenuId === id) {
@@ -476,7 +623,7 @@ const Requests: React.FC = () => {
 
   return (
     <div className="bg-white min-h-screen">
-      <div className="max-w-full mx-auto p-8 space-y-6">
+      <div className="max-w-full mx-auto p-4 md:p-8 space-y-4 md:space-y-6">
         {/* Breadcrumb */}
         <nav aria-label="Breadcrumb">
           <ol className="flex items-center gap-2 text-base font-medium">
@@ -489,7 +636,7 @@ const Requests: React.FC = () => {
         </nav>
 
         {/* Header */}
-        <div className="flex items-center pt-3 justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center pt-3 justify-between gap-4">
           <div className="flex items-center gap-5">
             <h1 className="text-2xl font-semibold text-gray-900">Requests</h1>
             <span className="text-[#4B5563] text-sm">Total {requests.length}</span>
@@ -497,7 +644,7 @@ const Requests: React.FC = () => {
           <PrimaryActionButton
             text="Add Request"
             onClick={() => navigate("/userdashboard/new-request")}
-            className="bg-[#7ED957] hover:bg-[#6BC847] !px-6 !py-2.5"
+            className="bg-[#7ED957] hover:bg-[#6BC847] !px-6 !py-2.5 w-full sm:w-auto"
           />
         </div>
 
@@ -507,7 +654,7 @@ const Requests: React.FC = () => {
         {/* Filters Section */}
         <div className="flex items-center gap-3 flex-wrap">
           {/* Search Bar */}
-          <div className="relative flex-1 max-w-xs">
+          <div className="relative w-full md:w-auto md:flex-1 max-w-none md:max-w-xs">
             <input
               type="text"
               placeholder="Search Anything..."
@@ -542,8 +689,8 @@ const Requests: React.FC = () => {
           />
         </div>
 
-        {/* Table */}
-        <div className="bg-white rounded-[1rem] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] border border-gray-200 overflow-hidden flex flex-col">
+        {/* Desktop Table View */}
+        <div className="hidden lg:flex bg-white rounded-[1rem] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] border border-gray-200 overflow-hidden flex-col">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -578,10 +725,7 @@ const Requests: React.FC = () => {
                       key={request.id}
                       request={request}
                       onRowClick={() => navigate(`/userdashboard/requests/${request.id}`)}
-                      onAttachmentClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/userdashboard/requests/${request.id}`);
-                      }}
+                      onAttachmentClick={(e) => handleDownloadAttachments(e, request)}
                       onMenuClick={(e) => handleMenuClick(e, request.id)}
                       isMenuOpen={activeMenuId === request.id}
                       menuPosition={menuPosition}
@@ -616,7 +760,7 @@ const Requests: React.FC = () => {
             </table>
           </div>
 
-          {/* Pagination */}
+          {/* Pagination for Desktop */}
           {filteredRequests.length > ROWS_PER_PAGE && (
             <div className="px-8 py-4 border-t border-gray-200 flex justify-center items-center gap-2">
               <button
@@ -637,6 +781,83 @@ const Requests: React.FC = () => {
                   className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-medium transition-all ${currentPage === page
                     ? 'bg-[#3A7D76] text-white shadow-lg'
                     : 'bg-transparent text-gray-600 border border-gray-300 hover:bg-gray-100'
+                    }`}
+                >
+                  {page}
+                </button>
+              ))}
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className={`p-2 rounded-full transition-colors ${currentPage === totalPages
+                  ? 'text-gray-300 cursor-not-allowed'
+                  : 'text-gray-600 hover:bg-gray-200'
+                  }`}
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Mobile/Tablet Card View */}
+        <div className="lg:hidden flex flex-col gap-4">
+          {paginatedRequests.length > 0 ? (
+            paginatedRequests.map((request) => (
+              <RequestMobileCard
+                key={request.id}
+                request={request}
+                onCardClick={() => navigate(`/userdashboard/requests/${request.id}`)}
+                onAttachmentClick={(e) => handleDownloadAttachments(e, request)}
+                onChatClick={(e) => {
+                  e.stopPropagation();
+                  navigate('/userdashboard/messages', {
+                    state: { viewMode: 'MR', requestId: request.id }
+                  });
+                }}
+                onMenuClick={(e) => handleMenuClick(e, request.id)}
+                isMenuOpen={activeMenuId === request.id}
+                menuPosition={menuPosition}
+                onMenuClose={() => setActiveMenuId(null)}
+                onPrint={() => handlePrint(request)}
+                onCancel={() => handleCancel(request.id)}
+                onDelete={() => handleDelete(request.id)}
+              />
+            ))
+          ) : (
+            <div className="bg-white rounded-xl p-8 text-center text-gray-400 font-medium border border-gray-200 shadow-sm">
+              <p>No requests found</p>
+              <button
+                onClick={resetRequestFilters}
+                className="mt-2 text-[#7ED957] hover:underline text-sm font-medium"
+              >
+                Clear all filters
+              </button>
+            </div>
+          )}
+
+          {/* Pagination for Mobile */}
+          {filteredRequests.length > ROWS_PER_PAGE && (
+            <div className="flex justify-center items-center gap-2 py-4">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className={`p-2 rounded-full transition-colors ${currentPage === 1
+                  ? 'text-gray-300 cursor-not-allowed'
+                  : 'text-gray-600 hover:bg-gray-200'
+                  }`}
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => handlePageChange(page)}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-medium transition-all ${currentPage === page
+                    ? 'bg-[#3A7D76] text-white shadow-lg'
+                    : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-100'
                     }`}
                 >
                   {page}

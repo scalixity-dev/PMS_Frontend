@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
     ChevronLeft,
@@ -17,6 +17,15 @@ import {
     Info,
     FileText
 } from 'lucide-react';
+import UserEditApplicantInfoModal from './components/UserEditApplicantInfoModal';
+import UserAddOccupantModal, { type OccupantFormData } from './components/UserAddOccupantModal';
+import UserAddPetModal, { type PetFormData } from './components/UserAddPetModal';
+import UserAddVehicleModal, { type VehicleFormData } from './components/UserAddVehicleModal';
+import UserAddResidenceModal, { type ResidenceFormData } from './components/UserAddResidenceModal';
+import UserAddIncomeModal, { type IncomeFormData } from './components/UserAddIncomeModal';
+import UserEditBackgroundQuestionsModal, { type BackgroundQuestionsData } from './components/UserEditBackgroundQuestionsModal';
+import UserAddReferenceModal, { type ReferenceFormData } from './components/UserAddReferenceModal';
+import UserAddFileModal, { type FileFormData } from './components/UserAddFileModal';
 
 interface ApplicationData {
     id: string;
@@ -34,6 +43,7 @@ interface ApplicationData {
         shortBio: string;
         rentPerMonth: number;
         householdIncome: number;
+        photo?: string;
     };
     additionalOccupants: number;
     occupantsData: Array<{
@@ -122,8 +132,18 @@ const ApplicationDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
 
-    // Mock data - in real app, this would come from API
-    const [application] = useState<ApplicationData>(() => {
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isAddOccupantModalOpen, setIsAddOccupantModalOpen] = useState(false);
+    const [isAddPetModalOpen, setIsAddPetModalOpen] = useState(false);
+    const [isAddVehicleModalOpen, setIsAddVehicleModalOpen] = useState(false);
+    const [isAddResidenceModalOpen, setIsAddResidenceModalOpen] = useState(false);
+    const [isAddIncomeModalOpen, setIsAddIncomeModalOpen] = useState(false);
+    const [isEditBackgroundInfoModalOpen, setIsEditBackgroundInfoModalOpen] = useState(false);
+    const [isAddReferenceModalOpen, setIsAddReferenceModalOpen] = useState(false);
+    const [isAddFileModalOpen, setIsAddFileModalOpen] = useState(false);
+    const [application, setApplication] = useState<ApplicationData | null>(null);
+
+    const loadApplication = () => {
         const localApps = JSON.parse(localStorage.getItem('user_applications') || '[]');
         const foundApp = localApps.find((app: any) => String(app.id) === id);
 
@@ -227,14 +247,14 @@ const ApplicationDetail: React.FC = () => {
                 relationship: contact.relationship,
                 phone: formatPhone(contact.phoneNumber, contact.phoneCountryCode),
                 email: contact.email || '—',
-                type: 'Emergency Contact'
+                type: contact.type || 'Emergency Contact'
             }));
 
             // Calculate total income for rent ratio
             const totalIncome = incomeHistoryData.reduce((acc: number, curr: any) => acc + curr.incomePerMonth, 0);
             const currentRent = residentialHistoryData.find((r: any) => r.status === 'Current')?.rent || 0;
 
-            return {
+            setApplication({
                 id: String(foundApp.id),
                 applicationNumber: String(foundApp.id).slice(-7),
                 applicantName: foundApp.name,
@@ -250,6 +270,7 @@ const ApplicationDetail: React.FC = () => {
                     shortBio: formData.shortBio || '—',
                     rentPerMonth: currentRent,
                     householdIncome: totalIncome,
+                    photo: formData.photo,
                 },
                 additionalOccupants: occupantsData.length,
                 occupantsData,
@@ -277,67 +298,77 @@ const ApplicationDetail: React.FC = () => {
                 termsAccepted: {
                     date: formatDateStr(foundApp.appliedDate),
                 },
-            };
+            });
+        } else {
+            // Return a mock fallback if no app found (preserved generic fallback but minimal)
+            setApplication({
+                id: id || '00000',
+                applicationNumber: '00000',
+                applicantName: 'Unknown',
+                phone: '—',
+                email: '—',
+                status: 'Submitted',
+                propertyName: 'Unknown Property',
+                listingContact: '—',
+                applicantInfo: {
+                    hasDetails: false,
+                    dateOfBirth: '—',
+                    preferredMoveIn: '—',
+                    shortBio: '—',
+                    rentPerMonth: 0,
+                    householdIncome: 0,
+                },
+                additionalOccupants: 0,
+                occupantsData: [],
+                pets: 0,
+                petsData: [],
+                vehicles: 0,
+                vehiclesData: [],
+                residentialHistory: 0,
+                residentialHistoryData: [],
+                incomeHistory: 0,
+                incomeHistoryData: [],
+                contacts: 0,
+                contactsData: [],
+                additionalQuestions: {
+                    smoke: 'No',
+                    military: 'No',
+                    crime: 'No',
+                    bankruptcy: 'No',
+                    refuseRent: 'No',
+                    evicted: 'No',
+                    explanations: {},
+                },
+                attachments: 0,
+                documentsData: [],
+                termsAccepted: {
+                    date: '—',
+                },
+            });
         }
+    };
 
-        // Return a mock fallback if no app found (preserved generic fallback but minimal)
-        return {
-            id: id || '00000',
-            applicationNumber: '00000',
-            applicantName: 'Unknown',
-            phone: '—',
-            email: '—',
-            status: 'Submitted',
-            propertyName: 'Unknown Property',
-            listingContact: '—',
-            applicantInfo: {
-                hasDetails: false,
-                dateOfBirth: '—',
-                preferredMoveIn: '—',
-                shortBio: '—',
-                rentPerMonth: 0,
-                householdIncome: 0,
-            },
-            additionalOccupants: 0,
-            occupantsData: [],
-            pets: 0,
-            petsData: [],
-            vehicles: 0,
-            vehiclesData: [],
-            residentialHistory: 0,
-            residentialHistoryData: [],
-            incomeHistory: 0,
-            incomeHistoryData: [],
-            contacts: 0,
-            contactsData: [],
-            additionalQuestions: {
-                smoke: 'No',
-                military: 'No',
-                crime: 'No',
-                bankruptcy: 'No',
-                refuseRent: 'No',
-                evicted: 'No',
-                explanations: {},
-            },
-            attachments: 0,
-            documentsData: [],
-            termsAccepted: {
-                date: '—',
-            },
-        };
-    });
+    useEffect(() => {
+        loadApplication();
+    }, [id]);
 
-    const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-        applicantInfo: application.applicantInfo.hasDetails,
-        additionalOccupants: application.additionalOccupants > 0,
-        pets: application.pets > 0,
-        vehicles: application.vehicles > 0,
-        residentialHistory: application.residentialHistory > 0,
-        incomeHistory: application.incomeHistory > 0,
-        contacts: application.contacts > 0,
-        additionalQuestions: true,
-        attachments: application.attachments > 0,
-    });
+    const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+
+    useEffect(() => {
+        if (application) {
+            setExpandedSections({
+                applicantInfo: application.applicantInfo.hasDetails,
+                additionalOccupants: application.additionalOccupants > 0,
+                pets: application.pets > 0,
+                vehicles: application.vehicles > 0,
+                residentialHistory: application.residentialHistory > 0,
+                incomeHistory: application.incomeHistory > 0,
+                contacts: application.contacts > 0,
+                additionalQuestions: true,
+                attachments: application.attachments > 0,
+            });
+        }
+    }, [application?.id]);
 
     const toggleSection = (section: string) => {
         setExpandedSections(prev => ({
@@ -358,6 +389,10 @@ const ApplicationDetail: React.FC = () => {
                 return 'bg-gray-100 text-gray-600';
         }
     };
+
+    if (!application) {
+        return <div className="p-8 text-center text-gray-500">Loading application...</div>;
+    }
 
     const applicationSections = [
         {
@@ -403,7 +438,7 @@ const ApplicationDetail: React.FC = () => {
             subtitle: `(${application.residentialHistory} record)`,
             recordCount: application.residentialHistory,
             primaryAction: '+ Add residence',
-            secondaryActions: ['+ Add additional information'],
+            secondaryActions: [],
         },
         {
             id: 'incomeHistory',
@@ -412,7 +447,7 @@ const ApplicationDetail: React.FC = () => {
             subtitle: `(${application.incomeHistory} record)`,
             recordCount: application.incomeHistory,
             primaryAction: '+ Add income',
-            secondaryActions: ['+ Add additional information'],
+            secondaryActions: [], // ['+ Add additional information']
         },
         {
             id: 'contacts',
@@ -421,7 +456,7 @@ const ApplicationDetail: React.FC = () => {
             subtitle: `(${application.contacts} record)`,
             recordCount: application.contacts,
             primaryAction: '+ Add reference',
-            secondaryActions: ['+ Add emergency contact'],
+            secondaryActions: [], // ['+ Add emergency contact']
         },
         {
             id: 'attachments',
@@ -434,8 +469,328 @@ const ApplicationDetail: React.FC = () => {
         },
     ];
 
+    // Handle primary actions for generic sections
+    const handleSectionPrimaryAction = (sectionId: string) => {
+        switch (sectionId) {
+            case 'applicantInfo':
+                setIsEditModalOpen(true);
+                break;
+            case 'additionalOccupants':
+                setIsAddOccupantModalOpen(true);
+                break;
+            case 'pets':
+                setIsAddPetModalOpen(true);
+                break;
+            case 'vehicles':
+                setIsAddVehicleModalOpen(true);
+                break;
+            case 'residentialHistory':
+                setIsAddResidenceModalOpen(true);
+                break;
+            case 'incomeHistory':
+                setIsAddIncomeModalOpen(true);
+                break;
+            case 'contacts':
+                setIsAddReferenceModalOpen(true);
+                break;
+            case 'attachments':
+                setIsAddFileModalOpen(true);
+                break;
+        }
+    };
+
+
+
+    const handleSaveOccupant = (data: OccupantFormData) => {
+        const localApps = JSON.parse(localStorage.getItem('user_applications') || '[]');
+        const appIndex = localApps.findIndex((app: any) => String(app.id) === id);
+
+        if (appIndex !== -1) {
+            const updatedApp = { ...localApps[appIndex] };
+            const currentOccupants = updatedApp.formData.occupants || [];
+
+            const newOccupant = {
+                id: `occ_${Date.now()}`,
+                firstName: data.firstName,
+                lastName: data.lastName,
+                email: data.email,
+                phoneNumber: data.phoneNumber,
+                phoneCountryCode: data.phoneCountryCode,
+                dob: data.dob ? data.dob.toISOString() : null,
+                relationship: data.relationship
+            };
+
+            updatedApp.formData.occupants = [...currentOccupants, newOccupant];
+            localApps[appIndex] = updatedApp;
+            localStorage.setItem('user_applications', JSON.stringify(localApps));
+
+            loadApplication();
+            setIsAddOccupantModalOpen(false);
+        }
+    };
+
+    const handleSavePet = (data: PetFormData) => {
+        const localApps = JSON.parse(localStorage.getItem('user_applications') || '[]');
+        const appIndex = localApps.findIndex((app: any) => String(app.id) === id);
+
+        if (appIndex !== -1) {
+            const updatedApp = { ...localApps[appIndex] };
+            const currentPets = updatedApp.formData.pets || [];
+
+            const newPet = {
+                id: `pet_${Date.now()}`,
+                type: data.type,
+                name: data.name,
+                weight: data.weight,
+                breed: data.breed,
+                // Handle photo if needed, though local file sync is tricky - assume basic string fields for now or uploaded URL
+                // If the PetFormData had a URL or if we upload it first, we'd use that.
+                // Assuming simple non-file storage for localStorage demo
+            };
+
+            updatedApp.formData.pets = [...currentPets, newPet];
+            localApps[appIndex] = updatedApp;
+            localStorage.setItem('user_applications', JSON.stringify(localApps));
+
+            loadApplication();
+            setIsAddPetModalOpen(false);
+        }
+    };
+
+    const handleSaveVehicle = (data: VehicleFormData) => {
+        const localApps = JSON.parse(localStorage.getItem('user_applications') || '[]');
+        const appIndex = localApps.findIndex((app: any) => String(app.id) === id);
+
+        if (appIndex !== -1) {
+            const updatedApp = { ...localApps[appIndex] };
+            const currentVehicles = updatedApp.formData.vehicles || [];
+
+            const newVehicle = {
+                id: `veh_${Date.now()}`,
+                type: data.type,
+                make: data.make,
+                model: data.model,
+                year: data.year,
+                color: data.color,
+                licensePlate: data.licensePlate,
+                registeredIn: data.registeredIn
+            };
+
+            updatedApp.formData.vehicles = [...currentVehicles, newVehicle];
+            localApps[appIndex] = updatedApp;
+            localStorage.setItem('user_applications', JSON.stringify(localApps));
+
+            loadApplication();
+            setIsAddVehicleModalOpen(false);
+        }
+    };
+
+    const handleSaveResidence = (data: ResidenceFormData) => {
+        const localApps = JSON.parse(localStorage.getItem('user_applications') || '[]');
+        const appIndex = localApps.findIndex((app: any) => String(app.id) === id);
+
+        if (appIndex !== -1) {
+            const updatedApp = { ...localApps[appIndex] };
+            const currentResidences = updatedApp.formData.residences || [];
+
+            const newResidence = {
+                // Map ResidenceFormData to structure expected by ApplicationDetail mock logic/storage
+                // Note: ApplicantForm and UserAddResidenceModal align mostly but storage format is generic object in local storage
+                // We should try to match the fields shown in UserApplicationDetail mapping (lines 194-207)
+                isCurrent: data.isCurrent,
+                address: data.address,
+                city: data.city,
+                state: data.state,
+                zip: data.zip,
+                country: data.country,
+                residencyType: data.residencyType === 'Others' ? data.otherResidencyType : data.residencyType,
+                moveInDate: data.moveInDate ? data.moveInDate.toISOString() : null,
+                moveOutDate: data.moveOutDate ? data.moveOutDate.toISOString() : null,
+                rentAmount: data.rentAmount,
+                landlordName: data.landlordName,
+                // Add other fields as needed by viewing logic
+            };
+
+            updatedApp.formData.residences = [...currentResidences, newResidence];
+            localApps[appIndex] = updatedApp;
+            localStorage.setItem('user_applications', JSON.stringify(localApps));
+
+            loadApplication();
+            setIsAddResidenceModalOpen(false);
+        }
+    };
+
+    const handleSaveIncome = (data: IncomeFormData) => {
+        const localApps = JSON.parse(localStorage.getItem('user_applications') || '[]');
+        const appIndex = localApps.findIndex((app: any) => String(app.id) === id);
+
+        if (appIndex !== -1) {
+            const updatedApp = { ...localApps[appIndex] };
+            const currentIncomes = updatedApp.formData.incomes || [];
+
+            const newIncome = {
+                // Map IncomeFormData to structure expected by ApplicationDetail mock logic/storage
+                currentEmployment: data.currentEmployment,
+                incomeType: data.incomeType,
+                startDate: data.startDate ? data.startDate.toISOString() : null,
+                endDate: data.endDate ? data.endDate.toISOString() : null,
+                company: data.company,
+                position: data.position,
+                monthlyAmount: data.monthlyAmount,
+                currency: data.currency,
+                address: data.address,
+                office: data.office,
+                companyPhone: data.companyPhone,
+                supervisorName: data.supervisorName,
+                supervisorEmail: data.supervisorEmail,
+                supervisorPhone: data.supervisorPhone
+            };
+
+            updatedApp.formData.incomes = [...currentIncomes, newIncome];
+            localApps[appIndex] = updatedApp;
+            localStorage.setItem('user_applications', JSON.stringify(localApps));
+
+            loadApplication();
+            setIsAddIncomeModalOpen(false);
+        }
+    };
+
+    const handleSaveBackgroundInfo = (data: BackgroundQuestionsData) => {
+        const localApps = JSON.parse(localStorage.getItem('user_applications') || '[]');
+        const appIndex = localApps.findIndex((app: any) => String(app.id) === id);
+
+        if (appIndex !== -1) {
+            const updatedApp = { ...localApps[appIndex] };
+
+            updatedApp.formData.backgroundQuestions = {
+                smoke: data.smoke,
+                military: data.military,
+                crime: data.crime,
+                bankruptcy: data.bankruptcy,
+                refuseRent: data.refuseRent,
+                evicted: data.evicted
+            };
+            updatedApp.formData.backgroundExplanations = data.explanations;
+
+            localApps[appIndex] = updatedApp;
+            localStorage.setItem('user_applications', JSON.stringify(localApps));
+
+            loadApplication();
+            setIsEditBackgroundInfoModalOpen(false);
+        }
+    };
+
+    const handleSaveReference = (data: ReferenceFormData) => {
+        const localApps = JSON.parse(localStorage.getItem('user_applications') || '[]');
+        const appIndex = localApps.findIndex((app: any) => String(app.id) === id);
+
+        if (appIndex !== -1) {
+            const updatedApp = { ...localApps[appIndex] };
+            const currentContacts = updatedApp.formData.emergencyContacts || [];
+
+            const newContact = {
+                id: `ref_${Date.now()}`,
+                fullName: data.fullName,
+                relationship: data.relationship,
+                email: data.email,
+                phoneNumber: data.phoneNumber,
+                phoneCountryCode: data.phoneCountryCode,
+                type: 'Reference'
+            };
+
+            updatedApp.formData.emergencyContacts = [...currentContacts, newContact];
+            localApps[appIndex] = updatedApp;
+            localStorage.setItem('user_applications', JSON.stringify(localApps));
+
+            loadApplication();
+            setIsAddReferenceModalOpen(false);
+        }
+    };
+
+    const handleSaveFile = (data: FileFormData) => {
+        const localApps = JSON.parse(localStorage.getItem('user_applications') || '[]');
+        const appIndex = localApps.findIndex((app: any) => String(app.id) === id);
+
+        if (appIndex !== -1) {
+            const updatedApp = { ...localApps[appIndex] };
+            const currentDocs = updatedApp.formData.documents || [];
+
+            const newDoc = {
+                name: data.name,
+                size: data.file ? data.file.size : 0,
+                type: data.type.split('/')[1]?.toUpperCase() || 'FILE',
+                url: '#'
+            };
+
+            updatedApp.formData.documents = [...currentDocs, newDoc];
+            localApps[appIndex] = updatedApp;
+            localStorage.setItem('user_applications', JSON.stringify(localApps));
+
+            loadApplication();
+            setIsAddFileModalOpen(false);
+        }
+    };
+
     return (
         <div className="flex flex-col gap-6 w-full min-h-screen bg-white p-4 lg:p-8">
+            <UserEditApplicantInfoModal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                applicationId={application.id}
+                onUpdate={loadApplication}
+            />
+            <UserAddOccupantModal
+                isOpen={isAddOccupantModalOpen}
+                onClose={() => setIsAddOccupantModalOpen(false)}
+                onSave={handleSaveOccupant}
+            />
+            <UserAddPetModal
+                isOpen={isAddPetModalOpen}
+                onClose={() => setIsAddPetModalOpen(false)}
+                onSave={handleSavePet}
+            />
+            <UserAddVehicleModal
+                isOpen={isAddVehicleModalOpen}
+                onClose={() => setIsAddVehicleModalOpen(false)}
+                onSave={handleSaveVehicle}
+            />
+            <UserAddResidenceModal
+                isOpen={isAddResidenceModalOpen}
+                onClose={() => setIsAddResidenceModalOpen(false)}
+                onSave={handleSaveResidence}
+            />
+            <UserAddIncomeModal
+                isOpen={isAddIncomeModalOpen}
+                onClose={() => setIsAddIncomeModalOpen(false)}
+                onSave={handleSaveIncome}
+            />
+            {application && (
+                <UserEditBackgroundQuestionsModal
+                    isOpen={isEditBackgroundInfoModalOpen}
+                    onClose={() => setIsEditBackgroundInfoModalOpen(false)}
+                    onSave={handleSaveBackgroundInfo}
+                    initialData={{
+                        smoke: application.additionalQuestions.smoke === 'Yes',
+                        military: application.additionalQuestions.military === 'Yes',
+                        crime: application.additionalQuestions.crime === 'Yes',
+                        bankruptcy: application.additionalQuestions.bankruptcy === 'Yes',
+                        refuseRent: application.additionalQuestions.refuseRent === 'Yes',
+                        evicted: application.additionalQuestions.evicted === 'Yes',
+                        explanations: application.additionalQuestions.explanations || {}
+                    }}
+                />
+            )}
+            <UserAddReferenceModal
+                isOpen={isAddReferenceModalOpen}
+                onClose={() => setIsAddReferenceModalOpen(false)}
+                onSave={handleSaveReference}
+            />
+            <UserAddFileModal
+                isOpen={isAddFileModalOpen}
+                onClose={() => setIsAddFileModalOpen(false)}
+                onSave={handleSaveFile}
+            />
+
             {/* Breadcrumbs */}
             <nav aria-label="Breadcrumb">
                 <ol className="flex items-center gap-2 text-base font-medium">
@@ -496,11 +851,19 @@ const ApplicationDetail: React.FC = () => {
                                 <div className="flex items-center gap-4">
                                     {/* Profile Image */}
                                     <div className="w-14 h-14 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-md overflow-hidden bg-gray-100">
-                                        <img
-                                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${application.applicantName}`}
-                                            alt={application.applicantName}
-                                            className="w-full h-full object-cover"
-                                        />
+                                        {application.applicantInfo.photo ? (
+                                            <img
+                                                src={application.applicantInfo.photo}
+                                                alt={application.applicantName}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <img
+                                                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${application.applicantName}`}
+                                                alt={application.applicantName}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        )}
                                     </div>
 
                                     <div className="space-y-1">
@@ -598,8 +961,11 @@ const ApplicationDetail: React.FC = () => {
                                     <div className="flex items-center gap-3">
                                         {section.primaryAction && (
                                             <button
-                                                className="text-[#7ED957] text-sm font-semibold hover:opacity-80 transition-opacity"
-                                                onClick={(e) => e.stopPropagation()}
+                                                className="text-[#7ED957] font-semibold text-sm hover:opacity-80 transition-opacity"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleSectionPrimaryAction(section.id);
+                                                }}
                                             >
                                                 {section.primaryAction}
                                             </button>
@@ -928,21 +1294,25 @@ const ApplicationDetail: React.FC = () => {
                                                         </div>
                                                     ))}
                                                 </div>
-                                            ) : section.id === 'attachments' && section.recordCount > 0 ? (
+                                            ) : section.id === 'attachments' ? (
                                                 <div className="space-y-4">
-                                                    {application.documentsData.map((doc, idx) => (
-                                                        <div key={idx} className="bg-[#FAFAFA] rounded-lg border border-gray-200 p-5 flex items-center justify-between">
-                                                            <div className="flex items-center gap-4">
-                                                                <div className="p-2 bg-white rounded-lg border border-gray-200">
-                                                                    <FileText size={20} className="text-[#7ED957]" />
-                                                                </div>
-                                                                <div>
-                                                                    <h4 className="text-sm font-semibold text-gray-900">{doc.name}</h4>
-                                                                    <p className="text-xs text-gray-500">{(doc.size / 1024).toFixed(1)} KB • {doc.type}</p>
+                                                    {application.documentsData.length > 0 ? (
+                                                        application.documentsData.map((doc, idx) => (
+                                                            <div key={idx} className="bg-[#FAFAFA] rounded-lg border border-gray-200 p-5 flex items-center justify-between">
+                                                                <div className="flex items-center gap-4">
+                                                                    <div className="p-2 bg-white rounded-lg border border-gray-200">
+                                                                        <FileText size={20} className="text-[#7ED957]" />
+                                                                    </div>
+                                                                    <div>
+                                                                        <h4 className="text-sm font-semibold text-gray-900">{doc.name}</h4>
+                                                                        <p className="text-xs text-gray-500">{(doc.size / 1024).toFixed(1)} KB • {doc.type}</p>
+                                                                    </div>
                                                                 </div>
                                                             </div>
-                                                        </div>
-                                                    ))}
+                                                        ))
+                                                    ) : (
+                                                        <p className="text-gray-500 italic text-sm">No attachments found</p>
+                                                    )}
                                                 </div>
                                             ) : (
                                                 <p className="text-gray-500 italic text-sm">No records found</p>
@@ -970,7 +1340,10 @@ const ApplicationDetail: React.FC = () => {
                             <div className="flex items-center gap-3">
                                 <button
                                     className="text-[#7ED957] text-sm font-semibold hover:opacity-80 transition-opacity"
-                                    onClick={(e) => e.stopPropagation()}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsEditBackgroundInfoModalOpen(true);
+                                    }}
                                 >
                                     Edit
                                 </button>
@@ -1044,52 +1417,7 @@ const ApplicationDetail: React.FC = () => {
                         )}
                     </div>
 
-                    {/* Attachments Section */}
-                    <div className="bg-[#F4F4F4] rounded-2xl border border-gray-200 shadow-[0px_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
-                        <div
-                            className="px-6 py-4 flex items-center justify-between cursor-pointer transition-colors"
-                            onClick={() => toggleSection('attachments')}
-                        >
-                            <div className="flex items-center gap-3 flex-1">
-                                <Paperclip size={20} className="text-gray-500" />
-                                <h3 className="text-xl font-semibold text-gray-900">
-                                    Attachments <span className="text-gray-400 text-sm font-medium ml-2">({application.attachments} records)</span>
-                                </h3>
-                            </div>
 
-                            <div className="flex items-center gap-3">
-                                <button
-                                    className="text-[#7ED957] text-sm font-semibold hover:opacity-80 transition-opacity"
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    Edit
-                                </button>
-                                <div className="p-1">
-                                    {expandedSections.attachments ? (
-                                        <ChevronUp size={20} className="text-gray-500" />
-                                    ) : (
-                                        <ChevronDown size={20} className="text-gray-500" />
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        {expandedSections.attachments && (
-                            <div className="px-6 pb-6 border-t border-[#E5E7EB]">
-                                <div className="pt-4">
-                                    {application.attachments > 0 ? (
-                                        <div className="text-gray-600 text-sm">
-                                            <p className="text-gray-500 italic">
-                                                {application.attachments} attachment(s) available
-                                            </p>
-                                        </div>
-                                    ) : (
-                                        <p className="text-gray-500 italic text-sm">No attachments found</p>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-                    </div>
 
                     {/* Terms & Conditions Agreement */}
                     <div className="bg-white p-2 flex items-center gap-3">
