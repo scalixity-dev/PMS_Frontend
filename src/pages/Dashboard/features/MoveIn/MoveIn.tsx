@@ -316,21 +316,7 @@ const MoveIn: React.FC = () => {
                                 />
                             )}
 
-                            {/* Placeholders for future steps */}
-                            {currentStep === 11 && (
-                                <div className="text-center text-gray-500">
-                                    Step 3: Extra fees & Utilities Content Coming Soon
-                                    <br />
-                                    <button onClick={handleCompleteMoveIn} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
-                                        Simulate Complete (Debug)
-                                    </button>
-                                </div>
-                            )}
-                            {currentStep === 12 && (
-                                <div className="text-center text-gray-500">
-                                    End of Flow
-                                </div>
-                            )}
+
                         </div>
                     </div>
                 </div>
