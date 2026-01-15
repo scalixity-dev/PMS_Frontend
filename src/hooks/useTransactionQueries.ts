@@ -6,6 +6,12 @@ import {
   type CreateExpenseInvoiceDto,
   type CreateRecurringIncomeDto,
   type CreateDepositDto,
+  type CreateCreditDto,
+  type ReturnableDeposit,
+  type ReturnDepositDto,
+  type ApplicableInvoice,
+  type AvailableDepositCredit,
+  type ApplyDepositCreditDto,
 } from '../services/transaction.service';
 
 // Query keys for React Query
@@ -248,6 +254,43 @@ export const useCreateDeposit = () => {
 };
 
 /**
+ * Hook to create a credit transaction
+ */
+export const useCreateCredit = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      creditData,
+      file,
+    }: {
+      creditData: CreateCreditDto;
+      file?: File;
+    }): Promise<BackendTransaction> => {
+      return transactionService.createCredit(creditData, file);
+    },
+    onSuccess: (data) => {
+      // Invalidate and refetch transactions list
+      queryClient.invalidateQueries({ queryKey: transactionQueryKeys.lists() });
+      // Invalidate property-specific transactions
+      if (data.propertyId) {
+        queryClient.invalidateQueries({
+          queryKey: transactionQueryKeys.byProperty(data.propertyId),
+        });
+      }
+      // Invalidate type-specific transactions
+      queryClient.invalidateQueries({
+        queryKey: transactionQueryKeys.byType(data.type),
+      });
+      // Cache the newly created transaction
+      queryClient.setQueryData(transactionQueryKeys.detail(data.id), data);
+      // Invalidate tags to refresh suggestions
+      queryClient.invalidateQueries({ queryKey: [...transactionQueryKeys.all, 'tags'] });
+    },
+  });
+};
+
+/**
  * Hook to delete a transaction
  */
 export const useDeleteTransaction = () => {
@@ -266,6 +309,119 @@ export const useDeleteTransaction = () => {
       queryClient.removeQueries({ queryKey: transactionQueryKeys.detail(transactionId) });
       // Invalidate all type-specific and property-specific queries
       queryClient.invalidateQueries({ queryKey: transactionQueryKeys.all });
+    },
+  });
+};
+
+/**
+ * Hook to get returnable deposits
+ */
+export const useGetReturnableDeposits = (params?: {
+  payerId?: string;
+  contactId?: string;
+  category?: string;
+}) => {
+  return useQuery({
+    queryKey: [...transactionQueryKeys.all, 'returnable-deposits', params],
+    queryFn: () => transactionService.getReturnableDeposits(params),
+    staleTime: 30 * 1000, // 30 seconds
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    enabled: true, // Always enabled, params can be undefined
+  });
+};
+
+/**
+ * Hook to return a deposit
+ */
+export const useReturnDeposit = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      returnData,
+      file,
+    }: {
+      returnData: ReturnDepositDto;
+      file?: File;
+    }): Promise<{ deposit: BackendTransaction; refundTransaction: BackendTransaction }> => {
+      return transactionService.returnDeposit(returnData, file);
+    },
+    onSuccess: () => {
+      // Invalidate all transaction-related queries
+      queryClient.invalidateQueries({ queryKey: transactionQueryKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: [...transactionQueryKeys.all, 'returnable-deposits'] });
+      queryClient.invalidateQueries({ queryKey: [...transactionQueryKeys.all, 'payments'] });
+      queryClient.invalidateQueries({ queryKey: transactionQueryKeys.all });
+    },
+  });
+};
+
+/**
+ * Hook to get applicable invoices (invoices that can have deposits/credits applied)
+ */
+export const useGetApplicableInvoices = (
+  payerId?: string | null,
+  contactId?: string | null,
+  leaseId?: string | null,
+) => {
+  return useQuery({
+    queryKey: [...transactionQueryKeys.all, 'applicable-invoices', payerId, contactId, leaseId],
+    queryFn: () =>
+      transactionService.getApplicableInvoices(
+        payerId || undefined,
+        contactId || undefined,
+        leaseId || undefined,
+      ),
+    enabled: !!(payerId || contactId),
+    staleTime: 30 * 1000,
+    gcTime: 2 * 60 * 1000,
+  });
+};
+
+/**
+ * Hook to get available deposits and credits
+ */
+export const useGetAvailableDepositsAndCredits = (
+  payerId?: string | null,
+  contactId?: string | null,
+  leaseId?: string | null,
+) => {
+  return useQuery({
+    queryKey: [...transactionQueryKeys.all, 'available-deposits-credits', payerId, contactId, leaseId],
+    queryFn: () =>
+      transactionService.getAvailableDepositsAndCredits(
+        payerId || undefined,
+        contactId || undefined,
+        leaseId || undefined,
+      ),
+    enabled: !!(payerId || contactId),
+    staleTime: 30 * 1000,
+    gcTime: 2 * 60 * 1000,
+  });
+};
+
+/**
+ * Hook to apply deposits/credits to invoices
+ */
+export const useApplyDepositCredit = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      applyData,
+      file,
+    }: {
+      applyData: ApplyDepositCreditDto;
+      file?: File;
+    }): Promise<{ message: string; applications: any[] }> => {
+      return transactionService.applyDepositCredit(applyData, file);
+    },
+    onSuccess: () => {
+      // Invalidate and refetch transactions list
+      queryClient.invalidateQueries({ queryKey: transactionQueryKeys.lists() });
+      // Invalidate applicable invoices and available deposits/credits
+      queryClient.invalidateQueries({ queryKey: [...transactionQueryKeys.all, 'applicable-invoices'] });
+      queryClient.invalidateQueries({ queryKey: [...transactionQueryKeys.all, 'available-deposits-credits'] });
     },
   });
 };

@@ -103,6 +103,25 @@ export interface CreateExpenseInvoiceDto {
   notes?: string;
 }
 
+export interface CreateCreditDto {
+  scope: 'PROPERTY' | 'GENERAL';
+  category?: string;
+  subcategory?: string;
+  dueDate?: string;
+  amount: number;
+  currency?: 'USD' | 'INR' | 'EUR' | 'GBP' | 'CAD' | 'AUD';
+  isPaid?: boolean;
+  payeeId?: string; // For credits, payeeId is who receives the credit
+  contactId?: string;
+  propertyId?: string;
+  unitId?: string;
+  leaseId?: string;
+  details?: string;
+  notes?: string;
+  tags?: string[];
+  paymentMethod?: string;
+}
+
 export interface CreateDepositDto {
   scope: 'PROPERTY' | 'GENERAL';
   category?: string;
@@ -325,6 +344,64 @@ class TransactionService {
   }
 
   /**
+   * Create a credit transaction
+   */
+  async createCredit(
+    creditData: CreateCreditDto,
+    file?: File,
+  ): Promise<BackendTransaction> {
+    const formData = new FormData();
+
+    if (file) {
+      formData.append('file', file);
+    }
+
+    Object.entries(creditData).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        if (Array.isArray(value)) {
+          formData.append(key, value.join(','));
+        } else if (typeof value === 'boolean') {
+          formData.append(key, value.toString());
+        } else {
+          formData.append(key, value.toString());
+        }
+      }
+    });
+
+    const response = await fetch(API_ENDPOINTS.TRANSACTION.CREATE_CREDIT, {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to create credit';
+      try {
+        const errorData = await response.json();
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join('. ');
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+        console.error('Credit creation error:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+        });
+      } catch (parseError) {
+        errorMessage = `Failed to create credit: ${response.statusText}`;
+        console.error('Failed to parse error response:', parseError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    return result.transaction;
+  }
+
+  /**
    * Create a recurring income transaction
    */
   async createRecurringIncome(
@@ -532,12 +609,244 @@ class TransactionService {
       throw new Error(errorData.message || 'Failed to delete transaction');
     }
   }
+
+  /**
+   * Get returnable deposits
+   */
+  async getReturnableDeposits(params?: {
+    payerId?: string;
+    contactId?: string;
+    category?: string;
+  }): Promise<ReturnableDeposit[]> {
+    const queryParams = new URLSearchParams();
+    if (params?.payerId) queryParams.append('payerId', params.payerId);
+    if (params?.contactId) queryParams.append('contactId', params.contactId);
+    if (params?.category) queryParams.append('category', params.category);
+
+    const url = `${API_ENDPOINTS.TRANSACTION.GET_RETURNABLE_DEPOSITS}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch returnable deposits');
+    }
+
+    const result = await response.json();
+    return result.deposits;
+  }
+
+  /**
+   * Return a deposit
+   */
+  async returnDeposit(
+    returnData: ReturnDepositDto,
+    file?: File,
+  ): Promise<{ deposit: BackendTransaction; refundTransaction: BackendTransaction }> {
+    const formData = new FormData();
+
+    if (file) {
+      formData.append('file', file);
+    }
+
+    Object.entries(returnData).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        if (typeof value === 'boolean') {
+          formData.append(key, value.toString());
+        } else {
+          formData.append(key, value.toString());
+        }
+      }
+    });
+
+    const response = await fetch(API_ENDPOINTS.TRANSACTION.RETURN_DEPOSIT, {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to return deposit';
+      try {
+        const errorData = await response.json();
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join('. ');
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+        console.error('Return deposit error:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+        });
+      } catch (parseError) {
+        errorMessage = `Failed to return deposit: ${response.statusText}`;
+        console.error('Failed to parse error response:', parseError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    return {
+      deposit: result.deposit,
+      refundTransaction: result.refundTransaction,
+    };
+  }
+
+  /**
+   * Get invoices that can have deposits/credits applied
+   */
+  async getApplicableInvoices(
+    payerId?: string,
+    contactId?: string,
+    leaseId?: string,
+  ): Promise<ApplicableInvoice[]> {
+    const params = new URLSearchParams();
+    if (payerId) params.append('payerId', payerId);
+    if (contactId) params.append('contactId', contactId);
+    if (leaseId) params.append('leaseId', leaseId);
+
+    const response = await fetch(
+      `${API_ENDPOINTS.TRANSACTION.GET_APPLICABLE_INVOICES}?${params.toString()}`,
+      {
+        method: 'GET',
+        credentials: 'include',
+      },
+    );
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to fetch applicable invoices';
+      try {
+        const errorData = await response.json();
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join('. ');
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+      } catch (parseError) {
+        errorMessage = `Failed to fetch applicable invoices: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    return result.invoices || [];
+  }
+
+  /**
+   * Get available deposits and credits that can be applied
+   */
+  async getAvailableDepositsAndCredits(
+    payerId?: string,
+    contactId?: string,
+    leaseId?: string,
+  ): Promise<AvailableDepositCredit[]> {
+    const params = new URLSearchParams();
+    if (payerId) params.append('payerId', payerId);
+    if (contactId) params.append('contactId', contactId);
+    if (leaseId) params.append('leaseId', leaseId);
+
+    const response = await fetch(
+      `${API_ENDPOINTS.TRANSACTION.GET_AVAILABLE_DEPOSITS_CREDITS}?${params.toString()}`,
+      {
+        method: 'GET',
+        credentials: 'include',
+      },
+    );
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to fetch available deposits and credits';
+      try {
+        const errorData = await response.json();
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join('. ');
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+      } catch (parseError) {
+        errorMessage = `Failed to fetch available deposits and credits: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    return result.depositsAndCredits || [];
+  }
+
+  /**
+   * Apply deposits/credits to invoices
+   */
+  async applyDepositCredit(
+    applyData: ApplyDepositCreditDto,
+    file?: File,
+  ): Promise<{ message: string; applications: any[] }> {
+    const formData = new FormData();
+
+    if (file) {
+      formData.append('file', file);
+    }
+
+    if (applyData.payerId) {
+      formData.append('payerId', applyData.payerId);
+    }
+    if (applyData.contactId) {
+      formData.append('contactId', applyData.contactId);
+    }
+    if (applyData.leaseId) {
+      formData.append('leaseId', applyData.leaseId);
+    }
+
+    formData.append('applications', JSON.stringify(applyData.applications));
+
+    const response = await fetch(API_ENDPOINTS.TRANSACTION.APPLY_DEPOSIT_CREDIT, {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to apply deposit/credit';
+      try {
+        const errorData = await response.json();
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join('. ');
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+        console.error('Apply deposit/credit error:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+        });
+      } catch (parseError) {
+        errorMessage = `Failed to apply deposit/credit: ${response.statusText}`;
+        console.error('Failed to parse error response:', parseError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    return await response.json();
+  }
 }
+
+export const transactionService = new TransactionService();
 
 export interface Transaction {
   id: string;
   status: 'Paid' | 'Pending' | 'Void';
   dueDate: string;
+  dueDateRaw?: string | null; // Raw ISO date for calculations
   date: string;
   category: string;
   property: string;
@@ -547,6 +856,7 @@ export interface Transaction {
   type: 'income' | 'expense' | 'refund';
   transactionType: string;
   currency: string;
+  isOverdue?: boolean; // Flag to indicate if transaction is overdue
 }
 
 export interface Payment {
@@ -582,4 +892,71 @@ export interface MarkAsPaidDto {
   notes?: string;
 }
 
-export const transactionService = new TransactionService();
+export interface ReturnableDeposit {
+  id: string;
+  transactionId: string;
+  payment: string;
+  payer: string;
+  method: string | null;
+  balance: number;
+  amount: number;
+  category: string;
+  date: string;
+  dueDate: string | null;
+  currency: string;
+  property: string;
+  lease: {
+    id: string;
+    status: string;
+  } | null;
+  payerId: string | null;
+  contactId: string | null;
+}
+
+export interface ReturnDepositDto {
+  transactionId: string;
+  refundAmount: number;
+  currency?: 'USD' | 'INR' | 'EUR' | 'GBP' | 'CAD' | 'AUD';
+  paymentMethod?: string;
+  notes?: string;
+  refundDate?: string; // ISO date string
+}
+
+export interface ApplicableInvoice {
+  id: string;
+  transactionId: string;
+  dueDate: string;
+  dueDateRaw: string | null;
+  category: string;
+  property: string;
+  contact: string;
+  amount: number;
+  balance: number;
+  currency: string;
+}
+
+export interface AvailableDepositCredit {
+  id: string;
+  transactionId: string;
+  type: 'DEPOSIT' | 'CREDIT';
+  category: string;
+  amount: number;
+  balance: number;
+  currency: string;
+  date: string;
+  contact: string;
+}
+
+export interface ApplyDepositCreditItemDto {
+  sourceTransactionId: string; // Deposit or Credit transaction ID
+  targetTransactionId: string; // Invoice transaction ID
+  amount: number;
+  notes?: string;
+}
+
+export interface ApplyDepositCreditDto {
+  payerId?: string;
+  contactId?: string;
+  leaseId?: string;
+  applications: ApplyDepositCreditItemDto[];
+}

@@ -81,25 +81,50 @@ const Transactions: React.FC = () => {
         }
     }, [location.state]);
 
-    const filterOptions: Record<string, FilterOption[]> = {
-        date: [
-            { value: 'today', label: 'Today' },
-            { value: 'this_week', label: 'This Week' },
-            { value: 'this_month', label: 'This Month' },
-        ],
-        client: [
-            { value: 'atul', label: 'Atul' },
-            { value: 'john', label: 'John' },
-        ],
-        property: [
-            { value: 'abc', label: 'ABC' },
-            { value: 'xyz', label: 'XYZ' },
-        ],
-        categories: [
-            { value: 'deposit', label: 'Deposit' },
-            { value: 'rent', label: 'Rent' },
-        ]
-    };
+    // Generate filter options dynamically from transactions
+    const filterOptions: Record<string, FilterOption[]> = useMemo(() => {
+        // Get unique clients (contacts)
+        const uniqueClients = new Set<string>();
+        transactions.forEach(t => {
+            if (t.contact && t.contact !== 'N/A') {
+                uniqueClients.add(t.contact);
+            }
+        });
+
+        // Get unique properties
+        const uniqueProperties = new Set<string>();
+        transactions.forEach(t => {
+            if (t.property && t.property !== 'N/A') {
+                uniqueProperties.add(t.property);
+            }
+        });
+
+        // Get unique categories
+        const uniqueCategories = new Set<string>();
+        transactions.forEach(t => {
+            if (t.category) {
+                uniqueCategories.add(t.category);
+            }
+        });
+
+        return {
+            date: [
+                { value: 'today', label: 'Today' },
+                { value: 'this_week', label: 'This Week' },
+                { value: 'this_month', label: 'This Month' },
+                { value: 'this_year', label: 'This Year' },
+            ],
+            client: Array.from(uniqueClients)
+                .sort()
+                .map(client => ({ value: client, label: client })),
+            property: Array.from(uniqueProperties)
+                .sort()
+                .map(property => ({ value: property, label: property })),
+            categories: Array.from(uniqueCategories)
+                .sort()
+                .map(category => ({ value: category, label: category }))
+        };
+    }, [transactions]);
 
     const filterLabels: Record<string, string> = {
         date: 'Date',
@@ -107,6 +132,43 @@ const Transactions: React.FC = () => {
         property: 'Property & Units',
         categories: 'Categories & subcategories'
     };
+
+    // Calculate stats for cards
+    const stats = useMemo(() => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        let outstanding = 0;
+        let paid = 0;
+        let overdue = 0;
+
+        transactions.forEach((t) => {
+            const balance = t.balance || 0;
+            const isPaid = t.status === 'Paid' && balance <= 0;
+
+            if (isPaid) {
+                paid += t.total;
+            } else if (balance > 0) {
+                // Check if overdue
+                let isOverdueFlag = false;
+                if (t.dueDateRaw) {
+                    const dueDate = new Date(t.dueDateRaw);
+                    dueDate.setHours(0, 0, 0, 0);
+                    isOverdueFlag = dueDate < today;
+                } else if (t.isOverdue) {
+                    isOverdueFlag = true;
+                }
+
+                if (isOverdueFlag) {
+                    overdue += balance;
+                } else {
+                    outstanding += balance;
+                }
+            }
+        });
+
+        return { outstanding, paid, overdue };
+    }, [transactions]);
 
     // Filter Logic
     const filteredTransactions = useMemo(() => {
@@ -120,12 +182,43 @@ const Transactions: React.FC = () => {
                 item.contact.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 item.property.toLowerCase().includes(searchQuery.toLowerCase());
 
-            // Dropdown Filters
-            const matchesClient = filters.client.length === 0 || filters.client.some(c => item.contact.toLowerCase().includes(c.toLowerCase()));
-            const matchesProperty = filters.property.length === 0 || filters.property.some(p => item.property.toLowerCase().includes(p.toLowerCase()));
-            const matchesCategory = filters.categories.length === 0 || filters.categories.some(c => item.category.toLowerCase().includes(c.toLowerCase()));
+            // Date Filter
+            const matchesDate = filters.date.length === 0 || filters.date.some(dateFilter => {
+                const transactionDate = new Date(item.date);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                switch (dateFilter) {
+                    case 'today':
+                        return transactionDate.toDateString() === today.toDateString();
+                    case 'this_week': {
+                        const weekStart = new Date(today);
+                        weekStart.setDate(today.getDate() - today.getDay()); // Start of week (Sunday)
+                        return transactionDate >= weekStart && transactionDate <= today;
+                    }
+                    case 'this_month':
+                        return transactionDate.getMonth() === today.getMonth() &&
+                               transactionDate.getFullYear() === today.getFullYear();
+                    case 'this_year':
+                        return transactionDate.getFullYear() === today.getFullYear();
+                    default:
+                        return true;
+                }
+            });
 
-            return matchesSearch && matchesClient && matchesProperty && matchesCategory;
+            // Client Filter (exact match)
+            const matchesClient = filters.client.length === 0 || 
+                filters.client.some(c => item.contact === c);
+
+            // Property Filter (exact match)
+            const matchesProperty = filters.property.length === 0 || 
+                filters.property.some(p => item.property === p);
+
+            // Category Filter (exact match)
+            const matchesCategory = filters.categories.length === 0 || 
+                filters.categories.some(c => item.category === c);
+
+            return matchesSearch && matchesDate && matchesClient && matchesProperty && matchesCategory;
         });
     }, [activeTab, searchQuery, filters, transactions]);
 
@@ -334,41 +427,32 @@ const Transactions: React.FC = () => {
                 {/* Stats Cards */}
                 <div className="bg-[#f0f0f6] rounded-[2rem] p-4 mb-8 shadow-sm">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        {/* Paid Income */}
-                        <div className="p-4 bg-[#7BD747] rounded-[1.5rem] sm:rounded-full flex flex-col justify-center items-center h-24">
-                            <span className="text-white text-sm font-medium mb-2">Paid Income</span>
+                        {/* Outstanding */}
+                        <div className="p-4 bg-[#3A6D6C] rounded-[1.5rem] sm:rounded-full flex flex-col justify-center items-center h-24">
+                            <span className="text-white text-sm font-medium mb-2">Outstanding</span>
                             <div className="bg-[#E3EBDE] px-6 py-2 rounded-full w-full sm:w-[80%] text-center shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.15)]">
                                 <span className="text-gray-600 text-lg font-bold">
-                                    ₹{transactions
-                                        .filter(t => t.type === 'income' && t.status === 'Paid')
-                                        .reduce((sum, t) => sum + t.total, 0)
-                                        .toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    ₹{stats.outstanding.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                 </span>
                             </div>
                         </div>
 
-                        {/* Paid Expense */}
+                        {/* Paid */}
                         <div className="p-4 bg-[#7BD747] rounded-[1.5rem] sm:rounded-full flex flex-col justify-center items-center h-24">
-                            <span className="text-white text-sm font-medium mb-2">Paid Expense</span>
+                            <span className="text-white text-sm font-medium mb-2">Paid</span>
                             <div className="bg-[#E3EBDE] px-6 py-2 rounded-full w-full sm:w-[80%] text-center shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.15)]">
                                 <span className="text-gray-600 text-lg font-bold">
-                                    ₹{transactions
-                                        .filter(t => t.type === 'expense' && t.status === 'Paid')
-                                        .reduce((sum, t) => sum + t.total, 0)
-                                        .toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    ₹{stats.paid.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                 </span>
                             </div>
                         </div>
 
-                        {/* Paid Refund */}
-                        <div className="p-4 bg-[#7BD747] rounded-[1.5rem] sm:rounded-full flex flex-col justify-center items-center h-24">
-                            <span className="text-white text-sm font-medium mb-2">Paid Refund</span>
+                        {/* Overdue */}
+                        <div className="p-4 bg-[#ef4444] rounded-[1.5rem] sm:rounded-full flex flex-col justify-center items-center h-24">
+                            <span className="text-white text-sm font-medium mb-2">Overdue</span>
                             <div className="bg-[#E3EBDE] px-6 py-2 rounded-full w-full sm:w-[80%] text-center shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.15)]">
                                 <span className="text-gray-600 text-lg font-bold">
-                                    ₹{transactions
-                                        .filter(t => t.type === 'refund' && t.status === 'Paid')
-                                        .reduce((sum, t) => sum + t.total, 0)
-                                        .toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    ₹{stats.overdue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                 </span>
                             </div>
                         </div>
