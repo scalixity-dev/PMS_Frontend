@@ -40,6 +40,7 @@ export interface BackendTransaction {
   contact?: {
     id: string;
     firstName: string;
+    middleName?: string | null;
     lastName: string;
     email: string;
   } | null;
@@ -64,6 +65,27 @@ export interface BackendTransaction {
     fileUrl: string;
     fileName: string;
     fileType: string;
+  }>;
+  payments?: Array<{
+    id: string;
+    amount: string;
+    paymentDate: Date | string;
+    method: string;
+    paymentDetails?: string | null;
+    referenceNumber?: string | null;
+    notes?: string | null;
+    recordedByUser?: {
+      id: string;
+      fullName: string;
+      email: string;
+    } | null;
+  }>;
+  history?: Array<{
+    id: string;
+    action: string;
+    description: string;
+    createdAt: Date | string;
+    changedBy: string;
   }>;
 }
 
@@ -589,6 +611,190 @@ class TransactionService {
 
     const result = await response.json();
     return result.transaction;
+  }
+
+  /**
+   * Get a single transaction by ID
+   */
+  async getTransactionById(transactionId: string): Promise<BackendTransaction> {
+    const response = await fetch(API_ENDPOINTS.TRANSACTION.GET_ONE(transactionId), {
+      method: 'GET',
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch transaction');
+    }
+
+    const result = await response.json();
+    return result.transaction;
+  }
+
+  /**
+   * Update a transaction
+   */
+  async updateTransaction(
+    transactionId: string,
+    updateData: {
+      category?: string;
+      subcategory?: string;
+      amount?: number;
+      dueDate?: string;
+      details?: string;
+      notes?: string;
+      tags?: string[];
+    },
+    file?: File,
+  ): Promise<BackendTransaction> {
+    const formData = new FormData();
+
+    if (file) {
+      formData.append('file', file);
+    }
+
+    if (updateData.category) formData.append('category', updateData.category);
+    if (updateData.subcategory) formData.append('subcategory', updateData.subcategory);
+    if (updateData.amount !== undefined) formData.append('amount', updateData.amount.toString());
+    if (updateData.dueDate) formData.append('dueDate', updateData.dueDate);
+    if (updateData.details !== undefined) formData.append('details', updateData.details || '');
+    if (updateData.notes !== undefined) formData.append('notes', updateData.notes || '');
+    if (updateData.tags) {
+      formData.append('tags', JSON.stringify(updateData.tags));
+    }
+
+    const response = await fetch(API_ENDPOINTS.TRANSACTION.UPDATE(transactionId), {
+      method: 'PATCH',
+      credentials: 'include',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to update transaction');
+    }
+
+    const result = await response.json();
+    return result.transaction;
+  }
+
+  /**
+   * Update transaction discount
+   */
+  async updateDiscount(
+    transactionId: string,
+    discount: number,
+    file?: File,
+  ): Promise<BackendTransaction> {
+    const formData = new FormData();
+    formData.append('discount', discount.toString());
+
+    if (file) {
+      formData.append('file', file);
+    }
+
+    const response = await fetch(API_ENDPOINTS.TRANSACTION.UPDATE_DISCOUNT(transactionId), {
+      method: 'PATCH',
+      credentials: 'include',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to update discount');
+    }
+
+    const result = await response.json();
+    return result.transaction;
+  }
+
+  /**
+   * Void a transaction
+   */
+  async voidTransaction(
+    transactionId: string,
+    reason: string,
+    file?: File,
+  ): Promise<BackendTransaction> {
+    const formData = new FormData();
+    formData.append('reason', reason);
+
+    if (file) {
+      formData.append('file', file);
+    }
+
+    const response = await fetch(API_ENDPOINTS.TRANSACTION.VOID(transactionId), {
+      method: 'PATCH',
+      credentials: 'include',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to void transaction');
+    }
+
+    const result = await response.json();
+    return result.transaction;
+  }
+
+  /**
+   * Update a payment
+   */
+  async updatePayment(
+    transactionId: string,
+    paymentId: string,
+    updateData: {
+      amount?: number;
+      paymentDate?: string;
+      method?: string;
+      paymentDetails?: string;
+      referenceNumber?: string;
+      notes?: string;
+    },
+    file?: File,
+  ): Promise<any> {
+    const formData = new FormData();
+
+    if (file) {
+      formData.append('file', file);
+    }
+
+    if (updateData.amount !== undefined) formData.append('amount', updateData.amount.toString());
+    if (updateData.paymentDate) formData.append('paymentDate', updateData.paymentDate);
+    if (updateData.method) formData.append('method', updateData.method);
+    if (updateData.paymentDetails !== undefined) formData.append('paymentDetails', updateData.paymentDetails || '');
+    if (updateData.referenceNumber !== undefined) formData.append('referenceNumber', updateData.referenceNumber || '');
+    if (updateData.notes !== undefined) formData.append('notes', updateData.notes || '');
+
+    const response = await fetch(API_ENDPOINTS.TRANSACTION.UPDATE_PAYMENT(transactionId, paymentId), {
+      method: 'PATCH',
+      credentials: 'include',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to update payment');
+    }
+
+    const result = await response.json();
+    return result.payment;
+  }
+
+  /**
+   * Delete a payment
+   */
+  async deletePayment(transactionId: string, paymentId: string): Promise<void> {
+    const response = await fetch(API_ENDPOINTS.TRANSACTION.DELETE_PAYMENT(transactionId, paymentId), {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to delete payment');
+    }
   }
 
   /**
