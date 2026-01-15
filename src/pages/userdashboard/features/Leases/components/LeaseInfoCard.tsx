@@ -9,7 +9,7 @@ interface LeaseInfoCardProps {
 
 export const LeaseInfoCard = ({ icon: Icon, label, value, className = "" }: LeaseInfoCardProps) => {
     return (
-        <div className={`bg-[#FFFFFE] p-5 pr-10 rounded-2xl shadow-[0px_2px_4px_0px_#00000026] border border-gray-100 flex items-start gap-4 min-w-[240px] ${className}`}>
+        <div className={`bg-[#FFFFFE] p-5 pr-10 rounded-2xl shadow-[0px_2px_4px_0px_#00000026] border border-gray-100 flex items-start gap-4 w-full md:w-auto md:min-w-[240px] ${className}`}>
             <div className="p-2.5 bg-white border border-gray-100 rounded-xl shadow-sm">
                 <Icon className="w-5 h-5 text-gray-900" />
             </div>

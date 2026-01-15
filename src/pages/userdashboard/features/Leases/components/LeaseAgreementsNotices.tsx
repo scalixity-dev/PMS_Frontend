@@ -71,7 +71,7 @@ export const LeaseAgreementsNotices = ({ lease }: LeaseAgreementsNoticesProps) =
                                                 <FileText size={20} className="text-blue-600" />
                                             </div>
                                             <div className="flex flex-col items-start">
-                                                <span className="text-sm font-medium text-[#1A1A1A]  transition-colors">
+                                                <span className="text-sm font-medium text-[#1A1A1A] transition-colors truncate max-w-[200px] sm:max-w-none">
                                                     {attachment.name}
                                                 </span>
                                                 <span className="text-xs text-gray-500">

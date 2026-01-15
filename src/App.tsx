@@ -14,8 +14,16 @@ import { RentalApplicationSettingsLayout } from './components/common/RentalAppli
 import PricingPage from './pages/basewebsite/pricing';
 import LoginPage from './pages/basewebsite/auth/login';
 import SignUpPage from './pages/basewebsite/auth/signUp';
-import ServiceDashboardLogin from './pages/ServiceDashboard/auth/Login';
-import ServiceDashboardSignup from './pages/ServiceDashboard/auth/Signup';
+import ServiceDashboardLogin from './pages/ServiceDashboard/pages/auth/Login';
+import ServiceDashboardSignup from './pages/ServiceDashboard/pages/auth/Signup';
+import ForgotPassword from './pages/ServiceDashboard/pages/auth/ForgotPassword';
+import Welcome from './pages/ServiceDashboard/pages/onboarding/Welcome';
+import SelectProfession from './pages/ServiceDashboard/pages/onboarding/SelectProfession';
+import ProfessionDetails from './pages/ServiceDashboard/pages/onboarding/ProfessionDetails';
+import ServiceDashboardLayout from './components/service-dashboard/layout/ServiceDashboardLayout';
+import ServiceDashboard from './pages/ServiceDashboard/pages/Dashboard/ServiceDashboard';
+import ServiceDashboardSettings from './pages/ServiceDashboard/pages/Dashboard/ServiceDashboardSettings';
+import ServiceDashboardProfileSettings from './pages/ServiceDashboard/pages/Dashboard/ProfileSettings';
 import OtpPage from './pages/basewebsite/auth/otp';
 import OAuthCallbackPage from './pages/basewebsite/auth/otp'; // Note: This might have been a mistake in the original or I misread, checking...
 import OAuthCompletePage from './pages/basewebsite/auth/signUp/oauth-complete';
@@ -45,6 +53,8 @@ import ExpensePayments from './pages/Dashboard/features/Transactions/ExpensePaym
 import AddExpenseInvoice from './pages/Dashboard/features/Transactions/AddExpenseInvoice';
 import Payments from './pages/Dashboard/features/Payments/Payments';
 import Recurring from './pages/Dashboard/features/Recurring/Recurring';
+import RecurringDetail from './pages/Dashboard/features/Recurring/RecurringDetail';
+import RecurringClone from './pages/Dashboard/features/Transactions/RecurringClone';
 import AddMaintenanceRequest from './pages/Dashboard/features/Maintenance/AddMaintenanceRequest';
 import Requests from './pages/Dashboard/features/Maintenance/MaintenanceRequests';
 import MaintenanceRequestsDetail from './pages/Dashboard/features/Maintenance/MaintenanceRequestsDetail';
@@ -185,6 +195,23 @@ const App: React.FC = () => {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <Routes>
+            {/* Service Dashboard Auth - Standalone Pages */}
+            <Route path="/service-dashboard/login" element={<ServiceDashboardLogin />} />
+            <Route path="/service-dashboard/signup" element={<ServiceDashboardSignup />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+
+            {/* Service Dashboard Onboarding */}
+            <Route path="/service-dashboard/welcome" element={<Welcome />} />
+            <Route path="/service-dashboard/select-profession" element={<SelectProfession />} />
+            <Route path="/service-dashboard/profession-details" element={<ProfessionDetails />} />
+
+            {/* Service Dashboard Routes */}
+            <Route element={<ServiceDashboardLayout />}>
+              <Route path="/service-dashboard/dashboard" element={<ProtectedRoute><ServiceDashboard /></ProtectedRoute>} />
+              <Route path="/service-dashboard/settings" element={<ProtectedRoute><ServiceDashboardSettings /></ProtectedRoute>} />
+              <Route path="/service-dashboard/settings/profile" element={<ProtectedRoute><ServiceDashboardProfileSettings /></ProtectedRoute>} />
+            </Route>
+
             <Route element={<AppLayout />}>
               <Route path="/" element={<HomePage />} />
               <Route path="/login" element={<LoginPage />} />
@@ -194,9 +221,7 @@ const App: React.FC = () => {
               <Route path="/otp" element={<OtpPage />} />
               <Route path="/auth/callback" element={<OAuthCallbackPage />} />
 
-              {/* Service Dashboard Auth */}
-              <Route path="/service-dashboard/login" element={<ServiceDashboardLogin />} />
-              <Route path="/service-dashboard/signup" element={<ServiceDashboardSignup />} />
+
 
 
               <Route path="/usecases/landlord" element={<LandlordUseCasesPage />} />
@@ -263,6 +288,8 @@ const App: React.FC = () => {
               <Route path="/dashboard/accounting/transactions/expense-payments" element={<ExpensePayments />} />
               <Route path="/dashboard/accounting/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
               <Route path="/dashboard/accounting/recurring" element={<ProtectedRoute><Recurring /></ProtectedRoute>} />
+              <Route path="/dashboard/accounting/transactions/recurring-clone" element={<ProtectedRoute><RecurringClone /></ProtectedRoute>} />
+              <Route path="/dashboard/accounting/recurring/:id" element={<ProtectedRoute><RecurringDetail /></ProtectedRoute>} />
               <Route path="/dashboard/maintenance/request" element={<AddMaintenanceRequest />} />
               <Route path="/dashboard/maintenance/requests" element={<Requests />} />
               <Route path="/dashboard/maintenance/requests/:id" element={<MaintenanceRequestsDetail />} />

@@ -7,6 +7,7 @@ import { mockTransactions } from "../../utils/mockData";
 import { calculateOutstandingAmount } from "../../utils/financeUtils";
 import { useDashboardStore } from "../../store/dashboardStore";
 import { TransactionRow } from "../Transactions/components/TransactionRow";
+import { TransactionCard } from "../Transactions/components/TransactionCard";
 
 const ROWS_PER_PAGE = 10;
 
@@ -96,7 +97,7 @@ const Rent: React.FC = () => {
 
   return (
     <div className="bg-white min-h-screen">
-      <div className="max-w-full mx-auto p-8 space-y-6">
+      <div className="max-w-full mx-auto p-4 md:p-8 space-y-4 md:space-y-6">
         {/* Breadcrumb */}
         <nav aria-label="Breadcrumb">
           <ol className="flex items-center gap-2 text-base font-medium">
@@ -127,7 +128,7 @@ const Rent: React.FC = () => {
         {/* Filters Section */}
         <div className="flex items-center gap-3 flex-wrap">
           {/* Search Bar */}
-          <div className="relative flex-1 max-w-xs">
+          <div className="relative w-full md:w-auto md:flex-1 max-w-none md:max-w-xs">
             <input
               type="text"
               placeholder="Search Anything..."
@@ -184,7 +185,7 @@ const Rent: React.FC = () => {
         </div>
 
         {/* Table Container */}
-        <div className="bg-white rounded-[1rem] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] border border-gray-200 flex flex-col overflow-hidden">
+        <div className="hidden lg:flex bg-white rounded-[1rem] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] border border-gray-200 flex-col overflow-hidden">
           {/* Table Header */}
           <div className="bg-[var(--dashboard-accent)] flex justify-between px-10 py-3">
             <span className="text-white font-normal text-lg flex-[1.2]">Status</span>
@@ -240,6 +241,69 @@ const Rent: React.FC = () => {
                     ? 'bg-[#3A7D76] text-white shadow-lg'
                     : 'bg-transparent text-gray-600 border border-gray-300 hover:bg-gray-100'
                     }`}
+                >
+                  {page}
+                </button>
+              ))}
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className={`p-2 rounded-full transition-colors ${currentPage === totalPages
+                  ? 'text-gray-300 cursor-not-allowed'
+                  : 'text-gray-600 hover:bg-gray-200'
+                  }`}
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Mobile/Tablet Card View */}
+        <div className="lg:hidden flex flex-col gap-4">
+          {paginatedTransactions.length > 0 ? (
+            paginatedTransactions.map((transaction) => (
+              <TransactionCard
+                key={transaction.id}
+                transaction={transaction}
+                onClick={() => navigate(`/userdashboard/transactions/${transaction.id}`)}
+              />
+            ))
+          ) : (
+            <div className="bg-white rounded-xl p-8 text-center text-gray-400 font-medium border border-gray-200 shadow-sm">
+              <p>No transactions found</p>
+              <button
+                onClick={resetRentFilters}
+                className="mt-2 text-[#7ED957] hover:underline text-sm font-medium"
+              >
+                Clear all filters
+              </button>
+            </div>
+          )}
+
+          {/* Pagination for Mobile */}
+          {filteredTransactions.length > ROWS_PER_PAGE && (
+            <div className="flex justify-center items-center gap-2 py-4">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className={`p-2 rounded-full transition-colors ${currentPage === 1
+                  ? 'text-gray-300 cursor-not-allowed'
+                  : 'text-gray-600 hover:bg-gray-200'
+                  }`}
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => handlePageChange(page)}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-medium transition-all ${currentPage === page
+                    ? 'bg-[#3A7D76] text-white shadow-lg'
+                    : 'bg-transparent text-gray-600 border border-gray-300 hover:bg-gray-100' // Keeping it transparent/white for mobile background
+                    } ${currentPage !== page ? 'bg-white' : ''}`} // Add bg-white for unselected in mobile if needed, or rely on transparent
                 >
                   {page}
                 </button>

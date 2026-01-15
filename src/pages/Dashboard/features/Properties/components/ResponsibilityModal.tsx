@@ -42,6 +42,18 @@ const ResponsibilityModal: React.FC<ResponsibilityModalProps> = ({ isOpen, onClo
     const [selectedUtility, setSelectedUtility] = useState<string>('');
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
+    // Prevent background scrolling when modal is open
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [isOpen]);
+
     useEffect(() => {
         if (isOpen) {
             setResponsibilities(initialData.map(item => ({ ...item }))); // Deep copy to avoid mutating prop directly
