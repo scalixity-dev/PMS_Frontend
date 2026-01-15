@@ -316,6 +316,18 @@ const MoveIn: React.FC = () => {
                                 />
                             )}
 
+                            {currentStep === 10 && !['one-time', 'daily', 'both'].includes(formData.lateFees.scheduleType || '') && (
+                                <div className="flex flex-col items-center justify-center p-8 text-center">
+                                    <p className="text-gray-500 mb-4">Invalid late fee schedule type selected.</p>
+                                    <button
+                                        onClick={handleBack}
+                                        className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                                    >
+                                        Go Back
+                                    </button>
+                                </div>
+                            )}
+
 
                         </div>
                     </div>
