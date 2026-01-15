@@ -4,68 +4,94 @@ import { ChevronLeft, Check, MoreHorizontal, Settings } from 'lucide-react';
 import MoneyInMoneyOutButtons from '../../components/MoneyInMoneyOutButtons';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import { useTransactionStore } from '../Transactions/store/transactionStore';
+import { useGetRecurringTransactions } from '../../../../hooks/useTransactionQueries';
 
 // Reuse modals from Transactions
 import EditInvoiceModal from '../Transactions/components/EditInvoiceModal';
 import DeleteTransactionModal from '../Transactions/components/DeleteTransactionModal';
 import PostNextInvoiceModal from './components/PostNextInvoiceModal';
 
-// Mock Data for Recurring
-const MOCK_RECURRING = [
-    {
-        id: 1,
-        status: 'Active',
-        nextDate: '10 Nov 2025',
-        transactionType: 'Exterior / Roof & Gutters',
-        category: 'Exterior / Roof & Gutters',
-        property: 'Luxury',
-        contact: 'Sam',
-        amount: 88210.00,
-        type: 'income'
-    },
-    {
-        id: 2,
-        status: 'Active',
-        nextDate: '10 Nov 2025',
-        transactionType: 'Exterior / Roof & Gutters',
-        category: 'Exterior / Roof & Gutters',
-        property: 'Luxury',
-        contact: 'Abc',
-        amount: 88210.00,
-        type: 'income'
-    },
-    {
-        id: 3,
-        status: 'Paused',
-        nextDate: '09 Nov 2025',
-        transactionType: 'Maintenance',
-        category: 'Maintenance',
-        property: 'Seaside Villa',
-        contact: 'John Doe',
-        amount: 1200.00,
-        type: 'expense'
-    },
-    {
-        id: 4,
-        status: 'Active',
-        nextDate: '08 Nov 2025',
-        transactionType: 'Rent',
-        category: 'Rent',
-        property: 'Urban Loft',
-        contact: 'Jane Smith',
-        amount: 2500.00,
-        type: 'income'
+// Utility function to calculate next date based on frequency
+const calculateNextDate = (startDate: Date, frequency: string, endDate?: Date | null): Date | null => {
+    const now = new Date();
+    const start = new Date(startDate);
+    
+    // If end date exists and has passed, return null
+    if (endDate) {
+        const end = new Date(endDate);
+        if (end < now) {
+            return null;
+        }
     }
-];
+    
+    // If start date is in the future, return start date
+    if (start > now) {
+        return start;
+    }
+    
+    // Calculate next occurrence based on frequency
+    let nextDate = new Date(start);
+    
+    while (nextDate <= now) {
+        switch (frequency) {
+            case 'DAILY':
+                nextDate.setDate(nextDate.getDate() + 1);
+                break;
+            case 'WEEKLY':
+                nextDate.setDate(nextDate.getDate() + 7);
+                break;
+            case 'EVERY_TWO_WEEKS':
+                nextDate.setDate(nextDate.getDate() + 14);
+                break;
+            case 'EVERY_FOUR_WEEKS':
+                nextDate.setDate(nextDate.getDate() + 28);
+                break;
+            case 'MONTHLY':
+                nextDate.setMonth(nextDate.getMonth() + 1);
+                break;
+            case 'EVERY_TWO_MONTHS':
+                nextDate.setMonth(nextDate.getMonth() + 2);
+                break;
+            case 'QUARTERLY':
+                nextDate.setMonth(nextDate.getMonth() + 3);
+                break;
+            case 'EVERY_SIX_MONTHS':
+                nextDate.setMonth(nextDate.getMonth() + 6);
+                break;
+            case 'YEARLY':
+                nextDate.setFullYear(nextDate.getFullYear() + 1);
+                break;
+            default:
+                return null;
+        }
+        
+        // Check if we've exceeded end date
+        if (endDate && nextDate > new Date(endDate)) {
+            return null;
+        }
+    }
+    
+    return nextDate;
+};
+
+// Format date for display
+const formatDate = (date: Date | null): string => {
+    if (!date) return 'N/A';
+    return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+};
 
 const Recurring: React.FC = () => {
     const navigate = useNavigate();
     const context = useOutletContext<{ sidebarCollapsed?: boolean }>();
-    const sidebarCollapsed = context?.sidebarCollapsed ?? false; const [activeTab, setActiveTab] = useState<'All' | 'Income' | 'Expense'>('All');
-    const [selectedItems, setSelectedItems] = useState<number[]>([]);
+    const sidebarCollapsed = context?.sidebarCollapsed ?? false;
+    const [activeTab, setActiveTab] = useState<'All' | 'Income' | 'Expense'>('All');
+    const [selectedItems, setSelectedItems] = useState<string[]>([]);
+
+    // Fetch recurring transactions from backend
+    const { data: recurringTransactions = [], isLoading } = useGetRecurringTransactions();
 
     const dropdownContainerRef = useRef<HTMLDivElement>(null);
-    const [moreMenuOpenId, setMoreMenuOpenId] = useState<number | null>(null);
+    const [moreMenuOpenId, setMoreMenuOpenId] = useState<string | null>(null);
     const moreMenuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -81,7 +107,7 @@ const Recurring: React.FC = () => {
         };
     }, [moreMenuOpenId]);
     const [isPostInvoiceModalOpen, setIsPostInvoiceModalOpen] = useState(false);
-    const [selectedRecurringId, setSelectedRecurringId] = useState<number | null>(null);
+    const [selectedRecurringId, setSelectedRecurringId] = useState<string | null>(null);
 
     // Using transaction store for shared modals state
     const {
@@ -101,22 +127,94 @@ const Recurring: React.FC = () => {
         property: []
     });
 
-    const filterOptions: Record<string, FilterOption[]> = {
-        date: [
-            { value: 'today', label: 'Today' },
-            { value: 'this_week', label: 'This Week' },
-            { value: 'this_month', label: 'This Month' },
-        ],
-        client: [
-            { value: 'sam', label: 'Sam' },
-            { value: 'abc', label: 'Abc' },
-            { value: 'john', label: 'John Doe' },
-        ],
-        property: [
-            { value: 'luxury', label: 'Luxury' },
-            { value: 'seaside', label: 'Seaside Villa' },
-        ],
-    };
+    // Transform backend data to component format
+    const transformedRecurring = useMemo(() => {
+        return recurringTransactions.map((rt: any) => {
+            // Determine transaction type (income or expense)
+            // For INVOICE type: if payerId exists, it's income; if payeeId exists, it's expense
+            const isIncome = rt.type === 'INVOICE' && rt.payerId;
+            const type = isIncome ? 'income' : 'expense';
+
+            // Get contact name
+            let contactName = 'N/A';
+            if (rt.payer) {
+                contactName = rt.payer.fullName || rt.payer.email || 'N/A';
+            } else if (rt.payee) {
+                contactName = rt.payee.fullName || rt.payee.email || 'N/A';
+            } else if (rt.contact) {
+                const nameParts = [
+                    rt.contact.firstName,
+                    rt.contact.middleName,
+                    rt.contact.lastName,
+                ].filter(Boolean);
+                contactName = nameParts.length > 0 ? nameParts.join(' ') : rt.contact.email || 'N/A';
+            }
+
+            // Get property name
+            const propertyName = rt.property?.propertyName || 'N/A';
+
+            // Calculate next date
+            const startDate = new Date(rt.startDate);
+            const endDate = rt.endDate ? new Date(rt.endDate) : null;
+            const nextDate = calculateNextDate(startDate, rt.frequency, endDate);
+
+            // Determine status
+            let status = 'Active';
+            if (!rt.enabled) {
+                status = 'Paused';
+            } else if (endDate && nextDate === null) {
+                status = 'Stopped';
+            }
+
+            return {
+                id: rt.id,
+                status,
+                nextDate: formatDate(nextDate),
+                nextDateObj: nextDate,
+                transactionType: rt.subcategory || rt.category || 'N/A',
+                category: rt.category || 'N/A',
+                property: propertyName,
+                contact: contactName,
+                amount: parseFloat(rt.amount),
+                currency: rt.currency || 'USD',
+                type,
+                frequency: rt.frequency,
+                startDate: rt.startDate,
+                endDate: rt.endDate,
+            };
+        });
+    }, [recurringTransactions]);
+
+    // Generate filter options from real data
+    const filterOptions: Record<string, FilterOption[]> = useMemo(() => {
+        const uniqueContacts = new Set<string>();
+        const uniqueProperties = new Set<string>();
+
+        transformedRecurring.forEach((item) => {
+            if (item.contact && item.contact !== 'N/A') {
+                uniqueContacts.add(item.contact);
+            }
+            if (item.property && item.property !== 'N/A') {
+                uniqueProperties.add(item.property);
+            }
+        });
+
+        return {
+            date: [
+                { value: 'today', label: 'Today' },
+                { value: 'this_week', label: 'This Week' },
+                { value: 'this_month', label: 'This Month' },
+            ],
+            client: Array.from(uniqueContacts).map(contact => ({
+                value: contact.toLowerCase(),
+                label: contact,
+            })),
+            property: Array.from(uniqueProperties).map(property => ({
+                value: property.toLowerCase(),
+                label: property,
+            })),
+        };
+    }, [transformedRecurring]);
 
     const filterLabels: Record<string, string> = {
         date: 'Date',
@@ -126,7 +224,7 @@ const Recurring: React.FC = () => {
 
     // Filter Logic
     const filteredRecurring = useMemo(() => {
-        return MOCK_RECURRING.filter(item => {
+        return transformedRecurring.filter(item => {
             // Tab Filter
             if (activeTab !== 'All') {
                 if (activeTab === 'Income' && item.type !== 'income') return false;
@@ -145,8 +243,8 @@ const Recurring: React.FC = () => {
 
             // Date Filter
             let matchesDate = true;
-            if (filters.date.length > 0) {
-                const itemDate = new Date(item.nextDate);
+            if (filters.date.length > 0 && item.nextDateObj) {
+                const itemDate = item.nextDateObj;
                 const today = new Date();
                 const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
                 const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
@@ -173,9 +271,9 @@ const Recurring: React.FC = () => {
 
             return matchesSearch && matchesClient && matchesProperty && matchesDate;
         });
-    }, [activeTab, searchQuery, filters]);
+    }, [activeTab, searchQuery, filters, transformedRecurring]);
 
-    const toggleSelection = (id: number) => {
+    const toggleSelection = (id: string) => {
         if (selectedItems.includes(id)) {
             setSelectedItems(selectedItems.filter(item => item !== id));
         } else {
@@ -296,7 +394,11 @@ const Recurring: React.FC = () => {
 
                 {/* Table Body */}
                 <div className="flex flex-col gap-3 bg-[#F0F0F6] p-4 rounded-b-[2rem] rounded-t min-h-[400px]">
-                    {filteredRecurring.map((item) => (
+                    {isLoading ? (
+                        <div className="text-center py-10 text-gray-500">
+                            Loading recurring transactions...
+                        </div>
+                    ) : filteredRecurring.map((item) => (
                         <div
                             key={item.id}
                             onClick={() => navigate(`/dashboard/accounting/recurring/${item.id}`)}
@@ -336,7 +438,9 @@ const Recurring: React.FC = () => {
                                 <div className="text-[#3A6D6C] text-sm font-medium">{item.contact}</div>
 
                                 {/* Amount */}
-                                <div className="text-gray-900 text-sm font-bold">₹ {item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                                <div className="text-gray-900 text-sm font-bold">
+                                    {item.currency === 'USD' ? '$' : item.currency === 'EUR' ? '€' : item.currency === 'GBP' ? '£' : item.currency === 'INR' ? '₹' : item.currency} {item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                </div>
 
                                 {/* Actions */}
                                 <div className="flex justify-end relative">
@@ -384,7 +488,9 @@ const Recurring: React.FC = () => {
 
                                 <div className="space-y-1">
                                     <div className="text-lg font-bold text-gray-800">{item.property}</div>
-                                    <div className="text-2xl font-bold text-gray-900">₹ {item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                                    <div className="text-2xl font-bold text-gray-900">
+                                        {item.currency === 'USD' ? '$' : item.currency === 'EUR' ? '€' : item.currency === 'GBP' ? '£' : item.currency === 'INR' ? '₹' : item.currency} {item.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4 text-sm mt-2 pt-4 border-t border-gray-100">
@@ -451,7 +557,7 @@ const Recurring: React.FC = () => {
                             )}
                         </div>
                     ))}
-                    {filteredRecurring.length === 0 && (
+                    {!isLoading && filteredRecurring.length === 0 && (
                         <div className="text-center py-10 text-gray-500">
                             No recurring transactions found.
                         </div>

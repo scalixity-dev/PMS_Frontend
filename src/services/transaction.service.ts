@@ -103,6 +103,43 @@ export interface CreateExpenseInvoiceDto {
   notes?: string;
 }
 
+export interface CreateDepositDto {
+  scope: 'PROPERTY' | 'GENERAL';
+  category?: string;
+  subcategory?: string;
+  dueDate?: string;
+  amount: number;
+  currency?: 'USD' | 'INR' | 'EUR' | 'GBP' | 'CAD' | 'AUD';
+  isPaid?: boolean;
+  paymentMethod?: string;
+  payerId?: string;
+  contactId?: string;
+  propertyId?: string;
+  unitId?: string;
+  leaseId?: string;
+  details?: string;
+  tags?: string[];
+  notes?: string;
+}
+
+export interface CreateRecurringIncomeDto {
+  scope: 'PROPERTY' | 'GENERAL';
+  category?: string;
+  subcategory?: string;
+  startDate: string;
+  endDate?: string;
+  frequency: 'DAILY' | 'WEEKLY' | 'EVERY_TWO_WEEKS' | 'EVERY_FOUR_WEEKS' | 'MONTHLY' | 'EVERY_TWO_MONTHS' | 'QUARTERLY' | 'EVERY_SIX_MONTHS' | 'YEARLY';
+  amount: number;
+  currency?: 'USD' | 'INR' | 'EUR' | 'GBP' | 'CAD' | 'AUD';
+  payerId?: string;
+  contactId?: string;
+  propertyId?: string;
+  unitId?: string;
+  leaseId?: string;
+  details?: string;
+  notes?: string;
+}
+
 class TransactionService {
   /**
    * Create an income invoice
@@ -227,6 +264,109 @@ class TransactionService {
   }
 
   /**
+   * Create a deposit transaction
+   */
+  async createDeposit(
+    depositData: CreateDepositDto,
+    file?: File,
+  ): Promise<BackendTransaction> {
+    const formData = new FormData();
+
+    // Add file if provided
+    if (file) {
+      formData.append('file', file);
+    }
+
+    // Add all fields to form data
+    Object.entries(depositData).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        if (Array.isArray(value)) {
+          // For arrays (like tags), join with comma or send as multiple entries
+          formData.append(key, value.join(','));
+        } else if (typeof value === 'boolean') {
+          formData.append(key, value.toString());
+        } else {
+          formData.append(key, value.toString());
+        }
+      }
+    });
+
+    const response = await fetch(API_ENDPOINTS.TRANSACTION.CREATE_DEPOSIT, {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to create deposit';
+      try {
+        const errorData = await response.json();
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join('. ');
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+        console.error('Deposit creation error:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+        });
+      } catch (parseError) {
+        errorMessage = `Failed to create deposit: ${response.statusText}`;
+        console.error('Failed to parse error response:', parseError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    return result.transaction;
+  }
+
+  /**
+   * Create a recurring income transaction
+   */
+  async createRecurringIncome(
+    recurringData: CreateRecurringIncomeDto,
+  ): Promise<any> {
+    const response = await fetch(API_ENDPOINTS.TRANSACTION.CREATE_RECURRING_INCOME, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(recurringData),
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to create recurring income';
+      try {
+        const errorData = await response.json();
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join('. ');
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+        console.error('Recurring income creation error:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+        });
+      } catch (parseError) {
+        errorMessage = `Failed to create recurring income: ${response.statusText}`;
+        console.error('Failed to parse error response:', parseError);
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    return result.recurringTransaction;
+  }
+
+  /**
    * Get all tags
    */
   async getTags(): Promise<string[]> {
@@ -302,6 +442,32 @@ class TransactionService {
 
     const result = await response.json();
     return result.transactions || [];
+  }
+
+  /**
+   * Get all recurring transactions
+   */
+  async getRecurringTransactions(): Promise<any[]> {
+    const response = await fetch(API_ENDPOINTS.TRANSACTION.GET_RECURRING, {
+      method: 'GET',
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to fetch recurring transactions';
+      try {
+        const errorData = await response.json();
+        if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+      } catch (parseError) {
+        errorMessage = `Failed to fetch recurring transactions: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    return result.recurringTransactions || [];
   }
 
   /**

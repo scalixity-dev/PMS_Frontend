@@ -276,13 +276,12 @@ const EndLease: React.FC = () => {
                                 Apply deposit
                             </button>
                             <button
-                                onClick={() => navigate('/dashboard/accounting/transactions/bulk-payments-income', {
-                                    state: {
-                                        prefilledPayer: { label: leaseData.tenantName },
-                                        prefilledProperty: leaseData.property
-                                    }
-                                })}
-                                className="flex-1 sm:flex-none bg-[#3A6D6C] hover:bg-[#2c5251] text-white px-4 py-2 rounded-md text-sm font-bold transition-colors shadow-sm whitespace-nowrap"
+                                onClick={() => {
+                                    // Bulk payments feature removed
+                                    console.log('Bulk payments feature is no longer available');
+                                }}
+                                className="flex-1 sm:flex-none bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-md text-sm font-bold transition-colors shadow-sm whitespace-nowrap cursor-not-allowed opacity-50"
+                                disabled
                             >
                                 Record as paid
                             </button>

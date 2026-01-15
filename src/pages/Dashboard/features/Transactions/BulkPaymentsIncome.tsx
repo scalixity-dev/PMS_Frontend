@@ -1,68 +1,34 @@
 import React, { useState } from 'react';
 import { ChevronLeft, Edit, Trash2, MoreHorizontal } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import PayerPayeeDropdown from './components/PayerPayeeDropdown';
 import TransactionToggle from './components/TransactionToggle';
 import AddTenantModal from '../Tenants/components/AddTenantModal';
 import CustomDropdown from '../../components/CustomDropdown';
-
 import { validateFile } from '../../../../utils/fileValidation';
 import { Upload } from 'lucide-react';
-
-// Mock Data
-const MOCK_PROPERTIES: Record<string, { value: string, label: string }[]> = {
-    '1': [ // Service Pro
-        { value: 'prop_1', label: 'Downtown Apartments' },
-        { value: 'prop_2', label: 'Sunset Villa' },
-    ],
-    '2': [ // Tenant
-        { value: 'prop_3', label: 'Greenwood Estate' },
-    ]
-};
-
-const MOCK_INVOICES: Record<string, any[]> = {
-    'prop_1': [
-        { id: 'INV-20251122-8492', dueOn: '08 Dec', category: 'Rent', balance: '+69,0000', amount: '₹ 50,000' },
-        { id: 'INV-20251123-9999', dueOn: '10 Dec', category: 'Deposit', balance: '+12,0000', amount: '₹ 10,000' }
-    ],
-    'prop_2': [
-        { id: 'INV-20251201-1111', dueOn: '15 Dec', category: 'Laundry', balance: '+5,000', amount: '₹ 5,000' }
-    ],
-    'prop_3': [
-        { id: 'INV-20250101-2222', dueOn: '01 Jan', category: 'Rent', balance: '+25,000', amount: '₹ 25,000' }
-    ]
-};
 
 const BulkPaymentsIncome: React.FC = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<'Invoice' | 'General Invoices'>('Invoice');
     const [payerPayee, setPayerPayee] = useState<string>('');
+    const [lease, setLease] = useState<string>('');
     const [property, setProperty] = useState<string>('');
     const [isAddTenantModalOpen, setIsAddTenantModalOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [uploadError, setUploadError] = useState<string>('');
     const fileInputRef = React.useRef<HTMLInputElement>(null);
-    const location = useLocation();
 
-    // Handle prefilled data
-    React.useEffect(() => {
-        if (location.state?.prefilledPayer) {
-            // Set to Tenant '2' context
-            setPayerPayee('2');
-        }
-        if (location.state?.prefilledProperty) {
-            // Set to a valid property mock 'prop_3' for Tenant '2' to show it works
-            setProperty('prop_3');
-        }
-    }, [location.state]);
-
-    // Dynamic Options and Data
-    const propertyOptions = payerPayee ? (MOCK_PROPERTIES[payerPayee] || []) : [];
-    const tableData = property ? (MOCK_INVOICES[property] || []) : [];
+    // Empty options - no backend integration
+    const payerPayeeOptions: Array<{ id: string; label: string; type: 'tenant' | 'Service Pro' }> = [];
+    const leaseOptions: Array<{ value: string; label: string }> = [];
+    const propertyOptions: Array<{ value: string; label: string }> = [];
+    const tableData: any[] = [];
 
     const handlePayerChange = (value: string) => {
         setPayerPayee(value);
-        setProperty(''); // Reset property when payer changes
+        setLease('');
+        setProperty('');
     };
 
     const handleFileClick = () => {
@@ -82,7 +48,6 @@ const BulkPaymentsIncome: React.FC = () => {
 
         setSelectedFile(file);
         setUploadError('');
-        console.log('Bulk file selected:', file);
     };
 
     const handleEdit = (id: string) => {
@@ -171,24 +136,24 @@ const BulkPaymentsIncome: React.FC = () => {
                                 <PayerPayeeDropdown
                                     value={payerPayee}
                                     onChange={handlePayerChange}
-                                    options={[
-                                        { id: '1', label: 'Service Pro', type: 'Service Pro' },
-                                        { id: '2', label: 'Tenant', type: 'tenant' },
-                                    ]}
+                                    options={payerPayeeOptions}
                                     onAddTenant={() => setIsAddTenantModalOpen(true)}
-                                    placeholder="Paye"
+                                    placeholder="Select Payer/Payee"
                                 />
                             </div>
                         </div>
-                        {/* Property (Visible/Enabled only if Payer selected) */}
+                        {/* Lease or Property */}
                         <div className={`col-span-1 transition-opacity duration-300 ${payerPayee ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}>
-                            <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Property *</label>
+                            <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Lease / Property *</label>
                             <div className="relative">
                                 <CustomDropdown
-                                    value={property}
-                                    onChange={setProperty}
-                                    options={propertyOptions}
-                                    placeholder="Select Property"
+                                    value={lease || property}
+                                    onChange={(value) => {
+                                        setLease(value);
+                                        setProperty(value);
+                                    }}
+                                    options={leaseOptions.length > 0 ? leaseOptions : propertyOptions}
+                                    placeholder="Select Lease or Property"
                                     searchable={true}
                                     disabled={!payerPayee}
                                     buttonClassName="!py-3 !rounded-md !border-0 !shadow-sm focus:!ring-[#3A6D6C]/20 w-full"
@@ -305,7 +270,7 @@ const BulkPaymentsIncome: React.FC = () => {
                         ))
                     ) : (
                         <div className="flex items-center justify-center h-full text-gray-500 text-sm mt-10">
-                            {!payerPayee ? "Select Payer / Payee to continue." : "Select Property to view invoices."}
+                            No invoices available.
                         </div>
                     )}
                 </div>
