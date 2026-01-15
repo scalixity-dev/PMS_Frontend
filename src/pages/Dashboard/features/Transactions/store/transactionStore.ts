@@ -36,6 +36,7 @@ export interface TransactionData {
  */
 export interface PaymentData {
     id?: number | string;
+    paymentId?: string;
     status?: string;
     datePaid?: string;
     date?: string;

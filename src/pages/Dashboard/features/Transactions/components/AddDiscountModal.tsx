@@ -4,12 +4,17 @@ import CustomDropdown from '../../../components/CustomDropdown';
 import CustomTextBox from '../../../components/CustomTextBox';
 import DatePicker from '@/components/ui/DatePicker';
 import { validateFile } from '@/utils/fileValidation';
-
 import { useTransactionStore } from '../store/transactionStore';
+import { useUpdateDiscount } from '../../../../../hooks/useTransactionQueries';
+import { useParams } from 'react-router-dom';
+import { formatMoney } from '../../../../../utils/currency.utils';
 
 interface AddDiscountModalProps {
     onConfirm?: (data: AddDiscountFormData) => void;
     amountOwed?: string;
+    transactionId?: string;
+    transactionAmount?: number;
+    currency?: string;
 }
 
 interface AddDiscountFormData {
@@ -22,17 +27,28 @@ interface AddDiscountFormData {
 
 const AddDiscountModal: React.FC<AddDiscountModalProps> = ({
     onConfirm,
-    amountOwed = '₹45,000.00'
+    amountOwed,
+    transactionId: propTransactionId,
+    transactionAmount: propTransactionAmount,
+    currency: propCurrency = 'USD',
 }) => {
-    const { isAddDiscountOpen, setAddDiscountOpen } = useTransactionStore();
+    const { id: routeTransactionId } = useParams<{ id: string }>();
+    const { isAddDiscountOpen, setAddDiscountOpen, selectedTransactionId } = useTransactionStore();
     const isOpen = isAddDiscountOpen;
     const onClose = () => setAddDiscountOpen(false);
+    
+    // Get transaction ID from props, route params, or store
+    const transactionId = propTransactionId || routeTransactionId || (selectedTransactionId ? String(selectedTransactionId) : null);
+    
+    const updateDiscountMutation = useUpdateDiscount();
+    
     const [discountType, setDiscountType] = useState('');
     const [dateApplied, setDateApplied] = useState<Date | undefined>(undefined);
     const [discountAmount, setDiscountAmount] = useState('');
     const [details, setDetails] = useState('');
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [uploadError, setUploadError] = useState<string>('');
+    const [error, setError] = useState<string>('');
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const [fieldErrors, setFieldErrors] = useState<{
         discountType?: string;
@@ -40,12 +56,24 @@ const AddDiscountModal: React.FC<AddDiscountModalProps> = ({
         discountAmount?: string;
         details?: string;
     }>({});
+    
+    // Calculate amount owed from transaction amount or use provided amountOwed
+    const calculatedAmountOwed = amountOwed || (propTransactionAmount ? formatMoney(propTransactionAmount, propCurrency) : '₹0.00');
 
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden';
         } else {
             document.body.style.overflow = 'unset';
+            // Reset form when modal closes
+            setDiscountType('');
+            setDateApplied(undefined);
+            setDiscountAmount('');
+            setDetails('');
+            setSelectedFile(null);
+            setUploadError('');
+            setError('');
+            setFieldErrors({});
         }
         return () => {
             document.body.style.overflow = 'unset';
@@ -72,31 +100,36 @@ const AddDiscountModal: React.FC<AddDiscountModalProps> = ({
     };
 
     const handleConfirm = () => {
-        // Reset field errors
+        // Reset errors
+        setError('');
         const errors: typeof fieldErrors = {};
 
-        // Validate discountType
-        if (!discountType || discountType.trim() === '') {
-            errors.discountType = 'Please select a discount type';
+        // Validate transaction ID
+        if (!transactionId) {
+            setError('Transaction ID is required');
+            return;
         }
 
-        // Validate dateApplied
-        if (!dateApplied || !(dateApplied instanceof Date) || isNaN(dateApplied.getTime())) {
-            errors.dateApplied = 'Please select a valid date';
-        }
-
-        // Validate discountAmount
+        // Validate discountAmount (required)
         const amountNum = parseFloat(discountAmount);
         if (!discountAmount || discountAmount.trim() === '') {
             errors.discountAmount = 'Please enter a discount amount';
         } else if (isNaN(amountNum) || amountNum <= 0) {
             errors.discountAmount = 'Amount must be a positive number';
+        } else if (propTransactionAmount) {
+            // Calculate max discount based on type
+            const maxDiscount = discountType === 'percentage' ? propTransactionAmount : propTransactionAmount;
+            const calculatedDiscount = discountType === 'percentage' 
+                ? (propTransactionAmount * amountNum) / 100 
+                : amountNum;
+            
+            if (calculatedDiscount > maxDiscount) {
+                errors.discountAmount = `Discount cannot exceed transaction amount (${formatMoney(propTransactionAmount, propCurrency)})`;
+            }
         }
 
-        // Validate details
-        if (!details || details.trim() === '') {
-            errors.details = 'Please provide details';
-        }
+        // Note: discountType, dateApplied, and details are optional (for UI/record-keeping only)
+        // The backend only requires the discount amount
 
         // If there are errors, set them and don't proceed
         if (Object.keys(errors).length > 0) {
@@ -107,11 +140,49 @@ const AddDiscountModal: React.FC<AddDiscountModalProps> = ({
         // Clear any previous errors
         setFieldErrors({});
 
-        // All validation passed, proceed with confirm
+        // Calculate final discount amount (handle percentage if needed)
+        let finalDiscountAmount = amountNum;
+        if (discountType === 'percentage' && propTransactionAmount) {
+            // If percentage, calculate the actual discount amount
+            finalDiscountAmount = (propTransactionAmount * amountNum) / 100;
+        }
+
+        // If onConfirm callback is provided, use it (for backward compatibility)
         if (onConfirm) {
             onConfirm({ discountType, dateApplied, discountAmount, details, selectedFile });
+            onClose();
+            return;
         }
-        onClose();
+
+        // Otherwise, use the mutation directly
+        if (!transactionId) {
+            setError('Transaction ID is required');
+            return;
+        }
+
+        updateDiscountMutation.mutate(
+            {
+                transactionId,
+                discount: finalDiscountAmount,
+                file: selectedFile || undefined,
+            },
+            {
+                onSuccess: () => {
+                    // Reset form
+                    setDiscountType('');
+                    setDateApplied(undefined);
+                    setDiscountAmount('');
+                    setDetails('');
+                    setSelectedFile(null);
+                    setUploadError('');
+                    setError('');
+                    onClose();
+                },
+                onError: (error: any) => {
+                    setError(error.message || 'Failed to update discount');
+                },
+            }
+        );
     };
 
     if (!isOpen) return null;
@@ -142,12 +213,19 @@ const AddDiscountModal: React.FC<AddDiscountModalProps> = ({
                         <div className="inline-block bg-[#7BD747] rounded-full px-6 py-3 shadow-md">
                             <span className="text-white text-sm font-bold block mb-1">Amount Owed*</span>
                             <CustomTextBox
-                                value={amountOwed}
+                                value={calculatedAmountOwed}
                                 className="bg-[#E3EBDE] px-1 text-center"
                                 valueClassName="text-[#2c3e50] font-bold text-sm"
                             />
                         </div>
                     </div>
+
+                    {/* Error Message */}
+                    {error && (
+                        <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-lg text-red-700 text-sm">
+                            {error}
+                        </div>
+                    )}
 
                     {/* Discount Type */}
                     <div className="mb-6">
@@ -189,10 +267,17 @@ const AddDiscountModal: React.FC<AddDiscountModalProps> = ({
 
                         {/* Discount Amount */}
                         <div>
-                            <label className={labelClasses}>Discount Amount*</label>
+                            <label className={labelClasses}>
+                                Discount Amount*
+                                {discountType === 'percentage' && propTransactionAmount && (
+                                    <span className="text-xs font-normal text-gray-500 ml-2">
+                                        ({discountAmount ? `= ${formatMoney((propTransactionAmount * parseFloat(discountAmount || '0')) / 100, propCurrency)}` : 'Enter percentage'})
+                                    </span>
+                                )}
+                            </label>
                             <input
                                 type="text"
-                                placeholder="Type here"
+                                placeholder={discountType === 'percentage' ? 'Enter percentage (e.g., 10)' : 'Type here'}
                                 className={inputClasses}
                                 value={discountAmount}
                                 onChange={(e) => setDiscountAmount(e.target.value)}
@@ -246,9 +331,10 @@ const AddDiscountModal: React.FC<AddDiscountModalProps> = ({
                         </button>
                         <button
                             onClick={handleConfirm}
-                            className="w-full sm:flex-1 py-3 px-6 bg-[#3A6D6C] text-white rounded-lg font-medium hover:bg-[#2c5251] transition-colors shadow-lg"
+                            disabled={updateDiscountMutation.isPending || !transactionId}
+                            className="w-full sm:flex-1 py-3 px-6 bg-[#3A6D6C] text-white rounded-lg font-medium hover:bg-[#2c5251] transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            Confirm
+                            {updateDiscountMutation.isPending ? 'Updating...' : 'Confirm'}
                         </button>
                     </div>
                 </div>
