@@ -20,6 +20,7 @@ import PhotoGalleryModal from './components/PhotoGalleryModal';
 import DeletePropertyModal from './components/DeletePropertyModal';
 import AssignTeamModal from './components/AssignTeamModal';
 import DetailTabs from '../../components/DetailTabs';
+import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import { useGetProperty } from '../../../../hooks/usePropertyQueries';
 import { useGetUnit } from '../../../../hooks/useUnitQueries';
 import { propertyService, isSummaryUnits } from '../../../../services/property.service';
@@ -751,13 +752,14 @@ const PropertyDetail: React.FC = () => {
     return (
         <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen pb-10 transition-all duration-300`}>
             {/* Breadcrumb */}
-            <div className="inline-flex items-center px-3 md:px-4 py-2 bg-[#E0E8E7] rounded-full mb-4 md:mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                <span className="text-[#4ad1a6] text-xs md:text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>Dashboard</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-[#4ad1a6] text-xs md:text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard/properties')}>Properties</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-xs md:text-sm font-semibold truncate max-w-[120px] md:max-w-none">{property?.name || 'Property'}</span>
-            </div>
+            <Breadcrumb
+                items={[
+                    { label: 'Dashboard', path: '/dashboard' },
+                    { label: 'Properties', path: '/dashboard/properties' },
+                    { label: property?.name || 'Property' }
+                ]}
+                className="mb-4 md:mb-6 px-3 md:px-4"
+            />
 
             <div className="bg-[#E0E8E7] rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6 min-h-screen">
                 {/* Header */}

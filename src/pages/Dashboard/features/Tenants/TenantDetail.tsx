@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Plus, Loader2 } from 'lucide-react';
+import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import DetailTabs from '../../components/DetailTabs';
 import TenantProfileSection from './components/TenantProfileSection';
 import TenantLeasesSection from './components/TenantLeasesSection';
@@ -168,13 +169,14 @@ const TenantDetail = () => {
     return (
         <div className="max-w-6xl mx-auto min-h-screen font-outfit pb-10">
             {/* Breadcrumb */}
-            <div className="inline-flex items-center px-4 py-2 bg-[#E0E5E5] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>Dashboard</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard/contacts/tenants')}>Tenants</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">{tenant.name}</span>
-            </div>
+            <Breadcrumb
+                items={[
+                    { label: 'Dashboard', path: '/dashboard' },
+                    { label: 'Tenants', path: '/dashboard/contacts/tenants' },
+                    { label: tenant.name }
+                ]}
+                className="mb-6"
+            />
 
             <div className="p-4 sm:p-6 bg-[#E0E5E5] min-h-screen rounded-[1.5rem] sm:rounded-[2rem]">
                 {/* Header Actions */}

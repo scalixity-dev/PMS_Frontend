@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, ChevronDown } from 'lucide-react';
+import Breadcrumb from '../../../../components/ui/Breadcrumb';
 
 interface ReportCardProps {
     title: string;
@@ -90,11 +91,7 @@ const Reports: React.FC = () => {
         <div className="max-w-7xl mx-auto min-h-screen font-outfit">
             {/* Breadcrumb */}
             <div className="flex w-full overflow-x-auto pb-2 md:pb-0 mb-6 scrollbar-hide">
-                <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] whitespace-nowrap">
-                    <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
-                    <span className="text-gray-500 text-sm mx-1">/</span>
-                    <span className="text-gray-600 text-sm font-semibold">Reports</span>
-                </div>
+                <Breadcrumb items={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Reports' }]} />
             </div>
 
             <div className="p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem] overflow-visible">

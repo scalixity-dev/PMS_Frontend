@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Edit, Paperclip, ChevronDown, ChevronUp, Trash2, Loader2 } from 'lucide-react';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
+import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import CustomTextBox from '../../components/CustomTextBox';
 import { useGetEquipment, useDeleteEquipment, useGetEquipmentCategories } from '../../../../hooks/useEquipmentQueries';
 import type { BackendEquipment } from '../../../../services/equipment.service';
@@ -126,6 +127,15 @@ const EquipmentDetail = () => {
 
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit">
+            <div className="mb-6">
+                <Breadcrumb
+                    items={[
+                        { label: 'Dashboard', path: '/dashboard' },
+                        { label: 'Equipments', path: '/dashboard/equipments' },
+                        { label: `Equipment no. ${equipmentTyped.id}` }
+                    ]}
+                />
+            </div>
             <div className="p-4 md:p-6 bg-[#E0E8E7] min-h-screen rounded-[1.5rem] md:rounded-[2rem]">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">

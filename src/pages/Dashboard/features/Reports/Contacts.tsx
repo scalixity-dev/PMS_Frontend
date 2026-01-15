@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronUp, Download, LayoutTemplate, X, Check, ChevronLeft } from 'lucide-react';
 import DashboardFilter from '../../components/DashboardFilter';
+import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import type { FilterOption } from '../../components/DashboardFilter';
 
 interface Contact {
@@ -148,13 +149,7 @@ const Contacts: React.FC = () => {
         <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-20">
             {/* Breadcrumb */}
             <div className="flex w-full overflow-x-auto pb-2 md:pb-0 mb-6 scrollbar-hide">
-                <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] whitespace-nowrap">
-                    <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>Dashboard</span>
-                    <span className="text-gray-500 text-sm mx-1">/</span>
-                    <span className="text-gray-600 text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard/reports')}>Reports</span>
-                    <span className="text-gray-500 text-sm mx-1">/</span>
-                    <span className="text-gray-800 text-sm font-semibold">Contacts</span>
-                </div>
+                <Breadcrumb items={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Reports', path: '/dashboard/reports' }, { label: 'Contacts' }]} />
             </div>
 
             <div className="bg-[#E0E8E7] rounded-[2rem] p-8 min-h-[calc(100vh-100px)] relative">
