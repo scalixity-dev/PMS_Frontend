@@ -152,6 +152,84 @@ export const useGetRecurringTransactions = () => {
 };
 
 /**
+ * Hook to get a single recurring transaction by ID
+ */
+export const useGetRecurringTransaction = (recurringTransactionId: string | undefined) => {
+  return useQuery({
+    queryKey: [...transactionQueryKeys.all, 'recurring', recurringTransactionId || ''],
+    queryFn: () => {
+      if (!recurringTransactionId) {
+        throw new Error('Recurring transaction ID is required');
+      }
+      return transactionService.getRecurringTransactionById(recurringTransactionId);
+    },
+    enabled: !!recurringTransactionId,
+    staleTime: 30 * 1000, // 30 seconds
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    retry: 1,
+  });
+};
+
+/**
+ * Hook to delete a recurring transaction
+ */
+export const useDeleteRecurringTransaction = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (recurringTransactionId: string): Promise<void> => {
+      return transactionService.deleteRecurringTransaction(recurringTransactionId);
+    },
+    onSuccess: () => {
+      // Invalidate recurring transactions list
+      queryClient.invalidateQueries({ queryKey: [...transactionQueryKeys.all, 'recurring'] });
+    },
+  });
+};
+
+/**
+ * Hook to end a recurring transaction (disable it)
+ */
+export const useEndRecurringTransaction = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (recurringTransactionId: string): Promise<void> => {
+      return transactionService.endRecurringTransaction(recurringTransactionId);
+    },
+    onSuccess: () => {
+      // Invalidate recurring transactions list
+      queryClient.invalidateQueries({ queryKey: [...transactionQueryKeys.all, 'recurring'] });
+    },
+  });
+};
+
+/**
+ * Hook to post next invoice from recurring transaction
+ */
+export const usePostNextInvoice = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      recurringTransactionId,
+      dueDate,
+    }: {
+      recurringTransactionId: string;
+      dueDate?: string;
+    }): Promise<any> => {
+      return transactionService.postNextInvoice(recurringTransactionId, dueDate);
+    },
+    onSuccess: () => {
+      // Invalidate recurring transactions list
+      queryClient.invalidateQueries({ queryKey: [...transactionQueryKeys.all, 'recurring'] });
+      // Invalidate transactions list
+      queryClient.invalidateQueries({ queryKey: transactionQueryKeys.lists() });
+    },
+  });
+};
+
+/**
  * Hook to mark a transaction as paid
  */
 export const useMarkAsPaid = () => {

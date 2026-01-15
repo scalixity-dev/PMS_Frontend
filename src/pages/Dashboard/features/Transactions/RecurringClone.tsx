@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -7,34 +7,237 @@ import PayerPayeeDropdown from './components/PayerPayeeDropdown';
 import TransactionToggle from './components/TransactionToggle';
 import AddTenantModal from '../Tenants/components/AddTenantModal';
 import CustomDropdown from '../../components/CustomDropdown';
-import { TRANSACTION_CATEGORIES } from '../../../../utils/transactionCategories';
 import { useTransactionStore } from './store/transactionStore';
 import { validateFile } from '../../../../utils/fileValidation';
+import { useCreateRecurringIncome, useGetTransactionTags } from '../../../../hooks/useTransactionQueries';
+import { useGetAllTenants } from '../../../../hooks/useTenantQueries';
+import { useGetAllApplications } from '../../../../hooks/useApplicationQueries';
+import { serviceProviderService, type BackendServiceProvider } from '../../../../services/service-provider.service';
+import { useQuery } from '@tanstack/react-query';
+import { useGetLeasesByTenant, useGetLeasesByProperty } from '../../../../hooks/useLeaseQueries';
+import TagInput from './components/TagInput';
+
+// Define recurring frequencies - mapping to backend enum values
+const RECURRING_FREQUENCIES = [
+    { value: 'DAILY', label: 'Daily' },
+    { value: 'WEEKLY', label: 'Weekly' },
+    { value: 'EVERY_TWO_WEEKS', label: 'Every two weeks' },
+    { value: 'EVERY_FOUR_WEEKS', label: 'Every four weeks' },
+    { value: 'MONTHLY', label: 'Monthly' },
+    { value: 'EVERY_TWO_MONTHS', label: 'Every two months' },
+    { value: 'QUARTERLY', label: 'Quarterly' },
+    { value: 'EVERY_SIX_MONTHS', label: 'Every six months' },
+    { value: 'YEARLY', label: 'Yearly' },
+];
+
+// Income categories
+const INCOME_CATEGORIES = [
+    { value: 'rent', label: 'Rent' },
+    { value: 'deposit', label: 'Deposit' },
+    { value: 'late_fee', label: 'Late Fee' },
+    { value: 'application_fee', label: 'Application Fee' },
+    { value: 'pet_fee', label: 'Pet Fee' },
+    { value: 'parking_fee', label: 'Parking Fee' },
+    { value: 'laundry', label: 'Laundry Income' },
+    { value: 'vending', label: 'Vending Income' },
+    { value: 'other', label: 'Other Income' },
+];
+
+// Property-related income categories that require lease selection
+const PROPERTY_RELATED_INCOME_CATEGORIES = [
+    'rent',
+    'deposit',
+    'late_fee',
+    'application_fee',
+    'pet_fee',
+    'parking_fee',
+];
 
 const RecurringClone: React.FC = () => {
     const navigate = useNavigate();
+    const createRecurringIncome = useCreateRecurringIncome();
+    
+    // Fetch data from backend
+    const { data: tenants = [] } = useGetAllTenants();
+    const { data: applications = [] } = useGetAllApplications();
+    const { data: serviceProviders = [] } = useQuery({
+        queryKey: ['service-providers'],
+        queryFn: () => serviceProviderService.getAll(true), // Only active service providers
+        staleTime: 2 * 60 * 1000,
+        gcTime: 5 * 60 * 1000,
+        retry: 1,
+    });
+    const { data: tags = [] } = useGetTransactionTags();
+
     const [incomeType, setIncomeType] = useState<'Property Income' | 'General Income'>('Property Income');
     const [startDate, setStartDate] = useState<Date | undefined>(undefined);
     const [endDate, setEndDate] = useState<Date | undefined>(undefined);
-    const [payer, setPayer] = useState<string>('');
-    const [lease, setLease] = useState<string>('');
+    const [payerPayee, setPayerPayee] = useState<string>('');
+    const [payerId, setPayerId] = useState<string>('');
+    const [contactId, setContactId] = useState<string>('');
+    const [selectedPayerType, setSelectedPayerType] = useState<'tenant' | 'Service Pro' | 'other'>('tenant');
+    const [leaseId, setLeaseId] = useState<string>('');
     const [category, setCategory] = useState<string>('');
     const [amount, setAmount] = useState<string>('');
     const [details, setDetails] = useState<string>('');
     const [frequency, setFrequency] = useState<string>('');
-    const [tags, setTags] = useState<string>('');
-    const [payerOptions, setPayerOptions] = useState<{ id: string; label: string; type: 'tenant' | 'Service Pro' | 'other' }[]>([
-        { id: '1', label: 'Tenant', type: 'tenant' },
-        { id: '2', label: 'Service Pro', type: 'Service Pro' },
-    ]);
+    const [tagsList, setTagsList] = useState<string[]>([]);
     const [isAddTenantModalOpen, setIsAddTenantModalOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [uploadError, setUploadError] = useState<string>('');
     const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
+    const [error, setError] = useState<string>('');
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     const { clonedTransactionData } = useTransactionStore();
 
+    // Determine if lease dropdown should be shown
+    const isPropertyRelatedCategory = PROPERTY_RELATED_INCOME_CATEGORIES.includes(category);
+    const isTenantPayer = selectedPayerType === 'tenant' && payerId;
+    const isApplicantPayer = selectedPayerType === 'other' && payerId;
+    const shouldShowLease = isPropertyRelatedCategory && (isTenantPayer || isApplicantPayer) && incomeType === 'Property Income';
+    
+    // Find property from applicant's application if payer is an applicant
+    const applicantPropertyId = useMemo(() => {
+        if (isApplicantPayer && payerId) {
+            // payerId for applicants is their email
+            const applicantEmail = payerId;
+            const application = applications.find(app => 
+                app.applicants?.some(applicant => applicant.email === applicantEmail)
+            );
+            return application?.leasing?.property?.id || null;
+        }
+        return null;
+    }, [isApplicantPayer, payerId, applications]);
+    
+    // Fetch leases for the selected tenant OR by property if applicant
+    const { data: leasesByTenant = [] } = useGetLeasesByTenant(
+        payerId && selectedPayerType === 'tenant' ? payerId : null,
+        shouldShowLease === true && selectedPayerType === 'tenant'
+    );
+    
+    const { data: leasesByProperty = [] } = useGetLeasesByProperty(
+        applicantPropertyId || null,
+        shouldShowLease === true && selectedPayerType === 'other'
+    );
+    
+    // Combine leases from both sources
+    const leases = useMemo(() => {
+        if (selectedPayerType === 'tenant') {
+            return leasesByTenant;
+        } else if (selectedPayerType === 'other') {
+            return leasesByProperty;
+        }
+        return [];
+    }, [selectedPayerType, leasesByTenant, leasesByProperty]);
+
+    // Transform leases to dropdown options
+    const leaseOptions = leases.map((lease: any) => {
+        const propertyName = lease.property?.propertyName || 'Unknown Property';
+        const unitName = lease.unit?.unitName || '';
+        
+        // Format dates for display
+        const startDate = lease.startDate ? new Date(lease.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+        const endDate = lease.endDate ? new Date(lease.endDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+        const dateRange = startDate && endDate ? ` (${startDate} - ${endDate})` : startDate ? ` (${startDate})` : '';
+        
+        // Create display name: Property - Unit (dates) or just Property (dates)
+        let displayName = propertyName;
+        if (unitName) {
+            displayName = `${propertyName} - ${unitName}`;
+        }
+        displayName += dateRange;
+        
+        return {
+            value: lease.id,
+            label: displayName,
+        };
+    });
+
+    // Transform backend data to PayerPayeeDropdown options
+    const payerPayeeOptions = useMemo(() => {
+        const options: Array<{ id: string; label: string; type: 'Service Pro' | 'tenant' | 'other' }> = [];
+
+        // Add tenants - use userId if available, otherwise use tenant profile id
+        tenants.forEach((tenant) => {
+            const name = `${tenant.firstName}${tenant.middleName ? ` ${tenant.middleName}` : ''} ${tenant.lastName}`.trim();
+            const tenantId = tenant.userId || tenant.id;
+            if (tenantId) {
+                options.push({
+                    id: tenantId,
+                    label: name,
+                    type: 'tenant',
+                });
+            }
+        });
+
+        // Add service providers
+        serviceProviders.forEach((provider: BackendServiceProvider) => {
+            const name = `${provider.firstName}${provider.middleName ? ` ${provider.middleName}` : ''} ${provider.lastName}`.trim();
+            options.push({
+                id: provider.id, // This is the contactBookEntry id
+                label: name,
+                type: 'Service Pro',
+            });
+        });
+
+        const addedApplicantEmails = new Set<string>();
+        
+        applications.forEach((application) => {
+            if (application?.applicants && Array.isArray(application.applicants) && application.applicants.length > 0) {
+                application.applicants.forEach((applicant: any) => {
+                    if (!applicant?.email || (!applicant?.firstName && !applicant?.lastName)) {
+                        return;
+                    }
+                    
+                    if (addedApplicantEmails.has(applicant.email)) {
+                        return;
+                    }
+                    
+                    const name = `${applicant.firstName || ''}${applicant.middleName ? ` ${applicant.middleName}` : ''} ${applicant.lastName || ''}`.trim();
+                    
+                    if (name) {
+                        const applicantId = applicant.email;
+                        options.push({
+                            id: applicantId,
+                            label: `${name} (Applicant)`,
+                            type: 'other',
+                        });
+                        addedApplicantEmails.add(applicant.email);
+                    }
+                });
+            }
+        });
+
+        return options;
+    }, [tenants, serviceProviders, applications]);
+
+    // Handle payer/payee selection
+    useEffect(() => {
+        if (payerPayee) {
+            const selectedOption = payerPayeeOptions.find(opt => opt.id === payerPayee);
+            if (selectedOption) {
+                setSelectedPayerType(selectedOption.type);
+                if (selectedOption.type === 'Service Pro') {
+                    setContactId(selectedOption.id);
+                    setPayerId('');
+                } else if (selectedOption.type === 'tenant') {
+                    setPayerId(selectedOption.id);
+                    setContactId('');
+                } else if (selectedOption.type === 'other') {
+                    // For applicants, payerId is the email
+                    setPayerId(selectedOption.id);
+                    setContactId('');
+                }
+            }
+        } else {
+            setPayerId('');
+            setContactId('');
+            setSelectedPayerType('tenant');
+        }
+    }, [payerPayee, payerPayeeOptions]);
+
+    // Pre-fill data from cloned transaction
     useEffect(() => {
         const dataToLoad = clonedTransactionData;
 
@@ -52,15 +255,40 @@ const RecurringClone: React.FC = () => {
                     setAmount('');
                 }
             }
-            if (dataToLoad.user) {
-                setPayer(dataToLoad.user);
+            if (dataToLoad.user || dataToLoad.payer) {
+                // Try to find matching option
+                const userLabel = dataToLoad.user || dataToLoad.payer || '';
+                const matchingOption = payerPayeeOptions.find(opt => opt.label === userLabel);
+                if (matchingOption) {
+                    setPayerPayee(matchingOption.id);
+                }
             }
             if (dataToLoad.details) {
                 setDetails(dataToLoad.details);
             }
-            // Add other field mappings as needed
+            if (dataToLoad.category) {
+                setCategory(dataToLoad.category);
+            }
+            if (dataToLoad.tags) {
+                const tagsArray = typeof dataToLoad.tags === 'string' 
+                    ? dataToLoad.tags.split(',').map(t => t.trim()).filter(Boolean)
+                    : Array.isArray(dataToLoad.tags) 
+                        ? dataToLoad.tags 
+                        : [];
+                setTagsList(tagsArray);
+            }
+            if (dataToLoad.date) {
+                try {
+                    const date = new Date(dataToLoad.date);
+                    if (!isNaN(date.getTime())) {
+                        setStartDate(date);
+                    }
+                } catch (e) {
+                    // Invalid date, ignore
+                }
+            }
         }
-    }, [clonedTransactionData]);
+    }, [clonedTransactionData, payerPayeeOptions]);
 
     const handleFileClick = () => {
         setUploadError('');
@@ -81,37 +309,71 @@ const RecurringClone: React.FC = () => {
         setUploadError('');
     };
 
-    const handleCreate = () => {
-        const errors: { [key: string]: string } = {};
-        if (!startDate) errors.startDate = 'Start date is required';
-        if (!endDate) errors.endDate = 'End date is required';
-        if (!amount) errors.amount = 'Amount is required';
-        if (!payer) errors.payer = 'Payer / Payee is required';
-
-        if (startDate && endDate && endDate < startDate) {
-            errors.endDate = 'End date must be after start date';
+    const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        // Allow empty string, numbers, and decimal point
+        if (value === '' || /^\d*\.?\d*$/.test(value)) {
+            setAmount(value);
         }
+    };
 
-        setFormErrors(errors);
-
-        if (Object.keys(errors).length > 0) {
+    const handleCreate = async () => {
+        setError('');
+        setFormErrors({});
+        
+        // Validate required fields
+        if (!amount || parseFloat(amount) <= 0) {
+            setFormErrors({ amount: 'Amount is required and must be greater than 0' });
             return;
         }
 
-        console.log({
-            incomeType,
-            startDate,
-            endDate,
-            payer,
-            lease,
-            category,
-            frequency,
-            amount,
-            tags,
-            details,
-            file: selectedFile
-        });
-        // TODO: Implement API call
+        if (!startDate) {
+            setFormErrors({ startDate: 'Start date is required' });
+            return;
+        }
+
+        if (!endDate) {
+            setFormErrors({ endDate: 'End date is required' });
+            return;
+        }
+
+        if (endDate < startDate) {
+            setFormErrors({ endDate: 'End date must be after start date' });
+            return;
+        }
+
+        if (!frequency) {
+            setFormErrors({ frequency: 'Frequency is required' });
+            return;
+        }
+
+        if (!payerPayee && !payerId && !contactId) {
+            setFormErrors({ payer: 'Payer/Payee is required' });
+            return;
+        }
+
+        try {
+            const recurringData = {
+                scope: incomeType === 'Property Income' ? 'PROPERTY' as const : 'GENERAL' as const,
+                category: category || undefined,
+                subcategory: category || undefined,
+                startDate: startDate.toISOString().split('T')[0],
+                endDate: endDate ? endDate.toISOString().split('T')[0] : undefined,
+                frequency: frequency as 'DAILY' | 'WEEKLY' | 'EVERY_TWO_WEEKS' | 'EVERY_FOUR_WEEKS' | 'MONTHLY' | 'EVERY_TWO_MONTHS' | 'QUARTERLY' | 'EVERY_SIX_MONTHS' | 'YEARLY',
+                amount: parseFloat(amount),
+                payerId: payerId || undefined,
+                contactId: contactId || undefined,
+                leaseId: leaseId || undefined,
+                details: details || undefined,
+            };
+
+            await createRecurringIncome.mutateAsync(recurringData);
+
+            // Navigate back on success
+            navigate(-1);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to create recurring income');
+        }
     };
 
     return (
@@ -152,7 +414,7 @@ const RecurringClone: React.FC = () => {
                             <CustomDropdown
                                 value={category}
                                 onChange={setCategory}
-                                options={TRANSACTION_CATEGORIES}
+                                options={INCOME_CATEGORIES}
                                 placeholder="Select Category"
                                 searchable={true}
                                 buttonClassName="!py-3 !rounded-md !border-0 !shadow-sm focus:!ring-[#3A6D6C]/20 w-full"
@@ -171,21 +433,17 @@ const RecurringClone: React.FC = () => {
 
                     {/* Frequency */}
                     <div className="col-span-1">
-                        <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Frequency</label>
+                        <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Frequency *</label>
                         <div className="relative">
                             <CustomDropdown
                                 value={frequency}
                                 onChange={setFrequency}
-                                options={[
-                                    { value: 'daily', label: 'Daily' },
-                                    { value: 'weekly', label: 'Weekly' },
-                                    { value: 'monthly', label: 'Monthly' },
-                                    { value: 'yearly', label: 'Yearly' },
-                                ]}
+                                options={RECURRING_FREQUENCIES}
                                 placeholder="Select Frequency"
                                 buttonClassName="!py-3 !rounded-md !border-0 !shadow-sm focus:!ring-[#3A6D6C]/20 w-full"
                             />
                         </div>
+                        {formErrors.frequency && <p className="text-red-500 text-xs mt-1 ml-1">{formErrors.frequency}</p>}
                     </div>
 
                     {/* End Date */}
@@ -205,7 +463,7 @@ const RecurringClone: React.FC = () => {
                                 type="text"
                                 placeholder="00"
                                 value={amount}
-                                onChange={(e) => setAmount(e.target.value)}
+                                onChange={handleAmountChange}
                                 className="w-full rounded-md bg-white px-4 py-3 text-sm text-gray-700 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#7BD747]/20 transition-all shadow-sm"
                             />
                         </div>
@@ -217,9 +475,9 @@ const RecurringClone: React.FC = () => {
                         <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Payer / Payee *</label>
                         <div className="relative">
                             <PayerPayeeDropdown
-                                value={payer}
-                                onChange={setPayer}
-                                options={payerOptions}
+                                value={payerPayee}
+                                onChange={setPayerPayee}
+                                options={payerPayeeOptions}
                                 onAddTenant={() => setIsAddTenantModalOpen(true)}
                                 placeholder="Payer"
                             />
@@ -228,35 +486,30 @@ const RecurringClone: React.FC = () => {
                     </div>
 
                     {/* Lease */}
-                    <div className="col-span-1">
-                        <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Lease</label>
-                        <div className="relative">
-                            <CustomDropdown
-                                value={lease}
-                                onChange={setLease}
-                                options={[
-                                    { value: 'lease1', label: 'bhbh. Lease #20 (Active)' },
-                                    { value: 'lease2', label: 'Other Lease' },
-                                ]}
-                                placeholder="Select Lease"
-                                buttonClassName="!py-3 !rounded-md !border-0 !shadow-sm focus:!ring-[#3A6D6C]/20 w-full"
-                            />
+                    {shouldShowLease && (
+                        <div className="col-span-1">
+                            <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Lease</label>
+                            <div className="relative">
+                                <CustomDropdown
+                                    value={leaseId}
+                                    onChange={setLeaseId}
+                                    options={leaseOptions}
+                                    placeholder="Select Lease"
+                                    buttonClassName="!py-3 !rounded-md !border-0 !shadow-sm focus:!ring-[#3A6D6C]/20 w-full"
+                                />
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Tags */}
                     <div className="col-span-1">
                         <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Tags</label>
                         <div className="relative">
-                            <CustomDropdown
-                                value={tags}
-                                onChange={setTags}
-                                options={[
-                                    { value: 'tag1', label: 'Tag 1' },
-                                    { value: 'tag2', label: 'Tag 2' },
-                                ]}
-                                placeholder="Tags"
-                                buttonClassName="!py-3 !rounded-md !border-0 !shadow-sm focus:!ring-[#3A6D6C]/20 w-full"
+                            <TagInput
+                                value={tagsList}
+                                onChange={setTagsList}
+                                suggestions={tags}
+                                placeholder="Add tags"
                             />
                         </div>
                     </div>
@@ -290,11 +543,19 @@ const RecurringClone: React.FC = () => {
                     </button>
                     <button
                         onClick={handleCreate}
-                        className="w-full sm:w-auto bg-[#3D7475] text-white px-10 py-3 rounded-md font-semibold shadow-lg shadow-[#3D7475]/20 hover:bg-[#2c5556] transition-all duration-200"
+                        disabled={createRecurringIncome.isPending}
+                        className="w-full sm:w-auto bg-[#3D7475] text-white px-10 py-3 rounded-md font-semibold shadow-lg shadow-[#3D7475]/20 hover:bg-[#2c5556] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        Create
+                        {createRecurringIncome.isPending ? 'Creating...' : 'Create'}
                     </button>
                 </div>
+
+                {/* Error Message */}
+                {error && (
+                    <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                        <p className="text-red-600 text-sm">{error}</p>
+                    </div>
+                )}
 
                 {/* File Upload Status */}
                 {(uploadError || selectedFile) && (
@@ -313,13 +574,9 @@ const RecurringClone: React.FC = () => {
                 <AddTenantModal
                     isOpen={isAddTenantModalOpen}
                     onClose={() => setIsAddTenantModalOpen(false)}
-                    onSave={(data) => {
-                        const newOption: { id: string; label: string; type: 'tenant' | 'Service Pro' | 'other' } = {
-                            id: `new-${Date.now()}`,
-                            label: `${data.firstName} ${data.lastName}`,
-                            type: 'tenant'
-                        };
-                        setPayerOptions(prev => [...prev, newOption]);
+                    onSave={() => {
+                        // The modal will handle the tenant creation
+                        // We'll refetch tenants to get the new one
                         setIsAddTenantModalOpen(false);
                     }}
                 />

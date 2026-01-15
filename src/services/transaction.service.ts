@@ -466,6 +466,92 @@ class TransactionService {
   }
 
   /**
+   * Get a single recurring transaction by ID
+   */
+  async getRecurringTransactionById(recurringTransactionId: string): Promise<any> {
+    const response = await fetch(API_ENDPOINTS.TRANSACTION.GET_RECURRING_ONE(recurringTransactionId), {
+      method: 'GET',
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to fetch recurring transaction';
+      try {
+        const errorData = await response.json();
+        if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+      } catch (parseError) {
+        errorMessage = `Failed to fetch recurring transaction: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    return result.recurringTransaction;
+  }
+
+  /**
+   * Delete a recurring transaction
+   */
+  async deleteRecurringTransaction(recurringTransactionId: string): Promise<void> {
+    const response = await fetch(API_ENDPOINTS.TRANSACTION.DELETE_RECURRING(recurringTransactionId), {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to delete recurring transaction');
+    }
+  }
+
+  /**
+   * End a recurring transaction (disable it)
+   */
+  async endRecurringTransaction(recurringTransactionId: string): Promise<void> {
+    const response = await fetch(API_ENDPOINTS.TRANSACTION.END_RECURRING(recurringTransactionId), {
+      method: 'PATCH',
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to end recurring transaction');
+    }
+  }
+
+  /**
+   * Post next invoice from recurring transaction
+   */
+  async postNextInvoice(recurringTransactionId: string, dueDate?: string): Promise<any> {
+    const response = await fetch(API_ENDPOINTS.TRANSACTION.POST_NEXT_INVOICE(recurringTransactionId), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ dueDate }),
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to post next invoice';
+      try {
+        const errorData = await response.json();
+        if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+      } catch (parseError) {
+        errorMessage = `Failed to post next invoice: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    return result.transaction;
+  }
+
+  /**
    * Get all tags
    */
   async getTags(): Promise<string[]> {

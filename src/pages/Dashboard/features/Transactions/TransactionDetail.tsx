@@ -375,6 +375,10 @@ const TransactionDetail: React.FC = () => {
             />
             <AddDiscountModal
                 onConfirm={handleUpdateDiscount}
+                transactionId={id}
+                transactionAmount={transaction ? parseFloat(transaction.amount) : undefined}
+                currency={transaction?.currency || 'USD'}
+                amountOwed={transaction ? formatMoney(parseFloat(transaction.balance), transaction.currency || 'USD') : undefined}
             />
             <DeleteConfirmationModal
                 isOpen={isDeleteTransactionOpen}
