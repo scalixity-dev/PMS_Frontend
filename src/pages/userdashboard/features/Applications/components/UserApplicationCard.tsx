@@ -63,7 +63,7 @@ export const UserApplicationCard: React.FC<ApplicationCardProps> = ({ app, onDel
     }, [app.imageUrl]);
 
     return (
-        <div className="bg-[#F7F7F7] rounded-2xl border border-[#F3F4F6] shadow-[0px_4px_4px_0px_#00000040] w-full flex flex-col relative">
+        <div className="bg-[#F7F7F7] rounded-2xl border-[0.5px] border-[#201F23]/40 shadow-[0px_4px_4px_0px_#00000040] w-full flex flex-col relative">
             {/* Status Badge */}
             <div className="absolute top-4 left-4 z-10">
                 <span

@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useState, useRef } from 'react';
+import React, { useMemo, useEffect, useState, useRef, useCallback } from 'react';
 import { Upload, Search, ChevronDown, Check, Loader2 } from 'lucide-react';
 import { Country } from 'country-state-city';
 import DatePicker from '@/components/ui/DatePicker';
@@ -6,7 +6,7 @@ import PrimaryActionButton from '@/components/common/buttons/PrimaryActionButton
 import ImageCropModal from '../../../../../Dashboard/features/Tenants/components/ImageCropModal';
 import { API_ENDPOINTS } from '@/config/api.config';
 
-interface FormData {
+export interface FormData {
     firstName: string;
     middleName: string;
     lastName: string;
@@ -176,7 +176,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
         onChange('photo', croppedFile);
         setPreviewUrl(croppedImageUrl);
         setImageToCrop(null);
-        
+
         // Upload photo to backend asynchronously
         try {
             await uploadPhotoToBackend(croppedFile);
@@ -186,7 +186,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
         }
     };
 
-    const validateField = (key: keyof FormData, value: FormData[keyof FormData]): string => {
+    const validateField = useCallback((key: keyof FormData, value: FormData[keyof FormData]): string => {
         if (['firstName', 'lastName', 'email', 'phoneNumber', 'shortBio'].includes(key)) {
             if (!value || (typeof value === 'string' && value.trim() === '')) {
                 return 'This field is required';
@@ -212,17 +212,11 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
         if (key === 'moveInDate') {
             if (!value) return 'Preferred move in date is required';
             if (value instanceof Date) {
-                const today = new Date();
-                today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
-                const selectedDate = new Date(value);
-                selectedDate.setHours(0, 0, 0, 0);
-                if (selectedDate < today) {
-                    return 'Preferred move-in date cannot be in the past';
-                }
+                // Removed past date validation to allow edits
             }
         }
         return '';
-    };
+    }, [data.phoneCountryCode]);
 
     const handleBlur = (key: keyof FormData) => {
         setTouched(prev => ({ ...prev, [key]: true }));
@@ -236,12 +230,12 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
         }
     };
 
-    const isFormValid = (): boolean => {
+    const isFormValid = useMemo((): boolean => {
         const requiredFields: Array<keyof FormData> = [
             'firstName', 'lastName', 'email', 'phoneNumber', 'dob', 'shortBio', 'moveInDate'
         ];
         return requiredFields.every(key => !validateField(key, data[key]));
-    };
+    }, [data, validateField]);
 
     const inputClass = (fieldName: string) => `
         w-full px-4 py-3 bg-white border rounded-[10px] text-sm font-medium transition-all
@@ -338,8 +332,8 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                                     type="button"
                                     onClick={() => setIsPhoneCodeOpen(!isPhoneCodeOpen)}
                                     className={`w-full h-full px-3 py-3 bg-white border rounded-[10px] text-sm font-medium flex items-center justify-between ${touched.phoneNumber && !data.phoneCountryCode
-                                            ? 'border-red-500 ring-1 ring-red-200'
-                                            : 'border-[#E5E7EB]'
+                                        ? 'border-red-500 ring-1 ring-red-200'
+                                        : 'border-[#E5E7EB]'
                                         }`}
                                 >
                                     <span className="truncate">{selectedPhoneCode ? selectedPhoneCode.phonecode : 'Code'}</span>
@@ -445,9 +439,9 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                 <PrimaryActionButton
                     text={submitLabel}
                     onClick={onSubmit}
-                    disabled={!isFormValid()}
+                    disabled={!isFormValid}
                     className={`px-16 py-3.5 rounded-full font-bold uppercase transition-all
-                        ${isFormValid()
+                        ${isFormValid
                             ? 'bg-[#7ED957] hover:bg-[#6BC847] shadow-lg shadow-[#7ED957]/30 text-white'
                             : 'bg-[#F3F4F6] text-black hover:bg-[#F3F4F6] cursor-not-allowed border-none shadow-none'}`}
                 />

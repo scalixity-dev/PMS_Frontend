@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo, useCallback, forwardRef, useImperativeHandle, useEffect } from 'react';
-import { UploadCloud, X, FileText, Pencil, Trash2 } from 'lucide-react';
+import { UploadCloud, X, FileText, Pencil, Trash2, Download } from 'lucide-react';
 import { format } from 'date-fns';
 import BaseModal from "@/components/common/modals/BaseModal";
 import DeleteConfirmationModal from "@/components/common/modals/DeleteConfirmationModal";
@@ -471,26 +471,42 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
             {/* Image Preview Modal */}
             {selectedImage && (
                 <div
-                    className="fixed inset-0 bg-black/75 z-[10000] flex items-center justify-center p-28"
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[10000] flex items-center justify-center p-4 md:p-10 lg:p-20"
                     onClick={() => setSelectedImage(null)}
                 >
-                    <div className="relative max-w-7xl max-h-[90vh] w-full h-full flex items-center justify-center">
+                    <div className="relative max-w-5xl max-h-[90vh] w-full h-full flex items-center justify-center">
                         {/* Close Button */}
                         <button
                             onClick={() => setSelectedImage(null)}
-                            className="absolute -top-8 -right-12 bg-white rounded-full p-3 hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl z-50"
+                            className="absolute -top-2 -right-2 sm:-top-4 sm:-right-4 md:-top-8 md:-right-12 bg-white rounded-full p-2 md:p-3 hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl z-50"
                             aria-label="Close"
                         >
-                            <X size={24} className="text-gray-700" strokeWidth={2.5} />
+                            <X size={20} className="text-gray-700 md:hidden" strokeWidth={2.5} />
+                            <X size={24} className="text-gray-700 hidden md:block" strokeWidth={2.5} />
                         </button>
 
                         {/* Image */}
-                        <img
-                            src={selectedImage}
-                            alt="Insurance document preview"
-                            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
-                            onClick={(e) => e.stopPropagation()}
-                        />
+                        <div className="relative w-full h-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                            <img
+                                src={selectedImage}
+                                alt="Insurance document preview"
+                                className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                            />
+                            {/* Mobile Download Button */}
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    const a = document.createElement('a');
+                                    a.href = selectedImage;
+                                    a.download = insuranceData?.fileName || "insurance-document";
+                                    a.click();
+                                }}
+                                className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm p-3 rounded-full shadow-lg md:hidden"
+                                aria-label="Download insurance document"
+                            >
+                                <Download size={20} className="text-gray-700" />
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
