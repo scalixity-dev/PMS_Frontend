@@ -5,6 +5,7 @@ import DeleteConfirmationModal from '../../../../components/common/modals/Delete
 import ChangeStatusModal from './components/ChangeStatusModal';
 import AssigneeModal from './components/AssigneeModal';
 import MakeRecurringModal from './components/MakeRecurringModal';
+import Breadcrumb from '../../../../components/ui/Breadcrumb';
 
 // --- Reusable Components ---
 
@@ -81,11 +82,14 @@ const MaintenanceRequestsDetail: React.FC = () => {
     return (
         <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit pb-12 transition-all duration-300`}>
             {/* Breadcrumb */}
-            <div className="inline-flex items-center px-4 py-2 bg-[#DFE5E3] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>Dashboard</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard/maintenance/requests')}>Requests</span>
-            </div>
+            <Breadcrumb
+                items={[
+                    { label: 'Dashboard', path: '/dashboard' },
+                    { label: 'Requests', path: '/dashboard/maintenance/requests' },
+                    { label: 'Request Details' }
+                ]}
+                className="mb-6"
+            />
 
             <div className="p-4 md:p-6 bg-[#DFE5E3] min-h-screen rounded-[2rem] overflow-visible">
 

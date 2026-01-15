@@ -4,6 +4,7 @@ import DashboardFilter, { type FilterOption } from '../../components/DashboardFi
 import Pagination from '../../components/Pagination';
 import TenantCard from './components/TenantCard';
 import { Plus, ChevronLeft, Loader2 } from 'lucide-react';
+import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import { useGetAllTenants } from '../../../../hooks/useTenantQueries';
 import { tenantService, type Tenant } from '../../../../services/tenant.service';
 
@@ -118,11 +119,14 @@ const Tenants = () => {
 
     return (
         <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit transition-all duration-300`}>
-            <div className="inline-flex items-center px-4 py-2 bg-[#E0E5E5] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                <span className="text-[#4ad1a6] text-sm font-semibold">Contacts</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">Tenants</span>
-            </div>
+            {/* Breadcrumb */}
+            <Breadcrumb
+                items={[
+                    { label: 'Dashboard', path: '/dashboard' },
+                    { label: 'Tenants' }
+                ]}
+                className="mb-6"
+            />
 
             <div className="p-4 sm:p-6 bg-[#E0E5E5] min-h-screen rounded-[1.5rem] sm:rounded-[2rem] flex flex-col">
                 {/* Header */}

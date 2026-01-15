@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
 
 export interface BreadcrumbItem {
     label: string;
@@ -14,29 +13,35 @@ interface BreadcrumbProps {
 
 const Breadcrumb: React.FC<BreadcrumbProps> = ({ items, className = '' }) => {
     return (
-        <nav className={`flex items-center text-sm font-medium ${className}`} aria-label="Breadcrumb">
-            <ol className="flex items-center space-x-2">
+        <nav
+            className={`inline-flex items-center px-6 py-2 bg-[#DFE5E3] rounded-full shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] ${className}`}
+            aria-label="Breadcrumb"
+        >
+            <ol className="flex items-center">
                 {items.map((item, index) => {
                     const isLast = index === items.length - 1;
 
                     return (
                         <li key={index} className="flex items-center">
                             {index > 0 && (
-                                <ChevronRight className="w-4 h-4 text-gray-400 mx-1" />
+                                <span className="text-gray-500 text-sm mx-2">/</span>
                             )}
                             {isLast ? (
-                                <span className="text-gray-900 font-semibold" aria-current="page">
+                                <span
+                                    className="text-[#1a2b4b] text-sm font-semibold"
+                                    aria-current="page"
+                                >
                                     {item.label}
                                 </span>
                             ) : item.path ? (
                                 <Link
                                     to={item.path}
-                                    className="text-gray-500 hover:text-gray-900 transition-colors"
+                                    className="text-[#4ad1a6] text-sm font-semibold cursor-pointer hover:underline"
                                 >
                                     {item.label}
                                 </Link>
                             ) : (
-                                <span className="text-gray-500">
+                                <span className="text-[#4ad1a6] text-sm font-semibold">
                                     {item.label}
                                 </span>
                             )}

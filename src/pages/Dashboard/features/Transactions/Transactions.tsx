@@ -14,6 +14,7 @@ import VoidTransactionModal from './components/VoidTransactionModal';
 import { utils, writeFile } from 'xlsx';
 import { useGetTransactions, useMarkAsPaid, useDeleteTransaction } from '../../../../hooks/useTransactionQueries';
 import type { Transaction } from '../../../../services/transaction.service';
+import Breadcrumb from '../../../../components/ui/Breadcrumb';
 
 const Transactions: React.FC = () => {
     const navigate = useNavigate();
@@ -291,11 +292,13 @@ const Transactions: React.FC = () => {
             />
 
             {/* Breadcrumb */}
-            <div className="inline-flex items-center px-4 py-2 bg-[#DFE5E3] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">Transactions</span>
-            </div>
+            <Breadcrumb
+                items={[
+                    { label: 'Dashboard', path: '/dashboard' },
+                    { label: 'Transactions' }
+                ]}
+                className="mb-6"
+            />
 
             <div className="p-4 sm:p-6 bg-[#DFE5E3] min-h-screen rounded-[1.5rem] sm:rounded-[2rem] overflow-visible">
                 {/* Header */}

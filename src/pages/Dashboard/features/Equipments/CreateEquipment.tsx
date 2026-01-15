@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Upload, Check, Loader2, X, ChevronLeft, Edit, Trash2 } from 'lucide-react';
 import CustomDropdown from '../../components/CustomDropdown';
+
+import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import CurrencySelector from '@/components/ui/CurrencySelector';
 import UnsavedChangesModal from '../../components/UnsavedChangesModal';
 import DatePicker from '../../../../components/ui/DatePicker';
@@ -361,11 +363,8 @@ const CreateEquipment = () => {
     if (isLoadingCategories || (isEditMode && isLoadingEquipment)) {
         return (
             <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-12">
-                <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                    <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
-                    <span className="text-gray-500 text-sm mx-1">/</span>
-                    <span className="text-gray-600 text-sm font-semibold">{isEditMode ? 'Edit Equipment' : 'Add Equipment'}</span>
-                </div>
+                {/* Breadcrumb */}
+                <Breadcrumb items={[{ label: 'Dashboard', path: '/dashboard' }, { label: isEditMode ? 'Edit Equipment' : 'Add Equipment' }]} />
                 <div className="p-4 md:p-8 bg-[#E0E8E7] min-h-screen rounded-[1.5rem] md:rounded-[2rem] flex items-center justify-center">
                     <div className="flex flex-col items-center gap-4">
                         <Loader2 className="w-8 h-8 animate-spin text-[#3A6D6C]" />
@@ -382,11 +381,8 @@ const CreateEquipment = () => {
     if (isEditMode && equipmentError) {
         return (
             <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-12">
-                <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                    <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
-                    <span className="text-gray-500 text-sm mx-1">/</span>
-                    <span className="text-gray-600 text-sm font-semibold">Edit Equipment</span>
-                </div>
+                {/* Breadcrumb */}
+                <Breadcrumb items={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Edit Equipment' }]} />
                 <div className="p-4 md:p-8 bg-[#E0E8E7] min-h-screen rounded-[1.5rem] md:rounded-[2rem] flex items-center justify-center">
                     <div className="bg-red-50 border border-red-200 rounded-2xl p-6 max-w-md text-center">
                         <p className="text-red-800 font-semibold mb-2">Equipment not found</p>
@@ -409,13 +405,7 @@ const CreateEquipment = () => {
         <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-12 transition-all duration-300">
             {/* Breadcrumb */}
             <div className="overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:pb-0 mb-6 w-full">
-                <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] whitespace-nowrap">
-                    <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
-                    <span className="text-gray-500 text-sm mx-1">/</span>
-                    <span className="text-gray-600 text-sm font-semibold cursor-pointer" onClick={() => handleNavigation('/dashboard/equipments')}>Equipments</span>
-                    <span className="text-gray-500 text-sm mx-1">/</span>
-                    <span className="text-gray-600 text-sm font-semibold">{isEditMode ? 'Edit Equipment' : 'Add Equipment'}</span>
-                </div>
+                <Breadcrumb items={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Equipments', path: '/dashboard/equipments' }, { label: isEditMode ? 'Edit Equipment' : 'Add Equipment' }]} />
             </div>
 
             <div className="p-4 md:p-6 bg-[#E0E8E7] min-h-screen rounded-[1.5rem] md:rounded-[2rem]">

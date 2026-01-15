@@ -18,6 +18,7 @@ import PhotoGalleryModal from '../Properties/components/PhotoGalleryModal';
 import DetailTabs from '../../components/DetailTabs';
 import { useGetProperty } from '../../../../hooks/usePropertyQueries';
 import { useGetUnit } from '../../../../hooks/useUnitQueries';
+import Breadcrumb from '../../../../components/ui/Breadcrumb';
 
 const UnitPropertyDetail: React.FC = () => {
     const { unitId } = useParams<{ unitId: string }>();
@@ -47,10 +48,10 @@ const UnitPropertyDetail: React.FC = () => {
 
     // Fetch property data (for address and property name) - optional, can work without it
     const { data: backendProperty, isLoading: isLoadingProperty } = useGetProperty(propertyId || null, !!propertyId);
-    
+
     // Fetch full unit data - required
     const { data: unitData, isLoading: isLoadingUnit, error: unitError } = useGetUnit(unitId || null, !!unitId);
-    
+
     const isLoading = isLoadingUnit || (!!propertyId && isLoadingProperty);
     const error = unitError;
 
@@ -116,7 +117,7 @@ const UnitPropertyDetail: React.FC = () => {
 
         return {
             id: unitData.id,
-            name: backendProperty 
+            name: backendProperty
                 ? `${backendProperty.propertyName} - ${unitData.unitName || 'Unit'}`
                 : unitData.unitName || 'Unit',
             address,
@@ -191,13 +192,14 @@ const UnitPropertyDetail: React.FC = () => {
     return (
         <div className="max-w-6xl mx-auto min-h-screen pb-10">
             {/* Breadcrumb */}
-            <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>Dashboard</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard/portfolio/units')}>Units</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">{unit?.name || 'Unit'}</span>
-            </div>
+            <Breadcrumb
+                items={[
+                    { label: 'Dashboard', path: '/dashboard' },
+                    { label: 'Units', path: '/dashboard/portfolio/units' },
+                    { label: unit?.name || 'Unit' }
+                ]}
+                className="mb-6"
+            />
 
             <div className="bg-[#E0E8E7] rounded-[2rem] p-6 min-h-screen">
                 {/* Header */}
@@ -225,7 +227,7 @@ const UnitPropertyDetail: React.FC = () => {
                             </button>
 
                             {isActionDropdownOpen && (
-                                <div 
+                                <div
                                     className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 animate-in fade-in zoom-in-95 duration-100 overflow-hidden"
                                     onClick={(e) => e.stopPropagation()}
                                 >
@@ -234,7 +236,7 @@ const UnitPropertyDetail: React.FC = () => {
                                         onClick={(e) => {
                                             e.preventDefault();
                                             e.stopPropagation();
-                                            
+
                                             // Navigate first, then close dropdown
                                             if (unitId && propertyId) {
                                                 navigate(`/dashboard/units/edit/${unitId}?propertyId=${propertyId}`);
@@ -243,7 +245,7 @@ const UnitPropertyDetail: React.FC = () => {
                                             } else {
                                                 console.error('unitId is missing, cannot navigate to edit page');
                                             }
-                                            
+
                                             // Close dropdown after navigation
                                             setIsActionDropdownOpen(false);
                                         }}

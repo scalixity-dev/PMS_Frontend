@@ -100,6 +100,8 @@ const UserDashboard = () => {
                     applicationService.getAll().catch(() => [])
                 ]);
 
+                const appsToProcess = apps || [];
+
                 // Filter for truly active leases
                 const activeLeases = (leases || []).filter((l: any) => l.status === 'Active' || l.status === 'ACTIVE');
 
@@ -108,13 +110,13 @@ const UserDashboard = () => {
 
                     // For now, populate roommates from mockLeases to align with the rest of the dashboard UI
                     // In a real scenario, this would come from the API (primaryLease.tenants)
-                    const primaryMockLease = mockLeases.find(l => l.status === 'Active');
+                    const primaryMockLease = mockLeases?.find(l => l.status === 'Active');
                     if (primaryMockLease && primaryMockLease.tenants) {
                         const currentEmail = userInfo?.email;
                         const otherTenants = primaryMockLease.tenants.filter(t => t.email !== currentEmail);
                         setRoommates(otherTenants);
                     }
-                } else if ((apps || []).length > 0) {
+                } else if (appsToProcess.length > 0) {
                     setDashboardStage('application_submitted');
                     setActiveTab('Applications');
 
@@ -127,15 +129,17 @@ const UserDashboard = () => {
                         return "Submitted";
                     };
 
-                    const apiApps = apps.map((app: any) => {
+                    const apiApps = appsToProcess.map((app: any) => {
                         const primaryApplicant = app.applicants?.find((a: any) => a.isPrimary) || app.applicants?.[0];
                         const applicantName = primaryApplicant
                             ? `${primaryApplicant.firstName || ''} ${primaryApplicant.middleName || ''} ${primaryApplicant.lastName || ''}`.trim() || "Unknown Applicant"
                             : "Unknown Applicant";
 
                         const propertyAddress = app.leasing?.property?.address
-                            ? `${app.leasing.property.address.streetAddress || ''}, ${app.leasing.property.address.city || ''}, ${app.leasing.property.address.stateRegion || ''}`
-                                .replace(/^, |, $/g, '').replace(/, ,/g, ',')
+                            ? typeof app.leasing.property.address === 'string'
+                                ? app.leasing.property.address
+                                : `${app.leasing.property.address.streetAddress || ''}, ${app.leasing.property.address.city || ''}, ${app.leasing.property.address.stateRegion || ''}`
+                                    .replace(/^, |, $/g, '').replace(/, ,/g, ',')
                             : "Address not available";
 
                         return {
@@ -239,7 +243,7 @@ const UserDashboard = () => {
                     <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end mb-8 xl:mb-10 gap-6">
                         {/* Navigation Tabs */}
                         <div className="flex-1 w-full relative overflow-x-auto scrollbar-hide">
-                            <div className="flex items-end gap-1 sm:gap-3 border-b-[0.5px] border-[var(--dashboard-border)] w-full sm:w-fit relative sm:pr-4">
+                            <div className={`flex items-end gap-1 sm:gap-3 border-b-[0.5px] border-[var(--dashboard-border)] relative ${dashboardStage === 'move_in' ? 'w-full sm:w-fit sm:pr-4' : 'w-fit'}`}>
                                 {dashboardStage === 'move_in' ? (
                                     tabs.map((tab) => (
                                         <button
@@ -256,7 +260,7 @@ const UserDashboard = () => {
                                     ))
                                 ) : (
                                     <button
-                                        className="relative px-4 sm:px-5 py-2 font-medium text-sm sm:text-base transition-all duration-200 whitespace-nowrap bg-[var(--dashboard-accent)] text-white rounded-t-2xl z-10"
+                                        className="relative flex-1 sm:flex-none px-4 sm:px-5 py-2 font-medium text-sm sm:text-base transition-all duration-200 whitespace-nowrap bg-[var(--dashboard-accent)] text-white rounded-t-2xl z-10"
                                     >
                                         Applications
                                     </button>

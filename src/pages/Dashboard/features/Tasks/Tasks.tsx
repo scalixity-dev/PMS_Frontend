@@ -5,6 +5,7 @@ import DashboardFilter, { type FilterOption, type SavedFilter } from '../../comp
 import AddTaskModal from './components/AddTaskModal';
 import TaskDetailSideModal from './components/TaskDetailSideModal';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
+import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import { useGetAllTasks, useDeleteTask, useUpdateTask } from '../../../../hooks/useTaskQueries';
 import { useGetAllProperties } from '../../../../hooks/usePropertyQueries';
 import type { TaskFilters } from '../../../../services/task.service';
@@ -356,11 +357,13 @@ const Tasks: React.FC = () => {
     return (
         <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen transition-all duration-300`}>
             {/* Breadcrumb */}
-            <div className="inline-flex items-center px-4 py-2 bg-[#DFE5E3] rounded-full mb-4 md:mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">Task</span>
-            </div>
+            <Breadcrumb
+                items={[
+                    { label: 'Dashboard', path: '/dashboard' },
+                    { label: 'Tasks' }
+                ]}
+                className="mb-4 md:mb-6"
+            />
 
             <div className="p-4 md:p-8 bg-[#DFE5E3] min-h-screen rounded-[1.5rem] md:rounded-[2rem]">
                 {/* Header */}

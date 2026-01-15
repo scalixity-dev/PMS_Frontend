@@ -5,6 +5,7 @@ import DOMPurify from 'dompurify';
 import ReviewSuccessModal from '../landlordforms/components/ReviewSuccessModal';
 import DocumentPreviewModal from '../components/DocumentPreviewModal';
 import { handleDocumentPrint } from '../utils/printPreviewUtils';
+import Breadcrumb from '../../../../../components/ui/Breadcrumb';
 import UseTemplateModal from './components/UseTemplateModal';
 
 interface MyLocationState {
@@ -175,18 +176,9 @@ const MyTemplateDetail: React.FC = () => {
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-10">
             {/* Breadcrumb */}
+            {/* Breadcrumb */}
             <div className="flex w-full overflow-x-auto pb-2 md:pb-0 mb-6 scrollbar-hide">
-                <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] whitespace-nowrap">
-                    <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>
-                        Dashboard
-                    </span>
-                    <span className="text-gray-500 text-sm mx-1">/</span>
-                    <span className="text-gray-600 text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard/documents/my-templates')}>
-                        Documents Template
-                    </span>
-                    <span className="text-gray-500 text-sm mx-1">/</span>
-                    <span className="text-gray-600 text-sm font-semibold max-w-[150px] md:max-w-xs truncate block">{templateName}</span>
-                </div>
+                <Breadcrumb items={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Documents Template', path: '/dashboard/documents/my-templates' }, { label: templateName }]} />
             </div>
 
             <div className="p-4 md:p-6 bg-[#E0E8E7] min-h-screen rounded-2xl md:rounded-[2rem]">

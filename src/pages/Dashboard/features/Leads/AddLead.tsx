@@ -4,6 +4,7 @@ import { ChevronLeft } from 'lucide-react';
 import PrimaryActionButton from '../../../../components/common/buttons/PrimaryActionButton';
 import { useCreateLead, useCreateActivity } from '../../../../hooks/useLeadQueries';
 import type { LeadType } from '../../../../services/lead.service';
+import Breadcrumb from '../../../../components/ui/Breadcrumb';
 
 const AddLead = () => {
     const navigate = useNavigate();
@@ -101,12 +102,8 @@ const AddLead = () => {
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-10">
             {/* Breadcrumb */}
-            <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] ml-2 border border-white/20">
-                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>Dashboard</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard/leasing/leads')}>Leads</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">Add Leads</span>
+            <div className="mb-6">
+                <Breadcrumb items={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Leads', path: '/dashboard/leasing/leads' }, { label: 'Add Lead' }]} />
             </div>
 
             <div className="p-4 sm:p-6 bg-[#E0E8E7] min-h-[500px] rounded-[1.5rem] sm:rounded-[2rem] shadow-sm">

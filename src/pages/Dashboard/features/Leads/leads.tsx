@@ -9,6 +9,7 @@ import DeleteConfirmationModal from '@/components/common/modals/DeleteConfirmati
 import { useGetAllLeads, useUpdateLead, useDeleteLead } from '../../../../hooks/useLeadQueries';
 import { useGetAllListings } from '../../../../hooks/useListingQueries';
 import type { BackendLead, LeadStatus } from '../../../../services/lead.service';
+import Breadcrumb from '../../../../components/ui/Breadcrumb';
 
 const STATUS_DISPLAY_TO_ENUM: Record<string, LeadStatus> = {
     'New': 'NEW',
@@ -357,10 +358,8 @@ const Leads = () => {
     return (
         <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit pb-10 transition-all duration-300`}>
             {/* Breadcrumb */}
-            <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>Dashboard</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">Leads</span>
+            <div className='mb-6'>
+                <Breadcrumb items={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Leads' }]} />
             </div>
 
             <div className="p-6 bg-[#E0E8E7]  rounded-[2rem]">

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import PrimaryActionButton from '../../../../../components/common/buttons/PrimaryActionButton';
 import TemplateEditor from '../components/TemplateEditor';
+import Breadcrumb from '../../../../../components/ui/Breadcrumb';
 
 const EditTemplate: React.FC = () => {
     const navigate = useNavigate();
@@ -95,22 +96,9 @@ const EditTemplate: React.FC = () => {
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-10">
             {/* Breadcrumb */}
+            {/* Breadcrumb */}
             <div className="flex w-full overflow-x-auto pb-2 md:pb-0 mb-8 scrollbar-hide">
-                <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] whitespace-nowrap">
-                    <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>
-                        Dashboard
-                    </span>
-                    <span className="text-gray-500 text-sm mx-1">/</span>
-                    <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard/documents/my-templates')}>
-                        Documents Template
-                    </span>
-                    <span className="text-gray-500 text-sm mx-1">/</span>
-                    <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate(`/dashboard/documents/my-templates/${id}`)}>
-                        {templateName}
-                    </span>
-                    <span className="text-gray-500 text-sm mx-1">/</span>
-                    <span className="text-gray-600 text-sm font-semibold">Edit template</span>
-                </div>
+                <Breadcrumb items={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Documents Template', path: '/dashboard/documents/my-templates' }, { label: templateName, path: `/dashboard/documents/my-templates/${id}` }, { label: 'Edit template' }]} />
             </div>
 
             {/* Main Edit Container */}

@@ -5,6 +5,7 @@ import DOMPurify from 'dompurify';
 import ReviewSuccessModal from './components/ReviewSuccessModal';
 import { getTemplateHTML } from './utils/templateUtils';
 import DocumentPreviewModal from '../components/DocumentPreviewModal';
+import Breadcrumb from '../../../../../components/ui/Breadcrumb';
 import { handleDocumentPrint } from '../utils/printPreviewUtils';
 
 // Mock data for properties and tenants
@@ -108,20 +109,7 @@ const TemplateView: React.FC = () => {
             {/* Breadcrumb */}
             {/* Breadcrumb */}
             <div className="flex w-full overflow-x-auto pb-2 md:pb-0 mb-6 print:hidden scrollbar-hide">
-                <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] whitespace-nowrap">
-                    <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>
-                        Dashboard
-                    </span>
-                    <span className="text-gray-500 text-sm mx-1">/</span>
-                    <span
-                        className="text-[#4ad1a6] text-sm font-semibold cursor-pointer"
-                        onClick={() => navigate('/dashboard/documents/landlord-forms')}
-                    >
-                        Landlord forms
-                    </span>
-                    <span className="text-gray-500 text-sm mx-1">/</span>
-                    <span className="text-gray-600 text-sm font-semibold max-w-[150px] md:max-w-[300px] truncate block">{decodedTemplateName}</span>
-                </div>
+                <Breadcrumb items={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Landlord forms', path: '/dashboard/documents/landlord-forms' }, { label: decodedTemplateName }]} />
             </div>
 
             <div className="p-4 md:p-6 bg-[#E0E8E7] min-h-screen rounded-2xl md:rounded-[2rem] print:bg-white print:p-0">

@@ -24,6 +24,7 @@ import InviteToApplyModal from './components/InviteToApplyModal';
 import DetailTabs from '../../components/DetailTabs';
 import { useGetListing, useUpdateListing } from '../../../../hooks/useListingQueries';
 import { getCurrencySymbol } from '../../../../utils/currency.utils';
+import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 
 const ListingDetail: React.FC = () => {
@@ -422,12 +423,9 @@ const ListingDetail: React.FC = () => {
     return (
         <div className="max-w-7xl mx-auto min-h-screen pb-10">
             {/* Breadcrumb */}
-            <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>Dashboard</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard/portfolio/listing')}>Listings</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">{listing?.name || `#${id}`}</span>
+            {/* Breadcrumb */}
+            <div className="mb-6">
+                <Breadcrumb items={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Listings', path: '/dashboard/portfolio/listing' }, { label: listing?.name || `#${id}` }]} />
             </div>
 
             <div className="bg-[#E0E8E7] rounded-[2rem] p-6 min-h-screen">
