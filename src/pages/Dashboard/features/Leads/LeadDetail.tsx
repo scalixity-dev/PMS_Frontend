@@ -34,6 +34,7 @@ import {
 } from '../../../../hooks/useLeadQueries';
 import type { LeadStatus, CreateActivityDto } from '../../../../services/lead.service';
 import { authService } from '../../../../services/auth.service';
+import Breadcrumb from '../../../../components/ui/Breadcrumb';
 
 interface ActivityItem {
     id: string; // Changed to string to use UUID directly
@@ -710,12 +711,8 @@ const LeadDetail = () => {
     return (
         <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit pb-10 transition-all duration-300 px-0.5 sm:px-0`}>
             {/* Breadcrumb - Hide on very small screens or make more compact */}
-            <div className="inline-flex flex-wrap items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] mx-1">
-                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>Dashboard</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard/leasing/leads')}>Leads</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">{leadInfo.fullName}</span>
+            <div className="mb-6">
+                <Breadcrumb items={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Leads', path: '/dashboard/leasing/leads' }, { label: leadInfo.fullName }]} />
             </div>
 
             <div className="p-4 sm:p-6 bg-[#DFE5E3] min-h-screen rounded-[1.5rem] sm:rounded-[2.5rem] shadow-sm border border-[#E0E0E0] mx-1">

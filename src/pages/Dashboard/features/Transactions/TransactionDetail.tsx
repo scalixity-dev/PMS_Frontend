@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ChevronLeft, Edit, Plus, Trash2, Paperclip, ChevronDown } from 'lucide-react';
 import CustomTextBox from '../../components/CustomTextBox';
 import EditPaymentModal from './components/EditPaymentModal';
@@ -12,6 +12,7 @@ import EditInvoiceModal from './components/EditInvoiceModal';
 import VoidTransactionModal from './components/VoidTransactionModal';
 import { useTransactionStore } from './store/transactionStore';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
+import Breadcrumb from '../../../../components/ui/Breadcrumb';
 
 const TransactionDetail: React.FC = () => {
     const navigate = useNavigate();
@@ -21,6 +22,8 @@ const TransactionDetail: React.FC = () => {
     const [isAttachmentsCollapsed, setIsAttachmentsCollapsed] = useState(false);
     const [isActionsOpen, setIsActionsOpen] = useState(false);
     const actionsDropdownRef = useRef<HTMLDivElement>(null);
+    const location = useLocation();
+    const fromPayments = location.state?.from === 'payments';
 
     const {
         setEditPaymentModalOpen,
@@ -178,13 +181,16 @@ const TransactionDetail: React.FC = () => {
             />
 
             {/* Breadcrumb */}
-            <div className="inline-flex items-center px-6 py-2 bg-[#DFE5E3] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
-                <span className="text-gray-500 text-sm mx-2">/</span>
-                <span className="text-[#1a2b4b] text-sm font-semibold">Transaction</span>
-                <span className="text-gray-500 text-sm mx-2">/</span>
-                <span className="text-[#1a2b4b] text-sm font-semibold">Details</span>
-            </div>
+            <Breadcrumb
+                items={[
+                    { label: 'Dashboard', path: '/dashboard' },
+                    fromPayments
+                        ? { label: 'Payments', path: '/dashboard/accounting/payments' }
+                        : { label: 'Transactions', path: '/dashboard/accounting/transactions' },
+                    { label: 'Details' }
+                ]}
+                className="mb-6 px-6"
+            />
 
             <div className="bg-[#dfe5e3] rounded-[2rem] p-6 pb-20 min-h-screen">
                 {/* Header */}

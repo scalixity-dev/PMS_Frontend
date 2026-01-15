@@ -7,6 +7,7 @@ import { Plus, ChevronLeft, Loader2 } from 'lucide-react';
 import { useGetAllApplications, useUpdateApplication } from '../../../../hooks/useApplicationQueries';
 import type { BackendApplication } from '../../../../services/application.service';
 import InviteToApplyModal from './components/InviteToApplyModal';
+import Breadcrumb from '../../../../components/ui/Breadcrumb';
 
 // Transform backend application to card format
 const transformApplicationToCard = (app: BackendApplication) => {
@@ -81,7 +82,7 @@ const Application = () => {
 
     // Fetch applications from API
     const { data: applications = [], isLoading, error } = useGetAllApplications();
-    
+
     // Mutation for updating application status
     const updateApplicationMutation = useUpdateApplication();
 
@@ -215,20 +216,19 @@ const Application = () => {
     };
 
     const handleMoveIn = (propertyId: string, applicantEmail?: string) => {
-        navigate('/dashboard/movein', { 
-            state: { 
+        navigate('/dashboard/movein', {
+            state: {
                 preSelectedPropertyId: propertyId,
-                preSelectedTenantEmail: applicantEmail 
-            } 
+                preSelectedTenantEmail: applicantEmail
+            }
         });
     };
 
     return (
         <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit transition-all duration-300`}>
-            <div className="inline-flex items-center px-4 py-2 bg-[#E0E5E5] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">Application</span>
+            {/* Breadcrumb */}
+            <div className="mb-6">
+                <Breadcrumb items={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Applications' }]} />
             </div>
 
             <div className="p-6 bg-[#E0E5E5] min-h-screen rounded-[2rem] flex flex-col">
@@ -393,7 +393,7 @@ const Application = () => {
                     // Optional callback for additional side effects (e.g., showing toasts, refreshing data)
                     // The modal now handles the API call directly to save invitation data
                     console.log(`Invitations sent successfully for property ${propertyId} to ${emails.length} user(s)`);
-                   
+
                 }}
             />
         </div>

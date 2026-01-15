@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MoreHorizontal, Plus, Loader2 } from 'lucide-react';
 import { useGetLease, useUpdateLease } from '../../../../hooks/useLeaseQueries';
+import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import DatePicker from '../../../../components/ui/DatePicker';
 import CustomTextBox from '../../components/CustomTextBox';
 
@@ -135,14 +136,15 @@ const EndLease: React.FC = () => {
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-10">
             {/* Breadcrumb */}
-            <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] overflow-x-auto whitespace-nowrap max-w-full">
-                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>Dashboard</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard/portfolio/leases')}>Leases</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate(`/dashboard/portfolio/leases/${id}`)}>{id}</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">End lease</span>
+            {/* Breadcrumb */}
+            {/* Breadcrumb */}
+            <div className="mb-6">
+                <Breadcrumb items={[
+                    { label: 'Dashboard', path: '/dashboard' },
+                    { label: 'Leases', path: '/dashboard/leasing/leases' },
+                    { label: id || 'Lease', path: `/dashboard/portfolio/leases/${id}` },
+                    { label: 'End lease' }
+                ]} />
             </div>
 
             <div className="bg-[#E0E8E7] rounded-[2rem] shadow-sm p-4 sm:p-8">
@@ -216,30 +218,30 @@ const EndLease: React.FC = () => {
                         <div className="flex flex-col gap-3 md:bg-[#F0F0F6] md:p-4 md:rounded-[2rem] md:rounded-t-none">
                             {unpaidInvoices.length > 0 ? (
                                 unpaidInvoices.map((invoice) => (
-                                <div key={invoice.id} className="bg-white rounded-2xl px-4 md:px-6 py-4 grid grid-cols-1 md:grid-cols-[1fr_1.5fr_1fr_1fr_1fr_50px] gap-2 md:gap-4 items-center shadow-sm hover:shadow-md transition-shadow">
-                                    <div className="text-gray-600 text-sm">{invoice.dueDate}</div>
-                                    <div className="text-gray-800 font-medium text-sm">
-                                        <span className="md:hidden text-gray-400 text-xs block mb-1">Category</span>
-                                        {invoice.category}
+                                    <div key={invoice.id} className="bg-white rounded-2xl px-4 md:px-6 py-4 grid grid-cols-1 md:grid-cols-[1fr_1.5fr_1fr_1fr_1fr_50px] gap-2 md:gap-4 items-center shadow-sm hover:shadow-md transition-shadow">
+                                        <div className="text-gray-600 text-sm">{invoice.dueDate}</div>
+                                        <div className="text-gray-800 font-medium text-sm">
+                                            <span className="md:hidden text-gray-400 text-xs block mb-1">Category</span>
+                                            {invoice.category}
+                                        </div>
+                                        <div className="text-gray-600 text-sm">
+                                            <span className="md:hidden text-gray-400 text-xs block mb-1">Payer</span>
+                                            {invoice.payer}
+                                        </div>
+                                        <div className="text-gray-800 font-medium text-sm md:text-right">
+                                            <span className="md:hidden text-gray-400 text-xs block mb-1">Total</span>
+                                            {invoice.total}
+                                        </div>
+                                        <div className="text-gray-600 text-sm md:text-right">
+                                            <span className="md:hidden text-gray-400 text-xs block mb-1">Paid</span>
+                                            {invoice.paid}
+                                        </div>
+                                        <div className="text-right hidden md:block">
+                                            <button className="text-gray-400 hover:text-gray-600">
+                                                <MoreHorizontal size={18} />
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div className="text-gray-600 text-sm">
-                                        <span className="md:hidden text-gray-400 text-xs block mb-1">Payer</span>
-                                        {invoice.payer}
-                                    </div>
-                                    <div className="text-gray-800 font-medium text-sm md:text-right">
-                                        <span className="md:hidden text-gray-400 text-xs block mb-1">Total</span>
-                                        {invoice.total}
-                                    </div>
-                                    <div className="text-gray-600 text-sm md:text-right">
-                                        <span className="md:hidden text-gray-400 text-xs block mb-1">Paid</span>
-                                        {invoice.paid}
-                                    </div>
-                                    <div className="text-right hidden md:block">
-                                        <button className="text-gray-400 hover:text-gray-600">
-                                            <MoreHorizontal size={18} />
-                                        </button>
-                                    </div>
-                                </div>
                                 ))
                             ) : (
                                 <div className="bg-white rounded-2xl px-6 py-8 text-center text-gray-500">

@@ -11,6 +11,7 @@ import { useGetAllListings } from '../../../../hooks/useListingQueries';
 import { unitService } from '../../../../services/unit.service';
 import type { Unit } from './components/UnitItem';
 import type { BackendListing } from '../../../../services/listing.service';
+import Breadcrumb from '../../../../components/ui/Breadcrumb';
 
 const Units: React.FC = () => {
     const navigate = useNavigate();
@@ -84,8 +85,8 @@ const Units: React.FC = () => {
             }
         });
 
-        return { 
-            activePropertyListingsMap, 
+        return {
+            activePropertyListingsMap,
             activeUnitListingsMap,
             draftPropertyListingsMap,
             draftUnitListingsMap
@@ -300,7 +301,7 @@ const Units: React.FC = () => {
 
                 // Determine balance category based on total monthly rent and currency
                 let balanceCategory: 'low' | 'medium' | 'high' = 'medium';
-                
+
                 // Currency-specific thresholds (in base currency units)
                 const currencyThresholds: Record<string, { low: number; high: number }> = {
                     'USD': { low: 25000, high: 75000 },
@@ -316,7 +317,7 @@ const Units: React.FC = () => {
                     'AED': { low: 92000, high: 275000 },
                     'SAR': { low: 94000, high: 280000 },
                 };
-                
+
                 const thresholds = currencyThresholds[currency] || currencyThresholds['USD'];
                 if (totalMonthlyRent < thresholds.low) {
                     balanceCategory = 'low';
@@ -366,7 +367,7 @@ const Units: React.FC = () => {
             const hasActiveListing = group.units.some(unit => unit.hasActiveListing);
             const hasDraftListing = group.units.some(unit => unit.hasDraftListing);
             const isUnlisted = !hasActiveListing && !hasDraftListing;
-            
+
             const matchesMarketingStatus = !filters.marketingStatus?.length ||
                 (filters.marketingStatus.includes('listed') && hasActiveListing) ||
                 (filters.marketingStatus.includes('unlisted') && isUnlisted) ||
@@ -436,11 +437,13 @@ const Units: React.FC = () => {
     return (
         <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen transition-all duration-300`}>
             {/* Breadcrumb */}
-            <div className="inline-flex items-center px-3 md:px-4 py-2 bg-[#E0E8E7] rounded-full mb-4 md:mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                <span className="text-[#4ad1a6] text-xs md:text-sm font-semibold">Dashboard</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-xs md:text-sm font-semibold">Units</span>
-            </div>
+            <Breadcrumb
+                items={[
+                    { label: 'Dashboard', path: '/dashboard' },
+                    { label: 'Units' }
+                ]}
+                className="mb-4 md:mb-6 px-3 md:px-4"
+            />
 
             <div className="p-4 md:p-6 bg-[#E0E8E7] min-h-screen rounded-[1.5rem] md:rounded-[2rem] overflow-visible flex flex-col">
                 {/* Header */}

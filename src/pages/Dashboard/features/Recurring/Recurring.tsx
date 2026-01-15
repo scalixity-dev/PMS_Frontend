@@ -9,6 +9,7 @@ import { useTransactionStore } from '../Transactions/store/transactionStore';
 import EditInvoiceModal from '../Transactions/components/EditInvoiceModal';
 import DeleteTransactionModal from '../Transactions/components/DeleteTransactionModal';
 import PostNextInvoiceModal from './components/PostNextInvoiceModal';
+import Breadcrumb from '../../../../components/ui/Breadcrumb';
 
 // Mock Data for Recurring
 const MOCK_RECURRING = [
@@ -224,11 +225,13 @@ const Recurring: React.FC = () => {
             />
 
             {/* Breadcrumb */}
-            <div className="inline-flex items-center px-4 py-2 bg-[#DFE5E3] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">Recurring</span>
-            </div>
+            <Breadcrumb
+                items={[
+                    { label: 'Dashboard', path: '/dashboard' },
+                    { label: 'Recurring' }
+                ]}
+                className="mb-6"
+            />
 
             <div className="p-6 bg-[#DFE5E3] min-h-screen rounded-[2rem] overflow-visible">
                 {/* Header */}

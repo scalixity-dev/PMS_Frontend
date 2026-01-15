@@ -7,6 +7,7 @@ import DeleteConfirmationModal from '../../../../components/common/modals/Delete
 import EditLeaseTermsModal, { type Lease } from './components/EditLeaseTermsModal';
 import { useGetAllLeases, useDeleteLease, useUpdateLease } from '../../../../hooks/useLeaseQueries';
 import type { BackendLease } from '../../../../services/lease.service';
+import Breadcrumb from '../../../../components/ui/Breadcrumb';
 
 // Define LeaseItem matching usage in this file
 export interface LeaseItem extends Lease {
@@ -53,11 +54,11 @@ const Leases: React.FC = () => {
 
         const startDate = lease.startDate ? new Date(lease.startDate) : null;
         const endDate = lease.endDate ? new Date(lease.endDate) : null;
-        const duration = startDate && endDate 
+        const duration = startDate && endDate
             ? `${formatDate(lease.startDate)} to ${formatDate(lease.endDate)}`
-            : startDate 
-            ? `From ${formatDate(lease.startDate)}`
-            : 'N/A';
+            : startDate
+                ? `From ${formatDate(lease.startDate)}`
+                : 'N/A';
 
         // Get lease number from ID (last 4 characters) or use index
         const leaseNumber = lease.id.slice(-4);
@@ -221,21 +222,21 @@ const Leases: React.FC = () => {
 
     const handleUpdateLease = async (updatedData: Lease) => {
         if (!selectedLeaseId || typeof selectedLeaseId !== 'string') return;
-        
+
         try {
             await updateLeaseMutation.mutateAsync({
                 id: selectedLeaseId,
                 data: {
-                    startDate: updatedData.startDate instanceof Date 
-                        ? updatedData.startDate.toISOString() 
-                        : typeof updatedData.startDate === 'string' 
-                        ? updatedData.startDate 
-                        : undefined,
-                    endDate: updatedData.endDate instanceof Date 
-                        ? updatedData.endDate.toISOString() 
-                        : typeof updatedData.endDate === 'string' 
-                        ? updatedData.endDate 
-                        : undefined,
+                    startDate: updatedData.startDate instanceof Date
+                        ? updatedData.startDate.toISOString()
+                        : typeof updatedData.startDate === 'string'
+                            ? updatedData.startDate
+                            : undefined,
+                    endDate: updatedData.endDate instanceof Date
+                        ? updatedData.endDate.toISOString()
+                        : typeof updatedData.endDate === 'string'
+                            ? updatedData.endDate
+                            : undefined,
                     notes: updatedData.termNotes,
                 },
             });
@@ -249,7 +250,7 @@ const Leases: React.FC = () => {
 
     const handleConfirmDelete = async () => {
         if (!selectedLeaseId || typeof selectedLeaseId !== 'string') return;
-        
+
         try {
             await deleteLeaseMutation.mutateAsync(selectedLeaseId);
             setIsDeleteModalOpen(false);
@@ -263,12 +264,9 @@ const Leases: React.FC = () => {
     return (
         <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit transition-all duration-300`}>
             {/* Breadcrumb */}
-            <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-[#4ad1a6] text-sm font-semibold">Portfolio</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">Leases</span>
+            {/* Breadcrumb */}
+            <div className="mb-6">
+                <Breadcrumb items={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Leases' }]} />
             </div>
 
             <div className="p-4 sm:p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem] overflow-visible">
@@ -385,11 +383,76 @@ const Leases: React.FC = () => {
                                         onClick={() => navigate(`/dashboard/portfolio/leases/${item.id}`)}
                                         className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer block md:grid md:grid-cols-[0.8fr_0.6fr_1.4fr_1fr_1.4fr_1.5fr_1fr] md:gap-4 md:items-center md:px-6 md:py-4"
                                     >
-                                {/* Mobile View */}
-                                <div className="md:hidden flex flex-col gap-3">
-                                    <div className="flex justify-between items-start border-b border-gray-100 pb-2">
-                                        <div className={`${getStatusColor(item.status)}`}>{item.status}</div>
-                                        <div className="flex items-center gap-2">
+                                        {/* Mobile View */}
+                                        <div className="md:hidden flex flex-col gap-3">
+                                            <div className="flex justify-between items-start border-b border-gray-100 pb-2">
+                                                <div className={`${getStatusColor(item.status)}`}>{item.status}</div>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        className="px-3 py-1 bg-[#82D64D] text-white text-xs font-medium rounded-full hover:bg-[#72bd42] transition-colors"
+                                                        onClick={(e) => handleEndLeaseClick(e, item.id)}
+                                                    >
+                                                        End Lease
+                                                    </button>
+                                                    <button
+                                                        className="text-[#3A6D6C] p-2 hover:bg-gray-100 rounded-full"
+                                                        onClick={(e) => handleEditClick(e, item)}
+                                                    >
+                                                        <Edit className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        className="text-[#3A6D6C] p-2 hover:bg-gray-100 rounded-full"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            navigate(`/dashboard/portfolio/leases/${item.id}`);
+                                                        }}
+                                                    >
+                                                        <Eye className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        className="text-red-500 p-2 hover:bg-red-50 rounded-full"
+                                                        onClick={(e) => handleDeleteClick(e, item.id)}
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div className="text-[#2E6819] font-bold text-lg">
+                                                    {typeof item.property === 'object' ? item.property.name : item.property}
+                                                </div>
+                                                <div className="text-gray-500 text-xs">Lease #{item.lease}</div>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4 bg-gray-50 p-3 rounded-xl">
+                                                <div>
+                                                    <p className="text-xs text-gray-400 mb-1">Tenant</p>
+                                                    <p className="text-[#2E6819] font-semibold text-sm">
+                                                        {typeof item.tenant === 'object' ? item.tenant.name : item.tenant}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-gray-400 mb-1">Rent</p>
+                                                    <p className="text-gray-800 font-semibold text-sm">{item.rent}</p>
+                                                </div>
+                                                <div className="col-span-2">
+                                                    <p className="text-xs text-gray-400 mb-1">Duration</p>
+                                                    <p className="text-[#2E6819] font-medium text-xs">{item.duration}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Desktop View */}
+                                        <div className="hidden md:block text-center"><span className={getStatusColor(item.status)}>{item.status}</span></div>
+                                        <div className="hidden md:block text-gray-600 text-sm font-medium text-center">{item.lease}</div>
+                                        <div className="hidden md:block text-[#2E6819] text-sm font-semibold text-center">
+                                            {typeof item.property === 'object' ? item.property.name : item.property}
+                                        </div>
+                                        <div className="hidden md:block text-[#2E6819] text-sm font-semibold text-center">
+                                            {typeof item.tenant === 'object' ? item.tenant.name : item.tenant}
+                                        </div>
+                                        <div className="hidden md:block text-[#2E6819] text-sm font-semibold text-center">{item.duration}</div>
+                                        <div className="hidden md:block text-gray-600 text-sm font-medium text-center">{item.rent}</div>
+                                        <div className="hidden md:flex items-center justify-center gap-2">
                                             <button
                                                 className="px-3 py-1 bg-[#82D64D] text-white text-xs font-medium rounded-full hover:bg-[#72bd42] transition-colors"
                                                 onClick={(e) => handleEndLeaseClick(e, item.id)}
@@ -397,92 +460,27 @@ const Leases: React.FC = () => {
                                                 End Lease
                                             </button>
                                             <button
-                                                className="text-[#3A6D6C] p-2 hover:bg-gray-100 rounded-full"
+                                                className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
                                                 onClick={(e) => handleEditClick(e, item)}
                                             >
-                                                <Edit className="w-4 h-4" />
+                                                <Edit className="w-5 h-5" />
                                             </button>
                                             <button
-                                                className="text-[#3A6D6C] p-2 hover:bg-gray-100 rounded-full"
+                                                className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     navigate(`/dashboard/portfolio/leases/${item.id}`);
                                                 }}
                                             >
-                                                <Eye className="w-4 h-4" />
+                                                <Eye className="w-5 h-5" />
                                             </button>
                                             <button
-                                                className="text-red-500 p-2 hover:bg-red-50 rounded-full"
+                                                className="text-red-500 hover:text-red-600 transition-colors"
                                                 onClick={(e) => handleDeleteClick(e, item.id)}
                                             >
-                                                <Trash2 className="w-4 h-4" />
+                                                <Trash2 className="w-5 h-5" />
                                             </button>
                                         </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-[#2E6819] font-bold text-lg">
-                                            {typeof item.property === 'object' ? item.property.name : item.property}
-                                        </div>
-                                        <div className="text-gray-500 text-xs">Lease #{item.lease}</div>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4 bg-gray-50 p-3 rounded-xl">
-                                        <div>
-                                            <p className="text-xs text-gray-400 mb-1">Tenant</p>
-                                            <p className="text-[#2E6819] font-semibold text-sm">
-                                                {typeof item.tenant === 'object' ? item.tenant.name : item.tenant}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-gray-400 mb-1">Rent</p>
-                                            <p className="text-gray-800 font-semibold text-sm">{item.rent}</p>
-                                        </div>
-                                        <div className="col-span-2">
-                                            <p className="text-xs text-gray-400 mb-1">Duration</p>
-                                            <p className="text-[#2E6819] font-medium text-xs">{item.duration}</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Desktop View */}
-                                <div className="hidden md:block text-center"><span className={getStatusColor(item.status)}>{item.status}</span></div>
-                                <div className="hidden md:block text-gray-600 text-sm font-medium text-center">{item.lease}</div>
-                                <div className="hidden md:block text-[#2E6819] text-sm font-semibold text-center">
-                                    {typeof item.property === 'object' ? item.property.name : item.property}
-                                </div>
-                                <div className="hidden md:block text-[#2E6819] text-sm font-semibold text-center">
-                                    {typeof item.tenant === 'object' ? item.tenant.name : item.tenant}
-                                </div>
-                                <div className="hidden md:block text-[#2E6819] text-sm font-semibold text-center">{item.duration}</div>
-                                <div className="hidden md:block text-gray-600 text-sm font-medium text-center">{item.rent}</div>
-                                <div className="hidden md:flex items-center justify-center gap-2">
-                                    <button
-                                        className="px-3 py-1 bg-[#82D64D] text-white text-xs font-medium rounded-full hover:bg-[#72bd42] transition-colors"
-                                        onClick={(e) => handleEndLeaseClick(e, item.id)}
-                                    >
-                                        End Lease
-                                    </button>
-                                    <button
-                                        className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
-                                        onClick={(e) => handleEditClick(e, item)}
-                                    >
-                                        <Edit className="w-5 h-5" />
-                                    </button>
-                                    <button
-                                        className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            navigate(`/dashboard/portfolio/leases/${item.id}`);
-                                        }}
-                                    >
-                                        <Eye className="w-5 h-5" />
-                                    </button>
-                                    <button
-                                        className="text-red-500 hover:text-red-600 transition-colors"
-                                        onClick={(e) => handleDeleteClick(e, item.id)}
-                                    >
-                                        <Trash2 className="w-5 h-5" />
-                                    </button>
-                                </div>
                                     </div>
                                 ))
                             ) : (

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, Printer } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../../components/DashboardFilter';
 import { handleDocumentPrint } from '../utils/printPreviewUtils';
+import Breadcrumb from '../../../../../components/ui/Breadcrumb';
 
 // Mock data for forms
 const MOCK_FORMS = [
@@ -133,12 +134,9 @@ const LandlordForms: React.FC = () => {
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-10">
             {/* Breadcrumb */}
-            <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>
-                    Dashboard
-                </span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">Landlord forms</span>
+            {/* Breadcrumb */}
+            <div className="mb-6">
+                <Breadcrumb items={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Landlord forms' }]} />
             </div>
 
             <div className="p-4 md:p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem]">

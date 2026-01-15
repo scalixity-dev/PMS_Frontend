@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { MoreHorizontal, Check, X, FileText } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
+import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import Pagination from '../../components/Pagination';
 import EditNameModal from './components/EditNameModal';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
@@ -347,11 +348,7 @@ const FileManager: React.FC = () => {
         <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit transition-all duration-300`}>
             {/* Breadcrumb */}
             <div className="flex w-full overflow-x-auto pb-2 md:pb-0 mb-6 scrollbar-hide">
-                <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] whitespace-nowrap">
-                    <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
-                    <span className="text-gray-500 text-sm mx-1">/</span>
-                    <span className="text-gray-600 text-sm font-semibold">File manager</span>
-                </div>
+                <Breadcrumb items={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'File manager' }]} />
             </div>
 
             <div className="p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem] overflow-visible">

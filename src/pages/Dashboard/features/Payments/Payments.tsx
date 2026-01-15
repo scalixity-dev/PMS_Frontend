@@ -16,6 +16,7 @@ import RefundPaymentModal from './components/RefundPaymentModal';
 import { utils, writeFile } from 'xlsx';
 import { useGetPayments } from '../../../../hooks/useTransactionQueries';
 import type { Payment } from '../../../../services/transaction.service';
+import Breadcrumb from '../../../../components/ui/Breadcrumb';
 
 const Payments: React.FC = () => {
     const navigate = useNavigate();
@@ -257,11 +258,13 @@ const Payments: React.FC = () => {
             />
 
             {/* Breadcrumb */}
-            <div className="inline-flex items-center px-4 py-2 bg-[#DFE5E3] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">Payments</span>
-            </div>
+            <Breadcrumb
+                items={[
+                    { label: 'Dashboard', path: '/dashboard' },
+                    { label: 'Payments' }
+                ]}
+                className="mb-6"
+            />
 
             <div className="p-4 sm:p-6 bg-[#DFE5E3] min-h-screen rounded-[1.5rem] sm:rounded-[2rem] overflow-visible">
                 {/* Header */}
@@ -398,7 +401,7 @@ const Payments: React.FC = () => {
                     {!isLoading && !error && filteredPayments.map((item) => (
                         <div
                             key={item.id}
-                            onClick={() => navigate(`/dashboard/accounting/transactions/${item.id}`)}
+                            onClick={() => navigate(`/dashboard/accounting/transactions/${item.id}`, { state: { from: 'payments' } })}
                             className="bg-white rounded-[1.5rem] sm:rounded-2xl px-4 sm:px-6 py-4 flex flex-col lg:grid lg:grid-cols-[40px_1fr_1fr_1.5fr_1fr_1fr_1fr_50px] gap-3 lg:gap-4 items-start lg:items-center shadow-sm hover:shadow-md transition-shadow relative cursor-pointer"
                         >
                             <div className="flex items-center justify-between w-full lg:w-auto mb-2 lg:mb-0">

@@ -3,6 +3,7 @@ import { useNavigate, useParams, useOutletContext } from 'react-router-dom';
 import { ChevronLeft, Edit, Trash2, Loader2 } from 'lucide-react';
 import CustomTextBox from '../../components/CustomTextBox';
 import AssignKeyModal from './AssignKeyModal';
+import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import ConfirmationModal from './ConfirmationModal';
 import { useGetKey, useUpdateKey, useDeleteKey } from '../../../../hooks/useKeysQueries';
@@ -176,14 +177,14 @@ const KeyDetail = () => {
         <>
             <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit transition-all duration-300`}>
                 {/* Breadcrumb */}
-                <div className="inline-flex items-center px-4 py-2 bg-[#E0E5E5] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                    <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
-                    <span className="text-gray-500 text-sm mx-1">/</span>
-                    <span className="text-gray-600 text-sm font-semibold">Keys & Locks</span>
-                    <span className="text-gray-500 text-sm mx-1">/</span>
-                    <span className="text-gray-600 text-sm font-semibold truncate max-w-[150px] md:max-w-none">
-                        Key no. <span className="md:hidden">{id ? `${id.slice(0, 8)}...` : 'Unknown'}</span><span className="hidden md:inline">{id || 'Unknown'}</span>
-                    </span>
+                <div className="mb-6">
+                    <Breadcrumb
+                        items={[
+                            { label: 'Dashboard', path: '/dashboard' },
+                            { label: 'Keys & Locks', path: '/dashboard/portfolio/keys-locks' },
+                            { label: `Key no. ${id || 'Unknown'}` }
+                        ]}
+                    />
                 </div>
 
                 <div className="p-4 md:p-6 bg-[#E0E5E5] min-h-screen rounded-[1.5rem] md:rounded-[2rem]">

@@ -3,6 +3,7 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Edit, Trash2, Check, ChevronLeft, Plus, Loader2 } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
+import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import { useGetAllEquipment, useDeleteEquipment, useGetEquipmentCategories } from '../../../../hooks/useEquipmentQueries';
 import type { BackendEquipment } from '../../../../services/equipment.service';
@@ -291,10 +292,8 @@ const Equipments: React.FC = () => {
     return (
         <div className={`mx-auto min-h-screen font-outfit ${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'}`}>
             {/* Breadcrumb */}
-            <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">Equipments</span>
+            <div className="mb-6">
+                <Breadcrumb items={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Equipments' }]} />
             </div>
 
             <div className="p-4 md:p-6 bg-[#E0E8E7] min-h-screen rounded-[1.5rem] md:rounded-[2rem] overflow-visible flex flex-col">

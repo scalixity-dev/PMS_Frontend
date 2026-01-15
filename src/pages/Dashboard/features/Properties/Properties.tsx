@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate, useOutletContext  } from 'react-router-dom';
-import { Trash2, CheckSquare, Square,Loader2, Building2 } from 'lucide-react';
+import { useNavigate, useOutletContext } from 'react-router-dom';
+import { Trash2, CheckSquare, Square, Loader2, Building2 } from 'lucide-react';
 import PropertiesHeader from './components/PropertiesHeader';
+import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
 import PropertyCard from './components/PropertyCard';
@@ -373,11 +374,14 @@ const Properties: React.FC = () => {
     return (
         <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen transition-all duration-300`}>
             {/* Breadcrumb */}
-            <div className="inline-flex items-center px-4 py-2 bg-[#E0E8E7] rounded-full mb-4 md:mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-                <span className="text-[#4ad1a6] text-sm font-semibold">Dashboard</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold">Properties</span>
-            </div>
+            {/* Breadcrumb */}
+            <Breadcrumb
+                items={[
+                    { label: 'Dashboard', path: '/dashboard' },
+                    { label: 'Properties' }
+                ]}
+                className="mb-4 md:mb-6"
+            />
 
             <div className="p-4 md:p-6 bg-[#E0E8E7] min-h-screen rounded-[1.5rem] md:rounded-[2rem] overflow-visible flex flex-col">
                 <PropertiesHeader onAddProperty={handleAddProperty} onImport={handleImport} />
@@ -396,8 +400,8 @@ const Properties: React.FC = () => {
                                     <Square className="w-5 h-5" />
                                 )}
                                 <span className="text-sm font-medium">
-                                    {selectedProperties.size === filteredProperties.length 
-                                        ? 'Deselect All' 
+                                    {selectedProperties.size === filteredProperties.length
+                                        ? 'Deselect All'
                                         : 'Select All'}
                                 </span>
                             </button>
@@ -502,7 +506,7 @@ const Properties: React.FC = () => {
 
                 {/* Delete Confirmation Modal */}
                 {showDeleteConfirm && (
-                    <div 
+                    <div
                         className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200"
                         onClick={(e) => {
                             if (e.target === e.currentTarget && !isDeleting) {
@@ -510,7 +514,7 @@ const Properties: React.FC = () => {
                             }
                         }}
                     >
-                        <div 
+                        <div
                             className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200"
                             onClick={(e) => e.stopPropagation()}
                         >
@@ -518,7 +522,7 @@ const Properties: React.FC = () => {
                                 Delete Properties?
                             </h3>
                             <p className="text-gray-600 mb-6">
-                                Are you sure you want to delete {selectedProperties.size} property(ies)? 
+                                Are you sure you want to delete {selectedProperties.size} property(ies)?
                                 This action cannot be undone.
                             </p>
                             <div className="flex gap-3 justify-end">

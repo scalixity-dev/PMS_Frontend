@@ -32,6 +32,7 @@ import ChangeStatusModal from './components/ChangeStatusModal';
 import EditApplicantInfoModal from './components/EditApplicantInfoModal';
 
 import CustomTextBox from '../../components/CustomTextBox';
+import Breadcrumb from '../../../../components/ui/Breadcrumb';
 
 // ... existing imports ...
 
@@ -1081,12 +1082,10 @@ const ApplicationDetail = () => {
     return (
         <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit pb-20 transition-all duration-300`}>
             {/* Breadcrumb - Matches design style */}
-            <div className="inline-flex flex-wrap items-center px-4 py-2 bg-[#E0E5E5] rounded-full mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] gap-y-1">
-                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer" onClick={() => navigate('/dashboard')}>Dashboard</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-[#4ad1a6] text-sm font-semibold cursor-pointer">Tenants</span>
-                <span className="text-gray-500 text-sm mx-1">/</span>
-                <span className="text-gray-600 text-sm font-semibold truncate max-w-[150px]">No.{application.id.substring(0, 8)}</span>
+            {/* Breadcrumb - Matches design style */}
+            {/* Breadcrumb - Matches design style */}
+            <div className="mb-6">
+                <Breadcrumb items={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Applications', path: '/dashboard/leasing/applications' }, { label: applicantName }]} />
             </div>
 
             {/* Main Container */}
