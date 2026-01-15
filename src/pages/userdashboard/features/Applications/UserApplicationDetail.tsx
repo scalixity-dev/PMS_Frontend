@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
     ChevronLeft,
@@ -143,8 +143,17 @@ const ApplicationDetail: React.FC = () => {
     const [isAddFileModalOpen, setIsAddFileModalOpen] = useState(false);
     const [application, setApplication] = useState<ApplicationData | null>(null);
 
-    const loadApplication = () => {
-        const localApps = JSON.parse(localStorage.getItem('user_applications') || '[]');
+    const getLocalApplications = useCallback(() => {
+        try {
+            return JSON.parse(localStorage.getItem('user_applications') || '[]');
+        } catch (error) {
+            console.error('Error parsing user_applications from localStorage:', error);
+            return [];
+        }
+    }, []);
+
+    const loadApplication = useCallback(() => {
+        const localApps = getLocalApplications();
         const foundApp = localApps.find((app: any) => String(app.id) === id);
 
         if (foundApp) {
@@ -346,11 +355,11 @@ const ApplicationDetail: React.FC = () => {
                 },
             });
         }
-    };
+    }, [id, getLocalApplications]); // Closing for loadApplication useCallback
 
     useEffect(() => {
         loadApplication();
-    }, [id]);
+    }, [loadApplication]);
 
     const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
@@ -502,7 +511,7 @@ const ApplicationDetail: React.FC = () => {
 
 
     const handleSaveOccupant = (data: OccupantFormData) => {
-        const localApps = JSON.parse(localStorage.getItem('user_applications') || '[]');
+        const localApps = getLocalApplications();
         const appIndex = localApps.findIndex((app: any) => String(app.id) === id);
 
         if (appIndex !== -1) {
@@ -530,7 +539,7 @@ const ApplicationDetail: React.FC = () => {
     };
 
     const handleSavePet = (data: PetFormData) => {
-        const localApps = JSON.parse(localStorage.getItem('user_applications') || '[]');
+        const localApps = getLocalApplications();
         const appIndex = localApps.findIndex((app: any) => String(app.id) === id);
 
         if (appIndex !== -1) {
@@ -558,7 +567,7 @@ const ApplicationDetail: React.FC = () => {
     };
 
     const handleSaveVehicle = (data: VehicleFormData) => {
-        const localApps = JSON.parse(localStorage.getItem('user_applications') || '[]');
+        const localApps = getLocalApplications();
         const appIndex = localApps.findIndex((app: any) => String(app.id) === id);
 
         if (appIndex !== -1) {
@@ -586,7 +595,7 @@ const ApplicationDetail: React.FC = () => {
     };
 
     const handleSaveResidence = (data: ResidenceFormData) => {
-        const localApps = JSON.parse(localStorage.getItem('user_applications') || '[]');
+        const localApps = getLocalApplications();
         const appIndex = localApps.findIndex((app: any) => String(app.id) === id);
 
         if (appIndex !== -1) {
@@ -621,7 +630,7 @@ const ApplicationDetail: React.FC = () => {
     };
 
     const handleSaveIncome = (data: IncomeFormData) => {
-        const localApps = JSON.parse(localStorage.getItem('user_applications') || '[]');
+        const localApps = getLocalApplications();
         const appIndex = localApps.findIndex((app: any) => String(app.id) === id);
 
         if (appIndex !== -1) {
@@ -656,7 +665,7 @@ const ApplicationDetail: React.FC = () => {
     };
 
     const handleSaveBackgroundInfo = (data: BackgroundQuestionsData) => {
-        const localApps = JSON.parse(localStorage.getItem('user_applications') || '[]');
+        const localApps = getLocalApplications();
         const appIndex = localApps.findIndex((app: any) => String(app.id) === id);
 
         if (appIndex !== -1) {
@@ -681,7 +690,7 @@ const ApplicationDetail: React.FC = () => {
     };
 
     const handleSaveReference = (data: ReferenceFormData) => {
-        const localApps = JSON.parse(localStorage.getItem('user_applications') || '[]');
+        const localApps = getLocalApplications();
         const appIndex = localApps.findIndex((app: any) => String(app.id) === id);
 
         if (appIndex !== -1) {
@@ -708,27 +717,41 @@ const ApplicationDetail: React.FC = () => {
     };
 
     const handleSaveFile = (data: FileFormData) => {
-        const localApps = JSON.parse(localStorage.getItem('user_applications') || '[]');
-        const appIndex = localApps.findIndex((app: any) => String(app.id) === id);
+        if (!data.file) return;
 
-        if (appIndex !== -1) {
-            const updatedApp = { ...localApps[appIndex] };
-            const currentDocs = updatedApp.formData.documents || [];
+        // Convert file to base64 data URL for localStorage persistence
+        const reader = new FileReader();
+        reader.onload = () => {
+            const localApps = getLocalApplications();
+            const appIndex = localApps.findIndex((app: any) => String(app.id) === id);
 
-            const newDoc = {
-                name: data.name,
-                size: data.file ? data.file.size : 0,
-                type: data.type.split('/')[1]?.toUpperCase() || 'FILE',
-                url: '#'
-            };
+            if (appIndex !== -1) {
+                const updatedApp = { ...localApps[appIndex] };
+                const currentDocs = updatedApp.formData.documents || [];
 
-            updatedApp.formData.documents = [...currentDocs, newDoc];
-            localApps[appIndex] = updatedApp;
-            localStorage.setItem('user_applications', JSON.stringify(localApps));
+                const newDoc = {
+                    name: data.name,
+                    size: data.file ? data.file.size : 0,
+                    type: data.type.split('/')[1]?.toUpperCase() || 'FILE',
+                    url: reader.result as string, // Store base64 data URL
+                    mimeType: data.type // Store mime type for proper file handling
+                };
 
-            loadApplication();
+                updatedApp.formData.documents = [...currentDocs, newDoc];
+                localApps[appIndex] = updatedApp;
+                localStorage.setItem('user_applications', JSON.stringify(localApps));
+
+                loadApplication();
+                setIsAddFileModalOpen(false);
+            }
+        };
+
+        reader.onerror = () => {
+            console.error('Error reading file');
             setIsAddFileModalOpen(false);
-        }
+        };
+
+        reader.readAsDataURL(data.file);
     };
 
     return (
@@ -764,7 +787,9 @@ const ApplicationDetail: React.FC = () => {
                 onClose={() => setIsAddIncomeModalOpen(false)}
                 onSave={handleSaveIncome}
             />
-            {application && (
+
+
+            {application.additionalQuestions && (
                 <UserEditBackgroundQuestionsModal
                     isOpen={isEditBackgroundInfoModalOpen}
                     onClose={() => setIsEditBackgroundInfoModalOpen(false)}
@@ -780,6 +805,7 @@ const ApplicationDetail: React.FC = () => {
                     }}
                 />
             )}
+
             <UserAddReferenceModal
                 isOpen={isAddReferenceModalOpen}
                 onClose={() => setIsAddReferenceModalOpen(false)}
@@ -791,7 +817,7 @@ const ApplicationDetail: React.FC = () => {
                 onSave={handleSaveFile}
             />
 
-            {/* Breadcrumbs */}
+
             <nav aria-label="Breadcrumb">
                 <ol className="flex items-center gap-2 text-base font-medium">
                     <li>

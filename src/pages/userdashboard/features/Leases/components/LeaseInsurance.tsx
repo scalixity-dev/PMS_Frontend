@@ -498,10 +498,11 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
                                     e.stopPropagation();
                                     const a = document.createElement('a');
                                     a.href = selectedImage;
-                                    a.download = "insurance-document";
+                                    a.download = insuranceData?.fileName || "insurance-document";
                                     a.click();
                                 }}
                                 className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm p-3 rounded-full shadow-lg md:hidden"
+                                aria-label="Download insurance document"
                             >
                                 <Download size={20} className="text-gray-700" />
                             </button>

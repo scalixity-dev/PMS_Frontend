@@ -520,7 +520,10 @@ const Requests: React.FC = () => {
       }
     };
 
-    // Download attachments
+    // Collect all files to download
+    const filesToDownload: Array<{ file: File | string; name: string }> = [];
+
+    // Add attachments
     if (request.attachments && request.attachments.length > 0) {
       request.attachments.forEach((file, index) => {
         let name = "";
@@ -532,11 +535,11 @@ const Requests: React.FC = () => {
           const ext = isVideo ? '.mp4' : isPdf ? '.pdf' : '.jpg';
           name = `attachment-${request.requestId}-${index + 1}${ext}`;
         }
-        downloadFile(file, name);
+        filesToDownload.push({ file, name });
       });
     }
 
-    // Download video
+    // Add video
     if (request.video) {
       let name = "";
       if (request.video instanceof File) {
@@ -544,8 +547,15 @@ const Requests: React.FC = () => {
       } else {
         name = `video-${request.requestId}.mp4`;
       }
-      downloadFile(request.video, name);
+      filesToDownload.push({ file: request.video, name });
     }
+
+    // Download files with delays to prevent browser blocking
+    filesToDownload.forEach(({ file, name }, index) => {
+      setTimeout(() => {
+        downloadFile(file, name);
+      }, index * 300); // 300ms delay between each download
+    });
   }, []);
 
   const handleMenuClick = useCallback((event: React.MouseEvent<HTMLButtonElement>, id: number) => {

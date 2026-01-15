@@ -30,30 +30,41 @@ const UserEditApplicantInfoModal: React.FC<UserEditApplicantInfoModalProps> = ({
 
     useEffect(() => {
         if (isOpen && applicationId) {
-            const localApps = JSON.parse(localStorage.getItem('user_applications') || '[]');
-            const foundApp = localApps.find((app: any) => String(app.id) === applicationId);
+            try {
+                const localApps = JSON.parse(localStorage.getItem('user_applications') || '[]');
+                const foundApp = localApps.find((app: any) => String(app.id) === applicationId);
 
-            if (foundApp && foundApp.formData) {
-                const data = foundApp.formData;
-                setFormData({
-                    firstName: data.firstName || '',
-                    middleName: data.middleName || '',
-                    lastName: data.lastName || '',
-                    email: data.email || '',
-                    phoneNumber: data.phoneNumber || '',
-                    phoneCountryCode: data.phoneCountryCode || 'IN|+91',
-                    dob: data.dob ? new Date(data.dob) : undefined,
-                    shortBio: data.shortBio || '',
-                    moveInDate: data.moveInDate ? new Date(data.moveInDate) : undefined,
-                    photo: data.photo || null
-                });
+                if (foundApp && foundApp.formData) {
+                    const data = foundApp.formData;
+                    setFormData({
+                        firstName: data.firstName || '',
+                        middleName: data.middleName || '',
+                        lastName: data.lastName || '',
+                        email: data.email || '',
+                        phoneNumber: data.phoneNumber || '',
+                        phoneCountryCode: data.phoneCountryCode || 'IN|+91',
+                        dob: data.dob ? new Date(data.dob) : undefined,
+                        shortBio: data.shortBio || '',
+                        moveInDate: data.moveInDate ? new Date(data.moveInDate) : undefined,
+                        photo: data.photo || null
+                    });
+                }
+            } catch (error) {
+                console.error("Failed to parse user_applications from localStorage", error);
+                // Optionally handle the error state, e.g., show a toast or reset form
             }
         }
     }, [isOpen, applicationId]);
 
     const handleSave = async () => {
         // Update localStorage
-        const localApps = JSON.parse(localStorage.getItem('user_applications') || '[]');
+        let localApps = [];
+        try {
+            localApps = JSON.parse(localStorage.getItem('user_applications') || '[]');
+        } catch (error) {
+            console.error("Failed to parse user_applications from localStorage in handleSave", error);
+            return;
+        }
         const appIndex = localApps.findIndex((app: any) => String(app.id) === applicationId);
 
         if (appIndex !== -1) {

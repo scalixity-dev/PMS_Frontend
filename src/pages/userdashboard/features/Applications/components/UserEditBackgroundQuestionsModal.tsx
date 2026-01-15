@@ -103,8 +103,8 @@ const UserEditBackgroundQuestionsModal: React.FC<UserEditBackgroundQuestionsModa
                                     type="button"
                                     onClick={() => handleChange(q.key, true)}
                                     className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${(formData as any)[q.key]
-                                            ? 'bg-red-500 text-white shadow-sm'
-                                            : 'text-gray-500 hover:text-gray-900'
+                                        ? 'bg-red-500 text-white shadow-sm'
+                                        : 'text-gray-500 hover:text-gray-900'
                                         }`}
                                 >
                                     Yes
@@ -113,8 +113,8 @@ const UserEditBackgroundQuestionsModal: React.FC<UserEditBackgroundQuestionsModa
                                     type="button"
                                     onClick={() => handleChange(q.key, false)}
                                     className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${!(formData as any)[q.key]
-                                            ? 'bg-[#7ED957] text-white shadow-sm'
-                                            : 'text-gray-500 hover:text-gray-900'
+                                        ? 'bg-[#7ED957] text-white shadow-sm'
+                                        : 'text-gray-500 hover:text-gray-900'
                                         }`}
                                 >
                                     No

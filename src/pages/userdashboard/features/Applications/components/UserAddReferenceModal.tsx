@@ -97,7 +97,7 @@ const UserAddReferenceModal: React.FC<UserAddReferenceModalProps> = ({ isOpen, o
         }
     };
 
-    const inputClasses = "w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm focus:outline-none focus:border-[#7CD947] focus:ring-1 focus:ring-[#7CD947]";
+    const inputClasses = "w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm focus:outline-none focus:border-[#7ED957] focus:ring-1 focus:ring-[#7ED957]";
     const labelClasses = "block text-xs font-semibold text-gray-700 mb-1";
     const errorClasses = "text-red-500 text-xs mt-1";
 
