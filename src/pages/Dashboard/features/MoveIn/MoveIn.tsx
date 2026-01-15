@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import GetStartedButton from '../../../../components/common/buttons/GetStartedButton';
+
 import MoveInStepper from './components/MoveInStepper';
 import MoveInPropertySelection from './steps/MoveInPropertySelection';
 import MoveInTenantSelection from './steps/MoveInTenantSelection';
@@ -19,51 +19,6 @@ import MoveInSuccessModal from './components/MoveInSuccessModal';
 import { useMoveInStore } from './store/moveInStore';
 import { useCreateLease, useUpdateLease } from '../../../../hooks/useLeaseQueries';
 
-interface MoveInScenarioCardProps {
-    type: 'easy' | 'advanced';
-    selected: boolean;
-    onClick: () => void;
-}
-
-const MoveInScenarioCard: React.FC<MoveInScenarioCardProps> = ({ type, selected, onClick }) => {
-    const isEasy = type === 'easy';
-    const title = isEasy ? 'Easy move in' : 'Advanced move in';
-    const description = isEasy
-        ? 'Add basic lease information such as property and tenant details, recurring rent, deposit, enabling late fees, and requesting renter\'s insurance.'
-        : 'Add more detailed lease information such as dependents, other lease transactions, utilities, and management fees. It also allows you to save the lease as a draft.';
-
-    return (
-        <div
-            onClick={onClick}
-            className={`
-        relative flex flex-col items-start p-6 md:p-8 rounded-3xl cursor-pointer transition-all duration-300 w-full max-w-sm h-auto
-        ${selected
-                    ? 'bg-[#F0F2F5] border-2 border-[#7BD747] shadow-none'
-                    : 'bg-white shadow-lg border-2 border-transparent hover:shadow-xl'
-                }
-      `}
-        >
-            {/* Pill Badge */}
-            <div className={`
-        flex items-center gap-2 px-6 py-2 rounded-full mb-8
-        ${selected ? 'bg-[#7BD747] text-white' : 'bg-[#7BD747] text-white'}
-      `}>
-                <div className={`
-          w-4 h-4 rounded-full border-2 border-white flex items-center justify-center
-        `}>
-                    {selected && <div className="w-2 h-2 bg-white rounded-full" />}
-                </div>
-                <span className="font-bold text-lg">{title}</span>
-            </div>
-
-            {/* Description */}
-            <p className="text-left text-gray-500 text-sm leading-relaxed">
-                {description}
-            </p>
-        </div>
-    );
-};
-
 // Helper to map current flow step to stepper visual step (1-based)
 const getVisualStep = (step: number) => {
     if (step === 1 || step === 2 || step === 3) return 1; // Property, Tenant, Share Lease -> Step 1
@@ -79,12 +34,11 @@ const MoveIn: React.FC = () => {
         formData,
         currentStep,
         setCurrentStep,
-        setSelectedScenario,
         setPropertyId,
         resetForm,
         loadExistingLease,
     } = useMoveInStore();
-    
+
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
     const [createdLeaseId, setCreatedLeaseId] = useState<string | null>(null);
     const [existingLeaseId, setExistingLeaseId] = useState<string | null>(null);
@@ -94,12 +48,12 @@ const MoveIn: React.FC = () => {
 
     // Handle pre-selection from navigation state or existing lease
     useEffect(() => {
-        const state = location.state as { 
+        const state = location.state as {
             preSelectedPropertyId?: string;
             leaseId?: string;
             existingLease?: any;
         } | null;
-        
+
         if (state?.existingLease) {
             // Load existing lease data and determine starting step
             loadExistingLease(state.existingLease);
@@ -115,17 +69,11 @@ const MoveIn: React.FC = () => {
     }, [location.state, setPropertyId, loadExistingLease]);
 
     const handleBack = () => {
-        if (currentStep > 0) {
+        if (currentStep > 1) {
             setCurrentStep(currentStep - 1);
         } else {
             navigate(-1);
         }
-    };
-
-    const handleGetStarted = () => {
-        if (!formData.selectedScenario) return;
-        // Proceed to Step 1 (Property)
-        setCurrentStep(1);
     };
 
     const handlePropertyNext = () => {
@@ -237,7 +185,7 @@ const MoveIn: React.FC = () => {
         try {
             let result;
             if (existingLeaseId) {
-                
+
                 result = await updateLeaseMutation.mutateAsync({
                     id: existingLeaseId,
                     data: {
@@ -281,144 +229,108 @@ const MoveIn: React.FC = () => {
                         </button>
                     </div>
 
-                    {/* Scenario Selection Content (Step 0) */}
-                    {currentStep === 0 && (
-                        <div className="flex flex-col items-center w-full mt-8">
-                            <div className="text-center mb-12">
-                                <h1 className="text-3xl font-semibold text-gray-800 mb-2">Move in process</h1>
-                                <h2 className="text-xl text-gray-700 mb-2">Select the move in scenario</h2>
-                                <p className="text-gray-500">Move in your tenant(s) to the property and start collecting rent.</p>
-                            </div>
-
-                            <div className="flex flex-col md:flex-row gap-8 mb-16 w-full justify-center items-center md:items-stretch">
-                                <MoveInScenarioCard
-                                    type="easy"
-                                    selected={formData.selectedScenario?.type === 'easy'}
-                                    onClick={() => setSelectedScenario({ type: 'easy' })}
-                                />
-                                <MoveInScenarioCard
-                                    type="advanced"
-                                    selected={formData.selectedScenario?.type === 'advanced'}
-                                    onClick={() => setSelectedScenario({ type: 'advanced' })}
-                                />
-                            </div>
-
-                            <GetStartedButton
-                                text="Get Started"
-                                widthClass="w-full sm:w-auto px-12"
-                                onClick={handleGetStarted}
-                                disabled={!formData.selectedScenario}
-                            />
-                        </div>
-                    )}
-
                     {/* Stepper Logic (Step 1+) */}
-                    {currentStep > 0 && (
-                        <div className="w-full flex flex-col items-center mt-8">
-                            <MoveInStepper currentStep={getVisualStep(currentStep)} />
+                    <div className="w-full flex flex-col items-center mt-8">
+                        <MoveInStepper currentStep={getVisualStep(currentStep)} />
 
-                            <div className="w-full mt-12">
-                                {currentStep === 1 && (
-                                    <MoveInPropertySelection
-                                        onNext={handlePropertyNext}
-                                    />
-                                )}
+                        <div className="w-full mt-12">
+                            {currentStep === 1 && (
+                                <MoveInPropertySelection
+                                    onNext={handlePropertyNext}
+                                />
+                            )}
 
-                                {currentStep === 2 && (
-                                    <MoveInTenantSelection
-                                        onNext={handleTenantNext}
-                                        onBack={handleBack}
-                                    />
-                                )}
+                            {currentStep === 2 && (
+                                <MoveInTenantSelection
+                                    onNext={handleTenantNext}
+                                    onBack={handleBack}
+                                />
+                            )}
 
-                                {currentStep === 3 && (
-                                    <MoveInShareLease
-                                        onNext={handleShareLeaseNext}
-                                    />
-                                )}
+                            {currentStep === 3 && (
+                                <MoveInShareLease
+                                    onNext={handleShareLeaseNext}
+                                />
+                            )}
 
-                                {currentStep === 4 && (
-                                    <MoveInRecurringRent
-                                        onNext={handleRecurringRentNext}
-                                        onBack={handleBack}
-                                    />
-                                )}
+                            {currentStep === 4 && (
+                                <MoveInRecurringRent
+                                    onNext={handleRecurringRentNext}
+                                    onBack={handleBack}
+                                />
+                            )}
 
-                                {currentStep === 5 && (
-                                    <MoveInRecurringRentSettings
-                                        onNext={handleRecurringRentSettingsNext}
-                                        onBack={handleBack}
-                                    />
-                                )}
+                            {currentStep === 5 && (
+                                <MoveInRecurringRentSettings
+                                    onNext={handleRecurringRentSettingsNext}
+                                    onBack={handleBack}
+                                />
+                            )}
 
-                                {currentStep === 6 && (
-                                    <MoveInDeposit
-                                        onNext={handleDepositNext}
-                                        onBack={handleBack}
-                                    />
-                                )}
+                            {currentStep === 6 && (
+                                <MoveInDeposit
+                                    onNext={handleDepositNext}
+                                    onBack={handleBack}
+                                />
+                            )}
 
-                                {currentStep === 7 && (
-                                    <MoveInDepositSettings
-                                        onNext={handleDepositSettingsNext}
-                                        onBack={handleBack}
-                                    />
-                                )}
+                            {currentStep === 7 && (
+                                <MoveInDepositSettings
+                                    onNext={handleDepositSettingsNext}
+                                    onBack={handleBack}
+                                />
+                            )}
 
-                                {currentStep === 8 && (
-                                    <MoveInLateFees
-                                        onNext={handleLateFeesNext}
-                                        onBack={handleBack}
-                                    />
-                                )}
+                            {currentStep === 8 && (
+                                <MoveInLateFees
+                                    onNext={handleLateFeesNext}
+                                    onBack={handleBack}
+                                />
+                            )}
 
-                                {currentStep === 9 && (
-                                    <MoveInLateFeesType
-                                        onNext={handleLateFeesTypeNext}
-                                        onBack={handleBack}
-                                    />
-                                )}
+                            {currentStep === 9 && (
+                                <MoveInLateFeesType
+                                    onNext={handleLateFeesTypeNext}
+                                    onBack={handleBack}
+                                />
+                            )}
 
-                                {currentStep === 10 && formData.lateFees.scheduleType === 'one-time' && (
-                                    <MoveInOneTimeLateFees
-                                        onNext={handleCompleteMoveIn}
-                                        onBack={handleBack}
-                                    />
-                                )}
+                            {currentStep === 10 && formData.lateFees.scheduleType === 'one-time' && (
+                                <MoveInOneTimeLateFees
+                                    onNext={handleCompleteMoveIn}
+                                    onBack={handleBack}
+                                />
+                            )}
 
-                                {currentStep === 10 && formData.lateFees.scheduleType === 'daily' && (
-                                    <MoveInDailyLateFees
-                                        onNext={handleCompleteMoveIn}
-                                        onBack={handleBack}
-                                    />
-                                )}
+                            {currentStep === 10 && formData.lateFees.scheduleType === 'daily' && (
+                                <MoveInDailyLateFees
+                                    onNext={handleCompleteMoveIn}
+                                    onBack={handleBack}
+                                />
+                            )}
 
-                                {currentStep === 10 && formData.lateFees.scheduleType === 'both' && (
-                                    <MoveInBothLateFees
-                                        onNext={handleCompleteMoveIn}
-                                        onBack={handleBack}
-                                    />
-                                )}
+                            {currentStep === 10 && formData.lateFees.scheduleType === 'both' && (
+                                <MoveInBothLateFees
+                                    onNext={handleCompleteMoveIn}
+                                    onBack={handleBack}
+                                />
+                            )}
 
-                                {/* Placeholders for future steps */}
-                                {currentStep === 11 && (
-                                    <div className="text-center text-gray-500">
-                                        Step 3: Extra fees & Utilities Content Coming Soon
-                                        <br />
-                                        <button onClick={handleCompleteMoveIn} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
-                                            Simulate Complete (Debug)
-                                        </button>
-                                    </div>
-                                )}
-                                {currentStep === 12 && (
-                                    <div className="text-center text-gray-500">
-                                        End of Flow
-                                    </div>
-                                )}
-                            </div>
+                            {currentStep === 10 && !['one-time', 'daily', 'both'].includes(formData.lateFees.scheduleType || '') && (
+                                <div className="flex flex-col items-center justify-center p-8 text-center">
+                                    <p className="text-gray-500 mb-4">Invalid late fee schedule type selected.</p>
+                                    <button
+                                        onClick={handleBack}
+                                        className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                                    >
+                                        Go Back
+                                    </button>
+                                </div>
+                            )}
+
+
                         </div>
-                    )}
-
+                    </div>
                 </div>
             </div>
             <MoveInSuccessModal

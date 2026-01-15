@@ -78,7 +78,7 @@ interface MoveInState {
 }
 
 const initialFormData: MoveInFormData = {
-  selectedScenario: null,
+  selectedScenario: { type: 'easy' },
   propertyId: null,
   unitId: null,
   tenantId: null,
@@ -108,7 +108,7 @@ const initialFormData: MoveInFormData = {
 
 export const useMoveInStore = create<MoveInState>((set) => ({
   formData: initialFormData,
-  currentStep: 0,
+  currentStep: 1,
 
   setFormData: (data) =>
     set((state) => ({
@@ -174,7 +174,7 @@ export const useMoveInStore = create<MoveInState>((set) => ({
   resetForm: () =>
     set({
       formData: initialFormData,
-      currentStep: 0,
+      currentStep: 1,
     }),
 
   loadExistingLease: (lease: any) =>
@@ -253,33 +253,33 @@ export const useMoveInStore = create<MoveInState>((set) => ({
                     time: lease.lateFees.dailyFeeTime || '',
                   }
                 : null,
-            }
-          : initialFormData.lateFees,
-      };
+              }
+            : initialFormData.lateFees,
+        };
 
-      // Determine which step to start from based on what's missing
-      let startStep = 0;
-      if (!formData.propertyId || !formData.tenantId) {
-        startStep = !formData.propertyId ? 1 : 2;
-      } else if (!formData.recurringRent?.enabled) {
-        startStep = 4; // Recurring Rent
-      } else if (!formData.recurringRent?.startOn) {
-        startStep = 5; // Recurring Rent Settings
-      } else if (!formData.deposit?.hasDeposit) {
-        startStep = 6; // Deposit
-      } else if (!formData.deposit?.invoiceDate) {
-        startStep = 7; // Deposit Settings
-      } else if (!formData.lateFees?.enabled) {
-        startStep = 8; // Late Fees
-      } else if (!formData.lateFees?.scheduleType) {
-        startStep = 9; // Late Fees Type
-      } else {
-        startStep = 10; // Late Fees Details
-      }
+        // Determine which step to start from based on what's missing
+        let startStep = 1;
+        if (!formData.propertyId || !formData.tenantId) {
+          startStep = !formData.propertyId ? 1 : 2;
+        } else if (!formData.recurringRent?.enabled) {
+          startStep = 4; // Recurring Rent
+        } else if (!formData.recurringRent?.startOn) {
+          startStep = 5; // Recurring Rent Settings
+        } else if (!formData.deposit?.hasDeposit) {
+          startStep = 6; // Deposit
+        } else if (!formData.deposit?.invoiceDate) {
+          startStep = 7; // Deposit Settings
+        } else if (!formData.lateFees?.enabled) {
+          startStep = 8; // Late Fees
+        } else if (!formData.lateFees?.scheduleType) {
+          startStep = 9; // Late Fees Type
+        } else {
+          startStep = 10; // Late Fees Details
+        }
 
-      return {
-        formData,
-        currentStep: startStep,
-      };
-    }),
-}));
+        return {
+          formData,
+          currentStep: startStep,
+        };
+      }),
+  }));
