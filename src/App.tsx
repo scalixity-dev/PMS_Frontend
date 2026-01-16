@@ -1,7 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { TanStackDevtools } from '@tanstack/react-devtools';
 import AppLayout from './components/layout/AppLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import DashboardLayout from './components/dashboardlayout/DashboardLayout';
@@ -12,6 +11,7 @@ import FinancePage from './pages/basewebsite/features/finance/index';
 import LeadsPage from './pages/basewebsite/features/leads/index';
 import { RentalApplicationSettingsLayout } from './components/common/RentalApplicationSettingsLayout';
 import PricingPage from './pages/basewebsite/pricing';
+import AIChatButton from './components/common/AIChatButton';
 import LoginPage from './pages/basewebsite/auth/login';
 import SignUpPage from './pages/basewebsite/auth/signUp';
 import ServiceDashboardLogin from './pages/ServiceDashboard/auth/Login';
@@ -85,6 +85,7 @@ import ApplicationDetail from './pages/Dashboard/features/Application/Applicatio
 import ProviderStatement from './pages/Dashboard/features/ServicePros/ProviderStatement';
 import TransactionDetail from './pages/Dashboard/features/Transactions/TransactionDetail';
 import ChatPage from './pages/Dashboard/features/Messages/ChatPage';
+import AIChatPage from './pages/Dashboard/features/AIChat/AIChatPage';
 // Documents pages
 import LandlordForms from './pages/Dashboard/features/Documents/landlordforms/LandlordForms';
 import TemplateView from './pages/Dashboard/features/Documents/landlordforms/TemplateView';
@@ -184,6 +185,7 @@ const App: React.FC = () => {
     <>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
+          <AIChatButton />
           <Routes>
             <Route element={<AppLayout />}>
               <Route path="/" element={<HomePage />} />
@@ -325,6 +327,14 @@ const App: React.FC = () => {
                 element={
                   <ProtectedRoute>
                     <ChatPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/ai-chat"
+                element={
+                  <ProtectedRoute>
+                    <AIChatPage />
                   </ProtectedRoute>
                 }
               />
@@ -780,7 +790,6 @@ const App: React.FC = () => {
             <Route path="*" element={<HomePage />} />
           </Routes>
         </BrowserRouter>
-        <TanStackDevtools />
       </QueryClientProvider>
     </>
   );

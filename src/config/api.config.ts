@@ -205,5 +205,9 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `${API_BASE_URL}/leases/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/leases/${id}`,
   },
+  AI_CHAT: {
+    STREAM: `${import.meta.env.VITE_AI_CHAT_API_URL || 'http://localhost:8000'}/chat/stream`,
+    CHAT: `${import.meta.env.VITE_AI_CHAT_API_URL || 'http://localhost:8000'}/chat`,
+  },
 };
 

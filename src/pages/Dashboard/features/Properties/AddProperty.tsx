@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { Upload, Trash2, Plus, X, Check, FileText, Undo2, ChevronLeft } from 'lucide-react';
+import { Upload, Trash2, Plus, X, Check, FileText, Undo2, ChevronLeft, Sparkles } from 'lucide-react';
 import { Country, State, City } from 'country-state-city';
 import type { ICountry, IState, ICity } from 'country-state-city';
 import Input from '../../../../components/common/Input';
 import CustomDropdown from '../../components/CustomDropdown';
 import UnsavedChangesModal from '../../components/UnsavedChangesModal';
+import AIPropertyChat from './components/AIPropertyChat';
 import { propertyService } from '../../../../services/property.service';
 import { API_ENDPOINTS } from '../../../../config/api.config';
 import { getCurrencySymbol } from '../../../../utils/currency.utils';
@@ -70,6 +71,7 @@ const AddProperty: React.FC = () => {
   const [isDirty, setIsDirty] = useState(false);
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
   const [pendingNavigationPath, setPendingNavigationPath] = useState<string | null>(null);
+  const [showAIChat, setShowAIChat] = useState(false);
 
   // Allowed MIME types for document attachments
   const allowedDocumentTypes = [
@@ -753,6 +755,23 @@ const AddProperty: React.FC = () => {
     }
   };
 
+  const handleAIFormData = (aiData: any) => {
+    setFormData(prev => ({
+      ...prev,
+      ...Object.entries(aiData).reduce((acc, [key, value]) => {
+        if (value !== null && value !== '' && value !== undefined) {
+          if (Array.isArray(value) && value.length > 0) {
+            acc[key] = value;
+          } else if (!Array.isArray(value)) {
+            acc[key] = value;
+          }
+        }
+        return acc;
+      }, {} as any)
+    }));
+    setIsDirty(true);
+  };
+
   const handleConfirmNavigation = () => {
     if (pendingNavigationPath) {
       navigate(pendingNavigationPath);
@@ -771,14 +790,31 @@ const AddProperty: React.FC = () => {
         onConfirm={handleConfirmNavigation}
       />
 
-      {/* Breadcrumb */}
-      <div className="inline-flex items-center px-3 md:px-4 py-2 bg-[#E0E8E7] rounded-full mb-4 md:mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-        <span className="text-[#4ad1a6] text-xs md:text-sm font-semibold cursor-pointer" onClick={() => handleNavigation('/dashboard')}>Dashboard</span>
-        <span className="text-gray-500 text-sm mx-1">/</span>
-        <span className="text-[#4ad1a6] text-xs md:text-sm font-semibold cursor-pointer" onClick={() => handleNavigation('/dashboard/properties')}>Properties</span>
-        <span className="text-gray-500 text-sm mx-1">/</span>
-        <span className="text-gray-600 text-xs md:text-sm font-semibold">Add Property</span>
+      {/* Breadcrumb and AI Button */}
+      <div className="flex items-center justify-between mb-4 md:mb-6">
+        <div className="inline-flex items-center px-3 md:px-4 py-2 bg-[#E0E8E7] rounded-full shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
+          <span className="text-[#4ad1a6] text-xs md:text-sm font-semibold cursor-pointer" onClick={() => handleNavigation('/dashboard')}>Dashboard</span>
+          <span className="text-gray-500 text-sm mx-1">/</span>
+          <span className="text-[#4ad1a6] text-xs md:text-sm font-semibold cursor-pointer" onClick={() => handleNavigation('/dashboard/properties')}>Properties</span>
+          <span className="text-gray-500 text-sm mx-1">/</span>
+          <span className="text-gray-600 text-xs md:text-sm font-semibold">Add Property</span>
+        </div>
+        
+        <button
+          onClick={() => setShowAIChat(true)}
+          className="flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-full font-medium hover:from-teal-700 hover:to-teal-600 transition-all shadow-lg hover:shadow-xl"
+        >
+          <Sparkles className="w-4 h-4 md:w-5 md:h-5" />
+          <span className="text-sm md:text-base">Fill using AI</span>
+        </button>
       </div>
+
+      {/* AI Chat Modal */}
+      <AIPropertyChat
+        isOpen={showAIChat}
+        onClose={() => setShowAIChat(false)}
+        onFormDataReceived={handleAIFormData}
+      />
 
       <div className={`bg-[#E0E8E7] min-h-screen p-4 md:p-8 font-sans rounded-[1.5rem] md:rounded-[2rem] text-[#4B5563]`}>
         {/* Header */}
