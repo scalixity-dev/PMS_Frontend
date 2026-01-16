@@ -93,7 +93,7 @@ const SettingCard = ({
                     </div>
                 </div>
                 {isOpen && (
-                    <div className="pt-3 pl-12 sm:pl-16 md:pl-18 space-y-1 text-xs sm:text-sm font-semibold text-[var(--dashboard-accent)]">
+                    <div className="pt-3 pl-12 sm:pl-16  space-y-1 text-xs sm:text-sm font-semibold text-[var(--dashboard-accent)]">
                         {card.links.map((link) => (
                             <p
                                 key={link.path}

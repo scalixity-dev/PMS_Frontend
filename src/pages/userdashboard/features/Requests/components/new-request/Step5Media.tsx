@@ -55,7 +55,7 @@ const Step5Media: React.FC<Step5Props> = ({
                             onChange={onAttachmentsChange}
                         />
                         {/* Icon - Responsive sizing */}
-                        <Upload size={window.innerWidth < 768 ? 36 : 48} strokeWidth={1.5} className="text-gray-800" />
+                        <Upload className="w-9 h-9 md:w-12 md:h-12 text-gray-800" strokeWidth={1.5} />
                         <span className="font-normal text-base md:text-lg text-gray-900">Attachments</span>
                     </div>
 
@@ -71,7 +71,7 @@ const Step5Media: React.FC<Step5Props> = ({
                             onChange={onVideoChange}
                         />
                         {/* Icon - Responsive sizing */}
-                        <Video size={window.innerWidth < 768 ? 36 : 48} strokeWidth={1.5} className={`${video ? "text-[#1A1A1A]" : "text-gray-800"}`} />
+                        <Video className={`w-9 h-9 md:w-12 md:h-12 ${video ? "text-[#1A1A1A]" : "text-gray-800"}`} strokeWidth={1.5} />
                         <span className={`font-normal text-base md:text-lg ${video ? "text-[#1A1A1A]" : "text-gray-900"}`}>Video</span>
                     </div>
                 </div>
@@ -92,7 +92,7 @@ const Step5Media: React.FC<Step5Props> = ({
                                                 }}
                                                 className="absolute top-0.5 right-0.5 md:top-1 md:right-1 w-4 h-4 md:w-5 md:h-5 bg-white rounded-full text-gray-500 hover:text-red-500 flex items-center justify-center shadow-sm z-10"
                                             >
-                                                <X size={10} className="md:w-3 md:h-3" />
+                                                <X className="w-2.5 h-2.5 md:w-3 md:h-3" />
                                             </button>
 
                                             {file.type.startsWith("image/") ? (
@@ -104,7 +104,7 @@ const Step5Media: React.FC<Step5Props> = ({
                                                 />
                                             ) : (
                                                 <div className="flex flex-col items-center gap-0.5 md:gap-1 p-1">
-                                                    <FileText size={16} className="md:w-5 md:h-5 text-gray-500" />
+                                                    <FileText className="w-4 h-4 md:w-5 md:h-5 text-gray-500" />
                                                     <span className="text-[8px] md:text-[9px] text-gray-600 text-center truncate w-full px-1">{file.name}</span>
                                                 </div>
                                             )}
@@ -119,7 +119,7 @@ const Step5Media: React.FC<Step5Props> = ({
                                 <h3 className="text-xs md:text-sm font-medium text-gray-700">Selected video</h3>
                                 <div className="relative inline-flex items-center gap-2 md:gap-3 bg-white p-2 md:p-3 rounded-lg border border-gray-200 w-full">
                                     <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                                        <Video size={16} className="md:w-5 md:h-5 text-gray-600" />
+                                        <Video className="w-4 h-4 md:w-5 md:h-5 text-gray-600" />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <p className="text-xs md:text-sm font-medium text-gray-900 truncate">{video.name}</p>
@@ -132,7 +132,7 @@ const Step5Media: React.FC<Step5Props> = ({
                                         }}
                                         className="p-1 md:p-1.5 hover:bg-gray-100 rounded-full text-gray-500 hover:text-red-500 transition-colors"
                                     >
-                                        <X size={14} className="md:w-4 md:h-4" />
+                                        <X className="w-3.5 h-3.5 md:w-4 md:h-4" />
                                     </button>
                                 </div>
                             </div>

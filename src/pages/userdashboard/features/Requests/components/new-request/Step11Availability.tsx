@@ -26,7 +26,7 @@ const Step11Availability: React.FC<Step11Props> = ({
             {/* Header Section - Responsive text sizing and spacing */}
             <div className="text-center mb-6 md:mb-8 px-4">
                 <h1 className="text-lg md:text-xl font-medium text-[#1A1A1A] mb-1">Availability details</h1>
-                <p className="text-gray-400 text-xs md:text-sm font-normal">Please provide the possible options below..</p>
+                <p className="text-gray-400 text-xs md:text-sm font-normal">Please provide the possible options below.</p>
             </div>
 
             {/* Availability Options - Responsive sizing */}
@@ -106,7 +106,7 @@ const Step11Availability: React.FC<Step11Props> = ({
                     onClick={onNext}
                     text="Next"
                     className={availability.length === 0 || availability.some(opt => !opt.date || opt.timeSlots.length === 0)
-                        ? "!bg-gray-100 !text-gray-400 cursor-not-allowed uppercase shadow-none px-8 md:px-12 w-full md:w-auto"
+                        ? "bg-gray-100! text-gray-400! cursor-not-allowed uppercase shadow-none px-8 md:px-12 w-full md:w-auto"
                         : "bg-[#7ED957] hover:bg-[#6BC847] shadow-lg shadow-[#7ED957]/80 px-8 md:px-12 w-full md:w-auto"}
                 />
             </div>

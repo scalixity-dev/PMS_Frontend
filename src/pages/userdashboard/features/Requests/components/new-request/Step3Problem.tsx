@@ -55,7 +55,7 @@ const Step3Problem: React.FC<Step3Props> = ({ selectedCategory, selectedSubCateg
                     disabled={!selectedProblem}
                     onClick={onNext}
                     className={!selectedProblem
-                        ? "!bg-gray-100 !text-gray-400 cursor-not-allowed uppercase shadow-none px-8 md:px-12 w-full md:w-auto"
+                        ? "bg-gray-100! text-gray-400! cursor-not-allowed uppercase shadow-none px-8 md:px-12 w-full md:w-auto"
                         : "bg-[#7ED957] hover:bg-[#6BC847] shadow-lg shadow-[#7ED957]/80 px-8 md:px-12 w-full md:w-auto"}
                     text="Next"
                 />

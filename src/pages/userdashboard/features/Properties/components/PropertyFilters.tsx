@@ -313,6 +313,9 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                                     <div
                                         key={type}
                                         className="flex justify-between items-center cursor-pointer py-0.5"
+                                        role="button"
+                                        tabIndex={0}
+                                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setPropertyType(type); } }}
                                         onClick={() => setPropertyType(type)}
                                     >
                                         <span className={`text-[14px] ${propertyType === type ? "text-gray-700 font-medium" : "text-gray-500"}`}>
@@ -347,8 +350,8 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                                     }}
                                     options={countryOptions}
                                     placeholder="Select country"
-                                    buttonClassName="py-2.5 border-gray-200 shadow-sm !rounded-md"
-                                    dropdownClassName="!rounded-md"
+                                    buttonClassName="py-2.5 border-gray-200 shadow-sm rounded-md!"
+                                    dropdownClassName="rounded-md!"
                                     textClassName="text-sm"
                                     searchable={true}
                                 />
@@ -364,8 +367,8 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                                     options={stateOptions}
                                     placeholder={country ? "Select state" : "Select country first"}
                                     disabled={!country}
-                                    buttonClassName="py-2.5 border-gray-200 shadow-sm !rounded-md"
-                                    dropdownClassName="!rounded-md"
+                                    buttonClassName="py-2.5 border-gray-200 shadow-sm rounded-md!"
+                                    dropdownClassName="rounded-md!"
                                     textClassName="text-sm"
                                     searchable={true}
                                 />
@@ -380,8 +383,8 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                                     options={cityOptions}
                                     placeholder={stateRegion ? "Select city" : "Select state first"}
                                     disabled={!stateRegion}
-                                    buttonClassName="py-2.5 border-gray-200 shadow-sm !rounded-md"
-                                    dropdownClassName="!rounded-md"
+                                    buttonClassName="py-2.5 border-gray-200 shadow-sm rounded-md!"
+                                    dropdownClassName="rounded-md!"
                                     textClassName="text-sm"
                                     searchable={true}
                                 />
@@ -491,12 +494,15 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
 
                         {/* Availability */}
                         <section className="space-y-2 pt-2 border-t border-gray-200">
-                            <h3 className="text-base font-semibold text-[#202020] px-1">Availablity</h3>
+                            <h3 className="text-base font-semibold text-[#202020] px-1">Availability</h3>
                             <div className="bg-white rounded-md p-2 shadow-sm space-y-1.5">
                                 {availabilityOptions.map((opt) => (
                                     <div
                                         key={opt}
                                         className="flex justify-between items-center cursor-pointer py-0.5"
+                                        role="button"
+                                        tabIndex={0}
+                                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setAvailability(opt); } }}
                                         onClick={() => setAvailability(opt)}
                                     >
                                         <span className={`text-[14px] ${availability === opt ? "text-gray-700 font-medium" : "text-gray-500"}`}>
@@ -523,6 +529,9 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                                     <div
                                         key={opt}
                                         className="flex justify-between items-center cursor-pointer py-0.5"
+                                        role="button"
+                                        tabIndex={0}
+                                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setPetsAllowed(opt); } }}
                                         onClick={() => setPetsAllowed(opt)}
                                     >
                                         <span className={`text-[14px] ${petsAllowed === opt ? "text-gray-700 font-medium" : "text-gray-500"}`}>
@@ -550,6 +559,18 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                                         <div
                                             key={amenity}
                                             className="flex justify-between items-center cursor-pointer py-0.5"
+                                            role="button"
+                                            tabIndex={0}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' || e.key === ' ') {
+                                                    e.preventDefault();
+                                                    if (selectedAmenities.includes(amenity)) {
+                                                        setSelectedAmenities(selectedAmenities.filter(a => a !== amenity));
+                                                    } else {
+                                                        setSelectedAmenities([...selectedAmenities, amenity]);
+                                                    }
+                                                }
+                                            }}
                                             onClick={() => {
                                                 if (selectedAmenities.includes(amenity)) {
                                                     setSelectedAmenities(selectedAmenities.filter(a => a !== amenity));
@@ -652,6 +673,9 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                                     <div
                                         key={type}
                                         className="flex justify-between items-center cursor-pointer py-0.5"
+                                        role="button"
+                                        tabIndex={0}
+                                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setPropertyType(type); } }}
                                         onClick={() => setPropertyType(type)}
                                     >
                                         <span className={`text-[14px] ${propertyType === type ? "text-gray-700 font-medium" : "text-gray-500"}`}>
@@ -686,8 +710,8 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                                     }}
                                     options={countryOptions}
                                     placeholder="Select country"
-                                    buttonClassName="py-2.5 border-gray-200 shadow-sm !rounded-md"
-                                    dropdownClassName="!rounded-md"
+                                    buttonClassName="py-2.5 border-gray-200 shadow-sm rounded-md!"
+                                    dropdownClassName="rounded-md!"
                                     textClassName="text-sm"
                                     searchable={true}
                                 />
@@ -703,8 +727,8 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                                     options={stateOptions}
                                     placeholder={country ? "Select state" : "Select country first"}
                                     disabled={!country}
-                                    buttonClassName="py-2.5 border-gray-200 shadow-sm !rounded-md"
-                                    dropdownClassName="!rounded-md"
+                                    buttonClassName="py-2.5 border-gray-200 shadow-sm rounded-md!"
+                                    dropdownClassName="rounded-md!"
                                     textClassName="text-sm"
                                     searchable={true}
                                 />
@@ -719,8 +743,8 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                                     options={cityOptions}
                                     placeholder={stateRegion ? "Select city" : "Select state first"}
                                     disabled={!stateRegion}
-                                    buttonClassName="py-2.5 border-gray-200 shadow-sm !rounded-md"
-                                    dropdownClassName="!rounded-md"
+                                    buttonClassName="py-2.5 border-gray-200 shadow-sm rounded-md!"
+                                    dropdownClassName="rounded-md!"
                                     textClassName="text-sm"
                                     searchable={true}
                                 />
@@ -834,12 +858,15 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
 
                         {/* Availability */}
                         <section className="space-y-2 pt-2 border-t border-gray-200">
-                            <h3 className="text-base font-semibold text-[#202020] px-1">Availablity</h3>
+                            <h3 className="text-base font-semibold text-[#202020] px-1">Availability</h3>
                             <div className="bg-white rounded-md p-2 shadow-sm space-y-1.5">
                                 {availabilityOptions.map((opt) => (
                                     <div
                                         key={opt}
                                         className="flex justify-between items-center cursor-pointer py-0.5"
+                                        role="button"
+                                        tabIndex={0}
+                                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setAvailability(opt); } }}
                                         onClick={() => setAvailability(opt)}
                                     >
                                         <span className={`text-[14px] ${availability === opt ? "text-gray-700 font-medium" : "text-gray-500"}`}>
@@ -866,6 +893,9 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                                     <div
                                         key={opt}
                                         className="flex justify-between items-center cursor-pointer py-0.5"
+                                        role="button"
+                                        tabIndex={0}
+                                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setPetsAllowed(opt); } }}
                                         onClick={() => setPetsAllowed(opt)}
                                     >
                                         <span className={`text-[14px] ${petsAllowed === opt ? "text-gray-700 font-medium" : "text-gray-500"}`}>
@@ -893,6 +923,18 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
                                         <div
                                             key={amenity}
                                             className="flex justify-between items-center cursor-pointer py-0.5"
+                                            role="button"
+                                            tabIndex={0}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' || e.key === ' ') {
+                                                    e.preventDefault();
+                                                    if (selectedAmenities.includes(amenity)) {
+                                                        setSelectedAmenities(selectedAmenities.filter(a => a !== amenity));
+                                                    } else {
+                                                        setSelectedAmenities([...selectedAmenities, amenity]);
+                                                    }
+                                                }
+                                            }}
                                             onClick={() => {
                                                 if (selectedAmenities.includes(amenity)) {
                                                     setSelectedAmenities(selectedAmenities.filter(a => a !== amenity));
