@@ -278,13 +278,16 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
             >
                 <div
                     ref={sidebarRef}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="filter-heading-desktop"
                     className={`bg-[#F4F7F8] w-full max-w-[380px] h-full shadow-2xl transition-all duration-500 ease-in-out overflow-y-auto transform ${isOpen ? "translate-x-0" : "translate-x-full"
                         }`}
                     onClick={(e) => e.stopPropagation()}
                 >
                     <div className="p-4 space-y-4 relative">
                         <div className="flex justify-between items-center px-1">
-                            <h2 className="text-xl font-semibold text-gray-900">Filters</h2>
+                            <h2 id="filter-heading-desktop" className="text-xl font-semibold text-gray-900">Filters</h2>
                             <button
                                 onClick={handleReset}
                                 className="text-sm font-medium text-[#8CD74B] "
@@ -619,6 +622,9 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
 
                 {/* Bottom Sheet */}
                 <div
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="filter-heading-mobile"
                     className={`absolute bottom-0 left-0 right-0 bg-[#F4F7F8] rounded-t-3xl shadow-2xl transition-transform duration-300 ease-out ${isOpen ? "translate-y-0" : "translate-y-full"
                         }`}
                     style={{ height: "70vh" }}
@@ -631,7 +637,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
 
                     {/* Header with Close Button */}
                     <div className="flex justify-between items-center px-4 pb-3 border-b border-gray-200">
-                        <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
+                        <h2 id="filter-heading-mobile" className="text-lg font-semibold text-gray-900">Filters</h2>
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={handleReset}

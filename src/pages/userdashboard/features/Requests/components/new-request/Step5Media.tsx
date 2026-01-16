@@ -44,6 +44,14 @@ const Step5Media: React.FC<Step5Props> = ({
                 <div className="grid grid-cols-2 gap-3 md:gap-12">
                     <div
                         onClick={() => attachmentsInputRef.current?.click()}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                attachmentsInputRef.current?.click();
+                            }
+                        }}
                         className={`group cursor-pointer flex flex-col items-center justify-center gap-2 md:gap-3 bg-white px-3 md:px-4 py-4 md:py-6 rounded-lg border-2 transition-all duration-200 ${attachments.length > 0 ? "border-[#7ED957] shadow-sm" : "border-gray-100 hover:border-gray-300 shadow-sm"}`}
                     >
                         <input
@@ -61,6 +69,14 @@ const Step5Media: React.FC<Step5Props> = ({
 
                     <div
                         onClick={() => videoInputRef.current?.click()}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                videoInputRef.current?.click();
+                            }
+                        }}
                         className={`group cursor-pointer flex flex-col items-center justify-center gap-2 md:gap-3 bg-white px-3 md:px-4 py-4 md:py-6 rounded-lg border-2 transition-all duration-200 ${video ? "border-[#7ED957] shadow-sm" : "border-gray-100 hover:border-gray-300 shadow-sm"}`}
                     >
                         <input
