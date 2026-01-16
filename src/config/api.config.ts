@@ -233,5 +233,13 @@ export const API_ENDPOINTS = {
     DELETE_PAYMENT: (id: string, paymentId: string) => `${API_BASE_URL}/transactions/${id}/payment/${paymentId}`,
     DELETE: (id: string) => `${API_BASE_URL}/transactions/${id}`,
   },
+  GOOGLE_CALENDAR: {
+    CONNECT: `${API_BASE_URL}/google-calendar/connect`,
+    CALLBACK: `${API_BASE_URL}/google-calendar/callback`,
+    STATUS: `${API_BASE_URL}/google-calendar/status`,
+    DISCONNECT: `${API_BASE_URL}/google-calendar/disconnect`,
+    SYNC_EVENTS: `${API_BASE_URL}/google-calendar/events/sync`,
+    CREATE_EVENT: `${API_BASE_URL}/google-calendar/events`,
+  },
 };
 

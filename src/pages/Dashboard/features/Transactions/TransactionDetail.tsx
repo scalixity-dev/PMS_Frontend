@@ -325,13 +325,13 @@ const TransactionDetail: React.FC = () => {
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit">
             <EditPaymentModal
-                onConfirm={(data) => {
+                onConfirm={() => {
                     // EditPaymentModal will handle the API call internally
                     setEditPaymentModalOpen(false);
                 }}
             />
             <RefundRentModal
-                onConfirm={(data) => {
+                onConfirm={() => {
                     // RefundRentModal will handle the API call internally
                     setRefundModalOpen(false);
                 }}
@@ -362,13 +362,13 @@ const TransactionDetail: React.FC = () => {
                 onConfirm={handleMarkAsPaid}
             />
             <ApplyDepositsModal
-                onConfirm={(data) => {
+                onConfirm={() => {
                     // ApplyDepositsModal will handle the API call internally
                     setApplyDepositsOpen(false);
                 }}
             />
             <ApplyCreditsModal
-                onConfirm={(data) => {
+                onConfirm={() => {
                     // ApplyCreditsModal will handle the API call internally
                     setApplyCreditsOpen(false);
                 }}

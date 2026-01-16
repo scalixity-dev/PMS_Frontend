@@ -7,10 +7,7 @@ import {
   type CreateRecurringIncomeDto,
   type CreateDepositDto,
   type CreateCreditDto,
-  type ReturnableDeposit,
   type ReturnDepositDto,
-  type ApplicableInvoice,
-  type AvailableDepositCredit,
   type ApplyDepositCreditDto,
 } from '../services/transaction.service';
 
