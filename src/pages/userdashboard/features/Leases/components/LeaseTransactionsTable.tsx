@@ -94,7 +94,6 @@ export const LeaseTransactionsTable: React.FC<LeaseTransactionsTableProps> = ({ 
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
                 dueDate.setHours(0, 0, 0, 0);
-                const amount = tx.total || parseFloat(tx.amount || '0');
                 const balance = tx.balance || 0;
                 if (dueDate < today && balance > 0) {
                     status = 'Overdue';
