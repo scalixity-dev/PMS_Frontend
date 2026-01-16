@@ -1,12 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { ChevronLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import PayerPayeeDropdown from './components/PayerPayeeDropdown';
 import AddTenantModal from '../Tenants/components/AddTenantModal';
 import CustomDropdown from '../../components/CustomDropdown';
 import DatePicker from '../../../../components/ui/DatePicker';
-
+import TagInput from './components/TagInput';
 import { validateFile } from '../../../../utils/fileValidation';
+import { useCreateCredit } from '../../../../hooks/useTransactionQueries';
+import { useGetAllTenants } from '../../../../hooks/useTenantQueries';
+import { useGetAllApplications } from '../../../../hooks/useApplicationQueries';
+import { serviceProviderService } from '../../../../services/service-provider.service';
+import { useGetTransactionTags } from '../../../../hooks/useTransactionQueries';
+import Breadcrumb from '../../../../components/ui/Breadcrumb';
 
 const CREDIT_CATEGORIES = [
     { value: 'general_credit', label: 'General Credit' },
@@ -15,19 +22,147 @@ const CREDIT_CATEGORIES = [
     { value: 'other', label: 'Other' },
 ];
 
+const CURRENCY_OPTIONS = [
+    { value: 'USD', label: 'USD' },
+    { value: 'EUR', label: 'EUR' },
+    { value: 'GBP', label: 'GBP' },
+    { value: 'INR', label: 'INR' },
+    { value: 'CAD', label: 'CAD' },
+    { value: 'AUD', label: 'AUD' },
+];
+
+const PAYMENT_METHOD_OPTIONS = [
+    { value: 'CASH', label: 'Cash' },
+    { value: 'CARD', label: 'Card' },
+    { value: 'BANK_TRANSFER', label: 'Bank Transfer' },
+    { value: 'CHEQUE', label: 'Cheque' },
+    { value: 'UPI', label: 'UPI' },
+    { value: 'OTHERS', label: 'Others' },
+];
+
 const Credits: React.FC = () => {
     const navigate = useNavigate();
-    const [payer, setPayer] = useState<string>('');
+    const location = useLocation();
+    const createCreditMutation = useCreateCredit();
+
+    // Fetch data from backend
+    const { data: tenants = [] } = useGetAllTenants();
+    const { data: applications = [] } = useGetAllApplications();
+    const { data: serviceProviders = [] } = useQuery({
+        queryKey: ['service-providers'],
+        queryFn: () => serviceProviderService.getAll(true),
+        staleTime: 2 * 60 * 1000,
+        gcTime: 5 * 60 * 1000,
+        retry: 1,
+    });
+    const { data: tagSuggestions = [] } = useGetTransactionTags();
+
+    const [payerPayee, setPayerPayee] = useState<string>('');
+    const [payeeId, setPayeeId] = useState<string>('');
+    const [contactId, setContactId] = useState<string>('');
     const [category, setCategory] = useState<string>('');
     const [dueOn, setDueOn] = useState<Date | undefined>(undefined);
     const [amount, setAmount] = useState<string>('');
     const [method, setMethod] = useState<string>('');
     const [currency, setCurrency] = useState('USD');
-    const [tags, setTags] = useState<string>('');
+    const [tags, setTags] = useState<string[]>([]);
+    const [details, setDetails] = useState<string>('');
+    const [isPaid, setIsPaid] = useState<boolean>(false);
     const [isAddTenantModalOpen, setIsAddTenantModalOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [uploadError, setUploadError] = useState<string>('');
+    const [error, setError] = useState<string>('');
+    const [success, setSuccess] = useState<string>('');
     const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+    // Transform payer/payee options
+    const payerPayeeOptions = useMemo(() => {
+        const options: Array<{ id: string; label: string; type: 'tenant' | 'Service Pro' | 'other' }> = [];
+
+        // Add tenants
+        tenants.forEach((tenant) => {
+            if (tenant.userId) {
+                const name = tenant.user?.fullName || tenant.user?.email || 'Unknown Tenant';
+                options.push({
+                    id: tenant.userId,
+                    label: name,
+                    type: 'tenant',
+                });
+            }
+        });
+
+        // Add applicants
+        applications.forEach((app) => {
+            app.applicants?.forEach((applicant) => {
+                if (applicant.email) {
+                    const name = [applicant.firstName, applicant.middleName, applicant.lastName]
+                        .filter(Boolean)
+                        .join(' ') || applicant.email;
+                    options.push({
+                        id: applicant.email, // Use email as ID for applicants
+                        label: name,
+                        type: 'other',
+                    });
+                }
+            });
+        });
+
+        // Add service providers
+        serviceProviders.forEach((sp) => {
+            const nameParts = [sp.firstName, sp.middleName, sp.lastName].filter(Boolean);
+            const name = nameParts.length > 0 ? nameParts.join(' ') : sp.email || 'Unknown Service Provider';
+            options.push({
+                id: sp.id,
+                label: name,
+                type: 'Service Pro',
+            });
+        });
+
+        return options;
+    }, [tenants, applications, serviceProviders]);
+
+    // Find selected payer/payee details
+    const selectedPayeeOption = useMemo(() => {
+        return payerPayeeOptions.find(opt => opt.id === payerPayee);
+    }, [payerPayeeOptions, payerPayee]);
+
+    // Update payee IDs when payer/payee changes
+    useEffect(() => {
+        if (selectedPayeeOption) {
+            if (selectedPayeeOption.type === 'tenant' || selectedPayeeOption.type === 'other') {
+                setPayeeId(selectedPayeeOption.id);
+                setContactId('');
+            } else if (selectedPayeeOption.type === 'Service Pro') {
+                setContactId(selectedPayeeOption.id);
+                setPayeeId('');
+            }
+        } else {
+            setPayeeId('');
+            setContactId('');
+        }
+    }, [selectedPayeeOption]);
+
+    // Handle prefilled data from navigation
+    useEffect(() => {
+        if (location.state?.prefilledPayer) {
+            const prefilledOption = payerPayeeOptions.find(
+                opt => opt.id === location.state.prefilledPayer || opt.label === location.state.prefilledPayer
+            );
+            if (prefilledOption) {
+                setPayerPayee(prefilledOption.id);
+            }
+        }
+        if (location.state?.prefilledCategory) {
+            setCategory(location.state.prefilledCategory);
+        }
+        if (location.state?.prefilledAmount) {
+            setAmount(location.state.prefilledAmount);
+        }
+    }, [location.state, payerPayeeOptions]);
+
+    const handlePayerChange = (value: string) => {
+        setPayerPayee(value);
+    };
 
     const handleFileClick = () => {
         setUploadError('');
@@ -48,22 +183,74 @@ const Credits: React.FC = () => {
         setUploadError('');
     };
 
-    const handleCreate = () => {
-        console.log({
-            payer,
-            category,
-            dueOn,
-            amount,
-            method,
-            currency,
-            tags,
-            file: selectedFile
-        });
-        // TODO: Implement API call
+    const handleCreate = async () => {
+        setError('');
+        setSuccess('');
+
+        // Validation
+        if (!payerPayee) {
+            setError('Please select a payer/payee');
+            return;
+        }
+
+        if (!category) {
+            setError('Please select a category');
+            return;
+        }
+
+        if (!dueOn) {
+            setError('Please select a due date');
+            return;
+        }
+
+        if (!amount || parseFloat(amount) <= 0) {
+            setError('Please enter a valid amount');
+            return;
+        }
+
+        // Determine scope based on whether property/lease is selected
+        // For now, we'll use GENERAL as default since Credits component doesn't have property/lease selection
+        const scope: 'PROPERTY' | 'GENERAL' = 'GENERAL';
+
+        try {
+            await createCreditMutation.mutateAsync({
+                creditData: {
+                    scope,
+                    category,
+                    dueDate: dueOn.toISOString().split('T')[0],
+                    amount: parseFloat(amount),
+                    currency: currency as any,
+                    isPaid,
+                    payeeId: payeeId || undefined,
+                    contactId: contactId || undefined,
+                    details: details || undefined,
+                    notes: details || undefined,
+                    tags: tags.length > 0 ? tags : undefined,
+                    paymentMethod: isPaid && method ? method : undefined,
+                },
+                file: selectedFile || undefined,
+            });
+
+            setSuccess('Credit created successfully');
+            // Navigate back after a short delay
+            setTimeout(() => {
+                navigate(-1);
+            }, 1500);
+        } catch (err: any) {
+            setError(err.message || 'Failed to create credit');
+        }
     };
 
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit">
+            <Breadcrumb
+                items={[
+                    { label: 'Dashboard', path: '/dashboard' },
+                    { label: 'Transactions', path: '/dashboard/accounting/transactions' },
+                    { label: 'Credits' },
+                ]}
+                className="mb-6"
+            />
 
             <div className="p-6 bg-[#DFE5E3] rounded-[2rem] overflow-visible">
                 {/* Header */}
@@ -77,8 +264,19 @@ const Credits: React.FC = () => {
                     </button>
                 </div>
 
+                {/* Error/Success Messages */}
+                {error && (
+                    <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-lg text-red-700 text-sm">
+                        {error}
+                    </div>
+                )}
+                {success && (
+                    <div className="mb-4 p-3 bg-green-100 border border-green-300 rounded-lg text-green-700 text-sm">
+                        {success}
+                    </div>
+                )}
+
                 {/* Form Section */}
-                {/* Visual note: The screenshot does NOT show a toggle. It just shows fields. */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-x-8 gap-y-6 mb-8 mt-8">
                     {/* Category & subcategory */}
                     <div className="col-span-1 md:col-span-2">
@@ -88,7 +286,7 @@ const Credits: React.FC = () => {
                                 value={category}
                                 onChange={setCategory}
                                 options={CREDIT_CATEGORIES}
-                                placeholder="General Income" /* Keeping "General Income" as placeholder per mockup, or should I correct it? "General Credit" is better but mockup says "General Income" inside placeholder. I'll stick to mockup text if it looks like a placeholder, but "General Income" seems like a copy-paste error in mockup. I'll use "General Credit" for sanity, or "General Income" if user is strict. I'll use "General Credit" as it is sensible. */
+                                placeholder="Select category"
                                 searchable={true}
                                 buttonClassName="!py-3 !rounded-md !border-0 !shadow-sm focus:!ring-[#3A6D6C]/20 w-full"
                             />
@@ -99,7 +297,6 @@ const Credits: React.FC = () => {
                     <div className="col-span-1">
                         <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Due on*</label>
                         <div className="relative">
-                            {/* Mockup has "0.00" here which is definitely swapped with Amount. using DatePicker. */}
                             <DatePicker value={dueOn} onChange={setDueOn} placeholder="dd/mm/yy" />
                         </div>
                     </div>
@@ -108,12 +305,13 @@ const Credits: React.FC = () => {
                     <div className="col-span-1">
                         <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Amount*</label>
                         <div className="relative">
-                            {/* Mockup has "Search" dropdown here. Definite swap with Payee or just wrong. Using Number Input. */}
                             <input
                                 type="number"
                                 value={amount}
                                 onChange={(e) => setAmount(e.target.value)}
                                 placeholder="0.00"
+                                step="0.01"
+                                min="0"
                                 className="w-full rounded-md bg-white pl-4 pr-4 py-3 text-sm text-gray-700 placeholder-gray-400 outline-none focus:ring-2 focus:ring-[#7BD747]/20 transition-all shadow-sm"
                             />
                         </div>
@@ -121,18 +319,14 @@ const Credits: React.FC = () => {
 
                     {/* Payer / Payee */}
                     <div className="col-span-1 md:col-span-2">
-                        <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Payer /Payee *</label>
+                        <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Payer / Payee *</label>
                         <div className="relative">
                             <PayerPayeeDropdown
-                                value={payer}
-                                onChange={setPayer}
-                                options={[
-                                    { id: '1', label: 'Tenant', type: 'tenant' },
-                                    { id: '2', label: 'Service Pro', type: 'Service Pro' },
-                                    { id: '3', label: 'Other', type: 'other' },
-                                ]}
+                                value={payerPayee}
+                                onChange={handlePayerChange}
+                                options={payerPayeeOptions}
                                 onAddTenant={() => setIsAddTenantModalOpen(true)}
-                                placeholder="Paye"
+                                placeholder="Select payer/payee"
                             />
                         </div>
                     </div>
@@ -144,13 +338,8 @@ const Credits: React.FC = () => {
                             <CustomDropdown
                                 value={currency}
                                 onChange={setCurrency}
-                                options={[
-                                    { value: 'USD', label: 'In Ruppes' },
-                                    { value: 'INR', label: 'In Rupees' },
-                                    { value: 'USD', label: 'In Dollars' },
-                                    { value: 'EUR', label: 'In Euros' },
-                                ]}
-                                placeholder="In Ruppes"
+                                options={CURRENCY_OPTIONS}
+                                placeholder="Select currency"
                                 buttonClassName="!py-3 !rounded-md !border-0 !shadow-sm focus:!ring-[#3A6D6C]/20 w-full"
                             />
                         </div>
@@ -160,28 +349,26 @@ const Credits: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 mb-8">
                     {/* Tags */}
                     <div className="col-span-1">
-                        <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Tags *</label>
+                        <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Tags</label>
                         <div className="relative">
-                            <CustomDropdown
+                            <TagInput
                                 value={tags}
                                 onChange={setTags}
-                                options={[{ value: 'tag1', label: 'Tag 1' }, { value: 'tag2', label: 'Tag 2' }]}
-                                placeholder="Tags"
-                                searchable={true}
-                                buttonClassName="!py-3 !rounded-md !border-0 !shadow-sm focus:!ring-[#3A6D6C]/20 w-full"
+                                placeholder="Type and press Enter to add tags"
+                                suggestions={tagSuggestions}
                             />
                         </div>
                     </div>
 
                     {/* Methods */}
                     <div className="col-span-1">
-                        <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Methods *</label>
+                        <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Methods</label>
                         <div className="relative">
                             <CustomDropdown
                                 value={method}
                                 onChange={setMethod}
-                                options={[{ value: 'cash', label: 'Cash' }, { value: 'card', label: 'Card' }, { value: 'bank_transfer', label: 'Bank Transfer' }]}
-                                placeholder="Paye" /* Mockup says "Paye" for method placeholder? Weird. I'll use "Select Method" or "Cash" etc. Mockup clearly shows "Paye". I will use "Select Method" for sensibility. */
+                                options={PAYMENT_METHOD_OPTIONS}
+                                placeholder="Select method"
                                 searchable={true}
                                 buttonClassName="!py-3 !rounded-md !border-0 !shadow-sm focus:!ring-[#3A6D6C]/20 w-full"
                             />
@@ -189,11 +376,27 @@ const Credits: React.FC = () => {
                     </div>
                 </div>
 
+                {/* Mark as paid toggle */}
+                <div className="flex items-center gap-3 mb-8">
+                    <input
+                        type="checkbox"
+                        id="isPaid"
+                        checked={isPaid}
+                        onChange={(e) => setIsPaid(e.target.checked)}
+                        className="w-5 h-5 rounded border-gray-300 text-[#3A6D6C] focus:ring-[#3A6D6C] cursor-pointer"
+                    />
+                    <label htmlFor="isPaid" className="text-sm font-medium text-gray-700 cursor-pointer">
+                        Mark as paid
+                    </label>
+                </div>
+
                 {/* Details Section */}
                 <div className="mb-8">
                     <label className="block text-xl font-bold text-gray-800 mb-4">Details</label>
                     <textarea
-                        placeholder="Write Some details"
+                        value={details}
+                        onChange={(e) => setDetails(e.target.value)}
+                        placeholder="Write some details"
                         className="w-full h-40 rounded-[1.5rem] bg-[#f0f0f6] px-6 py-4 text-sm text-gray-700 placeholder-gray-500 outline-none focus:ring-2 focus:ring-[#7BD747]/20 transition-all shadow-sm resize-none"
                     />
                 </div>
@@ -227,18 +430,20 @@ const Credits: React.FC = () => {
                     </button>
                     <button
                         onClick={handleCreate}
-                        className="bg-[#3A6D6C] text-white px-8 py-3 rounded-lg font-semibold shadow-md hover:bg-[#2c5251] hover:shadow-lg transition-all duration-200"
+                        disabled={createCreditMutation.isPending}
+                        className="bg-[#3A6D6C] text-white px-8 py-3 rounded-lg font-semibold shadow-md hover:bg-[#2c5251] hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        Create
+                        {createCreditMutation.isPending ? 'Creating...' : 'Create'}
                     </button>
                 </div>
 
                 <AddTenantModal
                     isOpen={isAddTenantModalOpen}
                     onClose={() => setIsAddTenantModalOpen(false)}
-                    onSave={(data) => console.log('New Tenant Data:', data)}
+                    onSave={(_data) => {
+                        setIsAddTenantModalOpen(false);
+                    }}
                 />
-
             </div>
         </div>
     );
