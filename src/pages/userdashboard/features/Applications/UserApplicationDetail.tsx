@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
     ChevronLeft,
@@ -26,6 +26,7 @@ import UserAddIncomeModal, { type IncomeFormData } from './components/UserAddInc
 import UserEditBackgroundQuestionsModal, { type BackgroundQuestionsData } from './components/UserEditBackgroundQuestionsModal';
 import UserAddReferenceModal, { type ReferenceFormData } from './components/UserAddReferenceModal';
 import UserAddFileModal, { type FileFormData } from './components/UserAddFileModal';
+import { useGetApplication, useUpdateApplication } from '../../../../hooks/useApplicationQueries';
 
 interface ApplicationData {
     id: string;
@@ -141,225 +142,194 @@ const ApplicationDetail: React.FC = () => {
     const [isEditBackgroundInfoModalOpen, setIsEditBackgroundInfoModalOpen] = useState(false);
     const [isAddReferenceModalOpen, setIsAddReferenceModalOpen] = useState(false);
     const [isAddFileModalOpen, setIsAddFileModalOpen] = useState(false);
-    const [application, setApplication] = useState<ApplicationData | null>(null);
 
-    const getLocalApplications = useCallback(() => {
-        try {
-            return JSON.parse(localStorage.getItem('user_applications') || '[]');
-        } catch (error) {
-            console.error('Error parsing user_applications from localStorage:', error);
-            return [];
-        }
-    }, []);
+    // Use react-query hooks
+    const { data: backendApplication, isLoading, error, refetch } = useGetApplication(id);
+    const updateApplicationMutation = useUpdateApplication();
 
+    // Transform backend data to frontend format
+    const application = useMemo<ApplicationData | null>(() => {
+        if (!backendApplication) return null;
+
+        const formatDateStr = (d: string | undefined | null) => 
+            d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+
+        const formatPhone = (phoneNumber: string | null | undefined): string => {
+            if (!phoneNumber) return '—';
+            return phoneNumber;
+        };
+
+        const primaryApplicant = backendApplication.applicants?.find(a => a.isPrimary) || backendApplication.applicants?.[0];
+        
+        // Map Occupants
+        const occupantsData = (backendApplication.occupants || []).map((occ, idx) => ({
+            id: occ.id || `occ_${idx}`,
+            name: occ.name || [occ.firstName, occ.lastName].filter(Boolean).join(' ') || 'Unknown Occupant',
+            relationship: occ.relationship,
+            dob: formatDateStr(occ.dateOfBirth),
+            email: occ.email || '—',
+            phone: formatPhone(occ.phoneNumber)
+        }));
+
+        // Map Pets
+        const petsData = (backendApplication.pets || []).map((pet, idx) => ({
+            id: pet.id || `pet_${idx}`,
+            name: pet.name,
+            type: pet.type,
+            breed: pet.breed,
+            weight: pet.weight || '—'
+        }));
+
+        // Map Vehicles
+        const vehiclesData = (backendApplication.vehicles || []).map((veh, idx) => ({
+            id: veh.id || `veh_${idx}`,
+            make: veh.make,
+            model: veh.model,
+            year: String(veh.year),
+            color: veh.color,
+            licensePlate: veh.licensePlate
+        }));
+
+        // Map Residences
+        const residentialHistoryData: Array<{
+            id: number;
+            address: string;
+            location: string;
+            status: 'Current' | 'Previous';
+            rentOrOwn: string;
+            moveInDate: string;
+            moveOutDate: string;
+            rent: number;
+            landlord: { name: string; initials: string };
+        }> = (backendApplication.residenceHistory || []).map((res, idx) => ({
+            id: idx + 1,
+            address: res.address || [res.city, res.state].filter(Boolean).join(', ') || 'Unknown Address',
+            location: res.city || 'Unknown Location',
+            status: res.isCurrent ? 'Current' : 'Previous',
+            rentOrOwn: res.residenceType === 'RENTED' ? 'Rent' : res.residenceType === 'OWNED' ? 'Own' : 'Family',
+            moveInDate: formatDateStr(res.moveInDate),
+            moveOutDate: formatDateStr(res.moveOutDate),
+            rent: parseFloat(res.monthlyRent || '0') || 0,
+            landlord: {
+                name: res.landlordName || '—',
+                initials: (res.landlordName?.trim() || 'L').split(/\s+/).map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()
+            }
+        }));
+
+        // Map Incomes
+        const incomeHistoryData: Array<{
+            id: number;
+            jobTitle: string;
+            company: string;
+            status: 'Current' | 'Previous';
+            type: string;
+            startDate: string;
+            address: string;
+            incomePerMonth: number;
+            officeNumber: string;
+            workPhone: string;
+        }> = (backendApplication.incomeDetails || []).map((inc, idx) => ({
+            id: idx + 1,
+            jobTitle: inc.positionTitle || 'Unknown Title',
+            company: inc.companyName || 'Unknown Company',
+            status: inc.currentEmployment ? 'Current' : 'Previous',
+            type: inc.incomeType,
+            startDate: formatDateStr(inc.startDate),
+            address: inc.officeAddress || '—',
+            incomePerMonth: parseFloat(inc.monthlyIncome || '0') || 0,
+            officeNumber: inc.office || '—',
+            workPhone: inc.companyPhone || '—'
+        }));
+
+        // Map Contacts (Emergency + Reference)
+        const emergencyContactsData = (backendApplication.emergencyContacts || []).map((contact, idx) => ({
+            id: contact.id || `cont_${idx}`,
+            name: contact.contactName,
+            relationship: contact.relationship,
+            phone: formatPhone(contact.phoneNumber),
+            email: contact.email || '—',
+            type: 'Emergency Contact'
+        }));
+
+        const referenceContactsData = (backendApplication.referenceContacts || []).map((contact, idx) => ({
+            id: contact.id || `ref_${idx}`,
+            name: contact.contactName,
+            relationship: contact.relationship,
+            phone: formatPhone(contact.phoneNumber),
+            email: contact.email || '—',
+            type: 'Reference'
+        }));
+
+        const contactsData = [...emergencyContactsData, ...referenceContactsData];
+
+        // Calculate total income for rent ratio
+        const totalIncome = incomeHistoryData.reduce((acc, curr) => acc + curr.incomePerMonth, 0);
+        const currentRent = residentialHistoryData.find((r) => r.status === 'Current')?.rent || 0;
+
+        // Map status
+        const statusMap: Record<string, 'Approved' | 'Pending' | 'Rejected' | 'Submitted'> = {
+            'APPROVED': 'Approved',
+            'REVIEWING': 'Pending',
+            'REJECTED': 'Rejected',
+            'SUBMITTED': 'Submitted',
+            'DRAFT': 'Submitted',
+            'CANCELLED': 'Rejected'
+        };
+
+        return {
+            id: backendApplication.id,
+            applicationNumber: backendApplication.id.slice(-7),
+            applicantName: primaryApplicant ? `${primaryApplicant.firstName} ${primaryApplicant.lastName}`.trim() : 'Unknown',
+            phone: formatPhone(primaryApplicant?.phoneNumber),
+            email: primaryApplicant?.email || '—',
+            status: statusMap[backendApplication.status] || 'Submitted',
+            propertyName: backendApplication.leasing?.property?.propertyName || 'Unknown Property',
+            listingContact: backendApplication.leasing?.property?.listingContactName || 'Property Manager',
+            applicantInfo: {
+                hasDetails: !!primaryApplicant,
+                dateOfBirth: formatDateStr(primaryApplicant?.dateOfBirth),
+                preferredMoveIn: formatDateStr(backendApplication.moveInDate),
+                shortBio: backendApplication.bio || '—',
+                rentPerMonth: currentRent,
+                householdIncome: totalIncome,
+                photo: backendApplication.imageUrl || undefined,
+            },
+            additionalOccupants: occupantsData.length,
+            occupantsData,
+            pets: petsData.length,
+            petsData,
+            vehicles: vehiclesData.length,
+            vehiclesData,
+            residentialHistory: residentialHistoryData.length,
+            residentialHistoryData,
+            incomeHistory: incomeHistoryData.length,
+            incomeHistoryData,
+            contacts: contactsData.length,
+            contactsData,
+            additionalQuestions: {
+                smoke: backendApplication.backgroundQuestions?.smoke ? 'Yes' : 'No',
+                military: backendApplication.backgroundQuestions?.militaryMember ? 'Yes' : 'No',
+                crime: backendApplication.backgroundQuestions?.criminalRecord ? 'Yes' : 'No',
+                bankruptcy: backendApplication.backgroundQuestions?.bankruptcy ? 'Yes' : 'No',
+                refuseRent: backendApplication.backgroundQuestions?.refusedRent ? 'Yes' : 'No',
+                evicted: backendApplication.backgroundQuestions?.evicted ? 'Yes' : 'No',
+                explanations: {}, // Custom background answers would need to be mapped from customBackgroundAnswers
+            },
+            attachments: 0, // Documents/attachments would need to be handled separately if available
+            documentsData: [],
+            termsAccepted: {
+                date: formatDateStr(backendApplication.applicationDate || backendApplication.createdAt),
+            },
+        };
+    }, [backendApplication]);
+
+    // Check if application is approved (cannot be edited)
+    const isApproved = application?.status === 'Approved';
+
+    // Legacy function kept for compatibility - now just triggers refetch
     const loadApplication = useCallback(() => {
-        const localApps = getLocalApplications();
-        const foundApp = localApps.find((app: any) => String(app.id) === id);
-
-        if (foundApp) {
-            const formData = foundApp.formData || {};
-
-            // Helpers
-            const formatDateStr = (d: string | undefined | null) => d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
-
-            // Helper to format phone with country code
-            // Country code is stored as "isoCode|phonecode" (e.g., "US|+1")
-            const formatPhone = (phoneNumber: string | undefined, phoneCountryCode: string | undefined): string => {
-                if (!phoneNumber) return '—';
-                if (!phoneCountryCode) return phoneNumber;
-
-                let phonecode = phoneCountryCode;
-
-                // Parse the country code format: "isoCode|phonecode"
-                if (phoneCountryCode.includes('|')) {
-                    const parts = phoneCountryCode.split('|');
-                    if (parts.length > 1 && parts[1]) {
-                        phonecode = parts[1];
-                    }
-                }
-
-                // If the resulting code is just letters (e.g. "US"), it's likely an ISO code without dial code
-                // Return just the phone number in this case to avoid "+US"
-                if (/^[A-Za-z]+$/.test(phonecode)) {
-                    return phoneNumber;
-                }
-
-                // Ensure phonecode starts with '+'
-                const formattedCode = phonecode.startsWith('+') ? phonecode : `+${phonecode}`;
-
-                return `(${formattedCode}) ${phoneNumber}`;
-            };
-
-            // Map Occupants
-            const occupantsData = (formData.occupants || []).map((occ: any, idx: number) => ({
-                id: occ.id || `occ_${idx}`,
-                name: [occ.firstName, occ.lastName].filter(Boolean).join(' ') || 'Unknown Occupant',
-                relationship: occ.relationship,
-                dob: formatDateStr(occ.dob),
-                email: occ.email || '—',
-                phone: formatPhone(occ.phoneNumber, occ.phoneCountryCode)
-            }));
-
-            // Map Pets
-            const petsData = (formData.pets || []).map((pet: any, idx: number) => ({
-                id: pet.id || `pet_${idx}`,
-                name: pet.name,
-                type: pet.type,
-                breed: pet.breed,
-                weight: pet.weight
-            }));
-
-            // Map Vehicles
-            const vehiclesData = (formData.vehicles || []).map((veh: any, idx: number) => ({
-                id: veh.id || `veh_${idx}`,
-                make: veh.make,
-                model: veh.model,
-                year: veh.year,
-                color: veh.color,
-                licensePlate: veh.licensePlate
-            }));
-
-            // Map Residences
-            const residentialHistoryData = (formData.residences || []).map((res: any, idx: number) => ({
-                id: idx + 1,
-                address: res.address || [res.city, res.state].filter(Boolean).join(', ') || 'Unknown Address',
-                location: res.city || 'Unknown Location',
-                status: res.isCurrent ? 'Current' : 'Previous',
-                rentOrOwn: res.residencyType,
-                moveInDate: formatDateStr(res.moveInDate),
-                moveOutDate: formatDateStr(res.moveOutDate),
-                rent: parseFloat(res.rentAmount || '0') || 0,
-                landlord: {
-                    name: res.landlordName || '—',
-                    initials: (res.landlordName?.trim() || 'L').split(/\s+/).map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()
-                }
-            }));
-
-            // Map Incomes
-            const incomeHistoryData = (formData.incomes || []).map((inc: any, idx: number) => ({
-                id: idx + 1,
-                jobTitle: inc.position || 'Unknown Title',
-                company: inc.company || 'Unknown Company',
-                status: inc.currentEmployment ? 'Current' : 'Previous',
-                type: inc.incomeType,
-                startDate: formatDateStr(inc.startDate),
-                address: inc.address || '—',
-                incomePerMonth: parseFloat(inc.monthlyAmount || '0') || 0,
-                officeNumber: '—',
-                workPhone: inc.companyPhone || '—'
-            }));
-
-            // Map Contacts (Emergency)
-            const contactsData = (formData.emergencyContacts || []).map((contact: any, idx: number) => ({
-                id: contact.id || `cont_${idx}`,
-                name: contact.fullName,
-                relationship: contact.relationship,
-                phone: formatPhone(contact.phoneNumber, contact.phoneCountryCode),
-                email: contact.email || '—',
-                type: contact.type || 'Emergency Contact'
-            }));
-
-            // Calculate total income for rent ratio
-            const totalIncome = incomeHistoryData.reduce((acc: number, curr: any) => acc + curr.incomePerMonth, 0);
-            const currentRent = residentialHistoryData.find((r: any) => r.status === 'Current')?.rent || 0;
-
-            setApplication({
-                id: String(foundApp.id),
-                applicationNumber: String(foundApp.id).slice(-7),
-                applicantName: foundApp.name,
-                phone: formatPhone(foundApp.phone || formData.phoneNumber, formData.phoneCountryCode),
-                email: formData.email || 'user@example.com',
-                status: foundApp.status,
-                propertyName: foundApp.propertyName || 'Property Name',
-                listingContact: 'Property Manager', // This could be better if saved in app data
-                applicantInfo: {
-                    hasDetails: !!formData.firstName,
-                    dateOfBirth: formatDateStr(formData.dob),
-                    preferredMoveIn: formatDateStr(formData.moveInDate),
-                    shortBio: formData.shortBio || '—',
-                    rentPerMonth: currentRent,
-                    householdIncome: totalIncome,
-                    photo: formData.photo,
-                },
-                additionalOccupants: occupantsData.length,
-                occupantsData,
-                pets: petsData.length,
-                petsData,
-                vehicles: vehiclesData.length,
-                vehiclesData,
-                residentialHistory: residentialHistoryData.length,
-                residentialHistoryData,
-                incomeHistory: incomeHistoryData.length,
-                incomeHistoryData,
-                contacts: contactsData.length,
-                contactsData,
-                additionalQuestions: {
-                    smoke: formData.backgroundQuestions?.smoke ? 'Yes' : 'No',
-                    military: formData.backgroundQuestions?.military ? 'Yes' : 'No',
-                    crime: formData.backgroundQuestions?.crime ? 'Yes' : 'No',
-                    bankruptcy: formData.backgroundQuestions?.bankruptcy ? 'Yes' : 'No',
-                    refuseRent: formData.backgroundQuestions?.refuseRent ? 'Yes' : 'No',
-                    evicted: formData.backgroundQuestions?.evicted ? 'Yes' : 'No',
-                    explanations: formData.backgroundExplanations || {},
-                },
-                attachments: (formData.documents || []).length,
-                documentsData: formData.documents || [],
-                termsAccepted: {
-                    date: formatDateStr(foundApp.appliedDate),
-                },
-            });
-        } else {
-            // Return a mock fallback if no app found (preserved generic fallback but minimal)
-            setApplication({
-                id: id || '00000',
-                applicationNumber: '00000',
-                applicantName: 'Unknown',
-                phone: '—',
-                email: '—',
-                status: 'Submitted',
-                propertyName: 'Unknown Property',
-                listingContact: '—',
-                applicantInfo: {
-                    hasDetails: false,
-                    dateOfBirth: '—',
-                    preferredMoveIn: '—',
-                    shortBio: '—',
-                    rentPerMonth: 0,
-                    householdIncome: 0,
-                },
-                additionalOccupants: 0,
-                occupantsData: [],
-                pets: 0,
-                petsData: [],
-                vehicles: 0,
-                vehiclesData: [],
-                residentialHistory: 0,
-                residentialHistoryData: [],
-                incomeHistory: 0,
-                incomeHistoryData: [],
-                contacts: 0,
-                contactsData: [],
-                additionalQuestions: {
-                    smoke: 'No',
-                    military: 'No',
-                    crime: 'No',
-                    bankruptcy: 'No',
-                    refuseRent: 'No',
-                    evicted: 'No',
-                    explanations: {},
-                },
-                attachments: 0,
-                documentsData: [],
-                termsAccepted: {
-                    date: '—',
-                },
-            });
-        }
-    }, [id, getLocalApplications]); // Closing for loadApplication useCallback
-
-    useEffect(() => {
-        loadApplication();
-    }, [loadApplication]);
+        refetch();
+    }, [refetch]);
 
     const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
@@ -399,8 +369,16 @@ const ApplicationDetail: React.FC = () => {
         }
     };
 
-    if (!application) {
+    if (isLoading) {
         return <div className="p-8 text-center text-gray-500">Loading application...</div>;
+    }
+
+    if (error || !application) {
+        return (
+            <div className="p-8 text-center text-red-500">
+                {error ? 'Failed to load application' : 'Application not found'}
+            </div>
+        );
     }
 
     const applicationSections = [
@@ -511,247 +489,314 @@ const ApplicationDetail: React.FC = () => {
 
 
     const handleSaveOccupant = (data: OccupantFormData) => {
-        const localApps = getLocalApplications();
-        const appIndex = localApps.findIndex((app: any) => String(app.id) === id);
+        if (!id || !backendApplication) return;
 
-        if (appIndex !== -1) {
-            const updatedApp = { ...localApps[appIndex] };
-            const currentOccupants = updatedApp.formData.occupants || [];
+        const currentOccupants = backendApplication.occupants || [];
+        const newOccupant = {
+            firstName: data.firstName,
+            lastName: data.lastName,
+            email: data.email || undefined,
+            phoneNumber: data.phoneNumber || undefined,
+            dateOfBirth: data.dob ? data.dob.toISOString() : new Date().toISOString(),
+            relationship: data.relationship
+        };
 
-            const newOccupant = {
-                id: `occ_${Date.now()}`,
-                firstName: data.firstName,
-                lastName: data.lastName,
-                email: data.email,
-                phoneNumber: data.phoneNumber,
-                phoneCountryCode: data.phoneCountryCode,
-                dob: data.dob ? data.dob.toISOString() : null,
-                relationship: data.relationship
-            };
-
-            updatedApp.formData.occupants = [...currentOccupants, newOccupant];
-            localApps[appIndex] = updatedApp;
-            localStorage.setItem('user_applications', JSON.stringify(localApps));
-
-            loadApplication();
-            setIsAddOccupantModalOpen(false);
-        }
+        updateApplicationMutation.mutate(
+            {
+                id,
+                updateData: {
+                    occupants: [...currentOccupants.map(o => ({
+                        firstName: o.firstName || undefined,
+                        lastName: o.lastName || undefined,
+                        name: o.name || undefined,
+                        email: o.email || undefined,
+                        phoneNumber: o.phoneNumber || undefined,
+                        dateOfBirth: o.dateOfBirth,
+                        relationship: o.relationship
+                    })), newOccupant]
+                }
+            },
+            {
+                onSuccess: () => {
+                    setIsAddOccupantModalOpen(false);
+                    refetch();
+                },
+                onError: (error: any) => {
+                    console.error('Failed to add occupant:', error);
+                    alert(error.message || 'Failed to add occupant');
+                }
+            }
+        );
     };
 
     const handleSavePet = (data: PetFormData) => {
-        const localApps = getLocalApplications();
-        const appIndex = localApps.findIndex((app: any) => String(app.id) === id);
+        if (!id || !backendApplication) return;
 
-        if (appIndex !== -1) {
-            const updatedApp = { ...localApps[appIndex] };
-            const currentPets = updatedApp.formData.pets || [];
+        const currentPets = backendApplication.pets || [];
+        const newPet = {
+            type: data.type,
+            name: data.name,
+            weight: data.weight ? parseFloat(data.weight) : undefined,
+            breed: data.breed,
+            photoUrl: undefined // TODO: Handle photo upload if needed
+        };
 
-            const newPet = {
-                id: `pet_${Date.now()}`,
-                type: data.type,
-                name: data.name,
-                weight: data.weight,
-                breed: data.breed,
-                // Handle photo if needed, though local file sync is tricky - assume basic string fields for now or uploaded URL
-                // If the PetFormData had a URL or if we upload it first, we'd use that.
-                // Assuming simple non-file storage for localStorage demo
-            };
-
-            updatedApp.formData.pets = [...currentPets, newPet];
-            localApps[appIndex] = updatedApp;
-            localStorage.setItem('user_applications', JSON.stringify(localApps));
-
-            loadApplication();
-            setIsAddPetModalOpen(false);
-        }
+        updateApplicationMutation.mutate(
+            {
+                id,
+                updateData: {
+                    pets: [...currentPets.map(p => ({
+                        type: p.type,
+                        name: p.name,
+                        weight: p.weight ? parseFloat(p.weight) : undefined,
+                        breed: p.breed,
+                        photoUrl: p.photoUrl || undefined
+                    })), newPet]
+                }
+            },
+            {
+                onSuccess: () => {
+                    setIsAddPetModalOpen(false);
+                    refetch();
+                },
+                onError: (error: any) => {
+                    console.error('Failed to add pet:', error);
+                    alert(error.message || 'Failed to add pet');
+                }
+            }
+        );
     };
 
     const handleSaveVehicle = (data: VehicleFormData) => {
-        const localApps = getLocalApplications();
-        const appIndex = localApps.findIndex((app: any) => String(app.id) === id);
+        if (!id || !backendApplication) return;
 
-        if (appIndex !== -1) {
-            const updatedApp = { ...localApps[appIndex] };
-            const currentVehicles = updatedApp.formData.vehicles || [];
+        const currentVehicles = backendApplication.vehicles || [];
+        const newVehicle = {
+            type: data.type,
+            make: data.make,
+            model: data.model,
+            year: parseInt(data.year, 10),
+            color: data.color,
+            licensePlate: data.licensePlate,
+            registeredIn: data.registeredIn
+        };
 
-            const newVehicle = {
-                id: `veh_${Date.now()}`,
-                type: data.type,
-                make: data.make,
-                model: data.model,
-                year: data.year,
-                color: data.color,
-                licensePlate: data.licensePlate,
-                registeredIn: data.registeredIn
-            };
-
-            updatedApp.formData.vehicles = [...currentVehicles, newVehicle];
-            localApps[appIndex] = updatedApp;
-            localStorage.setItem('user_applications', JSON.stringify(localApps));
-
-            loadApplication();
-            setIsAddVehicleModalOpen(false);
-        }
+        updateApplicationMutation.mutate(
+            {
+                id,
+                updateData: {
+                    vehicles: [...currentVehicles.map(v => ({
+                        type: v.type,
+                        make: v.make,
+                        model: v.model,
+                        year: v.year,
+                        color: v.color,
+                        licensePlate: v.licensePlate,
+                        registeredIn: v.registeredIn
+                    })), newVehicle]
+                }
+            },
+            {
+                onSuccess: () => {
+                    setIsAddVehicleModalOpen(false);
+                    refetch();
+                },
+                onError: (error: any) => {
+                    console.error('Failed to add vehicle:', error);
+                    alert(error.message || 'Failed to add vehicle');
+                }
+            }
+        );
     };
 
     const handleSaveResidence = (data: ResidenceFormData) => {
-        const localApps = getLocalApplications();
-        const appIndex = localApps.findIndex((app: any) => String(app.id) === id);
+        if (!id || !backendApplication) return;
 
-        if (appIndex !== -1) {
-            const updatedApp = { ...localApps[appIndex] };
-            const currentResidences = updatedApp.formData.residences || [];
+        const currentResidences = backendApplication.residenceHistory || [];
+        const cityValue = data.city && data.city.trim() !== '' ? data.city.trim() : data.state;
+        const residenceType = data.residencyType === 'Rent' ? 'RENTED' : data.residencyType === 'Own' ? 'OWNED' : 'FAMILY';
 
-            const newResidence = {
-                // Map ResidenceFormData to structure expected by ApplicationDetail mock logic/storage
-                // Note: ApplicantForm and UserAddResidenceModal align mostly but storage format is generic object in local storage
-                // We should try to match the fields shown in UserApplicationDetail mapping (lines 194-207)
-                isCurrent: data.isCurrent,
-                address: data.address,
-                city: data.city,
-                state: data.state,
-                zip: data.zip,
-                country: data.country,
-                residencyType: data.residencyType === 'Others' ? data.otherResidencyType : data.residencyType,
-                moveInDate: data.moveInDate ? data.moveInDate.toISOString() : null,
-                moveOutDate: data.moveOutDate ? data.moveOutDate.toISOString() : null,
-                rentAmount: data.rentAmount,
-                landlordName: data.landlordName,
-                // Add other fields as needed by viewing logic
-            };
+        const newResidence = {
+            residenceType,
+            monthlyRent: data.rentAmount ? parseFloat(data.rentAmount) : undefined,
+            moveInDate: data.moveInDate ? data.moveInDate.toISOString() : new Date().toISOString(),
+            moveOutDate: data.moveOutDate ? data.moveOutDate.toISOString() : undefined,
+            isCurrent: data.isCurrent ?? (data.moveOutDate ? false : true),
+            landlordName: data.landlordName || 'N/A',
+            landlordEmail: undefined,
+            landlordPhone: '',
+            address: data.address,
+            city: cityValue,
+            state: data.state,
+            zipCode: data.zip,
+            country: data.country,
+            additionalInfo: undefined
+        };
 
-            updatedApp.formData.residences = [...currentResidences, newResidence];
-            localApps[appIndex] = updatedApp;
-            localStorage.setItem('user_applications', JSON.stringify(localApps));
-
-            loadApplication();
-            setIsAddResidenceModalOpen(false);
-        }
+        updateApplicationMutation.mutate(
+            {
+                id,
+                updateData: {
+                    residenceHistory: [...currentResidences.map(r => ({
+                        residenceType: r.residenceType,
+                        monthlyRent: r.monthlyRent ? parseFloat(r.monthlyRent) : undefined,
+                        moveInDate: r.moveInDate,
+                        moveOutDate: r.moveOutDate || undefined,
+                        isCurrent: r.isCurrent,
+                        landlordName: r.landlordName,
+                        landlordEmail: r.landlordEmail || undefined,
+                        landlordPhone: r.landlordPhone,
+                        address: r.address,
+                        city: r.city,
+                        state: r.state,
+                        zipCode: r.zipCode,
+                        country: r.country,
+                        additionalInfo: r.additionalInfo || undefined
+                    })), newResidence]
+                }
+            },
+            {
+                onSuccess: () => {
+                    setIsAddResidenceModalOpen(false);
+                    refetch();
+                },
+                onError: (error: any) => {
+                    console.error('Failed to add residence:', error);
+                    alert(error.message || 'Failed to add residence');
+                }
+            }
+        );
     };
 
     const handleSaveIncome = (data: IncomeFormData) => {
-        const localApps = getLocalApplications();
-        const appIndex = localApps.findIndex((app: any) => String(app.id) === id);
+        if (!id || !backendApplication) return;
 
-        if (appIndex !== -1) {
-            const updatedApp = { ...localApps[appIndex] };
-            const currentIncomes = updatedApp.formData.incomes || [];
+        const currentIncomes = backendApplication.incomeDetails || [];
+        const newIncome = {
+            incomeType: data.incomeType,
+            companyName: data.company,
+            positionTitle: data.position,
+            startDate: data.startDate ? data.startDate.toISOString() : new Date().toISOString(),
+            endDate: data.endDate ? data.endDate.toISOString() : undefined,
+            currentEmployment: data.currentEmployment ?? false,
+            monthlyIncome: parseFloat(data.monthlyAmount) || 0,
+            officeAddress: data.address,
+            office: data.office || undefined,
+            companyPhone: data.companyPhone || undefined,
+            supervisorName: data.supervisorName,
+            supervisorPhone: data.supervisorPhone,
+            supervisorEmail: data.supervisorEmail || undefined,
+            additionalInfo: undefined
+        };
 
-            const newIncome = {
-                // Map IncomeFormData to structure expected by ApplicationDetail mock logic/storage
-                currentEmployment: data.currentEmployment,
-                incomeType: data.incomeType,
-                startDate: data.startDate ? data.startDate.toISOString() : null,
-                endDate: data.endDate ? data.endDate.toISOString() : null,
-                company: data.company,
-                position: data.position,
-                monthlyAmount: data.monthlyAmount,
-                currency: data.currency,
-                address: data.address,
-                office: data.office,
-                companyPhone: data.companyPhone,
-                supervisorName: data.supervisorName,
-                supervisorEmail: data.supervisorEmail,
-                supervisorPhone: data.supervisorPhone
-            };
-
-            updatedApp.formData.incomes = [...currentIncomes, newIncome];
-            localApps[appIndex] = updatedApp;
-            localStorage.setItem('user_applications', JSON.stringify(localApps));
-
-            loadApplication();
-            setIsAddIncomeModalOpen(false);
-        }
+        updateApplicationMutation.mutate(
+            {
+                id,
+                updateData: {
+                    incomeDetails: [...currentIncomes.map(i => ({
+                        incomeType: i.incomeType,
+                        companyName: i.companyName,
+                        positionTitle: i.positionTitle,
+                        startDate: i.startDate,
+                        endDate: i.endDate || undefined,
+                        currentEmployment: i.currentEmployment,
+                        monthlyIncome: parseFloat(i.monthlyIncome || '0'),
+                        officeAddress: i.officeAddress,
+                        office: i.office || undefined,
+                        companyPhone: i.companyPhone || undefined,
+                        supervisorName: i.supervisorName,
+                        supervisorPhone: i.supervisorPhone,
+                        supervisorEmail: i.supervisorEmail || undefined,
+                        additionalInfo: i.additionalInfo || undefined
+                    })), newIncome]
+                }
+            },
+            {
+                onSuccess: () => {
+                    setIsAddIncomeModalOpen(false);
+                    refetch();
+                },
+                onError: (error: any) => {
+                    console.error('Failed to add income:', error);
+                    alert(error.message || 'Failed to add income');
+                }
+            }
+        );
     };
 
     const handleSaveBackgroundInfo = (data: BackgroundQuestionsData) => {
-        const localApps = getLocalApplications();
-        const appIndex = localApps.findIndex((app: any) => String(app.id) === id);
+        if (!id) return;
 
-        if (appIndex !== -1) {
-            const updatedApp = { ...localApps[appIndex] };
-
-            updatedApp.formData.backgroundQuestions = {
-                smoke: data.smoke,
-                military: data.military,
-                crime: data.crime,
-                bankruptcy: data.bankruptcy,
-                refuseRent: data.refuseRent,
-                evicted: data.evicted
-            };
-            updatedApp.formData.backgroundExplanations = data.explanations;
-
-            localApps[appIndex] = updatedApp;
-            localStorage.setItem('user_applications', JSON.stringify(localApps));
-
-            loadApplication();
-            setIsEditBackgroundInfoModalOpen(false);
-        }
+        updateApplicationMutation.mutate(
+            {
+                id,
+                updateData: {
+                    backgroundQuestions: {
+                        smoke: data.smoke,
+                        militaryMember: data.military,
+                        criminalRecord: data.crime,
+                        bankruptcy: data.bankruptcy,
+                        refusedRent: data.refuseRent,
+                        evicted: data.evicted
+                    }
+                }
+            },
+            {
+                onSuccess: () => {
+                    setIsEditBackgroundInfoModalOpen(false);
+                    refetch();
+                },
+                onError: (error: any) => {
+                    console.error('Failed to update background info:', error);
+                    alert(error.message || 'Failed to update background info');
+                }
+            }
+        );
     };
 
     const handleSaveReference = (data: ReferenceFormData) => {
-        const localApps = getLocalApplications();
-        const appIndex = localApps.findIndex((app: any) => String(app.id) === id);
+        if (!id || !backendApplication) return;
 
-        if (appIndex !== -1) {
-            const updatedApp = { ...localApps[appIndex] };
-            const currentContacts = updatedApp.formData.emergencyContacts || [];
+        const currentReferences = backendApplication.referenceContacts || [];
+        const newReference = {
+            contactName: data.fullName,
+            relationship: data.relationship,
+            email: data.email,
+            phoneNumber: data.phoneNumber,
+            yearsKnown: 0 // Default value, could be added to form if needed
+        };
 
-            const newContact = {
-                id: `ref_${Date.now()}`,
-                fullName: data.fullName,
-                relationship: data.relationship,
-                email: data.email,
-                phoneNumber: data.phoneNumber,
-                phoneCountryCode: data.phoneCountryCode,
-                type: 'Reference'
-            };
-
-            updatedApp.formData.emergencyContacts = [...currentContacts, newContact];
-            localApps[appIndex] = updatedApp;
-            localStorage.setItem('user_applications', JSON.stringify(localApps));
-
-            loadApplication();
-            setIsAddReferenceModalOpen(false);
-        }
+        updateApplicationMutation.mutate(
+            {
+                id,
+                updateData: {
+                    referenceContacts: [...currentReferences.map(r => ({
+                        contactName: r.contactName,
+                        relationship: r.relationship,
+                        email: r.email,
+                        phoneNumber: r.phoneNumber,
+                        yearsKnown: r.yearsKnown
+                    })), newReference]
+                }
+            },
+            {
+                onSuccess: () => {
+                    setIsAddReferenceModalOpen(false);
+                    refetch();
+                },
+                onError: (error: any) => {
+                    console.error('Failed to add reference:', error);
+                    alert(error.message || 'Failed to add reference');
+                }
+            }
+        );
     };
 
-    const handleSaveFile = (data: FileFormData) => {
-        if (!data.file) return;
-
-        // Convert file to base64 data URL for localStorage persistence
-        const reader = new FileReader();
-        reader.onload = () => {
-            const localApps = getLocalApplications();
-            const appIndex = localApps.findIndex((app: any) => String(app.id) === id);
-
-            if (appIndex !== -1) {
-                const updatedApp = { ...localApps[appIndex] };
-                const currentDocs = updatedApp.formData.documents || [];
-
-                const newDoc = {
-                    name: data.name,
-                    size: data.file ? data.file.size : 0,
-                    type: data.type.split('/')[1]?.toUpperCase() || 'FILE',
-                    url: reader.result as string, // Store base64 data URL
-                    mimeType: data.type // Store mime type for proper file handling
-                };
-
-                updatedApp.formData.documents = [...currentDocs, newDoc];
-                localApps[appIndex] = updatedApp;
-                localStorage.setItem('user_applications', JSON.stringify(localApps));
-
-                loadApplication();
-                setIsAddFileModalOpen(false);
-            }
-        };
-
-        reader.onerror = () => {
-            console.error('Error reading file');
-            setIsAddFileModalOpen(false);
-        };
-
-        reader.readAsDataURL(data.file);
+    const handleSaveFile = (_data: FileFormData) => {
+        // TODO: Implement file upload to backend if file storage is available
+        // For now, just close the modal
+        console.warn('File upload not yet implemented - files need to be uploaded to backend storage');
+        setIsAddFileModalOpen(false);
     };
 
     return (
@@ -987,11 +1032,18 @@ const ApplicationDetail: React.FC = () => {
                                     <div className="flex items-center gap-3">
                                         {section.primaryAction && (
                                             <button
-                                                className="text-[#7ED957] font-semibold text-sm hover:opacity-80 transition-opacity"
+                                                className={`text-[#7ED957] font-semibold text-sm transition-opacity ${
+                                                    isApproved 
+                                                        ? 'opacity-50 cursor-not-allowed' 
+                                                        : 'hover:opacity-80'
+                                                }`}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleSectionPrimaryAction(section.id);
+                                                    if (!isApproved) {
+                                                        handleSectionPrimaryAction(section.id);
+                                                    }
                                                 }}
+                                                disabled={isApproved}
                                             >
                                                 {section.primaryAction}
                                             </button>
@@ -1365,11 +1417,18 @@ const ApplicationDetail: React.FC = () => {
 
                             <div className="flex items-center gap-3">
                                 <button
-                                    className="text-[#7ED957] text-sm font-semibold hover:opacity-80 transition-opacity"
+                                    className={`text-[#7ED957] text-sm font-semibold transition-opacity ${
+                                        isApproved 
+                                            ? 'opacity-50 cursor-not-allowed' 
+                                            : 'hover:opacity-80'
+                                    }`}
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        setIsEditBackgroundInfoModalOpen(true);
+                                        if (!isApproved) {
+                                            setIsEditBackgroundInfoModalOpen(true);
+                                        }
                                     }}
+                                    disabled={isApproved}
                                 >
                                     Edit
                                 </button>
