@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, Sparkles, Loader2 } from 'lucide-react';
+import { X, Send, Sparkles, Loader2, Check } from 'lucide-react';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -22,6 +22,7 @@ const AIPropertyChat: React.FC<AIPropertyChatProps> = ({ isOpen, onClose, onForm
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [pendingFormData, setPendingFormData] = useState<any | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -78,23 +79,11 @@ const AIPropertyChat: React.FC<AIPropertyChatProps> = ({ isOpen, onClose, onForm
       }]);
 
       if (data.formData && data.isComplete) {
-        onFormDataReceived(data.formData);
-        
-        setTimeout(() => {
-          setMessages(prev => [...prev, {
-            role: 'assistant',
-            content: "Perfect! I've filled out the form with all the details you provided. You can review and make any changes before saving. 🎉"
-          }]);
-          
-          setTimeout(() => {
-            onClose();
-            setMessages([{
-              role: 'assistant',
-              content: "Hi! I'm here to help you create your property listing. You can describe your property in plain English, and I'll help fill out the form. For example: 'I have a 3-bedroom house in New York with 2 bathrooms, built in 2015, 1500 sq ft, with a garage and central AC. The rent is $2500 per month.'\n\nGo ahead and tell me about your property!"
-            }]);
-            setConversationId(null);
-          }, 2000);
-        }, 500);
+        setPendingFormData(data.formData);
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: "Perfect! I've collected all the details you provided. Click 'Add to Form' below to fill out the form, then you can review and make any changes before saving. 🎉"
+        }]);
       }
     } catch (error) {
       console.error('Error sending message:', error);
@@ -111,6 +100,21 @@ const AIPropertyChat: React.FC<AIPropertyChatProps> = ({ isOpen, onClose, onForm
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
+    }
+  };
+
+  const handleConfirmAdd = () => {
+    if (pendingFormData) {
+      onFormDataReceived(pendingFormData);
+      setTimeout(() => {
+        onClose();
+        setMessages([{
+          role: 'assistant',
+          content: "Hi! I'm here to help you create your property listing. You can describe your property in plain English, and I'll help fill out the form. For example: 'I have a 3-bedroom house in New York with 2 bathrooms, built in 2015, 1500 sq ft, with a garage and central AC. The rent is $2500 per month.'\n\nGo ahead and tell me about your property!"
+        }]);
+        setConversationId(null);
+        setPendingFormData(null);
+      }, 300);
     }
   };
 
@@ -160,6 +164,21 @@ const AIPropertyChat: React.FC<AIPropertyChatProps> = ({ isOpen, onClose, onForm
               <div className="bg-gray-100 rounded-2xl px-4 py-3 flex items-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin text-teal-600" />
                 <p className="text-sm text-gray-600">Thinking...</p>
+              </div>
+            </div>
+          )}
+
+          {pendingFormData && !isLoading && (
+            <div className="flex justify-start">
+              <div className="bg-teal-50 border-2 border-teal-500 rounded-2xl px-4 py-3 flex flex-col gap-3 max-w-[80%]">
+                <p className="text-sm text-gray-800 font-medium">Ready to add to form!</p>
+                <button
+                  onClick={handleConfirmAdd}
+                  className="bg-teal-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-teal-700 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Check className="w-4 h-4" />
+                  Add to Form
+                </button>
               </div>
             </div>
           )}

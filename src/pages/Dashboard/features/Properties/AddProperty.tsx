@@ -756,19 +756,37 @@ const AddProperty: React.FC = () => {
   };
 
   const handleAIFormData = (aiData: any) => {
-    setFormData(prev => ({
-      ...prev,
-      ...Object.entries(aiData).reduce((acc, [key, value]) => {
-        if (value !== null && value !== '' && value !== undefined) {
-          if (Array.isArray(value) && value.length > 0) {
-            acc[key] = value;
-          } else if (!Array.isArray(value)) {
-            acc[key] = value;
-          }
+    const updates: any = {};
+    
+    Object.entries(aiData).forEach(([key, value]) => {
+      if (value !== null && value !== '' && value !== undefined) {
+        if (Array.isArray(value) && value.length > 0) {
+          updates[key] = value;
+        } else if (!Array.isArray(value)) {
+          updates[key] = value;
         }
-        return acc;
-      }, {} as any)
-    }));
+      }
+    });
+
+    setFormData(prev => {
+      const newData = { ...prev, ...updates };
+      
+      if (updates.country && !prev.country) {
+        const countryStates = State.getStatesOfCountry(updates.country as string);
+        setStates(countryStates);
+      }
+      
+      if (updates.country && updates.stateRegion) {
+        const stateCities = City.getCitiesOfState(
+          updates.country as string,
+          updates.stateRegion as string
+        );
+        setCities(stateCities);
+      }
+      
+      return newData;
+    });
+    
     setIsDirty(true);
   };
 
