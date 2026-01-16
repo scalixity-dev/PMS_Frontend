@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { type Chat, type Message, CURRENT_USER_ID } from './types';
+import { type Chat, type Message, type ChatCategory, CURRENT_USER_ID } from './types';
 import ChatSidebar from './components/ChatSidebar';
 import ChatHeader from './components/ChatHeader';
 import MessageList from './components/MessageList';
@@ -11,6 +11,7 @@ const INITIAL_CHATS: Chat[] = [
     id: '1',
     name: 'Ayesha Noor',
     role: 'Tenant',
+    category: 'Tenants',
     status: 'Active Now',
     avatar: 'https://api.dicebear.com/7.x/lorelei/svg?seed=Ayesha',
     lastMessage: 'Thanks for offering to help...',
@@ -29,6 +30,7 @@ const INITIAL_CHATS: Chat[] = [
     id: '2',
     name: 'Sam Curren',
     role: 'Owner',
+    category: 'Service Providers',
     status: 'Seen 2m ago',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sam',
     lastMessage: 'Perfect! The payment...',
@@ -43,6 +45,7 @@ const INITIAL_CHATS: Chat[] = [
     id: '3',
     name: 'Sana Javed',
     role: 'Agent',
+    category: 'Leads',
     status: 'Away',
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sana',
     lastMessage: 'I can start tomorrow...',
@@ -52,6 +55,34 @@ const INITIAL_CHATS: Chat[] = [
       { id: 'm10', senderId: 'user3', senderName: 'Sana', text: "I've reviewed the lease agreement.", time: '10:00 AM' },
       { id: 'm11', senderId: 'user3', senderName: 'Sana', text: "I can start tomorrow morning with the site visit.", time: '10:02 AM' },
       { id: 'm12', senderId: CURRENT_USER_ID, senderName: 'Me', text: "That sounds great, let's meet at 10 AM.", time: '10:15 AM' },
+    ]
+  },
+  {
+    id: '4',
+    name: 'Mike Plumber',
+    role: 'Plumber',
+    category: 'Maintenance Requests',
+    status: 'Offline',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Mike',
+    lastMessage: 'I will be there in 30 mins.',
+    time: '02:15 PM',
+    isPinned: false,
+    messages: [
+      { id: 'm13', senderId: 'user4', senderName: 'Mike', text: 'On my way to check the leak.', time: '02:00 PM' },
+      { id: 'm14', senderId: CURRENT_USER_ID, senderName: 'Me', text: 'Great, thanks.', time: '02:05 PM' },
+    ]
+  },
+  {
+    id: '5',
+    name: 'John Electrician',
+    role: 'Electrician',
+    category: 'Service Providers',
+    status: 'Online',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John',
+    lastMessage: 'Is the power back on?',
+    time: '01:00 PM',
+    messages: [
+      { id: 'm15', senderId: 'user5', senderName: 'John', text: 'Checked the wiring, everything looks good.', time: '12:50 PM' },
     ]
   }
 ];
@@ -64,6 +95,7 @@ const ChatPage: React.FC = () => {
   const [chats, setChats] = useState<Chat[]>(INITIAL_CHATS);
   const [activeChatId, setActiveChatId] = useState('1');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<ChatCategory>('Tenants');
   const [showMobileChat, setShowMobileChat] = useState(false); // Mobile view routing state
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -79,10 +111,11 @@ const ChatPage: React.FC = () => {
 
   const filteredChats = useMemo(() =>
     chats.filter(chat =>
-      chat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      chat.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
+      (chat.category === selectedCategory) &&
+      (chat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        chat.lastMessage.toLowerCase().includes(searchQuery.toLowerCase()))
     ),
-    [chats, searchQuery]
+    [chats, searchQuery, selectedCategory]
   );
 
   const sortedChats = useMemo(() =>
@@ -175,7 +208,7 @@ const ChatPage: React.FC = () => {
   }, []);
 
   return (
-    <div className={`mx-auto h-[calc(100vh-theme(spacing.20))] bg-white flex overflow-hidden print:h-auto print:block transition-all duration-300 ${sidebarOpen ? 'max-w-7xl' : 'max-w-full'}`}>
+    <div className={`mx-auto h-full bg-white flex overflow-hidden print:h-auto print:block transition-all duration-300 ${sidebarOpen ? 'max-w-7xl' : 'max-w-full'}`}>
       <style dangerouslySetInnerHTML={{
         __html: `
         @media print {
@@ -194,6 +227,8 @@ const ChatPage: React.FC = () => {
           onTogglePin={togglePinChat}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
+          selectedCategory={selectedCategory}
+          onSelectCategory={setSelectedCategory}
         />
       </div>
 
