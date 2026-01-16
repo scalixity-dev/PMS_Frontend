@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { StatusPill } from "./StatusPill";
 import { formatMoney } from "../../../../../utils/currency.utils";
@@ -32,42 +32,98 @@ const getOutstandingAmount = (transaction: LeaseTransaction) => {
 };
 
 /**
+ * Format date to "DD MMM" format
+ */
+const formatDateShort = (dateString: string): string => {
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    } catch {
+        return dateString;
+    }
+};
+
+/**
+ * Calculate next invoice date (for recurring transactions)
+ */
+const getNextInvoiceDate = (dueDate: string, schedule: string): string => {
+    try {
+        const date = new Date(dueDate);
+        if (schedule === 'Monthly') {
+            date.setMonth(date.getMonth() + 1);
+        }
+        return formatDateShort(date.toISOString());
+    } catch {
+        return formatDateShort(dueDate);
+    }
+};
+
+export interface LeaseTransactionsTableProps {
+    transactions?: any[]; // Backend transaction format
+}
+
+/**
  * LeaseTransactionsTable
  * A table component styled to match the main UserDashboard's TransactionTable style.
  */
-export const LeaseTransactionsTable = () => {
+export const LeaseTransactionsTable: React.FC<LeaseTransactionsTableProps> = ({ transactions: backendTransactions = [] }) => {
     const [currentPage, setCurrentPage] = useState(1);
 
-    // Mock data based on the provided image
-    const transactions = useMemo<LeaseTransaction[]>(() => [
-        {
-            id: "1",
-            status: "Active",
-            firstInvoice: "17 Dec",
-            category: "Rent",
-            nextInvoice: "17 Dec",
-            amount: -2611.00,
-            currency: "INR"
-        },
-        {
-            id: "2",
-            status: "Overdue",
-            firstInvoice: "15 Jan",
-            category: "Utility Bill",
-            nextInvoice: "15 Feb",
-            amount: -850.50,
-            currency: "INR"
-        },
-        {
-            id: "3",
-            status: "Paid",
-            firstInvoice: "10 Dec",
-            category: "Maintenance",
-            nextInvoice: "10 Jan",
-            amount: -1200.00,
-            currency: "INR"
-        }
-    ], []);
+    // Transform backend transactions to LeaseTransaction format
+    const transactions = useMemo<LeaseTransaction[]>(() => {
+        if (!backendTransactions || backendTransactions.length === 0) return [];
+
+        return backendTransactions.map((tx: any) => {
+            // Map status from backend to frontend format
+            const statusMap: Record<string, 'Active' | 'Overdue' | 'Paid' | 'Partial'> = {
+                'Pending': 'Active',
+                'Paid': 'Paid',
+                'Void': 'Active',
+                'PARTIALLY_PAID': 'Partial',
+                'PENDING': 'Active',
+                'PAID': 'Paid',
+                'VOID': 'Active',
+                'REFUNDED': 'Paid'
+            };
+
+            let status: 'Active' | 'Overdue' | 'Paid' | 'Partial' = statusMap[tx.status] || 'Active';
+            
+            // Check if overdue
+            if (status === 'Active' && tx.dueDateRaw) {
+                const dueDate = new Date(tx.dueDateRaw);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                dueDate.setHours(0, 0, 0, 0);
+                const amount = tx.total || parseFloat(tx.amount || '0');
+                const balance = tx.balance || 0;
+                if (dueDate < today && balance > 0) {
+                    status = 'Overdue';
+                }
+            }
+
+            const amount = tx.total || parseFloat(tx.amount || '0');
+            const balance = tx.balance || 0;
+            const paidAmount = amount - balance;
+            const dueDate = tx.dueDateRaw || tx.dueDate || new Date().toISOString();
+            const schedule = tx.schedule || (tx.isRecurring ? 'Monthly' : 'One-time');
+
+            return {
+                id: tx.id,
+                status,
+                firstInvoice: formatDateShort(dueDate),
+                category: tx.category || 'General',
+                nextInvoice: schedule === 'Monthly' ? getNextInvoiceDate(dueDate, schedule) : formatDateShort(dueDate),
+                amount: -Math.abs(amount), // Negative for expenses
+                currency: tx.currency || 'USD',
+                paidAmount: status === 'Partial' ? paidAmount : undefined
+            };
+        });
+    }, [backendTransactions]);
+
+    // Reset to first page when transactions change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [backendTransactions]);
 
     // Calculate pagination
     const totalPages = Math.ceil(transactions.length / ROWS_PER_PAGE);

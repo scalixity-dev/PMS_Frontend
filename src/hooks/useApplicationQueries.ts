@@ -87,3 +87,20 @@ export const useUpdateApplication = () => {
   });
 };
 
+/**
+ * Hook to delete an application
+ */
+export const useDeleteApplication = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => applicationService.delete(id),
+    onSuccess: (_data, id) => {
+      // Remove the deleted application from cache
+      queryClient.removeQueries({ queryKey: applicationQueryKeys.detail(id) });
+      // Invalidate the list to refetch
+      queryClient.invalidateQueries({ queryKey: applicationQueryKeys.lists() });
+    },
+  });
+};
+

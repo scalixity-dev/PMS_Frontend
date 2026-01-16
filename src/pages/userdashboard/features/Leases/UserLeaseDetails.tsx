@@ -1,7 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Calendar, Home, User, ArrowLeft } from 'lucide-react';
-import { mockLeases } from '../../utils/mockData';
 import type { Lease } from '../../utils/types';
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
 import CustomActionDropdown from "../../../Dashboard/components/CustomActionDropdown";
@@ -10,6 +9,8 @@ import { TenantCard } from "./components/TenantCard";
 import { LeaseTransactionsTable } from "./components/LeaseTransactionsTable";
 import { LeaseInsurance } from "./components/LeaseInsurance";
 import { LeaseAgreementsNotices } from "./components/LeaseAgreementsNotices";
+import { useGetLease } from "../../../../hooks/useLeaseQueries";
+import { useGetTransactions } from "../../../../hooks/useTransactionQueries";
 
 // Constants
 const DASHBOARD_PATH = "/userdashboard";
@@ -35,20 +36,85 @@ const LeaseDetails = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<LeaseTab>("TENANTS");
-    const [lease, setLease] = useState<Lease | null>(null);
     const insuranceRef = useRef<{ openModal: () => void }>(null);
 
-    useEffect(() => {
-        if (!id) return;
+    // Fetch lease data from backend
+    const { data: backendLease, isLoading: leaseLoading, error: leaseError } = useGetLease(id, !!id);
+    
+    // Fetch transactions to filter by lease
+    const { data: transactionsData } = useGetTransactions();
 
-        const foundLease = mockLeases.find(l => l.id === id);
-        setLease(foundLease ?? null);
-    }, [id]);
+    // Transform backend lease to frontend format
+    const lease = useMemo<Lease | null>(() => {
+        if (!backendLease) return null;
 
-    if (!lease) {
+        const sharedTenants = backendLease.sharedTenants || [];
+        const allTenants = [
+            backendLease.tenant ? {
+                id: backendLease.tenant.id,
+                firstName: backendLease.tenant.fullName?.split(' ')[0] || '',
+                lastName: backendLease.tenant.fullName?.split(' ').slice(1).join(' ') || '',
+                email: backendLease.tenant.email,
+                phone: backendLease.tenant.phoneNumber || '',
+                avatarSeed: backendLease.tenant.email
+            } : null,
+            ...sharedTenants.map((st: any) => ({
+                id: st.tenant.id,
+                firstName: st.tenant.fullName?.split(' ')[0] || '',
+                lastName: st.tenant.fullName?.split(' ').slice(1).join(' ') || '',
+                email: st.tenant.email,
+                phone: '',
+                avatarSeed: st.tenant.email
+            }))
+        ].filter(Boolean) as any[];
+
+        const propertyAddress = backendLease.property?.address
+            ? `${backendLease.property.address.streetAddress || ''}, ${backendLease.property.address.city || ''}, ${backendLease.property.address.stateRegion || ''}`
+                .replace(/^, |, $/g, '').replace(/, ,/g, ',')
+            : 'Address not available';
+
+        return {
+            id: backendLease.id,
+            number: backendLease.id.slice(-8).toUpperCase(),
+            startDate: backendLease.startDate,
+            endDate: backendLease.endDate || '',
+            status: backendLease.status === 'ACTIVE' ? 'Active' : backendLease.status === 'PENDING' ? 'Pending' : 'Expired',
+            property: {
+                name: backendLease.property?.propertyName || 'Unknown Property',
+                address: propertyAddress
+            },
+            landlord: {
+                name: 'Property Manager', // Could be enhanced with manager info if available
+                avatarSeed: 'PropertyManager'
+            },
+            tenants: allTenants,
+            attachments: [] // TODO: Map from backend if attachments are available
+        };
+    }, [backendLease]);
+
+    // Filter transactions for this lease
+    const leaseTransactions = useMemo(() => {
+        if (!transactionsData || !Array.isArray(transactionsData) || !id) return [];
+        return transactionsData.filter((tx: any) => tx.leaseId === id);
+    }, [transactionsData, id]);
+
+    // Loading state
+    if (leaseLoading) {
         return (
-            <div className="flex flex-col items-center justify-center p-10">
-                <p>Lease not found or loading...</p>
+            <div className="flex flex-col items-center justify-center p-10 min-h-screen">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--dashboard-accent)]"></div>
+                <p className="mt-4 text-gray-600">Loading lease details...</p>
+            </div>
+        );
+    }
+
+    // Error state
+    if (leaseError || !lease) {
+        return (
+            <div className="flex flex-col items-center justify-center p-10 min-h-screen">
+                <p className="text-red-600 mb-4">
+                    {leaseError instanceof Error ? leaseError.message : 'Lease not found'}
+                </p>
                 <button onClick={() => navigate(DASHBOARD_PATH)} className="mt-4 text-blue-500 hover:underline">
                     Back to Dashboard
                 </button>
@@ -156,7 +222,7 @@ const LeaseDetails = () => {
 
                 {/* Lease Transactions */}
                 {activeTab === "TRANSACTIONS" && (
-                    <LeaseTransactionsTable />
+                    <LeaseTransactionsTable transactions={leaseTransactions} />
                 )}
 
                 {/* Agreements & Notices */}
