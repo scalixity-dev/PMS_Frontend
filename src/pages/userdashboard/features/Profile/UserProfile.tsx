@@ -165,9 +165,9 @@ const Profile: React.FC = () => {
   return (
     <UserAccountSettingsLayout activeTab="Profile">
       {/* User Profile Overview */}
-      <div className="flex px-8 items-center gap-6 mb-10">
+      <div className="flex flex-col md:flex-row px-4 md:px-8 items-center gap-4 md:gap-6 mb-6 md:mb-10">
         <div className="relative group">
-          <div className="w-44 h-44 rounded-full bg-gradient-to-br from-orange-200 via-pink-200 to-orange-300 flex items-center justify-center overflow-hidden transition-all duration-500 relative">
+          <div className="w-28 h-28 md:w-36 md:h-36 lg:w-44 lg:h-44 rounded-full bg-gradient-to-br from-orange-200 via-pink-200 to-orange-300 flex items-center justify-center overflow-hidden transition-all duration-500 relative">
             <div className="w-full h-full flex items-center justify-center relative bg-[#F4D1AE]">
               <img
                 src={profileImage}
@@ -192,9 +192,9 @@ const Profile: React.FC = () => {
 
           <button
             onClick={handleCameraClick}
-            className="absolute bottom-2 right-2 p-2 bg-white rounded-full shadow-md border border-gray-200 text-gray-600 hover:text-[#7CD947] transition-colors z-10"
+            className="absolute bottom-1 right-1 md:bottom-2 md:right-2 p-1.5 md:p-2 bg-white rounded-full shadow-md border border-gray-200 text-gray-600 hover:text-[#7CD947] transition-colors z-10"
           >
-            <Camera size={20} />
+            <Camera size={16} className="md:w-5 md:h-5" />
           </button>
           <input
             type="file"
@@ -204,12 +204,12 @@ const Profile: React.FC = () => {
             accept="image/*"
           />
         </div>
-        <div className="space-y-1">
-          <h2 className="text-3xl font-medium text-[#1A1A1A]">{userInfo.firstName} {userInfo.lastName}</h2>
-          <p className="text-lg text-[#6B7280] font-medium">{userInfo.role}</p>
-          <p className="text-lg text-[#6B7280] font-medium">{userInfo.email}</p>
+        <div className="space-y-0.5 md:space-y-1 text-center md:text-left">
+          <h2 className="text-xl md:text-2xl lg:text-3xl font-medium text-[#1A1A1A]">{userInfo.firstName} {userInfo.lastName}</h2>
+          <p className="text-sm md:text-base lg:text-lg text-[#6B7280] font-medium">{userInfo.role}</p>
+          <p className="text-sm md:text-base lg:text-lg text-[#6B7280] font-medium break-all">{userInfo.email}</p>
           {uploadError && (
-            <p className="text-sm text-red-500 font-medium mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
+            <p className="text-xs md:text-sm text-red-500 font-medium mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
               {uploadError}
             </p>
           )}
@@ -220,18 +220,18 @@ const Profile: React.FC = () => {
       <div className="border-t border-[#E5E7EB] mb-8"></div>
 
       {/* Personal Information Section */}
-      <section className="px-20">
-        <div className="flex items-center justify-between pb-4  border-b border-[#E5E7EB] mb-8">
-          <h2 className="text-2xl font-medium text-[#1A1A1A]">Personal Information</h2>
+      <section className="px-4 md:px-8 lg:px-20">
+        <div className="flex items-center justify-between pb-3 md:pb-4 border-b border-[#E5E7EB] mb-6 md:mb-8">
+          <h2 className="text-lg md:text-xl lg:text-2xl font-medium text-[#1A1A1A]">Personal Information</h2>
           <PrimaryActionButton
             text="Edit"
             onClick={() => handleEditClick('personal')}
-            className="bg-[#84CC16] hover:bg-[#6BC53B] !rounded-lg font-semibold text-base !px-6 py-2.5 shadow-sm border-[1.84px] border-white"
+            className="bg-[#84CC16] hover:bg-[#6BC53B] !rounded-lg font-semibold text-sm md:text-base !px-3 md:!px-6 py-2 md:py-2.5 shadow-sm border-[1.84px] border-white"
           />
         </div>
 
-        <div className="space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-8">
+        <div className="space-y-6 md:space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 md:gap-x-8 gap-y-6 md:gap-y-8">
             <div className="space-y-2.5">
               <label className="block text-[13px] font-semibold text-[#1A1A1A]">
                 First Name
@@ -305,65 +305,65 @@ const Profile: React.FC = () => {
             </div>
           </div>
 
-          <div className="border-t border-[#E5E7EB] my-8"></div>
+          <div className="border-t border-[#E5E7EB] my-6 md:my-8"></div>
 
           {/* Email Verification Row */}
-          <div className="flex items-center justify-between py-2">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-2 gap-3 sm:gap-0">
             <div className="space-y-1">
-              <div className="flex items-center gap-3">
-                <span className="text-lg font-semibold text-[#1A1A1A]">Email Address</span>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#84CC16] text-white text-[11px] font-bold uppercase tracking-wider">
+              <div className="flex items-center gap-2 md:gap-3 flex-wrap">
+                <span className="text-base md:text-lg font-semibold text-[#1A1A1A]">Email Address</span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 md:px-3 py-1 rounded-full bg-[#84CC16] text-white text-[10px] md:text-[11px] font-bold uppercase tracking-wider">
                   Verified
                   <div className="w-3.5 h-3.5 bg-white rounded-full flex items-center justify-center">
                     <Check className="w-2.5 h-2.5 text-[#84CC16]" strokeWidth={4} />
                   </div>
                 </span>
               </div>
-              <p className="text-[13px] text-[#6B7280] font-medium">
+              <p className="text-xs md:text-[13px] text-[#6B7280] font-medium break-all">
                 Your Email id is {userInfo.email}
               </p>
             </div>
             <button
               onClick={() => handleEditClick('email')}
-              className="text-sm font-bold text-[#617C6C] hover:text-[#4A6354] transition-colors"
+              className="text-sm font-bold text-[#617C6C] hover:text-[#4A6354] transition-colors w-full sm:w-auto text-left sm:text-right"
             >
               Change
             </button>
           </div>
 
-          <div className="border-t border-[#E5E7EB] my-8"></div>
+          <div className="border-t border-[#E5E7EB] my-6 md:my-8"></div>
 
           {/* Password Row */}
-          <div className="flex items-center justify-between py-2">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-2 gap-3 sm:gap-0">
             <div className="space-y-1">
               <div className="flex items-center gap-3">
-                <span className="text-lg font-semibold text-[#1A1A1A]">Password</span>
+                <span className="text-base md:text-lg font-semibold text-[#1A1A1A]">Password</span>
               </div>
-              <p className="text-[13px] text-[#6B7280] font-medium">You haven&apos;t changed the password yet.</p>
+              <p className="text-xs md:text-[13px] text-[#6B7280] font-medium">You haven&apos;t changed the password yet.</p>
             </div>
             <button
               onClick={() => handleEditClick('password')}
-              className="text-sm font-bold text-[#617C6C] hover:text-[#4A6354] transition-colors"
+              className="text-sm font-bold text-[#617C6C] hover:text-[#4A6354] transition-colors w-full sm:w-auto text-left sm:text-right"
             >
               Change
             </button>
           </div>
-          <div className="border-t border-[#E5E7EB] my-8"></div>
+          <div className="border-t border-[#E5E7EB] my-6 md:my-8"></div>
         </div>
       </section>
 
       {/* Address Section */}
-      <section className="px-20">
-        <div className="flex items-center justify-between pb-4 border-b border-[#E5E7EB] mb-8">
-          <h2 className="text-2xl font-medium text-[#1A1A1A]">Address</h2>
+      <section className="px-4 md:px-8 lg:px-20">
+        <div className="flex items-center justify-between pb-3 md:pb-4 border-b border-[#E5E7EB] mb-6 md:mb-8">
+          <h2 className="text-lg md:text-xl lg:text-2xl font-medium text-[#1A1A1A]">Address</h2>
           <PrimaryActionButton
             text="Edit"
             onClick={() => handleEditClick('address')}
-            className="bg-[#84CC16] hover:bg-[#6BC53B] !rounded-lg font-semibold text-base !px-6 py-2.5 shadow-sm border-[1.84px] border-white"
+            className="bg-[#84CC16] hover:bg-[#6BC53B] !rounded-lg font-semibold text-sm md:text-base !px-3 md:!px-6 py-2 md:py-2.5 shadow-sm border-[1.84px] border-white"
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 md:gap-x-8 gap-y-6 md:gap-y-8">
           <div className="space-y-2.5">
             <label className="block text-[13px] font-bold text-[#1A1A1A]">Country</label>
             <input
@@ -395,14 +395,14 @@ const Profile: React.FC = () => {
       </section>
 
       {/* Delete Account Section */}
-      <section className="px-20">
-        <h2 className="text-lg font-semibold text-black mb-2">Delete Account</h2>
-        <p className="text-sm text-red-600 mb-4">
+      <section className="px-4 md:px-8 lg:px-20">
+        <h2 className="text-base md:text-lg font-semibold text-black mb-2">Delete Account</h2>
+        <p className="text-xs md:text-sm text-red-600 mb-4">
           Please note that all of the information will be permanently deleted.
         </p>
         <button
           onClick={() => setIsDeleteModalOpen(true)}
-          className="px-6 py-2 bg-[#FF4F5B] text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition-colors shadow-[0px_3.68px_3.68px_0px_#00000040]"
+          className="px-4 md:px-6 py-2 bg-[#FF4F5B] text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition-colors shadow-[0px_3.68px_3.68px_0px_#00000040] w-full sm:w-auto"
         >
           Delete Account
         </button>

@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
+import Toggle from "../../../../components/Toggle";
+import CustomDropdown from "../../../Dashboard/components/CustomDropdown";
 
 const PublicRenterProfile: React.FC = () => {
     const [lookingForPlace, setLookingForPlace] = useState(true);
@@ -13,6 +15,40 @@ const PublicRenterProfile: React.FC = () => {
     const [maxPrice, setMaxPrice] = useState(10000);
     const [renterType, setRenterType] = useState("");
     const [size, setSize] = useState("");
+
+    const bedsOptions = [
+        { label: "Any", value: "Any" },
+        { label: "1", value: "1" },
+        { label: "2", value: "2" },
+        { label: "3", value: "3" },
+        { label: "4+", value: "4+" },
+    ];
+
+    const bathsOptions = [
+        { label: "Any", value: "Any" },
+        { label: "1", value: "1" },
+        { label: "2", value: "2" },
+        { label: "3", value: "3" },
+        { label: "4+", value: "4+" },
+    ];
+
+    const renterTypeOptions = [
+        { label: "Individual", value: "Individual" },
+        { label: "Family", value: "Family" },
+        { label: "Student", value: "Student" },
+        { label: "Professional", value: "Professional" },
+    ];
+
+    const sizeOptions = [
+        { label: "0-500", value: "0-500" },
+        { label: "500-1000", value: "500-1000" },
+        { label: "1000-1500", value: "1000-1500" },
+        { label: "1500-2000", value: "1500-2000" },
+        { label: "2000+", value: "2000+" },
+    ];
+
+    const MAX_VAL = 20000;
+    const MIN_VAL = 0;
 
     const handleUpdate = () => {
         console.log("Updating preferences...", {
@@ -30,11 +66,11 @@ const PublicRenterProfile: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-white p-6 lg:p-10">
+        <div className="min-h-screen bg-white p-3 sm:p-4 md:p-6 lg:p-10">
             <div className="max-w-7xl mx-auto space-y-8">
                 {/* Breadcrumb */}
-                <nav aria-label="Breadcrumb">
-                    <ol className="flex items-center gap-2 text-base font-medium ml-1">
+                <nav aria-label="Breadcrumb" className="overflow-x-auto whitespace-nowrap scrollbar-hide">
+                    <ol className="flex items-center gap-1 sm:gap-2 text-sm sm:text-base font-medium ml-1">
                         <li>
                             <Link to="/userdashboard" className="text-[var(--dashboard-accent)] font-medium hover:opacity-80 transition-opacity">Dashboard</Link>
                         </li>
@@ -48,40 +84,36 @@ const PublicRenterProfile: React.FC = () => {
                 </nav>
 
                 {/* Main Container */}
-                <div className="bg-[#F4F4F4] border border-[#E5E7EB] pb-10 rounded-[20px] overflow-hidden shadow-[0px_3.68px_3.68px_0px_rgba(0,0,0,0.2)]">
-                    <div className="px-6 py-3 border-b border-[#E5E7EB]">
-                        <h1 className="text-2xl font-medium text-[#1A1A1A]">Public renter profile</h1>
+                <div className="bg-[#F4F4F4] border border-[#E5E7EB] pb-6 sm:pb-8 md:pb-10 rounded-[12px] md:rounded-[16px] lg:rounded-[20px] shadow-[0px_3.68px_3.68px_0px_rgba(0,0,0,0.2)]">
+                    <div className="px-4 sm:px-6 py-2.5 sm:py-3 border-b border-[#E5E7EB]">
+                        <h1 className="text-xl sm:text-2xl font-medium text-[#1A1A1A]">Public renter profile</h1>
                     </div>
 
                     {/* Content */}
-                    <div className="px-8 py-8 space-y-8">
+                    <div className="px-4 sm:px-6 md:px-8 py-5 sm:py-6 md:py-8 space-y-6 sm:space-y-8">
                         {/* Search Preferences Section */}
-                        <div className="space-y-6">
+                        <div className="space-y-4 sm:space-y-6">
                             <div>
-                                <h2 className="text-xl font-semibold text-[#1A1A1A] mb-1">Search preferences</h2>
-                                <p className="text-sm text-[#6B7280]">
+                                <h2 className="text-lg sm:text-xl font-semibold text-[#1A1A1A] mb-1">Search preferences</h2>
+                                <p className="text-xs sm:text-sm text-[#6B7280]">
                                     Set the default number of days early to post the recurring transactions before the invoice due date.
                                 </p>
                             </div>
 
                             {/* Looking for a new place toggle */}
                             <div className="flex items-center gap-3">
-                                <button
-                                    onClick={() => setLookingForPlace(!lookingForPlace)}
-                                    className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors ${lookingForPlace ? "bg-[#4CAF50]" : "bg-gray-300"
-                                        }`}
-                                >
-                                    <span
-                                        className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${lookingForPlace ? "translate-x-8" : "translate-x-1"
-                                            }`}
-                                    />
-                                </button>
-                                <span className="text-sm font-medium text-[#1A1A1A]">Looking for a new place</span>
+                                <Toggle
+                                    checked={lookingForPlace}
+                                    onChange={setLookingForPlace}
+                                    label="Looking for a new place"
+                                    labelClassName="text-sm font-medium text-[#1A1A1A]"
+                                    size="small"
+                                />
                             </div>
 
                             {/* Specify the following details */}
-                            <div className="w-3/4">
-                                <p className="text-sm font-medium text-[#6B7280] mb-4">Specify the following details</p>
+                            <div className="w-full lg:w-3/4">
+                                <p className="text-xs sm:text-sm font-medium text-[#6B7280] mb-4">Specify the following details</p>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                                     {/* Location */}
@@ -112,65 +144,61 @@ const PublicRenterProfile: React.FC = () => {
                                     {/* Beds */}
                                     <div>
                                         <label className="block text-sm font-medium text-[#1A1A1A] mb-2">Beds</label>
-                                        <select
+                                        <CustomDropdown
                                             value={beds}
-                                            onChange={(e) => setBeds(e.target.value)}
-                                            className="w-full px-4 py-3 bg-white border border-[#E5E7EB] rounded-lg text-sm text-[#1A1A1A] focus:outline-none focus:ring-2 focus:ring-[var(--dashboard-accent)] focus:border-transparent appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27currentColor%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3e%3cpolyline points=%276 9 12 15 18 9%27%3e%3c/polyline%3e%3c/svg%3e')] bg-[length:1.2em] bg-[right_0.7rem_center] bg-no-repeat"
-                                        >
-                                            <option>Any</option>
-                                            <option>1</option>
-                                            <option>2</option>
-                                            <option>3</option>
-                                            <option>4+</option>
-                                        </select>
+                                            onChange={setBeds}
+                                            options={bedsOptions}
+                                            searchable={false}
+                                            placeholder="Select Beds"
+                                            buttonClassName="w-full px-4 py-3 border-[#E5E7EB]"
+                                        />
                                     </div>
 
                                     {/* Baths */}
                                     <div>
                                         <label className="block text-sm font-medium text-[#1A1A1A] mb-2">Baths</label>
-                                        <select
+                                        <CustomDropdown
                                             value={baths}
-                                            onChange={(e) => setBaths(e.target.value)}
-                                            className="w-full px-4 py-3 bg-white border border-[#E5E7EB] rounded-lg text-sm text-[#1A1A1A] focus:outline-none focus:ring-2 focus:ring-[var(--dashboard-accent)] focus:border-transparent appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27currentColor%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3e%3cpolyline points=%276 9 12 15 18 9%27%3e%3c/polyline%3e%3c/svg%3e')] bg-[length:1.2em] bg-[right_0.7rem_center] bg-no-repeat"
-                                        >
-                                            <option>Any</option>
-                                            <option>1</option>
-                                            <option>2</option>
-                                            <option>3</option>
-                                            <option>4+</option>
-                                        </select>
+                                            onChange={setBaths}
+                                            options={bathsOptions}
+                                            searchable={false}
+                                            placeholder="Select Baths"
+                                            buttonClassName="w-full px-4 py-3 border-[#E5E7EB]"
+                                        />
                                     </div>
                                 </div>
 
                                 {/* Price Range */}
                                 <div className="mb-6">
-                                    <div className="flex items-center gap-8 mb-4">
+                                    <div className="flex flex-wrap items-center gap-x-6 gap-y-4 mb-4">
                                         <div className="flex items-center gap-2">
-                                            <span className="text-sm font-medium text-[#1A1A1A]">Min:</span>
+                                            <span className="text-xs sm:text-sm font-medium text-[#1A1A1A]">Min:</span>
                                             <input
                                                 type="number"
                                                 value={minPrice}
                                                 onChange={(e) => {
                                                     const value = Number(e.target.value);
-                                                    if (value <= maxPrice) {
+                                                    if (value >= MIN_VAL && value <= maxPrice) {
                                                         setMinPrice(value);
                                                     }
                                                 }}
-                                                className="w-24 px-3 py-2 bg-white border-2 border-[#4CAF50] rounded-lg text-sm font-semibold text-[#4CAF50] focus:outline-none focus:ring-2 focus:ring-[var(--dashboard-accent)]"
+                                                className="w-20 sm:w-24 px-2 sm:px-3 py-1.5 sm:py-2 bg-white border-2 border-[#7BD747] rounded-lg text-xs sm:text-sm font-semibold text-[#7BD747] focus:outline-none focus:ring-2 focus:ring-[var(--dashboard-accent)]"
                                             />
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <span className="text-sm font-medium text-[#1A1A1A]">Max:</span>
+                                            <span className="text-xs sm:text-sm font-medium text-[#1A1A1A]">Max:</span>
                                             <input
                                                 type="number"
                                                 value={maxPrice}
                                                 onChange={(e) => {
                                                     const value = Number(e.target.value);
-                                                    if (value >= minPrice) {
+                                                    if (value >= minPrice && value <= MAX_VAL) {
                                                         setMaxPrice(value);
+                                                    } else if (value > MAX_VAL) {
+                                                        setMaxPrice(MAX_VAL);
                                                     }
                                                 }}
-                                                className="w-24 px-3 py-2 bg-white border-2 border-[#4CAF50] rounded-lg text-sm font-semibold text-[#4CAF50] focus:outline-none focus:ring-2 focus:ring-[var(--dashboard-accent)]"
+                                                className="w-20 sm:w-24 px-2 sm:px-3 py-1.5 sm:py-2 bg-white border-2 border-[#7BD747] rounded-lg text-xs sm:text-sm font-semibold text-[#7BD747] focus:outline-none focus:ring-2 focus:ring-[var(--dashboard-accent)]"
                                             />
                                         </div>
                                     </div>
@@ -179,16 +207,16 @@ const PublicRenterProfile: React.FC = () => {
                                     <div className="relative w-full h-2">
                                         <div className="absolute w-full h-2 bg-gray-300 rounded-full"></div>
                                         <div
-                                            className="absolute h-2 bg-[#4CAF50] rounded-full"
+                                            className="absolute h-2 bg-[#7BD747] rounded-full"
                                             style={{
-                                                left: `${(minPrice / 20000) * 100}%`,
-                                                right: `${100 - (maxPrice / 20000) * 100}%`
+                                                left: `${(minPrice / MAX_VAL) * 100}%`,
+                                                right: `${Math.max(0, 100 - (maxPrice / MAX_VAL) * 100)}%`
                                             }}
                                         ></div>
                                         <input
                                             type="range"
-                                            min="0"
-                                            max="20000"
+                                            min={MIN_VAL}
+                                            max={MAX_VAL}
                                             value={minPrice}
                                             onChange={(e) => {
                                                 const value = Number(e.target.value);
@@ -196,12 +224,12 @@ const PublicRenterProfile: React.FC = () => {
                                                     setMinPrice(value);
                                                 }
                                             }}
-                                            className="absolute w-full h-2 appearance-none bg-transparent pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-[#4CAF50] [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md"
+                                            className="absolute w-full h-2 appearance-none bg-transparent pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-[#7BD747] [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md"
                                         />
                                         <input
                                             type="range"
-                                            min="0"
-                                            max="20000"
+                                            min={MIN_VAL}
+                                            max={MAX_VAL}
                                             value={maxPrice}
                                             onChange={(e) => {
                                                 const value = Number(e.target.value);
@@ -209,7 +237,7 @@ const PublicRenterProfile: React.FC = () => {
                                                     setMaxPrice(value);
                                                 }
                                             }}
-                                            className="absolute w-full h-2 appearance-none bg-transparent pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-[#4CAF50] [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md"
+                                            className="absolute w-full h-2 appearance-none bg-transparent pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-[#7BD747] [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md"
                                         />
                                     </div>
                                 </div>
@@ -218,55 +246,45 @@ const PublicRenterProfile: React.FC = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                                     {/* Renter Type */}
                                     <div>
-                                        <select
+                                        <CustomDropdown
                                             value={renterType}
-                                            onChange={(e) => setRenterType(e.target.value)}
-                                            className="w-full px-4 py-3 bg-white border border-[#E5E7EB] rounded-lg text-sm text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[var(--dashboard-accent)] focus:border-transparent appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27currentColor%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3e%3cpolyline points=%276 9 12 15 18 9%27%3e%3c/polyline%3e%3c/svg%3e')] bg-[length:1.2em] bg-[right_0.7rem_center] bg-no-repeat"
-                                        >
-                                            <option value="">Renter Type</option>
-                                            <option>Individual</option>
-                                            <option>Family</option>
-                                            <option>Student</option>
-                                            <option>Professional</option>
-                                        </select>
+                                            onChange={setRenterType}
+                                            options={renterTypeOptions}
+                                            searchable={false}
+                                            placeholder="Renter Type"
+                                            buttonClassName="w-full px-4 py-3 border-[#E5E7EB]"
+                                        />
                                     </div>
 
                                     {/* Size */}
                                     <div>
-                                        <select
+                                        <CustomDropdown
                                             value={size}
-                                            onChange={(e) => setSize(e.target.value)}
-                                            className="w-full px-4 py-3 bg-white border border-[#E5E7EB] rounded-lg text-sm text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[var(--dashboard-accent)] focus:border-transparent appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27currentColor%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3e%3cpolyline points=%276 9 12 15 18 9%27%3e%3c/polyline%3e%3c/svg%3e')] bg-[length:1.2em] bg-[right_0.7rem_center] bg-no-repeat"
-                                        >
-                                            <option value="">Size (sqft)</option>
-                                            <option>0-500</option>
-                                            <option>500-1000</option>
-                                            <option>1000-1500</option>
-                                            <option>1500-2000</option>
-                                            <option>2000+</option>
-                                        </select>
+                                            onChange={setSize}
+                                            options={sizeOptions}
+                                            searchable={false}
+                                            placeholder="Size (sqft)"
+                                            buttonClassName="w-full px-4 py-3 border-[#E5E7EB]"
+                                        />
                                     </div>
                                 </div>
 
                                 {/* Pets Allowed toggle */}
                                 <div className="flex items-center gap-3 mb-6">
-                                    <button
-                                        onClick={() => setPetsAllowed(!petsAllowed)}
-                                        className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors ${petsAllowed ? "bg-[#4CAF50]" : "bg-gray-300"
-                                            }`}
-                                    >
-                                        <span
-                                            className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${petsAllowed ? "translate-x-8" : "translate-x-1"
-                                                }`}
-                                        />
-                                    </button>
-                                    <span className="text-sm font-medium text-[#1A1A1A]">Pets Allowed</span>
+                                    <Toggle
+                                        checked={petsAllowed}
+                                        onChange={setPetsAllowed}
+                                        label="Pets Allowed"
+                                        labelClassName="text-sm font-medium text-[#1A1A1A]"
+                                        size="small"
+                                    />
                                 </div>
 
                                 {/* Update Button */}
                                 <PrimaryActionButton
                                     onClick={handleUpdate}
                                     text="Update"
+                                    className="w-full sm:w-auto"
                                 />
                             </div>
                         </div>
