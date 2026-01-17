@@ -77,7 +77,6 @@ const ServiceFilters: React.FC<ServiceFiltersProps> = ({
         if (onCategoryChange) onCategoryChange('All');
         if (onPropertyChange) onPropertyChange('All');
         if (onPriorityChange) onPriorityChange('All');
-        if (onPriorityChange) onPriorityChange('All');
         if (onSearch) onSearch('');
         setSearchTerm('');
     };

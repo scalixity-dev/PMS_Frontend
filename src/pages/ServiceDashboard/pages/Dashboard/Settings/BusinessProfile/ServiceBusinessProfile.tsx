@@ -253,7 +253,11 @@ const ServiceBusinessProfile = () => {
                                 { label: 'Job Preference', value: 'job_preference' }
                             ]}
                             activeTab="business_profile"
-                            onTabChange={() => { }}
+                            onTabChange={(val) => {
+                                if (val === 'job_preference') {
+                                    navigate('/service-dashboard/settings/job-preference'); // Adjust route if needed, assuming standard pattern
+                                }
+                            }}
                             className="border-none"
                         />
                     </div>
@@ -350,13 +354,17 @@ const ServiceBusinessProfile = () => {
                                         </div>
                                     )}
                                     <div
-                                        className="flex items-center gap-2 ml-1 cursor-pointer"
+                                        role="switch"
+                                        aria-checked={formData.displayPhone}
+                                        tabIndex={0}
+                                        className="flex items-center gap-2 ml-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-green-500 rounded p-1"
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                e.preventDefault();
+                                                handleInputChange('displayPhone', !formData.displayPhone);
+                                            }
+                                        }}
                                         onClick={() => {
-                                            // Always allow toggling, regardless of edit mode, or restrict if desired. 
-                                            // The user said "display phone number toggle is not working", usually this means interaction.
-                                            // Based on previous code, it only worked if isEditingPersonal was true. 
-                                            // I will allow it always for better UX or check requirements. 
-                                            // Assuming it should work when clicked.
                                             handleInputChange('displayPhone', !formData.displayPhone);
                                         }}
                                     >

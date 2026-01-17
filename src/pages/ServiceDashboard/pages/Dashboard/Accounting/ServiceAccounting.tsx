@@ -23,7 +23,9 @@ const ServiceAccounting = () => {
 
         const matchesStatus = statusFilter === 'All' || t.status === statusFilter;
         // Assuming 'type' field maps to schedule options (One-time/Recurring)
-        const matchesSchedule = scheduleFilter === 'All' || t.type === scheduleFilter;
+        // t.type can be "Expense / One Time" so we check for inclusion or if t.category matches (legacy check)
+        // But mock data says category is service type. t.type contains schedule.
+        const matchesSchedule = scheduleFilter === 'All' || (t.type && t.type.includes(scheduleFilter));
         // Basic Date Filter (assuming t.dueDate is a string like "Oct 24, 2024", hard to parse accurately without date lib or consistent format)
         // For now, implementing 'All' pass-through. Real date filtering would require parsing t.dueDate.
         const matchesDate = dateFilter === 'All' || true;

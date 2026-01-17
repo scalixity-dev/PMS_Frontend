@@ -289,10 +289,10 @@ const ServiceRequestsBoard = () => {
                                 <path d="M2.5 14.1667H17.5" stroke="#4B5563" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                         </button>
-                        <DashboardButton bgColor="#8BDC5E" textColor="text-white" onClick={() => { }}>
+                        <DashboardButton bgColor="#8BDC5E" textColor="text-white" onClick={() => alert("Feature Coming Soon")}>
                             Find a Job
                         </DashboardButton>
-                        <DashboardButton bgColor="white" textColor="text-gray-700" icon={PiPlus} onClick={() => { }}>
+                        <DashboardButton bgColor="white" textColor="text-gray-700" icon={PiPlus} onClick={() => alert("Feature Coming Soon")}>
                             Add Request
                         </DashboardButton>
                     </div>
