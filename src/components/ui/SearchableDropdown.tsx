@@ -17,6 +17,8 @@ interface SearchableDropdownProps {
     dropUp?: boolean;
     labelClassName?: string;
     onToggle?: (isOpen: boolean) => void;
+    startIcon?: React.ReactNode;
+    hideArrow?: boolean;
 }
 
 const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
@@ -29,7 +31,9 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
     buttonClassName,
     dropUp = false,
     labelClassName,
-    onToggle
+    onToggle,
+    startIcon,
+    hideArrow = false
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -75,8 +79,13 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
                     }}
                     className={buttonClassName || "w-full flex items-center justify-between text-white bg-[#7BD747] px-4 py-3 rounded-xl font-medium shadow-sm hover:opacity-90 transition-opacity"}
                 >
-                    <span className={buttonClassName ? "" : "text-white"}>{value || placeholder || 'Select'}</span>
-                    <ChevronDown size={20} className={`${buttonClassName ? "" : "text-white"} transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                    <div className="flex items-center gap-2">
+                        {startIcon}
+                        <span className={buttonClassName ? "" : "text-white"}>{value || placeholder || 'Select'}</span>
+                    </div>
+                    {!hideArrow && (
+                        <ChevronDown size={20} className={`${buttonClassName ? "" : "text-white"} transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                    )}
                 </button>
 
                 {isOpen && (
@@ -94,7 +103,7 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
                                 />
                             </div>
                         </div>
-                        <div className="max-h-60 overflow-y-auto py-1">
+                        <div className="max-h-60 overflow-y-auto py-1 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-300">
                             {filteredOptions.length === 0 ? (
                                 <div className="px-4 py-3 text-sm text-gray-500 text-center">No options found</div>
                             ) : (
@@ -109,14 +118,12 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
                                                     setSearchTerm('');
                                                     onToggle?.(false);
                                                 }}
-                                                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-left transition-colors"
+                                                className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 text-left transition-colors"
                                             >
-                                                <div className="w-5 flex justify-center">
-                                                    {value === option && <Check size={16} className="text-[#3A6D6C]" />}
-                                                </div>
                                                 <span className={`text-base sm:text-sm ${value === option ? 'text-[#3A6D6C] font-semibold' : 'text-gray-700'}`}>
                                                     {option}
                                                 </span>
+                                                {value === option && <Check size={16} className="text-[#3A6D6C]" />}
                                             </button>
                                         );
                                     } else {
@@ -134,14 +141,12 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
                                                             setSearchTerm('');
                                                             onToggle?.(false);
                                                         }}
-                                                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-left transition-colors"
+                                                        className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 text-left transition-colors"
                                                     >
-                                                        <div className="w-5 flex justify-center">
-                                                            {value === subOption && <Check size={16} className="text-[#3A6D6C]" />}
-                                                        </div>
                                                         <span className={`text-base sm:text-sm ${value === subOption ? 'text-[#3A6D6C] font-semibold' : 'text-gray-700'}`}>
                                                             {subOption}
                                                         </span>
+                                                        {value === subOption && <Check size={16} className="text-[#3A6D6C]" />}
                                                     </button>
                                                 ))}
                                             </div>

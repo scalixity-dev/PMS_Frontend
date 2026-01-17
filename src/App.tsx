@@ -159,6 +159,10 @@ import RolesPermissions from './pages/Dashboard/settings/team-management/RolesPe
 import PropertyPermissions from './pages/Dashboard/settings/team-management/PropertyPermissions';
 import RequestSettings from './pages/Dashboard/settings/request-settings/RequestSettings';
 import AutomationSettings from './pages/Dashboard/settings/request-settings/AutomationSettings';
+import ServiceRequests from './pages/ServiceDashboard/features/ServiceRequests/ServiceRequests';
+import ServiceRequestsBoard from './pages/ServiceDashboard/features/ServiceRequests/ServiceRequestsBoard';
+import ServiceAccounting from './pages/ServiceDashboard/features/Accounting/ServiceAccounting';
+import ServiceTransactionDetail from './pages/ServiceDashboard/features/Accounting/ServiceTransactionDetail';
 import GeneralReports from './pages/Dashboard/settings/report/general';
 import Reports from './pages/Dashboard/features/Reports/Reports';
 import Rentability from './pages/Dashboard/features/Reports/Rentability';
@@ -207,7 +211,11 @@ const App: React.FC = () => {
 
             {/* Service Dashboard Routes */}
             <Route element={<ServiceDashboardLayout />}>
-              <Route path="/service-dashboard/dashboard" element={<ProtectedRoute><ServiceDashboard /></ProtectedRoute>} />
+              <Route path="/service-dashboard" element={<ProtectedRoute><ServiceDashboard /></ProtectedRoute>} />
+              <Route path="/service-dashboard/requests" element={<ProtectedRoute><ServiceRequests /></ProtectedRoute>} />
+              <Route path="/service-dashboard/requests-board" element={<ProtectedRoute><ServiceRequestsBoard /></ProtectedRoute>} />
+              <Route path="/service-dashboard/accounting" element={<ProtectedRoute><ServiceAccounting /></ProtectedRoute>} />
+              <Route path="/service-dashboard/accounting/transaction/:id" element={<ProtectedRoute><ServiceTransactionDetail /></ProtectedRoute>} />
               <Route path="/service-dashboard/settings" element={<ProtectedRoute><ServiceDashboardSettings /></ProtectedRoute>} />
               <Route path="/service-dashboard/settings/profile" element={<ProtectedRoute><ServiceDashboardProfileSettings /></ProtectedRoute>} />
             </Route>

@@ -284,7 +284,7 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
                         <SidebarLink
                             label="Dashboard"
                             icon={<PiChartLineUpFill size={24} />}
-                            to="/service-dashboard/dashboard"
+                            to="/service-dashboard"
                             activeDropdown={activeDropdown}
                             setActiveDropdown={setActiveDropdown}
                         />
@@ -296,9 +296,12 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
                             setActiveDropdown={setActiveDropdown}
                         >
                             <SubLink label="Tasks" to="/service-dashboard/tasks" />
-                            <SubLink label="Request" to="/service-dashboard/tasks/request" />
-                            <SubLink label="Request Board" to="/service-dashboard/tasks/board" />
+                            <SubLink label="Requests" to="/service-dashboard/requests" />
+                            <SubLink label="Request Board" to="/service-dashboard/requests-board" />
                         </SidebarLink>
+
+
+
                         <SidebarLink
                             label="Accounting"
                             icon={<PiCurrencyDollarFill size={24} />}
