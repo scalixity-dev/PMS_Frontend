@@ -104,10 +104,8 @@ const OtpPage: React.FC = () => {
 
     try {
       if (otpType === 'device') {
-        // For device verification, we need to trigger login again to resend OTP
-        // This is a limitation - we'd need a separate endpoint for resending device OTP
-        alert('Please try logging in again to receive a new device verification code.');
-        navigate('/login', { replace: true });
+        // Resend device verification OTP
+        await authService.resendDeviceOtp(userId);
       } else {
         // Resend email OTP
         await authService.resendEmailOtp(userId);

@@ -11,6 +11,7 @@ export const API_ENDPOINTS = {
     VERIFY_EMAIL: (userId: string) => `${API_BASE_URL}/auth/verify-email/${userId}`,
     RESEND_EMAIL_OTP: (userId: string) => `${API_BASE_URL}/auth/resend-email-otp/${userId}`,
     VERIFY_DEVICE: (userId: string) => `${API_BASE_URL}/auth/verify-device/${userId}`,
+    RESEND_DEVICE_OTP: (userId: string) => `${API_BASE_URL}/auth/resend-device-otp/${userId}`,
     CHECK_DEVICE: (userId: string) => `${API_BASE_URL}/auth/check-device/${userId}`,
     ACTIVATE_ACCOUNT: (userId: string) => `${API_BASE_URL}/auth/activate-account/${userId}`,
     GET_CURRENT_USER: `${API_BASE_URL}/auth/me`,

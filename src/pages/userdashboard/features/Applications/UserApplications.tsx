@@ -187,9 +187,18 @@ const Applications: React.FC = () => {
         } else if (response.status === 401) {
           // User not authenticated - no applications
           setApplications([]);
+        } else {
+          // Log non-401 errors for debugging
+          console.error(`Failed to fetch applications: ${response.status} ${response.statusText}`);
+          const errorData = await response.json().catch(() => ({}));
+          console.error("Error details:", errorData);
+          setApplications([]);
         }
       } catch (error) {
-        if (error instanceof Error && error.name === 'AbortError') return;
+        if (error instanceof Error && error.name === 'AbortError') {
+          console.log("Request was aborted (component unmounted)");
+          return;
+        }
         console.error("Failed to fetch applications:", error);
         setApplications([]);
       }
