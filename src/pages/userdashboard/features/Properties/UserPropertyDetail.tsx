@@ -79,11 +79,11 @@ const ImageGalleryModal: React.FC<{
     };
 
     return (
-        <div className="fixed inset-0 z-40 bg-black/10 lg:left-[var(--sidebar-width)] transition-all duration-300">
+        <div className="fixed top-[var(--header-height)] left-0 lg:left-[var(--sidebar-width)] right-0 bottom-0 z-50 bg-black/10 flex items-center justify-center p-4 lg:p-10 transition-all duration-300">
 
 
-            <div className="w-full flex justify-center mt-6 lg:mt-20 px-10 p-10 transition-all duration-300">
-                <div className="bg-white w-full max-w-7xl max-h-[calc(100vh-160px)] rounded-xl shadow-2xl relative flex flex-col overflow-hidden transition-all duration-300">
+            <div className="w-full h-full flex items-center justify-center transition-all duration-300">
+                <div className="bg-white w-full max-w-7xl max-h-full rounded-xl shadow-2xl relative flex flex-col overflow-hidden transition-all duration-300">
 
                     {/* Header */}
                     <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-shrink-0">

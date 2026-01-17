@@ -1,88 +1,195 @@
-import { useRef } from 'react';
+import { useRef, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { handleDocumentPrint } from '../../../Dashboard/features/Documents/utils/printPreviewUtils';
-import { ChevronLeft, Printer, User, ChevronDown, CheckCircle2, Calendar, DollarSign, FileText, Download } from 'lucide-react';
+import { ChevronLeft, Printer, User, ChevronDown, CheckCircle2, Calendar, DollarSign, FileText, Download, Loader2 } from 'lucide-react';
 import { formatMoney } from '../../../../utils/currency.utils';
-import { mockTransactions } from '../../utils/mockData';
 import { TransactionNotFound } from './components/TransactionNotFound';
+import { useGetTransaction } from '../../../../hooks/useTransactionQueries';
+import type { BackendTransaction } from '../../../../services/transaction.service';
 
 const TransactionDetails = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const contentRef = useRef<HTMLDivElement>(null);
 
-    const foundTransaction = mockTransactions.find(t => t.id === id);
+    // Fetch transaction from API
+    const { data: backendTransaction, isLoading, error } = useGetTransaction(id);
+
+    // Transform backend transaction to frontend format
+    const transaction = useMemo(() => {
+        if (!backendTransaction) return null;
+
+        const tx = backendTransaction as BackendTransaction;
+
+        // Map backend status to frontend status
+        const statusMap: Record<string, 'Open' | 'Overdue' | 'Paid' | 'Partial'> = {
+            'Pending': 'Open',
+            'Paid': 'Paid',
+            'Void': 'Open',
+            'PARTIALLY_PAID': 'Partial',
+            'PENDING': 'Open',
+            'PAID': 'Paid',
+            'VOID': 'Open',
+            'REFUNDED': 'Paid'
+        };
+
+        let status: 'Open' | 'Overdue' | 'Paid' | 'Partial' = statusMap[tx.status] || 'Open';
+
+        // Check if overdue
+        if (status === 'Open' && tx.dueDate) {
+            const dueDate = new Date(tx.dueDate);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            dueDate.setHours(0, 0, 0, 0);
+            if (dueDate < today && parseFloat(tx.balance) > 0) {
+                status = 'Overdue';
+            }
+        }
+
+        // Calculate amounts
+        const totalAmount = Math.abs(parseFloat(tx.amount));
+        const balance = parseFloat(tx.balance);
+        const paidAmount = totalAmount - balance;
+        const outstandingAmount = Math.max(0, balance);
+
+        // Get contact information
+        let contactName = 'N/A';
+        let contactEmail = 'N/A';
+        if (tx.payer) {
+            contactName = tx.payer.fullName || tx.payer.email || 'N/A';
+            contactEmail = tx.payer.email || 'N/A';
+        } else if (tx.payee) {
+            contactName = tx.payee.fullName || tx.payee.email || 'N/A';
+            contactEmail = tx.payee.email || 'N/A';
+        } else if (tx.contact) {
+            const nameParts = [
+                tx.contact.firstName,
+                tx.contact.middleName,
+                tx.contact.lastName,
+            ].filter(Boolean);
+            contactName = nameParts.length > 0 ? nameParts.join(' ') : tx.contact.email || 'N/A';
+            contactEmail = tx.contact.email || 'N/A';
+        }
+
+        // Format due date
+        const dueDateFormatted = tx.dueDate
+            ? new Date(tx.dueDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+            : 'N/A';
+
+        // Determine transaction type
+        const schedule = tx.isRecurring ? 'Monthly' : 'One-time';
+        const typeLabel = tx.type === 'INVOICE' 
+            ? (tx.payerId ? 'Income' : 'Expense')
+            : tx.type;
+        const type = `${typeLabel} / ${schedule}`;
+
+        // Format attachments
+        const attachments = (tx.attachments || []).map((att, index) => {
+            // Try to determine file size from URL or use default
+            const fileExtension = att.fileName?.split('.').pop()?.toLowerCase() || 'file';
+            const fileType = fileExtension === 'pdf' ? 'PDF' 
+                : ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension) ? 'Image'
+                : ['doc', 'docx'].includes(fileExtension) ? 'Document'
+                : 'File';
+            
+            return {
+                id: att.id || `att-${index}`,
+                name: att.fileName || `attachment-${index}.${fileExtension}`,
+                size: 'N/A', // Backend doesn't provide size, could be enhanced
+                type: fileType,
+                url: att.fileUrl
+            };
+        });
+
+        return {
+            id: tx.id,
+            status,
+            dueDate: dueDateFormatted,
+            category: tx.subcategory || tx.category || 'General',
+            subCategory: tx.subcategory || 'General',
+            contact: {
+                name: contactName,
+                email: contactEmail,
+                initials: contactName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()
+            },
+            amount: -Math.abs(totalAmount), // Negative for expenses/rent
+            paidAmount: paidAmount > 0 ? paidAmount : 0,
+            totalAmount,
+            outstandingAmount,
+            invoiceNumber: tx.transactionId || `INV-${tx.id}`,
+            property: tx.property?.propertyName || 'N/A',
+            unit: tx.unit?.unitName || '-',
+            type,
+            currency: tx.currency || 'INR',
+            attachments
+        };
+    }, [backendTransaction]);
+
+    // Calculate progress
+    const progress = useMemo(() => {
+        if (!transaction) return 0;
+        return transaction.totalAmount > 0
+            ? Math.min(100, Math.max(0, (transaction.paidAmount / transaction.totalAmount) * 100))
+            : 0;
+    }, [transaction]);
+
+    // Format payment records from backend
+    const paymentRecords = useMemo(() => {
+        if (!backendTransaction || !backendTransaction.payments || backendTransaction.payments.length === 0) {
+            return [];
+        }
+
+        return backendTransaction.payments.map((payment) => {
+            const paymentDate = typeof payment.paymentDate === 'string' 
+                ? new Date(payment.paymentDate)
+                : payment.paymentDate;
+            
+            return {
+                id: payment.id,
+                date: paymentDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+                status: 'Success' as const,
+                amount: parseFloat(payment.amount),
+                method: payment.method,
+                referenceNumber: payment.referenceNumber,
+                notes: payment.notes
+            };
+        });
+    }, [backendTransaction]);
 
     const handlePrint = () => {
-        const title = foundTransaction ? `INV-${foundTransaction.id}` : `Transaction-${id}`;
+        const title = transaction ? transaction.invoiceNumber : `Transaction-${id}`;
         handleDocumentPrint(contentRef, { title });
     };
 
+    // Loading state
+    if (isLoading) {
+        return (
+            <div className="flex flex-col gap-6 w-full min-h-screen bg-white p-4 lg:p-8">
+                <div className="flex items-center justify-center min-h-[400px]">
+                    <div className="flex flex-col items-center gap-4">
+                        <Loader2 className="w-8 h-8 animate-spin text-[var(--dashboard-accent)]" />
+                        <p className="text-gray-600">Loading transaction...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
-
-    if (!foundTransaction) {
+    // Error state
+    if (error || !transaction) {
         return <TransactionNotFound />;
     }
 
-    // Amount Handling Logic
-    const totalAmount = Math.abs(foundTransaction.amount);
-    let paidAmount = 0;
-
-    if (foundTransaction.status === 'Paid') {
-        paidAmount = totalAmount;
-    } else if (foundTransaction.status === 'Partial') {
-        paidAmount = foundTransaction.paidAmount ?? 0;
-    }
-    // Open / Overdue -> paidAmount = 0
-
-    const outstandingAmount = Math.max(0, totalAmount - paidAmount);
-
-    // Progress Bar Safe Calculation
-    const progress = totalAmount > 0
-        ? Math.min(100, Math.max(0, (paidAmount / totalAmount) * 100))
-        : 0;
-
-    // Prepare transaction object for display
-    const transaction = {
-        ...foundTransaction,
-        subCategory: "General", // Default as missing in mock
-        contact: {
-            ...foundTransaction.contact,
-            email: "siddakbagga@gmail.com", // Default as missing in mock
-        },
-        amount: foundTransaction.amount, // Keep signed amount
-        paidAmount,
-        totalAmount,
-        outstandingAmount,
-        invoiceNumber: `INV-${foundTransaction.id}`,
-        property: "Luxury Apartment", // Default
-        unit: "-",
-        type: `Expense / ${foundTransaction.schedule}`,
-        attachments: [
-            { id: 1, name: "Invoice-DEC-2025.pdf", size: "2.4 MB", type: "PDF", url: "https://pdfobject.com/pdf/sample.pdf" },
-            { id: 2, name: "Receipt-1234.png", size: "1.2 MB", type: "Image", url: "https://images.unsplash.com/photo-1600596542815-e32904fc4969" }
-        ]
-    };
-
-    const paymentRecords = transaction.paidAmount > 0 ? [
-        {
-            id: `pay-${transaction.id}`,
-            date: transaction.dueDate, // Ideally this would be the actual payment date from backend history
-            status: "Success",
-            amount: transaction.paidAmount
-        }
-    ] : [];
-
     const handleDownload = (file: { name: string; url?: string }) => {
-        // Since we're using mock data, we'll simulate a download
-        // In a real app, this would be a link to the actual file
-        const link = document.createElement('a');
-        link.href = file.url || '#';
-        link.download = file.name;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        console.log(`Downloading: ${file.name}`);
+        if (file.url) {
+            const link = document.createElement('a');
+            link.href = file.url;
+            link.download = file.name;
+            link.target = '_blank';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
     };
 
     return (
@@ -233,37 +340,47 @@ const TransactionDetails = () => {
                         </div>
                         <div className="p-4">
                             <div className="rounded-lg border border-gray-100 overflow-hidden bg-white">
-                                {paymentRecords.map((record) => (
-                                    <div key={record.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-gray-50 transition-colors gap-4 sm:gap-0">
-                                        <div className="flex items-center gap-4">
-                                            <div className="p-1.5 rounded-full border border-gray-900 text-gray-900">
-                                                <DollarSign size={16} strokeWidth={3} />
-                                            </div>
-                                            <span className="font-semibold text-gray-900 text-lg">{record.date}</span>
-                                        </div>
-                                        <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
+                                {paymentRecords.length > 0 ? (
+                                    paymentRecords.map((record) => (
+                                        <div key={record.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-gray-50 transition-colors gap-4 sm:gap-0">
                                             <div className="flex items-center gap-4">
-                                                <span className="font-semibold text-gray-900">
-                                                    {formatMoney(record.amount, transaction.currency)}
-                                                </span>
-                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#DCFCE7] text-[#16A34A] rounded-full text-xs font-bold">
-                                                    <CheckCircle2 size={12} strokeWidth={3} />
-                                                    {record.status}
-                                                </span>
-                                                <div className="w-8 h-8 rounded-full overflow-hidden border border-gray-200">
-                                                    <img
-                                                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${transaction.contact.name}`}
-                                                        alt={transaction.contact.name}
-                                                        className="w-full h-full object-cover"
-                                                    />
+                                                <div className="p-1.5 rounded-full border border-gray-900 text-gray-900">
+                                                    <DollarSign size={16} strokeWidth={3} />
                                                 </div>
+                                                <span className="font-semibold text-gray-900 text-lg">{record.date}</span>
                                             </div>
-                                            <button className="p-1 hover:bg-gray-100 rounded-md transition-colors print:hidden">
-                                                <ChevronDown size={20} className="text-gray-900" />
-                                            </button>
+                                            <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
+                                                <div className="flex items-center gap-4">
+                                                    <span className="font-semibold text-gray-900">
+                                                        {formatMoney(record.amount, transaction.currency)}
+                                                    </span>
+                                                    {record.method && (
+                                                        <span className="text-sm text-gray-600">({record.method})</span>
+                                                    )}
+                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#DCFCE7] text-[#16A34A] rounded-full text-xs font-bold">
+                                                        <CheckCircle2 size={12} strokeWidth={3} />
+                                                        {record.status}
+                                                    </span>
+                                                    <div className="w-8 h-8 rounded-full overflow-hidden border border-gray-200">
+                                                        <img
+                                                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${transaction.contact.name}`}
+                                                            alt={transaction.contact.name}
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <button className="p-1 hover:bg-gray-100 rounded-md transition-colors print:hidden">
+                                                    <ChevronDown size={20} className="text-gray-900" />
+                                                </button>
+                                            </div>
                                         </div>
+                                    ))
+                                ) : (
+                                    <div className="text-center py-8 text-gray-500">
+                                        <DollarSign size={48} className="mx-auto text-gray-300 mb-3" />
+                                        <p>No payment records found for this transaction.</p>
                                     </div>
-                                ))}
+                                )}
                             </div>
                         </div>
                     </div>

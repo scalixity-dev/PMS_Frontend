@@ -1,20 +1,22 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDashboardStore } from "./store/dashboardStore";
 import { Sidebar } from "./components/layout/Sidebar";
 import { TransactionTable } from "./features/Transactions/components/TransactionTable";
 import { LeaseList } from "./features/Leases/components/LeaseList";
-import { mockTransactions, mockLeases, tabs } from "./utils/mockData";
+import { tabs } from "./utils/mockData";
 import { calculateOutstandingAmount } from "./utils/financeUtils";
-import type { TabType } from "./utils/types";
+import type { TabType, Transaction, Lease as FrontendLease } from "./utils/types";
 import PrimaryActionButton from "../../components/common/buttons/PrimaryActionButton";
 import { authService } from "../../services/auth.service";
 import { useAuthStore } from "./features/Profile/store/authStore";
-import { leasingService } from "../../services/leasing.service";
 import { applicationService } from "../../services/application.service";
 import { X } from "lucide-react";
 import DeleteConfirmationModal from "../../components/common/modals/DeleteConfirmationModal";
 import { UserApplicationCard } from "./features/Applications/components/UserApplicationCard";
+import { useGetLeasesByTenant } from "../../hooks/useLeaseQueries";
+import { useGetTransactions } from "../../hooks/useTransactionQueries";
+import { useGetAllApplications } from "../../hooks/useApplicationQueries";
 
 
 
@@ -30,6 +32,23 @@ const UserDashboard = () => {
     const [applications, setApplications] = useState<any[]>([]);
     const [deleteModalState, setDeleteModalState] = useState<{ isOpen: boolean; targetId?: string }>({ isOpen: false });
     const [errorToast, setErrorToast] = useState<string | null>(null);
+    const [userId, setUserId] = useState<string | null>(null);
+
+    // Fetch leases for the tenant
+    const { data: backendLeases, isLoading: leasesLoading } = useGetLeasesByTenant(
+        userId,
+        isAuthenticated === true && !!userId
+    );
+
+    // Fetch transactions only if authenticated (will filter by leaseId on frontend)
+    const { data: transactionsData } = useGetTransactions();
+
+    // Only fetch applications if authenticated - they're only needed if no active leases
+    // We'll determine this after leases load, but start fetching early for better UX
+    const shouldFetchApplications = isAuthenticated === true;
+    const { data: backendApplications, isLoading: applicationsLoading } = useGetAllApplications(
+        shouldFetchApplications
+    );
 
 
     // Check authentication and tenant role on mount
@@ -66,6 +85,7 @@ const UserDashboard = () => {
                         pincode: user.pincode || "",
                         dob: "1990-01-01", // Default placeholder for missing field
                     });
+                    setUserId(user.userId || null);
 
                     // Stage detection will handle setting isLoading(false) for successful auth (line 148)
                 } else {
@@ -89,84 +109,196 @@ const UserDashboard = () => {
         };
     }, []);
 
-    // Detect Stage
-    useEffect(() => {
-        if (!isAuthenticated) return;
+    // Transform backend leases to frontend format
+    const frontendLeases = useMemo<FrontendLease[]>(() => {
+        if (!backendLeases) return [];
 
-        const fetchData = async () => {
-            try {
-                const [leases, apps] = await Promise.all([
-                    leasingService.getAll().catch(() => []),
-                    applicationService.getAll().catch(() => [])
-                ]);
+        return backendLeases.map((lease) => {
+            const sharedTenants = lease.sharedTenants || [];
+            const allTenants = [
+                lease.tenant ? {
+                    id: lease.tenant.id,
+                    firstName: lease.tenant.fullName?.split(' ')[0] || '',
+                    lastName: lease.tenant.fullName?.split(' ').slice(1).join(' ') || '',
+                    email: lease.tenant.email,
+                    phone: lease.tenant.phoneNumber || '',
+                    avatarSeed: lease.tenant.email
+                } : null,
+                ...sharedTenants.map((st: any) => ({
+                    id: st.tenant.id,
+                    firstName: st.tenant.fullName?.split(' ')[0] || '',
+                    lastName: st.tenant.fullName?.split(' ').slice(1).join(' ') || '',
+                    email: st.tenant.email,
+                    phone: '',
+                    avatarSeed: st.tenant.email
+                }))
+            ].filter(Boolean) as any[];
 
-                const appsToProcess = apps || [];
+            const propertyAddress = lease.property?.address
+                ? `${lease.property.address.streetAddress || ''}, ${lease.property.address.city || ''}, ${lease.property.address.stateRegion || ''}`
+                    .replace(/^, |, $/g, '').replace(/, ,/g, ',')
+                : 'Address not available';
 
-                // Filter for truly active leases
-                const activeLeases = (leases || []).filter((l: any) => l.status === 'Active' || l.status === 'ACTIVE');
+            return {
+                id: lease.id,
+                number: lease.id.slice(-8).toUpperCase(),
+                startDate: lease.startDate,
+                endDate: lease.endDate || '',
+                status: lease.status === 'ACTIVE' ? 'Active' : lease.status === 'PENDING' ? 'Pending' : 'Expired',
+                property: {
+                    name: lease.property?.propertyName || 'Unknown Property',
+                    address: propertyAddress
+                },
+                landlord: {
+                    name: 'Property Manager' // Could be enhanced with manager info if available
+                },
+                tenants: allTenants
+            };
+        });
+    }, [backendLeases]);
 
-                if (activeLeases.length > 0) {
-                    setDashboardStage('move_in');
+    // Filter for active leases
+    const activeLeases = useMemo(() => {
+        return frontendLeases.filter(l => l.status === 'Active');
+    }, [frontendLeases]);
 
-                    // For now, populate roommates from mockLeases to align with the rest of the dashboard UI
-                    // In a real scenario, this would come from the API (primaryLease.tenants)
-                    const primaryMockLease = mockLeases?.find(l => l.status === 'Active');
-                    if (primaryMockLease && primaryMockLease.tenants) {
-                        const currentEmail = userInfo?.email;
-                        const otherTenants = primaryMockLease.tenants.filter(t => t.email !== currentEmail);
-                        setRoommates(otherTenants);
-                    }
-                } else if (appsToProcess.length > 0) {
-                    setDashboardStage('application_submitted');
-                    setActiveTab('Applications');
+    // Transform backend transactions to frontend format
+    // Backend already filters by tenant, so we just need to transform the format
+    const frontendTransactions = useMemo<Transaction[]>(() => {
+        if (!transactionsData || !Array.isArray(transactionsData)) return [];
+        
+        return transactionsData.map((tx: any) => {
+            // Backend returns: contact (string), total, balance, dueDate (formatted), status, etc.
+            const contactName = tx.contact || 'N/A';
+            const initials = contactName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase();
+            
+            const statusMap: Record<string, 'Open' | 'Overdue' | 'Paid' | 'Partial'> = {
+                'Pending': 'Open',
+                'Paid': 'Paid',
+                'Void': 'Open',
+                'PARTIALLY_PAID': 'Partial',
+                'PENDING': 'Open',
+                'PAID': 'Paid',
+                'VOID': 'Open',
+                'REFUNDED': 'Paid'
+            };
 
-                    // Normalize applications for display
-                    const normalizeStatus = (status: string): "Approved" | "Rejected" | "Submitted" | "Draft" => {
-                        const normalized = status?.charAt(0).toUpperCase() + status?.slice(1).toLowerCase();
-                        if (['Approved', 'Rejected', 'Submitted', 'Draft'].includes(normalized)) {
-                            return normalized as "Approved" | "Rejected" | "Submitted" | "Draft";
-                        }
-                        return "Submitted";
-                    };
+            const amount = tx.total || parseFloat(tx.amount || '0');
+            const balance = tx.balance || 0;
+            const paidAmount = amount - balance;
 
-                    const apiApps = appsToProcess.map((app: any) => {
-                        const primaryApplicant = app.applicants?.find((a: any) => a.isPrimary) || app.applicants?.[0];
-                        const applicantName = primaryApplicant
-                            ? `${primaryApplicant.firstName || ''} ${primaryApplicant.middleName || ''} ${primaryApplicant.lastName || ''}`.trim() || "Unknown Applicant"
-                            : "Unknown Applicant";
-
-                        const propertyAddress = app.leasing?.property?.address
-                            ? typeof app.leasing.property.address === 'string'
-                                ? app.leasing.property.address
-                                : `${app.leasing.property.address.streetAddress || ''}, ${app.leasing.property.address.city || ''}, ${app.leasing.property.address.stateRegion || ''}`
-                                    .replace(/^, |, $/g, '').replace(/, ,/g, ',')
-                            : "Address not available";
-
-                        return {
-                            id: String(app.id),
-                            name: applicantName,
-                            status: normalizeStatus(app.status),
-                            appliedDate: app.createdAt ? app.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
-                            address: propertyAddress,
-                            propertyId: app.leasing?.property?.id,
-                            imageUrl: app.imageUrl || null
-                        };
-                    });
-                    setApplications(apiApps);
-                } else {
-                    setDashboardStage('no_lease');
+            // Determine status - backend may already set isOverdue
+            let status: 'Open' | 'Overdue' | 'Paid' | 'Partial' = statusMap[tx.status] || 'Open';
+            if (tx.isOverdue && status === 'Open') {
+                status = 'Overdue';
+            } else if (status === 'Open' && tx.dueDateRaw) {
+                const dueDate = new Date(tx.dueDateRaw);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                dueDate.setHours(0, 0, 0, 0);
+                if (dueDate < today && balance > 0) {
+                    status = 'Overdue';
                 }
-            } catch (error) {
-                console.error("Error fetching stage data:", error);
-                setDashboardStage('error');
-                setErrorToast("Failed to load dashboard data. Please try refreshing the page.");
-            } finally {
-                setIsLoading(false);
             }
+
+            // Check if it's recurring based on transaction type or other indicators
+            const isRecurring = tx.isRecurring || false;
+
+            return {
+                id: tx.id,
+                status,
+                dueDate: tx.dueDate || (tx.dueDateRaw ? new Date(tx.dueDateRaw).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : ''),
+                category: tx.category || 'General',
+                contact: {
+                    name: contactName,
+                    initials,
+                    avatarColor: `#${Math.floor(Math.random()*16777215).toString(16)}`
+                },
+                amount,
+                paidAmount: status === 'Paid' ? amount : paidAmount,
+                currency: tx.currency || 'USD',
+                schedule: isRecurring ? 'Monthly' : 'One-time'
+            };
+        });
+    }, [transactionsData]);
+
+    // Normalize applications for display
+    const normalizedApplications = useMemo(() => {
+        if (!backendApplications) return [];
+
+        const normalizeStatus = (status: string): "Approved" | "Rejected" | "Submitted" | "Draft" => {
+            const normalized = status?.charAt(0).toUpperCase() + status?.slice(1).toLowerCase();
+            if (['Approved', 'Rejected', 'Submitted', 'Draft'].includes(normalized)) {
+                return normalized as "Approved" | "Rejected" | "Submitted" | "Draft";
+            }
+            return "Submitted";
         };
 
-        fetchData();
-    }, [isAuthenticated, setDashboardStage, setActiveTab]);
+        return backendApplications.map((app: any) => {
+            const primaryApplicant = app.applicants?.find((a: any) => a.isPrimary) || app.applicants?.[0];
+            const applicantName = primaryApplicant
+                ? `${primaryApplicant.firstName || ''} ${primaryApplicant.middleName || ''} ${primaryApplicant.lastName || ''}`.trim() || "Unknown Applicant"
+                : "Unknown Applicant";
+
+            const propertyAddress = app.leasing?.property?.address
+                ? typeof app.leasing.property.address === 'string'
+                    ? app.leasing.property.address
+                    : `${app.leasing.property.address.streetAddress || ''}, ${app.leasing.property.address.city || ''}, ${app.leasing.property.address.stateRegion || ''}`
+                        .replace(/^, |, $/g, '').replace(/, ,/g, ',')
+                : "Address not available";
+
+            return {
+                id: String(app.id),
+                name: applicantName,
+                status: normalizeStatus(app.status),
+                appliedDate: app.createdAt ? app.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
+                address: propertyAddress,
+                propertyId: app.leasing?.property?.id,
+                imageUrl: app.imageUrl || null
+            };
+        });
+    }, [backendApplications]);
+
+    // Detect Stage and set roommates
+    useEffect(() => {
+        if (!isAuthenticated) return;
+        if (leasesLoading || applicationsLoading) return;
+
+        try {
+            if (activeLeases.length > 0) {
+                setDashboardStage('move_in');
+
+                // Set roommates from active leases
+                const primaryLease = activeLeases[0];
+                if (primaryLease && primaryLease.tenants) {
+                    const currentEmail = userInfo?.email;
+                    const otherTenants = primaryLease.tenants
+                        .filter((t: any) => t.email !== currentEmail)
+                        .map((t: any) => ({
+                            id: t.id,
+                            firstName: t.firstName,
+                            lastName: t.lastName,
+                            email: t.email,
+                            phone: t.phone || '',
+                            avatarSeed: t.avatarSeed || t.email
+                        }));
+                    setRoommates(otherTenants);
+                }
+            } else if (normalizedApplications.length > 0) {
+                setDashboardStage('application_submitted');
+                setActiveTab('Applications');
+                setApplications(normalizedApplications);
+            } else {
+                setDashboardStage('no_lease');
+            }
+        } catch (error) {
+            console.error("Error processing stage data:", error);
+            setDashboardStage('error');
+            setErrorToast("Failed to load dashboard data. Please try refreshing the page.");
+        } finally {
+            setIsLoading(false);
+        }
+    }, [isAuthenticated, activeLeases, normalizedApplications, leasesLoading, applicationsLoading, setDashboardStage, setActiveTab, setRoommates, userInfo?.email]);
 
     const handleDeleteApplication = async () => {
         const targetId = deleteModalState.targetId;
@@ -192,12 +324,22 @@ const UserDashboard = () => {
 
     // Load finances on mount if authenticated
     useEffect(() => {
-        if (isAuthenticated && dashboardStage === 'move_in') {
-            const outstanding = calculateOutstandingAmount(mockTransactions).toFixed(2);
+        if (isAuthenticated && dashboardStage === 'move_in' && frontendTransactions.length > 0) {
+            const outstanding = calculateOutstandingAmount(frontendTransactions).toFixed(2);
+            
+            // Calculate deposits from active leases
+            const totalDeposits = activeLeases.reduce((sum, lease) => {
+                const leaseData = backendLeases?.find(l => l.id === lease.id);
+                const deposits = leaseData?.deposits || [];
+                return sum + deposits.reduce((depSum: number, dep: any) => {
+                    return depSum + parseFloat(dep.amount || '0');
+                }, 0);
+            }, 0);
+
             setFinances({
                 outstanding,
-                deposits: "45000.00",
-                credits: "0.00",
+                deposits: totalDeposits.toFixed(2),
+                credits: "0.00", // Could be calculated from transactions if needed
             });
         } else if (isAuthenticated) {
             // Reset to 0 for other stages
@@ -207,7 +349,7 @@ const UserDashboard = () => {
                 credits: "0.00",
             });
         }
-    }, [setFinances, isAuthenticated, dashboardStage]);
+    }, [setFinances, isAuthenticated, dashboardStage, frontendTransactions, activeLeases, backendLeases]);
 
 
     // Show loading state while checking authentication
@@ -344,8 +486,16 @@ const UserDashboard = () => {
 
                     {dashboardStage === 'move_in' && (
                         <>
-                            {activeTab === "Outstanding" && <TransactionTable transactions={mockTransactions} />}
-                            {activeTab === "Leases" && <LeaseList leases={mockLeases} />}
+                            {activeTab === "Outstanding" && (
+                                <TransactionTable 
+                                    transactions={frontendTransactions.length > 0 ? frontendTransactions : []} 
+                                />
+                            )}
+                            {activeTab === "Leases" && (
+                                <LeaseList 
+                                    leases={frontendLeases.length > 0 ? frontendLeases : []} 
+                                />
+                            )}
                             {activeTab !== "Outstanding" && activeTab !== "Leases" && (
                                 <div className="bg-white rounded-[1rem] p-8 sm:p-12 text-center text-gray-400 font-medium shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] border border-gray-100">
                                     Content for {activeTab} coming soon...

@@ -61,7 +61,14 @@ const MaintenanceRequestView = ({ request, onBack }: MaintenanceRequestViewProps
         });
     }, [chat, chatId, request, addChat, userEmail, firstName, lastName, userInfo]);
 
-    if (!userInfo) return null;
+    if (!userInfo) {
+        return (
+            <div className="flex-1 flex flex-col items-center justify-center text-gray-400 bg-gray-50">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--dashboard-accent)]"></div>
+                <p className="mt-4 text-gray-500">Loading conversation...</p>
+            </div>
+        );
+    }
 
     const handleSendMessage = (text: string) => {
         sendMessage(chatId, {

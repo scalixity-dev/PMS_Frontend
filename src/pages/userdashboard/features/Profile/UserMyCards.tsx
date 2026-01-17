@@ -151,18 +151,18 @@ const MyCards: React.FC = () => {
 
     return (
         <UserAccountSettingsLayout activeTab="My Cards">
-            <div className="px-8 pb-10">
+            <div className="px-3 sm:px-4 md:px-8 pb-6 sm:pb-8 md:pb-10">
                 {/* Saved Cards Section */}
-                <section className="border border-[#E8E8E8] rounded-2xl bg-[#FBFBFB] px-6 py-5 space-y-4">
-                    <div className="flex justify-between items-center">
-                        <h2 className="text-lg font-semibold text-gray-900">Saved Cards</h2>
+                <section className="border border-[#E8E8E8] rounded-2xl bg-[#FBFBFB] px-3 sm:px-4 md:px-6 py-4 md:py-5 space-y-4">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <h2 className="text-base sm:text-lg font-semibold text-gray-900">Saved Cards</h2>
                         {!showAddCard && (
                             <Button
-                                className="bg-[#486370] hover:bg-[#3a505b] text-white px-5 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2"
+                                className="bg-[#486370] hover:bg-[#3a505b] text-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium flex items-center gap-2 w-full sm:w-auto justify-center"
                                 onClick={() => setShowAddCard(true)}
                             >
                                 <Plus size={16} />
-                                Add New Card
+                                <span className="sm:inline">Add New Card</span>
                             </Button>
                         )}
                     </div>
@@ -173,15 +173,15 @@ const MyCards: React.FC = () => {
                             {savedCards.map((card) => (
                                 <div
                                     key={card.id}
-                                    className="border border-[#E8E8E8] rounded-xl bg-white p-5 flex items-center justify-between"
+                                    className="border border-[#E8E8E8] rounded-lg lg:rounded-xl bg-white p-3 sm:p-4 md:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4"
                                 >
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[#7CD947] to-[#6bc238] flex items-center justify-center">
-                                            <CreditCard className="text-white" size={24} />
+                                    <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
+                                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-[#7CD947] to-[#6bc238] flex items-center justify-center flex-shrink-0">
+                                            <CreditCard className="text-white" size={20} />
                                         </div>
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <h3 className="text-lg font-semibold text-gray-900">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900">
                                                     {card.brand} •••• {card.last4}
                                                 </h3>
                                                 {card.isDefault && (
@@ -190,45 +190,46 @@ const MyCards: React.FC = () => {
                                                     </span>
                                                 )}
                                             </div>
-                                            <p className="text-sm text-gray-600 mt-1">
+                                            <p className="text-xs sm:text-sm text-gray-600 mt-1">
                                                 Expires {card.expiryMonth.toString().padStart(2, "0")}/{card.expiryYear}
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end">
                                         {!card.isDefault && (
                                             <Button
                                                 variant="ghost"
-                                                className="text-[#486370] hover:bg-gray-100 px-4 py-2 text-sm"
+                                                className="text-[#486370] hover:bg-gray-100 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm"
                                                 onClick={() => handleSetDefault(card.id)}
                                             >
-                                                Set as Default
+                                                <span className="hidden sm:inline">Set as Default</span>
+                                                <span className="sm:hidden">Default</span>
                                             </Button>
                                         )}
                                         <button
                                             onClick={() => handleDeleteCard(card.id)}
-                                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                            className="p-1.5 sm:p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                                         >
-                                            <Trash2 size={18} />
+                                            <Trash2 size={16} className="sm:w-[18px] sm:h-[18px]" />
                                         </button>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        <div className="text-center py-8 text-gray-500">
-                            <CreditCard className="mx-auto mb-3 text-gray-400" size={48} />
-                            <p>No saved cards. Add a card to get started.</p>
+                        <div className="text-center py-6 sm:py-8 text-gray-500">
+                            <CreditCard className="mx-auto mb-3 text-gray-400" size={40} />
+                            <p className="text-sm sm:text-base">No saved cards. Add a card to get started.</p>
                         </div>
                     )}
                 </section>
 
                 {/* Add New Card Form */}
                 {showAddCard && (
-                    <section className="border border-[#E8E8E8] rounded-2xl bg-[#FBFBFB] px-6 py-5 space-y-4 mt-8">
-                        <div className="flex justify-between items-center">
+                    <section className="border border-[#E8E8E8] rounded-2xl bg-[#FBFBFB] px-3 sm:px-4 md:px-6 py-4 md:py-5 space-y-4 mt-6 sm:mt-8">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                             <div>
-                                <h2 className="text-lg font-semibold text-gray-900">Add New Card</h2>
+                                <h2 className="text-base sm:text-lg font-semibold text-gray-900">Add New Card</h2>
                                 <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
                                     <span className="w-1.5 h-1.5 rounded-full bg-[#7CD947]"></span>
                                     Your payment information is encrypted and secure
@@ -240,7 +241,7 @@ const MyCards: React.FC = () => {
                                     setErrorMsg("");
                                 }}
                                 disabled={isSubmitting}
-                                className="text-gray-500 hover:text-gray-700 text-sm disabled:opacity-50"
+                                className="text-gray-500 hover:text-gray-700 text-xs sm:text-sm disabled:opacity-50 self-end sm:self-auto"
                             >
                                 Cancel
                             </button>
@@ -252,23 +253,23 @@ const MyCards: React.FC = () => {
                             </div>
                         )}
 
-                        <form onSubmit={handleAddCard} className="space-y-4">
+                        <form onSubmit={handleAddCard} className="space-y-3 sm:space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                                     Cardholder Name
                                 </label>
                                 <input
                                     type="text"
                                     value={cardName}
                                     onChange={(e) => setCardName(e.target.value)}
-                                    className="w-full px-4 py-2.5 border border-[#E8E8E8] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7CD947]"
+                                    className="w-full px-3 sm:px-4 py-2 sm:py-2.5 border border-[#E8E8E8] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7CD947] text-sm sm:text-base"
                                     placeholder="John Doe"
                                     required
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                                     Card Number
                                 </label>
                                 <input
@@ -279,22 +280,22 @@ const MyCards: React.FC = () => {
                                         const formattedValue = value.replace(/(\d{4})(?=\d)/g, "$1 ").slice(0, 19);
                                         setCardNumber(formattedValue);
                                     }}
-                                    className="w-full px-4 py-2.5 border border-[#E8E8E8] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7CD947]"
+                                    className="w-full px-3 sm:px-4 py-2 sm:py-2.5 border border-[#E8E8E8] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7CD947] text-sm sm:text-base"
                                     placeholder="1234 5678 9012 3456"
                                     maxLength={19}
                                     required
                                 />
                             </div>
 
-                            <div className="grid grid-cols-3 gap-4">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                                 <div className="col-span-1">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                                         Month
                                     </label>
                                     <select
                                         value={expiryMonth}
                                         onChange={(e) => setExpiryMonth(e.target.value)}
-                                        className="w-full px-4 py-2.5 border border-[#E8E8E8] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7CD947]"
+                                        className="w-full px-2 sm:px-4 py-2 sm:py-2.5 border border-[#E8E8E8] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7CD947] text-sm sm:text-base"
                                         required
                                     >
                                         <option value="">MM</option>
@@ -306,13 +307,13 @@ const MyCards: React.FC = () => {
                                     </select>
                                 </div>
                                 <div className="col-span-1">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                                         Year
                                     </label>
                                     <select
                                         value={expiryYear}
                                         onChange={(e) => setExpiryYear(e.target.value)}
-                                        className="w-full px-4 py-2.5 border border-[#E8E8E8] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7CD947]"
+                                        className="w-full px-2 sm:px-4 py-2 sm:py-2.5 border border-[#E8E8E8] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7CD947] text-sm sm:text-base"
                                         required
                                     >
                                         <option value="">YYYY</option>
@@ -323,15 +324,15 @@ const MyCards: React.FC = () => {
                                         ))}
                                     </select>
                                 </div>
-                                <div className="col-span-1">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <div className="col-span-2 sm:col-span-1">
+                                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
                                         CVV
                                     </label>
                                     <input
                                         type="text"
                                         value={cvv}
                                         onChange={(e) => setCvv(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                                        className="w-full px-4 py-2.5 border border-[#E8E8E8] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7CD947]"
+                                        className="w-full px-3 sm:px-4 py-2 sm:py-2.5 border border-[#E8E8E8] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7CD947] text-sm sm:text-base"
                                         placeholder="123"
                                         maxLength={4}
                                         required
@@ -343,7 +344,7 @@ const MyCards: React.FC = () => {
                                 <Button
                                     type="submit"
                                     disabled={isSubmitting}
-                                    className="bg-[#486370] hover:bg-[#3a505b] text-white px-8 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2"
+                                    className="bg-[#486370] hover:bg-[#3a505b] text-white px-6 sm:px-8 py-2 sm:py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 text-sm sm:text-base w-full sm:w-auto"
                                 >
                                     {isSubmitting ? (
                                         <>
@@ -354,11 +355,11 @@ const MyCards: React.FC = () => {
                                         "Add Card"
                                     )}
                                 </Button>
-                                <div className="flex items-center gap-4 opacity-50 grayscale hover:grayscale-0 transition-all duration-300">
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/100px-Visa_Inc._logo.svg.png" alt="Visa" className="h-4" />
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/100px-Mastercard-logo.svg.png" alt="Mastercard" className="h-6" />
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/PayPal.svg/100px-PayPal.svg.png" alt="PayPal" className="h-4" />
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/American_Express_logo.svg/100px-American_Express_logo.svg.png" alt="Amex" className="h-6" />
+                                <div className="flex items-center gap-3 sm:gap-4 opacity-50 grayscale hover:grayscale-0 transition-all duration-300 justify-center sm:justify-start">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/100px-Visa_Inc._logo.svg.png" alt="Visa" className="h-3 sm:h-4" />
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/100px-Mastercard-logo.svg.png" alt="Mastercard" className="h-5 sm:h-6" />
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/PayPal.svg/100px-PayPal.svg.png" alt="PayPal" className="h-3 sm:h-4" />
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/American_Express_logo.svg/100px-American_Express_logo.svg.png" alt="Amex" className="h-5 sm:h-6" />
                                 </div>
                             </div>
                         </form>

@@ -27,22 +27,22 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
 
         {/* Tag */}
         {(property.tag || property.discount) && (
-          <div className="absolute top-3 left-3 bg-[var(--dashboard-accent)] text-white px-4 py-1.5 rounded-md text-sm font-semibold shadow-[var(--shadow-sm)]">
+          <div className="absolute top-2 sm:top-3 left-2 sm:left-3 bg-[var(--dashboard-accent)] text-white px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-md text-xs sm:text-sm font-semibold shadow-[var(--shadow-sm)]">
             {property.tag || property.discount}
           </div>
         )}
 
         {/* Info Overlay */}
-        <div className="absolute bottom-5 left-6 right-6 bg-white/90 backdrop-blur-sm rounded-[var(--radius-md)] p-4 shadow-[var(--shadow-sm)]">
+        <div className="absolute bottom-3 sm:bottom-5 left-3 sm:left-6 right-3 sm:right-6 bg-white/90 backdrop-blur-sm rounded-[var(--radius-md)] p-3 sm:p-4 shadow-[var(--shadow-sm)]">
           <div className="flex justify-between items-start">
-            <div className="space-y-0.5 pr-8">
-              <h3 className="text-[var(--dashboard-text-main)] text-base font-semibold leading-tight">
+            <div className="space-y-0.5 pr-6 sm:pr-8">
+              <h3 className="text-[var(--dashboard-text-main)] text-sm sm:text-base font-semibold leading-tight">
                 {property.title}
               </h3>
-              <p className="text-gray-600 text-[12px] leading-snug">
+              <p className="text-gray-600 text-[11px] sm:text-[12px] leading-snug">
                 {property.address}
               </p>
-              <p className="text-gray-500 text-[12px] mt-0.5">
+              <p className="text-gray-500 text-[11px] sm:text-[12px] mt-0.5">
                 {property.type}
               </p>
             </div>
@@ -53,11 +53,11 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
                 // handle favorite 
               }}
             >
-              <Heart size={18} />
+              <Heart size={16} className="sm:w-[18px] sm:h-[18px]" />
             </button>
           </div>
           <div className="mt-2 flex items-baseline gap-1">
-            <span className="text-[var(--dashboard-text-main)] text-base font-semibold">
+            <span className="text-[var(--dashboard-text-main)] text-sm sm:text-base font-semibold">
               {property.price || (property.rent ? formatMoney(property.rent, property.currencyCode || 'USD') : 'N/A')}
             </span>
             <span className="text-gray-500 text-[10px]">month</span>
@@ -490,9 +490,9 @@ const Properties: React.FC = () => {
       />
 
       {/* Scrollable Content Area */}
-      <div className="flex-1 overflow-y-auto p-6 lg:p-10">
+      <div className="flex-1 overflow-y-auto p-4 md:p-8">
         {/* Header Section */}
-        <div className="flex flex-col gap-4 mb-4">
+        <div className="flex flex-col gap-3 sm:gap-4 mb-3 sm:mb-4">
           <nav aria-label="Breadcrumb">
             <ol className="flex items-center gap-2 text-base font-medium">
               <li>
@@ -506,8 +506,8 @@ const Properties: React.FC = () => {
             {/* My Preferences Section */}
             {userPreferences && (
               <div className="bg-white rounded-lg border border-gray-200 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.08)] overflow-hidden">
-                <div className="p-4">
-                  <div className="flex items-center justify-between gap-4">
+                <div className="p-3 sm:p-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
                     {/* Left Side - Toggle */}
                     <label className="flex items-center gap-3 cursor-pointer group flex-shrink-0">
                       <div className="relative">
@@ -538,38 +538,38 @@ const Properties: React.FC = () => {
 
                     {/* Right Side - Active Filters */}
                     {usePreferences && (
-                      <div className="flex items-center gap-4 flex-1 min-w-0 animate-in fade-in slide-in-from-right-2 duration-300">
-                        <div className="h-8 w-px bg-gray-200"></div>
-                        <div className="flex flex-wrap items-center gap-2 flex-1 min-w-0">
+                      <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0 animate-in fade-in slide-in-from-right-2 duration-300">
+                        <div className="hidden sm:block h-8 w-px bg-gray-200"></div>
+                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 flex-1 min-w-0">
                           <span className="text-xs font-medium text-gray-500 flex-shrink-0">
                             Active:
                           </span>
                           {/* Show Preference City if active and not modified, OR Show Modified City if modified */}
                           {(!filters.locationModified ? userPreferences.location?.city : filters.locationFilter?.city) && (
-                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-[#8CD74B]/10 to-[#8CD74B]/5 border border-[#8CD74B]/20 rounded-md text-sm text-gray-700 font-medium shadow-sm">
-                              <MapPin size={14} className="text-[#8CD74B]" strokeWidth={2.5} />
+                            <div className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 bg-gradient-to-r from-[#8CD74B]/10 to-[#8CD74B]/5 border border-[#8CD74B]/20 rounded-md text-xs sm:text-sm text-gray-700 font-medium shadow-sm">
+                              <MapPin size={12} className="sm:w-[14px] sm:h-[14px] text-[#8CD74B]" strokeWidth={2.5} />
                               <span>
                                 {!filters.locationModified ? userPreferences.location?.city : filters.locationFilter?.city}
                               </span>
                             </div>
                           )}
                           {userPreferences.criteria?.minPrice !== undefined && userPreferences.criteria?.maxPrice !== undefined && (
-                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-[#8CD74B]/10 to-[#8CD74B]/5 border border-[#8CD74B]/20 rounded-md text-sm text-gray-700 font-medium shadow-sm">
-                              <DollarSign size={14} className="text-[#8CD74B]" strokeWidth={2.5} />
+                            <div className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 bg-gradient-to-r from-[#8CD74B]/10 to-[#8CD74B]/5 border border-[#8CD74B]/20 rounded-md text-xs sm:text-sm text-gray-700 font-medium shadow-sm">
+                              <DollarSign size={12} className="sm:w-[14px] sm:h-[14px] text-[#8CD74B]" strokeWidth={2.5} />
                               <span>
                                 {userPreferences.criteria.minPrice.toLocaleString()}-{userPreferences.criteria.maxPrice.toLocaleString()}
                               </span>
                             </div>
                           )}
                           {userPreferences.criteria?.beds && userPreferences.criteria.beds !== 'Any' && (
-                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-[#8CD74B]/10 to-[#8CD74B]/5 border border-[#8CD74B]/20 rounded-md text-sm text-gray-700 font-medium shadow-sm">
-                              <BedDouble size={14} className="text-[#8CD74B]" strokeWidth={2.5} />
+                            <div className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 bg-gradient-to-r from-[#8CD74B]/10 to-[#8CD74B]/5 border border-[#8CD74B]/20 rounded-md text-xs sm:text-sm text-gray-700 font-medium shadow-sm">
+                              <BedDouble size={12} className="sm:w-[14px] sm:h-[14px] text-[#8CD74B]" strokeWidth={2.5} />
                               <span>{userPreferences.criteria.beds} beds</span>
                             </div>
                           )}
                           {userPreferences.criteria?.petsAllowed && (
-                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-[#8CD74B]/10 to-[#8CD74B]/5 border border-[#8CD74B]/20 rounded-md text-sm text-gray-700 font-medium shadow-sm">
-                              <PawPrint size={14} className="text-[#8CD74B]" strokeWidth={2.5} />
+                            <div className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-0.5 sm:py-1 bg-gradient-to-r from-[#8CD74B]/10 to-[#8CD74B]/5 border border-[#8CD74B]/20 rounded-md text-xs sm:text-sm text-gray-700 font-medium shadow-sm">
+                              <PawPrint size={12} className="sm:w-[14px] sm:h-[14px] text-[#8CD74B]" strokeWidth={2.5} />
                               <span>Pets OK</span>
                             </div>
                           )}
@@ -585,9 +585,9 @@ const Properties: React.FC = () => {
             <div className="flex justify-end">
               <button
                 onClick={() => setIsPropertyFiltersOpen(true)}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors bg-[#F7F7F7] border-[0.97px] border-white shadow-[0px_3.9px_3.9px_0px_#00000040]"
+                className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium transition-colors bg-[#F7F7F7] border-[0.97px] border-white shadow-[0px_3.9px_3.9px_0px_#00000040]"
               >
-                <Filter size={18} />
+                <Filter size={16} className="sm:w-[18px] sm:h-[18px]" />
                 <span>Filter</span>
               </button>
             </div>
@@ -596,7 +596,7 @@ const Properties: React.FC = () => {
 
         {/* Grid Section */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
             {Array.from({ length: 6 }).map((_, i) => (
               <PropertySkeleton key={i} />
             ))}
@@ -613,7 +613,7 @@ const Properties: React.FC = () => {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-8">
               {paginatedProperties.length > 0 ? (
                 paginatedProperties.map((property) => (
                   <PropertyCard key={(property as any).uniqueId || property.id} property={property} />
@@ -633,23 +633,23 @@ const Properties: React.FC = () => {
 
             {/* Pagination */}
             {filteredProperties.length > ITEMS_PER_PAGE && (
-              <div className="mt-8 flex justify-center items-center gap-2">
+              <div className="mt-6 sm:mt-8 flex justify-center items-center gap-1 sm:gap-2">
                 <button
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className={`p-2 rounded-full transition-colors ${currentPage === 1
+                  className={`p-1.5 sm:p-2 rounded-full transition-colors ${currentPage === 1
                     ? 'text-gray-300 cursor-not-allowed'
                     : 'text-gray-600 hover:bg-gray-200'
                     }`}
                 >
-                  <ChevronLeft className="w-6 h-6" />
+                  <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
 
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                   <button
                     key={page}
                     onClick={() => handlePageChange(page)}
-                    className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-medium transition-all ${currentPage === page
+                    className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-base sm:text-lg font-medium transition-all ${currentPage === page
                       ? 'bg-[#3A7D76] text-white shadow-lg'
                       : 'bg-transparent text-gray-600 border border-gray-300 hover:bg-gray-100'
                       }`}
@@ -661,12 +661,12 @@ const Properties: React.FC = () => {
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className={`p-2 rounded-full transition-colors ${currentPage === totalPages
+                  className={`p-1.5 sm:p-2 rounded-full transition-colors ${currentPage === totalPages
                     ? 'text-gray-300 cursor-not-allowed'
                     : 'text-gray-600 hover:bg-gray-200'
                     }`}
                 >
-                  <ChevronRight className="w-6 h-6" />
+                  <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
               </div>
             )}

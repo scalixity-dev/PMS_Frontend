@@ -22,21 +22,23 @@ const Step12Priority: React.FC<Step12Props> = ({
     isSubmitting = false
 }) => {
     return (
-        <div className="text-center py-10">
-            <h1 className="text-xl font-medium text-[#1A1A1A] mb-1">Request Priority</h1>
-            <p className="text-gray-400 text-sm font-normal mb-8">How Urgent it is?</p>
+        <div className="text-center py-6 md:py-10">
+            {/* Header Section - Responsive text sizing and spacing */}
+            <h1 className="text-lg md:text-xl font-medium text-[#1A1A1A] mb-1 px-4">Request Priority</h1>
+            <p className="text-gray-400 text-xs md:text-sm font-normal mb-6 md:mb-8 px-4">How Urgent it is?</p>
 
-            <div className="max-w-md mx-auto px-4 mb-8">
+            {/* Dropdown Section - Responsive sizing */}
+            <div className="max-w-md mx-auto px-4 mb-6 md:mb-8">
                 <div className="relative" ref={priorityDropdownRef}>
                     <button
                         type="button"
                         onClick={() => setIsPriorityDropdownOpen(!isPriorityDropdownOpen)}
-                        className="w-full flex items-center justify-between px-4 py-3 bg-white border-2 border-gray-300 rounded-lg focus:border-[#7ED957] focus:outline-none transition-colors text-gray-900"
+                        className="w-full flex items-center justify-between px-3 md:px-4 py-2.5 md:py-3 bg-white border-2 border-gray-300 rounded-lg focus:border-[#7ED957] focus:outline-none transition-colors text-sm md:text-base text-gray-900"
                     >
                         <span>{priority || "Select Priority"}</span>
                         <ChevronDown
-                            size={20}
-                            className={`text-gray-500 transition-transform ${isPriorityDropdownOpen ? 'rotate-180' : ''}`}
+                            size={18}
+                            className={`md:w-5 md:h-5 text-gray-500 transition-transform ${isPriorityDropdownOpen ? 'rotate-180' : ''}`}
                         />
                     </button>
                     {isPriorityDropdownOpen && (
@@ -48,10 +50,10 @@ const Step12Priority: React.FC<Step12Props> = ({
                                         onSelect(option as "Low" | "Normal" | "Critical");
                                         setIsPriorityDropdownOpen(false);
                                     }}
-                                    className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${priority === option ? "bg-gray-50" : ""
+                                    className={`w-full text-left px-3 md:px-4 py-2.5 md:py-3 hover:bg-gray-50 transition-colors ${priority === option ? "bg-gray-50" : ""
                                         }`}
                                 >
-                                    <span className="text-gray-900">{option}</span>
+                                    <span className="text-sm md:text-base text-gray-900">{option}</span>
                                 </button>
                             ))}
                         </div>
@@ -59,12 +61,15 @@ const Step12Priority: React.FC<Step12Props> = ({
                 </div>
             </div>
 
-            <div className="flex justify-center gap-4">
+            {/* Submit Button - Responsive sizing and spacing */}
+            <div className="flex justify-center gap-4 px-4">
                 <PrimaryActionButton
                     disabled={!priority || isSubmitting}
                     onClick={onSubmit}
                     text={isSubmitting ? "Creating..." : "Create a request"}
-                    className={!priority || isSubmitting ? "!bg-gray-100 !text-gray-400 cursor-not-allowed uppercase shadow-none px-12" : "bg-[#7ED957] hover:bg-[#6BC847] shadow-lg shadow-[#7ED957]/30 px-12"}
+                    className={!priority || isSubmitting
+                        ? "!bg-gray-100 !text-gray-400 cursor-not-allowed uppercase shadow-none px-8 md:px-12 w-full md:w-auto"
+                        : "bg-[#7ED957] hover:bg-[#6BC847] shadow-lg shadow-[#7ED957]/30 px-8 md:px-12 w-full md:w-auto"}
                 />
             </div>
         </div>
