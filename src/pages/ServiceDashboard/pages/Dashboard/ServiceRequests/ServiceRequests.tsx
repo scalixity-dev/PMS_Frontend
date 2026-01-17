@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PiPlus, PiChatCircleText, PiKanban } from "react-icons/pi";
-import ServiceBreadCrumb from '../../components/ServiceBreadCrumb';
-import ServiceFilters from '../../components/ServiceFilters';
-import DashboardButton from '../../components/DashboardButton';
+import ServiceBreadCrumb from '../../../components/ServiceBreadCrumb';
+import ServiceFilters from '../../../components/ServiceFilters';
+import DashboardButton from '../../../components/DashboardButton';
 
 interface Request {
     id: string;

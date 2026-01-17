@@ -21,9 +21,9 @@ import {
     useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import ServiceBreadCrumb from '../../components/ServiceBreadCrumb';
-import ServiceFilters from '../../components/ServiceFilters';
-import DashboardButton from '../../components/DashboardButton';
+import ServiceBreadCrumb from '../../../components/ServiceBreadCrumb';
+import ServiceFilters from '../../../components/ServiceFilters';
+import DashboardButton from '../../../components/DashboardButton';
 
 // Types
 type Request = {

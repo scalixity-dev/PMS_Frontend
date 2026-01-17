@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { PiPrinter, PiUserCircle, PiCheckCircle, PiDotsThreeOutline, PiCurrencyDollar } from "react-icons/pi";
 import { ChevronLeft, Calendar } from 'lucide-react';
-import ServiceBreadCrumb from '../../components/ServiceBreadCrumb';
+import ServiceBreadCrumb from '../../../components/ServiceBreadCrumb';
 
 import { mockTransactions } from './mockData';
 

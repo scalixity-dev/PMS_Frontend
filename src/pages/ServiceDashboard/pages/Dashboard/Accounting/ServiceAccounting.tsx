@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import ServiceBreadCrumb from '../../components/ServiceBreadCrumb';
-import ServiceFilters from '../../components/ServiceFilters';
+import ServiceBreadCrumb from '../../../components/ServiceBreadCrumb';
+import ServiceFilters from '../../../components/ServiceFilters';
 
 import { mockTransactions } from './mockData';
 

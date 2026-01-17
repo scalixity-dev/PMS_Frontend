@@ -22,8 +22,8 @@ import SelectProfession from './pages/ServiceDashboard/pages/onboarding/SelectPr
 import ProfessionDetails from './pages/ServiceDashboard/pages/onboarding/ProfessionDetails';
 import ServiceDashboardLayout from './components/service-dashboard/layout/ServiceDashboardLayout';
 import ServiceDashboard from './pages/ServiceDashboard/pages/Dashboard/ServiceDashboard';
-import ServiceDashboardSettings from './pages/ServiceDashboard/pages/Dashboard/ServiceDashboardSettings';
-import ServiceDashboardProfileSettings from './pages/ServiceDashboard/pages/Dashboard/ProfileSettings';
+import ServiceDashboardSettings from './pages/ServiceDashboard/pages/Dashboard/Settings/ServiceDashboardSettings';
+import ServiceDashboardProfileSettings from './pages/ServiceDashboard/pages/Dashboard/Settings/AccountSettings/ProfileSettings';
 import OtpPage from './pages/basewebsite/auth/otp';
 import OAuthCallbackPage from './pages/basewebsite/auth/otp'; // Note: This might have been a mistake in the original or I misread, checking...
 import OAuthCompletePage from './pages/basewebsite/auth/signUp/oauth-complete';
@@ -159,10 +159,11 @@ import RolesPermissions from './pages/Dashboard/settings/team-management/RolesPe
 import PropertyPermissions from './pages/Dashboard/settings/team-management/PropertyPermissions';
 import RequestSettings from './pages/Dashboard/settings/request-settings/RequestSettings';
 import AutomationSettings from './pages/Dashboard/settings/request-settings/AutomationSettings';
-import ServiceRequests from './pages/ServiceDashboard/features/ServiceRequests/ServiceRequests';
-import ServiceRequestsBoard from './pages/ServiceDashboard/features/ServiceRequests/ServiceRequestsBoard';
-import ServiceAccounting from './pages/ServiceDashboard/features/Accounting/ServiceAccounting';
-import ServiceTransactionDetail from './pages/ServiceDashboard/features/Accounting/ServiceTransactionDetail';
+import ServiceRequests from './pages/ServiceDashboard/pages/Dashboard/ServiceRequests/ServiceRequests';
+import ServiceRequestsBoard from './pages/ServiceDashboard/pages/Dashboard/ServiceRequests/ServiceRequestsBoard';
+import ServiceAccounting from './pages/ServiceDashboard/pages/Dashboard/Accounting/ServiceAccounting';
+import ServiceTransactionDetail from './pages/ServiceDashboard/pages/Dashboard/Accounting/ServiceTransactionDetail';
+import ServiceBusinessProfile from './pages/ServiceDashboard/pages/Dashboard/Settings/BusinessProfile/ServiceBusinessProfile';
 import GeneralReports from './pages/Dashboard/settings/report/general';
 import Reports from './pages/Dashboard/features/Reports/Reports';
 import Rentability from './pages/Dashboard/features/Reports/Rentability';
@@ -218,6 +219,7 @@ const App: React.FC = () => {
               <Route path="/service-dashboard/accounting/transaction/:id" element={<ProtectedRoute><ServiceTransactionDetail /></ProtectedRoute>} />
               <Route path="/service-dashboard/settings" element={<ProtectedRoute><ServiceDashboardSettings /></ProtectedRoute>} />
               <Route path="/service-dashboard/settings/profile" element={<ProtectedRoute><ServiceDashboardProfileSettings /></ProtectedRoute>} />
+              <Route path="/service-dashboard/settings/business-profile" element={<ProtectedRoute><ServiceBusinessProfile /></ProtectedRoute>} />
             </Route>
 
             <Route element={<AppLayout />}>

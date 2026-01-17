@@ -20,7 +20,7 @@ const ServiceDashboardLayout: React.FC = () => {
                 />
 
                 <main className={`flex-1 p-4 lg:p-6 transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
-                    <Outlet />
+                    <Outlet context={{ sidebarCollapsed }} />
                 </main>
             </div>
         </div>
