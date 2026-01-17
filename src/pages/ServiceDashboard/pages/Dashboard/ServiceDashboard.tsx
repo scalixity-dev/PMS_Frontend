@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import RequestCard from './components/RequestCard';
 import DashboardButton from '../../components/DashboardButton';
+import ServiceTabs from '../../components/ServiceTabs';
 
 
 interface RequestItem {
@@ -135,27 +136,22 @@ const ServiceDashboard: React.FC = () => {
 
                 {/* Header Actions */}
                 {/* Header Actions */}
-                <div className="flex flex-col md:flex-row justify-between items-end">
-                    <div className="flex items-end border-b border-gray-200 w-full md:flex-1 pr-6 mr-6">
-                        <button
-                            className={`px-8 py-3 text-lg font-bold rounded-t-2xl transition-all duration-300 relative ${activeTab === 'new_request' ? 'bg-[#7BD747] text-white shadow-[0_10px_20px_rgba(123,215,71,0.4)]' : 'text-gray-400 hover:text-gray-600'}`}
-                            onClick={() => setActiveTab('new_request')}
-                        >
-                            New Request
-                        </button>
-                        <button
-                            className={`px-8 py-3 text-lg font-bold rounded-t-2xl transition-all duration-300 relative ${activeTab === 'in_process' ? 'bg-[#7BD747] text-white shadow-[0_10px_20px_rgba(123,215,71,0.4)]' : 'text-gray-400 hover:text-gray-600'}`}
-                            onClick={() => setActiveTab('in_process')}
-                        >
-                            In process
-                        </button>
-                    </div>
+                <div className="flex flex-col-reverse md:flex-row justify-between items-end gap-4 md:gap-0">
+                    <ServiceTabs
+                        tabs={[
+                            { label: 'New Request', value: 'new_request' },
+                            { label: 'In process', value: 'in_process' }
+                        ]}
+                        activeTab={activeTab}
+                        onTabChange={(val) => setActiveTab(val)}
+                        className="md:pr-6 md:mr-6"
+                    />
 
-                    <div className="flex gap-3 w-full md:w-auto pb-1 pl-4 md:pl-0">
-                        <DashboardButton bgColor="#3A6B65" className="flex-1 md:flex-none">
+                    <div className="flex gap-3 w-full md:w-auto pb-1 md:pl-0">
+                        <DashboardButton bgColor="#3A6B65" className="text-white flex-1 md:flex-none">
                             Find a Job
                         </DashboardButton>
-                        <DashboardButton bgColor="#7CD947" className="flex-1 md:flex-none">
+                        <DashboardButton bgColor="#7CD947" className="text-white flex-1 md:flex-none">
                             Add Request
                         </DashboardButton>
                     </div>

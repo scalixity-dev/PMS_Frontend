@@ -120,7 +120,7 @@ const TransactionDetail: React.FC = () => {
         if (!transaction) return 'N/A';
         const type = transaction.type;
         const category = transaction.subcategory || transaction.category || '';
-        
+
         if (type === 'INVOICE') {
             if (transaction.payerId) {
                 return `Income / ${category}`;
@@ -158,7 +158,7 @@ const TransactionDetail: React.FC = () => {
     // Handle edit invoice
     const handleEditInvoice = (data: any) => {
         if (!id) return;
-        
+
         const updateData: any = {};
         if (data.category) updateData.category = data.category;
         if (data.amount) updateData.amount = parseFloat(data.amount.replace(/[^0-9.]/g, ''));
@@ -166,7 +166,7 @@ const TransactionDetail: React.FC = () => {
         if (data.details !== undefined) updateData.details = data.details;
         if (data.notes !== undefined) updateData.notes = data.notes;
         if (data.tags) {
-            updateData.tags = typeof data.tags === 'string' 
+            updateData.tags = typeof data.tags === 'string'
                 ? data.tags.split(',').map((t: string) => t.trim()).filter(Boolean)
                 : data.tags;
         }
@@ -569,7 +569,7 @@ const TransactionDetail: React.FC = () => {
                         <div className="mt-4 mb-2">
                             {/* Progress Track */}
                             <div className="relative h-6 bg-gray-200 rounded-full w-full overflow-hidden flex items-center mb-3">
-                                <div 
+                                <div
                                     className="h-full bg-gradient-to-r from-[#7BD747] to-[#427326] rounded-full shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] transition-all duration-300"
                                     style={{ width: `${progress.percentage}%` }}
                                 ></div>
@@ -713,8 +713,8 @@ const TransactionDetail: React.FC = () => {
                                                                 <div>
                                                                     <button
                                                                         onClick={() => {
-                                                                            setSelectedPayment({ 
-                                                                                date: formatDate(paymentDate), 
+                                                                            setSelectedPayment({
+                                                                                date: formatDate(paymentDate),
                                                                                 amount: paymentAmount,
                                                                                 paymentId: payment.id
                                                                             });
@@ -729,8 +729,8 @@ const TransactionDetail: React.FC = () => {
                                                                     <button
                                                                         className="text-[#3A6D6C] hover:text-[#2c5251]"
                                                                         onClick={() => {
-                                                                            setSelectedPayment({ 
-                                                                                date: formatDate(paymentDate), 
+                                                                            setSelectedPayment({
+                                                                                date: formatDate(paymentDate),
                                                                                 amount: paymentAmount,
                                                                                 paymentId: payment.id
                                                                             });
@@ -742,8 +742,8 @@ const TransactionDetail: React.FC = () => {
                                                                     <button
                                                                         className="text-red-500 hover:text-red-600"
                                                                         onClick={() => {
-                                                                            setSelectedPayment({ 
-                                                                                date: formatDate(paymentDate), 
+                                                                            setSelectedPayment({
+                                                                                date: formatDate(paymentDate),
                                                                                 amount: paymentAmount,
                                                                                 paymentId: payment.id
                                                                             });
@@ -778,8 +778,8 @@ const TransactionDetail: React.FC = () => {
                                                     <div className="flex justify-end gap-2 border-t border-gray-100 pt-3">
                                                         <button
                                                             onClick={() => {
-                                                                setSelectedPayment({ 
-                                                                    date: formatDate(paymentDate), 
+                                                                setSelectedPayment({
+                                                                    date: formatDate(paymentDate),
                                                                     amount: paymentAmount,
                                                                     paymentId: payment.id
                                                                 });
@@ -792,8 +792,8 @@ const TransactionDetail: React.FC = () => {
                                                         <button
                                                             className="text-[#3A6D6C] hover:text-[#2c5251] p-1 rounded-full"
                                                             onClick={() => {
-                                                                setSelectedPayment({ 
-                                                                    date: formatDate(paymentDate), 
+                                                                setSelectedPayment({
+                                                                    date: formatDate(paymentDate),
                                                                     amount: paymentAmount,
                                                                     paymentId: payment.id
                                                                 });
@@ -805,8 +805,8 @@ const TransactionDetail: React.FC = () => {
                                                         <button
                                                             className="text-red-500 hover:text-red-600 p-1 rounded-full"
                                                             onClick={() => {
-                                                                setSelectedPayment({ 
-                                                                    date: formatDate(paymentDate), 
+                                                                setSelectedPayment({
+                                                                    date: formatDate(paymentDate),
                                                                     amount: paymentAmount,
                                                                     paymentId: payment.id
                                                                 });

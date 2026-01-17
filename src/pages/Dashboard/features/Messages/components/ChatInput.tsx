@@ -100,7 +100,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
     }, [inputText]);
 
     return (
-        <div className="px-6 pb-6 pt-2 relative print:hidden">
+        <div className="px-6 pb-2 pt-2 relative print:hidden">
             {pendingFile && (
                 <div className="absolute bottom-24 left-8 bg-[#EDF2F1] border border-[#A7D8C9] rounded-xl px-4 py-2 flex items-center gap-3 shadow-sm animate-in fade-in slide-in-from-bottom-2">
                     <Paperclip className="w-4 h-4 text-[#3D7068]" />
