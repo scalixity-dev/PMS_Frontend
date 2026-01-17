@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import type { KeyboardEvent, ClipboardEvent } from 'react';
 interface OtpFormProps {
     email?: string;
@@ -18,7 +18,39 @@ const OtpForm: React.FC<OtpFormProps> = ({
     const [error, setError] = useState<string>('');
     const [isResending, setIsResending] = useState(false);
     const [resendSuccess, setResendSuccess] = useState(false);
+    const [resendCountdown, setResendCountdown] = useState<number>(0);
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+    const countdownIntervalRef = useRef<number | null>(null);
+
+    // Countdown timer effect
+    useEffect(() => {
+        if (resendCountdown > 0) {
+            countdownIntervalRef.current = setInterval(() => {
+                setResendCountdown((prev) => {
+                    if (prev <= 1) {
+                        if (countdownIntervalRef.current) {
+                            clearInterval(countdownIntervalRef.current);
+                            countdownIntervalRef.current = null;
+                        }
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        } else {
+            if (countdownIntervalRef.current) {
+                clearInterval(countdownIntervalRef.current);
+                countdownIntervalRef.current = null;
+            }
+        }
+
+        return () => {
+            if (countdownIntervalRef.current) {
+                clearInterval(countdownIntervalRef.current);
+                countdownIntervalRef.current = null;
+            }
+        };
+    }, [resendCountdown]);
 
     const handleChange = (index: number, value: string) => {
         // Only allow single digit
@@ -104,16 +136,24 @@ const OtpForm: React.FC<OtpFormProps> = ({
     };
 
     const handleResend = async () => {
+        if (resendCountdown > 0) {
+            return; // Prevent resend if countdown is active
+        }
+
         setIsResending(true);
         setResendSuccess(false);
         try {
             if (onResend) {
                 await onResend();
                 setResendSuccess(true);
+                // Start 60 second countdown
+                setResendCountdown(60);
                 // Clear success message after 3 seconds
                 setTimeout(() => setResendSuccess(false), 3000);
             } else {
                 console.log('Resending OTP...');
+                // Start 60 second countdown even for default behavior
+                setResendCountdown(60);
                 // Default behavior: Handle resend logic here
             }
             setOtp(['', '', '', '', '', '']);
@@ -196,10 +236,16 @@ const OtpForm: React.FC<OtpFormProps> = ({
                         <button
                             type="button"
                             onClick={handleResend}
-                            disabled={isResending}
+                            disabled={isResending || resendCountdown > 0}
                             className="text-sm font-medium text-teal-500 hover:text-teal-600 hover:underline transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {isResending ? 'Sending...' : 'Resend Code'}
+                            {isResending ? (
+                                'Sending...'
+                            ) : resendCountdown > 0 ? (
+                                `Resend Code in ${resendCountdown}s`
+                            ) : (
+                                'Resend Code'
+                            )}
                         </button>
                     </div>
                 </div>

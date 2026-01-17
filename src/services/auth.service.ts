@@ -206,6 +206,27 @@ class AuthService {
   }
 
   /**
+   * Resend device verification OTP
+   */
+  async resendDeviceOtp(userId: string): Promise<void> {
+    const response = await fetch(API_ENDPOINTS.AUTH.RESEND_DEVICE_OTP(userId), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({
+        message: 'Failed to resend device OTP',
+        statusCode: response.status,
+      }));
+      throw new Error(errorData.message || `Failed to resend device OTP: ${response.statusText}`);
+    }
+  }
+
+  /**
    * Verify email OTP
    */
   async verifyEmail(userId: string, code: string): Promise<void> {
