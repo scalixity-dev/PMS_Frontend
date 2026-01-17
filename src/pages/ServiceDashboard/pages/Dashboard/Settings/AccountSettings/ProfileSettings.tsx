@@ -114,7 +114,22 @@ const ProfileSettings = () => {
     };
 
     const handleSavePassword = () => {
+        if (!passwordForm.oldPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
+            alert("All password fields are required.");
+            return;
+        }
+        if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+            alert("New passwords do not match.");
+            return;
+        }
+        if (passwordForm.newPassword.length < 6) {
+            alert("Password must be at least 6 characters.");
+            return;
+        }
+
         console.log("Saving password:", passwordForm);
+        // Simulate API
+        alert("Password updated successfully.");
         setIsChangingPassword(false);
         setPasswordForm({ oldPassword: '', newPassword: '', confirmPassword: '' });
     };

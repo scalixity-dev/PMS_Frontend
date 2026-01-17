@@ -56,6 +56,7 @@ const ServiceBusinessProfile = () => {
 
     const [isChangingPassword, setIsChangingPassword] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [isSavingPersonal, setIsSavingPersonal] = useState(false);
 
     // Form Data State
     const [formData, setFormData] = useState({
@@ -85,8 +86,16 @@ const ServiceBusinessProfile = () => {
     };
 
     const handleSavePassword = () => {
-        // Implement password save logic here
+        if (!passwordForm.oldPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
+            alert("All password fields are required.");
+            return;
+        }
+        if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+            alert("New passwords do not match.");
+            return;
+        }
         console.log("Saving password:", passwordForm);
+        alert("Password updated successfully.");
         setIsChangingPassword(false);
         setPasswordForm({ oldPassword: '', newPassword: '', confirmPassword: '' });
     };
@@ -143,6 +152,25 @@ const ServiceBusinessProfile = () => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
+    const handleSavePersonal = () => {
+        if (isEditingPersonal) {
+            // Validation
+            if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.email.trim()) {
+                alert("Please fill in First Name, Last Name and Email.");
+                return;
+            }
+            // Save Simulation
+            setIsSavingPersonal(true);
+            setTimeout(() => {
+                setIsSavingPersonal(false);
+                setIsEditingPersonal(false);
+                // alert("Personal information updated.");
+            }, 800);
+        } else {
+            setIsEditingPersonal(true);
+        }
+    };
+
     const handleDeleteAccount = () => {
         // API call to delete account would go here
         console.log("Deleting account...");
@@ -164,6 +192,17 @@ const ServiceBusinessProfile = () => {
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            // Validation
+            const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+            if (!validTypes.includes(file.type)) {
+                alert("Please upload a valid image (JPEG, PNG, GIF, WEBP, SVG).");
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) { // 5MB
+                alert("Image size must be less than 5MB.");
+                return;
+            }
+
             const reader = new FileReader();
             reader.onloadend = () => {
                 setFormData(prev => ({ ...prev, coverPhoto: reader.result as string }));
@@ -245,10 +284,11 @@ const ServiceBusinessProfile = () => {
                             <div className="flex justify-between items-center mb-6">
                                 <h2 className="text-lg font-bold text-gray-900">Personal Information</h2>
                                 <DashboardButton
-                                    onClick={() => setIsEditingPersonal(!isEditingPersonal)}
+                                    onClick={handleSavePersonal}
+                                    disabled={isSavingPersonal}
                                     className="h-8 text-xs font-bold"
                                 >
-                                    {isEditingPersonal ? 'Save' : 'Edit'}
+                                    {isSavingPersonal ? 'Saving...' : (isEditingPersonal ? 'Save' : 'Edit')}
                                 </DashboardButton>
                             </div>
 

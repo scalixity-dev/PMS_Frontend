@@ -15,21 +15,26 @@ const ServiceAccounting = () => {
     const [statusFilter, setStatusFilter] = useState('All');
     const [scheduleFilter, setScheduleFilter] = useState('All');
 
-    // Filter Logic Placeholder
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const filteredTransactions = transactions.filter(t => {
-        return (
-            (searchTerm === '' || t.category.includes(searchTerm)) &&
-            (dateFilter === 'All') &&
-            (statusFilter === 'All' || t.status === statusFilter) &&
-            (scheduleFilter === 'All' || t.category === scheduleFilter) // assuming schedule maps to category for now
-        );
+        const matchesSearch = searchTerm === '' ||
+            (t.category && t.category.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (t.contact && t.contact.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (t.description && t.description.toLowerCase().includes(searchTerm.toLowerCase()));
+
+        const matchesStatus = statusFilter === 'All' || t.status === statusFilter;
+        // Assuming 'type' field maps to schedule options (One-time/Recurring)
+        const matchesSchedule = scheduleFilter === 'All' || t.type === scheduleFilter;
+        // Basic Date Filter (assuming t.dueDate is a string like "Oct 24, 2024", hard to parse accurately without date lib or consistent format)
+        // For now, implementing 'All' pass-through. Real date filtering would require parsing t.dueDate.
+        const matchesDate = dateFilter === 'All' || true;
+
+        return matchesSearch && matchesStatus && matchesSchedule && matchesDate;
     });
 
 
     const outstanding = transactions
         .filter(t => t.status === 'Unpaid' || t.status === 'Overdue')
-        .reduce((acc, t) => acc + parseFloat(t.total.replace(/,/g, '').replace(' INR', '')), 0)
+        .reduce((acc, t) => acc + (t.amount || 0), 0)
         .toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
     return (
@@ -93,9 +98,9 @@ const ServiceAccounting = () => {
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                         {filteredTransactions.length > 0 ? (
-                            filteredTransactions.map((transaction, index) => (
+                            filteredTransactions.map((transaction) => (
                                 <tr
-                                    key={index}
+                                    key={transaction.id}
                                     className="hover:bg-gray-50 cursor-pointer"
                                     onClick={() => navigate(`/service-dashboard/accounting/transaction/${transaction.id}`)}
                                 >

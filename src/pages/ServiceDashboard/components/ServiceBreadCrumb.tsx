@@ -24,7 +24,7 @@ const ServiceBreadCrumb: React.FC<ServiceBreadCrumbProps> = ({ items }) => {
                     ) : (
                         item.active
                             ? <span className="text-gray-900">{item.label}</span>
-                            : <span className="text-[#8BDC5E]">{item.label}</span>
+                            : <span className="text-gray-500">{item.label}</span>
                     )}
                 </React.Fragment>
             ))}

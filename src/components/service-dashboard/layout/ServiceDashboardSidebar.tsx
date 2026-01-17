@@ -38,6 +38,7 @@ interface SidebarDropdownLinkProps {
     to?: string;
     activeDropdown: string | null;
     setActiveDropdown: (label: string | null) => void;
+    exact?: boolean;
 }
 
 // --- Component Implementations ---
@@ -62,7 +63,7 @@ function SidebarSubLink({ label, to }: SidebarSubLinkProps) {
 }
 
 
-function SidebarLink({ label, icon, children, to, activeDropdown, setActiveDropdown }: SidebarDropdownLinkProps) {
+function SidebarLink({ label, icon, children, to, activeDropdown, setActiveDropdown, exact }: SidebarDropdownLinkProps) {
     const location = useLocation();
     const { collapsed, onNavigate } = React.useContext(SidebarContext);
     const [isHovered, setIsHovered] = useState(false);
@@ -72,7 +73,7 @@ function SidebarLink({ label, icon, children, to, activeDropdown, setActiveDropd
 
     // Check if active (handle both direct and dropdown children)
     const isActiveRoute = to
-        ? location.pathname === to || location.pathname.startsWith(`${to}/`)
+        ? (exact ? location.pathname === to : (location.pathname === to || location.pathname.startsWith(`${to}/`)))
         : React.Children.toArray(children).some((child) => {
             if (React.isValidElement(child)) {
                 const props = child.props as { to?: string };
@@ -287,6 +288,7 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
                             to="/service-dashboard"
                             activeDropdown={activeDropdown}
                             setActiveDropdown={setActiveDropdown}
+                            exact={true}
                         />
 
                         <SidebarLink

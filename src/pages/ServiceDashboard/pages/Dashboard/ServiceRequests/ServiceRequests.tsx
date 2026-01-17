@@ -126,10 +126,10 @@ const ServiceRequests = () => {
                     >
                         <PiKanban size={20} />
                     </button>
-                    <DashboardButton bgColor="#8BDC5E" textColor="text-white" onClick={() => { }}>
+                    <DashboardButton bgColor="#8BDC5E" textColor="text-white" onClick={() => alert("Feature Coming Soon")}>
                         Find a Job
                     </DashboardButton>
-                    <DashboardButton bgColor="white" textColor="text-gray-700" icon={PiPlus} onClick={() => { }}>
+                    <DashboardButton bgColor="white" textColor="text-gray-700" icon={PiPlus} onClick={() => alert("Feature Coming Soon")}>
                         Add Request
                     </DashboardButton>
                 </div>
@@ -152,8 +152,8 @@ const ServiceRequests = () => {
             {/* Mobile Card View */}
             <div className="md:hidden space-y-4">
                 {filteredRequests.length > 0 ? (
-                    filteredRequests.map((req: Request, index: number) => (
-                        <div key={index} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                    filteredRequests.map((req: Request) => (
+                        <div key={req.id} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
                             <div className="flex justify-between items-start mb-3">
                                 <span className="text-gray-500 font-medium text-sm">#{req.id}</span>
                                 <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${req.status === 'New' ? 'bg-red-50 text-red-600' :
@@ -214,8 +214,8 @@ const ServiceRequests = () => {
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                         {filteredRequests.length > 0 ? (
-                            filteredRequests.map((req: Request, index: number) => (
-                                <tr key={index} className="hover:bg-gray-50">
+                            filteredRequests.map((req: Request) => (
+                                <tr key={req.id} className="hover:bg-gray-50">
                                     <td className="px-6 py-4">
                                         <div className={`flex items-center gap-2 font-medium text-sm ${req.status === 'New' ? 'text-red-500' :
                                             req.status === 'Completed' ? 'text-green-600' :

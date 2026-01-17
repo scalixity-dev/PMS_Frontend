@@ -73,7 +73,7 @@ const SortableRequestCard = ({ request }: { request: Request }) => {
                     <button className="text-gray-500 hover:text-gray-700 relative">
                         <PiChatCircleText size={20} />
                         {/* Dot for Normal as seen in image, red for critical (removed logic for critical based on user pref, keeping visual consistent with others) */}
-                        <span className={`absolute top-0 right-0 block h-2 w-2 rounded-full ring-1 ring-white ${request.priority === 'Critical' ? 'bg-red-500' : 'bg-red-500'} transform translate-x-1/4 -translate-y-1/4`}></span>
+                        <span className={`absolute top-0 right-0 block h-2 w-2 rounded-full ring-1 ring-white ${request.priority === 'Critical' ? 'bg-red-500' : 'bg-gray-300'} transform translate-x-1/4 -translate-y-1/4`}></span>
                     </button>
                     <button className="text-gray-500 hover:text-gray-700">
                         <PiDotsThreeOutlineFill size={20} />
@@ -329,11 +329,14 @@ const ServiceRequestsBoard = () => {
                     </div>
 
                     <DragOverlay>
-                        {activeId ? (
-                            <div className="rotate-3 cursor-grabbing opacity-90">
-                                <SortableRequestCard request={requests.find(r => r.id === activeId)!} />
-                            </div>
-                        ) : null}
+                        {(() => {
+                            const activeRequest = requests.find(r => r.id === activeId);
+                            return activeRequest ? (
+                                <div className="rotate-3 cursor-grabbing opacity-90">
+                                    <SortableRequestCard request={activeRequest} />
+                                </div>
+                            ) : null;
+                        })()}
                     </DragOverlay>
                 </DndContext>
             </div>

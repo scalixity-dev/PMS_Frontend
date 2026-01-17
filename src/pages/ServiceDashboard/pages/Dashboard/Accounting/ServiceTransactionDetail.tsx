@@ -10,10 +10,20 @@ const ServiceTransactionDetail = () => {
     const navigate = useNavigate();
 
     // Find transaction from mock data
-    const transaction = mockTransactions.find(t => t.id === id) || mockTransactions[0]; // Fallback to first if not found (or handle 404)
+    const transaction = mockTransactions.find(t => t.id === id);
 
     // Check if valid transaction
     if (!transaction) return <div>Transaction not found</div>;
+
+    const escapeHtml = (unsafe: string | number | undefined) => {
+        if (unsafe === undefined || unsafe === null) return '';
+        return String(unsafe)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    };
 
     const handlePrint = () => {
         const printWindow = window.open('', '_blank');
@@ -23,7 +33,7 @@ const ServiceTransactionDetail = () => {
             <!DOCTYPE html>
             <html>
             <head>
-                <title>Transaction Receipt - ${transaction.id}</title>
+                <title>Transaction Receipt - ${escapeHtml(transaction.id)}</title>
                 <style>
                     body { font-family: 'Inter', sans-serif; padding: 40px; color: #111; max-width: 800px; margin: 0 auto; }
                     .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; border-bottom: 2px solid #eee; padding-bottom: 20px; }
@@ -54,31 +64,31 @@ const ServiceTransactionDetail = () => {
                         <p>Scalixity Services</p>
                     </div>
                     <div class="meta">
-                        <p><strong>Receipt #:</strong> ${transaction.id}</p>
+                        <p><strong>Receipt #:</strong> ${escapeHtml(transaction.id)}</p>
                         <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
-                        <p><strong>Due Date:</strong> ${transaction.dueDate}</p>
+                        <p><strong>Due Date:</strong> ${escapeHtml(transaction.dueDate)}</p>
                         <br/>
-                        <span class="status-badge status-${transaction.status}">${transaction.status}</span>
+                        <span class="status-badge status-${escapeHtml(transaction.status)}">${escapeHtml(transaction.status)}</span>
                     </div>
                 </div>
 
                 <div class="row">
                     <div class="section" style="width: 45%">
                         <div class="section-title">Bill To</div>
-                        <div class="value">${transaction.payer.name}</div>
-                        <div style="font-size: 14px; color: #666;">${transaction.payer.email}</div>
+                        <div class="value">${escapeHtml(transaction.payer.name)}</div>
+                        <div style="font-size: 14px; color: #666;">${escapeHtml(transaction.payer.email)}</div>
                     </div>
                     <div class="section" style="width: 45%; text-align: right;">
                         <div class="section-title">Property Info</div>
-                        <div class="value">${transaction.property}</div>
-                        <div style="font-size: 14px; color: #666;">Unit: ${transaction.unit}</div>
+                        <div class="value">${escapeHtml(transaction.property)}</div>
+                        <div style="font-size: 14px; color: #666;">Unit: ${escapeHtml(transaction.unit)}</div>
                     </div>
                 </div>
 
                 <div class="section">
                     <div class="section-title">Description</div>
-                    <p style="font-size: 16px; margin: 0;">${transaction.description}</p>
-                    <p style="font-size: 14px; color: #666; margin: 5px 0 0;">Category: ${transaction.category} • Type: ${transaction.type}</p>
+                    <p style="font-size: 16px; margin: 0;">${escapeHtml(transaction.description)}</p>
+                    <p style="font-size: 14px; color: #666; margin: 5px 0 0;">Category: ${escapeHtml(transaction.category)} • Type: ${escapeHtml(transaction.type)}</p>
                 </div>
 
                 <div class="section">
@@ -91,7 +101,7 @@ const ServiceTransactionDetail = () => {
                         </thead>
                         <tbody>
                             <tr>
-                                <td>${transaction.description}</td>
+                                <td>${escapeHtml(transaction.description)}</td>
                                 <td style="text-align: right;">$${transaction.amount.toFixed(2)}</td>
                             </tr>
                         </tbody>
@@ -172,7 +182,11 @@ const ServiceTransactionDetail = () => {
                         <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
                             <div
                                 className="h-full bg-gradient-to-r from-[#D8D9D7] to-[#7ED949]"
-                                style={{ width: `${((transaction.amount - transaction.amountLeft) / transaction.amount) * 100}%` }}
+                                style={{
+                                    width: `${Number.isFinite(transaction.amount) && transaction.amount > 0
+                                        ? Math.min(Math.max(((transaction.amount - transaction.amountLeft) / transaction.amount) * 100, 0), 100)
+                                        : 0}%`
+                                }}
                             ></div>
                         </div>
                         <div className="flex justify-between text-xs text-gray-500 mt-1 font-medium">
@@ -232,7 +246,7 @@ const ServiceTransactionDetail = () => {
                 <div className="bg-gray-50 rounded-xl border border-gray-200 p-6">
                     <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                         <PiCurrencyDollar className="text-xl" />
-                        Payment & Activity <span className="text-gray-500 font-normal text-sm">({transaction.activity.length} Record)</span>
+                        Payment & Activity <span className="text-gray-500 font-normal text-sm">({transaction.activity.length} {transaction.activity.length === 1 ? 'Record' : 'Records'})</span>
                     </h3>
 
                     <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
