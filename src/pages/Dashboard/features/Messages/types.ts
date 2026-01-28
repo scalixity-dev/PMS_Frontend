@@ -7,10 +7,13 @@ export interface Message {
     reactions?: string[];
 }
 
+export type ChatCategory = 'Tenants' | 'Service Providers' | 'Maintenance Requests' | 'Leads';
+
 export interface Chat {
     id: string;
     name: string;
     role: string;
+    category: ChatCategory;
     status: string;
     avatar: string;
     lastMessage: string;

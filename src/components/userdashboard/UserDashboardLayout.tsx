@@ -1,8 +1,10 @@
 // src/components/userdashboard/UserDashboardLayout.tsx
 import { Outlet } from "react-router-dom";
-import { useState, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import UserDashboardNavbar from "./UserDashboardNavbar";
 import UserDashboardSidebar from "./UserDashboardSidebar";
+import { useAuthStore } from "../../pages/userdashboard/features/Profile/store/authStore";
+import { authService } from "../../services/auth.service";
 
 interface UserDashboardLayoutProps {
     children?: ReactNode;
@@ -11,9 +13,42 @@ interface UserDashboardLayoutProps {
 export default function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
     const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
     const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
+    const { userInfo, setUserInfo } = useAuthStore();
+
+    // Ensure userInfo is loaded into the store for all dashboard sub-routes
+    useEffect(() => {
+        if (!userInfo) {
+            const fetchUser = async () => {
+                try {
+                    const user = await authService.getCurrentUser();
+                    const [firstName, ...lastNameParts] = (user.fullName || "").split(" ");
+                    setUserInfo({
+                        firstName: firstName || "User",
+                        lastName: lastNameParts.join(" ") || "",
+                        email: user.email,
+                        role: user.role,
+                        phone: user.phoneNumber || "",
+                        country: user.country || "",
+                        city: user.state || "",
+                        pincode: user.pincode || "",
+                        dob: "1990-01-01", // Default placeholder
+                    });
+                } catch (error) {
+                    console.error("Layout: Failed to fetch user info:", error);
+                }
+            };
+            fetchUser();
+        }
+    }, [userInfo, setUserInfo]);
 
     return (
-        <div className="flex min-h-screen bg-gray-100 flex-col">
+        <div
+            className="flex min-h-screen bg-gray-100 flex-col"
+            style={{
+                "--header-height": "4rem",
+                "--sidebar-width": sidebarCollapsed ? "5rem" : "16rem"
+            } as React.CSSProperties}
+        >
             <div className="fixed top-0 left-0 right-0 z-50 print:hidden">
                 <UserDashboardNavbar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
             </div>
