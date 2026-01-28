@@ -43,6 +43,7 @@ const MoveIn: React.FC = () => {
     const [createdLeaseId, setCreatedLeaseId] = useState<string | null>(null);
     const [existingLeaseId, setExistingLeaseId] = useState<string | null>(null);
     const [propertyName, setPropertyName] = useState<string>('Property');
+    const [successPropertyId, setSuccessPropertyId] = useState<string | null>(null);
     const createLeaseMutation = useCreateLease();
     const updateLeaseMutation = useUpdateLease();
 
@@ -204,6 +205,8 @@ const MoveIn: React.FC = () => {
                     setPropertyName(result.property.propertyName);
                 }
             }
+            // Persist propertyId for use in success modal uploads
+            setSuccessPropertyId(formData.propertyId);
             setIsSuccessModalOpen(true);
             // Reset form after successful creation/update
             resetForm();
@@ -343,7 +346,7 @@ const MoveIn: React.FC = () => {
                     setIsSuccessModalOpen(false);
                     const leaseId = createdLeaseId || existingLeaseId;
                     if (leaseId) {
-                        navigate(`/dashboard/portfolio/leases/${leaseId}`);
+                        navigate(`/dashboard/leasing/leases/${leaseId}`);
                     } else {
                         navigate('/dashboard/application');
                     }
@@ -353,11 +356,13 @@ const MoveIn: React.FC = () => {
                     // Logic for e-signature request
                     const leaseId = createdLeaseId || existingLeaseId;
                     if (leaseId) {
-                        navigate(`/dashboard/portfolio/leases/${leaseId}/signature`);
+                        navigate(`/dashboard/leasing/leases/${leaseId}/signature`);
                     }
                 }}
                 propertyName={propertyName}
                 leaseNumber={createdLeaseId ? createdLeaseId.slice(-4) : (existingLeaseId ? existingLeaseId.slice(-4) : '')}
+                leaseId={createdLeaseId || existingLeaseId || undefined}
+                propertyId={successPropertyId || undefined}
             />
         </div>
     );

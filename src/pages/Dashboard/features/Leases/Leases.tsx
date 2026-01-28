@@ -106,9 +106,11 @@ const Leases: React.FC = () => {
         };
     };
 
-    // Transform all leases
+    // Transform all leases and hide ended ones (Terminated/Cancelled)
     const transformedLeases = useMemo(() => {
-        return leases.map(transformLease);
+        return leases
+            .filter((lease) => lease.status !== 'TERMINATED' && lease.status !== 'CANCELLED')
+            .map(transformLease);
     }, [leases]);
 
     // Calculate stats
@@ -211,7 +213,8 @@ const Leases: React.FC = () => {
 
     const handleEndLeaseClick = (e: React.MouseEvent, id: number | string) => {
         e.stopPropagation();
-        navigate(`/dashboard/leasing/leases/${id}/end-lease`);
+        // Navigate to lease detail where End Lease action is handled
+        navigate(`/dashboard/leasing/leases/${id}`);
     };
 
     const handleEditClick = (e: React.MouseEvent, item: LeaseItem) => {
@@ -380,7 +383,7 @@ const Leases: React.FC = () => {
                                 paginatedLeases.map((item) => (
                                     <div
                                         key={item.id}
-                                        onClick={() => navigate(`/dashboard/portfolio/leases/${item.id}`)}
+                                        onClick={() => navigate(`/dashboard/leasing/leases/${item.id}`)}
                                         className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer block md:grid md:grid-cols-[0.8fr_0.6fr_1.4fr_1fr_1.4fr_1.5fr_1fr] md:gap-4 md:items-center md:px-6 md:py-4"
                                     >
                                         {/* Mobile View */}
@@ -404,7 +407,7 @@ const Leases: React.FC = () => {
                                                         className="text-[#3A6D6C] p-2 hover:bg-gray-100 rounded-full"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            navigate(`/dashboard/portfolio/leases/${item.id}`);
+                                                            navigate(`/dashboard/leasing/leases/${item.id}`);
                                                         }}
                                                     >
                                                         <Eye className="w-4 h-4" />
@@ -469,7 +472,7 @@ const Leases: React.FC = () => {
                                                 className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    navigate(`/dashboard/portfolio/leases/${item.id}`);
+                                                    navigate(`/dashboard/leasing/leases/${item.id}`);
                                                 }}
                                             >
                                                 <Eye className="w-5 h-5" />

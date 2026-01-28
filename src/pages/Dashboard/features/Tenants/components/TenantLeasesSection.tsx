@@ -118,7 +118,7 @@ const TenantLeasesSection = ({ tenantId: _tenantId, tenant }: TenantLeasesSectio
                             {/* View Button */}
                             <button
                                 className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-xs font-medium hover:bg-[#2c5251] transition-colors shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)] flex items-center justify-center gap-2 w-full md:w-auto mt-2 md:mt-0"
-                                onClick={() => navigate(`/dashboard/portfolio/leases/${lease.id}`)}
+                                onClick={() => navigate(`/dashboard/leasing/leases/${lease.id}`)}
                             >
                                 <Eye className="w-4 h-4" />
                                 View

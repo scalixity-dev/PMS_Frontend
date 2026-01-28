@@ -205,6 +205,8 @@ export const API_ENDPOINTS = {
     CREATE: `${API_BASE_URL}/leases`,
     UPDATE: (id: string) => `${API_BASE_URL}/leases/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/leases/${id}`,
+    UPDATE_UTILITIES: (id: string) => `${API_BASE_URL}/leases/${id}/utilities`,
+    UPDATE_INSURANCES: (id: string) => `${API_BASE_URL}/leases/${id}/insurances`,
   },
   TRANSACTION: {
     CREATE_INCOME_INVOICE: `${API_BASE_URL}/transactions/income-invoice`,
