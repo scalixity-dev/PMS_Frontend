@@ -16,7 +16,7 @@ export interface FormData {
     dob: Date | undefined;
     shortBio: string;
     moveInDate: Date | undefined;
-    photo?: File | null;
+    photo?: File | string | null;
 }
 
 interface ApplicantFormProps {
@@ -252,9 +252,9 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                 <p className="text-gray-400 text-sm">{subTitle}</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 mb-8">
                 {/* Profile Photo Section */}
-                <div className="md:col-span-3 flex flex-col items-center">
+                <div className="md:col-span-3 flex flex-col items-center mb-6 md:mb-0">
                     <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
                     <div
                         onClick={() => !uploadingPhoto && fileInputRef.current?.click()}
@@ -340,7 +340,7 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
                                     <ChevronDown size={14} className="text-gray-400" />
                                 </button>
                                 {isPhoneCodeOpen && (
-                                    <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-[#E5E7EB] rounded-[10px] shadow-lg z-50 max-h-60 overflow-hidden flex flex-col">
+                                    <div className="absolute top-full left-0 mt-1 w-[280px] sm:w-64 bg-white border border-[#E5E7EB] rounded-[10px] shadow-lg z-50 max-h-60 overflow-hidden flex flex-col">
                                         <div className="p-2 border-b border-[#E5E7EB]">
                                             <div className="relative">
                                                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />

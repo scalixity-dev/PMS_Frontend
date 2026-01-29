@@ -83,13 +83,13 @@ const BackgroundQuestionsStep: React.FC<BackgroundQuestionsStepProps> = ({ onNex
     const handleCustomToggle = (questionId: string, value: boolean) => {
         const existingIndex = customAnswers.findIndex(a => a.questionId === questionId);
         const newAnswers = [...customAnswers];
-        
+
         if (existingIndex >= 0) {
             newAnswers[existingIndex] = { questionId, answer: value };
         } else {
             newAnswers.push({ questionId, answer: value });
         }
-        
+
         updateFormData('customBackgroundAnswers', newAnswers);
     };
 
@@ -100,7 +100,7 @@ const BackgroundQuestionsStep: React.FC<BackgroundQuestionsStepProps> = ({ onNex
         });
     };
 
-    const questionsNeedingExplanation = ['crime', 'bankruptcy', 'refuseRent', 'evicted'];
+    const questionsNeedingExplanation = ['smoke', 'military', 'crime', 'bankruptcy', 'refuseRent', 'evicted'];
 
     const getCustomAnswer = (questionId: string): boolean | null => {
         const answer = customAnswers.find(a => a.questionId === questionId);
@@ -151,9 +151,9 @@ const BackgroundQuestionsStep: React.FC<BackgroundQuestionsStepProps> = ({ onNex
                                 key={q.id}
                                 className="bg-white px-5 py-4 rounded-2xl border border-[#E5E7EB] shadow-sm hover:shadow-md transition-all flex flex-col gap-4"
                             >
-                                <div className="flex items-center justify-between">
-                                    <p className="text-[#1A1A1A] font-semibold text-sm max-w-[70%]">{q.text}</p>
-                                    <div className="flex items-center gap-6">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                    <p className="text-[#1A1A1A] font-semibold text-sm sm:max-w-[60%] md:max-w-[70%]">{q.text}</p>
+                                    <div className="flex items-center gap-6 sm:justify-end">
                                         <label className="flex items-center gap-2 cursor-pointer group">
                                             <div
                                                 onClick={() => handleToggle(q.id, true)}
@@ -202,9 +202,9 @@ const BackgroundQuestionsStep: React.FC<BackgroundQuestionsStepProps> = ({ onNex
                                         key={q.id}
                                         className="bg-white px-5 py-4 rounded-2xl border border-[#E5E7EB] shadow-sm hover:shadow-md transition-all"
                                     >
-                                        <div className="flex items-center justify-between">
-                                            <p className="text-[#1A1A1A] font-semibold text-sm max-w-[70%]">{q.question}</p>
-                                            <div className="flex items-center gap-6">
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                            <p className="text-[#1A1A1A] font-semibold text-sm sm:max-w-[60%] md:max-w-[70%]">{q.question}</p>
+                                            <div className="flex items-center gap-6 sm:justify-end">
                                                 <label className="flex items-center gap-2 cursor-pointer group">
                                                     <div
                                                         onClick={() => handleCustomToggle(q.id, true)}

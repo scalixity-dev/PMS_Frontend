@@ -14,6 +14,7 @@ const IncomeItem: React.FC<{ income: IncomeFormData & { id: string }; onDelete: 
                 <div className="flex flex-col">
                     <p className="font-semibold text-[#1A1A1A] text-sm">{income.incomeType} • {income.company}</p>
                     <p className="text-[11px] text-[#ADADAD]">{income.office} • {income.currentEmployment ? 'Current' : 'Previous'}</p>
+                    <p className="text-[11px] font-bold text-[#7ED957] sm:hidden mt-0.5">₹{income.monthlyAmount}/mo</p>
                 </div>
             </div>
             <div className="flex items-center gap-2">

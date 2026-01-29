@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Bell, X } from "lucide-react";
+import { Bell, X, ChevronLeft, ChevronRight } from "lucide-react";
 import ApplicationSubmittedModal from "./components/ApplicationSubmittedModal";
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
 import DeleteConfirmationModal from "../../../../components/common/modals/DeleteConfirmationModal";
-import { UserApplicationCard, type ApplicationItem } from "./components/UserApplicationCard";
+import { UserApplicationCard, UserApplicationCardSkeleton, type ApplicationItem } from "./components/UserApplicationCard";
 import { API_ENDPOINTS } from "../../../../config/api.config";
 
 interface InvitationItem {
@@ -16,12 +16,14 @@ interface InvitationItem {
   initials: string;
 }
 
-
+const ITEMS_PER_PAGE = 10;
 
 const Applications: React.FC = () => {
   const navigate = useNavigate();
   const [showInvitationsSection, setShowInvitationsSection] = useState(false);
   const [invitations, setInvitations] = useState<InvitationItem[]>([]);
+  const [isLoadingInvitations, setIsLoadingInvitations] = useState(true);
+  const [isLoadingApplications, setIsLoadingApplications] = useState(true);
   const [deleteModalState, setDeleteModalState] = useState<{
     isOpen: boolean;
     type: 'invitation' | 'application';
@@ -59,6 +61,7 @@ const Applications: React.FC = () => {
     const controller = new AbortController();
 
     const fetchInvitations = async () => {
+      setIsLoadingInvitations(true);
       try {
         const response = await fetch(API_ENDPOINTS.APPLICATION.GET_INVITATIONS, {
           method: 'GET',
@@ -113,12 +116,12 @@ const Applications: React.FC = () => {
         }
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {
-          // Request was aborted, this is expected on unmount
           return;
         }
         console.error("Failed to fetch invitations:", error);
         setInvitations([]);
       }
+      setIsLoadingInvitations(false);
     };
 
     fetchInvitations();
@@ -133,6 +136,7 @@ const Applications: React.FC = () => {
     const controller = new AbortController();
 
     const fetchApplications = async () => {
+      setIsLoadingApplications(true);
       try {
         const response = await fetch(API_ENDPOINTS.APPLICATION.GET_ALL, {
           method: 'GET',
@@ -196,12 +200,12 @@ const Applications: React.FC = () => {
         }
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {
-          console.log("Request was aborted (component unmounted)");
           return;
         }
         console.error("Failed to fetch applications:", error);
         setApplications([]);
       }
+      setIsLoadingApplications(false);
     };
 
     fetchApplications();
@@ -209,9 +213,30 @@ const Applications: React.FC = () => {
     return () => controller.abort();
   }, []);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.ceil(applications.length / ITEMS_PER_PAGE);
+
+  const paginatedApplications = applications.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
+    }
+  }, [applications.length, totalPages, currentPage]);
+
   return (
     <div className="bg-white min-h-screen">
-      <div className="max-w-full mx-auto p-8 space-y-8">
+      <div className="max-w-full mx-auto p-4 sm:p-6 md:p-8 space-y-6 sm:space-y-8">
         {/* Breadcrumbs */}
         <nav aria-label="Breadcrumb">
           <ol className="flex items-center gap-2 text-base font-medium">
@@ -233,25 +258,25 @@ const Applications: React.FC = () => {
         </nav>
 
         {/* Header Section */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-baseline gap-10">
-            <h1 className="text-2xl font-semibold text-[#1A1A1A]">Application</h1>
-            <span className="text-[#A1A1AA] text-lg font-medium">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-baseline gap-4 sm:gap-10">
+            <h1 className="text-xl sm:text-2xl font-semibold text-[#1A1A1A]">Application</h1>
+            <span className="text-[#A1A1AA] text-base sm:text-lg font-medium">
               Total {applications.filter(app => app.status !== 'Draft').length}
             </span>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center justify-end gap-3 sm:gap-4">
             {/* Notification Bell - Toggles Invitation Cards */}
             <button
               onClick={() => setShowInvitationsSection(!showInvitationsSection)}
-              className="relative"
+              className="relative shrink-0"
             >
-              <div className="w-10 h-10 bg-[#7ED957] rounded-full flex items-center justify-center text-white cursor-pointer hover:opacity-90 transition-opacity shadow-sm">
-                <Bell size={22} fill="white" strokeWidth={1.5} />
+              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-[#7ED957] rounded-full flex items-center justify-center text-white cursor-pointer hover:opacity-90 transition-opacity shadow-sm">
+                <Bell size={20} className="sm:w-[22px]" fill="white" strokeWidth={1.5} />
               </div>
-              {invitations.length > 0 && (
-                <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#FF3B30] border-2 border-white rounded-full flex items-center justify-center text-[10px] font-bold text-white">
+              {invitations.length > 0 && !isLoadingInvitations && (
+                <div className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-[#FF3B30] border-2 border-white rounded-full flex items-center justify-center text-[8px] sm:text-[10px] font-bold text-white">
                   {invitations.length}
                 </div>
               )}
@@ -260,55 +285,71 @@ const Applications: React.FC = () => {
             {/* Find a Place Button */}
             <PrimaryActionButton
               text="Find a Place"
-              className="bg-[#7ED957] hover:bg-[#6BC847] px-6! py-2.5!"
+              className="bg-[#7ED957] hover:bg-[#6BC847] px-4! sm:px-6! py-2! sm:py-2.5! text-xs sm:text-sm"
               to="/userdashboard/properties"
             />
           </div>
         </div>
 
         {/* Invitations Section */}
-        {showInvitationsSection && invitations.length > 0 && (
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-[#1A1A1A]">Invitations ({invitations.length})</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {invitations.map((inv) => (
-                <div key={inv.id} className="bg-white rounded-xl border border-[#E5E7EB] p-5 flex items-center justify-between shadow-[0px_4px_4px_0px_#00000040]">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-[#52D3A2] flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-                      {inv.initials}
-                    </div>
-                    <div className="flex flex-col">
-                      <h3 className="font-semibold text-[#1A1A1A] text-sm">{inv.inviterName}</h3>
-                      <p className="text-sm text-[#71717A] leading-tight mt-0.5">
-                        invited you to apply for {inv.propertyName}, {inv.propertyAddress}
-                      </p>
+        {showInvitationsSection && (
+          <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+            {isLoadingInvitations ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                {[1, 2].map((i) => (
+                  <div key={i} className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-5 h-[100px] animate-pulse flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-gray-200 shrink-0"></div>
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                      <div className="h-3 bg-gray-200 rounded w-3/4"></div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-6 pr-2">
-                    <button
-                      onClick={() => setDeleteModalState({ isOpen: true, type: 'invitation', targetId: inv.id })}
-                      className="text-[#64748B] text-sm font-medium hover:text-[#1A1A1A] transition-colors"
-                    >
-                      Ignore
-                    </button>
-                    <button
-                      onClick={() => navigate(`/userdashboard/properties/${inv.propertyId}`)}
-                      className="text-[#7ED957] text-sm font-semibold hover:opacity-80 transition-opacity"
-                    >
-                      View
-                    </button>
-                  </div>
+                ))}
+              </div>
+            ) : invitations.length > 0 ? (
+              <>
+                <h2 className="text-lg font-semibold text-[#1A1A1A]">Invitations ({invitations.length})</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                  {invitations.map((inv) => (
+                    <div key={inv.id} className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-[0px_4px_4px_0px_#00000040]">
+                      <div className="flex items-center gap-3 sm:gap-4">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#52D3A2] flex items-center justify-center text-white font-bold text-base sm:text-lg flex-shrink-0">
+                          {inv.initials}
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <h3 className="font-semibold text-[#1A1A1A] text-sm truncate">{inv.inviterName}</h3>
+                          <p className="text-xs sm:text-sm text-[#71717A] leading-tight mt-0.5 break-words">
+                            invited you to apply for <span className="text-[#1A1A1A] font-medium">{inv.propertyName}</span>, {inv.propertyAddress}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-6 sm:justify-end sm:pr-2 pl-13 sm:pl-0">
+                        <button
+                          onClick={() => setDeleteModalState({ isOpen: true, type: 'invitation', targetId: inv.id })}
+                          className="text-[#64748B] text-sm font-medium hover:text-[#1A1A1A] transition-colors"
+                        >
+                          Ignore
+                        </button>
+                        <button
+                          onClick={() => navigate(`/userdashboard/properties/${inv.propertyId}`)}
+                          className="text-[#7ED957] text-sm font-bold hover:opacity-80 transition-opacity"
+                        >
+                          View
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </>
+            ) : (
+              <div className="bg-[#F9FAFB] rounded-xl border border-dashed border-[#E5E7EB] p-8 text-center text-[#71717A]">
+                No new invitations at the moment.
+              </div>
+            )}
           </div>
         )}
 
-        {showInvitationsSection && invitations.length === 0 && (
-          <div className="bg-[#F9FAFB] rounded-xl border border-dashed border-[#E5E7EB] p-8 text-center text-[#71717A]">
-            No new invitations at the moment.
-          </div>
-        )}
+
 
         <DeleteConfirmationModal
           isOpen={deleteModalState.isOpen}
@@ -341,6 +382,7 @@ const Applications: React.FC = () => {
                       'Content-Type': 'application/json',
                     },
                     credentials: 'include',
+                    body: JSON.stringify({}),
                   });
 
                   if (deleteResponse.ok) {
@@ -376,22 +418,29 @@ const Applications: React.FC = () => {
 
         {/* Application List */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {applications.map((app) => (
-            <UserApplicationCard
-              key={app.id}
-              app={app}
-              onDelete={(id) => setDeleteModalState({ isOpen: true, type: 'application', targetId: String(id) })}
-              onNavigate={() => navigate(
-                app.status === "Draft" ? "/userdashboard/new-application" : `/userdashboard/applications/${app.id}`,
-                {
-                  state: app.status === "Draft" && app.propertyId ? { propertyId: app.propertyId } : undefined
-                }
-              )}
-            />
-          ))}
+          {isLoadingApplications ? (
+            // Skeleton Loading State
+            Array.from({ length: 4 }).map((_, index) => (
+              <UserApplicationCardSkeleton key={index} />
+            ))
+          ) : (
+            paginatedApplications.map((app) => (
+              <UserApplicationCard
+                key={app.id}
+                app={app}
+                onDelete={(id) => setDeleteModalState({ isOpen: true, type: 'application', targetId: String(id) })}
+                onNavigate={() => navigate(
+                  app.status === "Draft" ? "/userdashboard/new-application" : `/userdashboard/applications/${app.id}`,
+                  {
+                    state: app.status === "Draft" && app.propertyId ? { propertyId: app.propertyId } : undefined
+                  }
+                )}
+              />
+            ))
+          )}
 
           {
-            applications.length === 0 && (
+            !isLoadingApplications && applications.length === 0 && (
               <div className="col-span-full w-full py-20 flex flex-col items-center justify-center text-gray-400">
                 <p className="text-lg font-medium">No applications found</p>
                 <p className="text-sm">Start a new application or check your invitations.</p>
@@ -399,6 +448,48 @@ const Applications: React.FC = () => {
             )
           }
         </div >
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="mt-8 flex justify-center items-center gap-2 pb-10">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className={`p-2 rounded-full transition-colors ${currentPage === 1
+                ? 'text-gray-300 cursor-not-allowed'
+                : 'text-gray-600 hover:bg-gray-100'
+                }`}
+            >
+              <ChevronLeft size={24} />
+            </button>
+
+            <div className="flex items-center gap-2">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => handlePageChange(page)}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${currentPage === page
+                    ? 'bg-[#7ED957] text-white shadow-lg'
+                    : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                    }`}
+                >
+                  {page}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className={`p-2 rounded-full transition-colors ${currentPage === totalPages
+                ? 'text-gray-300 cursor-not-allowed'
+                : 'text-gray-600 hover:bg-gray-100'
+                }`}
+            >
+              <ChevronRight size={24} />
+            </button>
+          </div>
+        )}
       </div >
 
       {/* Error Toast */}

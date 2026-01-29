@@ -319,19 +319,28 @@ const UserNewApplication: React.FC = () => {
 
         try {
             const leasing = await leasingService.getByPropertyId(formData.propertyId);
-            
+
             if (!leasing || !leasing.id) {
                 throw new Error('No leasing information found for this property. Please ensure the property has leasing details configured.');
             }
 
             leasingId = leasing.id;
-            
+
             if (leasing.property?.address) {
                 const addr = leasing.property.address;
                 address = `${addr.streetAddress || ''}, ${addr.city || ''}, ${addr.stateRegion || ''} ${addr.zipCode || ''}, ${addr.country || ''}`.replace(/^, |, $/g, '').replace(/, ,/g, ',');
             }
-            
-            propertyName = leasing.property?.propertyName || leasing.property?.listing?.title || 'Property';
+
+            // Get listing title from property - check both listing and listings
+            const beds = leasing.property?.leasing?.singleUnitDetail?.beds ?? leasing.property?.leasing?.unit?.beds ??
+                leasing.singleUnitDetail?.beds ?? leasing.unit?.beds ?? null;
+            const listingTitle = (leasing.property as any)?.listing?.title ||
+                ((leasing.property as any)?.listings && (leasing.property as any).listings.length > 0
+                    ? (leasing.property as any).listings[0]?.title
+                    : null);
+            propertyName = leasing.property?.propertyName || listingTitle ||
+                (beds !== null ? `${beds} Bedroom ${leasing.property?.propertyType === 'SINGLE' ? 'Property' : 'Unit'}` : null) ||
+                'Property';
             landlordName = leasing.property?.manager?.fullName || leasing.property?.listingContactName || "Property Manager";
         } catch (error) {
             // Re-throw with more context if it's already an Error
@@ -488,9 +497,9 @@ const UserNewApplication: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#F9FAFB] p-4 md:p-10 relative">
+        <div className="min-h-screen bg-[#F9FAFB] p-2 sm:p-4 md:p-10 relative">
             <div className="max-w-4xl mx-auto">
-                <div className="bg-[#F5F5F5] rounded-xl shadow-[0px_3.9px_3.9px_0px_#00000040] border border-gray-100 p-8 relative">
+                <div className="bg-[#F5F5F5] rounded-xl shadow-[0px_3.9px_3.9px_0px_#00000040] border border-gray-100 p-4 sm:p-6 md:p-8 relative">
                     <button
                         onClick={handleBack}
                         className="flex items-center gap-1 text-[#004D40] font-bold text-sm mb-6 hover:opacity-80 transition-opacity"

@@ -92,9 +92,9 @@ export const UserApplicationCard: React.FC<ApplicationCardProps> = ({ app, onDel
             </button>
 
             {/* Main Content */}
-            <div className="flex flex-col items-center pt-12 px-6">
+            <div className="flex flex-col items-center pt-10 sm:pt-12 px-4 sm:px-6">
                 {/* Avatar */}
-                <div className="w-20 h-20 rounded-full bg-[#E0F2FE] mb-3 overflow-hidden flex items-center justify-center">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#E0F2FE] mb-3 overflow-hidden flex items-center justify-center shrink-0">
                     {app.imageUrl && !imageError ? (
                         <img
                             src={app.imageUrl}
@@ -103,14 +103,14 @@ export const UserApplicationCard: React.FC<ApplicationCardProps> = ({ app, onDel
                             onError={() => setImageError(true)}
                         />
                     ) : (
-                        <span className="text-2xl font-semibold text-[#1565C0]">
+                        <span className="text-xl sm:text-2xl font-semibold text-[#1565C0]">
                             {initials}
                         </span>
                     )}
                 </div>
 
                 {/* Name */}
-                <h3 className="text-lg font-semibold text-[#1A1A1A] mb-1">
+                <h3 className="text-base sm:text-lg font-semibold text-[#1A1A1A] mb-1 text-center truncate w-full">
                     {app.name}
                 </h3>
 
@@ -138,6 +138,41 @@ export const UserApplicationCard: React.FC<ApplicationCardProps> = ({ app, onDel
                 >
                     {app.status === "Draft" ? "Continue application" : "View application"}
                 </button>
+            </div>
+        </div>
+    );
+};
+
+export const UserApplicationCardSkeleton: React.FC = () => {
+    return (
+        <div className="bg-[#F7F7F7] rounded-2xl border-[0.5px] border-[#201F23]/40 shadow-[0px_4px_4px_0px_#00000040] w-full flex flex-col relative h-[320px] animate-pulse">
+            {/* Status Badge Skeleton */}
+            <div className="absolute top-4 left-4 z-10 w-20 h-6 bg-gray-200 rounded-full"></div>
+
+            {/* Delete Button Skeleton */}
+            <div className="absolute top-4 right-4 z-10 w-8 h-8 bg-gray-200 rounded-full"></div>
+
+            {/* Main Content */}
+            <div className="flex flex-col items-center pt-10 sm:pt-12 px-4 sm:px-6 w-full">
+                {/* Avatar Skeleton */}
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gray-200 mb-3 shrink-0"></div>
+
+                {/* Name Skeleton */}
+                <div className="w-3/4 h-6 bg-gray-200 rounded mb-2"></div>
+
+                {/* Applied Date Skeleton */}
+                <div className="w-1/2 h-4 bg-gray-200 rounded mb-4"></div>
+
+                {/* Address Skeleton */}
+                <div className="w-full h-12 bg-gray-200 rounded-lg mb-4"></div>
+            </div>
+
+            {/* Separator */}
+            <div className="border-t border-[#E5E7EB] mt-auto"></div>
+
+            {/* View Application Link Skeleton */}
+            <div className="py-4 flex justify-center">
+                <div className="w-1/3 h-5 bg-gray-200 rounded"></div>
             </div>
         </div>
     );
