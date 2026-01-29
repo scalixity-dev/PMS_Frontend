@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { PiPlus, PiChatCircleText, PiKanban } from "react-icons/pi";
+import { useNavigate, useOutletContext } from 'react-router-dom';
+import { PiChatCircleText, PiKanban } from "react-icons/pi";
 import ServiceBreadCrumb from '../../../components/ServiceBreadCrumb';
 import ServiceFilters from '../../../components/ServiceFilters';
 import DashboardButton from '../../../components/DashboardButton';
@@ -14,6 +14,10 @@ interface Request {
     client: string;
     avatar: string;
     subCategory?: string; // Optional since not all mock data might have it
+}
+
+interface DashboardContext {
+    sidebarCollapsed: boolean;
 }
 
 const ServiceRequests = () => {
@@ -76,6 +80,7 @@ const ServiceRequests = () => {
     ]);
 
     const navigate = useNavigate();
+    const { sidebarCollapsed } = useOutletContext<DashboardContext>() || { sidebarCollapsed: false };
 
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
@@ -100,7 +105,7 @@ const ServiceRequests = () => {
     });
 
     return (
-        <div>
+        <div className={`mx-auto min-h-screen pb-20 transition-all duration-300 ${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'}`}>
             <ServiceBreadCrumb
                 items={[
                     { label: 'Dashboard', to: '/service-dashboard' },
@@ -126,11 +131,8 @@ const ServiceRequests = () => {
                     >
                         <PiKanban size={20} />
                     </button>
-                    <DashboardButton bgColor="#8BDC5E" textColor="text-white" onClick={() => alert("Feature Coming Soon")}>
+                    <DashboardButton bgColor="#8BDC5E" textColor="text-white" onClick={() => navigate('/service-dashboard/find-job')}>
                         Find a Job
-                    </DashboardButton>
-                    <DashboardButton bgColor="white" textColor="text-gray-700" icon={PiPlus} onClick={() => alert("Feature Coming Soon")}>
-                        Add Request
                     </DashboardButton>
                 </div>
             </div>
@@ -153,7 +155,11 @@ const ServiceRequests = () => {
             <div className="md:hidden space-y-4">
                 {filteredRequests.length > 0 ? (
                     filteredRequests.map((req: Request) => (
-                        <div key={req.id} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                        <div
+                            key={req.id}
+                            className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+                            onClick={() => navigate(`/service-dashboard/requests/${req.id}`)}
+                        >
                             <div className="flex justify-between items-start mb-3">
                                 <span className="text-gray-500 font-medium text-sm">#{req.id}</span>
                                 <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${req.status === 'New' ? 'bg-red-50 text-red-600' :
@@ -183,7 +189,9 @@ const ServiceRequests = () => {
 
                             <div className="flex items-center justify-between pt-3 border-t border-gray-50">
                                 <div className="flex items-center gap-2">
-                                    <img src={req.avatar} alt={req.client} className="w-8 h-8 rounded-full object-cover" />
+                                    <div className="w-8 h-8 rounded-full bg-coral-100 flex items-center justify-center text-xs font-bold text-gray-700">
+                                        {req.client.split(' ').map((n: string) => n[0]).join('')}
+                                    </div>
                                     <span className="text-sm font-medium text-gray-700">{req.client}</span>
                                 </div>
                                 <button className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100">
@@ -215,7 +223,11 @@ const ServiceRequests = () => {
                     <tbody className="divide-y divide-gray-100">
                         {filteredRequests.length > 0 ? (
                             filteredRequests.map((req: Request) => (
-                                <tr key={req.id} className="hover:bg-gray-50">
+                                <tr
+                                    key={req.id}
+                                    className="hover:bg-gray-50 cursor-pointer"
+                                    onClick={() => navigate(`/service-dashboard/requests/${req.id}`)}
+                                >
                                     <td className="px-6 py-4">
                                         <div className={`flex items-center gap-2 font-medium text-sm ${req.status === 'New' ? 'text-red-500' :
                                             req.status === 'Completed' ? 'text-green-600' :
@@ -246,7 +258,12 @@ const ServiceRequests = () => {
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex justify-between items-center pr-4">
-                                            <span className="text-sm text-gray-900">{req.client}</span>
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-8 h-8 rounded-full bg-coral-100 flex items-center justify-center text-[10px] font-bold text-gray-700">
+                                                    {req.client.split(' ').map((n: string) => n[0]).join('')}
+                                                </div>
+                                                <span className="text-sm text-gray-900">{req.client}</span>
+                                            </div>
                                             <button className="p-1 rounded-full border border-gray-200 hover:bg-gray-100 text-gray-500 relative">
                                                 <PiChatCircleText size={18} />
                                                 <span className="absolute top-0 right-0 block h-2 w-2 rounded-full ring-2 ring-white bg-red-500 transform translate-x-1/4 -translate-y-1/4"></span>

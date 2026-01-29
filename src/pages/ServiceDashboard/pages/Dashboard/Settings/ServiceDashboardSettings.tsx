@@ -140,7 +140,7 @@ const ServiceDashboardSettings = () => {
     };
 
     return (
-        <div className={`min-h-screen transition-all duration-300 mx-auto ${sidebarOpen ? 'max-w-7xl' : 'max-w-full'}`}>
+        <div className={`min-h-screen transition-all duration-300 mx-auto ${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'}`}>
             <div className="space-y-5">
                 <ServiceBreadCrumb
                     items={[

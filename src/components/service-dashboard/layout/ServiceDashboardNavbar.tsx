@@ -5,10 +5,8 @@ import {
     Search,
     Bell,
     MessageSquare,
-    User,
     LogOut,
     UserCog,
-    Info,
     X,
     MoreHorizontal,
 } from "lucide-react";
@@ -192,18 +190,6 @@ export default function ServiceDashboardNavbar({ setSidebarOpen }: NavbarProps) 
                                         <button
                                             onClick={() => {
                                                 setIsMobileMenuOpen(false);
-                                                // navigate('/service-dashboard/info');
-                                            }}
-                                            className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                                        >
-                                            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                                                <Info size={16} className="text-gray-700" />
-                                            </div>
-                                            <span className="font-medium">Info</span>
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                setIsMobileMenuOpen(false);
                                                 navigate('/service-dashboard/notifications');
                                             }}
                                             className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
@@ -227,12 +213,6 @@ export default function ServiceDashboardNavbar({ setSidebarOpen }: NavbarProps) 
                             >
                                 <MessageSquare size={18} className="text-gray-800" />
                             </button>
-                            <button
-                                aria-label="Info"
-                                className="w-8 h-8 rounded-full bg-white flex items-center justify-center hover:bg-gray-100 shadow-[0_3px_0_rgba(93,111,108)]"
-                            >
-                                <Info size={18} className="text-gray-800" />
-                            </button>
 
                             {/* Notification (Bell) Icon */}
                             <button
@@ -254,7 +234,7 @@ export default function ServiceDashboardNavbar({ setSidebarOpen }: NavbarProps) 
                                     {isLoading ? "Loading..." : userName}
                                 </span>
                                 <div className="w-6 h-6 rounded-full bg-gray-800 flex items-center justify-center overflow-hidden">
-                                    <User size={16} className="text-white" />
+                                    <span className="text-white text-[10px] font-bold">SB</span>
                                 </div>
                             </div>
 
@@ -264,7 +244,7 @@ export default function ServiceDashboardNavbar({ setSidebarOpen }: NavbarProps) 
                                     <div className="px-5 pt-5 pb-4">
                                         <div className="flex items-start gap-3">
                                             <div className="w-14 h-14 rounded-full bg-gray-900 flex items-center justify-center text-white self-start">
-                                                <User size={28} />
+                                                <span className="text-xl font-bold">SB</span>
                                             </div>
                                             <div className="flex flex-col items-start space-y-0.5">
                                                 <p className="text-xs text-gray-500">{userRole}</p>
