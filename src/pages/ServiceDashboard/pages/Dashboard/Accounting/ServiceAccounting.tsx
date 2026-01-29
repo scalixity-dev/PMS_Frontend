@@ -40,8 +40,13 @@ const ServiceAccounting = () => {
                 : (scheduleSource && scheduleSource.includes(scheduleFilter)));
 
         // Basic Date Filter
-        const matchesDate = dateFilter === 'All' || (() => {
+        // Basic Date Filter
+        const matchesDate = (() => {
             if (!t.dueDate) return false;
+
+            const filters = Array.isArray(dateFilter) ? dateFilter : [dateFilter];
+            if (filters.includes('All')) return true;
+
             // Parse date "YYYY-MM-DD"
             const [y, m, d] = (t.dueDate as string).split('-').map(Number);
             const date = new Date(y, m - 1, d);
@@ -50,24 +55,26 @@ const ServiceAccounting = () => {
             // Normalize current date to midnight for fair comparison
             const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-            if (dateFilter === 'Last 7 Days') {
-                const diffTime = today.getTime() - date.getTime();
-                const diffDays = diffTime / (1000 * 3600 * 24);
-                return diffDays >= 0 && diffDays <= 7;
-            }
-            if (dateFilter === 'Last 30 Days') {
-                const diffTime = today.getTime() - date.getTime();
-                const diffDays = diffTime / (1000 * 3600 * 24);
-                return diffDays >= 0 && diffDays <= 30;
-            }
-            if (dateFilter === 'This Month') {
-                return date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
-            }
-            if (dateFilter === 'Last Month') {
-                const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-                return date.getMonth() === lastMonth.getMonth() && date.getFullYear() === lastMonth.getFullYear();
-            }
-            return true;
+            return filters.some(filter => {
+                if (filter === 'Last 7 Days') {
+                    const diffTime = today.getTime() - date.getTime();
+                    const diffDays = diffTime / (1000 * 3600 * 24);
+                    return diffDays >= 0 && diffDays <= 7;
+                }
+                if (filter === 'Last 30 Days') {
+                    const diffTime = today.getTime() - date.getTime();
+                    const diffDays = diffTime / (1000 * 3600 * 24);
+                    return diffDays >= 0 && diffDays <= 30;
+                }
+                if (filter === 'This Month') {
+                    return date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
+                }
+                if (filter === 'Last Month') {
+                    const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                    return date.getMonth() === lastMonth.getMonth() && date.getFullYear() === lastMonth.getFullYear();
+                }
+                return true;
+            });
         })();
 
         return matchesSearch && matchesStatus && matchesSchedule && matchesDate;

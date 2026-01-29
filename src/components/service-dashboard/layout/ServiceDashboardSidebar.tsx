@@ -141,8 +141,8 @@ const DownloadPopup: React.FC<DownloadPopupProps> = ({ isOpen, onClose, position
                 <button
                     onClick={onClose}
                     className="p-2 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors"
-                    aria-label="Close sidebar"
-                    title="Close sidebar"
+                    aria-label="Close downloads"
+                    title="Close downloads"
                 >
                     <X size={18} />
                 </button>

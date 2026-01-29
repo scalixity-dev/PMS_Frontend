@@ -31,8 +31,13 @@ const IntegrationSettings = () => {
         try {
             setIsConnecting(true);
             const result = await connectUrlMutation.mutateAsync(undefined);
-            // Redirect to Google OAuth
-            window.location.href = result.authUrl;
+
+            if (result && typeof result.authUrl === 'string' && result.authUrl.trim() !== '') {
+                // Redirect to Google OAuth
+                window.location.href = result.authUrl;
+            } else {
+                throw new Error("Invalid authentication URL received");
+            }
         } catch (error: any) {
             console.error("Failed to get connect URL:", error);
             alert(error.message || "Failed to connect Google Calendar");

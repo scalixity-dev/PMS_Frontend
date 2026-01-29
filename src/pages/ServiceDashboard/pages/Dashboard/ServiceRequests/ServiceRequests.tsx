@@ -201,6 +201,7 @@ const ServiceRequests = () => {
                                     </div>
                                     <button
                                         className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
+                                        aria-label={`Chat about request ${req.id}`}
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             // Handle chat logic here if needed, or it might be handled by parent if we didn't stop prop, 
@@ -274,6 +275,7 @@ const ServiceRequests = () => {
                                                 </div>
                                                 <button
                                                     className="p-1 rounded-full border border-gray-200 hover:bg-gray-100 text-gray-500 relative"
+                                                    aria-label={`Chat about request ${req.id}`}
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         console.log("Chat clicked for", req.id);
