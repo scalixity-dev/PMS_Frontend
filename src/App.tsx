@@ -24,6 +24,9 @@ import ServiceDashboardLayout from './components/service-dashboard/layout/Servic
 import ServiceDashboard from './pages/ServiceDashboard/pages/Dashboard/ServiceDashboard';
 import ServiceDashboardSettings from './pages/ServiceDashboard/pages/Dashboard/Settings/ServiceDashboardSettings';
 import ServiceDashboardProfileSettings from './pages/ServiceDashboard/pages/Dashboard/Settings/AccountSettings/ProfileSettings';
+import ServiceDashboardSecuritySettings from './pages/ServiceDashboard/pages/Dashboard/Settings/AccountSettings/SecuritySettings';
+import ServiceDashboardIntegrationSettings from './pages/ServiceDashboard/pages/Dashboard/Settings/AccountSettings/IntegrationSettings';
+import ServiceDashboardNotificationSettings from './pages/ServiceDashboard/pages/Dashboard/Settings/AccountSettings/NotificationSettings';
 import OtpPage from './pages/basewebsite/auth/otp';
 import OAuthCallbackPage from './pages/basewebsite/auth/otp'; // Note: This might have been a mistake in the original or I misread, checking...
 import OAuthCompletePage from './pages/basewebsite/auth/signUp/oauth-complete';
@@ -228,6 +231,9 @@ const App: React.FC = () => {
               <Route path="/service-dashboard/accounting/transaction/:id" element={<ProtectedRoute><ServiceTransactionDetail /></ProtectedRoute>} />
               <Route path="/service-dashboard/settings" element={<ProtectedRoute><ServiceDashboardSettings /></ProtectedRoute>} />
               <Route path="/service-dashboard/settings/profile" element={<ProtectedRoute><ServiceDashboardProfileSettings /></ProtectedRoute>} />
+              <Route path="/service-dashboard/settings/security" element={<ProtectedRoute><ServiceDashboardSecuritySettings /></ProtectedRoute>} />
+              <Route path="/service-dashboard/settings/integrations" element={<ProtectedRoute><ServiceDashboardIntegrationSettings /></ProtectedRoute>} />
+              <Route path="/service-dashboard/settings/notifications" element={<ProtectedRoute><ServiceDashboardNotificationSettings /></ProtectedRoute>} />
               <Route path="/service-dashboard/settings/business-profile" element={<ProtectedRoute><ServiceBusinessProfile /></ProtectedRoute>} />
               <Route path="/service-dashboard/contacts" element={<ProtectedRoute><ServiceContacts /></ProtectedRoute>} />
               <Route path="/service-dashboard/calendar" element={<ProtectedRoute><ServiceDashboardCalendar /></ProtectedRoute>} />

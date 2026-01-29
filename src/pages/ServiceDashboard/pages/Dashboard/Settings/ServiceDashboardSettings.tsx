@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import {
-    CreditCard,
     DollarSign,
     Users,
     UserCircle,
@@ -34,7 +33,7 @@ const SETTING_CARDS: SettingCardData[] = [
         links: [
             { label: "Profile", path: "/service-dashboard/settings/profile" },
             { label: "Security", path: "/service-dashboard/settings/security" },
-            { label: "Integration", path: "/service-dashboard/settings/integration" },
+            { label: "Integrations", path: "/service-dashboard/settings/integrations" },
             { label: "Notifications", path: "/service-dashboard/settings/notifications" },
         ],
     },
@@ -55,14 +54,6 @@ const SETTING_CARDS: SettingCardData[] = [
             { label: "Bank Account", path: "/service-dashboard/settings/bank-account" },
             { label: "Entities", path: "/service-dashboard/settings/entities" },
             { label: "Tax Forms", path: "/service-dashboard/settings/tax-forms" },
-        ],
-    },
-    {
-        title: "Affiliate Program",
-        description: "Lets you control and update account information and enable other products.",
-        icon: CreditCard,
-        links: [
-            { label: "Affiliate Program", path: "/service-dashboard/settings/affiliate-program" },
         ],
     },
 ];
@@ -108,7 +99,7 @@ const SettingCard = ({
                 </div>
             </div>
             {isOpen && (
-                <div className="pt-3 pl-16 space-y-1 text-sm font-semibold text-[#44A445]">
+                <div className="pt-3 pl-16 space-y-1 text-sm font-semibold text-[#7BD747]">
                     {card.links.map((link) => (
                         <p
                             key={link.path}
@@ -133,14 +124,13 @@ const ServiceDashboardSettings = () => {
     // Safe context access
     const context = useOutletContext<DashboardContext>();
     const sidebarCollapsed = context?.sidebarCollapsed ?? false;
-    const sidebarOpen = !sidebarCollapsed;
 
     const toggleCard = (title: string) => {
         setOpenCardTitle((prev) => (prev === title ? null : title));
     };
 
     return (
-        <div className={`min-h-screen transition-all duration-300 mx-auto ${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'}`}>
+        <div className={`min-h-screen transition-all duration-300 mx-auto w-full max-w-full overflow-x-hidden ${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'}`}>
             <div className="space-y-5">
                 <ServiceBreadCrumb
                     items={[
