@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
+import { PiBriefcaseLight } from 'react-icons/pi';
 import ServiceFilters from '../../../components/ServiceFilters';
 import JobCard from './components/JobCard';
 import ServiceBreadCrumb from '@/pages/ServiceDashboard/components/ServiceBreadCrumb';
@@ -13,7 +14,7 @@ interface DashboardContext {
 const FindJob = () => {
     const { sidebarCollapsed } = useOutletContext<DashboardContext>() || { sidebarCollapsed: false };
     const [searchTerm, setSearchTerm] = useState('');
-    const [priorityFilter, setPriorityFilter] = useState('All');
+    const [priorityFilter, setPriorityFilter] = useState<string | string[]>('All');
     const [radiusFilter, setRadiusFilter] = useState('All');
     const [categoryFilter] = useState('All');
 
@@ -21,7 +22,8 @@ const FindJob = () => {
     const filteredJobs = MOCK_JOBS.filter(job => {
         const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
             job.location.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesPriority = priorityFilter === 'All' || job.priority === priorityFilter;
+        const matchesPriority = priorityFilter === 'All' ||
+            (Array.isArray(priorityFilter) ? (priorityFilter.includes('All') || priorityFilter.includes(job.priority)) : job.priority === priorityFilter);
         const matchesCategory = categoryFilter === 'All' || job.category === categoryFilter;
         // Radius logic would go here in a real app
 
@@ -83,12 +85,25 @@ const FindJob = () => {
             </div>
 
             {filteredJobs.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-20 text-center">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4 text-3xl">
-                        🔍
+                <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-gray-200 shadow-sm mt-8">
+                    <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                        <PiBriefcaseLight size={40} className="text-gray-400" />
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">No jobs found</h3>
-                    <p className="text-gray-500">Try adjusting your filters or search terms</p>
+                    {MOCK_JOBS.length === 0 ? (
+                        <>
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">No jobs available</h3>
+                            <p className="text-gray-500 text-center max-w-md px-6 leading-relaxed">
+                                There are currently no maintenance jobs available for application. Check back later for new opportunities.
+                            </p>
+                        </>
+                    ) : (
+                        <>
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">No jobs found</h3>
+                            <p className="text-gray-500 text-center max-w-md px-6 leading-relaxed">
+                                We couldn't find any jobs matching your current filters. Try adjusting your search or radius to see more opportunities.
+                            </p>
+                        </>
+                    )}
                 </div>
             )}
         </div>

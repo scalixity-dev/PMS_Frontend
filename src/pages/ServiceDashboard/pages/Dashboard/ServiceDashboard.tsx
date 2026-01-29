@@ -3,6 +3,7 @@ import { useOutletContext, useNavigate } from 'react-router-dom';
 import RequestCard from './components/RequestCard';
 import DashboardButton from '../../components/DashboardButton';
 import ServiceTabs from '../../components/ServiceTabs';
+import { PiEnvelopeSimpleLight, PiToolboxLight } from 'react-icons/pi';
 
 
 interface RequestItem {
@@ -175,17 +176,47 @@ const ServiceDashboard: React.FC = () => {
                 </div>
 
                 {/* Content Area - Request Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {filteredRequests.map((request) => (
-                        <RequestCard
-                            key={request.id}
-                            id={request.id}
-                            status={request.status}
-                            category={request.category}
-                            propertyName={request.propertyName}
-                        />
-                    ))}
-                </div>
+                {filteredRequests.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {filteredRequests.map((request) => (
+                            <RequestCard
+                                key={request.id}
+                                id={request.id}
+                                status={request.status}
+                                category={request.category}
+                                propertyName={request.propertyName}
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-gray-200 shadow-sm">
+                        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                            {activeTab === 'new_request'
+                                ? <PiEnvelopeSimpleLight size={40} className="text-gray-400" />
+                                : <PiToolboxLight size={40} className="text-gray-400" />
+                            }
+                        </div>
+                        {mockRequests.length === 0 ? (
+                            <>
+                                <h3 className="text-xl font-bold text-gray-900 mb-2">No requests yet</h3>
+                                <p className="text-gray-500 text-center max-w-md px-6 leading-relaxed">
+                                    You haven't received any maintenance requests yet. When a property owner sends you a request, it will appear here.
+                                </p>
+                            </>
+                        ) : (
+                            <>
+                                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                                    {activeTab === 'new_request' ? 'No new requests' : 'No requests in process'}
+                                </h3>
+                                <p className="text-gray-500 text-center max-w-md px-6 leading-relaxed">
+                                    {activeTab === 'new_request'
+                                        ? 'You currently have no new maintenance requests to review.'
+                                        : 'You currently have no active jobs in progress. Check your new requests to get started.'}
+                                </p>
+                            </>
+                        )}
+                    </div>
+                )}
 
             </div>
         </div>

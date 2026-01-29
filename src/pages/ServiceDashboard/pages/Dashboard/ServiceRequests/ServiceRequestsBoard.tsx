@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { PiChatCircleText, PiDotsThreeOutlineFill } from "react-icons/pi";
+import { PiChatCircleText, PiDotsThreeOutlineFill, PiKanbanLight } from "react-icons/pi";
 import {
     DndContext,
     DragOverlay,
@@ -164,10 +164,10 @@ const ServiceRequestsBoard = () => {
     const navigate = useNavigate();
 
     const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState('All'); // Note: Filtering columns might effectively hide them or empty them
-    const [categoryFilter, setCategoryFilter] = useState('All');
-    const [propertyFilter, setPropertyFilter] = useState('All');
-    const [priorityFilter, setPriorityFilter] = useState('All');
+    const [statusFilter, setStatusFilter] = useState<string | string[]>('All'); // Note: Filtering columns might effectively hide them or empty them
+    const [categoryFilter, setCategoryFilter] = useState<string | string[]>('All');
+    const [propertyFilter, setPropertyFilter] = useState<string | string[]>('All');
+    const [priorityFilter, setPriorityFilter] = useState<string | string[]>('All');
     const [activeId, setActiveId] = useState<string | null>(null);
 
     // Filter Logic
@@ -181,10 +181,14 @@ const ServiceRequestsBoard = () => {
             req.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
             req.id.includes(searchTerm);
 
-        const matchesStatus = statusFilter === 'All' || req.status === statusFilter;
-        const matchesCategory = categoryFilter === 'All' || req.category === categoryFilter;
-        const matchesProperty = propertyFilter === 'All' || req.property === propertyFilter;
-        const matchesPriority = priorityFilter === 'All' || req.priority === priorityFilter;
+        const matchesStatus = statusFilter === 'All' ||
+            (Array.isArray(statusFilter) ? (statusFilter.includes('All') || statusFilter.includes(req.status)) : req.status === statusFilter);
+        const matchesCategory = categoryFilter === 'All' ||
+            (Array.isArray(categoryFilter) ? (categoryFilter.includes('All') || categoryFilter.includes(req.category)) : req.category === categoryFilter);
+        const matchesProperty = propertyFilter === 'All' ||
+            (Array.isArray(propertyFilter) ? (propertyFilter.includes('All') || propertyFilter.includes(req.property)) : req.property === propertyFilter);
+        const matchesPriority = priorityFilter === 'All' ||
+            (Array.isArray(priorityFilter) ? (priorityFilter.includes('All') || priorityFilter.includes(req.priority)) : req.priority === priorityFilter);
 
         return matchesSearch && matchesStatus && matchesCategory && matchesProperty && matchesPriority;
     });
@@ -268,7 +272,9 @@ const ServiceRequestsBoard = () => {
     }, {} as Record<string, Request[]>);
 
     // Only show columns matching status filter if not All
-    const visibleColumns = statusFilter === 'All' ? COLUMNS : COLUMNS.filter(c => c === statusFilter);
+    const visibleColumns = statusFilter === 'All'
+        ? COLUMNS
+        : COLUMNS.filter(c => Array.isArray(statusFilter) ? (statusFilter.includes('All') || statusFilter.includes(c)) : c === statusFilter);
 
 
     return (
@@ -326,30 +332,53 @@ const ServiceRequestsBoard = () => {
 
             {/* Scrollable Board Area */}
             <div className="flex-1 overflow-x-auto overflow-y-hidden snap-x snap-mandatory [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-300">
-                <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCorners}
-                    onDragStart={handleDragStart}
-                    onDragOver={handleDragOver}
-                    onDragEnd={handleDragEnd}
-                >
-                    <div className="flex h-full pb-4 gap-4 px-1">
-                        {visibleColumns.map(colId => (
-                            <KanbanColumn key={colId} id={colId} requests={columns[colId]} />
-                        ))}
-                    </div>
+                {filteredRequests.length > 0 ? (
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCorners}
+                        onDragStart={handleDragStart}
+                        onDragOver={handleDragOver}
+                        onDragEnd={handleDragEnd}
+                    >
+                        <div className="flex h-full pb-4 gap-4 px-1">
+                            {visibleColumns.map(colId => (
+                                <KanbanColumn key={colId} id={colId} requests={columns[colId]} />
+                            ))}
+                        </div>
 
-                    <DragOverlay>
-                        {(() => {
-                            const activeRequest = requests.find(r => r.id === activeId);
-                            return activeRequest ? (
-                                <div className="rotate-3 cursor-grabbing opacity-90">
-                                    <SortableRequestCard request={activeRequest} />
-                                </div>
-                            ) : null;
-                        })()}
-                    </DragOverlay>
-                </DndContext>
+                        <DragOverlay>
+                            {(() => {
+                                const activeRequest = requests.find(r => r.id === activeId);
+                                return activeRequest ? (
+                                    <div className="rotate-3 cursor-grabbing opacity-90">
+                                        <SortableRequestCard request={activeRequest} />
+                                    </div>
+                                ) : null;
+                            })()}
+                        </DragOverlay>
+                    </DndContext>
+                ) : (
+                    <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-gray-200 shadow-sm mx-1">
+                        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                            <PiKanbanLight size={40} className="text-gray-400" />
+                        </div>
+                        {requests.length === 0 ? (
+                            <>
+                                <h3 className="text-xl font-bold text-gray-900 mb-2">No requests yet</h3>
+                                <p className="text-gray-500 text-center max-w-md px-6 leading-relaxed">
+                                    Your board is currently empty. When you receive maintenance requests, they will appear here as cards that you can organize.
+                                </p>
+                            </>
+                        ) : (
+                            <>
+                                <h3 className="text-xl font-bold text-gray-900 mb-2">No requests found</h3>
+                                <p className="text-gray-500 text-center max-w-md px-6 leading-relaxed">
+                                    We couldn't find any maintenance requests matching your filters on the board. Try adjusting your search or filters to see your tasks.
+                                </p>
+                            </>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );

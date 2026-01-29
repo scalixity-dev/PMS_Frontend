@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { FileText, Image, File, Video, MoreVertical, Download, Edit2, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
-import { useNavigate, useOutletContext } from "react-router-dom";
+import { useOutletContext } from "react-router-dom";
 import { createPortal } from "react-dom";
 import ServiceFilters from "../../../components/ServiceFilters";
+import ServiceBreadCrumb from "../../../components/ServiceBreadCrumb";
 
 interface FileItem {
     id: number;
@@ -175,10 +176,9 @@ interface DashboardContext {
 }
 
 const ServiceFileManager: React.FC = () => {
-    const navigate = useNavigate();
     const { sidebarCollapsed } = useOutletContext<DashboardContext>() || { sidebarCollapsed: false };
     const [searchQuery, setSearchQuery] = useState("");
-    const [fileTypeFilter, setFileTypeFilter] = useState("All");
+    const [fileTypeFilter, setFileTypeFilter] = useState<string | string[]>("All");
     const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
     const [menuPosition, setMenuPosition] = useState<MenuPosition | null>(null);
     const [editingFileId, setEditingFileId] = useState<number | null>(null);
@@ -250,7 +250,15 @@ const ServiceFileManager: React.FC = () => {
                     return false;
                 }
             }
-            if (fileTypeFilter !== "All" && file.type !== fileTypeFilter) return false;
+            if (fileTypeFilter !== "All") {
+                if (Array.isArray(fileTypeFilter)) {
+                    if (!fileTypeFilter.includes("All") && !fileTypeFilter.includes(file.type)) {
+                        return false;
+                    }
+                } else if (file.type !== fileTypeFilter) {
+                    return false;
+                }
+            }
             return true;
         });
     }, [searchQuery, fileTypeFilter, files]);
@@ -308,24 +316,21 @@ const ServiceFileManager: React.FC = () => {
 
     return (
         <div className={`mx-auto min-h-screen pb-20 transition-all duration-300 ${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'}`}>
-            <div className="space-y-6 md:space-y-8">
-                <nav aria-label="Breadcrumb">
-                    <ol className="flex items-center gap-2 text-base font-medium ">
-                        <li>
-                            <button onClick={() => navigate("/service-dashboard")} className="text-[var(--dashboard-accent)] font-medium hover:opacity-80 transition-opacity">Dashboard</button>
-                        </li>
-                        <li aria-hidden="true" className="text-[#1A1A1A] font-semibold">/</li>
-                        <li className="text-[#1A1A1A] font-medium" aria-current="page">File manager</li>
-                    </ol>
-                </nav>
+            <div className="">
+                <ServiceBreadCrumb
+                    items={[
+                        { label: 'Dashboard', to: '/service-dashboard' },
+                        { label: 'File manager', active: true }
+                    ]}
+                />
 
-                <div className="flex flex-col sm:flex-row sm:items-center pt-3 justify-between gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">File manager</h1>
                 </div>
 
-                <div className="border-t border-[#E5E7EB]"></div>
+                <div className="border-t border-[#E5E7EB] mt-4 mb-8"></div>
 
-                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mt-8">
                     {stats.map((stat, index) => (
                         <div key={index} className="bg-[#F4F4F4] border border-[#E5E7EB] rounded-xl p-4 md:p-6 shadow-sm">
                             <p className="text-gray-500 text-[11px] md:text-sm mb-1 font-medium">{stat.label}</p>
@@ -334,13 +339,15 @@ const ServiceFileManager: React.FC = () => {
                     ))}
                 </div>
 
-                <ServiceFilters
-                    onSearch={setSearchQuery}
-                    currentStatus={fileTypeFilter}
-                    onStatusChange={setFileTypeFilter}
-                    statusOptions={['All', 'PDF', 'Image', 'Document', 'Video']}
-                    statusLabel="File type"
-                />
+                <div className="mt-10">
+                    <ServiceFilters
+                        onSearch={setSearchQuery}
+                        currentStatus={fileTypeFilter}
+                        onStatusChange={setFileTypeFilter}
+                        statusOptions={['All', 'PDF', 'Image', 'Document', 'Video']}
+                        statusLabel="File type"
+                    />
+                </div>
 
                 <div className="hidden lg:flex bg-white rounded-[1rem] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] border border-gray-200 overflow-hidden flex-col">
                     <div className="overflow-x-auto">
