@@ -375,7 +375,7 @@ const Calendar: React.FC = () => {
                     if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
                         const dateStr = entry.target.getAttribute('data-date');
                         if (dateStr) {
-                            const visibleDate = new Date(dateStr);
+                            const visibleDate = new Date(Number(dateStr));
                             if (!isSameMonth(visibleDate, currentDate)) {
                                 setCurrentDate(visibleDate);
                             }
@@ -411,7 +411,7 @@ const Calendar: React.FC = () => {
             if (rect.bottom > containerRect.top + 100 && rect.top < containerRect.bottom - 100) {
                 const dateStr = el.getAttribute('data-date');
                 if (dateStr) {
-                    const date = new Date(dateStr);
+                    const date = new Date(Number(dateStr));
                     if (!isSameMonth(date, currentDate)) {
                         setCurrentDate(date);
                     }
@@ -450,7 +450,7 @@ const Calendar: React.FC = () => {
                     todayEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
                 } else {
                     // Fallback to month start
-                    const el = containerRef.current.querySelector(`[data-date="${newDate.toISOString()}"]`);
+                    const el = containerRef.current.querySelector(`[data-date="${newDate.getTime().toString()}"]`);
                     if (el) {
                         el.scrollIntoView({ block: 'start', behavior: 'smooth' });
                     }
@@ -517,7 +517,7 @@ const Calendar: React.FC = () => {
                         {months.map((month) => (
                             <div
                                 key={month.toISOString()}
-                                data-date={month.toISOString()}
+                                data-date={month.getTime().toString()}
                                 className="month-section flex flex-col lg:flex-row mb-4"
                             >
                                 {/* Mobile/Tablet Horizontal Month Label */}

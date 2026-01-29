@@ -123,18 +123,20 @@ const MonthGrid: React.FC<MonthGridProps> = ({ month, reminders }) => {
                                     {/* Reminders */}
                                     <div className="mt-1 space-y-1">
                                         {visibleReminders.map((reminder) => (
-                                            <div
+                                            <button
+                                                type="button"
                                                 key={reminder.id}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     setSelectedReminder(reminder);
                                                     setIsDetailModalOpen(true);
                                                 }}
-                                                className={`px-1 md:px-1.5 py-0.5 rounded text-[9px] md:text-[10px] font-medium truncate border cursor-pointer hover:opacity-80 transition-opacity
+                                                className={`w-full text-left px-1 md:px-1.5 py-0.5 rounded text-[9px] md:text-[10px] font-medium truncate border hover:opacity-80 transition-opacity
                                                 ${getReminderColor(reminder.id)}`}
+                                                aria-label={`${reminder.time} ${reminder.title}`}
                                             >
                                                 {reminder.time} {reminder.title}
-                                            </div>
+                                            </button>
                                         ))}
 
                                         {hiddenCount > 0 && (

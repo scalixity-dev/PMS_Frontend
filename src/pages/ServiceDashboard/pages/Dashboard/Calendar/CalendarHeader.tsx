@@ -1,5 +1,5 @@
 import React from 'react';
-import { format, setMonth, setYear } from 'date-fns';
+import { format, setMonth, setYear, getDate, setDate, getDaysInMonth } from 'date-fns';
 import { Plus } from 'lucide-react';
 import CustomDropdown from '../../../../Dashboard/components/CustomDropdown';
 
@@ -31,12 +31,20 @@ const CalendarHeader: React.FC<CalendarHeaderProps> = ({
     });
 
     const handleMonthChange = (value: string) => {
-        const newDate = setMonth(currentDate, parseInt(value));
+        const originalDay = getDate(currentDate);
+        const baseDate = setDate(currentDate, 1);
+        const newMonthDate = setMonth(baseDate, parseInt(value));
+        const allowedDay = Math.min(originalDay, getDaysInMonth(newMonthDate));
+        const newDate = setDate(newMonthDate, allowedDay);
         onDateChange(newDate);
     };
 
     const handleYearChange = (value: string) => {
-        const newDate = setYear(currentDate, parseInt(value));
+        const originalDay = getDate(currentDate);
+        const baseDate = setDate(currentDate, 1);
+        const newYearDate = setYear(baseDate, parseInt(value));
+        const allowedDay = Math.min(originalDay, getDaysInMonth(newYearDate));
+        const newDate = setDate(newYearDate, allowedDay);
         onDateChange(newDate);
     };
 

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { X, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { type Reminder } from '../Calendar';
@@ -13,16 +13,23 @@ interface DayDetailModalProps {
 }
 
 const DayDetailModal: React.FC<DayDetailModalProps> = ({ isOpen, onClose, date, reminders, onReminderClick }) => {
-    // Prevent background scrolling
+    const closeButtonRef = useRef<HTMLButtonElement>(null);
+    const previousFocusRef = useRef<HTMLElement | null>(null);
+
+    // Focus management and background scrolling
     useEffect(() => {
         if (isOpen) {
+            previousFocusRef.current = document.activeElement as HTMLElement;
             document.body.style.overflow = 'hidden';
+            // Use setTimeout to ensure the modal is rendered before focusing
+            const timer = setTimeout(() => {
+                closeButtonRef.current?.focus();
+            }, 50);
+            return () => clearTimeout(timer);
         } else {
             document.body.style.overflow = 'unset';
+            previousFocusRef.current?.focus();
         }
-        return () => {
-            document.body.style.overflow = 'unset';
-        };
     }, [isOpen]);
 
     if (!isOpen) return null;
@@ -30,6 +37,9 @@ const DayDetailModal: React.FC<DayDetailModalProps> = ({ isOpen, onClose, date, 
     return (
         <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200 p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="day-detail-header"
             onClick={(e) => {
                 if (e.target === e.currentTarget) {
                     onClose();
@@ -42,7 +52,7 @@ const DayDetailModal: React.FC<DayDetailModalProps> = ({ isOpen, onClose, date, 
                 {/* Header */}
                 <div className="bg-[#3A6D6C] p-4 sm:p-6 flex items-center justify-between text-white flex-shrink-0">
                     <div>
-                        <h2 className="text-xl font-bold truncate pr-4">
+                        <h2 id="day-detail-header" className="text-xl font-bold truncate pr-4">
                             {format(date, 'd MMMM')}
                         </h2>
                         <p className="text-white/80 text-sm font-medium">
@@ -50,7 +60,9 @@ const DayDetailModal: React.FC<DayDetailModalProps> = ({ isOpen, onClose, date, 
                         </p>
                     </div>
                     <button
+                        ref={closeButtonRef}
                         onClick={onClose}
+                        aria-label="Close"
                         className="hover:bg-white/10 p-2 rounded-full transition-colors flex-shrink-0"
                     >
                         <X size={24} />
@@ -67,10 +79,10 @@ const DayDetailModal: React.FC<DayDetailModalProps> = ({ isOpen, onClose, date, 
                     ) : (
                         <div className="space-y-3">
                             {reminders.map((reminder) => (
-                                <div
+                                <button
                                     key={reminder.id}
                                     onClick={() => onReminderClick(reminder)}
-                                    className={`p-3 rounded-md border cursor-pointer hover:shadow-md transition-all group relative overflow-hidden
+                                    className={`w-full text-left p-3 rounded-md border cursor-pointer hover:shadow-md transition-all group relative overflow-hidden
                                         ${getReminderColor(reminder.id)}`}
                                 >
                                     <div className="flex items-start gap-3 relative z-10">
@@ -89,7 +101,7 @@ const DayDetailModal: React.FC<DayDetailModalProps> = ({ isOpen, onClose, date, 
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                </button>
                             ))}
                         </div>
                     )}

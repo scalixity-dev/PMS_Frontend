@@ -67,6 +67,20 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
     const MAX_DETAILS_LENGTH = 100;
     const prevIsOpenRef = React.useRef(isOpen);
 
+    // Resolve property ID from property name if ID is missing (falls back for some API responses)
+    const resolvedPropertyId = useMemo(() => {
+        if (!isOpen || !isEditMode || !editReminder) return undefined;
+        if (editReminder.propertyId) return editReminder.propertyId;
+
+        if (editReminder.property && properties.length > 0) {
+            const matched = properties.find(
+                p => p.propertyName.toLowerCase() === editReminder.property?.toLowerCase()
+            );
+            return matched?.id;
+        }
+        return undefined;
+    }, [isOpen, isEditMode, editReminder, properties]);
+
     useEffect(() => {
         // Only run when modal opens
         const isOpening = !prevIsOpenRef.current && isOpen;
@@ -80,12 +94,12 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
                     date: editReminder.date ? new Date(editReminder.date) : undefined,
                     time: editReminder.time || '',
                     assignee: editReminder.assigneeName || '',
-                    property: editReminder.propertyId || '',
-                    isRecurring: false,
-                    frequency: '',
-                    endDate: undefined,
+                    property: resolvedPropertyId || editReminder.propertyId || '',
+                    isRecurring: editReminder.recurring || false,
+                    frequency: editReminder.frequency || '',
+                    endDate: editReminder.endDate ? new Date(editReminder.endDate) : undefined,
                     type: mapReminderTypeToFormType(editReminder.type),
-                    color: undefined,
+                    color: editReminder.color,
                 };
                 setFormData(editFormData);
                 setInitialSnapshot(editFormData);
@@ -111,7 +125,14 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
 
         // Update ref
         prevIsOpenRef.current = isOpen;
-    }, [isOpen, setFormData, isEditMode, editReminder]);
+    }, [isOpen, setFormData, isEditMode, editReminder, resolvedPropertyId]);
+
+    // Secondary effect to update property ID if properties list loads after modal is opened
+    useEffect(() => {
+        if (isOpen && isEditMode && !formData.property && resolvedPropertyId) {
+            updateFormData('property', resolvedPropertyId);
+        }
+    }, [isOpen, isEditMode, formData.property, resolvedPropertyId, updateFormData]);
 
     useEffect(() => {
         if (isOpen) {
@@ -175,8 +196,8 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
                 assignee: formData.assignee || undefined,
                 propertyId: formData.property || undefined,
                 recurring: formData.isRecurring,
-                frequency: formData.frequency ? (formData.frequency.toUpperCase() as 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY' | 'ONCE') : undefined,
-                endDate: formData.endDate ? formData.endDate.toISOString() : undefined,
+                frequency: formData.isRecurring && formData.frequency ? (formData.frequency.toUpperCase() as 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY' | 'ONCE') : undefined,
+                endDate: formData.isRecurring && formData.endDate ? formData.endDate.toISOString() : undefined,
                 color: formData.color || undefined,
             };
 
