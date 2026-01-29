@@ -42,17 +42,27 @@ const ServiceAccounting = () => {
 
         // Basic Date Filter
         const matchesDate = (() => {
-            if (!dateRange?.from || !dateRange?.to) return true;
+            // Check if at least one date is present
+            if (!dateRange?.from && !dateRange?.to) return true;
 
             if (!t.dueDate) return false;
 
-            // Parse date "YYYY-MM-DD"
+            // Parse transaction date "YYYY-MM-DD"
             const [y, m, d] = (t.dueDate as string).split('-').map(Number);
             const date = new Date(y, m - 1, d); // Local midnight
-            const from = new Date(dateRange.from.getFullYear(), dateRange.from.getMonth(), dateRange.from.getDate());
-            const to = new Date(dateRange.to.getFullYear(), dateRange.to.getMonth(), dateRange.to.getDate());
 
-            // Adjust to ensure inclusive comparison
+            // Determine effective range
+            // If only 'from' is selected, use it as both start and end (single day)
+            // If only 'to' is selected (unlikely in UI but possible in state), treat as single day
+            const fromDateRaw = dateRange.from || dateRange.to;
+            const toDateRaw = dateRange.to || dateRange.from;
+
+            if (!fromDateRaw || !toDateRaw) return true; // Should be covered above but safe guard
+
+            const from = new Date(fromDateRaw.getFullYear(), fromDateRaw.getMonth(), fromDateRaw.getDate());
+            const to = new Date(toDateRaw.getFullYear(), toDateRaw.getMonth(), toDateRaw.getDate());
+
+            // Adjust to ensure inclusive comparison for the end date
             to.setHours(23, 59, 59, 999);
 
             return date >= from && date <= to;

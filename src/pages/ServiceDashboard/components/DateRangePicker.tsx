@@ -60,6 +60,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
     return (
         <div className={cn("relative", className)} ref={containerRef}>
             <button
+                type="button"
                 onClick={() => setIsOpen(!isOpen)}
                 className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 text-sm font-semibold rounded-md hover:bg-gray-50 transition-colors shadow-md shadow-black/20 min-w-[220px] justify-between h-[38px]"
             >
@@ -68,7 +69,9 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
                     <span>{formatDateRange(dateRange)}</span>
                 </div>
                 {dateRange?.from && (
-                    <div
+                    <button
+                        type="button"
+                        aria-label="Clear date range"
                         onClick={(e) => {
                             e.stopPropagation();
                             onDateRangeChange(undefined);
@@ -76,7 +79,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
                         className="p-0.5 hover:bg-gray-200 rounded-full"
                     >
                         <X size={14} className="text-gray-400" />
-                    </div>
+                    </button>
                 )}
             </button>
 
