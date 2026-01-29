@@ -75,13 +75,13 @@ const IntegrationSettings = () => {
         if (success === "true") {
             // Show success message
             if (message) {
-                alert(`Success: ${decodeURIComponent(message)}`);
+                alert(`Success: ${message}`);
             }
             refetchStatus();
             // Clean up URL
             window.history.replaceState({}, document.title, window.location.pathname);
         } else if (error) {
-            alert(`Connection failed: ${decodeURIComponent(error)}`);
+            alert(`Connection failed: ${error}`);
             window.history.replaceState({}, document.title, window.location.pathname);
         }
     }, [refetchStatus]);

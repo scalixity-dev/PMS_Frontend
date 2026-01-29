@@ -115,8 +115,7 @@ const SecuritySettings = () => {
                                 <div className="flex-1 space-y-2">
                                     <h2 className="text-lg font-bold text-gray-900">Export Data</h2>
                                     <p className="text-xs text-gray-600">
-                                        Identity verification is required to prevent fraud and increase security. TenantCloud works with Stripe
-                                        to conduct identity verification online.
+                                        Export your account data (listings, transactions, and documents) in machine-readable formats (CSV/JSON).
                                     </p>
                                     <a href="#" className="text-xs font-medium text-[#1E88E5] hover:underline inline-block">
                                         Learn more
@@ -137,8 +136,7 @@ const SecuritySettings = () => {
                                 <div className="flex-1 space-y-2">
                                     <h2 className="text-lg font-bold text-gray-900">Two Steps Authentication</h2>
                                     <p className="text-xs text-gray-600">
-                                        Identity verification is required to prevent fraud and increase security. TenantCloud works with Stripe
-                                        to conduct identity verification online.
+                                        Enable two-step authentication (2FA) to add an extra layer of security using SMS or an authenticator app.
                                     </p>
                                     <a href="#" className="text-xs font-medium text-[#1E88E5] hover:underline inline-block">
                                         Learn more

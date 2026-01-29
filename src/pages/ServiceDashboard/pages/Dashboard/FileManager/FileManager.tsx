@@ -93,20 +93,29 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
     const [adjustedPosition, setAdjustedPosition] = useState(position);
 
     useEffect(() => {
-        if (isOpen && position && menuRef.current) {
-            const menuHeight = menuRef.current.offsetHeight;
-            const viewportHeight = window.innerHeight;
-            let top = position.top;
+        if (isOpen && position) {
+            // Set initial position immediately to allow render
+            setAdjustedPosition(position);
 
-            if (top + menuHeight > viewportHeight - 20) {
-                top = viewportHeight - menuHeight - 20;
+            if (menuRef.current) {
+                const menuHeight = menuRef.current.offsetHeight;
+                const viewportHeight = window.innerHeight;
+                let top = position.top;
+
+                if (top + menuHeight > viewportHeight - 20) {
+                    top = viewportHeight - menuHeight - 20;
+                }
+
+                setAdjustedPosition({ ...position, top });
             }
-
-            setAdjustedPosition({ ...position, top });
         }
     }, [isOpen, position]);
 
-    if (!isOpen || !adjustedPosition) return null;
+    if (!isOpen || (!adjustedPosition && !position)) return null;
+
+    const finalPosition = adjustedPosition || position;
+    // We safeguarded above that at least one exists
+    if (!finalPosition) return null;
 
     return createPortal(
         <>
@@ -115,8 +124,8 @@ const ActionMenu: React.FC<ActionMenuProps> = ({
                 ref={menuRef}
                 className="fixed z-[101] bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 w-48 animate-in fade-in zoom-in-95 duration-200"
                 style={{
-                    top: adjustedPosition.top,
-                    right: adjustedPosition.right,
+                    top: finalPosition.top,
+                    right: finalPosition.right,
                 }}
             >
                 <div className="px-2 space-y-0.5">

@@ -141,6 +141,8 @@ const DownloadPopup: React.FC<DownloadPopupProps> = ({ isOpen, onClose, position
                 <button
                     onClick={onClose}
                     className="p-2 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors"
+                    aria-label="Close sidebar"
+                    title="Close sidebar"
                 >
                     <X size={18} />
                 </button>
@@ -155,10 +157,19 @@ const DownloadPopup: React.FC<DownloadPopupProps> = ({ isOpen, onClose, position
                                 <div className="flex items-center gap-2 mt-0.5">
                                     <span className="text-[11px] text-gray-500 font-medium">{file.size}</span>
                                     <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                                    <span className="text-[11px] text-gray-500 font-medium">{new Date(file.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                                    <span className="text-[11px] text-gray-500 font-medium">
+                                        {(() => {
+                                            const [y, m, d] = file.date.split('-').map(Number);
+                                            return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                                        })()}
+                                    </span>
                                 </div>
                             </div>
-                            <button className="p-2.5 text-gray-400 hover:text-[#3A6D6C] hover:bg-[#3A6D6C]/10 rounded-xl transition-all active:scale-90">
+                            <button
+                                className="p-2.5 text-gray-400 hover:text-[#3A6D6C] hover:bg-[#3A6D6C]/10 rounded-xl transition-all active:scale-90"
+                                aria-label={`Download ${file.name}`}
+                                title={`Download ${file.name}`}
+                            >
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
                             </button>
                         </div>

@@ -199,7 +199,16 @@ const ServiceRequests = () => {
                                         </div>
                                         <span className="text-sm font-medium text-gray-700">{req.client}</span>
                                     </div>
-                                    <button className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100">
+                                    <button
+                                        className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            // Handle chat logic here if needed, or it might be handled by parent if we didn't stop prop, 
+                                            // but request was to *prevent* parent row click.
+                                            // Assuming there's a chat action to invoke:
+                                            console.log("Chat clicked for", req.id);
+                                        }}
+                                    >
                                         <PiChatCircleText size={20} />
                                     </button>
                                 </div>
@@ -263,7 +272,13 @@ const ServiceRequests = () => {
                                                     </div>
                                                     <span className="text-sm text-gray-900">{req.client}</span>
                                                 </div>
-                                                <button className="p-1 rounded-full border border-gray-200 hover:bg-gray-100 text-gray-500 relative">
+                                                <button
+                                                    className="p-1 rounded-full border border-gray-200 hover:bg-gray-100 text-gray-500 relative"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        console.log("Chat clicked for", req.id);
+                                                    }}
+                                                >
                                                     <PiChatCircleText size={18} />
                                                     <span className="absolute top-0 right-0 block h-2 w-2 rounded-full ring-2 ring-white bg-red-500 transform translate-x-1/4 -translate-y-1/4"></span>
                                                 </button>

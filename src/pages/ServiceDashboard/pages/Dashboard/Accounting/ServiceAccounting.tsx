@@ -33,13 +33,42 @@ const ServiceAccounting = () => {
 
         // Handling Schedule Filter (checking t.type for "One-time" or "Recurring")
         // Also checking t.category as legacy fallback if needed, but primary is t.type
+        const scheduleSource = t.type || t.category || '';
         const matchesSchedule = scheduleFilter === 'All' ||
             (Array.isArray(scheduleFilter) ?
-                (scheduleFilter.includes('All') || (t.type && scheduleFilter.some(s => t.type.includes(s))))
-                : (t.type && t.type.includes(scheduleFilter)));
+                (scheduleFilter.includes('All') || (scheduleSource && scheduleFilter.some(s => scheduleSource.includes(s))))
+                : (scheduleSource && scheduleSource.includes(scheduleFilter)));
 
-        // Basic Date Filter - Just pass through 'All' for now as logic is complex without real dates
-        const matchesDate = dateFilter === 'All' || true;
+        // Basic Date Filter
+        const matchesDate = dateFilter === 'All' || (() => {
+            if (!t.dueDate) return false;
+            // Parse date "YYYY-MM-DD"
+            const [y, m, d] = (t.dueDate as string).split('-').map(Number);
+            const date = new Date(y, m - 1, d);
+            const now = new Date();
+
+            // Normalize current date to midnight for fair comparison
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+            if (dateFilter === 'Last 7 Days') {
+                const diffTime = today.getTime() - date.getTime();
+                const diffDays = diffTime / (1000 * 3600 * 24);
+                return diffDays >= 0 && diffDays <= 7;
+            }
+            if (dateFilter === 'Last 30 Days') {
+                const diffTime = today.getTime() - date.getTime();
+                const diffDays = diffTime / (1000 * 3600 * 24);
+                return diffDays >= 0 && diffDays <= 30;
+            }
+            if (dateFilter === 'This Month') {
+                return date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
+            }
+            if (dateFilter === 'Last Month') {
+                const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                return date.getMonth() === lastMonth.getMonth() && date.getFullYear() === lastMonth.getFullYear();
+            }
+            return true;
+        })();
 
         return matchesSearch && matchesStatus && matchesSchedule && matchesDate;
     });
