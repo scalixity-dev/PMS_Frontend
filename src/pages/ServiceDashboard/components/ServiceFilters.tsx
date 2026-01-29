@@ -32,6 +32,11 @@ interface ServiceFiltersProps {
     categoryLabel?: string;
     propertyLabel?: string;
     priorityLabel?: string;
+    radiusLabel?: string;
+
+    currentRadius?: string;
+    onRadiusChange?: (radius: string) => void;
+    radiusOptions?: string[];
 }
 
 const ServiceFilters: React.FC<ServiceFiltersProps> = ({
@@ -47,12 +52,18 @@ const ServiceFilters: React.FC<ServiceFiltersProps> = ({
     const defaultCategories = ['All', 'Appliances', 'Plumbing', 'Electrical', 'HVAC', 'General'];
     const defaultProperties = ['All', 'Sunset Apartments', 'Downtown Lofts', 'Ocean View Villa', 'Mountain Retreat'];
     const defaultPriorities = ['All', 'Critical', 'High', 'Normal', 'Low'];
+    const defaultRadii = ['All', '5 miles', '10 miles', '25 miles', '50 miles'];
 
     // Use props if provided, else defaults
     const statuses = props.statusOptions || defaultStatuses;
     const categories = props.categoryOptions || defaultCategories;
     const properties = props.propertyOptions || defaultProperties;
     const priorities = props.priorityOptions || defaultPriorities;
+    const radii = props.radiusOptions || defaultRadii;
+
+    const {
+        currentRadius, onRadiusChange
+    } = props;
 
     const dropdownStyle = "min-w-[120px] flex items-center justify-center px-4 py-2 bg-white text-gray-700 text-sm font-semibold rounded-md hover:bg-gray-50 transition-colors shadow-md shadow-black/20";
 
@@ -68,7 +79,8 @@ const ServiceFilters: React.FC<ServiceFiltersProps> = ({
         currentStatus,
         currentCategory,
         currentProperty,
-        currentPriority
+        currentPriority,
+        currentRadius
     ].filter(val => val && val !== 'All').length;
 
     // Helper to clear all filters
@@ -77,6 +89,7 @@ const ServiceFilters: React.FC<ServiceFiltersProps> = ({
         if (onCategoryChange) onCategoryChange('All');
         if (onPropertyChange) onPropertyChange('All');
         if (onPriorityChange) onPriorityChange('All');
+        if (onRadiusChange) onRadiusChange('All');
         if (onSearch) onSearch('');
         setSearchTerm('');
     };
@@ -175,6 +188,18 @@ const ServiceFilters: React.FC<ServiceFiltersProps> = ({
                         hideArrow
                     />
                 )}
+
+                {onRadiusChange && (
+                    <SearchableDropdown
+                        value={currentRadius === 'All' ? (props.radiusLabel || 'Radius') : currentRadius || (props.radiusLabel || 'Radius')}
+                        options={radii}
+                        onChange={handleFilterChange(onRadiusChange)}
+                        placeholder={props.radiusLabel || "Radius"}
+                        buttonClassName={dropdownStyle}
+                        startIcon={<PiPlusBold size={14} />}
+                        hideArrow
+                    />
+                )}
             </div>
 
             {/* Mobile Filter Modal */}
@@ -262,6 +287,26 @@ const ServiceFilters: React.FC<ServiceFiltersProps> = ({
                                                 key={option}
                                                 onClick={() => onPriorityChange(option)}
                                                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${currentPriority === option
+                                                    ? 'bg-[#7BD747] text-white border-[#7BD747]'
+                                                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                                                    }`}
+                                            >
+                                                {option}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {onRadiusChange && (
+                                <div>
+                                    <h3 className="text-sm font-semibold text-gray-900 mb-3">{props.radiusLabel || "Radius"}</h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        {radii.map(option => (
+                                            <button
+                                                key={option}
+                                                onClick={() => onRadiusChange(option)}
+                                                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${currentRadius === option
                                                     ? 'bg-[#7BD747] text-white border-[#7BD747]'
                                                     : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
                                                     }`}

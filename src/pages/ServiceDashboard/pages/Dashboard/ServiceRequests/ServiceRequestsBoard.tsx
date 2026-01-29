@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { PiPlus, PiChatCircleText, PiDotsThreeOutlineFill } from "react-icons/pi";
+import { useNavigate, useOutletContext } from 'react-router-dom';
+import { PiChatCircleText, PiDotsThreeOutlineFill } from "react-icons/pi";
 import {
     DndContext,
     DragOverlay,
@@ -43,6 +43,7 @@ const COLUMNS: ColumnId[] = ['New', 'In Progress', 'On Hold', 'Completed', 'Canc
 
 // --- Sortable Item Component (The Card) ---
 const SortableRequestCard = ({ request }: { request: Request }) => {
+    const navigate = useNavigate();
     const {
         attributes,
         listeners,
@@ -102,9 +103,17 @@ const SortableRequestCard = ({ request }: { request: Request }) => {
 
             <div className="flex justify-between items-center">
                 <div className="w-8 h-8 rounded-full bg-blue-100 border-2 border-white flex items-center justify-center overflow-hidden">
-                    <img src={request.avatar} alt={request.client} className="w-full h-full object-cover" />
+                    <div className="w-full h-full bg-coral-100 flex items-center justify-center text-[10px] font-bold text-gray-700">
+                        {request.client.split(' ').map(n => n[0]).join('')}
+                    </div>
                 </div>
-                <button className="text-[#8BDC5E] text-sm font-medium hover:underline">
+                <button
+                    className="text-[#8BDC5E] text-sm font-medium hover:underline"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/service-dashboard/requests/${request.id}`);
+                    }}
+                >
                     View
                 </button>
             </div>
@@ -135,7 +144,12 @@ const KanbanColumn = ({ id, requests }: { id: string, requests: Request[] }) => 
 };
 
 
+interface DashboardContext {
+    sidebarCollapsed: boolean;
+}
+
 const ServiceRequestsBoard = () => {
+    const { sidebarCollapsed } = useOutletContext<DashboardContext>() || { sidebarCollapsed: false };
     const [requests, setRequests] = useState<Request[]>([
         { id: '12345', status: 'New', category: 'Appliances', subCategory: 'General', property: 'Sunset Apartments', priority: 'Critical', client: 'Alice Johnson', avatar: 'https://i.pravatar.cc/150?u=1' },
         { id: '12346', status: 'In Progress', category: 'Plumbing', subCategory: 'Leak', property: 'Downtown Lofts', priority: 'Normal', client: 'Bob Smith', avatar: 'https://i.pravatar.cc/150?u=2' },
@@ -258,7 +272,7 @@ const ServiceRequestsBoard = () => {
 
 
     return (
-        <div className="h-full flex flex-col">
+        <div className={`h-full flex flex-col mx-auto transition-all duration-300 ${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'}`}>
             {/* Fixed Header Area */}
             <div className="flex-none">
                 <ServiceBreadCrumb
@@ -289,11 +303,8 @@ const ServiceRequestsBoard = () => {
                                 <path d="M2.5 14.1667H17.5" stroke="#4B5563" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                         </button>
-                        <DashboardButton bgColor="#8BDC5E" textColor="text-white" onClick={() => alert("Feature Coming Soon")}>
+                        <DashboardButton bgColor="#8BDC5E" textColor="text-white" onClick={() => navigate('/service-dashboard/find-job')}>
                             Find a Job
-                        </DashboardButton>
-                        <DashboardButton bgColor="white" textColor="text-gray-700" icon={PiPlus} onClick={() => alert("Feature Coming Soon")}>
-                            Add Request
                         </DashboardButton>
                     </div>
                 </div>

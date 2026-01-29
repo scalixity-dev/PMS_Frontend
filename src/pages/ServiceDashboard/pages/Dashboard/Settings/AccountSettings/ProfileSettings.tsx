@@ -188,14 +188,9 @@ const ProfileSettings = () => {
                         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-10">
                             <div className="relative">
                                 <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-md bg-blue-100">
-                                    <img
-                                        src={userProfile.avatar}
-                                        alt={userProfile.name}
-                                        className="w-full h-full object-cover"
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).src = 'https://ui-avatars.com/api/?name=User&background=ff6b6b&color=fff';
-                                        }}
-                                    />
+                                    <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-gray-700 bg-coral-100 uppercase">
+                                        SB
+                                    </div>
                                 </div>
                             </div>
                             <div className="text-center sm:text-left mt-3">
