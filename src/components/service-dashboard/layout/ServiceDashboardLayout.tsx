@@ -24,7 +24,7 @@ const ServiceDashboardLayout: React.FC = () => {
                     setCollapsed={setSidebarCollapsed}
                 />
 
-                <main className={`flex-1 transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'} ${shouldHavePadding ? 'p-4 lg:p-6' : ''}`}>
+                <main className={`flex-1 transition-all duration-300 overflow-x-hidden max-w-full ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'} ${shouldHavePadding ? 'p-4 lg:p-6' : ''}`}>
                     <Outlet context={{ sidebarCollapsed }} />
                 </main>
             </div>

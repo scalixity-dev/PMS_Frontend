@@ -71,6 +71,45 @@ const mockDownloadedFiles: DownloadedFile[] = [
 ];
 
 const DownloadPopup: React.FC<DownloadPopupProps> = ({ isOpen, onClose, position, popupRef }) => {
+    const [popupStyle, setPopupStyle] = useState<React.CSSProperties>({});
+
+    useEffect(() => {
+        if (isOpen && position && popupRef.current) {
+            const popupHeight = popupRef.current.offsetHeight;
+            const popupWidth = popupRef.current.offsetWidth;
+            const viewportHeight = window.innerHeight;
+            const viewportWidth = window.innerWidth;
+
+            let top = position.top;
+            let left = position.left;
+
+            // Prevent overflow from bottom
+            if (top + popupHeight > viewportHeight - 20) {
+                top = viewportHeight - popupHeight - 20;
+            }
+
+            // Prevent overflow from top
+            if (top < 10) {
+                top = 10;
+            }
+
+            // For mobile, handle width differently
+            if (viewportWidth < 640) {
+                left = (viewportWidth - popupWidth) / 2;
+            } else {
+                // Prevent overflow from right
+                if (left + popupWidth > viewportWidth - 20) {
+                    left = viewportWidth - popupWidth - 20;
+                }
+            }
+
+            setPopupStyle({
+                top: `${top}px`,
+                left: `${left}px`,
+            });
+        }
+    }, [isOpen, position]);
+
     if (!isOpen || !position) return null;
 
     const getFileIcon = (type: string) => {
@@ -91,36 +130,61 @@ const DownloadPopup: React.FC<DownloadPopupProps> = ({ isOpen, onClose, position
     return createPortal(
         <div
             ref={popupRef}
-            className="fixed z-[9999] bg-white rounded-lg shadow-[0px_4px_24px_rgba(0,0,0,0.12)] border border-gray-100 w-[400px] sm:w-[450px] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
-            style={{
-                top: position.top,
-                left: position.left,
-            }}
+            className="fixed z-[9999] bg-white rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-gray-100 w-[calc(100vw-32px)] sm:w-[450px] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+            style={popupStyle}
         >
-            <div className="p-4 border-b border-gray-100 flex justify-between items-center">
-                <h3 className="text-base font-bold text-[#111827]">Downloads</h3>
-                <span className="text-xs text-gray-500 font-medium bg-gray-50 px-2 py-1 rounded-full">{mockDownloadedFiles.length} files</span>
-            </div>
-            <div className="max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 hover:scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                {mockDownloadedFiles.map((file) => (
-                    <div key={file.id} className="flex items-center gap-3 p-3.5 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-b-0">
-                        {getFileIcon(file.type)}
-                        <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-900 truncate tracking-tight">{file.name}</p>
-                            <p className="text-[11px] text-gray-500 font-medium">{file.size} • {new Date(file.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
-                        </div>
-                        <button className="p-2 text-gray-400 hover:text-[#3A6D6C] hover:bg-gray-100 rounded-lg transition-all active:scale-90">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
-                        </button>
-                    </div>
-                ))}
-            </div>
-            <div className="p-3 border-t border-gray-100 flex justify-end bg-gray-50/50">
+            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/30">
+                <div>
+                    <h3 className="text-base font-bold text-gray-900">Downloads</h3>
+                    <p className="text-[11px] text-gray-500 font-medium">Manage your recently downloaded files</p>
+                </div>
                 <button
                     onClick={onClose}
-                    className="px-5 py-2 bg-[#3A6D6C] text-white rounded-lg text-sm font-semibold hover:bg-[#2c5251] transition-all active:scale-95 shadow-md shadow-[#3A6D6C]/20"
+                    className="p-2 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors"
+                    aria-label="Close downloads"
+                    title="Close downloads"
                 >
-                    Close
+                    <X size={18} />
+                </button>
+            </div>
+            <div className="max-h-[min(400px,60vh)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 hover:scrollbar-thumb-gray-300 scrollbar-track-transparent">
+                {mockDownloadedFiles.length > 0 ? (
+                    mockDownloadedFiles.map((file) => (
+                        <div key={file.id} className="flex items-center gap-3 p-3.5 hover:bg-gray-50/80 transition-colors border-b border-gray-50 last:border-b-0">
+                            {getFileIcon(file.type)}
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-gray-900 truncate tracking-tight">{file.name}</p>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                    <span className="text-[11px] text-gray-500 font-medium">{file.size}</span>
+                                    <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                                    <span className="text-[11px] text-gray-500 font-medium">
+                                        {(() => {
+                                            const [y, m, d] = file.date.split('-').map(Number);
+                                            return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                                        })()}
+                                    </span>
+                                </div>
+                            </div>
+                            <button
+                                className="p-2.5 text-gray-400 hover:text-[#3A6D6C] hover:bg-[#3A6D6C]/10 rounded-xl transition-all active:scale-90"
+                                aria-label={`Download ${file.name}`}
+                                title={`Download ${file.name}`}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                            </button>
+                        </div>
+                    ))
+                ) : (
+                    <div className="p-8 text-center text-gray-500 text-sm">No recent downloads found.</div>
+                )}
+            </div>
+            <div className="p-3 border-t border-gray-100 flex justify-between items-center bg-gray-50/50">
+                <span className="text-xs font-semibold text-gray-500 ml-1">{mockDownloadedFiles.length} files total</span>
+                <button
+                    onClick={onClose}
+                    className="px-6 py-2 bg-[#3A6D6C] text-white rounded-lg text-sm font-bold hover:bg-[#2c5251] transition-all active:scale-95 shadow-lg shadow-[#3A6D6C]/20"
+                >
+                    Done
                 </button>
             </div>
         </div>,
@@ -299,12 +363,19 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
     closeMobileDrawer?: () => void;
 }) {
 
+    const location = useLocation();
     const navigate = useNavigate();
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
     const [isDownloadPopupOpen, setIsDownloadPopupOpen] = useState(false);
     const [downloadPopupPosition, setDownloadPopupPosition] = useState({ top: 0, left: 0 });
     const downloadButtonRef = useRef<HTMLDivElement>(null);
     const downloadPopupRef = useRef<HTMLDivElement>(null);
+
+    // Close dropdown on route change
+    useEffect(() => {
+        setActiveDropdown(null);
+        setIsDownloadPopupOpen(false);
+    }, [location.pathname]);
 
     // Navigate helper that also closes mobile drawer
     const onNavigate = (path: string) => {
@@ -315,11 +386,9 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
     const toggleDownloads = () => {
         if (!isDownloadPopupOpen && downloadButtonRef.current) {
             const rect = downloadButtonRef.current.getBoundingClientRect();
-            const offset = isMobile ? 220 : 150;
-            const top = Math.max(10, rect.top - offset);
             setDownloadPopupPosition({
-                top: top,
-                left: isMobile ? 20 : rect.right + 15
+                top: rect.top,
+                left: isMobile ? 16 : rect.right + 15
             });
         }
         setIsDownloadPopupOpen(!isDownloadPopupOpen);
@@ -336,11 +405,9 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
         const handleScroll = () => {
             if (isDownloadPopupOpen && downloadButtonRef.current) {
                 const rect = downloadButtonRef.current.getBoundingClientRect();
-                const offset = isMobile ? 220 : 150;
-                const top = Math.max(10, rect.top - offset);
                 setDownloadPopupPosition({
-                    top: top,
-                    left: isMobile ? 20 : rect.right + 15
+                    top: rect.top,
+                    left: isMobile ? 16 : rect.right + 15
                 });
             }
         }
@@ -432,9 +499,9 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
                             activeDropdown={activeDropdown}
                             setActiveDropdown={setActiveDropdown}
                         >
+                            <SubLink label="Find a Job" to="/service-dashboard/find-job" />
                             <SubLink label="Requests" to="/service-dashboard/requests" />
                             <SubLink label="Request Board" to="/service-dashboard/requests-board" />
-                            <SubLink label="Find a Job" to="/service-dashboard/find-job" />
                         </SidebarLink>
 
 
