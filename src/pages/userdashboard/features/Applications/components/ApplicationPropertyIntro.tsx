@@ -80,12 +80,12 @@ const ApplicationPropertyIntro: React.FC<ApplicationPropertyIntroProps> = ({ pro
 
                 const listing = apiData.listing || {};
                 const singleUnitDetails = apiData.singleUnitDetails || apiData.singleUnitDetail || {};
-                
+
                 // For multi-unit properties, try to get unit details from the first available unit
                 let unitDetails = singleUnitDetails;
                 if (apiData.propertyType === 'MULTI' && apiData.units) {
-                    const unitsArray = Array.isArray(apiData.units) 
-                        ? apiData.units 
+                    const unitsArray = Array.isArray(apiData.units)
+                        ? apiData.units
                         : (apiData.units.units || []);
                     if (unitsArray.length > 0) {
                         // Try to find unit with beds/baths, or use first unit
@@ -111,11 +111,11 @@ const ApplicationPropertyIntro: React.FC<ApplicationPropertyIntroProps> = ({ pro
                 const agentName = apiData.manager?.fullName || apiData.listingContactName || "Property Manager";
 
                 // Extract beds and baths, handling both number and string types
-                const beds = unitDetails.beds 
-                    ? (typeof unitDetails.beds === 'string' ? parseFloat(unitDetails.beds) : Number(unitDetails.beds)) 
+                const beds = unitDetails.beds
+                    ? (typeof unitDetails.beds === 'string' ? parseFloat(unitDetails.beds) : Number(unitDetails.beds))
                     : 0;
-                const baths = unitDetails.baths 
-                    ? (typeof unitDetails.baths === 'string' ? parseFloat(unitDetails.baths) : Number(unitDetails.baths)) 
+                const baths = unitDetails.baths
+                    ? (typeof unitDetails.baths === 'string' ? parseFloat(unitDetails.baths) : Number(unitDetails.baths))
                     : 0;
                 const title = listing.title || apiData.propertyName || "Property";
 
@@ -169,32 +169,32 @@ const ApplicationPropertyIntro: React.FC<ApplicationPropertyIntroProps> = ({ pro
     };
 
     return (
-        <div className="flex flex-col items-center justify-center py-6 animate-in fade-in duration-500">
-            <h1 className="text-2xl font-medium text-[#1A1A1A] mb-2 text-center">Start the application process</h1>
-            <p className="text-gray-500 text-md text-center mb-10 max-w-lg mx-auto">
-                Fill out and submit the rental application for the property below listed by <span className="font-semibold  text-[#1A1A1A]">{data.agentName}</span>.
+        <div className="flex flex-col items-center justify-center py-4 md:py-6 animate-in fade-in duration-500">
+            <h1 className="text-xl md:text-2xl font-medium text-[#1A1A1A] mb-2 text-center px-4">Start the application process</h1>
+            <p className="text-gray-500 text-sm md:text-md text-center mb-6 md:mb-10 max-w-lg mx-auto px-4">
+                Fill out and submit the rental application for the property below listed by <span className="font-semibold text-[#1A1A1A]">{data.agentName}</span>.
             </p>
 
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-[0px_4px_20px_0px_rgba(0,0,0,0.08)] p-4 max-w-sm w-full mb-10">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-[0px_4px_20px_0px_rgba(0,0,0,0.08)] p-4 max-w-sm w-full mb-8 md:mb-10 mx-auto">
                 <div className="aspect-[4/3] w-full rounded-xl overflow-hidden mb-4 bg-gray-100">
                     <img src={data.image} alt={data.title} className="w-full h-full object-cover" />
                 </div>
 
-                <div className="flex justify-between items-start mb-2 px-1">
-                    <div>
-                        <h3 className="font-bold text-lg text-[#1A1A1A]">{data.title}</h3>
+                <div className="flex justify-between items-start mb-2 px-1 gap-2">
+                    <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-base md:text-lg text-[#1A1A1A] truncate">{data.title}</h3>
                     </div>
-                    <div className="text-right">
-                        <h3 className="font-bold text-lg text-[#1A1A1A]">{formatMoney(data.rent, data.currencyCode)}</h3>
-                        <p className="text-xs text-gray-500">Rent/monthly</p>
+                    <div className="text-right shrink-0">
+                        <h3 className="font-bold text-base md:text-lg text-[#1A1A1A]">{formatMoney(data.rent, data.currencyCode)}</h3>
+                        <p className="text-[10px] md:text-xs text-gray-500">Rent/monthly</p>
                     </div>
                 </div>
 
-                <p className="text-[#4B5563] text-sm mb-6 px-1 leading-relaxed">
+                <p className="text-[#4B5563] text-xs md:text-sm mb-6 px-1 leading-relaxed">
                     {data.address}
                 </p>
 
-                <div className="flex items-center gap-8 mb-2 px-1">
+                <div className="flex flex-wrap items-center gap-4 md:gap-8 mb-2 px-1">
                     <div className="flex items-center gap-2">
                         <BedDouble className="text-[#1A1A1A]" size={20} />
                         <span className="font-bold text-[#1A1A1A]">x {data.beds}</span>

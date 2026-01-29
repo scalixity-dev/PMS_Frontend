@@ -11,7 +11,7 @@ import PrimaryActionButton from "../../components/common/buttons/PrimaryActionBu
 import { authService } from "../../services/auth.service";
 import { useAuthStore } from "./features/Profile/store/authStore";
 import { applicationService } from "../../services/application.service";
-import { X } from "lucide-react";
+import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import DeleteConfirmationModal from "../../components/common/modals/DeleteConfirmationModal";
 import { UserApplicationCard } from "./features/Applications/components/UserApplicationCard";
 import { useGetLeasesByTenant } from "../../hooks/useLeaseQueries";
@@ -21,7 +21,7 @@ import { useGetAllApplications } from "../../hooks/useApplicationQueries";
 
 
 
-
+const ITEMS_PER_PAGE = 10;
 
 const UserDashboard = () => {
     const navigate = useNavigate();
@@ -30,6 +30,7 @@ const UserDashboard = () => {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [applications, setApplications] = useState<any[]>([]);
+    const [currentPage, setCurrentPage] = useState(1);
     const [deleteModalState, setDeleteModalState] = useState<{ isOpen: boolean; targetId?: string }>({ isOpen: false });
     const [errorToast, setErrorToast] = useState<string | null>(null);
     const [userId, setUserId] = useState<string | null>(null);
@@ -166,12 +167,12 @@ const UserDashboard = () => {
     // Backend already filters by tenant, so we just need to transform the format
     const frontendTransactions = useMemo<Transaction[]>(() => {
         if (!transactionsData || !Array.isArray(transactionsData)) return [];
-        
+
         return transactionsData.map((tx: any) => {
             // Backend returns: contact (string), total, balance, dueDate (formatted), status, etc.
             const contactName = tx.contact || 'N/A';
             const initials = contactName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase();
-            
+
             const statusMap: Record<string, 'Open' | 'Overdue' | 'Paid' | 'Partial'> = {
                 'Pending': 'Open',
                 'Paid': 'Paid',
@@ -212,7 +213,7 @@ const UserDashboard = () => {
                 contact: {
                     name: contactName,
                     initials,
-                    avatarColor: `#${Math.floor(Math.random()*16777215).toString(16)}`
+                    avatarColor: `#${Math.floor(Math.random() * 16777215).toString(16)}`
                 },
                 amount,
                 paidAmount: status === 'Paid' ? amount : paidAmount,
@@ -300,6 +301,18 @@ const UserDashboard = () => {
         }
     }, [isAuthenticated, activeLeases, normalizedApplications, leasesLoading, applicationsLoading, setDashboardStage, setActiveTab, setRoommates, userInfo?.email]);
 
+    const totalPages = Math.ceil(applications.length / ITEMS_PER_PAGE);
+    const paginatedApplications = useMemo(() => {
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        return applications.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    }, [applications, currentPage]);
+
+    const handlePageChange = (page: number) => {
+        if (page >= 1 && page <= totalPages) {
+            setCurrentPage(page);
+        }
+    };
+
     const handleDeleteApplication = async () => {
         const targetId = deleteModalState.targetId;
         if (!targetId) return;
@@ -326,7 +339,7 @@ const UserDashboard = () => {
     useEffect(() => {
         if (isAuthenticated && dashboardStage === 'move_in' && frontendTransactions.length > 0) {
             const outstanding = calculateOutstandingAmount(frontendTransactions).toFixed(2);
-            
+
             // Calculate deposits from active leases
             const totalDeposits = activeLeases.reduce((sum, lease) => {
                 const leaseData = backendLeases?.find(l => l.id === lease.id);
@@ -471,29 +484,73 @@ const UserDashboard = () => {
 
 
                     {dashboardStage === 'application_submitted' && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
-                            {applications.map((app) => (
-                                <UserApplicationCard
-                                    key={app.id}
-                                    app={app}
-                                    onDelete={(id) => setDeleteModalState({ isOpen: true, targetId: String(id) })}
-                                    onNavigate={() => navigate(app.status === "Draft" ? "/userdashboard/new-application" : `/userdashboard/applications/${app.id}`)}
-                                />
-                            ))}
-                        </div>
+                        <>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+                                {paginatedApplications.map((app) => (
+                                    <UserApplicationCard
+                                        key={app.id}
+                                        app={app}
+                                        onDelete={(id) => setDeleteModalState({ isOpen: true, targetId: String(id) })}
+                                        onNavigate={() => navigate(app.status === "Draft" ? "/userdashboard/new-application" : `/userdashboard/applications/${app.id}`)}
+                                    />
+                                ))}
+                            </div>
+
+                            {/* Pagination Controls */}
+                            {totalPages > 1 && (
+                                <div className="mt-8 flex justify-center items-center gap-2 pb-10">
+                                    <button
+                                        onClick={() => handlePageChange(currentPage - 1)}
+                                        disabled={currentPage === 1}
+                                        className={`p-2 rounded-full transition-colors ${currentPage === 1
+                                            ? 'text-gray-300 cursor-not-allowed'
+                                            : 'text-gray-600 hover:bg-gray-100'
+                                            }`}
+                                    >
+                                        <ChevronLeft size={24} />
+                                    </button>
+
+                                    <div className="flex items-center gap-2">
+                                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                                            <button
+                                                key={page}
+                                                onClick={() => handlePageChange(page)}
+                                                className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${currentPage === page
+                                                    ? 'bg-[#7ED957] text-white shadow-lg'
+                                                    : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                                                    }`}
+                                            >
+                                                {page}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    <button
+                                        onClick={() => handlePageChange(currentPage + 1)}
+                                        disabled={currentPage === totalPages}
+                                        className={`p-2 rounded-full transition-colors ${currentPage === totalPages
+                                            ? 'text-gray-300 cursor-not-allowed'
+                                            : 'text-gray-600 hover:bg-gray-100'
+                                            }`}
+                                    >
+                                        <ChevronRight size={24} />
+                                    </button>
+                                </div>
+                            )}
+                        </>
                     )}
 
 
                     {dashboardStage === 'move_in' && (
                         <>
                             {activeTab === "Outstanding" && (
-                                <TransactionTable 
-                                    transactions={frontendTransactions.length > 0 ? frontendTransactions : []} 
+                                <TransactionTable
+                                    transactions={frontendTransactions.length > 0 ? frontendTransactions : []}
                                 />
                             )}
                             {activeTab === "Leases" && (
-                                <LeaseList 
-                                    leases={frontendLeases.length > 0 ? frontendLeases : []} 
+                                <LeaseList
+                                    leases={frontendLeases.length > 0 ? frontendLeases : []}
                                 />
                             )}
                             {activeTab !== "Outstanding" && activeTab !== "Leases" && (

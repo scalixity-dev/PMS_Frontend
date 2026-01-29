@@ -415,7 +415,7 @@ class ApplicationService {
         criminalRecord: formData.backgroundQuestions.crime === true,
         bankruptcy: formData.backgroundQuestions.bankruptcy === true,
         refusedRent: formData.backgroundQuestions.refuseRent === true,
-        evicted: formData.backgroundQuestions.evicted === true,
+        evicted: formData.backgroundQuestions.evicted === true
       } : undefined,
       customBackgroundAnswers: (formData as any).customBackgroundAnswers && (formData as any).customBackgroundAnswers.length > 0
         ? (formData as any).customBackgroundAnswers
@@ -552,7 +552,7 @@ class ApplicationService {
         criminalRecord: formData.backgroundQuestions.crime === true,
         bankruptcy: formData.backgroundQuestions.bankruptcy === true,
         refusedRent: formData.backgroundQuestions.refuseRent === true,
-        evicted: formData.backgroundQuestions.evicted === true,
+        evicted: formData.backgroundQuestions.evicted === true
       } : undefined,
       customBackgroundAnswers: formData.customBackgroundAnswers && formData.customBackgroundAnswers.length > 0
         ? formData.customBackgroundAnswers
