@@ -42,10 +42,10 @@ const ServiceAccounting = () => {
         // Basic Date Filter
         // Basic Date Filter
         const matchesDate = (() => {
-            if (!t.dueDate) return false;
-
             const filters = Array.isArray(dateFilter) ? dateFilter : [dateFilter];
             if (filters.includes('All')) return true;
+
+            if (!t.dueDate) return false;
 
             // Parse date "YYYY-MM-DD"
             const [y, m, d] = (t.dueDate as string).split('-').map(Number);
@@ -176,7 +176,11 @@ const ServiceAccounting = () => {
                                         )}
                                         <span className="text-sm font-medium text-gray-700">{transaction.contact}</span>
                                     </div>
-                                    <button className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100">
+                                    <button
+                                        type="button"
+                                        aria-label="Download CSV"
+                                        className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
+                                    >
                                         <Download size={20} />
                                     </button>
                                 </div>
