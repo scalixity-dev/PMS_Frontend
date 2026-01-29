@@ -2,6 +2,8 @@ import React from 'react';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { PiPlusBold } from "react-icons/pi";
 import SearchableDropdown from '../../../components/ui/SearchableDropdown';
+import type { DateRange } from 'react-day-picker';
+import DateRangePicker from './DateRangePicker';
 
 interface ServiceFiltersProps {
     onSearch?: (term: string) => void;
@@ -17,6 +19,10 @@ interface ServiceFiltersProps {
 
     currentPriority?: string | string[];
     onPriorityChange?: (priority: any) => void;
+
+    // Date Range Props
+    dateRange?: DateRange | undefined;
+    onDateRangeChange?: (range: DateRange | undefined) => void;
 
     // Optional legacy or additional props can be added here
     onStatusClick?: () => void;
@@ -45,6 +51,7 @@ const ServiceFilters: React.FC<ServiceFiltersProps> = ({
     currentCategory, onCategoryChange,
     currentProperty, onPropertyChange,
     currentPriority, onPriorityChange,
+    dateRange, onDateRangeChange,
     ...props // Capture rest of props
 }) => {
     // Default Options
@@ -218,6 +225,14 @@ const ServiceFilters: React.FC<ServiceFiltersProps> = ({
                     <Search className="absolute right-3 top-2.5 text-gray-400" size={16} />
                 </div>
 
+                {onDateRangeChange && (
+                    <DateRangePicker
+                        dateRange={dateRange}
+                        onDateRangeChange={onDateRangeChange}
+                        placeholder={props.propertyLabel || "Pick a date range"}
+                    />
+                )}
+
                 {onStatusChange && (
                     <SearchableDropdown
                         value={getStatusValue()}
@@ -347,6 +362,18 @@ const ServiceFilters: React.FC<ServiceFiltersProps> = ({
                         </div>
 
                         <div className="space-y-6 pb-24">
+                            {onDateRangeChange && (
+                                <div>
+                                    <h3 className="text-sm font-semibold text-gray-900 mb-3">{props.propertyLabel || "Date Range"}</h3>
+                                    <DateRangePicker
+                                        dateRange={dateRange}
+                                        onDateRangeChange={onDateRangeChange}
+                                        className="w-full"
+                                        placeholder={props.propertyLabel || "Pick a date range"}
+                                    />
+                                </div>
+                            )}
+
                             {onStatusChange && (
                                 <div>
                                     <h3 className="text-sm font-semibold text-gray-900 mb-3">{props.statusLabel || "Status"}</h3>

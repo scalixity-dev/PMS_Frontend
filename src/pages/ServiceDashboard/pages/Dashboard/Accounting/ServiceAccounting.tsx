@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { DateRange } from 'react-day-picker';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Download } from 'lucide-react';
 import { PiHandCoinsLight } from 'react-icons/pi';
@@ -18,7 +19,7 @@ const ServiceAccounting = () => {
 
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
-    const [dateFilter, setDateFilter] = useState<string | string[]>('All');
+    const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
     const [statusFilter, setStatusFilter] = useState<string | string[]>('All');
     const [scheduleFilter, setScheduleFilter] = useState<string | string[]>('All');
 
@@ -40,41 +41,31 @@ const ServiceAccounting = () => {
                 : (scheduleSource && scheduleSource.includes(scheduleFilter)));
 
         // Basic Date Filter
-        // Basic Date Filter
         const matchesDate = (() => {
-            const filters = Array.isArray(dateFilter) ? dateFilter : [dateFilter];
-            if (filters.includes('All')) return true;
+            // Check if at least one date is present
+            if (!dateRange?.from && !dateRange?.to) return true;
 
             if (!t.dueDate) return false;
 
-            // Parse date "YYYY-MM-DD"
+            // Parse transaction date "YYYY-MM-DD"
             const [y, m, d] = (t.dueDate as string).split('-').map(Number);
-            const date = new Date(y, m - 1, d);
-            const now = new Date();
+            const date = new Date(y, m - 1, d); // Local midnight
 
-            // Normalize current date to midnight for fair comparison
-            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            // Determine effective range
+            // If only 'from' is selected, use it as both start and end (single day)
+            // If only 'to' is selected (unlikely in UI but possible in state), treat as single day
+            const fromDateRaw = dateRange.from || dateRange.to;
+            const toDateRaw = dateRange.to || dateRange.from;
 
-            return filters.some(filter => {
-                if (filter === 'Last 7 Days') {
-                    const diffTime = today.getTime() - date.getTime();
-                    const diffDays = diffTime / (1000 * 3600 * 24);
-                    return diffDays >= 0 && diffDays <= 7;
-                }
-                if (filter === 'Last 30 Days') {
-                    const diffTime = today.getTime() - date.getTime();
-                    const diffDays = diffTime / (1000 * 3600 * 24);
-                    return diffDays >= 0 && diffDays <= 30;
-                }
-                if (filter === 'This Month') {
-                    return date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
-                }
-                if (filter === 'Last Month') {
-                    const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-                    return date.getMonth() === lastMonth.getMonth() && date.getFullYear() === lastMonth.getFullYear();
-                }
-                return true;
-            });
+            if (!fromDateRaw || !toDateRaw) return true; // Should be covered above but safe guard
+
+            const from = new Date(fromDateRaw.getFullYear(), fromDateRaw.getMonth(), fromDateRaw.getDate());
+            const to = new Date(toDateRaw.getFullYear(), toDateRaw.getMonth(), toDateRaw.getDate());
+
+            // Adjust to ensure inclusive comparison for the end date
+            to.setHours(23, 59, 59, 999);
+
+            return date >= from && date <= to;
         })();
 
         return matchesSearch && matchesStatus && matchesSchedule && matchesDate;
@@ -115,10 +106,9 @@ const ServiceAccounting = () => {
                 onSearch={setSearchTerm}
 
                 // + Date
-                currentProperty={dateFilter}
-                onPropertyChange={setDateFilter}
-                propertyLabel="Date"
-                propertyOptions={['All', 'Last 7 Days', 'Last 30 Days', 'This Month', 'Last Month']}
+                dateRange={dateRange}
+                onDateRangeChange={setDateRange}
+                propertyLabel="Date Range"
 
                 // + Transaction Status
                 currentStatus={statusFilter}
