@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, Fragment } from 'react';
 import { createPortal } from 'react-dom';
-import { SquarePen, ChevronLeft, ChevronRight, X, Sparkles } from "lucide-react";
+import { SquarePen, ChevronLeft, ChevronRight, X } from "lucide-react";
 import {
   PiChartLineUpFill, PiChartPieSliceFill, PiBuildingsFill, PiUsersFill,
   PiCurrencyDollarFill, PiWrenchFill, PiFileTextFill
@@ -390,23 +390,6 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
 
           {/* Navigation */}
           <nav className="px-1 py-2 space-y-1">
-            <NavLink
-              to="/dashboard/ai-chat"
-              onClick={() => {
-                if (isMobile && closeMobileDrawer) closeMobileDrawer();
-              }}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 mb-2 ${
-                  isActive
-                    ? 'bg-gradient-to-r from-[#3D7475] to-[#819A78] text-white shadow-md'
-                    : 'text-gray-700 hover:bg-gray-50 hover:text-[#3D7475]'
-                } ${collapsed ? 'justify-center' : ''}`
-              }
-            >
-              <Sparkles className={`flex-shrink-0 ${collapsed ? 'w-5 h-5' : 'w-5 h-5'}`} />
-              {!collapsed && <span className="font-medium text-sm">AI Assistant</span>}
-            </NavLink>
-
             <SidebarDropdownLink
               label="Dashboard"
               icon={<PiChartLineUpFill size={24} />}
