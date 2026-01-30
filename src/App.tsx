@@ -15,6 +15,14 @@ import PricingPage from './pages/basewebsite/pricing';
 import LoginPage from './pages/basewebsite/auth/login';
 import SignUpPage from './pages/basewebsite/auth/signUp';
 import ServiceDashboardLogin from './pages/ServiceDashboard/pages/auth/Login';
+import AdminLogin from './pages/Admin/Login';
+import AdminLayout from './pages/Admin/layout/AdminLayout';
+import AdminDashboard from './pages/Admin/pages/Dashboard/AdminDashboard';
+import UsersPage from './pages/Admin/pages/Users/UsersPage';
+import UserDetailPage from './pages/Admin/pages/Users/UserDetails/UserDetailPage';
+import PropertiesPage from './pages/Admin/pages/Properties/PropertiesPage';
+import LeasesPage from './pages/Admin/pages/Leases/LeasesPage';
+import PaymentsPage from './pages/Admin/pages/Payments/PaymentsPage';
 import ServiceDashboardSignup from './pages/ServiceDashboard/pages/auth/Signup';
 import ForgotPassword from './pages/ServiceDashboard/pages/auth/ForgotPassword';
 import Welcome from './pages/ServiceDashboard/pages/onboarding/Welcome';
@@ -212,6 +220,18 @@ const App: React.FC = () => {
         <BrowserRouter>
           <Routes>
             {/* Service Dashboard Auth - Standalone Pages */}
+            <Route path="/admin/login" element={<AdminLogin />} />
+
+            {/* Admin Dashboard Routes */}
+            <Route element={<AdminLayout />}>
+              <Route path="/admin/dashboard" element={<AdminDashboard />} />
+              <Route path="/admin/users" element={<UsersPage />} />
+              <Route path="/admin/users/:userId" element={<UserDetailPage />} />
+              <Route path="/admin/properties" element={<PropertiesPage />} />
+              <Route path="/admin/leases" element={<LeasesPage />} />
+              <Route path="/admin/payments" element={<PaymentsPage />} />
+            </Route>
+
             <Route path="/service-dashboard/login" element={<ServiceDashboardLogin />} />
             <Route path="/service-dashboard/signup" element={<ServiceDashboardSignup />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
