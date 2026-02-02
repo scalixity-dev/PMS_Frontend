@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Sparkles } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import GetStartedButton from '../../../../components/common/buttons/GetStartedButton';
 import MaintenanceStepper from './components/MaintenanceStepper';
@@ -16,6 +16,7 @@ import MaintenanceSuccessModal from './components/MaintenanceSuccessModal';
 import AdvancedRequestForm from './components/AdvancedRequestForm';
 import PropertyTenantsStep from './components/PropertyTenantsStep';
 import DueDateMaterialsStep from './components/DueDateMaterialsStep';
+import AIMaintenanceChat from './components/AIMaintenanceChat';
 import propertyImage from '../../../../assets/images/property.jpg';
 
 interface RequestTypeCardProps {
@@ -116,6 +117,8 @@ const AddMaintenanceRequest: React.FC = () => {
     const [selectedPriority, setSelectedPriority] = useState<string | null>(null);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [createdRequestId, setCreatedRequestId] = useState<string>('');
+    const [showAIChat, setShowAIChat] = useState(false);
+    const [pendingAIData, setPendingAIData] = useState<any | null>(null);
 
     const [propertiesList, setPropertiesList] = useState([
         {
@@ -170,6 +173,13 @@ const AddMaintenanceRequest: React.FC = () => {
         setPropertiesList([...propertiesList, newProperty]);
         setSelectedProperty(newProperty.id);
         setIsCreatingProperty(false);
+    };
+
+    const handleAIFormData = (aiData: any) => {
+        setPendingAIData(aiData);
+        setSelectedType('advanced');
+        setMainStep(1);
+        setGeneralSubStep(1);
     };
 
     const handleSubmitRequest = () => {
@@ -283,8 +293,8 @@ const AddMaintenanceRequest: React.FC = () => {
             <div className="flex-1 flex items-start justify-center pt-8">
                 <div className={`bg-[#DFE5E3] rounded-[2rem] p-6 md:p-12 flex flex-col items-center w-full shadow-sm min-h-[80vh] relative ${selectedType === 'advanced' && mainStep >= 1 ? 'max-w-6xl' : 'max-w-3xl'}`}>
 
-                    {/* Back Button */}
-                    <div className="w-full md:w-auto relative mb-4 md:mb-0 md:absolute md:top-8 md:left-8">
+                    {/* Back Button and AI Button */}
+                    <div className="w-full flex items-center justify-between mb-4 md:mb-0 md:absolute md:top-8 md:left-8 md:right-8 md:w-auto md:justify-between md:gap-4">
                         <button
                             onClick={handleBack}
                             className="flex items-center gap-2 text-[#3D7475] font-bold hover:opacity-80 transition-opacity uppercase tracking-wide"
@@ -292,6 +302,15 @@ const AddMaintenanceRequest: React.FC = () => {
                             <ArrowLeft size={20} strokeWidth={2.5} />
                             Back
                         </button>
+                        {mainStep === 0 && (
+                            <button
+                                onClick={() => setShowAIChat(true)}
+                                className="flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-full font-medium hover:from-teal-700 hover:to-teal-600 transition-all shadow-lg hover:shadow-xl"
+                            >
+                                <Sparkles className="w-4 h-4 md:w-5 md:h-5" />
+                                <span className="text-sm md:text-base">Fill using AI</span>
+                            </button>
+                        )}
                     </div>
 
                     {/* Stepper (Only show for Main Step 1+) */}
@@ -343,7 +362,7 @@ const AddMaintenanceRequest: React.FC = () => {
                                     handleNext();
                                 }}
                                 onDiscard={() => navigate('/dashboard')}
-                                initialData={isEditMode ? mockInitialData.advancedForm : undefined}
+                                initialData={pendingAIData || (isEditMode ? mockInitialData.advancedForm : undefined)}
                             />
                         ) : (
                             <div className="flex flex-col items-center w-full">
@@ -482,6 +501,12 @@ const AddMaintenanceRequest: React.FC = () => {
                         }}
                         requestId={createdRequestId}
                         propertyName={propertiesList.find(p => p.id === selectedProperty)?.name || 'Property'}
+                    />
+
+                    <AIMaintenanceChat
+                        isOpen={showAIChat}
+                        onClose={() => setShowAIChat(false)}
+                        onFormDataReceived={handleAIFormData}
                     />
                 </div>
             </div>

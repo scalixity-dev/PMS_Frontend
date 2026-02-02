@@ -242,5 +242,9 @@ export const API_ENDPOINTS = {
     SYNC_EVENTS: `${API_BASE_URL}/google-calendar/events/sync`,
     CREATE_EVENT: `${API_BASE_URL}/google-calendar/events`,
   },
+  AI_CHAT: {
+    STREAM: `${import.meta.env.VITE_AI_CHAT_API_URL || 'http://localhost:8000'}/chat/stream`,
+    CHAT: `${import.meta.env.VITE_AI_CHAT_API_URL || 'http://localhost:8000'}/chat`,
+  },
 };
 

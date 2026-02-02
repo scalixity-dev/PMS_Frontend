@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import CustomDropdown from '../../../components/CustomDropdown';
-import { Upload, Video, X } from 'lucide-react';
+import AIMaintenanceChat from './AIMaintenanceChat';
+import { Upload, Video, X, Sparkles } from 'lucide-react';
 
 interface AdvancedRequestFormProps {
     onNext: (data: any) => void;
@@ -25,6 +26,7 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
     });
 
     const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
+    const [showAIChat, setShowAIChat] = useState(false);
 
     // Track if user has edited the form to avoid clobbering their changes
     const formTouchedRef = useRef(false);
@@ -175,13 +177,11 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
     };
 
     const handleChange = (field: string, value: string) => {
-        // Mark form as touched when user makes any change
         formTouchedRef.current = true;
 
         setFormData(prev => {
             const updated = { ...prev, [field]: value };
 
-            // Reset dependent fields when parent field changes
             if (field === 'category') {
                 updated.subCategory = '';
                 updated.issue = '';
@@ -190,6 +190,34 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
                 updated.issue = '';
                 updated.subIssue = '';
             } else if (field === 'issue') {
+                updated.subIssue = '';
+            }
+
+            return updated;
+        });
+    };
+
+    const handleAIFormData = (aiData: any) => {
+        formTouchedRef.current = true;
+        
+        const updates: any = {};
+        Object.entries(aiData).forEach(([key, value]) => {
+            if (value !== null && value !== '' && value !== undefined) {
+                updates[key] = value;
+            }
+        });
+
+        setFormData(prev => {
+            const updated = { ...prev, ...updates };
+            
+            if (updates.category && prev.category !== updates.category) {
+                updated.subCategory = '';
+                updated.issue = '';
+                updated.subIssue = '';
+            } else if (updates.subCategory && prev.subCategory !== updates.subCategory) {
+                updated.issue = '';
+                updated.subIssue = '';
+            } else if (updates.issue && prev.issue !== updates.issue) {
                 updated.subIssue = '';
             }
 
@@ -215,13 +243,28 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
 
     return (
         <div className="w-full max-w-5xl mx-auto pb-12">
-            <div className="mb-8">
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">Category</h2>
-                <p className="text-gray-500 text-sm">
-                    Search or select the issue category. Only the main category is required, but you can select a sub-category, issue and sub-issue to narrow down the request.
-                    Select 'other' option if the category you are looking for isn't here.
-                </p>
+            <div className="mb-8 flex items-center justify-between">
+                <div>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-2">Category</h2>
+                    <p className="text-gray-500 text-sm">
+                        Search or select the issue category. Only the main category is required, but you can select a sub-category, issue and sub-issue to narrow down the request.
+                        Select 'other' option if the category you are looking for isn't here.
+                    </p>
+                </div>
+                <button
+                    onClick={() => setShowAIChat(true)}
+                    className="flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-full font-medium hover:from-teal-700 hover:to-teal-600 transition-all shadow-lg hover:shadow-xl"
+                >
+                    <Sparkles className="w-4 h-4 md:w-5 md:h-5" />
+                    <span className="text-sm md:text-base">Fill using AI</span>
+                </button>
             </div>
+
+            <AIMaintenanceChat
+                isOpen={showAIChat}
+                onClose={() => setShowAIChat(false)}
+                onFormDataReceived={handleAIFormData}
+            />
 
             {/* Category & Sub-category */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
