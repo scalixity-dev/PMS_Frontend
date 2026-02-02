@@ -1,62 +1,138 @@
 import React, { useState } from 'react';
 import {
-    MapPin,
-    CheckCircle,
-    Pencil,
-    Trash2,
     Building2,
-    Eye,
     Briefcase,
-    Home
+    CheckCircle,
+    Home,
+    TrendingUp,
+    TrendingDown
 } from 'lucide-react';
-import ServiceFilters from '../../../ServiceDashboard/components/ServiceFilters';
+import {
+    AreaChart,
+    Area,
+    XAxis,
+    CartesianGrid,
+    BarChart,
+    Bar,
+    PieChart,
+    Pie,
+    Cell,
+    Label
+} from 'recharts';
+import {
+    ChartContainer,
+    ChartTooltip,
+    ChartTooltipContent,
+    type ChartConfig
+} from "@/components/ui/chart";
+import CustomDropdown from '../../../Dashboard/components/CustomDropdown';
 
 // --- Mock Data ---
 
-interface PropertyManager {
-    id: string;
-    name: string;
-    avatar: string;
-    status: 'Active' | 'Expired' | 'Inactive';
-    totalProperties: number;
-    occupancyRate: number; // For the progress bar next to PM name in design
-}
-
-interface Property {
-    id: string;
-    pmId: string;
-    name: string;
-    location: string;
-    units: number;
-    occupancyRate: number;
-    leaseStatus: 'Active' | 'Ending' | 'Vacant';
-    status: 'Occupied' | 'Vacant' | 'Maintenance';
-}
-
-const mockPMs: PropertyManager[] = [
-    { id: 'pm1', name: 'Sarah Jenkins', avatar: '', status: 'Active', totalProperties: 3, occupancyRate: 78 },
-    { id: 'pm2', name: 'John Doe', avatar: '', status: 'Expired', totalProperties: 1, occupancyRate: 92 },
-    { id: 'pm3', name: 'Mike Ross', avatar: '', status: 'Active', totalProperties: 2, occupancyRate: 45 },
+const monthlyPropertiesData = [
+    { month: 'Jan', properties: 45, units: 320 },
+    { month: 'Feb', properties: 48, units: 340 },
+    { month: 'Mar', properties: 52, units: 365 },
+    { month: 'Apr', properties: 55, units: 380 },
+    { month: 'May', properties: 58, units: 395 },
+    { month: 'Jun', properties: 62, units: 420 },
+    { month: 'Jul', properties: 65, units: 445 },
+    { month: 'Aug', properties: 70, units: 480 },
+    { month: 'Sep', properties: 74, units: 510 },
+    { month: 'Oct', properties: 78, units: 535 },
+    { month: 'Nov', properties: 82, units: 560 },
+    { month: 'Dec', properties: 88, units: 590 },
 ];
 
-const mockProperties: Property[] = [
-    { id: 'p1', pmId: 'pm1', name: 'Sunset Apartments', location: 'Los Angeles', units: 24, occupancyRate: 92, leaseStatus: 'Active', status: 'Occupied' },
-    { id: 'p2', pmId: 'pm1', name: 'Palm Heights', location: 'Los Angeles', units: 10, occupancyRate: 40, leaseStatus: 'Ending', status: 'Vacant' },
-    { id: 'p3', pmId: 'pm1', name: 'Lakeview Homes', location: 'Miami', units: 8, occupancyRate: 100, leaseStatus: 'Active', status: 'Occupied' },
-    { id: 'p4', pmId: 'pm2', name: 'Downtown Lofts', location: 'New York', units: 45, occupancyRate: 95, leaseStatus: 'Active', status: 'Occupied' },
-    { id: 'p5', pmId: 'pm3', name: 'Urban Heights', location: 'Chicago', units: 30, occupancyRate: 50, leaseStatus: 'Active', status: 'Occupied' },
-    { id: 'p6', pmId: 'pm3', name: 'Riverside Condo', location: 'Chicago', units: 12, occupancyRate: 40, leaseStatus: 'Vacant', status: 'Maintenance' },
-    { id: 'p7', pmId: 'pm2', name: 'Ocean View Villa', location: 'Miami', units: 1, occupancyRate: 100, leaseStatus: 'Active', status: 'Occupied' },
-    { id: 'p8', pmId: 'pm3', name: 'Forest Cabin', location: 'Denver', units: 1, occupancyRate: 0, leaseStatus: 'Vacant', status: 'Vacant' },
+const monthlyOccupancyData = [
+    { month: 'Jan', occupied: 280, vacant: 40 },
+    { month: 'Feb', occupied: 295, vacant: 45 },
+    { month: 'Mar', occupied: 320, vacant: 45 },
+    { month: 'Apr', occupied: 340, vacant: 40 },
+    { month: 'May', occupied: 355, vacant: 40 },
+    { month: 'Jun', occupied: 380, vacant: 40 },
+    { month: 'Jul', occupied: 405, vacant: 40 },
+    { month: 'Aug', occupied: 440, vacant: 40 },
+    { month: 'Sep', occupied: 465, vacant: 45 },
+    { month: 'Oct', occupied: 490, vacant: 45 },
+    { month: 'Nov', occupied: 515, vacant: 45 },
+    { month: 'Dec', occupied: 545, vacant: 45 },
 ];
+
+const leaseStatusData = [
+    { status: 'Active', count: 72, fill: "#10B981" },
+    { status: 'Ending Soon', count: 10, fill: "#F59E0B" },
+    { status: 'Vacant', count: 6, fill: "#EF4444" },
+];
+
+const propertyTypeData = [
+    { type: 'Apartments', count: 45, fill: "#6366F1" },
+    { type: 'Single Family', count: 25, fill: "#8B5CF6" },
+    { type: 'Condos', count: 12, fill: "#EC4899" },
+    { type: 'Townhouses', count: 6, fill: "#14B8A6" },
+];
+
+// --- Chart Configs ---
+
+const propertiesGrowthConfig = {
+    properties: {
+        label: "Properties",
+        color: "#6366F1",
+    },
+    units: {
+        label: "Units",
+        color: "#8B5CF6",
+    },
+} satisfies ChartConfig;
+
+const occupancyConfig = {
+    occupied: {
+        label: "Occupied",
+        color: "#10B981",
+    },
+    vacant: {
+        label: "Vacant",
+        color: "#EF4444",
+    },
+} satisfies ChartConfig;
+
+const leaseStatusConfig = {
+    count: { label: "Properties" },
+    active: { label: "Active", color: "#10B981" },
+    ending: { label: "Ending Soon", color: "#F59E0B" },
+    vacant: { label: "Vacant", color: "#EF4444" },
+} satisfies ChartConfig;
+
+const propertyTypeConfig = {
+    count: { label: "Properties" },
+    apartments: { label: "Apartments", color: "#6366F1" },
+    singleFamily: { label: "Single Family", color: "#8B5CF6" },
+    condos: { label: "Condos", color: "#EC4899" },
+    townhouses: { label: "Townhouses", color: "#14B8A6" },
+} satisfies ChartConfig;
 
 // --- Components ---
 
-const StatCard = ({ title, value, icon, colorClass }: { title: string, value: string | number, icon: React.ReactNode, colorClass: string }) => (
-    <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-start justify-between">
+interface AnalyticsCardProps {
+    title: string;
+    value: string;
+    change?: string;
+    isPositive?: boolean;
+    icon: React.ReactNode;
+    colorClass: string;
+}
+
+const AnalyticsCard: React.FC<AnalyticsCardProps> = ({ title, value, change, isPositive, icon, colorClass }) => (
+    <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-start justify-between transition-all hover:shadow-md">
         <div>
             <p className="text-gray-500 text-sm font-medium mb-1">{title}</p>
-            <h3 className="text-2xl font-bold text-gray-900">{value}</h3>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">{value}</h3>
+            {change && (
+                <div className={`flex items-center text-xs font-semibold ${isPositive ? 'text-green-600' : 'text-red-500'}`}>
+                    {isPositive ? <TrendingUp size={14} className="mr-1" /> : <TrendingDown size={14} className="mr-1" />}
+                    <span>{change} vs last month</span>
+                </div>
+            )}
         </div>
         <div className={`p-3 rounded-lg ${colorClass} text-white shadow-sm`}>
             {icon}
@@ -64,251 +140,280 @@ const StatCard = ({ title, value, icon, colorClass }: { title: string, value: st
     </div>
 );
 
-const ProgressBar = ({ value, className = "" }: { value: number, className?: string }) => {
-    let colorClass = 'bg-blue-500';
-    if (value >= 90) colorClass = 'bg-green-500';
-    else if (value >= 70) colorClass = 'bg-blue-500';
-    else if (value >= 40) colorClass = 'bg-yellow-500';
-    else colorClass = 'bg-red-500';
-
-    return (
-        <div className={`h-2 bg-gray-100 rounded-full overflow-hidden w-24 ${className}`}>
-            <div className={`h-full ${colorClass} rounded-full transition-all duration-500`} style={{ width: `${value}%` }} />
-        </div>
-    );
-};
-
-const PropertyManagerGroup = ({ pm, properties }: { pm: PropertyManager, properties: Property[] }) => {
-    if (properties.length === 0) return null;
-
-    return (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden mb-6">
-            {/* PM Header */}
-            <div className="px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-green-50/50 border-b border-green-100">
-                <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold text-lg border-2 border-white shadow-sm">
-                        {pm.avatar ? <img src={pm.avatar} alt={pm.name} className="w-full h-full rounded-full object-cover" /> : pm.name.charAt(0)}
-                    </div>
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <h3 className="text-lg font-bold text-gray-900">{pm.name}</h3>
-                            <div className={`w-2.5 h-2.5 rounded-full ${pm.status === 'Active' ? 'bg-green-500' : 'bg-red-500'}`} />
-                            <span className={`px-2 py-0.5 rounded text-xs font-medium border ${pm.status === 'Active' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-700 border-red-100'
-                                }`}>
-                                {pm.status}
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
-                            <span>{properties.length} Properties</span>
-                            <span className="text-gray-300">•</span>
-                            {/* PM Overall Occupancy Bar */}
-                            <div className="flex items-center gap-2" title="Overall Occupancy Rate">
-                                <span className="text-xs font-medium">{pm.occupancyRate}% Occupancy</span>
-                                <ProgressBar value={pm.occupancyRate} className="w-20 h-1.5" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2">
-                    <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors font-medium">
-                        <Eye size={16} /> View
-                    </button>
-                    <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors font-medium">
-                        <Pencil size={16} /> Edit
-                    </button>
-                    <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors font-medium">
-                        <Trash2 size={16} /> Block
-                    </button>
-                </div>
-            </div>
-
-            {/* Properties Table */}
-            <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                    <thead>
-                        <tr className="bg-white text-gray-400 text-xs uppercase tracking-wider font-semibold border-b border-gray-50">
-                            <th className="px-6 py-3 pl-8">Property</th>
-                            <th className="px-6 py-3">City</th>
-                            <th className="px-6 py-3">Units</th>
-                            <th className="px-6 py-3">Occupancy</th>
-                            <th className="px-6 py-3">Lease</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-50">
-                        {properties.map((property) => {
-                            const occupied = Math.round(property.units * (property.occupancyRate / 100));
-                            const vacant = property.units - occupied;
-
-                            return (
-                                <tr key={property.id} className="hover:bg-gray-50 transition-colors group">
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-2 rounded-lg bg-gray-100 text-gray-500">
-                                                <Building2 size={18} />
-                                            </div>
-                                            <div className="font-medium text-gray-900">{property.name}</div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-1.5 text-gray-500 text-sm">
-                                            <MapPin size={14} />
-                                            {property.location}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{property.units}</td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-col gap-1.5">
-                                            <div className="flex items-center gap-3">
-                                                <span className="text-sm font-bold text-gray-900 w-8">{property.occupancyRate}%</span>
-                                                <ProgressBar value={property.occupancyRate} />
-                                            </div>
-                                            <div className="text-xs flex items-center gap-2">
-                                                {property.units === 1 ? (
-                                                    <span className="text-gray-500 font-medium">Single Unit</span>
-                                                ) : (
-                                                    <>
-                                                        <span className="text-green-600 font-medium">{occupied} Occ</span>
-                                                        <span className="text-gray-300">•</span>
-                                                        <span className="text-gray-500 font-medium">{vacant} Vac</span>
-                                                    </>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${property.leaseStatus === 'Active' ? 'bg-green-50 text-green-700 border-green-100' :
-                                            property.leaseStatus === 'Ending' ? 'bg-yellow-50 text-yellow-700 border-yellow-100' :
-                                                'bg-gray-50 text-gray-700 border-gray-100'
-                                            }`}>
-                                            {property.leaseStatus === 'Active' && <CheckCircle size={10} className="mr-1" />}
-                                            {property.leaseStatus}
-                                        </span>
-                                    </td>
-                                </tr>
-                            )
-                        })}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    );
-};
-
 const PropertiesPage: React.FC = () => {
-    const [searchTerm, setSearchTerm] = useState('');
-    const [cityFilter, setCityFilter] = useState<string | string[]>('All');
-    const [statusFilter, setStatusFilter] = useState<string | string[]>('All');
+    const [propertiesPeriod, setPropertiesPeriod] = useState<string>('12');
+    const [occupancyPeriod, setOccupancyPeriod] = useState<string>('12');
 
-    // Stats
-    const totalProperties = mockProperties.length;
-    const totalPMs = mockPMs.length;
-    const occupiedCount = mockProperties.filter(p => p.status === 'Occupied').length;
-    const vacantCount = mockProperties.filter(p => p.status === 'Vacant').length;
-
-    // Filter Logic
-    const getFilteredData = () => {
-        // First filter properties
-        const filteredProps = mockProperties.filter(p => {
-            const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                p.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                mockPMs.find(pm => pm.id === p.pmId)?.name.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesCity = cityFilter === 'All' || (Array.isArray(cityFilter) ? cityFilter.includes(p.location) : p.location === cityFilter);
-            // Assuming statusFilter maps to 'status' (Occupancy)
-            const matchesStatus = statusFilter === 'All' || (Array.isArray(statusFilter) ? statusFilter.includes(p.status) : p.status === statusFilter);
-
-            return matchesSearch && matchesCity && matchesStatus;
-        });
-
-        return filteredProps;
+    // Filter data based on period selection
+    const getFilteredData = (data: any[], period: string) => {
+        const monthsToShow = parseInt(period);
+        return data.slice(-monthsToShow);
     };
 
-    const filteredProperties = getFilteredData();
+    const filteredPropertiesData = getFilteredData(monthlyPropertiesData, propertiesPeriod);
+    const filteredOccupancyData = getFilteredData(monthlyOccupancyData, occupancyPeriod);
 
-    // Grouping
-    const groupedData = mockPMs.map(pm => ({
-        pm,
-        properties: filteredProperties.filter(p => p.pmId === pm.id)
-    })).filter(group => group.properties.length > 0); // Only show PMs with matching properties
+    // Stats from latest data
+    const latestData = monthlyPropertiesData[monthlyPropertiesData.length - 1];
+    const previousData = monthlyPropertiesData[monthlyPropertiesData.length - 2];
+    const latestOccupancy = monthlyOccupancyData[monthlyOccupancyData.length - 1];
 
-    // Filter Options
-    const cityOptions = ['All', ...Array.from(new Set(mockProperties.map(p => p.location)))];
-    const statusOptions = ['All', 'Occupied', 'Vacant', 'Maintenance'];
+    const totalProperties = latestData.properties;
+    const totalUnits = latestData.units;
+    const occupiedUnits = latestOccupancy.occupied;
+    const vacantUnits = latestOccupancy.vacant;
+    const occupancyRate = Math.round((occupiedUnits / (occupiedUnits + vacantUnits)) * 100);
+
+    const propertyGrowth = (((latestData.properties - previousData.properties) / previousData.properties) * 100).toFixed(1);
+    const unitGrowth = (((latestData.units - previousData.units) / previousData.units) * 100).toFixed(1);
+
+    // Time Period Options
+    const timePeriodOptions = [
+        { value: '3', label: 'Last 3 Months' },
+        { value: '6', label: 'Last 6 Months' },
+        { value: '12', label: 'This Year' },
+    ];
+
+    const totalLeases = leaseStatusData.reduce((acc, curr) => acc + curr.count, 0);
 
     return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-gray-900">Properties</h1>
-                    <p className="text-gray-500 text-sm mt-1">Manage properties grouped by property managers.</p>
-                </div>
+            <div className="flex flex-col gap-2">
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">Properties Analytics</h1>
+                <p className="text-gray-500 text-sm">Overview of property portfolio performance and trends.</p>
             </div>
 
-            {/* Stats Bar */}
-            {/* Stats Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard
+            {/* KPI Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                <AnalyticsCard
                     title="Total Properties"
-                    value={totalProperties}
+                    value={totalProperties.toString()}
+                    change={`+${propertyGrowth}%`}
+                    isPositive={true}
                     icon={<Building2 size={20} />}
-                    colorClass="bg-blue-500"
+                    colorClass="bg-indigo-500"
                 />
-                <StatCard
-                    title="Property Managers"
-                    value={totalPMs}
-                    icon={<Briefcase size={20} />}
+                <AnalyticsCard
+                    title="Total Units"
+                    value={totalUnits.toString()}
+                    change={`+${unitGrowth}%`}
+                    isPositive={true}
+                    icon={<Home size={20} />}
                     colorClass="bg-purple-500"
                 />
-                <StatCard
+                <AnalyticsCard
                     title="Occupied Units"
-                    value={occupiedCount}
+                    value={occupiedUnits.toString()}
+                    change={`${occupancyRate}% rate`}
+                    isPositive={true}
                     icon={<CheckCircle size={20} />}
-                    colorClass="bg-green-500"
+                    colorClass="bg-emerald-500"
                 />
-                <StatCard
-                    title="Vacant Units"
-                    value={vacantCount}
-                    icon={<Home size={20} />}
-                    colorClass="bg-orange-500"
-                />
-            </div>
-
-            {/* Filters */}
-            <div>
-                <ServiceFilters
-                    onSearch={setSearchTerm}
-
-                    categoryLabel="City"
-                    currentCategory={cityFilter}
-                    onCategoryChange={setCityFilter}
-                    categoryOptions={cityOptions}
-
-                    statusLabel="Occupancy"
-                    currentStatus={statusFilter}
-                    onStatusChange={setStatusFilter}
-                    statusOptions={statusOptions}
-
-                // Could add Lease Status as another filter if needed
+                <AnalyticsCard
+                    title="Property Managers"
+                    value="12"
+                    change="+2 this month"
+                    isPositive={true}
+                    icon={<Briefcase size={20} />}
+                    colorClass="bg-blue-500"
                 />
             </div>
 
-            {/* PM Groups */}
-            <div className="space-y-6">
-                {groupedData.length > 0 ? (
-                    groupedData.map(group => (
-                        <PropertyManagerGroup
-                            key={group.pm.id}
-                            pm={group.pm}
-                            properties={group.properties}
+            {/* Charts Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                {/* Properties Growth Chart */}
+                <div className="bg-white p-4 md:p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col">
+                    <div className="mb-4 md:mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                        <div>
+                            <h3 className="text-base md:text-lg font-bold text-gray-900">Properties Growth</h3>
+                            <p className="text-xs md:text-sm text-gray-500">Monthly property acquisition trend</p>
+                        </div>
+                        <CustomDropdown
+                            value={propertiesPeriod}
+                            onChange={setPropertiesPeriod}
+                            options={timePeriodOptions}
+                            buttonClassName="w-full sm:w-auto min-w-[140px] py-2 text-sm"
+                            className="w-full sm:w-auto"
                         />
-                    ))
-                ) : (
-                    <div className="bg-white p-12 rounded-xl border border-gray-100 text-center">
-                        <Building2 size={48} className="text-gray-200 mx-auto mb-4" />
-                        <h3 className="text-lg font-bold text-gray-900">No properties found</h3>
-                        <p className="text-gray-500">Try adjusting your filters or search terms.</p>
                     </div>
-                )}
+                    <div className="flex-1 min-h-[250px] md:min-h-[300px] w-full">
+                        <ChartContainer config={propertiesGrowthConfig} className="h-full w-full">
+                            <AreaChart
+                                accessibilityLayer
+                                data={filteredPropertiesData}
+                                margin={{ left: 12, right: 12, top: 12, bottom: 12 }}
+                            >
+                                <CartesianGrid vertical={false} />
+                                <XAxis
+                                    dataKey="month"
+                                    tickLine={false}
+                                    axisLine={false}
+                                    tickMargin={8}
+                                    tickFormatter={(value) => value.slice(0, 3)}
+                                />
+                                <ChartTooltip cursor={false} content={<ChartTooltipContent className="bg-white" />} />
+                                <Area
+                                    dataKey="properties"
+                                    type="natural"
+                                    fill="#6366F1"
+                                    fillOpacity={0.4}
+                                    stroke="#6366F1"
+                                    strokeWidth={2}
+                                />
+                            </AreaChart>
+                        </ChartContainer>
+                    </div>
+                </div>
+
+                {/* Occupancy Trend Chart */}
+                <div className="bg-white p-4 md:p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col">
+                    <div className="mb-4 md:mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                        <div>
+                            <h3 className="text-base md:text-lg font-bold text-gray-900">Occupancy Trend</h3>
+                            <p className="text-xs md:text-sm text-gray-500">Monthly occupied vs vacant units</p>
+                        </div>
+                        <CustomDropdown
+                            value={occupancyPeriod}
+                            onChange={setOccupancyPeriod}
+                            options={timePeriodOptions}
+                            buttonClassName="w-full sm:w-auto min-w-[140px] py-2 text-sm"
+                            className="w-full sm:w-auto"
+                        />
+                    </div>
+                    <div className="flex-1 min-h-[250px] md:min-h-[300px] w-full">
+                        <ChartContainer config={occupancyConfig} className="h-full w-full">
+                            <BarChart accessibilityLayer data={filteredOccupancyData}>
+                                <CartesianGrid vertical={false} />
+                                <XAxis
+                                    dataKey="month"
+                                    tickLine={false}
+                                    tickMargin={10}
+                                    axisLine={false}
+                                    tickFormatter={(value) => value.slice(0, 3)}
+                                />
+                                <ChartTooltip cursor={false} content={<ChartTooltipContent className="bg-white" />} />
+                                <Bar dataKey="occupied" fill="#10B981" radius={[4, 4, 0, 0]} stackId="a" />
+                                <Bar dataKey="vacant" fill="#EF4444" radius={[4, 4, 0, 0]} stackId="a" />
+                            </BarChart>
+                        </ChartContainer>
+                    </div>
+                </div>
+
+                {/* Lease Status Chart */}
+                <div className="bg-white p-4 md:p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between">
+                    <div className="mb-4 md:mb-6">
+                        <h3 className="text-base md:text-lg font-bold text-gray-900">Lease Status Distribution</h3>
+                        <p className="text-xs md:text-sm text-gray-500">Current status of all property leases</p>
+                    </div>
+
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-8 h-full">
+                        <div className="w-full md:w-1/3 space-y-3">
+                            {leaseStatusData.map((item) => (
+                                <div key={item.status} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border border-gray-100">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.fill }} />
+                                        <span className="text-sm font-medium text-gray-700">{item.status}</span>
+                                    </div>
+                                    <span className="text-lg font-bold text-gray-900">{item.count}</span>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="w-full md:w-2/3 h-[250px]">
+                            <ChartContainer config={leaseStatusConfig} className="mx-auto aspect-square max-h-[250px]">
+                                <PieChart>
+                                    <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel className="bg-white" />} />
+                                    <Pie
+                                        data={leaseStatusData}
+                                        dataKey="count"
+                                        nameKey="status"
+                                        innerRadius={60}
+                                        outerRadius={90}
+                                        strokeWidth={5}
+                                    >
+                                        <Label
+                                            content={({ viewBox }) => {
+                                                if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                                                    return (
+                                                        <text
+                                                            x={viewBox.cx}
+                                                            y={viewBox.cy}
+                                                            textAnchor="middle"
+                                                            dominantBaseline="middle"
+                                                        >
+                                                            <tspan
+                                                                x={viewBox.cx}
+                                                                y={viewBox.cy}
+                                                                className="fill-foreground text-3xl font-bold"
+                                                            >
+                                                                {totalLeases}
+                                                            </tspan>
+                                                            <tspan
+                                                                x={viewBox.cx}
+                                                                y={(viewBox.cy || 0) + 20}
+                                                                className="fill-muted-foreground text-sm"
+                                                            >
+                                                                Total
+                                                            </tspan>
+                                                        </text>
+                                                    )
+                                                }
+                                            }}
+                                        />
+                                        {leaseStatusData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                                        ))}
+                                    </Pie>
+                                </PieChart>
+                            </ChartContainer>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Property Type Distribution */}
+                <div className="bg-white p-4 md:p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between">
+                    <div className="mb-4 md:mb-6">
+                        <h3 className="text-base md:text-lg font-bold text-gray-900">Property Types</h3>
+                        <p className="text-xs md:text-sm text-gray-500">Distribution by property category</p>
+                    </div>
+
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-8 h-full">
+                        <div className="w-full md:w-1/3 space-y-3">
+                            {propertyTypeData.map((item) => (
+                                <div key={item.type} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border border-gray-100">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.fill }} />
+                                        <span className="text-sm font-medium text-gray-700">{item.type}</span>
+                                    </div>
+                                    <span className="text-lg font-bold text-gray-900">{item.count}</span>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="w-full md:w-2/3 h-[250px]">
+                            <ChartContainer config={propertyTypeConfig} className="mx-auto aspect-square max-h-[250px]">
+                                <PieChart>
+                                    <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel className="bg-white" />} />
+                                    <Pie
+                                        data={propertyTypeData}
+                                        dataKey="count"
+                                        nameKey="type"
+                                        innerRadius={60}
+                                        outerRadius={90}
+                                        strokeWidth={5}
+                                    >
+                                        {propertyTypeData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                                        ))}
+                                    </Pie>
+                                </PieChart>
+                            </ChartContainer>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     );

@@ -11,9 +11,10 @@ interface UserHeaderProps {
         joinedDate: string;
         avatar?: string;
     };
+    hideProfileActions?: boolean;
 }
 
-const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
+const UserHeader: React.FC<UserHeaderProps> = ({ user, hideProfileActions = false }) => {
     const getRoleBadgeColor = (role: string) => {
         switch (role) {
             case 'Tenant': return 'bg-blue-50 text-blue-700 border-blue-100';
@@ -68,14 +69,18 @@ const UserHeader: React.FC<UserHeaderProps> = ({ user }) => {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                    <button className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
-                        <Pencil size={16} />
-                        Edit Profile
-                    </button>
-                    <button className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
-                        <Lock size={16} />
-                        Reset Password
-                    </button>
+                    {!hideProfileActions && (
+                        <>
+                            <button className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
+                                <Pencil size={16} />
+                                Edit Profile
+                            </button>
+                            <button className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
+                                <Lock size={16} />
+                                Reset Password
+                            </button>
+                        </>
+                    )}
                     {user.status !== 'Blocked' ? (
                         <button className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium">
                             <Ban size={16} />

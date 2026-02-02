@@ -17,7 +17,10 @@ import {
     DollarSign,
     Activity,
     TrendingUp,
-    TrendingDown
+    TrendingDown,
+    Building2,
+    Wrench,
+    Wallet
 } from 'lucide-react';
 import CustomDropdown from '../../../Dashboard/components/CustomDropdown';
 
@@ -185,12 +188,12 @@ const AdminDashboard: React.FC = () => {
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex flex-col gap-2">
-                <h1 className="text-3xl font-bold tracking-tight text-gray-900">Dashboard Overview</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">Dashboard Overview</h1>
                 <p className="text-gray-500 text-sm">Welcome back, Admin. Here's your daily digest.</p>
             </div>
 
             {/* Analytics Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                 <AnalyticsCard
                     title="Monthly Active Users"
                     value="3,240"
@@ -225,25 +228,61 @@ const AdminDashboard: React.FC = () => {
                 />
             </div>
 
+            {/* Daily Activity KPI Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                <AnalyticsCard
+                    title="Daily Active PMs"
+                    value="45"
+                    change="+8.2%"
+                    isPositive={true}
+                    icon={<Building2 size={20} />}
+                    colorClass="bg-purple-500"
+                />
+                <AnalyticsCard
+                    title="Daily Active Tenants"
+                    value="312"
+                    change="+15.3%"
+                    isPositive={true}
+                    icon={<Users size={20} />}
+                    colorClass="bg-cyan-500"
+                />
+                <AnalyticsCard
+                    title="Daily Active Service Pros"
+                    value="28"
+                    change="+4.7%"
+                    isPositive={true}
+                    icon={<Wrench size={20} />}
+                    colorClass="bg-amber-500"
+                />
+                <AnalyticsCard
+                    title="Daily Transactions"
+                    value="$18,450"
+                    change="+22.1%"
+                    isPositive={true}
+                    icon={<Wallet size={20} />}
+                    colorClass="bg-teal-500"
+                />
+            </div>
+
             {/* Charts Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
                 {/* User Growth Chart */}
-                <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col">
-                    <div className="mb-6 flex justify-between items-start">
+                <div className="bg-white p-4 md:p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col">
+                    <div className="mb-4 md:mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
                         <div>
-                            <h3 className="text-lg font-bold text-gray-900">User Growth</h3>
-                            <p className="text-sm text-gray-500">Monthly user acquisition trend</p>
+                            <h3 className="text-base md:text-lg font-bold text-gray-900">User Growth</h3>
+                            <p className="text-xs md:text-sm text-gray-500">Monthly user acquisition trend</p>
                         </div>
                         <CustomDropdown
                             value={userGrowthPeriod}
                             onChange={setUserGrowthPeriod}
                             options={timePeriodOptions}
-                            buttonClassName="w-auto min-w-[140px] py-2 text-sm"
-                            className="w-auto"
+                            buttonClassName="w-full sm:w-auto min-w-[140px] py-2 text-sm"
+                            className="w-full sm:w-auto"
                         />
                     </div>
-                    <div className="flex-1 min-h-[300px] w-full">
+                    <div className="flex-1 min-h-[250px] md:min-h-[300px] w-full">
                         <ChartContainer config={userGrowthConfig} className="h-full w-full">
                             <AreaChart
                                 accessibilityLayer
@@ -277,13 +316,13 @@ const AdminDashboard: React.FC = () => {
                 </div>
 
                 {/* Revenue Chart */}
-                <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col">
-                    <div className="mb-6 flex justify-between items-start">
+                <div className="bg-white p-4 md:p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col">
+                    <div className="mb-4 md:mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
                         <div>
-                            <h3 className="text-lg font-bold text-gray-900">Revenue Analytics</h3>
-                            <p className="text-sm text-gray-500">Monthly revenue breakdown</p>
+                            <h3 className="text-base md:text-lg font-bold text-gray-900">Revenue Analytics</h3>
+                            <p className="text-xs md:text-sm text-gray-500">Monthly revenue breakdown</p>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
                             <div className="text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
                                 Total: ${totalRevenue.toLocaleString()}
                             </div>
@@ -291,12 +330,12 @@ const AdminDashboard: React.FC = () => {
                                 value={revenuePeriod}
                                 onChange={setRevenuePeriod}
                                 options={timePeriodOptions}
-                                buttonClassName="w-auto min-w-[140px] py-2 text-sm"
-                                className="w-auto"
+                                buttonClassName="w-full sm:w-auto min-w-[140px] py-2 text-sm"
+                                className="w-full sm:w-auto"
                             />
                         </div>
                     </div>
-                    <div className="flex-1 min-h-[300px] w-full">
+                    <div className="flex-1 min-h-[250px] md:min-h-[300px] w-full">
                         <ChartContainer config={revenueConfig} className="h-full w-full">
                             <BarChart accessibilityLayer data={filteredRevenueData}>
                                 <CartesianGrid vertical={false} />
@@ -318,10 +357,10 @@ const AdminDashboard: React.FC = () => {
                 </div>
 
                 {/* Lease Status Chart */}
-                <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between">
-                    <div className="mb-6">
-                        <h3 className="text-lg font-bold text-gray-900">Lease Status</h3>
-                        <p className="text-sm text-gray-500">Distribution of active and inactive leases</p>
+                <div className="bg-white p-4 md:p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between">
+                    <div className="mb-4 md:mb-6">
+                        <h3 className="text-base md:text-lg font-bold text-gray-900">Lease Status</h3>
+                        <p className="text-xs md:text-sm text-gray-500">Distribution of active and inactive leases</p>
                     </div>
 
                     <div className="flex flex-col md:flex-row items-center justify-between gap-8 h-full">
@@ -360,10 +399,10 @@ const AdminDashboard: React.FC = () => {
                 </div>
 
                 {/* Occupancy Rate Chart */}
-                <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between">
-                    <div className="mb-6">
-                        <h3 className="text-lg font-bold text-gray-900">Occupancy Rate</h3>
-                        <p className="text-sm text-gray-500">Percentage of total units currently occupied</p>
+                <div className="bg-white p-4 md:p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between">
+                    <div className="mb-4 md:mb-6">
+                        <h3 className="text-base md:text-lg font-bold text-gray-900">Occupancy Rate</h3>
+                        <p className="text-xs md:text-sm text-gray-500">Percentage of total units currently occupied</p>
                     </div>
 
                     <div className="flex flex-col md:flex-row items-center justify-between gap-8 h-full">

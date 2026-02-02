@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, FileText, DollarSign, Clock } from 'lucide-react';
+import { Home, DollarSign, Wrench } from 'lucide-react';
 
 const TenantProfile: React.FC = () => {
     // Mock Data
@@ -11,14 +11,37 @@ const TenantProfile: React.FC = () => {
         rent: 1200
     };
 
-    const payments = [
-        { id: 1, date: "2023-11-01", amount: 1200, status: "Paid", method: "Credit Card" },
-        { id: 2, date: "2023-10-01", amount: 1200, status: "Paid", method: "Auto-Pay" },
-        { id: 3, date: "2023-09-01", amount: 1200, status: "Paid", method: "Bank Transfer" },
-    ];
+    const tenantStats = {
+        totalPayments: 14400,
+        activeMaintenanceRequests: 2
+    };
 
     return (
         <div className="space-y-6">
+            {/* KPI Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                            <DollarSign size={20} />
+                        </div>
+                        <p className="text-gray-500 text-sm font-medium">Total Payments Made</p>
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900">${tenantStats.totalPayments.toLocaleString()}</h3>
+                    <p className="text-xs text-gray-400 mt-1">Lifetime payments</p>
+                </div>
+                <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 bg-orange-50 text-orange-600 rounded-lg">
+                            <Wrench size={20} />
+                        </div>
+                        <p className="text-gray-500 text-sm font-medium">Active Maintenance Requests</p>
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900">{tenantStats.activeMaintenanceRequests}</h3>
+                    <p className="text-xs text-gray-400 mt-1">Pending requests</p>
+                </div>
+            </div>
+
             {/* Current Lease */}
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
                 <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
@@ -42,60 +65,6 @@ const TenantProfile: React.FC = () => {
                         <p className="text-sm text-gray-500 mb-1">Monthly Rent</p>
                         <p className="font-bold text-green-600">${leaseInfo.rent}/mo</p>
                     </div>
-                </div>
-                <div className="mt-6 flex gap-3">
-                    <button className="flex items-center gap-2 text-sm text-blue-600 font-medium hover:underline">
-                        <FileText size={16} />
-                        View Lease Agreement
-                    </button>
-                </div>
-            </div>
-
-            {/* Recent Payments */}
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                        <DollarSign size={20} className="text-gray-400" />
-                        Payment History
-                    </h3>
-                    <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">View All</button>
-                </div>
-                <table className="w-full text-left">
-                    <thead className="bg-gray-50 text-gray-500 text-xs uppercase font-semibold">
-                        <tr>
-                            <th className="px-6 py-3">Date</th>
-                            <th className="px-6 py-3">Amount</th>
-                            <th className="px-6 py-3">Method</th>
-                            <th className="px-6 py-3">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                        {payments.map(payment => (
-                            <tr key={payment.id} className="hover:bg-gray-50/50">
-                                <td className="px-6 py-4 text-sm text-gray-900">{payment.date}</td>
-                                <td className="px-6 py-4 text-sm font-medium text-gray-900">${payment.amount}</td>
-                                <td className="px-6 py-4 text-sm text-gray-500">{payment.method}</td>
-                                <td className="px-6 py-4">
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-50 text-green-700 border border-green-100">
-                                        {payment.status}
-                                    </span>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-
-            {/* Maintenance Requests (Placeholder) */}
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                        <Clock size={20} className="text-gray-400" />
-                        Active Maintenance Requests
-                    </h3>
-                </div>
-                <div className="p-4 bg-gray-50 rounded-lg text-center text-gray-500 text-sm">
-                    No active maintenance requests.
                 </div>
             </div>
         </div>

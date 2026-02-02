@@ -2,44 +2,135 @@ import React, { useState } from 'react';
 import {
     FileText,
     CheckCircle,
-    XCircle,
     Clock,
-    Eye,
-    Pencil,
-    Trash2
+    TrendingUp,
+    TrendingDown,
+    Calendar
 } from 'lucide-react';
-import ServiceFilters from '../../../ServiceDashboard/components/ServiceFilters';
-import type { DateRange } from 'react-day-picker';
-import { isWithinInterval, startOfDay, endOfDay, differenceInDays, parseISO } from 'date-fns';
+import {
+    AreaChart,
+    Area,
+    XAxis,
+    CartesianGrid,
+    BarChart,
+    Bar,
+    PieChart,
+    Pie,
+    Cell,
+    Label
+} from 'recharts';
+import {
+    ChartContainer,
+    ChartTooltip,
+    ChartTooltipContent,
+    type ChartConfig
+} from "@/components/ui/chart";
+import CustomDropdown from '../../../Dashboard/components/CustomDropdown';
 
 // --- Mock Data ---
 
-interface Lease {
-    id: string;
-    tenantName: string;
-    propertyName: string;
-    pmName: string;
-    startDate: string;
-    endDate: string;
-    status: 'Active' | 'Ended' | 'Terminated';
-}
-
-const mockLeases: Lease[] = [
-    { id: '1', tenantName: 'Alice Johnson', propertyName: 'Sunset Apartments', pmName: 'Sarah Jenkins', startDate: '2023-01-01', endDate: '2024-01-01', status: 'Active' },
-    { id: '2', tenantName: 'Mark Evans', propertyName: 'Downtown Lofts', pmName: 'John Doe', startDate: '2023-06-15', endDate: '2024-06-15', status: 'Active' },
-    { id: '3', tenantName: 'Susan Lee', propertyName: 'Ocean View Villa', pmName: 'Sarah Jenkins', startDate: '2022-05-01', endDate: '2023-05-01', status: 'Ended' },
-    { id: '4', tenantName: 'David Chen', propertyName: 'Urban Heights', pmName: 'Mike Ross', startDate: '2023-11-01', endDate: '2024-11-01', status: 'Active' },
-    { id: '5', tenantName: 'Emily Wilson', propertyName: 'Green Valley', pmName: 'John Doe', startDate: '2023-02-01', endDate: '2023-08-01', status: 'Terminated' },
-    { id: '6', tenantName: 'Tom Brown', propertyName: 'Lakeside Condo', pmName: 'Mike Ross', startDate: '2023-03-01', endDate: '2024-03-01', status: 'Active' }, // Expiring soon relative to a hypothetic date, let's just make one clearly expiring soon based on current date if we want dynamic testing, but static is fine for layout.
+const monthlyLeasesData = [
+    { month: 'Jan', new: 12, renewed: 8, ended: 3 },
+    { month: 'Feb', new: 15, renewed: 10, ended: 4 },
+    { month: 'Mar', new: 18, renewed: 12, ended: 5 },
+    { month: 'Apr', new: 14, renewed: 9, ended: 6 },
+    { month: 'May', new: 20, renewed: 15, ended: 4 },
+    { month: 'Jun', new: 22, renewed: 14, ended: 7 },
+    { month: 'Jul', new: 25, renewed: 18, ended: 5 },
+    { month: 'Aug', new: 28, renewed: 20, ended: 8 },
+    { month: 'Sep', new: 24, renewed: 16, ended: 6 },
+    { month: 'Oct', new: 30, renewed: 22, ended: 9 },
+    { month: 'Nov', new: 26, renewed: 19, ended: 7 },
+    { month: 'Dec', new: 32, renewed: 24, ended: 10 },
 ];
+
+const leaseValueData = [
+    { month: 'Jan', value: 45000 },
+    { month: 'Feb', value: 52000 },
+    { month: 'Mar', value: 58000 },
+    { month: 'Apr', value: 54000 },
+    { month: 'May', value: 65000 },
+    { month: 'Jun', value: 72000 },
+    { month: 'Jul', value: 78000 },
+    { month: 'Aug', value: 85000 },
+    { month: 'Sep', value: 80000 },
+    { month: 'Oct', value: 92000 },
+    { month: 'Nov', value: 88000 },
+    { month: 'Dec', value: 98000 },
+];
+
+const leaseStatusData = [
+    { status: 'Active', count: 156, fill: "#10B981" },
+    { status: 'Expiring Soon', count: 24, fill: "#F59E0B" },
+    { status: 'Ended', count: 45, fill: "#6B7280" },
+    { status: 'Terminated', count: 12, fill: "#EF4444" },
+];
+
+const leaseDurationData = [
+    { duration: '6 months', count: 35, fill: "#6366F1" },
+    { duration: '12 months', count: 120, fill: "#8B5CF6" },
+    { duration: '18 months', count: 45, fill: "#EC4899" },
+    { duration: '24+ months', count: 37, fill: "#14B8A6" },
+];
+
+// --- Chart Configs ---
+
+const leasesActivityConfig = {
+    new: {
+        label: "New Leases",
+        color: "#10B981",
+    },
+    renewed: {
+        label: "Renewed",
+        color: "#6366F1",
+    },
+    ended: {
+        label: "Ended",
+        color: "#EF4444",
+    },
+} satisfies ChartConfig;
+
+const leaseValueConfig = {
+    value: {
+        label: "Lease Value",
+        color: "#8B5CF6",
+    },
+} satisfies ChartConfig;
+
+const leaseStatusConfig = {
+    count: { label: "Leases" },
+    active: { label: "Active", color: "#10B981" },
+    expiring: { label: "Expiring Soon", color: "#F59E0B" },
+    ended: { label: "Ended", color: "#6B7280" },
+    terminated: { label: "Terminated", color: "#EF4444" },
+} satisfies ChartConfig;
+
+const leaseDurationConfig = {
+    count: { label: "Leases" },
+} satisfies ChartConfig;
 
 // --- Components ---
 
-const StatCard = ({ title, value, icon, colorClass }: { title: string, value: string | number, icon: React.ReactNode, colorClass: string }) => (
-    <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-start justify-between">
+interface AnalyticsCardProps {
+    title: string;
+    value: string;
+    change?: string;
+    isPositive?: boolean;
+    icon: React.ReactNode;
+    colorClass: string;
+}
+
+const AnalyticsCard: React.FC<AnalyticsCardProps> = ({ title, value, change, isPositive, icon, colorClass }) => (
+    <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-start justify-between transition-all hover:shadow-md">
         <div>
             <p className="text-gray-500 text-sm font-medium mb-1">{title}</p>
-            <h3 className="text-2xl font-bold text-gray-900">{value}</h3>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">{value}</h3>
+            {change && (
+                <div className={`flex items-center text-xs font-semibold ${isPositive ? 'text-green-600' : 'text-red-500'}`}>
+                    {isPositive ? <TrendingUp size={14} className="mr-1" /> : <TrendingDown size={14} className="mr-1" />}
+                    <span>{change} vs last month</span>
+                </div>
+            )}
         </div>
         <div className={`p-3 rounded-lg ${colorClass} text-white shadow-sm`}>
             {icon}
@@ -48,200 +139,292 @@ const StatCard = ({ title, value, icon, colorClass }: { title: string, value: st
 );
 
 const LeasesPage: React.FC = () => {
-    const [searchTerm, setSearchTerm] = useState('');
-    const [pmFilter, setPmFilter] = useState<string | string[]>('All');
-    const [statusFilter, setStatusFilter] = useState<string | string[]>('All');
-    const [dateRange, setDateRange] = useState<DateRange | undefined>();
+    const [activityPeriod, setActivityPeriod] = useState<string>('12');
+    const [valuePeriod, setValuePeriod] = useState<string>('12');
 
-    // Helper for filter matching
-    const matchesFilter = (filterValue: string | string[], itemValue: string) => {
-        if (filterValue === 'All') return true;
-        if (Array.isArray(filterValue)) {
-            return filterValue.includes('All') || filterValue.length === 0 || filterValue.includes(itemValue);
-        }
-        return filterValue === itemValue;
+    // Filter data based on period selection
+    const getFilteredData = (data: any[], period: string) => {
+        const monthsToShow = parseInt(period);
+        return data.slice(-monthsToShow);
     };
 
-    const filteredLeases = mockLeases.filter(lease => {
-        const matchesSearch = lease.tenantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            lease.propertyName.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesPM = matchesFilter(pmFilter, lease.pmName);
-        const matchesStatus = matchesFilter(statusFilter, lease.status);
+    const filteredActivityData = getFilteredData(monthlyLeasesData, activityPeriod);
+    const filteredValueData = getFilteredData(leaseValueData, valuePeriod);
 
-        let matchesDate = true;
-        if (dateRange?.from && dateRange?.to) {
-            const leaseStart = parseISO(lease.startDate);
-            matchesDate = isWithinInterval(leaseStart, {
-                start: startOfDay(dateRange.from),
-                end: endOfDay(dateRange.to)
-            });
-        }
+    // Stats from latest data
+    const totalLeases = leaseStatusData.reduce((acc, curr) => acc + curr.count, 0);
+    const activeLeases = leaseStatusData.find(s => s.status === 'Active')?.count || 0;
+    const expiringSoon = leaseStatusData.find(s => s.status === 'Expiring Soon')?.count || 0;
 
-        return matchesSearch && matchesPM && matchesStatus && matchesDate;
-    });
+    const latestValue = leaseValueData[leaseValueData.length - 1].value;
+    const previousValue = leaseValueData[leaseValueData.length - 2].value;
+    const valueGrowth = (((latestValue - previousValue) / previousValue) * 100).toFixed(1);
 
-    // Stats Calculation
-    const totalLeases = mockLeases.length;
-    const activeLeases = mockLeases.filter(l => l.status === 'Active').length;
-    const endedLeases = mockLeases.filter(l => ['Ended', 'Terminated'].includes(l.status)).length;
-
-    // Calculate expiring soon (next 30 days)
-    // For demo purposes, let's assume "Today" is 2023-12-15 to make some expire, or better yet, check against a fixed near-future date relative to the mock data.
-    // Actually, let's just use current date. Since mock data is 2024, most are active. 
-    // Let's purposefully verify against real time.
-    const today = new Date();
-    const expiringSoon = mockLeases.filter(l => {
-        if (l.status !== 'Active') return false;
-        const endDate = parseISO(l.endDate);
-        const daysUntilEnd = differenceInDays(endDate, today);
-        return daysUntilEnd >= 0 && daysUntilEnd <= 30;
-    }).length;
-
-    // Filter Options
-    const pmOptions = ['All', ...Array.from(new Set(mockLeases.map(l => l.pmName)))];
-    const statusOptions = ['All', 'Active', 'Ended', 'Terminated'];
+    // Time Period Options
+    const timePeriodOptions = [
+        { value: '3', label: 'Last 3 Months' },
+        { value: '6', label: 'Last 6 Months' },
+        { value: '12', label: 'This Year' },
+    ];
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-gray-900">Leases</h1>
-                    <p className="text-gray-500 text-sm mt-1">Track rental agreements and expiration dates.</p>
-                </div>
+            <div className="flex flex-col gap-2">
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">Leases Analytics</h1>
+                <p className="text-gray-500 text-sm">Track rental agreements, renewals, and lease performance.</p>
             </div>
 
-            {/* Stats Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard
+            {/* KPI Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                <AnalyticsCard
                     title="Total Leases"
-                    value={totalLeases}
+                    value={totalLeases.toString()}
+                    change="+8.5%"
+                    isPositive={true}
                     icon={<FileText size={20} />}
                     colorClass="bg-blue-500"
                 />
-                <StatCard
+                <AnalyticsCard
                     title="Active Leases"
-                    value={activeLeases}
+                    value={activeLeases.toString()}
+                    change="+12.3%"
+                    isPositive={true}
                     icon={<CheckCircle size={20} />}
-                    colorClass="bg-green-500"
+                    colorClass="bg-emerald-500"
                 />
-                <StatCard
-                    title="Ended / Terminated"
-                    value={endedLeases}
-                    icon={<XCircle size={20} />}
-                    colorClass="bg-gray-500"
-                />
-                <StatCard
-                    title="Expiring Soon (30 days)"
-                    value={expiringSoon}
+                <AnalyticsCard
+                    title="Expiring Soon"
+                    value={expiringSoon.toString()}
+                    change="Next 30 days"
+                    isPositive={false}
                     icon={<Clock size={20} />}
-                    colorClass="bg-orange-500"
+                    colorClass="bg-amber-500"
+                />
+                <AnalyticsCard
+                    title="Monthly Value"
+                    value={`$${latestValue.toLocaleString()}`}
+                    change={`+${valueGrowth}%`}
+                    isPositive={true}
+                    icon={<Calendar size={20} />}
+                    colorClass="bg-purple-500"
                 />
             </div>
 
-            {/* Filters */}
-            <div>
-                <ServiceFilters
-                    onSearch={setSearchTerm}
+            {/* Charts Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-                    categoryLabel="Property Manager"
-                    currentCategory={pmFilter}
-                    onCategoryChange={setPmFilter}
-                    categoryOptions={pmOptions}
-
-                    statusLabel="Status"
-                    currentStatus={statusFilter}
-                    onStatusChange={setStatusFilter}
-                    statusOptions={statusOptions}
-
-                    dateRange={dateRange}
-                    onDateRangeChange={setDateRange}
-                />
-            </div>
-
-            {/* Leases Table */}
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead>
-                            <tr className="bg-[#7BD747] border-b border-[#7BD747]">
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Tenant Name</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Property</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">PM Name</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Start Date</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">End Date</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-4 text-center text-xs font-semibold text-white uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {filteredLeases.length > 0 ? (
-                                filteredLeases.map((lease) => (
-                                    <tr key={lease.id} className="hover:bg-gray-50/50 transition-colors group">
-                                        <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
-                                            {lease.tenantName}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                                            {lease.propertyName}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                                            {lease.pmName}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-gray-500 text-sm">
-                                            {new Date(lease.startDate).toLocaleDateString()}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-gray-500 text-sm">
-                                            {new Date(lease.endDate).toLocaleDateString()}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${lease.status === 'Active' ? 'bg-green-50 text-green-700 border-green-100' :
-                                                lease.status === 'Ended' ? 'bg-gray-50 text-gray-700 border-gray-100' :
-                                                    'bg-red-50 text-red-700 border-red-100'
-                                                }`}>
-                                                {lease.status === 'Active' && <CheckCircle size={10} className="mr-1" />}
-                                                {lease.status !== 'Active' && <XCircle size={10} className="mr-1" />}
-                                                {lease.status}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-center">
-                                            <div className="flex items-center justify-center gap-2">
-                                                <button className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="View Lease">
-                                                    <Eye size={18} />
-                                                </button>
-                                                <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Edit Lease">
-                                                    <Pencil size={18} />
-                                                </button>
-                                                <button className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete Lease">
-                                                    <Trash2 size={18} />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
-                            ) : (
-                                <tr>
-                                    <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
-                                        <div className="flex flex-col items-center justify-center">
-                                            <FileText size={48} className="text-gray-200 mb-4" />
-                                            <p className="text-lg font-medium text-gray-900">No leases found</p>
-                                            <p className="text-sm text-gray-500 max-w-sm mt-1">
-                                                Try adjusting your filters to find what you're looking for.
-                                            </p>
-                                        </div>
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-                {/* Pagination (Simplified) */}
-                <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
-                    <p className="text-sm text-gray-500">Showing <span className="font-medium">{filteredLeases.length}</span> results</p>
-                    <div className="flex items-center gap-2">
-                        <button className="px-3 py-1 text-sm border border-gray-200 rounded-md text-gray-500 hover:bg-gray-50 disabled:opacity-50" disabled>Previous</button>
-                        <button className="px-3 py-1 text-sm border border-gray-200 rounded-md text-gray-500 hover:bg-gray-50 disabled:opacity-50" disabled>Next</button>
+                {/* Lease Activity Chart */}
+                <div className="bg-white p-4 md:p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col">
+                    <div className="mb-4 md:mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                        <div>
+                            <h3 className="text-base md:text-lg font-bold text-gray-900">Lease Activity</h3>
+                            <p className="text-xs md:text-sm text-gray-500">New, renewed, and ended leases by month</p>
+                        </div>
+                        <CustomDropdown
+                            value={activityPeriod}
+                            onChange={setActivityPeriod}
+                            options={timePeriodOptions}
+                            buttonClassName="w-full sm:w-auto min-w-[140px] py-2 text-sm"
+                            className="w-full sm:w-auto"
+                        />
+                    </div>
+                    <div className="flex-1 min-h-[250px] md:min-h-[300px] w-full">
+                        <ChartContainer config={leasesActivityConfig} className="h-full w-full">
+                            <BarChart accessibilityLayer data={filteredActivityData}>
+                                <CartesianGrid vertical={false} />
+                                <XAxis
+                                    dataKey="month"
+                                    tickLine={false}
+                                    tickMargin={10}
+                                    axisLine={false}
+                                    tickFormatter={(value) => value.slice(0, 3)}
+                                />
+                                <ChartTooltip cursor={false} content={<ChartTooltipContent className="bg-white" />} />
+                                <Bar dataKey="new" fill="#10B981" radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="renewed" fill="#6366F1" radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="ended" fill="#EF4444" radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                        </ChartContainer>
+                    </div>
+                    <div className="flex items-center justify-center gap-6 mt-4 text-sm">
+                        <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                            <span className="text-gray-600">New</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full bg-indigo-500" />
+                            <span className="text-gray-600">Renewed</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full bg-red-500" />
+                            <span className="text-gray-600">Ended</span>
+                        </div>
                     </div>
                 </div>
+
+                {/* Lease Value Trend */}
+                <div className="bg-white p-4 md:p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col">
+                    <div className="mb-4 md:mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                        <div>
+                            <h3 className="text-base md:text-lg font-bold text-gray-900">Monthly Lease Value</h3>
+                            <p className="text-xs md:text-sm text-gray-500">Total rental income from active leases</p>
+                        </div>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+                            <div className="text-xs font-medium text-purple-700 bg-purple-50 px-2.5 py-1 rounded-full border border-purple-100">
+                                Total: ${filteredValueData.reduce((acc, curr) => acc + curr.value, 0).toLocaleString()}
+                            </div>
+                            <CustomDropdown
+                                value={valuePeriod}
+                                onChange={setValuePeriod}
+                                options={timePeriodOptions}
+                                buttonClassName="w-full sm:w-auto min-w-[140px] py-2 text-sm"
+                                className="w-full sm:w-auto"
+                            />
+                        </div>
+                    </div>
+                    <div className="flex-1 min-h-[250px] md:min-h-[300px] w-full">
+                        <ChartContainer config={leaseValueConfig} className="h-full w-full">
+                            <AreaChart
+                                accessibilityLayer
+                                data={filteredValueData}
+                                margin={{ left: 12, right: 12, top: 12, bottom: 12 }}
+                            >
+                                <CartesianGrid vertical={false} />
+                                <XAxis
+                                    dataKey="month"
+                                    tickLine={false}
+                                    axisLine={false}
+                                    tickMargin={8}
+                                    tickFormatter={(value) => value.slice(0, 3)}
+                                />
+                                <ChartTooltip cursor={false} content={<ChartTooltipContent className="bg-white" />} />
+                                <Area
+                                    dataKey="value"
+                                    type="natural"
+                                    fill="#8B5CF6"
+                                    fillOpacity={0.4}
+                                    stroke="#8B5CF6"
+                                    strokeWidth={2}
+                                />
+                            </AreaChart>
+                        </ChartContainer>
+                    </div>
+                </div>
+
+                {/* Lease Status Distribution */}
+                <div className="bg-white p-4 md:p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between">
+                    <div className="mb-4 md:mb-6">
+                        <h3 className="text-base md:text-lg font-bold text-gray-900">Lease Status</h3>
+                        <p className="text-xs md:text-sm text-gray-500">Current distribution of all leases</p>
+                    </div>
+
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-8 h-full">
+                        <div className="w-full md:w-1/3 space-y-3">
+                            {leaseStatusData.map((item) => (
+                                <div key={item.status} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border border-gray-100">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.fill }} />
+                                        <span className="text-sm font-medium text-gray-700">{item.status}</span>
+                                    </div>
+                                    <span className="text-lg font-bold text-gray-900">{item.count}</span>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="w-full md:w-2/3 h-[250px]">
+                            <ChartContainer config={leaseStatusConfig} className="mx-auto aspect-square max-h-[250px]">
+                                <PieChart>
+                                    <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel className="bg-white" />} />
+                                    <Pie
+                                        data={leaseStatusData}
+                                        dataKey="count"
+                                        nameKey="status"
+                                        innerRadius={60}
+                                        outerRadius={90}
+                                        strokeWidth={5}
+                                    >
+                                        <Label
+                                            content={({ viewBox }) => {
+                                                if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                                                    return (
+                                                        <text
+                                                            x={viewBox.cx}
+                                                            y={viewBox.cy}
+                                                            textAnchor="middle"
+                                                            dominantBaseline="middle"
+                                                        >
+                                                            <tspan
+                                                                x={viewBox.cx}
+                                                                y={viewBox.cy}
+                                                                className="fill-foreground text-3xl font-bold"
+                                                            >
+                                                                {totalLeases}
+                                                            </tspan>
+                                                            <tspan
+                                                                x={viewBox.cx}
+                                                                y={(viewBox.cy || 0) + 20}
+                                                                className="fill-muted-foreground text-sm"
+                                                            >
+                                                                Total
+                                                            </tspan>
+                                                        </text>
+                                                    )
+                                                }
+                                            }}
+                                        />
+                                        {leaseStatusData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                                        ))}
+                                    </Pie>
+                                </PieChart>
+                            </ChartContainer>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Lease Duration Distribution */}
+                <div className="bg-white p-4 md:p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col justify-between">
+                    <div className="mb-4 md:mb-6">
+                        <h3 className="text-base md:text-lg font-bold text-gray-900">Lease Duration</h3>
+                        <p className="text-xs md:text-sm text-gray-500">Distribution by lease term length</p>
+                    </div>
+
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-8 h-full">
+                        <div className="w-full md:w-1/3 space-y-3">
+                            {leaseDurationData.map((item) => (
+                                <div key={item.duration} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border border-gray-100">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.fill }} />
+                                        <span className="text-sm font-medium text-gray-700">{item.duration}</span>
+                                    </div>
+                                    <span className="text-lg font-bold text-gray-900">{item.count}</span>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="w-full md:w-2/3 h-[250px]">
+                            <ChartContainer config={leaseDurationConfig} className="mx-auto aspect-square max-h-[250px]">
+                                <PieChart>
+                                    <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel className="bg-white" />} />
+                                    <Pie
+                                        data={leaseDurationData}
+                                        dataKey="count"
+                                        nameKey="duration"
+                                        innerRadius={60}
+                                        outerRadius={90}
+                                        strokeWidth={5}
+                                    >
+                                        {leaseDurationData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                                        ))}
+                                    </Pie>
+                                </PieChart>
+                            </ChartContainer>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     );

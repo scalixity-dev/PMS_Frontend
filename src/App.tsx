@@ -23,6 +23,7 @@ import UserDetailPage from './pages/Admin/pages/Users/UserDetails/UserDetailPage
 import PropertiesPage from './pages/Admin/pages/Properties/PropertiesPage';
 import LeasesPage from './pages/Admin/pages/Leases/LeasesPage';
 import PaymentsPage from './pages/Admin/pages/Payments/PaymentsPage';
+import SettingsPage from './pages/Admin/pages/Settings/SettingsPage';
 import ServiceDashboardSignup from './pages/ServiceDashboard/pages/auth/Signup';
 import ForgotPassword from './pages/ServiceDashboard/pages/auth/ForgotPassword';
 import Welcome from './pages/ServiceDashboard/pages/onboarding/Welcome';
@@ -230,6 +231,7 @@ const App: React.FC = () => {
               <Route path="/admin/properties" element={<PropertiesPage />} />
               <Route path="/admin/leases" element={<LeasesPage />} />
               <Route path="/admin/payments" element={<PaymentsPage />} />
+              <Route path="/admin/settings" element={<SettingsPage />} />
             </Route>
 
             <Route path="/service-dashboard/login" element={<ServiceDashboardLogin />} />

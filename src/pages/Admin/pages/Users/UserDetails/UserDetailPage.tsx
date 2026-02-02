@@ -57,7 +57,7 @@ const UserDetailPage: React.FC = () => {
             </button>
 
             {/* Common Header */}
-            <UserHeader user={user} />
+            <UserHeader user={user} hideProfileActions={true} />
 
             {/* Role Specific Content */}
             {renderRoleContent()}

@@ -2,11 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     Search,
-    Bell,
-    MessageSquare,
     LogOut,
     X,
-    MoreHorizontal,
 } from "lucide-react";
 import logo from "../../../assets/images/logo.png";
 
@@ -16,7 +13,6 @@ interface NavbarProps {
 
 export default function AdminNavbar({ setSidebarOpen }: NavbarProps) {
     const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
 
     // Hardcoded User Data as placeholder for Admin Dashboard
@@ -25,7 +21,6 @@ export default function AdminNavbar({ setSidebarOpen }: NavbarProps) {
     const [userRole] = useState<string>("Super Admin");
 
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const mobileMenuRef = useRef<HTMLDivElement>(null);
     const mobileSearchRef = useRef<HTMLInputElement>(null);
     const navigate = useNavigate();
 
@@ -34,9 +29,6 @@ export default function AdminNavbar({ setSidebarOpen }: NavbarProps) {
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
                 setIsProfileDropdownOpen(false);
-            }
-            if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
-                setIsMobileMenuOpen(false);
             }
         };
 
@@ -131,67 +123,6 @@ export default function AdminNavbar({ setSidebarOpen }: NavbarProps) {
                         >
                             <Search size={20} />
                         </button>
-
-                        {/* Mobile Actions Dropdown Trigger */}
-                        <div className="relative md:hidden" ref={mobileMenuRef}>
-                            <button
-                                className="p-2 text-white rounded-full hover:bg-white/10"
-                                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                            >
-                                <MoreHorizontal size={24} />
-                            </button>
-
-                            {isMobileMenuOpen && (
-                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.2)] border border-gray-100 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150 origin-top-right">
-                                    <div className="p-2 flex flex-col gap-1">
-                                        <button
-                                            onClick={() => {
-                                                setIsMobileMenuOpen(false);
-                                                // navigate('/admin/messages');
-                                            }}
-                                            className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                                        >
-                                            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                                                <MessageSquare size={16} className="text-gray-700" />
-                                            </div>
-                                            <span className="font-medium">Chat</span>
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                setIsMobileMenuOpen(false);
-                                                // navigate('/admin/notifications');
-                                            }}
-                                            className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                                        >
-                                            <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                                                <Bell size={16} className="text-gray-700" />
-                                            </div>
-                                            <span className="font-medium">Notifications</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Desktop Actions (Hidden on Mobile) */}
-                        <div className="hidden md:flex items-center gap-1 md:gap-2">
-                            <button
-                                aria-label="Chat"
-                                className="w-8 h-8 rounded-full bg-white flex items-center justify-center hover:bg-gray-100 shadow-[0_3px_0_rgba(93,111,108)]"
-                            // onClick={() => navigate('/admin/messages')}
-                            >
-                                <MessageSquare size={18} className="text-gray-800" />
-                            </button>
-
-                            {/* Notification (Bell) Icon */}
-                            <button
-                                aria-label="Notifications"
-                                className="w-8 h-8 md:mr-6 rounded-full bg-white flex items-center justify-center hover:bg-gray-100 shadow-[0_3px_0_rgba(93,111,108)]"
-                            // onClick={() => navigate('/admin/notifications')}
-                            >
-                                <Bell size={18} className="text-gray-800" />
-                            </button>
-                        </div>
 
                         {/* User Profile */}
                         <div className="relative" ref={dropdownRef}>
