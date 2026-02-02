@@ -478,7 +478,7 @@ const RecurringDetail: React.FC = () => {
                                             </span>
                                             {hasLease ? (
                                                 <button
-                                                    onClick={() => navigate(`/dashboard/portfolio/leases/${leaseId}`)}
+                                                    onClick={() => navigate(`/dashboard/leasing/leases/${leaseId}`)}
                                                     className="text-xs text-[#3A6D6C] font-medium w-2/3 pl-2 truncate hover:underline cursor-pointer text-left"
                                                     title={`Click to view ${leaseDisplay}`}
                                                 >
