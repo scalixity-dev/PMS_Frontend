@@ -6,9 +6,10 @@ import Avatar from './Avatar';
 interface MessageBubbleProps {
     message: Message;
     activeChatName: string;
+    isPending?: boolean;
 }
 
-const MessageBubble: React.FC<MessageBubbleProps> = ({ message, activeChatName }) => {
+const MessageBubble: React.FC<MessageBubbleProps> = ({ message, activeChatName, isPending }) => {
     const isMe = message.senderId === CURRENT_USER_ID;
 
     return (
@@ -32,10 +33,14 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, activeChatName }
             {isMe && (
                 <>
                     <div className="flex items-center gap-2">
-                        <div className="flex">
-                            <Check className="w-3.5 h-3.5 text-[#41C1A6]" />
-                            <Check className="w-3.5 h-3.5 text-[#41C1A6] -ml-2.5" />
-                        </div>
+                        {isPending ? (
+                            <span className="text-[10px] text-amber-600 font-medium">Sending...</span>
+                        ) : (
+                            <div className="flex">
+                                <Check className="w-3.5 h-3.5 text-[#41C1A6]" />
+                                <Check className="w-3.5 h-3.5 text-[#41C1A6] -ml-2.5" />
+                            </div>
+                        )}
                         <span className="text-[10px] text-gray-400 font-medium">{message.time}</span>
                         <span className="text-[11px] font-bold text-gray-900">{message.senderName}</span>
                     </div>

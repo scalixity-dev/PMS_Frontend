@@ -6,11 +6,14 @@ interface MessageBubbleProps {
     isOwnMessage: boolean;
     contactName: string;
     contactAvatar: string;
+    isPending?: boolean;
 }
 
-const MessageBubble = ({ message, isOwnMessage, contactName, contactAvatar }: MessageBubbleProps) => {
+const MessageBubble = ({ message, isOwnMessage, contactName, contactAvatar, isPending }: MessageBubbleProps) => {
     const formatTime = (timestamp: string) => {
+        if (!timestamp) return '';
         const date = new Date(timestamp);
+        if (Number.isNaN(date.getTime())) return '';
         return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     };
 
@@ -77,8 +80,8 @@ const MessageBubble = ({ message, isOwnMessage, contactName, contactAvatar }: Me
                 </div>
 
                 <span className={`text-xs text-gray-500 mt-1 px-1`}>
-                    {formatTime(message.timestamp)}
-                    {isOwnMessage && message.isRead && (
+                    {isPending ? 'Sending...' : formatTime(message.timestamp)}
+                    {isOwnMessage && !isPending && message.isRead && (
                         <span className="ml-1 text-[var(--dashboard-accent)]">• Read</span>
                     )}
                 </span>

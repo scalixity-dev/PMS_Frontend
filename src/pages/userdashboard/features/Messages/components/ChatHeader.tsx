@@ -5,9 +5,10 @@ interface ChatHeaderProps {
     chat: Chat;
     onBack?: () => void;
     showBackButton?: boolean;
+    pendingCount?: number;
 }
 
-const ChatHeader = ({ chat, onBack, showBackButton = false }: ChatHeaderProps) => {
+const ChatHeader = ({ chat, onBack, showBackButton = false, pendingCount = 0 }: ChatHeaderProps) => {
     return (
         <div className="bg-white border-b border-gray-200 px-3 md:px-4 py-2 md:py-2.5">
             <div className="flex items-center justify-between">
@@ -43,6 +44,11 @@ const ChatHeader = ({ chat, onBack, showBackButton = false }: ChatHeaderProps) =
 
                 {/* Right Section - Actions */}
                 <div className="flex items-center gap-1 md:gap-2">
+                    {pendingCount > 0 && (
+                        <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full font-medium">
+                            {pendingCount} pending
+                        </span>
+                    )}
                     <button className="p-1.5 md:p-2.5 hover:bg-gray-100 rounded-lg transition-colors group" title="Print Conversation">
                         <Printer className="w-4 h-4 md:w-5 md:h-5 text-gray-600 group-hover:text-[var(--dashboard-accent)]" />
                     </button>

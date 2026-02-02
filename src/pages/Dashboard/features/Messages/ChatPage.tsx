@@ -1,130 +1,247 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { type Chat, type Message, type ChatCategory, CURRENT_USER_ID } from './types';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  useConversations,
+  useMessages,
+  useContacts,
+  useCreateConversation,
+  useMarkAsRead,
+  chatQueryKeys,
+} from '../../../../hooks/useChatQueries';
+import { useChatToken, useChatWebSocket } from '../../../../hooks/useChatWebSocket';
+import { useOfflineQueue } from '../../../../hooks/useOfflineQueue';
+import { useChatToastStore } from '../../../../store/chatToastStore';
+import { useGetCurrentUser } from '../../../../hooks/useAuthQueries';
+import type { Chat, Message, ChatCategory } from './types';
 import ChatSidebar from './components/ChatSidebar';
 import ChatHeader from './components/ChatHeader';
 import MessageList from './components/MessageList';
 import ChatInput from './components/ChatInput';
 
-const INITIAL_CHATS: Chat[] = [
-  {
-    id: '1',
-    name: 'Ayesha Noor',
-    role: 'Tenant',
-    category: 'Tenants',
-    status: 'Active Now',
-    avatar: 'https://api.dicebear.com/7.x/lorelei/svg?seed=Ayesha',
-    lastMessage: 'Thanks for offering to help...',
-    time: '04:24 AM',
-    isPinned: true,
-    messages: [
-      { id: 'm1', senderId: 'user1', senderName: 'Ayesha', text: 'Lorem cjsdcj dcsd ss j jsd ss fsbf s', time: '12:42 PM' },
-      { id: 'm2', senderId: CURRENT_USER_ID, senderName: 'Me', text: "That's wonderful! Thank you so much. nasnscnsnkc ka c kscscjsbcbcbc bbc jjssccj k czscr.", time: '01:12 PM', reactions: ['1 👍'] },
-      { id: 'm3', senderId: 'user1', senderName: 'Ayesha', text: 'Of course! I havendkcnscc cssdsdcsddcn bcjzcc jbj jcjcv jzx cv n', time: '01:42 PM' },
-      { id: 'm4', senderId: CURRENT_USER_ID, senderName: 'Me', text: 'How about tomorrow around 2 PM? I can provide the shopping list and payment for groceries.', time: '01:57 PM' },
-      { id: 'm5', senderId: 'user1', senderName: 'Ayesha', text: 'Perfect! That works for me. Should we arrange payment for the help as well?', time: '02:12 PM' },
-      { id: 'm6', senderId: CURRENT_USER_ID, senderName: 'Me', text: 'Thanks for offering to help! When would be a good time?', time: '02:27 PM' },
-    ]
-  },
-  {
-    id: '2',
-    name: 'Sam Curren',
-    role: 'Owner',
-    category: 'Service Providers',
-    status: 'Seen 2m ago',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sam',
-    lastMessage: 'Perfect! The payment...',
-    time: '04:24 AM',
-    messages: [
-      { id: 'm7', senderId: 'user2', senderName: 'Sam', text: "Hey, did you check the latest transaction?", time: '09:00 AM' },
-      { id: 'm8', senderId: CURRENT_USER_ID, senderName: 'Me', text: "Not yet, let me check and get back to you.", time: '09:05 AM' },
-      { id: 'm9', senderId: 'user2', senderName: 'Sam', text: "Perfect! The payment is already initiated.", time: '09:10 AM' },
-    ]
-  },
-  {
-    id: '3',
-    name: 'Sana Javed',
-    role: 'Agent',
-    category: 'Leads',
-    status: 'Away',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sana',
-    lastMessage: 'I can start tomorrow...',
-    time: '04:24 AM',
-    isPinned: false,
-    messages: [
-      { id: 'm10', senderId: 'user3', senderName: 'Sana', text: "I've reviewed the lease agreement.", time: '10:00 AM' },
-      { id: 'm11', senderId: 'user3', senderName: 'Sana', text: "I can start tomorrow morning with the site visit.", time: '10:02 AM' },
-      { id: 'm12', senderId: CURRENT_USER_ID, senderName: 'Me', text: "That sounds great, let's meet at 10 AM.", time: '10:15 AM' },
-    ]
-  },
-  {
-    id: '4',
-    name: 'Mike Plumber',
-    role: 'Plumber',
-    category: 'Maintenance Requests',
-    status: 'Offline',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Mike',
-    lastMessage: 'I will be there in 30 mins.',
-    time: '02:15 PM',
-    isPinned: false,
-    messages: [
-      { id: 'm13', senderId: 'user4', senderName: 'Mike', text: 'On my way to check the leak.', time: '02:00 PM' },
-      { id: 'm14', senderId: CURRENT_USER_ID, senderName: 'Me', text: 'Great, thanks.', time: '02:05 PM' },
-    ]
-  },
-  {
-    id: '5',
-    name: 'John Electrician',
-    role: 'Electrician',
-    category: 'Service Providers',
-    status: 'Online',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John',
-    lastMessage: 'Is the power back on?',
-    time: '01:00 PM',
-    messages: [
-      { id: 'm15', senderId: 'user5', senderName: 'John', text: 'Checked the wiring, everything looks good.', time: '12:50 PM' },
-    ]
+function formatTime(iso: string | undefined | null): string {
+  if (!iso) return '';
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    const now = new Date();
+    const diff = now.getTime() - d.getTime();
+    if (diff < 86400000) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (diff < 172800000) return 'Yesterday';
+    return d.toLocaleDateString();
+  } catch {
+    return '';
   }
-];
+}
+
+function avatarUrl(name: string): string {
+  return `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}&backgroundColor=3D7475`;
+}
+
+function toChatCategory(contactType: string): ChatCategory {
+  if (contactType === 'TENANT') return 'Tenants';
+  if (contactType === 'SERVICE_PROVIDER') return 'Service Providers';
+  if (contactType === 'OTHER') return 'Leads';
+  return 'Leads';
+}
 
 interface DashboardContext {
   sidebarCollapsed: boolean;
 }
 
 const ChatPage: React.FC = () => {
-  const [chats, setChats] = useState<Chat[]>(INITIAL_CHATS);
-  const [activeChatId, setActiveChatId] = useState('1');
+  const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<ChatCategory>('Tenants');
-  const [showMobileChat, setShowMobileChat] = useState(false); // Mobile view routing state
+  const [showMobileChat, setShowMobileChat] = useState(false);
+  const [showNewChatModal, setShowNewChatModal] = useState(false);
+  const [pendingNewChat, setPendingNewChat] = useState<{
+    id: string;
+    name: string;
+    contact: { userId: string; fullName: string; email: string };
+  } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Safe context access
+  const qc = useQueryClient();
+  const { data: user } = useGetCurrentUser();
+  const currentUserId = user?.userId ?? '';
+
+  const { data: convData, isLoading: convLoading } = useConversations(!!currentUserId);
+  const { data: contacts } = useContacts(!!currentUserId);
+  const { data: token } = useChatToken(!!currentUserId);
+  const createConv = useCreateConversation();
+  const markRead = useMarkAsRead();
+
+  const conversations = convData ?? [];
+
+  const { data: messagesData } = useMessages(activeChatId, !!activeChatId);
+  const apiMessages = messagesData ?? [];
+
+  const onNewMessage = useCallback(
+    (data: unknown) => {
+      const m = data as { conversationId: string; sender?: { id: string } };
+      if (m.conversationId === activeChatId && m.sender?.id !== currentUserId) {
+        qc.invalidateQueries({ queryKey: chatQueryKeys.messages(activeChatId!) });
+        qc.invalidateQueries({ queryKey: chatQueryKeys.conversations() });
+      }
+    },
+    [activeChatId, currentUserId, qc]
+  );
+
+  const { sendMessage, isConnected } = useChatWebSocket(
+    token ?? null,
+    activeChatId,
+    currentUserId,
+    onNewMessage
+  );
+
+  const { trySend, pendingCount, pendingForConv } = useOfflineQueue(isConnected, sendMessage);
+
+  useEffect(() => {
+    if (activeChatId) markRead.mutate(activeChatId);
+  }, [activeChatId, markRead]);
+
+  const chats: Chat[] = useMemo(() => {
+    return conversations.map((c: { id: string; participants: { userId: string; displayName?: string; email?: string }[]; lastMessage?: { content: string; createdAt: string } | null; updatedAt: string }) => {
+      const other = c.participants.find((p: { userId: string }) => p.userId !== currentUserId);
+      const name = other?.displayName ?? other?.email ?? 'Unknown';
+      const contact = contacts?.find((ct: { userId: string; contactType: string }) => ct.userId === other?.userId);
+      const category = contact ? toChatCategory(contact.contactType) : 'Leads';
+      const lastMsg = c.lastMessage;
+      return {
+        id: c.id,
+        name,
+        role: contact?.contactType?.replace('_', ' ') ?? 'Contact',
+        category,
+        status: isConnected ? 'Active Now' : 'Offline',
+        avatar: avatarUrl(name),
+        lastMessage: lastMsg?.content ?? 'No messages yet',
+        time: lastMsg ? formatTime(lastMsg.createdAt) : '',
+        messages: [],
+        isPinned: false,
+      };
+    });
+  }, [conversations, contacts, currentUserId, isConnected]);
+
+  const messages: (Message & { isPending?: boolean })[] = useMemo(() => {
+    const api = apiMessages.map((m: { id: string; sender: { id: string; displayName: string }; content: string; createdAt: string }) => ({
+      id: m.id,
+      senderId: m.sender.id === currentUserId ? 'me' : m.sender.id,
+      senderName: m.sender.id === currentUserId ? 'Me' : m.sender.displayName,
+      text: m.content,
+      time: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isPending: false,
+    }));
+    const pending = (activeChatId ? pendingForConv(activeChatId) : []).map((q) => ({
+      id: q.id ?? `pending-${q.conversationId}-${q.content.slice(0, 10)}`,
+      senderId: 'me' as const,
+      senderName: 'Me',
+      text: q.content,
+      time: '',
+      isPending: true,
+    }));
+    return [...api, ...pending];
+  }, [apiMessages, currentUserId, activeChatId, pendingForConv]);
+
+  useEffect(() => {
+    if (pendingNewChat && conversations.some((c) => c.id === pendingNewChat.id)) {
+      setPendingNewChat(null);
+    }
+  }, [conversations, pendingNewChat]);
+
+  const activeChat: Chat | null = useMemo(() => {
+    if (pendingNewChat) {
+      return {
+        id: pendingNewChat.id,
+        name: pendingNewChat.name,
+        role: 'Contact',
+        category: 'Leads',
+        status: isConnected ? 'Active Now' : 'Offline',
+        avatar: avatarUrl(pendingNewChat.name),
+        lastMessage: 'No messages yet',
+        time: '',
+        messages,
+      };
+    }
+    const base = chats.find((c) => c.id === activeChatId);
+    if (!base) return null;
+    return { ...base, messages };
+  }, [chats, activeChatId, messages, pendingNewChat, isConnected]);
+
+  const filteredChats = useMemo(
+    () =>
+      chats.filter(
+        (c: Chat) =>
+          c.category === selectedCategory &&
+          (c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            c.lastMessage.toLowerCase().includes(searchQuery.toLowerCase()))
+      ),
+    [chats, searchQuery, selectedCategory]
+  );
+
+  const sortedChats = useMemo(
+    () =>
+      [...filteredChats].sort((a, b) => {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        return 0;
+      }),
+    [filteredChats]
+  );
+
   const context = useOutletContext<DashboardContext>();
   const sidebarCollapsed = context?.sidebarCollapsed ?? false;
   const sidebarOpen = !sidebarCollapsed;
 
-  const activeChat = useMemo(() =>
-    chats.find(c => c.id === activeChatId) || chats[0],
-    [chats, activeChatId]
+  const handleChatSelect = useCallback((id: string) => {
+    setActiveChatId(id);
+    setShowMobileChat(true);
+  }, []);
+
+  const handleBackToSidebar = useCallback(() => {
+    setShowMobileChat(false);
+  }, []);
+
+  const handleSendMessage = useCallback(
+    (text: string, file: File | null) => {
+      let finalText = text;
+      if (file) finalText = text ? `${text}\n📎 ${file.name}` : `📎 ${file.name}`;
+      if (!finalText.trim() || !activeChatId) return;
+      const sent = trySend(activeChatId, finalText);
+      if (sent) {
+        qc.invalidateQueries({ queryKey: chatQueryKeys.messages(activeChatId) });
+        qc.invalidateQueries({ queryKey: chatQueryKeys.conversations() });
+      } else {
+        useChatToastStore.getState().showInfo('Message saved. Will send when back online.');
+      }
+    },
+    [trySend, activeChatId, qc]
   );
 
-  const filteredChats = useMemo(() =>
-    chats.filter(chat =>
-      (chat.category === selectedCategory) &&
-      (chat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        chat.lastMessage.toLowerCase().includes(searchQuery.toLowerCase()))
-    ),
-    [chats, searchQuery, selectedCategory]
-  );
-
-  const sortedChats = useMemo(() =>
-    [...filteredChats].sort((a, b) => {
-      if (a.isPinned && !b.isPinned) return -1;
-      if (!a.isPinned && b.isPinned) return 1;
-      return 0;
-    }),
-    [filteredChats]
+  const handleStartNewChat = useCallback(
+    (contact: { userId: string; email: string; fullName: string }) => {
+      createConv.mutate(
+        {
+          participantUserId: contact.userId,
+          participantEmail: contact.email,
+          participantFullName: contact.fullName,
+        },
+        {
+          onSuccess: (conv: { id: string }) => {
+            setActiveChatId(conv.id);
+            setPendingNewChat({
+              id: conv.id,
+              name: contact.fullName,
+              contact,
+            });
+            setShowNewChatModal(false);
+            setShowMobileChat(true);
+            qc.invalidateQueries({ queryKey: chatQueryKeys.conversations() });
+          },
+        }
+      );
+    },
+    [createConv, qc]
   );
 
   const scrollToBottom = useCallback(() => {
@@ -132,133 +249,96 @@ const ChatPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (showMobileChat) {
-      scrollToBottom();
-    }
-  }, [activeChat.messages, scrollToBottom, showMobileChat]);
+    if (showMobileChat && activeChat) scrollToBottom();
+  }, [activeChat?.messages, scrollToBottom, showMobileChat]);
 
-  // Handle chat selection
-  const handleChatSelect = useCallback((id: string) => {
-    setActiveChatId(id);
-    setShowMobileChat(true); // Switch to chat view on mobile
-  }, []);
-
-  // Handle back to sidebar
-  const handleBackToSidebar = useCallback(() => {
-    setShowMobileChat(false);
-  }, []);
-
-  const handleSendMessage = useCallback((text: string, file: File | null) => {
-    let finalMessageText = text;
-    if (file) {
-      finalMessageText = text
-        ? `${text}\n📎 Attached file: ${file.name}`
-        : `📎 Attached file: ${file.name}`;
-
-      // Note: In a real production app, we would upload the file to a server here
-      // console.log('Uploading file:', file.name, 'Size:', file.size);
-    }
-
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      senderId: CURRENT_USER_ID,
-      senderName: 'Me',
-      text: finalMessageText,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
-
-    setChats(prevChats => prevChats.map(chat => {
-      if (chat.id === activeChatId) {
-        return {
-          ...chat,
-          messages: [...chat.messages, newMessage],
-          lastMessage: finalMessageText,
-          time: newMessage.time
-        };
-      }
-      return chat;
-    }));
-  }, [activeChatId]);
-
-  const handleDeleteChat = useCallback(() => {
-    if (window.confirm(`Are you sure you want to delete the chat with ${activeChat.name}?`)) {
-      setChats(prevChats => {
-        const remainingChats = prevChats.filter(chat => chat.id !== activeChatId);
-        if (remainingChats.length > 0) {
-          setActiveChatId(remainingChats[0].id);
-        } else {
-          // Handle case where all chats are deleted if needed
-        }
-        return remainingChats;
-      });
-      // On mobile, go back to list if current chat deleted
-      setShowMobileChat(false);
-    }
-  }, [activeChat.name, activeChatId]);
-
-  const handlePrint = useCallback(() => {
-    window.print();
-  }, []);
-
-  const togglePinChat = useCallback((e: React.SyntheticEvent, chatId: string) => {
-    e.stopPropagation();
-    setChats(prevChats => prevChats.map(chat =>
-      chat.id === chatId ? { ...chat, isPinned: !chat.isPinned } : chat
-    ));
-  }, []);
+  if (convLoading && conversations.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-full bg-white">
+        <div className="text-gray-500">Loading conversations...</div>
+      </div>
+    );
+  }
 
   return (
-    <div className={`mx-auto h-full bg-white flex overflow-hidden print:h-auto print:block transition-all duration-300 ${sidebarOpen ? 'max-w-7xl' : 'max-w-full'}`}>
-      <style dangerouslySetInnerHTML={{
-        __html: `
-        @media print {
-          aside, nav, header, .no-print { display: none !important; }
-          main { margin: 0 !important; padding: 0 !important; width: 100% !important; }
-          body { background: white !important; }
-        }
-      `}} />
-
-      {/* Sidebar - Hidden on mobile if chat is active */}
+    <div
+      className={`mx-auto h-full bg-white flex overflow-hidden transition-all duration-300 ${sidebarOpen ? 'max-w-7xl' : 'max-w-full'}`}
+    >
       <div className={`${showMobileChat ? 'hidden md:flex' : 'flex'} w-full md:w-auto flex-col h-full`}>
         <ChatSidebar
           chats={sortedChats}
-          activeChatId={activeChatId}
+          activeChatId={activeChatId ?? ''}
           onSelectChat={handleChatSelect}
-          onTogglePin={togglePinChat}
+          onTogglePin={() => {}}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           selectedCategory={selectedCategory}
           onSelectCategory={setSelectedCategory}
+          onNewChat={() => setShowNewChatModal(true)}
         />
       </div>
 
-      {/* Main Chat Area - Hidden on mobile if no chat active */}
       <div className={`flex-1 flex flex-col bg-white ${showMobileChat ? 'flex' : 'hidden md:flex'}`}>
         {activeChat ? (
           <>
             <ChatHeader
               activeChat={activeChat}
-              onPrint={handlePrint}
-              onDelete={handleDeleteChat}
+              onPrint={() => window.print()}
+              onDelete={() => setActiveChatId(null)}
               onBack={handleBackToSidebar}
+              pendingCount={pendingCount}
             />
-
-            <MessageList
-              activeChat={activeChat}
-              messagesEndRef={messagesEndRef}
-            />
-
+            <MessageList activeChat={activeChat} messagesEndRef={messagesEndRef} />
             <ChatInput onSendMessage={handleSendMessage} />
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center text-gray-400">
-            <div className="text-center">
-              <p className="text-lg font-medium">Select a conversation to start messaging</p>
-            </div>
+            <p className="text-lg font-medium">Select a conversation or start a new chat</p>
           </div>
         )}
       </div>
 
+      {showNewChatModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 max-h-[80vh] flex flex-col">
+            <div className="p-4 border-b flex justify-between items-center">
+              <h3 className="font-semibold text-gray-900">New conversation</h3>
+              <button
+                onClick={() => setShowNewChatModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ×
+              </button>
+            </div>
+            <div className="overflow-y-auto flex-1 p-4">
+              {contacts?.length === 0 ? (
+                <p className="text-gray-500 text-sm">No contacts with accounts yet.</p>
+              ) : (
+                <div className="space-y-1">
+                  {contacts?.map((c: { id: string; userId: string; email: string; fullName: string }) => (
+                    <button
+                      key={c.id}
+                      onClick={() => handleStartNewChat(c)}
+                      disabled={createConv.isPending}
+                      className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-[#E6F3EF] transition-colors text-left"
+                    >
+                      <div
+                        className="w-10 h-10 rounded-full bg-[var(--color-primary)]/20 flex items-center justify-center text-[var(--color-primary)] font-semibold"
+                      >
+                        {c.fullName?.charAt(0) ?? c.email?.charAt(0) ?? '?'}
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">{c.fullName}</p>
+                        <p className="text-xs text-gray-500">{c.email}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

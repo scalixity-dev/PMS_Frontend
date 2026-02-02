@@ -1,4 +1,4 @@
-import { MapPin, DollarSign, Home } from 'lucide-react';
+import { MapPin, Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface JobCardProps {
@@ -14,7 +14,7 @@ interface JobCardProps {
 
 const JobCard = ({
     id,
-    image,
+    image: _image,
     title,
     location,
     address,
