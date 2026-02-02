@@ -69,8 +69,7 @@ const AdminLogin: React.FC = () => {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (validateForm()) {
-            // TODO: Implement admin login logic
-            console.log('Admin Login data:', formData);
+            // TODO: Implement admin login logic with proper authentication
             // Navigate to Admin Dashboard (placeholder)
             navigate('/admin/dashboard');
         }

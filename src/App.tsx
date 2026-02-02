@@ -224,6 +224,9 @@ const App: React.FC = () => {
             <Route path="/admin/login" element={<AdminLogin />} />
 
             {/* Admin Dashboard Routes */}
+            {/* TODO: Wrap admin routes with AdminProtectedRoute that checks for admin role/permissions.
+                Currently left unprotected for development purposes.
+                Before production, implement authentication guard similar to ProtectedRoute but with admin role verification. */}
             <Route element={<AdminLayout />}>
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
               <Route path="/admin/users" element={<UsersPage />} />

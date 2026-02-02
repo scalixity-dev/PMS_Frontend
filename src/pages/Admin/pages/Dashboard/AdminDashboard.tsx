@@ -69,7 +69,7 @@ const leaseStatusData = [
     { status: 'Pending', count: 50, fill: "var(--color-pending)" },
 ];
 
-// ... (imports remain)
+
 
 const occupancyData = [
     { status: "Occupied", count: 85, fill: "#10B981" }, // Emerald 500
@@ -124,7 +124,7 @@ const occupancyConfig = {
     },
 } satisfies ChartConfig;
 
-// ... (inside component)
+
 
 
 
@@ -137,7 +137,7 @@ interface AnalyticsCardProps {
     change?: string;
     isPositive?: boolean;
     icon: React.ReactNode;
-    colorClass: string; // Tailwinc class for background
+    colorClass: string; // Tailwind class for background
 }
 
 const AnalyticsCard: React.FC<AnalyticsCardProps> = ({ title, value, change, isPositive, icon, colorClass }) => (

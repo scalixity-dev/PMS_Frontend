@@ -162,10 +162,15 @@ const PropertiesPage: React.FC = () => {
     const totalUnits = latestData.units;
     const occupiedUnits = latestOccupancy.occupied;
     const vacantUnits = latestOccupancy.vacant;
-    const occupancyRate = Math.round((occupiedUnits / (occupiedUnits + vacantUnits)) * 100);
+    const totalOccupancyUnits = occupiedUnits + vacantUnits;
+    const occupancyRate = totalOccupancyUnits > 0 ? Math.round((occupiedUnits / totalOccupancyUnits) * 100) : 0;
 
-    const propertyGrowth = (((latestData.properties - previousData.properties) / previousData.properties) * 100).toFixed(1);
-    const unitGrowth = (((latestData.units - previousData.units) / previousData.units) * 100).toFixed(1);
+    const propertyGrowth = previousData.properties > 0
+        ? (((latestData.properties - previousData.properties) / previousData.properties) * 100).toFixed(1)
+        : '0.0';
+    const unitGrowth = previousData.units > 0
+        ? (((latestData.units - previousData.units) / previousData.units) * 100).toFixed(1)
+        : '0.0';
 
     // Time Period Options
     const timePeriodOptions = [

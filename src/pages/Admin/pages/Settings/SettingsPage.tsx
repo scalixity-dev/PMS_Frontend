@@ -81,9 +81,11 @@ const mockAdminUsers: AdminUser[] = [
 
 const generatePassword = (): string => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
+    const randomValues = new Uint32Array(12);
+    globalThis.crypto.getRandomValues(randomValues);
     let password = '';
     for (let i = 0; i < 12; i++) {
-        password += chars.charAt(Math.floor(Math.random() * chars.length));
+        password += chars.charAt(randomValues[i] % chars.length);
     }
     return password;
 };
@@ -128,10 +130,16 @@ const CreateAdminModal = ({
         }
     };
 
-    const handleCopyPassword = () => {
-        navigator.clipboard.writeText(generatedPassword);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+    const handleCopyPassword = async () => {
+        try {
+            await navigator.clipboard.writeText(generatedPassword);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch (error) {
+            console.error('Failed to copy password to clipboard:', error);
+            // Fallback: Show user-friendly error indication
+            // The UI will simply not show the copied state if this fails
+        }
     };
 
     const regeneratePassword = () => {
@@ -424,10 +432,10 @@ const SettingsPage: React.FC = () => {
                                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                                     placeholder="Confirm new password"
                                                     className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#7BD747] focus:border-transparent outline-none transition-all pr-12 bg-white ${confirmPassword && newPassword !== confirmPassword
-                                                            ? 'border-red-300 bg-red-50/50'
-                                                            : confirmPassword && newPassword === confirmPassword
-                                                                ? 'border-green-300 bg-green-50/50'
-                                                                : 'border-gray-200'
+                                                        ? 'border-red-300 bg-red-50/50'
+                                                        : confirmPassword && newPassword === confirmPassword
+                                                            ? 'border-green-300 bg-green-50/50'
+                                                            : 'border-gray-200'
                                                         }`}
                                                 />
                                                 <button
@@ -500,10 +508,10 @@ const SettingsPage: React.FC = () => {
                                                 <div className="flex items-center justify-between mb-2">
                                                     <span className="text-xs font-medium text-gray-600">Password Strength</span>
                                                     <span className={`text-xs font-semibold ${newPassword.length >= 8 && /[A-Z]/.test(newPassword) && /[a-z]/.test(newPassword) && /[0-9]/.test(newPassword) && /[!@#$%^&*]/.test(newPassword)
-                                                            ? 'text-green-600'
-                                                            : newPassword.length >= 8 && ((/[A-Z]/.test(newPassword) && /[a-z]/.test(newPassword)) || /[0-9]/.test(newPassword))
-                                                                ? 'text-yellow-600'
-                                                                : 'text-red-500'
+                                                        ? 'text-green-600'
+                                                        : newPassword.length >= 8 && ((/[A-Z]/.test(newPassword) && /[a-z]/.test(newPassword)) || /[0-9]/.test(newPassword))
+                                                            ? 'text-yellow-600'
+                                                            : 'text-red-500'
                                                         }`}>
                                                         {newPassword.length >= 8 && /[A-Z]/.test(newPassword) && /[a-z]/.test(newPassword) && /[0-9]/.test(newPassword) && /[!@#$%^&*]/.test(newPassword)
                                                             ? 'Strong'
@@ -515,10 +523,10 @@ const SettingsPage: React.FC = () => {
                                                 <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                                                     <div
                                                         className={`h-full transition-all duration-300 rounded-full ${newPassword.length >= 8 && /[A-Z]/.test(newPassword) && /[a-z]/.test(newPassword) && /[0-9]/.test(newPassword) && /[!@#$%^&*]/.test(newPassword)
-                                                                ? 'bg-green-500 w-full'
-                                                                : newPassword.length >= 8 && ((/[A-Z]/.test(newPassword) && /[a-z]/.test(newPassword)) || /[0-9]/.test(newPassword))
-                                                                    ? 'bg-yellow-500 w-2/3'
-                                                                    : 'bg-red-400 w-1/3'
+                                                            ? 'bg-green-500 w-full'
+                                                            : newPassword.length >= 8 && ((/[A-Z]/.test(newPassword) && /[a-z]/.test(newPassword)) || /[0-9]/.test(newPassword))
+                                                                ? 'bg-yellow-500 w-2/3'
+                                                                : 'bg-red-400 w-1/3'
                                                             }`}
                                                     />
                                                 </div>

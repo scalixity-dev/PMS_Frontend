@@ -116,27 +116,40 @@ interface AnalyticsCardProps {
     value: string;
     change?: string;
     isPositive?: boolean;
+    changeVariant?: 'positive' | 'negative' | 'neutral';
     icon: React.ReactNode;
     colorClass: string;
 }
 
-const AnalyticsCard: React.FC<AnalyticsCardProps> = ({ title, value, change, isPositive, icon, colorClass }) => (
-    <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-start justify-between transition-all hover:shadow-md">
-        <div>
-            <p className="text-gray-500 text-sm font-medium mb-1">{title}</p>
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">{value}</h3>
-            {change && (
-                <div className={`flex items-center text-xs font-semibold ${isPositive ? 'text-green-600' : 'text-red-500'}`}>
-                    {isPositive ? <TrendingUp size={14} className="mr-1" /> : <TrendingDown size={14} className="mr-1" />}
-                    <span>{change} vs last month</span>
-                </div>
-            )}
+const AnalyticsCard: React.FC<AnalyticsCardProps> = ({ title, value, change, isPositive, changeVariant, icon, colorClass }) => {
+    // Determine variant: explicit changeVariant takes precedence, then fall back to isPositive
+    const variant = changeVariant ?? (isPositive ? 'positive' : 'negative');
+
+    const variantStyles = {
+        positive: 'text-green-600',
+        negative: 'text-red-500',
+        neutral: 'text-gray-500'
+    };
+
+    return (
+        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-start justify-between transition-all hover:shadow-md">
+            <div>
+                <p className="text-gray-500 text-sm font-medium mb-1">{title}</p>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">{value}</h3>
+                {change && (
+                    <div className={`flex items-center text-xs font-semibold ${variantStyles[variant]}`}>
+                        {variant === 'positive' && <TrendingUp size={14} className="mr-1" />}
+                        {variant === 'negative' && <TrendingDown size={14} className="mr-1" />}
+                        <span>{variant === 'neutral' ? change : `${change} vs last month`}</span>
+                    </div>
+                )}
+            </div>
+            <div className={`p-3 rounded-lg ${colorClass} text-white shadow-sm`}>
+                {icon}
+            </div>
         </div>
-        <div className={`p-3 rounded-lg ${colorClass} text-white shadow-sm`}>
-            {icon}
-        </div>
-    </div>
-);
+    );
+};
 
 const LeasesPage: React.FC = () => {
     const [activityPeriod, setActivityPeriod] = useState<string>('12');
@@ -158,7 +171,7 @@ const LeasesPage: React.FC = () => {
 
     const latestValue = leaseValueData[leaseValueData.length - 1].value;
     const previousValue = leaseValueData[leaseValueData.length - 2].value;
-    const valueGrowth = (((latestValue - previousValue) / previousValue) * 100).toFixed(1);
+    const valueGrowth = previousValue === 0 ? 'N/A' : (((latestValue - previousValue) / previousValue) * 100).toFixed(1);
 
     // Time Period Options
     const timePeriodOptions = [
@@ -197,7 +210,7 @@ const LeasesPage: React.FC = () => {
                     title="Expiring Soon"
                     value={expiringSoon.toString()}
                     change="Next 30 days"
-                    isPositive={false}
+                    changeVariant="neutral"
                     icon={<Clock size={20} />}
                     colorClass="bg-amber-500"
                 />

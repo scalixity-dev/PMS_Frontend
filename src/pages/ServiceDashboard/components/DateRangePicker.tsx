@@ -191,15 +191,6 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
                         .calendar-wrapper .rdp-nav_button:hover {
                             background-color: #F3F4F6;
                         }
-                        
-                        /* Mobile Responsive tweaks */
-                        const handleResize = () => {
-                            if (window.innerWidth < 768) {
-                                setNumberOfMonths(1);
-                            } else {
-                                setNumberOfMonths(2);
-                            }
-                        };
                     `}</style>
                     <div className="calendar-wrapper">
                         <Calendar
