@@ -118,16 +118,43 @@ const CreateAdminModal = ({
     const [email, setEmail] = useState('');
     const [generatedPassword, setGeneratedPassword] = useState(generatePassword());
     const [copied, setCopied] = useState(false);
+    // Track whether user has been created and is in confirmation state
+    const [showConfirmation, setShowConfirmation] = useState(false);
+    const [createdUserEmail, setCreatedUserEmail] = useState('');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (name && email) {
+            // Create the user but don't close the modal yet.
+            // Show confirmation state so admin can copy the password before closing.
+            // The password is passed to onCreateUser which should send it to the backend
+            // for secure hashing/storage.
             onCreateUser({ name, email, password: generatedPassword });
-            setName('');
-            setEmail('');
-            setGeneratedPassword(generatePassword());
-            onClose();
+            setCreatedUserEmail(email);
+            setShowConfirmation(true);
         }
+    };
+
+    const handleConfirmAndClose = () => {
+        // Admin has confirmed they've captured the password - now we can close
+        setName('');
+        setEmail('');
+        setCreatedUserEmail('');
+        setShowConfirmation(false);
+        setGeneratedPassword(generatePassword());
+        setCopied(false);
+        onClose();
+    };
+
+    const handleCancel = () => {
+        // Reset state on cancel
+        setName('');
+        setEmail('');
+        setCreatedUserEmail('');
+        setShowConfirmation(false);
+        setGeneratedPassword(generatePassword());
+        setCopied(false);
+        onClose();
     };
 
     const handleCopyPassword = async () => {
@@ -149,10 +176,57 @@ const CreateAdminModal = ({
 
     if (!isOpen) return null;
 
+    // Show confirmation screen after user is created
+    if (showConfirmation) {
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center">
+                <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+                <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 animate-in fade-in zoom-in-95 duration-200">
+                    <div className="text-center mb-6">
+                        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <CheckCircle size={32} className="text-green-600" />
+                        </div>
+                        <h2 className="text-xl font-bold text-gray-900">User Created Successfully</h2>
+                        <p className="text-sm text-gray-500 mt-2">Admin user <strong>{createdUserEmail}</strong> has been created.</p>
+                    </div>
+
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+                        <p className="text-sm text-amber-800 font-medium mb-2">⚠️ Important: Save this password</p>
+                        <p className="text-xs text-amber-700 mb-3">Make sure you've copied the password before closing. This is the only time it will be shown.</p>
+                        <div className="relative">
+                            <input
+                                type="text"
+                                value={generatedPassword}
+                                readOnly
+                                className="w-full px-4 py-2.5 pr-12 border border-amber-300 rounded-lg bg-white text-gray-700 font-mono text-sm"
+                            />
+                            <button
+                                type="button"
+                                onClick={handleCopyPassword}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-[#7BD747] transition-colors"
+                                title="Copy password"
+                            >
+                                {copied ? <CheckCircle size={18} className="text-green-500" /> : <Copy size={18} />}
+                            </button>
+                        </div>
+                        {copied && <p className="text-xs text-green-600 mt-2">✓ Password copied to clipboard</p>}
+                    </div>
+
+                    <button
+                        onClick={handleConfirmAndClose}
+                        className="w-full px-4 py-2.5 bg-[#7BD747] text-white rounded-lg hover:bg-[#6bc43a] transition-colors font-medium shadow-sm"
+                    >
+                        I've Saved the Password - Close
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
             {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={handleCancel} />
 
             {/* Modal */}
             <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 animate-in fade-in zoom-in-95 duration-200">
@@ -168,7 +242,7 @@ const CreateAdminModal = ({
                         </div>
                     </div>
                     <button
-                        onClick={onClose}
+                        onClick={handleCancel}
                         className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                     >
                         <X size={20} />
@@ -237,7 +311,7 @@ const CreateAdminModal = ({
                     <div className="flex items-center gap-3 pt-4">
                         <button
                             type="button"
-                            onClick={onClose}
+                            onClick={handleCancel}
                             className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
                         >
                             Cancel
@@ -558,8 +632,9 @@ const SettingsPage: React.FC = () => {
                                 <span className="text-sm text-gray-600">Trial Period:</span>
                                 <input
                                     type="number"
+                                    min="0"
                                     value={trialDays}
-                                    onChange={(e) => setTrialDays(parseInt(e.target.value) || 0)}
+                                    onChange={(e) => setTrialDays(Math.max(0, parseInt(e.target.value) || 0))}
                                     className="w-16 px-2 py-1 border border-gray-200 rounded text-center text-sm"
                                 />
                                 <span className="text-sm text-gray-500">days</span>
@@ -591,8 +666,9 @@ const SettingsPage: React.FC = () => {
                                             <label className="block text-xs text-gray-500 mb-1">Price ($/month)</label>
                                             <input
                                                 type="number"
+                                                min="0"
                                                 value={plan.price}
-                                                onChange={(e) => handlePlanUpdate(plan.id, 'price', parseInt(e.target.value) || 0)}
+                                                onChange={(e) => handlePlanUpdate(plan.id, 'price', Math.max(0, parseInt(e.target.value) || 0))}
                                                 className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
                                             />
                                         </div>

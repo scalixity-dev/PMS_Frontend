@@ -169,9 +169,30 @@ const LeasesPage: React.FC = () => {
     const activeLeases = leaseStatusData.find(s => s.status === 'Active')?.count || 0;
     const expiringSoon = leaseStatusData.find(s => s.status === 'Expiring Soon')?.count || 0;
 
-    const latestValue = leaseValueData[leaseValueData.length - 1].value;
-    const previousValue = leaseValueData[leaseValueData.length - 2].value;
-    const valueGrowth = previousValue === 0 ? 'N/A' : (((latestValue - previousValue) / previousValue) * 100).toFixed(1);
+    // Compute monthly value KPI with proper guards
+    let latestValue = 0;
+    let valueGrowth = 'N/A';
+    let valueIsPositive = false;
+
+    if (leaseValueData.length >= 2) {
+        latestValue = leaseValueData[leaseValueData.length - 1].value;
+        const previousValue = leaseValueData[leaseValueData.length - 2].value;
+        const delta = latestValue - previousValue;
+
+        if (previousValue === 0) {
+            valueGrowth = 'N/A';
+            valueIsPositive = false;
+        } else {
+            const percent = (delta / previousValue) * 100;
+            valueGrowth = percent.toFixed(1) + '%';
+            valueIsPositive = delta > 0;
+        }
+    } else if (leaseValueData.length === 1) {
+        latestValue = leaseValueData[0].value;
+    }
+
+    // Format change label: add '+' only when positive (negative sign is included in the number)
+    const valueChangeLabel = valueGrowth === 'N/A' ? 'N/A' : (valueIsPositive ? `+${valueGrowth}` : valueGrowth);
 
     // Time Period Options
     const timePeriodOptions = [
@@ -217,8 +238,8 @@ const LeasesPage: React.FC = () => {
                 <AnalyticsCard
                     title="Monthly Value"
                     value={`$${latestValue.toLocaleString()}`}
-                    change={`+${valueGrowth}%`}
-                    isPositive={true}
+                    change={valueChangeLabel}
+                    isPositive={valueIsPositive}
                     icon={<Calendar size={20} />}
                     colorClass="bg-purple-500"
                 />
