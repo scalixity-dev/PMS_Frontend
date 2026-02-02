@@ -376,7 +376,7 @@ const App: React.FC = () => {
                   </ProtectedRoute>
                 }
               />
-              <Route path="/dashboard/portfolio/leases/:id" element={<LeaseDetail />} />
+              <Route path="/dashboard/leasing/leases/:id" element={<LeaseDetail />} />
               <Route path="/dashboard/leasing/leases/:id/end-lease" element={<EndLease />} />
 
               <Route

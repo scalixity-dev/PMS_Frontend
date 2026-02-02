@@ -90,6 +90,37 @@ export interface BackendLease {
     dailyGracePeriod?: string | null;
     dailyFeeTime?: string | null;
   } | null;
+  documents?: Array<{
+    id: string;
+    leaseId: string;
+    fileUrl: string;
+    fileType: string;
+    documentCategory: string; // e.g. 'AGREEMENT', 'NOTICE', 'OTHER'
+    visibility: 'SHARED' | 'PRIVATE';
+    description?: string | null;
+    uploadedAt: string;
+  }>;
+  insurances?: Array<{
+    id: string;
+    leaseId: string;
+    companyName: string;
+    policyNumber?: string | null;
+    effectiveDate?: string | null;
+    expirationDate?: string | null;
+    price?: string | null;
+    emailNotification: boolean;
+    agentName?: string | null;
+    agentEmail?: string | null;
+    agentPhone?: string | null;
+    companyWebsite?: string | null;
+    details?: string | null;
+  }>;
+  utilities?: Array<{
+    id: string;
+    leaseId: string;
+    utility: string;
+    payer: 'Landlord' | 'Tenant';
+  }>;
 }
 
 export interface CreateLeaseDto {
@@ -277,6 +308,90 @@ class LeaseService {
         }
       } catch (parseError) {
         errorMessage = `Failed to update lease: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Update insurances for a lease (replace all)
+   */
+  async updateInsurances(
+    id: string,
+    insurances: Array<{
+      companyName: string;
+      companyWebsite: string;
+      agentName: string;
+      agentEmail: string;
+      agentPhone: string;
+      policyNumber: string;
+      price: string;
+      effectiveDate: string;
+      expirationDate: string;
+      details: string;
+      emailNotification: boolean;
+    }>,
+  ): Promise<BackendLease> {
+    const response = await fetch(API_ENDPOINTS.LEASE.UPDATE_INSURANCES(id), {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ insurances }),
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to update insurances';
+      try {
+        const errorData = await response.json();
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join('. ');
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+      } catch (parseError) {
+        errorMessage = `Failed to update insurances: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Update utilities/responsibilities for a lease
+   */
+  async updateUtilities(
+    id: string,
+    utilities: Array<{ utility: string; payer: 'Landlord' | 'Tenant' }>,
+  ): Promise<BackendLease> {
+    const response = await fetch(API_ENDPOINTS.LEASE.UPDATE_UTILITIES(id), {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ utilities }),
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to update utilities';
+      try {
+        const errorData = await response.json();
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join('. ');
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+      } catch (parseError) {
+        errorMessage = `Failed to update utilities: ${response.statusText}`;
       }
       throw new Error(errorMessage);
     }
