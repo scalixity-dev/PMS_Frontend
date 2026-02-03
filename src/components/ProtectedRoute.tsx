@@ -126,7 +126,7 @@ export const ServiceProtectedRoute: React.FC<ProtectedRouteProps> = ({ children 
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/service-dashboard/login" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   return <>{children}</>;

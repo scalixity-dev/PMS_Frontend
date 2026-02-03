@@ -14,7 +14,6 @@ import { RentalApplicationSettingsLayout } from './components/common/RentalAppli
 import PricingPage from './pages/basewebsite/pricing';
 import LoginPage from './pages/basewebsite/auth/login';
 import SignUpPage from './pages/basewebsite/auth/signUp';
-import ForgotPassword from './pages/ServiceDashboard/pages/auth/ForgotPassword';
 import Welcome from './pages/ServiceDashboard/pages/onboarding/Welcome';
 import SelectProfession from './pages/ServiceDashboard/pages/onboarding/SelectProfession';
 import ProfessionDetails from './pages/ServiceDashboard/pages/onboarding/ProfessionDetails';
@@ -198,10 +197,7 @@ const App: React.FC = () => {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <Routes>
-            {/* Service Dashboard Auth - reuse basewebsite auth pages */}
-            <Route path="/service-dashboard/login" element={<LoginPage />} />
-            <Route path="/service-dashboard/signup" element={<SignUpPage />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
+            {/* Forgot password route removed; use basewebsite auth flows instead */}
 
             {/* Service Dashboard Onboarding */}
             <Route path="/service-dashboard/welcome" element={<Welcome />} />
