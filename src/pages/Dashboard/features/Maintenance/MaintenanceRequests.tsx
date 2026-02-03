@@ -337,7 +337,11 @@ const Requests: React.FC = () => {
                 assigneeName.toLowerCase().includes(searchQuery.toLowerCase());
 
             const matchesStatus = filters.status.length === 0 || filters.status.some(s => item.status.toLowerCase() === s.toLowerCase());
-            const matchesAssignee = filters.assignee.length === 0 || filters.assignee.some(a => assigneeName.toLowerCase().includes(a.toLowerCase()));
+            const matchesAssignee = filters.assignee.length === 0 || filters.assignee.some(a =>
+                a.toLowerCase() === 'unassignee'
+                    ? assigneeName.trim() === ''
+                    : assigneeName.toLowerCase().includes(a.toLowerCase())
+            );
             const matchesProperty = filters.property.length === 0 || filters.property.some(p => item.propertyName.toLowerCase().includes(p.toLowerCase()));
 
             return matchesSearch && matchesStatus && matchesAssignee && matchesProperty;
