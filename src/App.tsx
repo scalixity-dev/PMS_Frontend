@@ -21,6 +21,9 @@ import ServiceDashboardLayout from './components/service-dashboard/layout/Servic
 import ServiceDashboard from './pages/ServiceDashboard/pages/Dashboard/ServiceDashboard';
 import ServiceDashboardSettings from './pages/ServiceDashboard/pages/Dashboard/Settings/ServiceDashboardSettings';
 import ServiceDashboardProfileSettings from './pages/ServiceDashboard/pages/Dashboard/Settings/AccountSettings/ProfileSettings';
+import ServiceDashboardSecuritySettings from './pages/ServiceDashboard/pages/Dashboard/Settings/AccountSettings/SecuritySettings';
+import ServiceDashboardIntegrationSettings from './pages/ServiceDashboard/pages/Dashboard/Settings/AccountSettings/IntegrationSettings';
+import ServiceDashboardNotificationSettings from './pages/ServiceDashboard/pages/Dashboard/Settings/AccountSettings/NotificationSettings';
 import OtpPage from './pages/basewebsite/auth/otp';
 import OAuthCallbackPage from './pages/basewebsite/auth/otp'; // Note: This might have been a mistake in the original or I misread, checking...
 import OAuthCompletePage from './pages/basewebsite/auth/signUp/oauth-complete';
@@ -158,9 +161,17 @@ import RequestSettings from './pages/Dashboard/settings/request-settings/Request
 import AutomationSettings from './pages/Dashboard/settings/request-settings/AutomationSettings';
 import ServiceRequests from './pages/ServiceDashboard/pages/Dashboard/ServiceRequests/ServiceRequests';
 import ServiceRequestsBoard from './pages/ServiceDashboard/pages/Dashboard/ServiceRequests/ServiceRequestsBoard';
+import ServiceRequestDetail from './pages/ServiceDashboard/pages/Dashboard/ServiceRequests/ServiceRequestDetail';
 import ServiceAccounting from './pages/ServiceDashboard/pages/Dashboard/Accounting/ServiceAccounting';
 import ServiceTransactionDetail from './pages/ServiceDashboard/pages/Dashboard/Accounting/ServiceTransactionDetail';
 import ServiceBusinessProfile from './pages/ServiceDashboard/pages/Dashboard/Settings/BusinessProfile/ServiceBusinessProfile';
+import ServiceContacts from './pages/ServiceDashboard/pages/Dashboard/Contact/ServiceContacts';
+import ServiceDashboardCalendar from './pages/ServiceDashboard/pages/Dashboard/Calendar/Calendar';
+import ServiceFileManager from './pages/ServiceDashboard/pages/Dashboard/FileManager/FileManager';
+import ServiceMessages from './pages/ServiceDashboard/pages/Dashboard/Messages/ServiceMessages';
+import FindJob from './pages/ServiceDashboard/pages/Dashboard/FindJob/FindJob';
+import JobDetail from './pages/ServiceDashboard/pages/Dashboard/FindJob/JobDetail';
+import ServiceNotification from './pages/ServiceDashboard/pages/Dashboard/Notification/Notification';
 import GeneralReports from './pages/Dashboard/settings/report/general';
 import Reports from './pages/Dashboard/features/Reports/Reports';
 import Rentability from './pages/Dashboard/features/Reports/Rentability';
@@ -214,6 +225,25 @@ const App: React.FC = () => {
               <Route path="/service-dashboard/settings" element={<ServiceProtectedRoute><ServiceDashboardSettings /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/settings/profile" element={<ServiceProtectedRoute><ServiceDashboardProfileSettings /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/settings/business-profile" element={<ServiceProtectedRoute><ServiceBusinessProfile /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard" element={<ProtectedRoute><ServiceDashboard /></ProtectedRoute>} />
+              <Route path="/service-dashboard/requests" element={<ProtectedRoute><ServiceRequests /></ProtectedRoute>} />
+              <Route path="/service-dashboard/requests/:id" element={<ProtectedRoute><ServiceRequestDetail /></ProtectedRoute>} />
+              <Route path="/service-dashboard/requests-board" element={<ProtectedRoute><ServiceRequestsBoard /></ProtectedRoute>} />
+              <Route path="/service-dashboard/accounting" element={<ProtectedRoute><ServiceAccounting /></ProtectedRoute>} />
+              <Route path="/service-dashboard/accounting/transaction/:id" element={<ProtectedRoute><ServiceTransactionDetail /></ProtectedRoute>} />
+              <Route path="/service-dashboard/settings" element={<ProtectedRoute><ServiceDashboardSettings /></ProtectedRoute>} />
+              <Route path="/service-dashboard/settings/profile" element={<ProtectedRoute><ServiceDashboardProfileSettings /></ProtectedRoute>} />
+              <Route path="/service-dashboard/settings/security" element={<ProtectedRoute><ServiceDashboardSecuritySettings /></ProtectedRoute>} />
+              <Route path="/service-dashboard/settings/integrations" element={<ProtectedRoute><ServiceDashboardIntegrationSettings /></ProtectedRoute>} />
+              <Route path="/service-dashboard/settings/notifications" element={<ProtectedRoute><ServiceDashboardNotificationSettings /></ProtectedRoute>} />
+              <Route path="/service-dashboard/settings/business-profile" element={<ProtectedRoute><ServiceBusinessProfile /></ProtectedRoute>} />
+              <Route path="/service-dashboard/contacts" element={<ProtectedRoute><ServiceContacts /></ProtectedRoute>} />
+              <Route path="/service-dashboard/calendar" element={<ProtectedRoute><ServiceDashboardCalendar /></ProtectedRoute>} />
+              <Route path="/service-dashboard/file-manager" element={<ProtectedRoute><ServiceFileManager /></ProtectedRoute>} />
+              <Route path="/service-dashboard/messages" element={<ProtectedRoute><ServiceMessages /></ProtectedRoute>} />
+              <Route path="/service-dashboard/find-job" element={<ProtectedRoute><FindJob /></ProtectedRoute>} />
+              <Route path="/service-dashboard/find-job/:id" element={<ProtectedRoute><JobDetail /></ProtectedRoute>} />
+              <Route path="/service-dashboard/notifications" element={<ProtectedRoute><ServiceNotification /></ProtectedRoute>} />
             </Route>
 
             <Route element={<AppLayout />}>

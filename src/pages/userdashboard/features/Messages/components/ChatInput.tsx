@@ -59,23 +59,23 @@ const ChatInput = ({ onSendMessage, disabled = false }: ChatInputProps) => {
     };
 
     return (
-        <div className="bg-white border-t border-gray-200 px-4 py-2.5">
+        <div className="bg-white border-t border-gray-200 px-3 md:px-4 py-2 md:py-2.5">
             {/* Attached Files Preview */}
             {attachedFiles.length > 0 && (
-                <div className="mb-3 flex flex-wrap gap-2">
+                <div className="mb-2 md:mb-3 flex flex-wrap gap-1.5 md:gap-2">
                     {attachedFiles.map((file, index) => (
                         <div
                             key={index}
-                            className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2 text-sm"
+                            className="flex items-center gap-1.5 md:gap-2 bg-gray-100 rounded-lg px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm"
                         >
-                            <ImageIcon className="w-4 h-4 text-gray-600" />
-                            <span className="text-gray-700 max-w-[150px] truncate">{file.name}</span>
-                            <span className="text-gray-500 text-xs">({formatFileSize(file.size)})</span>
+                            <ImageIcon className="w-3.5 h-3.5 md:w-4 md:h-4 text-gray-600" />
+                            <span className="text-gray-700 max-w-[120px] md:max-w-[150px] truncate">{file.name}</span>
+                            <span className="text-gray-500 text-[10px] md:text-xs">({formatFileSize(file.size)})</span>
                             <button
                                 onClick={() => removeFile(index)}
                                 className="text-gray-400 hover:text-red-500 transition-colors"
                             >
-                                <X className="w-4 h-4" />
+                                <X className="w-3.5 h-3.5 md:w-4 md:h-4" />
                             </button>
                         </div>
                     ))}
@@ -83,15 +83,15 @@ const ChatInput = ({ onSendMessage, disabled = false }: ChatInputProps) => {
             )}
 
             {/* Input Area */}
-            <div className="flex items-end gap-3">
+            <div className="flex items-end gap-2 md:gap-3">
                 {/* Attachment Button */}
                 <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={disabled}
-                    className="p-2.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                    className="p-2 md:p-2.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
                     title="Attach file"
                 >
-                    <Paperclip className="w-5 h-5" />
+                    <Paperclip className="w-4 h-4 md:w-5 md:h-5" />
                 </button>
 
                 {/* Hidden File Input */}
@@ -114,7 +114,7 @@ const ChatInput = ({ onSendMessage, disabled = false }: ChatInputProps) => {
                         disabled={disabled}
                         placeholder="Type a message..."
                         rows={1}
-                        className="w-full px-4 py-3 bg-transparent resize-none focus:outline-none text-sm disabled:opacity-50 disabled:cursor-not-allowed max-h-[120px]"
+                        className="w-full px-3 md:px-4 py-2 md:py-3 bg-transparent resize-none focus:outline-none text-xs md:text-sm disabled:opacity-50 disabled:cursor-not-allowed max-h-[120px]"
                     />
                 </div>
 
@@ -124,15 +124,15 @@ const ChatInput = ({ onSendMessage, disabled = false }: ChatInputProps) => {
                 <button
                     onClick={handleSend}
                     disabled={disabled || (!message.trim() && attachedFiles.length === 0)}
-                    className="p-3 bg-[var(--dashboard-accent)] text-white rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 shadow-lg shadow-[var(--dashboard-accent)]/20"
+                    className="p-2.5 md:p-3 bg-[var(--dashboard-accent)] text-white rounded-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 shadow-lg shadow-[var(--dashboard-accent)]/20"
                     title="Send message"
                 >
-                    <Send className="w-5 h-5" />
+                    <Send className="w-4 h-4 md:w-5 md:h-5" />
                 </button>
             </div>
 
             {/* Helper Text */}
-            <p className="text-xs text-gray-500 mt-2 px-1">
+            <p className="text-[10px] md:text-xs text-gray-500 mt-1.5 md:mt-2 px-1">
                 Press Enter to send, Shift + Enter for new line
             </p>
         </div>

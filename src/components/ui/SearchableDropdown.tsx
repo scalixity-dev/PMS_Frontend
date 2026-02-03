@@ -8,9 +8,9 @@ interface GroupedOption {
 
 interface SearchableDropdownProps {
     label?: string;
-    value: string;
+    value: string | string[];
     options: (string | GroupedOption)[];
-    onChange: (value: string) => void;
+    onChange: (value: any) => void;
     placeholder?: string;
     className?: string;
     buttonClassName?: string;
@@ -20,6 +20,7 @@ interface SearchableDropdownProps {
     startIcon?: React.ReactNode;
     hideArrow?: boolean;
     allowCustomValue?: boolean;
+    isMulti?: boolean;
 }
 
 const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
@@ -35,11 +36,55 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
     onToggle,
     startIcon,
     hideArrow = false,
-    allowCustomValue = false
+    allowCustomValue = false,
+    isMulti = false
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const dropdownRef = useRef<HTMLDivElement>(null);
+
+    const isSelected = (val: string) => {
+        if (isMulti && Array.isArray(value)) {
+            return value.includes(val);
+        }
+        return value === val;
+    };
+
+    const handleSelect = (option: string) => {
+        if (isMulti) {
+            const currentValues = Array.isArray(value) ? value : [];
+            const newValues = currentValues.includes(option)
+                ? currentValues.filter(v => v !== option)
+                : [...currentValues, option];
+
+            // If selecting something other than 'All', remove 'All'
+            if (option !== 'All' && newValues.includes('All')) {
+                const filtered = newValues.filter(v => v !== 'All');
+                onChange(filtered.length === 0 ? ['All'] : filtered);
+            }
+            // If selecting 'All', clear others
+            else if (option === 'All') {
+                onChange(['All']);
+            }
+            else {
+                onChange(newValues.length === 0 ? ['All'] : newValues);
+            }
+        } else {
+            onChange(option);
+            setIsOpen(false);
+            onToggle?.(false);
+        }
+        setSearchTerm('');
+    };
+
+    const getDisplayValue = () => {
+        if (isMulti && Array.isArray(value)) {
+            if (value.length === 0 || (value.length === 1 && value[0] === 'All')) return placeholder;
+            if (value.length > 2) return `${value.length} Selected`;
+            return value.join(', ');
+        }
+        return (value as string) || placeholder || 'Select';
+    };
 
     const filteredOptions = options.reduce<(string | GroupedOption)[]>((acc, option) => {
         if (typeof option === 'string') {
@@ -81,12 +126,12 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
                     }}
                     className={buttonClassName || "w-full flex items-center justify-between text-white bg-[#7BD747] px-4 py-3 rounded-xl font-medium shadow-sm hover:opacity-90 transition-opacity"}
                 >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 max-w-full overflow-hidden">
                         {startIcon}
-                        <span className={buttonClassName ? "" : "text-white"}>{value || placeholder || 'Select'}</span>
+                        <span className={`${buttonClassName ? "" : "text-white"} truncate`}>{getDisplayValue()}</span>
                     </div>
                     {!hideArrow && (
-                        <ChevronDown size={20} className={`${buttonClassName ? "" : "text-white"} transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                        <ChevronDown size={20} className={`${buttonClassName ? "" : "text-white"} transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
                     )}
                 </button>
 
@@ -148,18 +193,20 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
                                             return (
                                                 <button
                                                     key={index}
-                                                    onClick={() => {
-                                                        onChange(option);
-                                                        setIsOpen(false);
-                                                        setSearchTerm('');
-                                                        onToggle?.(false);
-                                                    }}
+                                                    onClick={() => handleSelect(option)}
                                                     className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 text-left transition-colors"
                                                 >
-                                                    <span className={`text-base sm:text-sm ${value === option ? 'text-[#3A6D6C] font-semibold' : 'text-gray-700'}`}>
-                                                        {option}
-                                                    </span>
-                                                    {value === option && <Check size={16} className="text-[#3A6D6C]" />}
+                                                    <div className="flex items-center gap-3 overflow-hidden">
+                                                        {isMulti && option !== 'All' && (
+                                                            <div className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${isSelected(option) ? 'bg-[#3A6D6C] border-[#3A6D6C]' : 'border-gray-300'}`}>
+                                                                {isSelected(option) && <Check size={12} className="text-white" />}
+                                                            </div>
+                                                        )}
+                                                        <span className={`text-base sm:text-sm truncate ${isSelected(option) ? 'text-[#3A6D6C] font-semibold' : 'text-gray-700'}`}>
+                                                            {option}
+                                                        </span>
+                                                    </div>
+                                                    {!isMulti && isSelected(option) && <Check size={16} className="text-[#3A6D6C] flex-shrink-0" />}
                                                 </button>
                                             );
                                         } else {
@@ -171,18 +218,20 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
                                                     {option.options.map((subOption, subIndex) => (
                                                         <button
                                                             key={`${index}-${subIndex}`}
-                                                            onClick={() => {
-                                                                onChange(subOption);
-                                                                setIsOpen(false);
-                                                                setSearchTerm('');
-                                                                onToggle?.(false);
-                                                            }}
+                                                            onClick={() => handleSelect(subOption)}
                                                             className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 text-left transition-colors"
                                                         >
-                                                            <span className={`text-base sm:text-sm ${value === subOption ? 'text-[#3A6D6C] font-semibold' : 'text-gray-700'}`}>
-                                                                {subOption}
-                                                            </span>
-                                                            {value === subOption && <Check size={16} className="text-[#3A6D6C]" />}
+                                                            <div className="flex items-center gap-3 overflow-hidden">
+                                                                {isMulti && (
+                                                                    <div className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors ${isSelected(subOption) ? 'bg-[#3A6D6C] border-[#3A6D6C]' : 'border-gray-300'}`}>
+                                                                        {isSelected(subOption) && <Check size={12} className="text-white" />}
+                                                                    </div>
+                                                                )}
+                                                                <span className={`text-base sm:text-sm truncate ${isSelected(subOption) ? 'text-[#3A6D6C] font-semibold' : 'text-gray-700'}`}>
+                                                                    {subOption}
+                                                                </span>
+                                                            </div>
+                                                            {!isMulti && isSelected(subOption) && <Check size={16} className="text-[#3A6D6C] flex-shrink-0" />}
                                                         </button>
                                                     ))}
                                                 </div>

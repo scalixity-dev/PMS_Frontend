@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { PiPrinter, PiUserCircle, PiCheckCircle, PiDotsThreeOutline, PiCurrencyDollar } from "react-icons/pi";
+import { PiPrinter, PiUserCircle, PiCheckCircle, PiCurrencyDollar } from "react-icons/pi";
 import { ChevronLeft, Calendar } from 'lucide-react';
 import ServiceBreadCrumb from '../../../components/ServiceBreadCrumb';
 
@@ -259,12 +259,6 @@ const ServiceTransactionDetail = () => {
                                         <PiCheckCircle size={12} fill="currentColor" />
                                         {item.status}
                                     </span>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <img src={item.user.avatar} className="w-8 h-8 rounded-full" alt="user" />
-                                    <button className="text-gray-400 hover:text-gray-600">
-                                        <PiDotsThreeOutline size={20} />
-                                    </button>
                                 </div>
                             </div>
                         ))}

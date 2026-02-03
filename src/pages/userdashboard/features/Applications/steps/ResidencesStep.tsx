@@ -24,6 +24,7 @@ const ResidenceItem: React.FC<{ residence: ResidenceFormData & { id: string }; o
                 <div className="flex flex-col">
                     <p className="font-semibold text-[#1A1A1A] text-sm">{residence.address}</p>
                     <p className="text-[11px] text-[#ADADAD]">{residence.city}, {residence.state} • {residence.residencyType} • Moved in {formatDate(residence.moveInDate)}</p>
+                    <p className="text-[11px] font-bold text-[#7ED957] sm:hidden mt-0.5">₹{residence.rentAmount}/mo</p>
                 </div>
             </div>
             <div className="flex items-center gap-4">

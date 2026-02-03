@@ -1,19 +1,27 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import type { DateRange } from 'react-day-picker';
+import { useNavigate, useOutletContext } from 'react-router-dom';
+import { Download } from 'lucide-react';
+import { PiHandCoinsLight } from 'react-icons/pi';
 import ServiceBreadCrumb from '../../../components/ServiceBreadCrumb';
 import ServiceFilters from '../../../components/ServiceFilters';
 
 import { mockTransactions } from './mockData';
 
+interface DashboardContext {
+    sidebarCollapsed: boolean;
+}
+
 const ServiceAccounting = () => {
     // Mock Data
     const [transactions] = useState(mockTransactions);
+    const { sidebarCollapsed } = useOutletContext<DashboardContext>() || { sidebarCollapsed: false };
 
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
-    const [dateFilter, setDateFilter] = useState('All');
-    const [statusFilter, setStatusFilter] = useState('All');
-    const [scheduleFilter, setScheduleFilter] = useState('All');
+    const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+    const [statusFilter, setStatusFilter] = useState<string | string[]>('All');
+    const [scheduleFilter, setScheduleFilter] = useState<string | string[]>('All');
 
     const filteredTransactions = transactions.filter(t => {
         const matchesSearch = searchTerm === '' ||
@@ -21,14 +29,44 @@ const ServiceAccounting = () => {
             (t.contact && t.contact.toLowerCase().includes(searchTerm.toLowerCase())) ||
             (t.description && t.description.toLowerCase().includes(searchTerm.toLowerCase()));
 
-        const matchesStatus = statusFilter === 'All' || t.status === statusFilter;
-        // Assuming 'type' field maps to schedule options (One-time/Recurring)
-        // t.type can be "Expense / One Time" so we check for inclusion or if t.category matches (legacy check)
-        // But mock data says category is service type. t.type contains schedule.
-        const matchesSchedule = scheduleFilter === 'All' || (t.type && t.type.includes(scheduleFilter));
-        // Basic Date Filter (assuming t.dueDate is a string like "Oct 24, 2024", hard to parse accurately without date lib or consistent format)
-        // For now, implementing 'All' pass-through. Real date filtering would require parsing t.dueDate.
-        const matchesDate = dateFilter === 'All' || true;
+        const matchesStatus = statusFilter === 'All' ||
+            (Array.isArray(statusFilter) ? (statusFilter.includes('All') || statusFilter.includes(t.status)) : t.status === statusFilter);
+
+        // Handling Schedule Filter (checking t.type for "One-time" or "Recurring")
+        // Also checking t.category as legacy fallback if needed, but primary is t.type
+        const scheduleSource = t.type || t.category || '';
+        const matchesSchedule = scheduleFilter === 'All' ||
+            (Array.isArray(scheduleFilter) ?
+                (scheduleFilter.includes('All') || (scheduleSource && scheduleFilter.some(s => scheduleSource.includes(s))))
+                : (scheduleSource && scheduleSource.includes(scheduleFilter)));
+
+        // Basic Date Filter
+        const matchesDate = (() => {
+            // Check if at least one date is present
+            if (!dateRange?.from && !dateRange?.to) return true;
+
+            if (!t.dueDate) return false;
+
+            // Parse transaction date "YYYY-MM-DD"
+            const [y, m, d] = (t.dueDate as string).split('-').map(Number);
+            const date = new Date(y, m - 1, d); // Local midnight
+
+            // Determine effective range
+            // If only 'from' is selected, use it as both start and end (single day)
+            // If only 'to' is selected (unlikely in UI but possible in state), treat as single day
+            const fromDateRaw = dateRange.from || dateRange.to;
+            const toDateRaw = dateRange.to || dateRange.from;
+
+            if (!fromDateRaw || !toDateRaw) return true; // Should be covered above but safe guard
+
+            const from = new Date(fromDateRaw.getFullYear(), fromDateRaw.getMonth(), fromDateRaw.getDate());
+            const to = new Date(toDateRaw.getFullYear(), toDateRaw.getMonth(), toDateRaw.getDate());
+
+            // Adjust to ensure inclusive comparison for the end date
+            to.setHours(23, 59, 59, 999);
+
+            return date >= from && date <= to;
+        })();
 
         return matchesSearch && matchesStatus && matchesSchedule && matchesDate;
     });
@@ -40,7 +78,7 @@ const ServiceAccounting = () => {
         .toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
     return (
-        <div>
+        <div className={`mx-auto min-h-screen pb-20 transition-all duration-300 ${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'}`}>
             <ServiceBreadCrumb
                 items={[
                     { label: 'Dashboard', to: '/service-dashboard' },
@@ -68,10 +106,9 @@ const ServiceAccounting = () => {
                 onSearch={setSearchTerm}
 
                 // + Date
-                currentProperty={dateFilter}
-                onPropertyChange={setDateFilter}
-                propertyLabel="Date"
-                propertyOptions={['All', 'Last 7 Days', 'Last 30 Days', 'This Month', 'Last Month']}
+                dateRange={dateRange}
+                onDateRangeChange={setDateRange}
+                propertyLabel="Date Range"
 
                 // + Transaction Status
                 currentStatus={statusFilter}
@@ -86,57 +123,141 @@ const ServiceAccounting = () => {
                 categoryOptions={['All', 'One-time', 'Recurring']}
             />
 
-            {/* Table */}
-            <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto shadow-sm">
-                <table className="w-full min-w-[800px]">
-                    <thead className="bg-[#7BE156] text-white">
-                        <tr>
-                            <th className="px-6 py-4 text-left font-semibold">Status</th>
-                            <th className="px-6 py-4 text-left font-semibold">Due Date</th>
-                            <th className="px-6 py-4 text-left font-semibold">Category</th>
-                            <th className="px-6 py-4 text-left font-semibold">Contact</th>
-                            <th className="px-6 py-4 text-left font-semibold">Total</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                        {filteredTransactions.length > 0 ? (
-                            filteredTransactions.map((transaction) => (
-                                <tr
-                                    key={transaction.id}
-                                    className="hover:bg-gray-50 cursor-pointer"
-                                    onClick={() => navigate(`/service-dashboard/accounting/transaction/${transaction.id}`)}
-                                >
-                                    <td className="px-6 py-4">
-                                        <div className={`flex items-center gap-2 font-medium text-sm ${transaction.status === 'Paid' ? 'text-green-600' :
-                                            transaction.status === 'Overdue' ? 'text-red-500' :
-                                                transaction.status === 'Pending' ? 'text-blue-500' :
-                                                    'text-yellow-600' // Unpaid
-                                            }`}>
-                                            <span className={`w-2 h-2 rounded-full ${transaction.status === 'Paid' ? 'bg-green-600' :
-                                                transaction.status === 'Overdue' ? 'bg-red-500' :
-                                                    transaction.status === 'Pending' ? 'bg-blue-500' :
-                                                        'bg-yellow-600'
-                                                }`}></span>
-                                            {transaction.status}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-gray-900">{transaction.dueDate}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-900">{transaction.category}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-900">{transaction.contact}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-900 font-medium">{transaction.total}</td>
+            {filteredTransactions.length > 0 ? (
+                <>
+                    {/* Mobile Card View */}
+                    <div className="md:hidden space-y-4">
+                        {filteredTransactions.map((transaction) => (
+                            <div
+                                key={transaction.id}
+                                className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+                                onClick={() => navigate(`/service-dashboard/accounting/transaction/${transaction.id}`)}
+                            >
+                                <div className="flex justify-between items-start mb-3">
+                                    <span className="text-gray-500 font-medium text-sm">#{transaction.id}</span>
+                                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${transaction.status === 'Paid' ? 'bg-green-50 text-green-700' :
+                                        transaction.status === 'Overdue' ? 'bg-red-50 text-red-600' :
+                                            transaction.status === 'Pending' ? 'bg-blue-50 text-blue-600' :
+                                                'bg-yellow-50 text-yellow-700'
+                                        }`}>
+                                        {transaction.status}
+                                    </span>
+                                </div>
+
+                                <div className="mb-4">
+                                    <h3 className="font-semibold text-gray-900 text-lg mb-1">{transaction.description}</h3>
+                                    <p className="text-gray-500 text-sm">{transaction.property}</p>
+                                </div>
+
+                                <div className="flex items-center gap-3 mb-4">
+                                    <span className="text-sm font-semibold text-gray-900">
+                                        {transaction.total}
+                                    </span>
+                                </div>
+
+                                <div className="flex items-center justify-between pt-3 border-t border-gray-50">
+                                    <div className="flex items-center gap-2">
+                                        {transaction.payer?.avatar ? (
+                                            <img src={transaction.payer.avatar} alt={transaction.contact} className="w-8 h-8 rounded-full object-cover" />
+                                        ) : (
+                                            <div className="w-8 h-8 rounded-full bg-coral-100 flex items-center justify-center text-xs font-bold text-gray-700">
+                                                {transaction.contact.split(' ').map((n: string) => n[0]).join('')}
+                                            </div>
+                                        )}
+                                        <span className="text-sm font-medium text-gray-700">{transaction.contact}</span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        aria-label="Download CSV"
+                                        className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
+                                    >
+                                        <Download size={20} />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Desktop Table View */}
+                    <div className="hidden md:block bg-white rounded-lg border border-gray-200 overflow-x-auto shadow-sm">
+                        <table className="w-full min-w-[800px]">
+                            <thead className="bg-[#7BE156] text-white">
+                                <tr>
+                                    <th className="px-6 py-4 text-left font-semibold">Status</th>
+                                    <th className="px-6 py-4 text-left font-semibold">Due Date</th>
+                                    <th className="px-6 py-4 text-left font-semibold">Category</th>
+                                    <th className="px-6 py-4 text-left font-semibold">Contact</th>
+                                    <th className="px-6 py-4 text-left font-semibold">Total</th>
                                 </tr>
-                            ))
-                        ) : (
-                            <tr>
-                                <td colSpan={5} className="bg-gray-50 h-64 text-center text-gray-500">
-                                    {/* Empty State */}
-                                    No transactions found.
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {filteredTransactions.map((transaction) => (
+                                    <tr
+                                        key={transaction.id}
+                                        className="hover:bg-gray-50 cursor-pointer"
+                                        onClick={() => navigate(`/service-dashboard/accounting/transaction/${transaction.id}`)}
+                                    >
+                                        <td className="px-6 py-4">
+                                            <div className={`flex items-center gap-2 font-medium text-sm ${transaction.status === 'Paid' ? 'text-green-600' :
+                                                transaction.status === 'Overdue' ? 'text-red-500' :
+                                                    transaction.status === 'Pending' ? 'text-blue-500' :
+                                                        'text-yellow-600' // Unpaid
+                                                }`}>
+                                                <span className={`w-2 h-2 rounded-full ${transaction.status === 'Paid' ? 'bg-green-600' :
+                                                    transaction.status === 'Overdue' ? 'bg-red-500' :
+                                                        transaction.status === 'Pending' ? 'bg-blue-500' :
+                                                            'bg-yellow-600'
+                                                    }`}></span>
+                                                {transaction.status}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-gray-900">{transaction.dueDate}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-900">{transaction.category}</td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-2">
+                                                {transaction.payer?.avatar ? (
+                                                    <img src={transaction.payer.avatar} alt={transaction.contact} className="w-8 h-8 rounded-full object-cover" />
+                                                ) : (
+                                                    <div className="w-8 h-8 rounded-full bg-coral-100 flex items-center justify-center text-[10px] font-bold text-gray-700">
+                                                        {transaction.contact.split(' ').map((n: string) => n[0]).join('')}
+                                                    </div>
+                                                )}
+                                                <span className="text-sm font-medium text-gray-900">{transaction.contact}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex justify-between items-center pr-4">
+                                                <span className="text-sm text-gray-900 font-medium">{transaction.total}</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </>
+            ) : (
+                <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-gray-200 shadow-sm mt-8">
+                    <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                        <PiHandCoinsLight size={40} className="text-gray-400" />
+                    </div>
+                    {transactions.length === 0 ? (
+                        <>
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">No transactions yet</h3>
+                            <p className="text-gray-500 text-center max-w-md px-6 leading-relaxed">
+                                You don't have any financial records yet. Your payments and expenses will be tracked here once you start processing jobs.
+                            </p>
+                        </>
+                    ) : (
+                        <>
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">No transactions found</h3>
+                            <p className="text-gray-500 text-center max-w-md px-6 leading-relaxed">
+                                We couldn't find any transactions matching your current filters. Try adjusting your search or filters to see your financial records.
+                            </p>
+                        </>
+                    )}
+                </div>
+            )}
 
         </div>
     );

@@ -45,13 +45,12 @@ const MessageBubble = ({ message, isOwnMessage, contactName, contactAvatar }: Me
                         {contactName}
                     </span>
                 )}
-                
+
                 <div
-                    className={`rounded-2xl px-4 py-2.5 ${
-                        isOwnMessage
-                            ? 'bg-[var(--dashboard-accent)] text-white rounded-br-sm'
-                            : 'bg-gray-100 text-gray-800 rounded-bl-sm'
-                    }`}
+                    className={`rounded-2xl px-4 py-2.5 ${isOwnMessage
+                        ? 'bg-[var(--dashboard-accent)] text-white rounded-br-sm'
+                        : 'bg-gray-100 text-gray-800 rounded-bl-sm'
+                        }`}
                 >
                     <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
                         {message.text}
@@ -63,9 +62,8 @@ const MessageBubble = ({ message, isOwnMessage, contactName, contactAvatar }: Me
                             {message.attachments.map((attachment) => (
                                 <div
                                     key={attachment.id}
-                                    className={`flex items-center gap-2 p-2 rounded-lg ${
-                                        isOwnMessage ? 'bg-white/10' : 'bg-white'
-                                    }`}
+                                    className={`flex items-center gap-2 p-2 rounded-lg ${isOwnMessage ? 'bg-white/10' : 'bg-white'
+                                        }`}
                                 >
                                     {getAttachmentIcon(attachment.type)}
                                     <div className="flex-1 min-w-0">

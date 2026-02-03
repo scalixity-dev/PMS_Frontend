@@ -28,7 +28,7 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext }) => {
 
     const uploadFileToBackend = async (file: File, index: number): Promise<string> => {
         setUploadingFiles(prev => new Map(prev).set(index, true));
-        
+
         try {
             const formDataToSend = new FormData();
             formDataToSend.append('file', file);
@@ -50,7 +50,7 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext }) => {
 
             const data = await response.json();
             const fileUrl = data.url;
-            
+
             setUploadedUrls(prev => new Map(prev).set(index, fileUrl));
             return fileUrl;
         } catch (error) {
@@ -105,7 +105,7 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext }) => {
                 const existingDocs = formData.documents || [];
                 const existingUrls = formData.documentUrls || [];
                 const startIndex = existingDocs.length;
-                
+
                 // Add files to store first
                 setFormData({
                     ...formData,
@@ -139,14 +139,14 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext }) => {
         const updatedDocs = formData.documents.filter((_, i) => i !== index);
         const updatedFiles = (formData.documentFiles || []).filter((_, i) => i !== index);
         const updatedUrls = (formData.documentUrls || []).filter((_, i) => i !== index);
-        
+
         setFormData({
             ...formData,
             documents: updatedDocs,
             documentFiles: updatedFiles,
             documentUrls: updatedUrls
         });
-        
+
         // Clean up upload state
         setUploadedUrls(prev => {
             const newMap = new Map(prev);
@@ -172,7 +172,7 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext }) => {
             <div className="flex flex-col items-center">
                 {/* Upload Area */}
                 <div
-                    className="w-full border-2 border-dashed border-[#E5E7EB] rounded-2xl p-10 flex flex-col items-center justify-center text-center hover:border-[#7ED957] hover:bg-[#7ED957]/5 transition-all cursor-pointer mb-8 bg-gray-50/30 group"
+                    className="w-full border-2 border-dashed border-[#E5E7EB] rounded-2xl p-6 md:p-10 flex flex-col items-center justify-center text-center hover:border-[#7ED957] hover:bg-[#7ED957]/5 transition-all cursor-pointer mb-8 bg-gray-50/30 group"
                     onClick={() => fileInputRef.current?.click()}
                 >
                     <div className="w-16 h-16 bg-white rounded-full shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
@@ -211,7 +211,7 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext }) => {
                         {formData.documents.map((file, index) => {
                             const isUploading = uploadingFiles.get(index);
                             const uploadedUrl = uploadedUrls.get(index);
-                            
+
                             return (
                                 <div key={index} className="flex items-center justify-between bg-white px-5 py-4 rounded-2xl border border-[#E5E7EB] shadow-sm hover:shadow-md transition-shadow">
                                     <div className="flex items-center gap-4">
@@ -232,8 +232,8 @@ const DocumentsStep: React.FC<DocumentsStepProps> = ({ onNext }) => {
                                         </div>
                                     </div>
                                     <button
-                                        onClick={(e) => { 
-                                            e.stopPropagation(); 
+                                        onClick={(e) => {
+                                            e.stopPropagation();
                                             if (!isUploading) {
                                                 removeDocument(index);
                                                 setUploadedUrls(prev => {

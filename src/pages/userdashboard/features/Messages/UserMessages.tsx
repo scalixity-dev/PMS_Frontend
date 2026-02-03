@@ -209,10 +209,10 @@ const Messages = () => {
     };
 
     return (
-        <div className="h-[calc(100vh-4rem)] flex flex-col">
-            <div className="flex bg-white flex-1 shadow-lg overflow-hidden font-inter">
+        <div className="h-[calc(100vh-4rem)] md:h-[calc(100vh-4rem)] flex flex-col">
+            <div className="flex bg-white flex-1 shadow-sm md:shadow-lg overflow-hidden font-inter">
                 {/* Sidebar - Hidden on mobile when chat is active */}
-                <div className={`${showMobileChat ? 'hidden md:flex' : 'flex'} flex-shrink-0`}>
+                <div className={`${showMobileChat ? 'hidden md:flex' : 'flex'} flex-shrink-0 w-full md:w-auto`}>
                     <ChatSidebar
                         chats={sortedChats}
                         activeChat={activeChat}
@@ -244,12 +244,12 @@ const Messages = () => {
                                 <ChatInput onSendMessage={handleSendMessage} />
                             </>
                         ) : (
-                            <div className="flex-1 flex flex-col items-center justify-center text-gray-400 bg-gray-50">
-                                <MessageSquare className="w-24 h-24 mb-4 text-gray-300" />
-                                <h3 className="text-xl font-semibold text-gray-600 mb-2">
+                            <div className="flex-1 flex flex-col items-center justify-center text-gray-400 bg-gray-50 px-4">
+                                <MessageSquare className="w-16 h-16 md:w-24 md:h-24 mb-3 md:mb-4 text-gray-300" />
+                                <h3 className="text-lg md:text-xl font-semibold text-gray-600 mb-2">
                                     No conversation selected
                                 </h3>
-                                <p className="text-sm text-gray-500 text-center max-w-md px-4">
+                                <p className="text-xs md:text-sm text-gray-500 text-center max-w-md">
                                     Choose a conversation from the sidebar to start messaging.
                                 </p>
                             </div>
@@ -261,12 +261,12 @@ const Messages = () => {
                                 onBack={handleBackToSidebar}
                             />
                         ) : (
-                            <div className="flex-1 flex flex-col items-center justify-center text-gray-400 bg-gray-50">
-                                <MessageSquare className="w-24 h-24 mb-4 text-gray-300" />
-                                <h3 className="text-xl font-semibold text-gray-600 mb-2">
+                            <div className="flex-1 flex flex-col items-center justify-center text-gray-400 bg-gray-50 px-4">
+                                <MessageSquare className="w-16 h-16 md:w-24 md:h-24 mb-3 md:mb-4 text-gray-300" />
+                                <h3 className="text-lg md:text-xl font-semibold text-gray-600 mb-2">
                                     No request selected
                                 </h3>
-                                <p className="text-sm text-gray-500 text-center max-w-md px-4">
+                                <p className="text-xs md:text-sm text-gray-500 text-center max-w-md">
                                     Choose a maintenance request from the sidebar to view details.
                                 </p>
                             </div>
@@ -278,10 +278,10 @@ const Messages = () => {
                                 onBack={handleBackToSidebar}
                             />
                         ) : (
-                            <div className="flex-1 flex flex-col items-center justify-center bg-[#f8fafc] px-6 text-center">
-                                <ListPlus className="w-24 h-24 mb-4 text-gray-300" />
-                                <h3 className="text-xl font-semibold text-[#1e293b] mb-2">No publication selected</h3>
-                                <p className="text-sm text-[#64748b] max-w-md">
+                            <div className="flex-1 flex flex-col items-center justify-center bg-[#f8fafc] px-4 md:px-6 text-center">
+                                <ListPlus className="w-16 h-16 md:w-24 md:h-24 mb-3 md:mb-4 text-gray-300" />
+                                <h3 className="text-lg md:text-xl font-semibold text-[#1e293b] mb-2">No publication selected</h3>
+                                <p className="text-xs md:text-sm text-[#64748b] max-w-md">
                                     Choose a publication from the sidebar to read the full details.
                                 </p>
                             </div>

@@ -2,21 +2,27 @@ import React from 'react';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { PiPlusBold } from "react-icons/pi";
 import SearchableDropdown from '../../../components/ui/SearchableDropdown';
+import type { DateRange } from 'react-day-picker';
+import DateRangePicker from './DateRangePicker';
 
 interface ServiceFiltersProps {
     onSearch?: (term: string) => void;
 
-    currentStatus?: string;
-    onStatusChange?: (status: string) => void;
+    currentStatus?: string | string[];
+    onStatusChange?: (status: any) => void;
 
-    currentCategory?: string;
-    onCategoryChange?: (category: string) => void;
+    currentCategory?: string | string[];
+    onCategoryChange?: (category: any) => void;
 
-    currentProperty?: string;
-    onPropertyChange?: (property: string) => void;
+    currentProperty?: string | string[];
+    onPropertyChange?: (property: any) => void;
 
-    currentPriority?: string;
-    onPriorityChange?: (priority: string) => void;
+    currentPriority?: string | string[];
+    onPriorityChange?: (priority: any) => void;
+
+    // Date Range Props
+    dateRange?: DateRange | undefined;
+    onDateRangeChange?: (range: DateRange | undefined) => void;
 
     // Optional legacy or additional props can be added here
     onStatusClick?: () => void;
@@ -32,6 +38,11 @@ interface ServiceFiltersProps {
     categoryLabel?: string;
     propertyLabel?: string;
     priorityLabel?: string;
+    radiusLabel?: string;
+
+    currentRadius?: string;
+    onRadiusChange?: (radius: string) => void;
+    radiusOptions?: string[];
 }
 
 const ServiceFilters: React.FC<ServiceFiltersProps> = ({
@@ -40,6 +51,7 @@ const ServiceFilters: React.FC<ServiceFiltersProps> = ({
     currentCategory, onCategoryChange,
     currentProperty, onPropertyChange,
     currentPriority, onPriorityChange,
+    dateRange, onDateRangeChange,
     ...props // Capture rest of props
 }) => {
     // Default Options
@@ -54,22 +66,48 @@ const ServiceFilters: React.FC<ServiceFiltersProps> = ({
     const properties = props.propertyOptions || defaultProperties;
     const priorities = props.priorityOptions || defaultPriorities;
 
+    const {
+        currentRadius, onRadiusChange
+    } = props;
+
     const dropdownStyle = "min-w-[120px] flex items-center justify-center px-4 py-2 bg-white text-gray-700 text-sm font-semibold rounded-md hover:bg-gray-50 transition-colors shadow-md shadow-black/20";
 
-    const handleFilterChange = (setter?: (val: string) => void) => (val: string) => {
+    const handleFilterChange = (setter?: (val: any) => void) => (val: any) => {
         if (setter) setter(val);
     };
 
     const [isMobileFiltersOpen, setIsMobileFiltersOpen] = React.useState(false);
+    const [isRadiusDropdownOpen, setIsRadiusDropdownOpen] = React.useState(false);
     const [searchTerm, setSearchTerm] = React.useState('');
+    const radiusDropdownRef = React.useRef<HTMLDivElement>(null);
+
+    // Handle click outside for radius dropdown
+    React.useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (radiusDropdownRef.current && !radiusDropdownRef.current.contains(event.target as Node)) {
+                setIsRadiusDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const isFilterActive = (val: string | string[] | undefined) => {
+        if (!val) return false;
+        if (Array.isArray(val)) {
+            return val.length > 0 && !val.includes('All');
+        }
+        return val !== 'All';
+    };
 
     // Calculate active filters count
     const activeFilterCount = [
         currentStatus,
         currentCategory,
         currentProperty,
-        currentPriority
-    ].filter(val => val && val !== 'All').length;
+        currentPriority,
+        currentRadius
+    ].filter(isFilterActive).length;
 
     // Helper to clear all filters
     const handleClearAll = () => {
@@ -77,8 +115,67 @@ const ServiceFilters: React.FC<ServiceFiltersProps> = ({
         if (onCategoryChange) onCategoryChange('All');
         if (onPropertyChange) onPropertyChange('All');
         if (onPriorityChange) onPriorityChange('All');
+        if (onRadiusChange) onRadiusChange('All');
         if (onSearch) onSearch('');
         setSearchTerm('');
+    };
+
+    const handleMobileToggle = (current: string | string[] | undefined, setter: ((val: any) => void) | undefined, option: string) => {
+        if (!setter) return;
+        const currentArray = Array.isArray(current) ? current : (current && current !== 'All' ? [current] : []);
+
+        if (option === 'All') {
+            setter(['All']);
+            return;
+        }
+
+        let next;
+        if (currentArray.includes(option)) {
+            next = currentArray.filter(v => v !== option);
+            if (next.length === 0) next = ['All'];
+        } else {
+            next = [...currentArray.filter(v => v !== 'All'), option];
+        }
+        setter(next);
+    };
+
+    const isOptionSelected = (current: string | string[] | undefined, option: string) => {
+        if (Array.isArray(current)) {
+            return current.includes(option);
+        }
+        return current === option;
+    };
+
+    const getStatusValue = () => {
+        if (Array.isArray(currentStatus)) {
+            if (currentStatus.includes('All') || currentStatus.length === 0) return props.statusLabel || 'Status';
+            return currentStatus;
+        }
+        return currentStatus === 'All' ? (props.statusLabel || 'Status') : currentStatus || (props.statusLabel || 'Status');
+    };
+
+    const getCategoryValue = () => {
+        if (Array.isArray(currentCategory)) {
+            if (currentCategory.includes('All') || currentCategory.length === 0) return props.categoryLabel || 'Category';
+            return currentCategory;
+        }
+        return currentCategory === 'All' ? (props.categoryLabel || 'Category') : currentCategory || (props.categoryLabel || 'Category');
+    };
+
+    const getPropertyValue = () => {
+        if (Array.isArray(currentProperty)) {
+            if (currentProperty.includes('All') || currentProperty.length === 0) return props.propertyLabel || 'Property';
+            return currentProperty;
+        }
+        return currentProperty === 'All' ? (props.propertyLabel || 'Property') : currentProperty || (props.propertyLabel || 'Property');
+    };
+
+    const getPriorityValue = () => {
+        if (Array.isArray(currentPriority)) {
+            if (currentPriority.includes('All') || currentPriority.length === 0) return props.priorityLabel || 'Priority';
+            return currentPriority;
+        }
+        return currentPriority === 'All' ? (props.priorityLabel || 'Priority') : currentPriority || (props.priorityLabel || 'Priority');
     };
 
     return (
@@ -128,52 +225,124 @@ const ServiceFilters: React.FC<ServiceFiltersProps> = ({
                     <Search className="absolute right-3 top-2.5 text-gray-400" size={16} />
                 </div>
 
+                {onDateRangeChange && (
+                    <DateRangePicker
+                        dateRange={dateRange}
+                        onDateRangeChange={onDateRangeChange}
+                        placeholder={props.propertyLabel || "Pick a date range"}
+                    />
+                )}
+
                 {onStatusChange && (
                     <SearchableDropdown
-                        value={currentStatus === 'All' ? (props.statusLabel || 'Status') : currentStatus || (props.statusLabel || 'Status')}
+                        value={getStatusValue()}
                         options={statuses}
                         onChange={handleFilterChange(onStatusChange)}
                         placeholder={props.statusLabel || "Status"}
                         buttonClassName={dropdownStyle}
                         startIcon={<PiPlusBold size={14} />}
                         hideArrow
+                        isMulti
                     />
                 )}
 
                 {onCategoryChange && (
                     <SearchableDropdown
-                        value={currentCategory === 'All' ? (props.categoryLabel || 'Category') : currentCategory || (props.categoryLabel || 'Category')}
+                        value={getCategoryValue()}
                         options={categories}
                         onChange={handleFilterChange(onCategoryChange)}
                         placeholder={props.categoryLabel || "Category"}
                         buttonClassName={dropdownStyle}
                         startIcon={<PiPlusBold size={14} />}
                         hideArrow
+                        isMulti
                     />
                 )}
 
                 {onPropertyChange && (
                     <SearchableDropdown
-                        value={currentProperty === 'All' ? (props.propertyLabel || 'Property') : currentProperty || (props.propertyLabel || 'Property')}
+                        value={getPropertyValue()}
                         options={properties}
                         onChange={handleFilterChange(onPropertyChange)}
                         placeholder={props.propertyLabel || "Property"}
                         buttonClassName={dropdownStyle}
                         startIcon={<PiPlusBold size={14} />}
                         hideArrow
+                        isMulti
                     />
                 )}
 
                 {onPriorityChange && (
                     <SearchableDropdown
-                        value={currentPriority === 'All' ? (props.priorityLabel || 'Priority') : currentPriority || (props.priorityLabel || 'Priority')}
+                        value={getPriorityValue()}
                         options={priorities}
                         onChange={handleFilterChange(onPriorityChange)}
                         placeholder={props.priorityLabel || "Priority"}
                         buttonClassName={dropdownStyle}
                         startIcon={<PiPlusBold size={14} />}
                         hideArrow
+                        isMulti
                     />
+                )}
+
+                {onRadiusChange && (
+                    <div className="relative" ref={radiusDropdownRef}>
+                        <button
+                            onClick={() => setIsRadiusDropdownOpen(!isRadiusDropdownOpen)}
+                            className={dropdownStyle}
+                        >
+                            <div className="flex items-center gap-2">
+                                <PiPlusBold size={14} />
+                                <span>{currentRadius === 'All' ? (props.radiusLabel || 'Radius') : currentRadius}</span>
+                            </div>
+                        </button>
+
+                        {isRadiusDropdownOpen && (
+                            <div className="absolute z-50 w-[240px] bg-white border border-gray-100 rounded-xl shadow-xl p-4 mt-2 animate-in fade-in zoom-in-95 duration-100">
+                                <div className="flex flex-col gap-3">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{props.radiusLabel || "Radius"}</span>
+                                        <span className="text-sm font-bold text-[#7BD747]">
+                                            {currentRadius === 'All' ? 'All miles' : currentRadius}
+                                        </span>
+                                    </div>
+                                    <div className="px-1">
+                                        <input
+                                            type="range"
+                                            min="0"
+                                            max="100"
+                                            step="5"
+                                            value={
+                                                currentRadius === 'All' ? 0 : parseInt(currentRadius?.split(' ')[0] || '0')
+                                            }
+                                            onChange={(e) => {
+                                                const val = parseInt(e.target.value);
+                                                if (val === 0) {
+                                                    onRadiusChange('All');
+                                                } else {
+                                                    onRadiusChange(`${val} miles`);
+                                                }
+                                            }}
+                                            className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#7BD747]"
+                                        />
+                                        <div className="flex justify-between mt-2 text-[10px] text-gray-400 font-bold uppercase tracking-tighter">
+                                            <span>All</span>
+                                            <span>25mi</span>
+                                            <span>50mi</span>
+                                            <span>75mi</span>
+                                            <span>100mi</span>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setIsRadiusDropdownOpen(false)}
+                                        className="w-full mt-2 py-1.5 bg-gray-50 text-gray-500 rounded-lg text-xs font-bold hover:bg-gray-100 transition-colors"
+                                    >
+                                        Close
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 )}
             </div>
 
@@ -193,6 +362,18 @@ const ServiceFilters: React.FC<ServiceFiltersProps> = ({
                         </div>
 
                         <div className="space-y-6 pb-24">
+                            {onDateRangeChange && (
+                                <div>
+                                    <h3 className="text-sm font-semibold text-gray-900 mb-3">{props.propertyLabel || "Date Range"}</h3>
+                                    <DateRangePicker
+                                        dateRange={dateRange}
+                                        onDateRangeChange={onDateRangeChange}
+                                        className="w-full"
+                                        placeholder={props.propertyLabel || "Pick a date range"}
+                                    />
+                                </div>
+                            )}
+
                             {onStatusChange && (
                                 <div>
                                     <h3 className="text-sm font-semibold text-gray-900 mb-3">{props.statusLabel || "Status"}</h3>
@@ -200,8 +381,8 @@ const ServiceFilters: React.FC<ServiceFiltersProps> = ({
                                         {statuses.map(option => (
                                             <button
                                                 key={option}
-                                                onClick={() => onStatusChange(option)}
-                                                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${currentStatus === option
+                                                onClick={() => handleMobileToggle(currentStatus, onStatusChange, option)}
+                                                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${isOptionSelected(currentStatus, option)
                                                     ? 'bg-[#7BD747] text-white border-[#7BD747]'
                                                     : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
                                                     }`}
@@ -220,8 +401,8 @@ const ServiceFilters: React.FC<ServiceFiltersProps> = ({
                                         {categories.map(option => (
                                             <button
                                                 key={option}
-                                                onClick={() => onCategoryChange(option)}
-                                                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${currentCategory === option
+                                                onClick={() => handleMobileToggle(currentCategory, onCategoryChange, option)}
+                                                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${isOptionSelected(currentCategory, option)
                                                     ? 'bg-[#7BD747] text-white border-[#7BD747]'
                                                     : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
                                                     }`}
@@ -240,8 +421,8 @@ const ServiceFilters: React.FC<ServiceFiltersProps> = ({
                                         {properties.map(option => (
                                             <button
                                                 key={option}
-                                                onClick={() => onPropertyChange(option)}
-                                                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${currentProperty === option
+                                                onClick={() => handleMobileToggle(currentProperty, onPropertyChange, option)}
+                                                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${isOptionSelected(currentProperty, option)
                                                     ? 'bg-[#7BD747] text-white border-[#7BD747]'
                                                     : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
                                                     }`}
@@ -260,8 +441,8 @@ const ServiceFilters: React.FC<ServiceFiltersProps> = ({
                                         {priorities.map(option => (
                                             <button
                                                 key={option}
-                                                onClick={() => onPriorityChange(option)}
-                                                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${currentPriority === option
+                                                onClick={() => handleMobileToggle(currentPriority, onPriorityChange, option)}
+                                                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors border ${isOptionSelected(currentPriority, option)
                                                     ? 'bg-[#7BD747] text-white border-[#7BD747]'
                                                     : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
                                                     }`}
@@ -269,6 +450,44 @@ const ServiceFilters: React.FC<ServiceFiltersProps> = ({
                                                 {option}
                                             </button>
                                         ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {onRadiusChange && (
+                                <div className="space-y-4">
+                                    <div className="flex justify-between items-center">
+                                        <h3 className="text-sm font-semibold text-gray-900">{props.radiusLabel || "Radius"}</h3>
+                                        <span className="text-sm font-bold text-[#7BD747]">
+                                            {currentRadius === 'All' ? 'All miles' : currentRadius}
+                                        </span>
+                                    </div>
+                                    <div className="px-2">
+                                        <input
+                                            type="range"
+                                            min="0"
+                                            max="100"
+                                            step="5"
+                                            value={
+                                                currentRadius === 'All' ? 0 : parseInt(currentRadius?.split(' ')[0] || '0')
+                                            }
+                                            onChange={(e) => {
+                                                const val = parseInt(e.target.value);
+                                                if (val === 0) {
+                                                    onRadiusChange('All');
+                                                } else {
+                                                    onRadiusChange(`${val} miles`);
+                                                }
+                                            }}
+                                            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#7BD747]"
+                                        />
+                                        <div className="flex justify-between mt-2 text-[10px] text-gray-400 font-bold uppercase tracking-tighter">
+                                            <span>All</span>
+                                            <span>25mi</span>
+                                            <span>50mi</span>
+                                            <span>75mi</span>
+                                            <span>100mi</span>
+                                        </div>
                                     </div>
                                 </div>
                             )}

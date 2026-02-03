@@ -141,7 +141,7 @@ const ProfileSettings = () => {
     };
 
     return (
-        <div className="min-h-screen font-sans">
+        <div className="min-h-screen font-sans w-full max-w-full overflow-x-hidden">
             <DeleteConfirmationModal
                 isOpen={showDeleteModal}
                 onClose={() => setShowDeleteModal(false)}
@@ -164,12 +164,12 @@ const ProfileSettings = () => {
 
                 {/* Main Content Card */}
                 <div className="bg-[#F6F6F6] rounded-[20px] shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-200">
+                    <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
                         <h1 className="text-2xl font-semibold text-gray-800">Account settings</h1>
                     </div>
 
                     {/* Tabs */}
-                    <div className="border-b border-gray-200 px-6 pt-2">
+                    <div className="border-b border-gray-200 px-4 sm:px-6 pt-2">
                         <ServiceTabs
                             tabs={[
                                 { label: 'Profile', value: 'profile' },
@@ -183,24 +183,19 @@ const ProfileSettings = () => {
                         />
                     </div>
 
-                    <div className="p-8">
+                    <div className="p-4 sm:p-8">
                         {/* 1. Header Section (Avatar) */}
-                        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-10">
+                        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-8 sm:mb-10">
                             <div className="relative">
-                                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-md bg-blue-100">
-                                    <img
-                                        src={userProfile.avatar}
-                                        alt={userProfile.name}
-                                        className="w-full h-full object-cover"
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).src = 'https://ui-avatars.com/api/?name=User&background=ff6b6b&color=fff';
-                                        }}
-                                    />
+                                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-4 border-white shadow-md bg-blue-100">
+                                    <div className="w-full h-full flex items-center justify-center text-3xl sm:text-4xl font-bold text-gray-700 bg-coral-100 uppercase">
+                                        SB
+                                    </div>
                                 </div>
                             </div>
-                            <div className="text-center sm:text-left mt-3">
-                                <h1 className="text-2xl font-bold text-gray-900">{userProfile.name}</h1>
-                                <p className="text-gray-500">{userProfile.email}</p>
+                            <div className="text-center sm:text-left">
+                                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{userProfile.name}</h1>
+                                <p className="text-sm text-gray-500">{userProfile.email}</p>
                             </div>
                         </div>
 
@@ -216,7 +211,7 @@ const ProfileSettings = () => {
                                 </DashboardButton>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 sm:gap-x-6 gap-y-4 sm:gap-y-6">
                                 {/* First Name */}
                                 <div>
                                     <label className="block text-xs font-semibold text-gray-700 mb-2 ml-1">First Name</label>
@@ -338,7 +333,7 @@ const ProfileSettings = () => {
                                 </div>
                             </div>
                             {isChangingPassword ? (
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-4">
                                     <div>
                                         <label className="block text-xs font-semibold text-gray-700 mb-2 ml-1">Old Password</label>
                                         <input
@@ -386,7 +381,7 @@ const ProfileSettings = () => {
                                 </DashboardButton>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                                 <div>
                                     <label className="block text-xs font-semibold text-gray-700 mb-2 ml-1">Country</label>
                                     {isEditingAddress ? (

@@ -5,7 +5,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import MoveInStepper from './components/MoveInStepper';
 import MoveInPropertySelection from './steps/MoveInPropertySelection';
 import MoveInTenantSelection from './steps/MoveInTenantSelection';
-import MoveInShareLease from './steps/MoveInShareLease';
 import MoveInRecurringRent from './steps/MoveInRecurringRent';
 import MoveInRecurringRentSettings from './steps/MoveInRecurringRentSettings';
 import MoveInDeposit from './steps/MoveInDeposit';
@@ -21,9 +20,9 @@ import { useCreateLease, useUpdateLease } from '../../../../hooks/useLeaseQuerie
 
 // Helper to map current flow step to stepper visual step (1-based)
 const getVisualStep = (step: number) => {
-    if (step === 1 || step === 2 || step === 3) return 1; // Property, Tenant, Share Lease -> Step 1
-    if (step === 4 || step === 5 || step === 6 || step === 7) return 2; // Recurring Rent, Settings, Deposit, Deposit Settings -> Step 2
-    if (step >= 8) return 3; // Late Fees and beyond -> Step 3
+    if (step === 1 || step === 2) return 1; // Property, Tenant -> Step 1
+    if (step === 3 || step === 4 || step === 5 || step === 6) return 2; // Recurring Rent, Settings, Deposit, Deposit Settings -> Step 2
+    if (step >= 7) return 3; // Late Fees and beyond -> Step 3
     return 1;
 };
 
@@ -83,49 +82,44 @@ const MoveIn: React.FC = () => {
     };
 
     const handleTenantNext = () => {
-        // Proceed to Step 3 (Share Lease)
+        // Proceed to Step 3 (Recurring Rent)
         setCurrentStep(3);
-    };
-
-    const handleShareLeaseNext = () => {
-        // Proceed to Step 4 (Recurring Rent)
-        setCurrentStep(4);
     };
 
     const handleRecurringRentNext = (enabled: boolean) => {
         if (enabled) {
-            // Proceed to Step 5 (Recurring Rent Settings)
-            setCurrentStep(5);
+            // Proceed to Step 4 (Recurring Rent Settings)
+            setCurrentStep(4);
         } else {
-            // Skip to Step 6 (Deposit)
-            setCurrentStep(6);
+            // Skip to Step 5 (Deposit)
+            setCurrentStep(5);
         }
     }
 
     const handleRecurringRentSettingsNext = () => {
-        // Proceed to Step 6 (Deposit)
-        setCurrentStep(6);
+        // Proceed to Step 5 (Deposit)
+        setCurrentStep(5);
     }
 
     const handleDepositNext = (hasDeposit: boolean) => {
         if (hasDeposit) {
-            // Proceed to Step 7 (Deposit Settings)
-            setCurrentStep(7);
+            // Proceed to Step 6 (Deposit Settings)
+            setCurrentStep(6);
         } else {
-            // Skip to Step 8 (Late Fees)
-            setCurrentStep(8);
+            // Skip to Step 7 (Late Fees)
+            setCurrentStep(7);
         }
     }
 
     const handleDepositSettingsNext = () => {
-        // Proceed to Step 8 (Late Fees)
-        setCurrentStep(8);
+        // Proceed to Step 7 (Late Fees)
+        setCurrentStep(7);
     }
 
     const handleLateFeesNext = (enableLateFees: boolean) => {
         if (enableLateFees) {
-            // Proceed to Step 9 (Late Fees Type)
-            setCurrentStep(9);
+            // Proceed to Step 8 (Late Fees Type)
+            setCurrentStep(8);
         } else {
             // Show completion modal immediately
             handleCompleteMoveIn();
@@ -133,8 +127,8 @@ const MoveIn: React.FC = () => {
     }
 
     const handleLateFeesTypeNext = () => {
-        // Proceed to Step 10 (One Time Late Fee or Daily Late Fee)
-        setCurrentStep(10);
+        // Proceed to Step 9 (One Time Late Fee or Daily Late Fee)
+        setCurrentStep(9);
     }
 
     const handleCompleteMoveIn = async () => {
@@ -251,75 +245,69 @@ const MoveIn: React.FC = () => {
                             )}
 
                             {currentStep === 3 && (
-                                <MoveInShareLease
-                                    onNext={handleShareLeaseNext}
-                                />
-                            )}
-
-                            {currentStep === 4 && (
                                 <MoveInRecurringRent
                                     onNext={handleRecurringRentNext}
                                     onBack={handleBack}
                                 />
                             )}
 
-                            {currentStep === 5 && (
+                            {currentStep === 4 && (
                                 <MoveInRecurringRentSettings
                                     onNext={handleRecurringRentSettingsNext}
                                     onBack={handleBack}
                                 />
                             )}
 
-                            {currentStep === 6 && (
+                            {currentStep === 5 && (
                                 <MoveInDeposit
                                     onNext={handleDepositNext}
                                     onBack={handleBack}
                                 />
                             )}
 
-                            {currentStep === 7 && (
+                            {currentStep === 6 && (
                                 <MoveInDepositSettings
                                     onNext={handleDepositSettingsNext}
                                     onBack={handleBack}
                                 />
                             )}
 
-                            {currentStep === 8 && (
+                            {currentStep === 7 && (
                                 <MoveInLateFees
                                     onNext={handleLateFeesNext}
                                     onBack={handleBack}
                                 />
                             )}
 
-                            {currentStep === 9 && (
+                            {currentStep === 8 && (
                                 <MoveInLateFeesType
                                     onNext={handleLateFeesTypeNext}
                                     onBack={handleBack}
                                 />
                             )}
 
-                            {currentStep === 10 && formData.lateFees.scheduleType === 'one-time' && (
+                            {currentStep === 9 && formData.lateFees.scheduleType === 'one-time' && (
                                 <MoveInOneTimeLateFees
                                     onNext={handleCompleteMoveIn}
                                     onBack={handleBack}
                                 />
                             )}
 
-                            {currentStep === 10 && formData.lateFees.scheduleType === 'daily' && (
+                            {currentStep === 9 && formData.lateFees.scheduleType === 'daily' && (
                                 <MoveInDailyLateFees
                                     onNext={handleCompleteMoveIn}
                                     onBack={handleBack}
                                 />
                             )}
 
-                            {currentStep === 10 && formData.lateFees.scheduleType === 'both' && (
+                            {currentStep === 9 && formData.lateFees.scheduleType === 'both' && (
                                 <MoveInBothLateFees
                                     onNext={handleCompleteMoveIn}
                                     onBack={handleBack}
                                 />
                             )}
 
-                            {currentStep === 10 && !['one-time', 'daily', 'both'].includes(formData.lateFees.scheduleType || '') && (
+                            {currentStep === 9 && !['one-time', 'daily', 'both'].includes(formData.lateFees.scheduleType || '') && (
                                 <div className="flex flex-col items-center justify-center p-8 text-center">
                                     <p className="text-gray-500 mb-4">Invalid late fee schedule type selected.</p>
                                     <button

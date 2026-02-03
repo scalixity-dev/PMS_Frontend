@@ -39,7 +39,158 @@ interface SidebarDropdownLinkProps {
     activeDropdown: string | null;
     setActiveDropdown: (label: string | null) => void;
     exact?: boolean;
+    onClick?: () => void;
+    linkRef?: React.RefObject<HTMLDivElement>;
 }
+
+// --- Download Popup Component ---
+interface DownloadPopupProps {
+    isOpen: boolean;
+    onClose: () => void;
+    position: { top: number; left: number } | null;
+    popupRef: React.RefObject<HTMLDivElement | null>;
+}
+
+interface DownloadedFile {
+    id: number;
+    name: string;
+    size: string;
+    date: string;
+    type: 'pdf' | 'image' | 'document' | 'video';
+}
+
+const mockDownloadedFiles: DownloadedFile[] = [
+    { id: 1, name: "Invoice_Jan2024.pdf", size: "1.2 MB", date: "2024-01-28", type: "pdf" },
+    { id: 2, name: "Work_Order_Report.pdf", size: "856 KB", date: "2024-01-27", type: "pdf" },
+    { id: 3, name: "Property_Photos.zip", size: "15.4 MB", date: "2024-01-26", type: "image" },
+    { id: 4, name: "Service_Contract.docx", size: "245 KB", date: "2024-01-25", type: "document" },
+    { id: 5, name: "Maintenance_Guide.pdf", size: "3.4 MB", date: "2024-01-24", type: "pdf" },
+    { id: 6, name: "Kitchen_Renovation_Specs.docx", size: "1.1 MB", date: "2024-01-23", type: "document" },
+    { id: 7, name: "Roof_Inspection.mp4", size: "45.2 MB", date: "2024-01-22", type: "video" },
+    { id: 8, name: "Floor_Plan_v2.pdf", size: "2.8 MB", date: "2024-01-21", type: "pdf" },
+];
+
+const DownloadPopup: React.FC<DownloadPopupProps> = ({ isOpen, onClose, position, popupRef }) => {
+    const [popupStyle, setPopupStyle] = useState<React.CSSProperties>({});
+
+    useEffect(() => {
+        if (isOpen && position && popupRef.current) {
+            const popupHeight = popupRef.current.offsetHeight;
+            const popupWidth = popupRef.current.offsetWidth;
+            const viewportHeight = window.innerHeight;
+            const viewportWidth = window.innerWidth;
+
+            let top = position.top;
+            let left = position.left;
+
+            // Prevent overflow from bottom
+            if (top + popupHeight > viewportHeight - 20) {
+                top = viewportHeight - popupHeight - 20;
+            }
+
+            // Prevent overflow from top
+            if (top < 10) {
+                top = 10;
+            }
+
+            // For mobile, handle width differently
+            if (viewportWidth < 640) {
+                left = (viewportWidth - popupWidth) / 2;
+            } else {
+                // Prevent overflow from right
+                if (left + popupWidth > viewportWidth - 20) {
+                    left = viewportWidth - popupWidth - 20;
+                }
+            }
+
+            setPopupStyle({
+                top: `${top}px`,
+                left: `${left}px`,
+            });
+        }
+    }, [isOpen, position]);
+
+    if (!isOpen || !position) return null;
+
+    const getFileIcon = (type: string) => {
+        switch (type) {
+            case 'pdf':
+                return <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center text-red-600 text-[10px] font-bold">PDF</div>;
+            case 'image':
+                return <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 text-[10px] font-bold">IMG</div>;
+            case 'document':
+                return <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600 text-[10px] font-bold">DOC</div>;
+            case 'video':
+                return <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600 text-[10px] font-bold">VID</div>;
+            default:
+                return <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center text-gray-600 text-[10px] font-bold">FILE</div>;
+        }
+    };
+
+    return createPortal(
+        <div
+            ref={popupRef}
+            className="fixed z-[9999] bg-white rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-gray-100 w-[calc(100vw-32px)] sm:w-[450px] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+            style={popupStyle}
+        >
+            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/30">
+                <div>
+                    <h3 className="text-base font-bold text-gray-900">Downloads</h3>
+                    <p className="text-[11px] text-gray-500 font-medium">Manage your recently downloaded files</p>
+                </div>
+                <button
+                    onClick={onClose}
+                    className="p-2 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600 transition-colors"
+                    aria-label="Close downloads"
+                    title="Close downloads"
+                >
+                    <X size={18} />
+                </button>
+            </div>
+            <div className="max-h-[min(400px,60vh)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 hover:scrollbar-thumb-gray-300 scrollbar-track-transparent">
+                {mockDownloadedFiles.length > 0 ? (
+                    mockDownloadedFiles.map((file) => (
+                        <div key={file.id} className="flex items-center gap-3 p-3.5 hover:bg-gray-50/80 transition-colors border-b border-gray-50 last:border-b-0">
+                            {getFileIcon(file.type)}
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-gray-900 truncate tracking-tight">{file.name}</p>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                    <span className="text-[11px] text-gray-500 font-medium">{file.size}</span>
+                                    <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                                    <span className="text-[11px] text-gray-500 font-medium">
+                                        {(() => {
+                                            const [y, m, d] = file.date.split('-').map(Number);
+                                            return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                                        })()}
+                                    </span>
+                                </div>
+                            </div>
+                            <button
+                                className="p-2.5 text-gray-400 hover:text-[#3A6D6C] hover:bg-[#3A6D6C]/10 rounded-xl transition-all active:scale-90"
+                                aria-label={`Download ${file.name}`}
+                                title={`Download ${file.name}`}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                            </button>
+                        </div>
+                    ))
+                ) : (
+                    <div className="p-8 text-center text-gray-500 text-sm">No recent downloads found.</div>
+                )}
+            </div>
+            <div className="p-3 border-t border-gray-100 flex justify-between items-center bg-gray-50/50">
+                <span className="text-xs font-semibold text-gray-500 ml-1">{mockDownloadedFiles.length} files total</span>
+                <button
+                    onClick={onClose}
+                    className="px-6 py-2 bg-[#3A6D6C] text-white rounded-lg text-sm font-bold hover:bg-[#2c5251] transition-all active:scale-95 shadow-lg shadow-[#3A6D6C]/20"
+                >
+                    Done
+                </button>
+            </div>
+        </div>,
+        document.body
+    );
+};
 
 // --- Component Implementations ---
 
@@ -212,14 +363,65 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
     closeMobileDrawer?: () => void;
 }) {
 
+    const location = useLocation();
     const navigate = useNavigate();
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+    const [isDownloadPopupOpen, setIsDownloadPopupOpen] = useState(false);
+    const [downloadPopupPosition, setDownloadPopupPosition] = useState({ top: 0, left: 0 });
+    const downloadButtonRef = useRef<HTMLDivElement>(null);
+    const downloadPopupRef = useRef<HTMLDivElement>(null);
+
+    // Close dropdown on route change
+    useEffect(() => {
+        setActiveDropdown(null);
+        setIsDownloadPopupOpen(false);
+    }, [location.pathname]);
 
     // Navigate helper that also closes mobile drawer
     const onNavigate = (path: string) => {
         navigate(path);
         if (isMobile && closeMobileDrawer) closeMobileDrawer();
     }
+
+    const toggleDownloads = () => {
+        if (!isDownloadPopupOpen && downloadButtonRef.current) {
+            const rect = downloadButtonRef.current.getBoundingClientRect();
+            setDownloadPopupPosition({
+                top: rect.top,
+                left: isMobile ? 16 : rect.right + 15
+            });
+        }
+        setIsDownloadPopupOpen(!isDownloadPopupOpen);
+    }
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as Node;
+            if (downloadButtonRef.current && !downloadButtonRef.current.contains(target) && downloadPopupRef.current && !downloadPopupRef.current.contains(target)) {
+                setIsDownloadPopupOpen(false);
+            }
+        };
+
+        const handleScroll = () => {
+            if (isDownloadPopupOpen && downloadButtonRef.current) {
+                const rect = downloadButtonRef.current.getBoundingClientRect();
+                setDownloadPopupPosition({
+                    top: rect.top,
+                    left: isMobile ? 16 : rect.right + 15
+                });
+            }
+        }
+
+        document.addEventListener('mousedown', handleClickOutside);
+        window.addEventListener('scroll', handleScroll, true);
+        window.addEventListener('resize', handleScroll);
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            window.removeEventListener('scroll', handleScroll, true);
+            window.removeEventListener('resize', handleScroll);
+        };
+    }, [isDownloadPopupOpen, isMobile]);
 
     // Enhance SidebarSubLink to close drawer on mobile click
     const MobileSidebarSubLink = ({ label, to }: { label: string, to: string }) => {
@@ -297,7 +499,7 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
                             activeDropdown={activeDropdown}
                             setActiveDropdown={setActiveDropdown}
                         >
-                            <SubLink label="Tasks" to="/service-dashboard/tasks" />
+                            <SubLink label="Find a Job" to="/service-dashboard/find-job" />
                             <SubLink label="Requests" to="/service-dashboard/requests" />
                             <SubLink label="Request Board" to="/service-dashboard/requests-board" />
                         </SidebarLink>
@@ -331,18 +533,28 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
                         <SidebarLink
                             label="File Manager"
                             icon={<PiFolderFill size={24} />}
-                            to="/service-dashboard/files"
+                            to="/service-dashboard/file-manager"
                             activeDropdown={activeDropdown}
                             setActiveDropdown={setActiveDropdown}
                         />
 
-                        <SidebarLink
-                            label="Downloads"
-                            icon={<PiDownloadFill size={24} />}
-                            to="/service-dashboard/downloads"
-                            activeDropdown={activeDropdown}
-                            setActiveDropdown={setActiveDropdown}
-                        />
+                        <div ref={downloadButtonRef}>
+                            <div
+                                className={`flex items-center px-3 py-2.5 rounded-md transition-colors cursor-pointer text-gray-700 hover:bg-gray-100 group ${collapsed ? "justify-center" : "justify-between"}`}
+                                onClick={toggleDownloads}
+                            >
+                                <div className={`flex items-center gap-3 ${collapsed ? 'justify-center w-full' : ''}`}>
+                                    <span className="text-black group-hover:text-black">
+                                        <PiDownloadFill size={24} />
+                                    </span>
+                                    {!collapsed && (
+                                        <span className="text-black group-hover:text-black text-sm font-medium">
+                                            Downloads
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
 
                     </nav>
                 </div>
@@ -356,6 +568,7 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
                     />
                 </div>
             </div>
+            <DownloadPopup isOpen={isDownloadPopupOpen} onClose={() => setIsDownloadPopupOpen(false)} position={downloadPopupPosition} popupRef={downloadPopupRef} />
         </SidebarContext.Provider>
     );
 }

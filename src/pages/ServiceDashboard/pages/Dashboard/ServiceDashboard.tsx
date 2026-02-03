@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useOutletContext, useNavigate } from 'react-router-dom';
 import RequestCard from './components/RequestCard';
 import DashboardButton from '../../components/DashboardButton';
 import ServiceTabs from '../../components/ServiceTabs';
+import { PiEnvelopeSimpleLight, PiToolboxLight } from 'react-icons/pi';
 
 
 interface RequestItem {
@@ -9,7 +11,6 @@ interface RequestItem {
     status: 'Normal' | 'Urgent' | 'Critical';
     category: string;
     propertyName: string;
-    avatarSeed: string;
     tabStatus: 'new_request' | 'in_process';
 }
 
@@ -19,7 +20,6 @@ const mockRequests: RequestItem[] = [
         status: 'Normal',
         category: 'Appliances / Refrigerator / Other',
         propertyName: 'Luxury Application',
-        avatarSeed: 'Felix',
         tabStatus: 'new_request'
     },
     {
@@ -27,7 +27,6 @@ const mockRequests: RequestItem[] = [
         status: 'Critical',
         category: 'Plumbing / Leak',
         propertyName: 'Sunset Apartments',
-        avatarSeed: 'Aneka',
         tabStatus: 'new_request'
     },
     {
@@ -35,7 +34,6 @@ const mockRequests: RequestItem[] = [
         status: 'Urgent',
         category: 'Electrical / Outage',
         propertyName: 'Downtown Lofts',
-        avatarSeed: 'Bob',
         tabStatus: 'in_process'
     },
     {
@@ -43,7 +41,6 @@ const mockRequests: RequestItem[] = [
         status: 'Normal',
         category: 'General / Maintenance',
         propertyName: 'Green Valley',
-        avatarSeed: 'Jack',
         tabStatus: 'new_request'
     },
     {
@@ -51,31 +48,31 @@ const mockRequests: RequestItem[] = [
         status: 'Normal',
         category: 'HVAC / Heating',
         propertyName: 'Skyline Tower',
-        avatarSeed: 'Molly',
         tabStatus: 'in_process'
     }
 ];
 
+interface DashboardContext {
+    sidebarCollapsed: boolean;
+}
+
 const ServiceDashboard: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'new_request' | 'in_process'>('new_request');
+    const { sidebarCollapsed } = useOutletContext<DashboardContext>() || { sidebarCollapsed: false };
+    const navigate = useNavigate();
 
     const filteredRequests = mockRequests.filter(req => req.tabStatus === activeTab);
 
     return (
-        <div className="flex flex-col lg:flex-row gap-6 p-2">
+        <div className={`flex flex-col lg:flex-row gap-6 p-2 mx-auto transition-all duration-300 ${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'}`}>
 
             {/* Left Column: Profile & Stats */}
             <div className="w-full lg:w-1/4 flex flex-col gap-6">
 
                 {/* Profile Card */}
                 <div className="bg-white rounded-3xl shadow-sm p-6 flex flex-col items-center text-center border border-gray-100">
-                    <div className="w-24 h-24 bg-coral-100 rounded-full mb-4 overflow-hidden relative">
-                        {/* Placeholder for Avatar - Replicating the illustration look with code or generic image if we had one */}
-                        <img
-                            src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
-                            alt="Siddak Bagga"
-                            className="w-full h-full object-cover"
-                        />
+                    <div className="w-24 h-24 bg-coral-100 rounded-full mb-4 overflow-hidden relative flex items-center justify-center text-4xl font-bold text-gray-700">
+                        SB
                     </div>
                     <h2 className="text-xl font-bold text-gray-900">
                         Service Provider
@@ -93,7 +90,12 @@ const ServiceDashboard: React.FC = () => {
                             <p className="text-gray-500 text-sm mb-1">Outstanding</p>
                             <p className="text-xl font-bold text-gray-900">2.00 INR</p>
                         </div>
-                        <button className="text-[#7BD747] text-sm font-medium hover:underline">View</button>
+                        <button
+                            onClick={() => navigate('/service-dashboard/accounting')}
+                            className="text-[#7BD747] text-sm font-medium hover:underline"
+                        >
+                            View
+                        </button>
                     </div>
                     <div className="border-t border-gray-100"></div>
 
@@ -103,7 +105,12 @@ const ServiceDashboard: React.FC = () => {
                             <p className="text-gray-500 text-sm mb-1">Calendar Reminder</p>
                             <p className="text-xl font-bold text-gray-900">0</p>
                         </div>
-                        <button className="text-[#7BD747] text-sm font-medium hover:underline">View</button>
+                        <button
+                            onClick={() => navigate('/service-dashboard/calendar')}
+                            className="text-[#7BD747] text-sm font-medium hover:underline"
+                        >
+                            View
+                        </button>
                     </div>
                     <div className="border-t border-gray-100"></div>
 
@@ -113,7 +120,12 @@ const ServiceDashboard: React.FC = () => {
                             <p className="text-gray-500 text-sm mb-1">Job Leads</p>
                             <p className="text-xl font-bold text-gray-900">0</p>
                         </div>
-                        <button className="text-[#7BD747] text-sm font-medium hover:underline">View</button>
+                        <button
+                            onClick={() => navigate('/service-dashboard/find-job')}
+                            className="text-[#7BD747] text-sm font-medium hover:underline"
+                        >
+                            View
+                        </button>
                     </div>
                 </div>
 
@@ -121,7 +133,12 @@ const ServiceDashboard: React.FC = () => {
                 <div className="bg-white rounded-3xl shadow-sm p-6 border border-gray-100 relative overflow-hidden">
                     <div className="flex justify-between items-start mb-4">
                         <h3 className="text-lg font-bold text-gray-800">Business Profile</h3>
-                        <button className="text-[#7BD747] text-sm font-medium hover:underline">Activate</button>
+                        <button
+                            onClick={() => navigate('/service-dashboard/settings/business-profile')}
+                            className="text-[#7BD747] text-sm font-medium hover:underline"
+                        >
+                            Activate
+                        </button>
                     </div>
 
                     <div className="flex items-center gap-3">
@@ -152,27 +169,58 @@ const ServiceDashboard: React.FC = () => {
                     />
 
                     <div className="flex gap-3 w-full md:w-auto pb-1 md:pl-0">
-                        <DashboardButton bgColor="#3A6B65" className="text-white flex-1 md:flex-none">
+                        <DashboardButton
+                            onClick={() => navigate('/service-dashboard/find-job')}
+                            bgColor="#3A6B65"
+                            className="text-white flex-1 md:flex-none"
+                        >
                             Find a Job
-                        </DashboardButton>
-                        <DashboardButton bgColor="#7CD947" className="text-white flex-1 md:flex-none">
-                            Add Request
                         </DashboardButton>
                     </div>
                 </div>
 
                 {/* Content Area - Request Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {filteredRequests.map((request) => (
-                        <RequestCard
-                            key={request.id}
-                            status={request.status}
-                            category={request.category}
-                            propertyName={request.propertyName}
-                            avatarSeed={request.avatarSeed}
-                        />
-                    ))}
-                </div>
+                {filteredRequests.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {filteredRequests.map((request) => (
+                            <RequestCard
+                                key={request.id}
+                                id={request.id}
+                                status={request.status}
+                                category={request.category}
+                                propertyName={request.propertyName}
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-gray-200 shadow-sm">
+                        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                            {activeTab === 'new_request'
+                                ? <PiEnvelopeSimpleLight size={40} className="text-gray-400" />
+                                : <PiToolboxLight size={40} className="text-gray-400" />
+                            }
+                        </div>
+                        {mockRequests.length === 0 ? (
+                            <>
+                                <h3 className="text-xl font-bold text-gray-900 mb-2">No requests yet</h3>
+                                <p className="text-gray-500 text-center max-w-md px-6 leading-relaxed">
+                                    You haven't received any maintenance requests yet. When a property owner sends you a request, it will appear here.
+                                </p>
+                            </>
+                        ) : (
+                            <>
+                                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                                    {activeTab === 'new_request' ? 'No new requests' : 'No requests in process'}
+                                </h3>
+                                <p className="text-gray-500 text-center max-w-md px-6 leading-relaxed">
+                                    {activeTab === 'new_request'
+                                        ? 'You currently have no new maintenance requests to review.'
+                                        : 'You currently have no active jobs in progress. Check your new requests to get started.'}
+                                </p>
+                            </>
+                        )}
+                    </div>
+                )}
 
             </div>
         </div>

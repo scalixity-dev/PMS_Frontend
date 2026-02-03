@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { PiPlus, PiChatCircleText, PiDotsThreeOutlineFill } from "react-icons/pi";
+import { useNavigate, useOutletContext } from 'react-router-dom';
+import { PiChatCircleText, PiDotsThreeOutlineFill, PiKanbanLight } from "react-icons/pi";
 import {
     DndContext,
     DragOverlay,
@@ -43,6 +43,7 @@ const COLUMNS: ColumnId[] = ['New', 'In Progress', 'On Hold', 'Completed', 'Canc
 
 // --- Sortable Item Component (The Card) ---
 const SortableRequestCard = ({ request }: { request: Request }) => {
+    const navigate = useNavigate();
     const {
         attributes,
         listeners,
@@ -102,9 +103,17 @@ const SortableRequestCard = ({ request }: { request: Request }) => {
 
             <div className="flex justify-between items-center">
                 <div className="w-8 h-8 rounded-full bg-blue-100 border-2 border-white flex items-center justify-center overflow-hidden">
-                    <img src={request.avatar} alt={request.client} className="w-full h-full object-cover" />
+                    <div className="w-full h-full bg-coral-100 flex items-center justify-center text-[10px] font-bold text-gray-700">
+                        {request.client.split(' ').map(n => n[0]).join('')}
+                    </div>
                 </div>
-                <button className="text-[#8BDC5E] text-sm font-medium hover:underline">
+                <button
+                    className="text-[#8BDC5E] text-sm font-medium hover:underline"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/service-dashboard/requests/${request.id}`);
+                    }}
+                >
                     View
                 </button>
             </div>
@@ -135,7 +144,12 @@ const KanbanColumn = ({ id, requests }: { id: string, requests: Request[] }) => 
 };
 
 
+interface DashboardContext {
+    sidebarCollapsed: boolean;
+}
+
 const ServiceRequestsBoard = () => {
+    const { sidebarCollapsed } = useOutletContext<DashboardContext>() || { sidebarCollapsed: false };
     const [requests, setRequests] = useState<Request[]>([
         { id: '12345', status: 'New', category: 'Appliances', subCategory: 'General', property: 'Sunset Apartments', priority: 'Critical', client: 'Alice Johnson', avatar: 'https://i.pravatar.cc/150?u=1' },
         { id: '12346', status: 'In Progress', category: 'Plumbing', subCategory: 'Leak', property: 'Downtown Lofts', priority: 'Normal', client: 'Bob Smith', avatar: 'https://i.pravatar.cc/150?u=2' },
@@ -150,10 +164,10 @@ const ServiceRequestsBoard = () => {
     const navigate = useNavigate();
 
     const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState('All'); // Note: Filtering columns might effectively hide them or empty them
-    const [categoryFilter, setCategoryFilter] = useState('All');
-    const [propertyFilter, setPropertyFilter] = useState('All');
-    const [priorityFilter, setPriorityFilter] = useState('All');
+    const [statusFilter, setStatusFilter] = useState<string | string[]>('All'); // Note: Filtering columns might effectively hide them or empty them
+    const [categoryFilter, setCategoryFilter] = useState<string | string[]>('All');
+    const [propertyFilter, setPropertyFilter] = useState<string | string[]>('All');
+    const [priorityFilter, setPriorityFilter] = useState<string | string[]>('All');
     const [activeId, setActiveId] = useState<string | null>(null);
 
     // Filter Logic
@@ -167,10 +181,14 @@ const ServiceRequestsBoard = () => {
             req.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
             req.id.includes(searchTerm);
 
-        const matchesStatus = statusFilter === 'All' || req.status === statusFilter;
-        const matchesCategory = categoryFilter === 'All' || req.category === categoryFilter;
-        const matchesProperty = propertyFilter === 'All' || req.property === propertyFilter;
-        const matchesPriority = priorityFilter === 'All' || req.priority === priorityFilter;
+        const matchesStatus = statusFilter === 'All' ||
+            (Array.isArray(statusFilter) ? (statusFilter.includes('All') || statusFilter.includes(req.status)) : req.status === statusFilter);
+        const matchesCategory = categoryFilter === 'All' ||
+            (Array.isArray(categoryFilter) ? (categoryFilter.includes('All') || categoryFilter.includes(req.category)) : req.category === categoryFilter);
+        const matchesProperty = propertyFilter === 'All' ||
+            (Array.isArray(propertyFilter) ? (propertyFilter.includes('All') || propertyFilter.includes(req.property)) : req.property === propertyFilter);
+        const matchesPriority = priorityFilter === 'All' ||
+            (Array.isArray(priorityFilter) ? (priorityFilter.includes('All') || priorityFilter.includes(req.priority)) : req.priority === priorityFilter);
 
         return matchesSearch && matchesStatus && matchesCategory && matchesProperty && matchesPriority;
     });
@@ -254,11 +272,13 @@ const ServiceRequestsBoard = () => {
     }, {} as Record<string, Request[]>);
 
     // Only show columns matching status filter if not All
-    const visibleColumns = statusFilter === 'All' ? COLUMNS : COLUMNS.filter(c => c === statusFilter);
+    const visibleColumns = statusFilter === 'All'
+        ? COLUMNS
+        : COLUMNS.filter(c => Array.isArray(statusFilter) ? (statusFilter.includes('All') || statusFilter.includes(c)) : c === statusFilter);
 
 
     return (
-        <div className="h-full flex flex-col">
+        <div className={`h-full flex flex-col mx-auto transition-all duration-300 ${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'}`}>
             {/* Fixed Header Area */}
             <div className="flex-none">
                 <ServiceBreadCrumb
@@ -289,11 +309,8 @@ const ServiceRequestsBoard = () => {
                                 <path d="M2.5 14.1667H17.5" stroke="#4B5563" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                         </button>
-                        <DashboardButton bgColor="#8BDC5E" textColor="text-white" onClick={() => alert("Feature Coming Soon")}>
+                        <DashboardButton bgColor="#8BDC5E" textColor="text-white" onClick={() => navigate('/service-dashboard/find-job')}>
                             Find a Job
-                        </DashboardButton>
-                        <DashboardButton bgColor="white" textColor="text-gray-700" icon={PiPlus} onClick={() => alert("Feature Coming Soon")}>
-                            Add Request
                         </DashboardButton>
                     </div>
                 </div>
@@ -315,30 +332,53 @@ const ServiceRequestsBoard = () => {
 
             {/* Scrollable Board Area */}
             <div className="flex-1 overflow-x-auto overflow-y-hidden snap-x snap-mandatory [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-300">
-                <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCorners}
-                    onDragStart={handleDragStart}
-                    onDragOver={handleDragOver}
-                    onDragEnd={handleDragEnd}
-                >
-                    <div className="flex h-full pb-4 gap-4 px-1">
-                        {visibleColumns.map(colId => (
-                            <KanbanColumn key={colId} id={colId} requests={columns[colId]} />
-                        ))}
-                    </div>
+                {filteredRequests.length > 0 ? (
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCorners}
+                        onDragStart={handleDragStart}
+                        onDragOver={handleDragOver}
+                        onDragEnd={handleDragEnd}
+                    >
+                        <div className="flex h-full pb-4 gap-4 px-1">
+                            {visibleColumns.map(colId => (
+                                <KanbanColumn key={colId} id={colId} requests={columns[colId]} />
+                            ))}
+                        </div>
 
-                    <DragOverlay>
-                        {(() => {
-                            const activeRequest = requests.find(r => r.id === activeId);
-                            return activeRequest ? (
-                                <div className="rotate-3 cursor-grabbing opacity-90">
-                                    <SortableRequestCard request={activeRequest} />
-                                </div>
-                            ) : null;
-                        })()}
-                    </DragOverlay>
-                </DndContext>
+                        <DragOverlay>
+                            {(() => {
+                                const activeRequest = requests.find(r => r.id === activeId);
+                                return activeRequest ? (
+                                    <div className="rotate-3 cursor-grabbing opacity-90">
+                                        <SortableRequestCard request={activeRequest} />
+                                    </div>
+                                ) : null;
+                            })()}
+                        </DragOverlay>
+                    </DndContext>
+                ) : (
+                    <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-gray-200 shadow-sm mx-1">
+                        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                            <PiKanbanLight size={40} className="text-gray-400" />
+                        </div>
+                        {requests.length === 0 ? (
+                            <>
+                                <h3 className="text-xl font-bold text-gray-900 mb-2">No requests yet</h3>
+                                <p className="text-gray-500 text-center max-w-md px-6 leading-relaxed">
+                                    Your board is currently empty. When you receive maintenance requests, they will appear here as cards that you can organize.
+                                </p>
+                            </>
+                        ) : (
+                            <>
+                                <h3 className="text-xl font-bold text-gray-900 mb-2">No requests found</h3>
+                                <p className="text-gray-500 text-center max-w-md px-6 leading-relaxed">
+                                    We couldn't find any maintenance requests matching your filters on the board. Try adjusting your search or filters to see your tasks.
+                                </p>
+                            </>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );
