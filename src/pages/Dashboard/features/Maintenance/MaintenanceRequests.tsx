@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate, useOutletContext, useLocation } from 'react-router-dom';
-import { ChevronLeft, Plus, Check, MessageSquare, MoreHorizontal, Edit, Repeat, Printer, Trash2 } from 'lucide-react';
+import { ChevronLeft, Plus, Check, MessageSquare, MoreHorizontal, Edit, Repeat, Printer, Trash2, UserPlus } from 'lucide-react';
 import MakeRecurringModal from './components/MakeRecurringModal';
+import AssigneeModal from './components/AssigneeModal';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import Pagination from '../../components/Pagination';
@@ -120,7 +121,7 @@ const MOCK_REQUESTS = [
         category: 'Luxury',
         subCategory: 'Lights/Beaping',
         priority: 'Normal',
-        assignee: 'Vedh',
+        assignee: null, // Unassigned
         propertyName: 'Luxury Property',
     },
     {
@@ -131,7 +132,7 @@ const MOCK_REQUESTS = [
         category: 'Luxury',
         subCategory: 'Lights/Beaping',
         priority: 'Normal',
-        assignee: 'Vedh',
+        assignee: null, // Unassigned
         propertyName: 'Abc Apartsment',
     },
     {
@@ -164,7 +165,7 @@ const MOCK_REQUESTS = [
         category: 'Interior',
         subCategory: 'Plumbing',
         priority: 'Normal',
-        assignee: 'Mike',
+        assignee: null, // Unassigned
         propertyName: 'Ocean View Apartments',
     },
     {
@@ -200,10 +201,14 @@ const Requests: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [requestToDelete, setRequestToDelete] = useState<string | null>(null);
+    const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
     const [isRecurringModalOpen, setIsRecurringModalOpen] = useState(false);
     const [selectedRequestForRecurring, setSelectedRequestForRecurring] = useState<typeof MOCK_REQUESTS[0] | null>(null);
+    const [isAssigneeModalOpen, setIsAssigneeModalOpen] = useState(false);
+    const [selectedRequestForAssign, setSelectedRequestForAssign] = useState<string | null>(null);
+    const [requestsData, setRequestsData] = useState(MOCK_REQUESTS);
     const [filters, setFilters] = useState<{
         status: string[];
         assignee: string[];
@@ -234,6 +239,17 @@ const Requests: React.FC = () => {
         setIsDeleteModalOpen(true);
     };
 
+    const handleBulkDeleteClick = () => {
+        setIsBulkDeleteModalOpen(true);
+    };
+
+    const confirmBulkDelete = () => {
+        console.log('Deleting requests:', selectedItems);
+        setRequestsData(prev => prev.filter(r => !selectedItems.includes(r.id)));
+        setSelectedItems([]);
+        setIsBulkDeleteModalOpen(false);
+    };
+
     const handleEdit = (id: string) => {
         console.log('Edit clicked for:', id);
         navigate('/dashboard/maintenance/request', { state: { editMode: true, id } });
@@ -241,7 +257,7 @@ const Requests: React.FC = () => {
 
     const handleMakeRecurring = (id: string) => {
         console.log('Make Recurring clicked for:', id);
-        const request = MOCK_REQUESTS.find(r => r.id === id);
+        const request = requestsData.find(r => r.id === id);
         if (request) {
             setSelectedRequestForRecurring(request);
             setIsRecurringModalOpen(true);
@@ -261,8 +277,32 @@ const Requests: React.FC = () => {
 
     const confirmDelete = () => {
         console.log('Deleting request:', requestToDelete);
+        if (requestToDelete) {
+            setRequestsData(prev => prev.filter(r => r.id !== requestToDelete));
+        }
         setIsDeleteModalOpen(false);
         setRequestToDelete(null);
+    };
+
+    const handleAssignClick = (id: string) => {
+        setSelectedRequestForAssign(id);
+        setIsAssigneeModalOpen(true);
+    };
+
+    const handleAssigneeChange = (newAssignee: string) => {
+        if (selectedRequestForAssign) {
+            setRequestsData(prev => prev.map(r =>
+                r.id === selectedRequestForAssign
+                    ? { ...r, assignee: newAssignee === 'Unassigned' ? null : newAssignee }
+                    : r
+            ));
+        }
+        setIsAssigneeModalOpen(false);
+        setSelectedRequestForAssign(null);
+    };
+
+    const handleChatClick = (assignee: string) => {
+        navigate(`/dashboard/messages?assignee=${encodeURIComponent(assignee)}`);
     };
 
     const filterOptions: Record<string, FilterOption[]> = {
@@ -289,23 +329,24 @@ const Requests: React.FC = () => {
 
     // Filter Logic
     const filteredRequests = useMemo(() => {
-        return MOCK_REQUESTS.filter(item => {
+        return requestsData.filter(item => {
+            const assigneeName = item.assignee || '';
             const matchesSearch = searchQuery === '' ||
                 item.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 item.subCategory.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                item.assignee.toLowerCase().includes(searchQuery.toLowerCase());
+                assigneeName.toLowerCase().includes(searchQuery.toLowerCase());
 
             const matchesStatus = filters.status.length === 0 || filters.status.some(s => item.status.toLowerCase() === s.toLowerCase());
-            const matchesAssignee = filters.assignee.length === 0 || filters.assignee.some(a => item.assignee.toLowerCase().includes(a.toLowerCase()));
+            const matchesAssignee = filters.assignee.length === 0 || filters.assignee.some(a => assigneeName.toLowerCase().includes(a.toLowerCase()));
             const matchesProperty = filters.property.length === 0 || filters.property.some(p => item.propertyName.toLowerCase().includes(p.toLowerCase()));
 
             return matchesSearch && matchesStatus && matchesAssignee && matchesProperty;
         });
-    }, [searchQuery, filters]);
+    }, [searchQuery, filters, requestsData]);
 
     // Group requests by property
     const groupedByProperty = useMemo(() => {
-        const groups: Record<string, typeof MOCK_REQUESTS> = {};
+        const groups: Record<string, typeof requestsData> = {};
         filteredRequests.forEach(req => {
             if (!groups[req.propertyName]) groups[req.propertyName] = [];
             groups[req.propertyName].push(req);
@@ -376,6 +417,15 @@ const Requests: React.FC = () => {
                         >
                             Settings
                         </button>
+                        {selectedItems.length > 0 && (
+                            <button
+                                onClick={handleBulkDeleteClick}
+                                className="px-6 py-2 bg-red-500 text-white rounded-full text-sm font-medium hover:bg-red-600 transition-colors shadow-sm flex items-center gap-2 flex-grow md:flex-grow-0 justify-center"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                                Delete Selected ({selectedItems.length})
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -472,15 +522,33 @@ const Requests: React.FC = () => {
                                             <div className="flex items-center justify-between pt-3 border-t border-gray-100">
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-gray-400 text-xs">Assignee:</span>
-                                                    <span className="text-[#4ad1a6] text-sm font-semibold">{item.assignee}</span>
+                                                    {item.assignee ? (
+                                                        <span className="text-[#4ad1a6] text-sm font-semibold">{item.assignee}</span>
+                                                    ) : (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleAssignClick(item.id);
+                                                            }}
+                                                            className="flex items-center gap-1 text-[#3A6D6C] text-sm font-semibold hover:text-[#2c5251] transition-colors"
+                                                        >
+                                                            <UserPlus className="w-4 h-4" />
+                                                            Assign
+                                                        </button>
+                                                    )}
                                                 </div>
                                                 <div className="flex items-center justify-end gap-3">
-                                                    <button
-                                                        className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
-                                                        onClick={(e) => e.stopPropagation()}
-                                                    >
-                                                        <MessageSquare className="w-5 h-5" />
-                                                    </button>
+                                                    {item.assignee && (
+                                                        <button
+                                                            className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleChatClick(item.assignee!);
+                                                            }}
+                                                        >
+                                                            <MessageSquare className="w-5 h-5" />
+                                                        </button>
+                                                    )}
                                                     <div className={`relative ${openDropdownId === item.id ? 'z-[100]' : ''}`}>
                                                         <button
                                                             className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
@@ -530,15 +598,35 @@ const Requests: React.FC = () => {
                                                 {item.category} <span className="text-gray-400">/</span>{item.subCategory}
                                             </div>
                                             <div className="text-[#3A6D6C] text-sm font-semibold">{item.priority}</div>
-                                            <div className="text-[#4ad1a6] text-sm font-semibold">{item.assignee}</div>
+                                            <div className="text-sm font-semibold">
+                                                {item.assignee ? (
+                                                    <span className="text-[#4ad1a6]">{item.assignee}</span>
+                                                ) : (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleAssignClick(item.id);
+                                                        }}
+                                                        className="flex items-center gap-1 text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
+                                                    >
+                                                        <UserPlus className="w-4 h-4" />
+                                                        Assign
+                                                    </button>
+                                                )}
+                                            </div>
 
                                             <div className="flex items-center justify-end gap-3">
-                                                <button
-                                                    className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
-                                                    onClick={(e) => e.stopPropagation()}
-                                                >
-                                                    <MessageSquare className="w-5 h-5" />
-                                                </button>
+                                                {item.assignee && (
+                                                    <button
+                                                        className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleChatClick(item.assignee!);
+                                                        }}
+                                                    >
+                                                        <MessageSquare className="w-5 h-5" />
+                                                    </button>
+                                                )}
                                                 <div className={`relative ${openDropdownId === item.id ? 'z-[100]' : ''}`}>
                                                     <button
                                                         className="text-[#3A6D6C] hover:text-[#2c5251] transition-colors"
@@ -600,6 +688,26 @@ const Requests: React.FC = () => {
                     onSave={handleRecurringCreate}
                 />
             )}
+
+            {/* Bulk Delete Confirmation Modal */}
+            <DeleteConfirmationModal
+                isOpen={isBulkDeleteModalOpen}
+                onClose={() => setIsBulkDeleteModalOpen(false)}
+                onConfirm={confirmBulkDelete}
+                title="Delete Selected Requests"
+                itemName={`${selectedItems.length} maintenance request${selectedItems.length > 1 ? 's' : ''}`}
+            />
+
+            {/* Assignee Modal */}
+            <AssigneeModal
+                isOpen={isAssigneeModalOpen}
+                onClose={() => {
+                    setIsAssigneeModalOpen(false);
+                    setSelectedRequestForAssign(null);
+                }}
+                currentAssignee="Unassigned"
+                onSave={handleAssigneeChange}
+            />
         </div>
     );
 };

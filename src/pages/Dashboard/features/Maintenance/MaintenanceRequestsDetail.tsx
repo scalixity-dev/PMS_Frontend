@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams, useOutletContext } from 'react-router-dom';
-import { ChevronLeft, ChevronDown, ChevronRight, Edit, Trash2, Plus, Repeat, Printer } from 'lucide-react';
+import { ChevronLeft, ChevronDown, ChevronRight, Edit, Trash2, Plus, Repeat, Printer, Paperclip, FileText } from 'lucide-react';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import ChangeStatusModal from './components/ChangeStatusModal';
 import AssigneeModal from './components/AssigneeModal';
@@ -44,7 +44,7 @@ const MaintenanceRequestsDetail: React.FC = () => {
     const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
     const [status, setStatus] = useState('New');
     const [isAssigneeModalOpen, setIsAssigneeModalOpen] = useState(false);
-    const [assignee, setAssignee] = useState('Anjali Vyas');
+    const [assignee, setAssignee] = useState<string | null>(null); // null = unassigned
     const [isRecurringModalOpen, setIsRecurringModalOpen] = useState(false);
 
     const handleDelete = () => {
@@ -61,7 +61,7 @@ const MaintenanceRequestsDetail: React.FC = () => {
     };
 
     const handleAssigneeChange = (newAssignee: string) => {
-        setAssignee(newAssignee);
+        setAssignee(newAssignee === 'Unassigned' ? null : newAssignee);
         setIsAssigneeModalOpen(false);
         console.log('Assignee updated to:', newAssignee);
     };
@@ -71,12 +71,45 @@ const MaintenanceRequestsDetail: React.FC = () => {
         setIsRecurringModalOpen(false);
     };
 
-    // Mock Data (Replace with functionality)
+    // Mock Data for Materials
     const materials = [
         { id: 1, item: 'Paint (Gallon)', quantity: 2 },
         { id: 2, item: 'Drywall Screws (Box)', quantity: 1 },
         { id: 3, item: 'Lumber (2x4)', quantity: 5 },
         { id: 4, item: 'Sandpaper (Pack)', quantity: 3 }
+    ];
+
+    // Mock Data for Tenant Information
+    const tenantInfo = {
+        authorizationToEnter: 'Yes',
+        authorizationCode: '4521',
+        pets: ['Dog', 'Cat'],
+        setUpDateTime: '24 Nov 2025, 10:00 AM',
+        availability: [
+            { id: 1, date: '2025-11-24', timeSlots: ['9:00 AM - 12:00 PM', '2:00 PM - 5:00 PM'] },
+            { id: 2, date: '2025-11-25', timeSlots: ['10:00 AM - 1:00 PM'] }
+        ]
+    };
+
+    // Mock Data for Equipment
+    const equipment = [
+        { id: 1, name: 'Power Drill', serialNumber: 'PD-2024-001', condition: 'Good' },
+        { id: 2, name: 'Ladder (8ft)', serialNumber: 'LD-2024-015', condition: 'Fair' },
+        { id: 3, name: 'Paint Sprayer', serialNumber: 'PS-2024-003', condition: 'Excellent' }
+    ];
+
+    // Mock Data for Transactions
+    const transactions = [
+        { id: 1, date: '20 Nov 2025', type: 'Money Out', description: 'Materials Purchase', amount: -250.00 },
+        { id: 2, date: '22 Nov 2025', type: 'Money Out', description: 'Labor Cost', amount: -150.00 },
+        { id: 3, date: '24 Nov 2025', type: 'Money In', description: 'Tenant Payment', amount: 400.00 }
+    ];
+
+    // Mock Data for Attachments
+    const attachments = [
+        { id: 1, name: 'Invoice_Materials.pdf', size: '245 KB', type: 'application/pdf' },
+        { id: 2, name: 'Work_Order.pdf', size: '128 KB', type: 'application/pdf' },
+        { id: 3, name: 'Before_Photo.jpg', size: '1.2 MB', type: 'image/jpeg' }
     ];
 
     return (
@@ -225,7 +258,7 @@ const MaintenanceRequestsDetail: React.FC = () => {
                             onClick={() => setIsAssigneeModalOpen(true)}
                             className="px-4 py-1.5 bg-[#3A6D6C] text-white rounded-full text-xs font-medium hover:bg-[#2c5251] transition-colors"
                         >
-                            Re-Assign
+                            {assignee ? 'Re-Assign' : 'Add Assignee'}
                         </button>
                     }
                 >
@@ -233,18 +266,41 @@ const MaintenanceRequestsDetail: React.FC = () => {
                         {/* Profile Card */}
                         <div className="bg-[#F0F0F6] rounded-3xl p-6 w-full xl:w-80 flex flex-col items-center justify-center shadow-sm">
                             <div className="w-32 h-32 rounded-2xl overflow-hidden mb-4 bg-gray-200">
-                                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200" alt="Profile" className="w-full h-full object-cover" />
+                                {assignee ? (
+                                    <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200" alt="Profile" className="w-full h-full object-cover" />
+                                ) : (
+                                    <button
+                                        onClick={() => setIsAssigneeModalOpen(true)}
+                                        className="w-full h-full flex items-center justify-center bg-gray-300 text-gray-500 hover:bg-gray-400 hover:text-gray-700 transition-colors cursor-pointer"
+                                    >
+                                        <span className="text-4xl">?</span>
+                                    </button>
+                                )}
                             </div>
 
-                            <div className="bg-[#3A6D6C] text-white text-center py-2 px-6 rounded-xl w-full mb-4">
-                                <h3 className="font-bold text-sm">{assignee}</h3>
-                                <p className="text-[10px] opacity-90">+91 9876543210</p>
-                                <p className="text-[10px] opacity-90 break-all">{assignee.toLowerCase().replace(' ', '')}@gmail.com</p>
-                            </div>
+                            {assignee ? (
+                                <div className="bg-[#3A6D6C] text-white text-center py-2 px-6 rounded-xl w-full mb-4">
+                                    <h3 className="font-bold text-sm">{assignee}</h3>
+                                    <p className="text-[10px] opacity-90">+91 9876543210</p>
+                                    <p className="text-[10px] opacity-90 break-all">{assignee.toLowerCase().replace(' ', '')}@gmail.com</p>
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={() => setIsAssigneeModalOpen(true)}
+                                    className="bg-[#3A6D6C] text-white text-center py-2 px-6 rounded-xl w-full mb-4 hover:bg-[#2c5251] transition-colors cursor-pointer group"
+                                >
+                                    <h3 className="font-bold text-sm">
+                                        <span className="group-hover:hidden">Not Assigned</span>
+                                        <span className="hidden group-hover:inline">+ Add Assignee</span>
+                                    </h3>
+                                </button>
+                            )}
 
-                            <button className="bg-[#D1D1D1] text-gray-700 text-xs font-bold py-2 px-8 rounded-full hover:bg-gray-300 transition-colors">
-                                View Profile
-                            </button>
+                            {assignee && (
+                                <button className="bg-[#D1D1D1] text-gray-700 text-xs font-bold py-2 px-8 rounded-full hover:bg-gray-300 transition-colors">
+                                    View Profile
+                                </button>
+                            )}
                         </div>
 
                         {/* Details Grid */}
@@ -291,44 +347,37 @@ const MaintenanceRequestsDetail: React.FC = () => {
                 </CollapsibleSection>
 
                 {/* Tenant Information */}
-                <CollapsibleSection title="SmartTenantAI information" defaultOpen={true}>
+                <CollapsibleSection title="Tenant information" defaultOpen={true}>
                     <div className="bg-[#f0f0f6] p-6 rounded-xl shadow-sm">
                         <div className="bg-[#7BD747] rounded-3xl p-4 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-x-4 md:gap-x-12 gap-y-4 shadow-sm max-w-4xl">
                             <div className="space-y-4">
                                 <div className="bg-white rounded-full px-4 py-2 flex items-center justify-between shadow-sm">
-                                    <span className="text-gray-500 text-xs font-medium">Authorization</span>
-                                    <span className="text-gray-800 text-xs font-bold">-</span>
+                                    <span className="text-gray-500 text-xs font-medium">Authorization to Enter</span>
+                                    <span className="text-gray-800 text-xs font-bold">{tenantInfo.authorizationToEnter}</span>
                                 </div>
                                 <div className="bg-white rounded-full px-4 py-2 flex items-center justify-between shadow-sm">
-                                    <span className="text-gray-500 text-xs font-medium">Alarm code</span>
-                                    <span className="text-gray-800 text-xs font-bold">-</span>
+                                    <span className="text-gray-500 text-xs font-medium">Authorization Code</span>
+                                    <span className="text-gray-800 text-xs font-bold">{tenantInfo.authorizationCode}</span>
                                 </div>
                                 <div className="bg-white rounded-full px-4 py-2 flex items-center justify-between shadow-sm">
                                     <span className="text-gray-500 text-xs font-medium">Pets</span>
-                                    <span className="text-gray-800 text-xs font-bold">-</span>
+                                    <span className="text-gray-800 text-xs font-bold">{tenantInfo.pets.join(', ')}</span>
                                 </div>
                                 <div className="bg-white rounded-full px-4 py-2 flex items-center justify-between shadow-sm">
-                                    <span className="text-gray-500 text-xs font-medium">Date due</span>
-                                    <span className="text-gray-800 text-xs font-bold">-</span>
+                                    <span className="text-gray-500 text-xs font-medium">Set Up Date/Time</span>
+                                    <span className="text-gray-800 text-xs font-bold">{tenantInfo.setUpDateTime}</span>
                                 </div>
                             </div>
                             <div className="space-y-4">
-                                <div className="bg-white rounded-full px-4 py-2 flex items-center justify-between shadow-sm">
-                                    <span className="text-gray-500 text-xs font-medium">Availability time 1</span>
-                                    <span className="text-gray-800 text-xs font-bold">-</span>
-                                </div>
-                                <div className="bg-white rounded-full px-4 py-2 flex items-center justify-between shadow-sm">
-                                    <span className="text-gray-500 text-xs font-medium">Ended work</span>
-                                    <span className="text-gray-800 text-xs font-bold">-</span>
-                                </div>
-                                <div className="bg-white rounded-full px-4 py-2 flex items-center justify-between shadow-sm">
-                                    <span className="text-gray-500 text-xs font-medium">Labor time</span>
-                                    <span className="text-gray-800 text-xs font-bold">-</span>
-                                </div>
-                                <div className="bg-white rounded-full px-4 py-2 flex items-center justify-between shadow-sm">
-                                    <span className="text-gray-500 text-xs font-medium">Key returned</span>
-                                    <span className="text-gray-800 text-xs font-bold">-</span>
-                                </div>
+                                {tenantInfo.availability.map((slot, index) => (
+                                    <div key={slot.id} className="bg-white rounded-2xl px-4 py-3 shadow-sm">
+                                        <span className="text-gray-500 text-xs font-medium block mb-1">Availability {index + 1}</span>
+                                        <div className="text-gray-800 text-xs font-bold">
+                                            <p>Date: {new Date(slot.date).toLocaleDateString()}</p>
+                                            <p className="text-gray-600">Time: {slot.timeSlots.join(', ')}</p>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </div>
@@ -410,37 +459,157 @@ const MaintenanceRequestsDetail: React.FC = () => {
                     </div>
                 </CollapsibleSection>
 
-                {/* Equipment Placeholder */}
-                <CollapsibleSection title="Equipment" defaultOpen={false}>
-                    <div className="bg-[#F0F0F6] rounded-xl p-8 text-center text-gray-400 text-sm">
-                        No equipment added yet
+                {/* Equipment Section */}
+                <CollapsibleSection title="Equipment" defaultOpen={true}>
+                    <div className="bg-[#F0F0F6] rounded-3xl p-4 shadow-sm overflow-hidden">
+                        {/* Desktop Table View */}
+                        <div className="hidden md:block overflow-x-auto">
+                            {/* Table Header */}
+                            <div className="bg-[#3A6D6C] text-white rounded-t-xl px-6 py-3 grid grid-cols-[1fr_1fr_1fr_100px] text-xs font-bold min-w-[500px]">
+                                <div>Name</div>
+                                <div>Serial Number</div>
+                                <div>Condition</div>
+                                <div className="text-right">Actions</div>
+                            </div>
+
+                            {/* Table Body */}
+                            <div className="bg-white rounded-b-xl px-6 py-2 min-w-[500px]">
+                                {equipment.map((e) => (
+                                    <div key={e.id} className="grid grid-cols-[1fr_1fr_1fr_100px] items-center py-3 border-b border-gray-50 last:border-0">
+                                        <div className="text-sm font-semibold text-gray-800">{e.name}</div>
+                                        <div className="text-sm font-medium text-gray-600">{e.serialNumber}</div>
+                                        <div className="text-sm font-medium text-[#3A6D6C]">{e.condition}</div>
+                                        <div className="flex justify-end gap-3">
+                                            <button className="text-[#3A6D6C] hover:text-[#2c5251]">
+                                                <Edit className="w-4 h-4" />
+                                            </button>
+                                            <button className="text-red-500 hover:text-red-600">
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Mobile Card View */}
+                        <div className="md:hidden space-y-4">
+                            {equipment.map((e) => (
+                                <div key={e.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <span className="text-sm font-bold text-gray-800">{e.name}</span>
+                                        <div className="flex gap-2">
+                                            <button className="text-[#3A6D6C] p-1.5 hover:bg-gray-50 rounded-full">
+                                                <Edit className="w-4 h-4" />
+                                            </button>
+                                            <button className="text-red-500 p-1.5 hover:bg-red-50 rounded-full">
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2 text-xs text-gray-500">
+                                        <div>
+                                            <span className="block">Serial:</span>
+                                            <span className="font-semibold text-gray-800">{e.serialNumber}</span>
+                                        </div>
+                                        <div>
+                                            <span className="block">Condition:</span>
+                                            <span className="font-semibold text-[#3A6D6C]">{e.condition}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </CollapsibleSection>
 
-                {/* Transactions Placeholder */}
+                {/* Transactions Section */}
                 <CollapsibleSection
                     title="Transactions"
-                    defaultOpen={false}
+                    defaultOpen={true}
                     action={
                         <div className="flex flex-wrap gap-4">
-                            <button className="px-5 py-1.5 bg-[#3A6D6C] text-white rounded-full text-xs font-bold hover:bg-[#2c5251] transition-colors">
+                            <button
+                                onClick={() => navigate('/dashboard/accounting/transactions/expense/add')}
+                                className="px-5 py-1.5 bg-[#3A6D6C] text-white rounded-full text-xs font-bold hover:bg-[#2c5251] transition-colors"
+                            >
                                 Money out
                             </button>
-                            <button className="px-5 py-1.5 bg-[#3A6D6C] text-white rounded-full text-xs font-bold hover:bg-[#2c5251] transition-colors">
+                            <button
+                                onClick={() => navigate('/dashboard/accounting/transactions/income/add')}
+                                className="px-5 py-1.5 bg-[#3A6D6C] text-white rounded-full text-xs font-bold hover:bg-[#2c5251] transition-colors"
+                            >
                                 Money In
                             </button>
                         </div>
                     }
                 >
-                    <div className="bg-[#F0F0F6] rounded-xl p-12 text-center text-gray-400 text-sm">
+                    <div className="bg-[#F0F0F6] rounded-3xl p-4 shadow-sm overflow-hidden">
+                        {/* Desktop Table View */}
+                        <div className="hidden md:block overflow-x-auto">
+                            {/* Table Header */}
+                            <div className="bg-[#3A6D6C] text-white rounded-t-xl px-6 py-3 grid grid-cols-[1fr_1fr_2fr_1fr] text-xs font-bold min-w-[500px]">
+                                <div>Date</div>
+                                <div>Type</div>
+                                <div>Description</div>
+                                <div className="text-right">Amount</div>
+                            </div>
 
+                            {/* Table Body */}
+                            <div className="bg-white rounded-b-xl px-6 py-2 min-w-[500px]">
+                                {transactions.map((t) => (
+                                    <div key={t.id} className="grid grid-cols-[1fr_1fr_2fr_1fr] items-center py-3 border-b border-gray-50 last:border-0">
+                                        <div className="text-sm font-medium text-gray-800">{t.date}</div>
+                                        <div className={`text-sm font-medium ${t.type === 'Money In' ? 'text-green-600' : 'text-red-500'}`}>{t.type}</div>
+                                        <div className="text-sm text-gray-600">{t.description}</div>
+                                        <div className={`text-sm font-bold text-right ${t.amount >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                                            {t.amount >= 0 ? '+' : ''}${Math.abs(t.amount).toFixed(2)}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Mobile Card View */}
+                        <div className="md:hidden space-y-4">
+                            {transactions.map((t) => (
+                                <div key={t.id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <span className="text-sm font-bold text-gray-800">{t.description}</span>
+                                        <span className={`text-sm font-bold ${t.amount >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                                            {t.amount >= 0 ? '+' : ''}${Math.abs(t.amount).toFixed(2)}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                                        <span>{t.date}</span>
+                                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${t.type === 'Money In' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-500'}`}>
+                                            {t.type}
+                                        </span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </CollapsibleSection>
 
-                {/* Attachments Placeholder */}
+                {/* Attachments Section */}
                 <CollapsibleSection title="Attachments" defaultOpen={true}>
-                    <div className="bg-[#F0F0F6] rounded-2xl p-12 text-center text-gray-500 text-sm font-medium">
-                        No attachments yet
+                    <div className="bg-[#F0F0F6] rounded-2xl p-4 shadow-sm">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {attachments.map((file) => (
+                                <div key={file.id} className="bg-white rounded-xl border border-gray-200 p-4 flex items-center hover:shadow-md transition-shadow group">
+                                    <div className="flex items-center gap-3 overflow-hidden">
+                                        <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center shrink-0 text-gray-500 group-hover:bg-[#f0fdf4] group-hover:text-[#166534] transition-colors">
+                                            {file.type.includes('pdf') ? <FileText className="w-5 h-5" /> : <Paperclip className="w-5 h-5" />}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-semibold text-gray-900 truncate" title={file.name}>{file.name}</p>
+                                            <p className="text-xs text-gray-500">{file.size}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </CollapsibleSection>
 
@@ -464,7 +633,7 @@ const MaintenanceRequestsDetail: React.FC = () => {
             <AssigneeModal
                 isOpen={isAssigneeModalOpen}
                 onClose={() => setIsAssigneeModalOpen(false)}
-                currentAssignee={assignee}
+                currentAssignee={assignee || 'Unassigned'}
                 onSave={handleAssigneeChange}
             />
 
