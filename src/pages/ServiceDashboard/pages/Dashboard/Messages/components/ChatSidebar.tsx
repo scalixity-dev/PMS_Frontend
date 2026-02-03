@@ -7,6 +7,8 @@ interface ChatSidebarProps {
     searchQuery: string;
     onSearchChange: (query: string) => void;
     onSelectChat: (chat: Chat) => void;
+    activeTab: 'All' | 'MR' | 'PM';
+    onTabChange: (tab: 'All' | 'MR' | 'PM') => void;
 }
 
 const ChatSidebar = ({
@@ -15,6 +17,8 @@ const ChatSidebar = ({
     searchQuery,
     onSearchChange,
     onSelectChat,
+    activeTab,
+    onTabChange,
 }: ChatSidebarProps) => {
 
     const formatTime = (time: string) => {
@@ -55,10 +59,34 @@ const ChatSidebar = ({
     }
 
     return (
-        <div className="w-full md:w-96 bg-white border-r border-gray-200 flex flex-col h-full">
-            {/* Header / Title */}
-            <div className="border-b px-6 py-4 border-[#F1F1F1]">
-                <h2 className="text-lg font-semibold text-gray-800">Messages</h2>
+        <div className="w-full h-full flex flex-col bg-white">
+            {/* Tab Navigation */}
+            <div className="border-b px-2 md:px-8 pt-2 md:pt-3 border-[#F1F1F1]">
+                <div className="flex gap-0 w-full">
+                    {(['All', 'MR', 'PM'] as const).map((tab) => (
+                        <button
+                            key={tab}
+                            onClick={() => onTabChange(tab)}
+                            className={`flex-1 px-2 md:px-3 py-2 md:py-2.5 font-medium text-xs md:text-sm transition-all relative ${activeTab === tab
+                                ? 'text-white rounded-t-lg -mb-[1px]'
+                                : 'text-gray-400 hover:text-gray-600'
+                                }`}
+                            style={
+                                activeTab === tab
+                                    ? { background: 'linear-gradient(90deg, #1BCB40 10.96%, #7CD947 92.24%)' }
+                                    : undefined
+                            }
+                        >
+                            {tab}
+                            {activeTab === tab && (
+                                <div
+                                    className="absolute -bottom-3 left-0 right-0 h-3 blur-lg opacity-20 -z-10"
+                                    style={{ background: 'linear-gradient(90deg, #1BCB40 10.96%, #7CD947 92.24%)' }}
+                                ></div>
+                            )}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* Search Bar */}
@@ -66,10 +94,14 @@ const ChatSidebar = ({
                 <div className="relative">
                     <input
                         type="text"
-                        placeholder="Search conversations..."
+                        placeholder={
+                            activeTab === 'MR' ? "Search tenant chats..." :
+                                activeTab === 'PM' ? "Search manager chats..." :
+                                    "Search conversations..."
+                        }
                         value={searchQuery}
                         onChange={(e) => onSearchChange(e.target.value)}
-                        className={`w-full pl-3 pr-10 py-2 rounded-lg text-sm focus:outline-none transition-all bg-white border border-gray-200 focus:ring-2 focus:ring-[#3A6D6C] focus:border-transparent`}
+                        className={`w-full pl-3 pr-10 py-2 rounded-lg text-base md:text-sm focus:outline-none transition-all bg-white border border-gray-200 focus:ring-2 focus:ring-[#3A6D6C] focus:border-transparent`}
                     />
                     <Search className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400`} />
                 </div>
