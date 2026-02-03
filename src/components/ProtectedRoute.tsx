@@ -22,7 +22,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
           isActive: user.isActive,
           isEmailVerified: user.isEmailVerified
         });
-        
+
         // Verify user is property manager (or has property manager role) and account is active
         // Role might be 'PROPERTY_MANAGER', 'property_manager', or similar variations
         const isPropertyManager = user.role && (
@@ -30,13 +30,13 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
           user.role.toLowerCase() === 'property_manager' ||
           user.role === 'property_manager'
         );
-        
+
         console.log('ProtectedRoute: Validation results:', {
           isPropertyManager,
           isActive: user.isActive,
           isEmailVerified: user.isEmailVerified
         });
-        
+
         // User must be:
         // 1. Property manager
         // 2. Account must be active (isActive = true)

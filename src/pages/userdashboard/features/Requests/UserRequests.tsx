@@ -5,6 +5,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
 import FilterDropdown from "../../../../components/ui/FilterDropdown";
 import RequestSuccessModal from "./components/RequestSuccessModal";
+import DeleteConfirmationModal from "../../../../components/common/modals/DeleteConfirmationModal";
 import { useRequestStore } from "./store/requestStore";
 import type { ServiceRequest, AvailabilityOption } from "../../utils/types";
 
@@ -454,6 +455,8 @@ const Requests: React.FC = () => {
   const [menuPosition, setMenuPosition] = useState<MenuPosition | null>(null);
   const [printingRequest, setPrintingRequest] = useState<ServiceRequest | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [requestToDelete, setRequestToDelete] = useState<ServiceRequest | null>(null);
   const { search: searchQuery, status: statusFilter, priority: priorityFilter, category: categoryFilter } = requestFilters;
 
   const showSuccess = location.state?.showSuccess;
@@ -489,12 +492,19 @@ const Requests: React.FC = () => {
     setActiveMenuId(null);
   }, [updateRequestStatus]);
 
-  const handleDelete = useCallback((id: number) => {
-    if (window.confirm("Are you sure you want to delete this request?")) {
-      deleteRequest(id);
-      setActiveMenuId(null);
+  const handleDelete = useCallback((request: ServiceRequest) => {
+    setRequestToDelete(request);
+    setIsDeleteModalOpen(true);
+    setActiveMenuId(null);
+  }, []);
+
+  const confirmDelete = useCallback(() => {
+    if (requestToDelete) {
+      deleteRequest(requestToDelete.id);
+      setIsDeleteModalOpen(false);
+      setRequestToDelete(null);
     }
-  }, [deleteRequest]);
+  }, [deleteRequest, requestToDelete]);
 
   const handleDownloadAttachments = useCallback((e: React.MouseEvent, request: ServiceRequest) => {
     e.stopPropagation();
@@ -742,7 +752,7 @@ const Requests: React.FC = () => {
                       onMenuClose={() => setActiveMenuId(null)}
                       onPrint={() => handlePrint(request)}
                       onCancel={() => handleCancel(request.id)}
-                      onDelete={() => handleDelete(request.id)}
+                      onDelete={() => handleDelete(request)}
                       onChatClick={(e) => {
                         e.stopPropagation();
                         navigate('/userdashboard/messages', {
@@ -832,7 +842,7 @@ const Requests: React.FC = () => {
                 onMenuClose={() => setActiveMenuId(null)}
                 onPrint={() => handlePrint(request)}
                 onCancel={() => handleCancel(request.id)}
-                onDelete={() => handleDelete(request.id)}
+                onDelete={() => handleDelete(request)}
               />
             ))
           ) : (
@@ -893,6 +903,14 @@ const Requests: React.FC = () => {
         onClose={handleCloseModal}
         requestId={submittedRequestId || ""}
         propertyName="Main Street Apartment"
+      />
+
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        title="Delete Request"
+        itemName={requestToDelete?.requestId}
       />
 
       <PrintableRequest request={printingRequest} />

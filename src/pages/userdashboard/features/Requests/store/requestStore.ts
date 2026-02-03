@@ -8,6 +8,7 @@ interface RequestState {
     setRequestFilters: (filters: Partial<RequestFilters>) => void;
     resetRequestFilters: () => void;
     addRequest: (request: ServiceRequest) => void;
+    updateRequest: (id: number | string, data: Partial<ServiceRequest>) => void;
     updateRequestStatus: (id: number, status: ServiceRequest["status"]) => void;
     deleteRequest: (id: number) => void;
 }
@@ -167,6 +168,16 @@ export const useRequestStore = create<RequestState>((set) => ({
                 console.warn('Request added to state but failed to persist to localStorage');
             }
 
+            return { requests: updatedRequests };
+        }),
+    updateRequest: (id, data) =>
+        set((state) => {
+            const updatedRequests = state.requests.map((req) => {
+                // Handle both number and string IDs
+                const matchId = String(req.id) === String(id) || req.requestId === id;
+                return matchId ? { ...req, ...data } : req;
+            });
+            saveRequests(updatedRequests);
             return { requests: updatedRequests };
         }),
     updateRequestStatus: (id, status) =>
