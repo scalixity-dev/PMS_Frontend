@@ -114,7 +114,7 @@ const ChatInput = ({ onSendMessage, disabled = false }: ChatInputProps) => {
                         disabled={disabled}
                         placeholder="Type a message..."
                         rows={1}
-                        className="w-full px-4 py-3 bg-transparent resize-none focus:outline-none text-sm disabled:opacity-50 disabled:cursor-not-allowed max-h-[120px]"
+                        className="w-full px-4 py-3 bg-transparent resize-none focus:outline-none text-base md:text-sm disabled:opacity-50 disabled:cursor-not-allowed max-h-[120px]"
                     />
                 </div>
 

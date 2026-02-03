@@ -64,29 +64,46 @@ const ServiceMessages = () => {
         });
     };
 
+    const [activeTab, setActiveTab] = useState<'All' | 'MR' | 'PM'>('All');
+
     // Filter logic
     const filteredChats = useMemo(() => {
-        if (!chatSearch) return chats;
-        const query = chatSearch.toLowerCase();
-        return chats.filter(chat =>
-            chat.contactName.toLowerCase().includes(query) ||
-            chat.lastMessage.toLowerCase().includes(query)
-        );
-    }, [chats, chatSearch]);
+        let result = chats;
+
+        // First filter by tab
+        if (activeTab === 'MR') {
+            result = result.filter((chat) => chat.contactRole === 'Tenant');
+        } else if (activeTab === 'PM') {
+            result = result.filter((chat) => chat.contactRole === 'Property Manager' || chat.contactRole === 'Admin');
+        }
+
+        // Then filter by search query
+        if (chatSearch) {
+            const query = chatSearch.toLowerCase();
+            result = result.filter(chat =>
+                chat.contactName.toLowerCase().includes(query) ||
+                chat.lastMessage.toLowerCase().includes(query)
+            );
+        }
+
+        return result;
+    }, [chats, chatSearch, activeTab]);
 
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
 
     return (
-        <div className={`h-[calc(100vh-4rem)] flex flex-col bg-white mx-auto transition-all duration-300 ${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'}`}>
-            <div className="flex bg-white flex-1 overflow-hidden font-inter">
+        <div className={`flex flex-col bg-white mx-auto transition-all duration-300 ${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} h-[calc(100vh-4rem)] supports-[height:100dvh]:h-[calc(100dvh-4rem)]`}>
+            <div className="flex bg-white flex-1 overflow-hidden font-inter border-x border-gray-100 shadow-sm ">
                 {/* Sidebar */}
-                <div className={`${showMobileChat ? 'hidden md:flex' : 'flex'} flex-shrink-0`}>
+                <div className={`${showMobileChat ? 'hidden md:flex' : 'flex'} w-full md:w-80 lg:w-96 flex-shrink-0 border-r border-gray-200`}>
                     <ChatSidebar
                         chats={filteredChats}
                         activeChat={activeChat}
                         searchQuery={chatSearch}
                         onSearchChange={setChatSearch}
                         onSelectChat={handleSelectChat}
+                        activeTab={activeTab}
+                        onTabChange={setActiveTab}
                     />
                 </div>
 
