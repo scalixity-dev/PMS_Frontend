@@ -705,7 +705,7 @@ const Requests: React.FC = () => {
                     setIsAssigneeModalOpen(false);
                     setSelectedRequestForAssign(null);
                 }}
-                currentAssignee="Unassigned"
+                currentAssignee={requestsData.find(r => r.id === selectedRequestForAssign)?.assignee ?? 'Unassigned'}
                 onSave={handleAssigneeChange}
             />
         </div>
