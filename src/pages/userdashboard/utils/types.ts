@@ -45,7 +45,7 @@ export interface Lease {
     landlord: LandlordSummary;
     tenants: TenantSummary[];
     attachments?: {
-        id: number;
+        id: string;
         name: string;
         size: string;
         type: 'PDF' | 'Image' | 'Document' | 'Video';

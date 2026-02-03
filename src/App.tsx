@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TanStackDevtools } from '@tanstack/react-devtools';
 import AppLayout from './components/layout/AppLayout';
-import { ProtectedRoute } from './components/ProtectedRoute';
+import { ProtectedRoute, ServiceProtectedRoute } from './components/ProtectedRoute';
 import DashboardLayout from './components/dashboardlayout/DashboardLayout';
 import HomePage from './pages/basewebsite/home';
 import ScreeningPage from './pages/basewebsite/features/screening/index';
@@ -14,18 +14,6 @@ import { RentalApplicationSettingsLayout } from './components/common/RentalAppli
 import PricingPage from './pages/basewebsite/pricing';
 import LoginPage from './pages/basewebsite/auth/login';
 import SignUpPage from './pages/basewebsite/auth/signUp';
-import ServiceDashboardLogin from './pages/ServiceDashboard/pages/auth/Login';
-import AdminLogin from './pages/Admin/Login';
-import AdminLayout from './pages/Admin/layout/AdminLayout';
-import AdminDashboard from './pages/Admin/pages/Dashboard/AdminDashboard';
-import UsersPage from './pages/Admin/pages/Users/UsersPage';
-import UserDetailPage from './pages/Admin/pages/Users/UserDetails/UserDetailPage';
-import PropertiesPage from './pages/Admin/pages/Properties/PropertiesPage';
-import LeasesPage from './pages/Admin/pages/Leases/LeasesPage';
-import PaymentsPage from './pages/Admin/pages/Payments/PaymentsPage';
-import SettingsPage from './pages/Admin/pages/Settings/SettingsPage';
-import ServiceDashboardSignup from './pages/ServiceDashboard/pages/auth/Signup';
-import ForgotPassword from './pages/ServiceDashboard/pages/auth/ForgotPassword';
 import Welcome from './pages/ServiceDashboard/pages/onboarding/Welcome';
 import SelectProfession from './pages/ServiceDashboard/pages/onboarding/SelectProfession';
 import ProfessionDetails from './pages/ServiceDashboard/pages/onboarding/ProfessionDetails';
@@ -220,26 +208,7 @@ const App: React.FC = () => {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <Routes>
-            {/* Service Dashboard Auth - Standalone Pages */}
-            <Route path="/admin/login" element={<AdminLogin />} />
-
-            {/* Admin Dashboard Routes */}
-            {/* TODO: Wrap admin routes with AdminProtectedRoute that checks for admin role/permissions.
-                Currently left unprotected for development purposes.
-                Before production, implement authentication guard similar to ProtectedRoute but with admin role verification. */}
-            <Route element={<AdminLayout />}>
-              <Route path="/admin/dashboard" element={<AdminDashboard />} />
-              <Route path="/admin/users" element={<UsersPage />} />
-              <Route path="/admin/users/:userId" element={<UserDetailPage />} />
-              <Route path="/admin/properties" element={<PropertiesPage />} />
-              <Route path="/admin/leases" element={<LeasesPage />} />
-              <Route path="/admin/payments" element={<PaymentsPage />} />
-              <Route path="/admin/settings" element={<SettingsPage />} />
-            </Route>
-
-            <Route path="/service-dashboard/login" element={<ServiceDashboardLogin />} />
-            <Route path="/service-dashboard/signup" element={<ServiceDashboardSignup />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
+            {/* Forgot password route removed; use basewebsite auth flows instead */}
 
             {/* Service Dashboard Onboarding */}
             <Route path="/service-dashboard/welcome" element={<Welcome />} />
@@ -248,6 +217,14 @@ const App: React.FC = () => {
 
             {/* Service Dashboard Routes */}
             <Route element={<ServiceDashboardLayout />}>
+              <Route path="/service-dashboard" element={<ServiceProtectedRoute><ServiceDashboard /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/requests" element={<ServiceProtectedRoute><ServiceRequests /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/requests-board" element={<ServiceProtectedRoute><ServiceRequestsBoard /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/accounting" element={<ServiceProtectedRoute><ServiceAccounting /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/accounting/transaction/:id" element={<ServiceProtectedRoute><ServiceTransactionDetail /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/settings" element={<ServiceProtectedRoute><ServiceDashboardSettings /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/settings/profile" element={<ServiceProtectedRoute><ServiceDashboardProfileSettings /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/settings/business-profile" element={<ServiceProtectedRoute><ServiceBusinessProfile /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard" element={<ProtectedRoute><ServiceDashboard /></ProtectedRoute>} />
               <Route path="/service-dashboard/requests" element={<ProtectedRoute><ServiceRequests /></ProtectedRoute>} />
               <Route path="/service-dashboard/requests/:id" element={<ProtectedRoute><ServiceRequestDetail /></ProtectedRoute>} />
