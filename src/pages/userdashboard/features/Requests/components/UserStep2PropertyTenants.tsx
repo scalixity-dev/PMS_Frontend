@@ -14,6 +14,7 @@ interface Equipment {
     id: string;
     name: string;
     category: string;
+    serial?: string;
 }
 
 interface TenantListItem {
@@ -58,7 +59,9 @@ const UserStep2PropertyTenants: React.FC<UserStep2PropertyTenantsProps> = ({ onN
         setValidationError('');
         onNext({
             property: selectedProperty,
-            equipment: linkEquipment ? selectedEquipment : null,
+            equipmentId: linkEquipment ? selectedEquipment : null,
+            equipmentName: linkEquipment ? equipmentList.find(e => e.id === selectedEquipment)?.name : null,
+            equipmentSerial: linkEquipment ? equipmentList.find(e => e.id === selectedEquipment)?.serial : null,
             tenantAuthorization,
             dateOptions,
             tenantList,
@@ -159,7 +162,8 @@ const UserStep2PropertyTenants: React.FC<UserStep2PropertyTenantsProps> = ({ onN
         const createdEquipment: Equipment = {
             id: Math.random().toString(36).substr(2, 9),
             name: `${newEquipment.brand} ${newEquipment.model}`,
-            category: newEquipment.category.toUpperCase()
+            category: newEquipment.category.toUpperCase(),
+            serial: newEquipment.serial
         };
 
         setEquipmentList(prev => [...prev, createdEquipment]);

@@ -14,6 +14,8 @@ export const useNewRequestForm = () => {
     const [selectedProblem, setSelectedProblem] = useState<string | null>(null);
     const [finalDetail, setFinalDetail] = useState<string | null>(null);
     const [selectedEquipment, setSelectedEquipment] = useState<string | null>(null);
+    const [equipmentSerial, setEquipmentSerial] = useState<string | null>(null);
+    const [equipmentCondition, setEquipmentCondition] = useState<string | null>(null);
 
     const [title, setTitle] = useState<string>("");
     const [description, setDescription] = useState<string>("");
@@ -213,6 +215,8 @@ export const useNewRequestForm = () => {
                 description: description || "",
                 property: propertiesList.find(p => p.id === property)?.name || "Main Street Apartment",
                 equipment: selectedEquipment,
+                equipmentSerial: equipmentSerial,
+                equipmentCondition: equipmentCondition || 'Good',
                 priority: priority,
                 authorizationToEnter: authorization ? (authorization === "yes" ? "Yes" : "No") : "No",
                 authorizationCode: authCode,
@@ -325,5 +329,9 @@ export const useNewRequestForm = () => {
         hasFormData,
         property,
         setProperty,
+        equipmentSerial,
+        setEquipmentSerial,
+        equipmentCondition,
+        setEquipmentCondition,
     };
 };

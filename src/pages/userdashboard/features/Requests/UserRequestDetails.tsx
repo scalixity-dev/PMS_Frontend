@@ -105,30 +105,32 @@ const RequestDetails = () => {
 
         assigneeInfo: {
             name: foundRequest.assignee || "",
-            email: foundRequest.assignee ? "ashendarma360@gmail.com" : "",
-            phone: foundRequest.assignee ? "+1 (555) 012-3456" : "",
+            email: "Not specified",
+            phone: "Not specified",
             avatarSeed: foundRequest.assignee || "",
 
-            type: "One Time",
-            dateInitiated: foundRequest.createdAt ? new Date(foundRequest.createdAt).toLocaleDateString() : "03/02/2026",
-            dateDue: foundRequest.dateDue ? new Date(foundRequest.dateDue).toLocaleDateString() : "05/02/2026",
-            startedWork: "04/02/2026, 10:30 AM",
-            endedWork: "04/02/2026, 02:15 PM",
-            laborTime: "3h 45m",
-            keyReturned: "Yes"
+            type: "Not specified",
+            dateInitiated: foundRequest.createdAt ? new Date(foundRequest.createdAt).toLocaleDateString() : "Not specified",
+            dateDue: foundRequest.dateDue ? new Date(foundRequest.dateDue).toLocaleDateString() : "Not specified",
+            startedWork: "Not specified",
+            endedWork: "Not specified",
+            laborTime: "Not specified",
+            keyReturned: "Not specified"
         },
         materials: foundRequest.materials || [],
 
-        subIssue: foundRequest.subIssue || "Standard check required",
+        subIssue: foundRequest.subIssue || "",
         title: foundRequest.title || "",
-        transactions: [
-            { id: 1, date: '02/02/2026', type: 'Money Out', description: 'Materials Purchase', amount: -85.50 },
-            { id: 2, date: '04/02/2026', type: 'Money Out', description: 'Labor Cost', amount: -120.00 },
-        ],
+        transactions: [] as Array<{ id: number; date: string; type: string; description: string; amount: number }>,
         attachments: foundRequest.attachments || [],
 
         equipmentList: foundRequest.equipment ? [
-            { id: 1, name: foundRequest.equipment, serialNumber: 'TL-552-PD', condition: 'Good' }
+            {
+                id: 1,
+                name: foundRequest.equipment,
+                serialNumber: foundRequest.equipmentSerial || 'Not specified',
+                condition: foundRequest.equipmentCondition || 'Not specified'
+            }
         ] : []
 
     };
@@ -159,7 +161,11 @@ const RequestDetails = () => {
         } else if (itemToDelete.type === 'equipment') {
             // If it's the main equipment field
             if (foundRequest.equipment) {
-                updateRequest(foundRequest.id, { equipment: null });
+                updateRequest(foundRequest.id, {
+                    equipment: null,
+                    equipmentSerial: null,
+                    equipmentCondition: null
+                });
             }
         }
 
@@ -192,8 +198,12 @@ const RequestDetails = () => {
             };
             updateRequest(foundRequest.id, { materials: updatedMaterials });
         } else if (editingItem.type === 'equipment') {
-            // Update the equipment name and potentially store other details if we expand the model
-            updateRequest(foundRequest.id, { equipment: updatedData.name });
+            // Update the equipment details
+            updateRequest(foundRequest.id, {
+                equipment: updatedData.name,
+                equipmentSerial: updatedData.serialNumber,
+                equipmentCondition: updatedData.condition
+            });
         }
 
         setEditingItem(null);
@@ -691,8 +701,8 @@ const RequestDetails = () => {
                         </div>
                         <div className="text-right">
                             <p className="font-bold">Landlord:</p>
-                            <p>Ashendra Sharma</p>
-                            <p className="text-sm">ashendrasharma360@gmail.com</p>
+                            <p>Not specified</p>
+                            <p className="text-sm">Not specified</p>
                         </div>
                     </div>
                     <section>
@@ -732,7 +742,7 @@ const RequestDetails = () => {
                             </div>
                             <div>
                                 <p className="font-bold text-sm">Due date:</p>
-                                <p className="text-sm">N/A</p>
+                                <p className="text-sm">{foundRequest.dateDue ? new Date(foundRequest.dateDue).toLocaleDateString() : "Not specified"}</p>
                             </div>
                         </div>
                     </div>
@@ -879,14 +889,13 @@ const RequestDetails = () => {
                 </div>
             )}
 
-            <style dangerouslySetInnerHTML={{
-                __html: `
+            <style>{`
                 @media print {
                     body * { visibility: hidden; }
                     #printable-request, #printable-request * { visibility: visible; }
                     #printable-request { position: absolute; left: 0; top: 0; width: 100%; }
                 }
-            `}} />
+            `}</style>
         </div>
     );
 };

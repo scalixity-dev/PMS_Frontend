@@ -160,6 +160,8 @@ export interface ServiceRequest {
     category: string;
     property: string;
     equipment?: string | null;
+    equipmentSerial?: string | null;
+    equipmentCondition?: string | null;
     priority: "Critical" | "Normal" | "Low";
     assignee: string;
     subCategory?: string;

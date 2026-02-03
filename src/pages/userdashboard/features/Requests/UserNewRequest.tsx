@@ -61,6 +61,8 @@ const NewRequest: React.FC = () => {
     setVideo,
     selectedEquipment,
     setSelectedEquipment,
+    setEquipmentSerial,
+    setEquipmentCondition,
   } = useNewRequestForm();
 
 
@@ -220,7 +222,9 @@ const NewRequest: React.FC = () => {
             onNext={(data) => {
               console.log('Step 2 Data:', data);
               setProperty(data.property);
-              setSelectedEquipment(data.equipment);
+              setSelectedEquipment(data.equipmentName);
+              setEquipmentSerial(data.equipmentSerial || null);
+              setEquipmentCondition('Good'); // Default condition for newly linked equipment
 
               setAuthorization(data.tenantAuthorization ? 'yes' : 'no');
               setAuthCode(data.accessCode);
