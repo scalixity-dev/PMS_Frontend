@@ -225,25 +225,25 @@ const App: React.FC = () => {
               <Route path="/service-dashboard/settings" element={<ServiceProtectedRoute><ServiceDashboardSettings /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/settings/profile" element={<ServiceProtectedRoute><ServiceDashboardProfileSettings /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/settings/business-profile" element={<ServiceProtectedRoute><ServiceBusinessProfile /></ServiceProtectedRoute>} />
-              <Route path="/service-dashboard" element={<ProtectedRoute><ServiceDashboard /></ProtectedRoute>} />
-              <Route path="/service-dashboard/requests" element={<ProtectedRoute><ServiceRequests /></ProtectedRoute>} />
-              <Route path="/service-dashboard/requests/:id" element={<ProtectedRoute><ServiceRequestDetail /></ProtectedRoute>} />
-              <Route path="/service-dashboard/requests-board" element={<ProtectedRoute><ServiceRequestsBoard /></ProtectedRoute>} />
-              <Route path="/service-dashboard/accounting" element={<ProtectedRoute><ServiceAccounting /></ProtectedRoute>} />
-              <Route path="/service-dashboard/accounting/transaction/:id" element={<ProtectedRoute><ServiceTransactionDetail /></ProtectedRoute>} />
+              <Route path="/service-dashboard" element={<ServiceProtectedRoute><ServiceDashboard /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/requests" element={<ServiceProtectedRoute><ServiceRequests /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/requests/:id" element={<ServiceProtectedRoute><ServiceRequestDetail /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/requests-board" element={<ServiceProtectedRoute><ServiceRequestsBoard /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/accounting" element={<ServiceProtectedRoute><ServiceAccounting /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/accounting/transaction/:id" element={<ServiceProtectedRoute><ServiceTransactionDetail /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/settings" element={<ProtectedRoute><ServiceDashboardSettings /></ProtectedRoute>} />
-              <Route path="/service-dashboard/settings/profile" element={<ProtectedRoute><ServiceDashboardProfileSettings /></ProtectedRoute>} />
-              <Route path="/service-dashboard/settings/security" element={<ProtectedRoute><ServiceDashboardSecuritySettings /></ProtectedRoute>} />
+              <Route path="/service-dashboard/settings/profile" element={<ServiceProtectedRoute><ServiceDashboardProfileSettings /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/settings/security" element={<ServiceProtectedRoute><ServiceDashboardSecuritySettings /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/settings/integrations" element={<ProtectedRoute><ServiceDashboardIntegrationSettings /></ProtectedRoute>} />
-              <Route path="/service-dashboard/settings/notifications" element={<ProtectedRoute><ServiceDashboardNotificationSettings /></ProtectedRoute>} />
+              <Route path="/service-dashboard/settings/notifications" element={<ServiceProtectedRoute><ServiceDashboardNotificationSettings /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/settings/business-profile" element={<ProtectedRoute><ServiceBusinessProfile /></ProtectedRoute>} />
-              <Route path="/service-dashboard/contacts" element={<ProtectedRoute><ServiceContacts /></ProtectedRoute>} />
+              <Route path="/service-dashboard/contacts" element={<ServiceProtectedRoute><ServiceContacts /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/calendar" element={<ProtectedRoute><ServiceDashboardCalendar /></ProtectedRoute>} />
-              <Route path="/service-dashboard/file-manager" element={<ProtectedRoute><ServiceFileManager /></ProtectedRoute>} />
+              <Route path="/service-dashboard/file-manager" element={<ServiceProtectedRoute><ServiceFileManager /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/messages" element={<ProtectedRoute><ServiceMessages /></ProtectedRoute>} />
-              <Route path="/service-dashboard/find-job" element={<ProtectedRoute><FindJob /></ProtectedRoute>} />
-              <Route path="/service-dashboard/find-job/:id" element={<ProtectedRoute><JobDetail /></ProtectedRoute>} />
-              <Route path="/service-dashboard/notifications" element={<ProtectedRoute><ServiceNotification /></ProtectedRoute>} />
+              <Route path="/service-dashboard/find-job" element={<ServiceProtectedRoute><FindJob /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/find-job/:id" element={<ServiceProtectedRoute><JobDetail /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/notifications" element={<ServiceProtectedRoute><ServiceNotification /></ServiceProtectedRoute>} />
             </Route>
 
             <Route element={<AppLayout />}>
