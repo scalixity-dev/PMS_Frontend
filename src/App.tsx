@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TanStackDevtools } from '@tanstack/react-devtools';
 import AppLayout from './components/layout/AppLayout';
-import { ProtectedRoute } from './components/ProtectedRoute';
+import { ProtectedRoute, ServiceProtectedRoute } from './components/ProtectedRoute';
 import DashboardLayout from './components/dashboardlayout/DashboardLayout';
 import HomePage from './pages/basewebsite/home';
 import ScreeningPage from './pages/basewebsite/features/screening/index';
@@ -14,8 +14,6 @@ import { RentalApplicationSettingsLayout } from './components/common/RentalAppli
 import PricingPage from './pages/basewebsite/pricing';
 import LoginPage from './pages/basewebsite/auth/login';
 import SignUpPage from './pages/basewebsite/auth/signUp';
-import ServiceDashboardLogin from './pages/ServiceDashboard/pages/auth/Login';
-import ServiceDashboardSignup from './pages/ServiceDashboard/pages/auth/Signup';
 import ForgotPassword from './pages/ServiceDashboard/pages/auth/ForgotPassword';
 import Welcome from './pages/ServiceDashboard/pages/onboarding/Welcome';
 import SelectProfession from './pages/ServiceDashboard/pages/onboarding/SelectProfession';
@@ -200,9 +198,9 @@ const App: React.FC = () => {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <Routes>
-            {/* Service Dashboard Auth - Standalone Pages */}
-            <Route path="/service-dashboard/login" element={<ServiceDashboardLogin />} />
-            <Route path="/service-dashboard/signup" element={<ServiceDashboardSignup />} />
+            {/* Service Dashboard Auth - reuse basewebsite auth pages */}
+            <Route path="/service-dashboard/login" element={<LoginPage />} />
+            <Route path="/service-dashboard/signup" element={<SignUpPage />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
 
             {/* Service Dashboard Onboarding */}
@@ -212,14 +210,14 @@ const App: React.FC = () => {
 
             {/* Service Dashboard Routes */}
             <Route element={<ServiceDashboardLayout />}>
-              <Route path="/service-dashboard" element={<ProtectedRoute><ServiceDashboard /></ProtectedRoute>} />
-              <Route path="/service-dashboard/requests" element={<ProtectedRoute><ServiceRequests /></ProtectedRoute>} />
-              <Route path="/service-dashboard/requests-board" element={<ProtectedRoute><ServiceRequestsBoard /></ProtectedRoute>} />
-              <Route path="/service-dashboard/accounting" element={<ProtectedRoute><ServiceAccounting /></ProtectedRoute>} />
-              <Route path="/service-dashboard/accounting/transaction/:id" element={<ProtectedRoute><ServiceTransactionDetail /></ProtectedRoute>} />
-              <Route path="/service-dashboard/settings" element={<ProtectedRoute><ServiceDashboardSettings /></ProtectedRoute>} />
-              <Route path="/service-dashboard/settings/profile" element={<ProtectedRoute><ServiceDashboardProfileSettings /></ProtectedRoute>} />
-              <Route path="/service-dashboard/settings/business-profile" element={<ProtectedRoute><ServiceBusinessProfile /></ProtectedRoute>} />
+              <Route path="/service-dashboard" element={<ServiceProtectedRoute><ServiceDashboard /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/requests" element={<ServiceProtectedRoute><ServiceRequests /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/requests-board" element={<ServiceProtectedRoute><ServiceRequestsBoard /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/accounting" element={<ServiceProtectedRoute><ServiceAccounting /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/accounting/transaction/:id" element={<ServiceProtectedRoute><ServiceTransactionDetail /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/settings" element={<ServiceProtectedRoute><ServiceDashboardSettings /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/settings/profile" element={<ServiceProtectedRoute><ServiceDashboardProfileSettings /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/settings/business-profile" element={<ServiceProtectedRoute><ServiceBusinessProfile /></ServiceProtectedRoute>} />
             </Route>
 
             <Route element={<AppLayout />}>

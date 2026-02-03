@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import RequestCard from './components/RequestCard';
 import DashboardButton from '../../components/DashboardButton';
 import ServiceTabs from '../../components/ServiceTabs';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../../context/AuthContext';
 
 
 interface RequestItem {
@@ -57,7 +59,15 @@ const mockRequests: RequestItem[] = [
 ];
 
 const ServiceDashboard: React.FC = () => {
+    const navigate = useNavigate();
+    const { user } = useAuth();
     const [activeTab, setActiveTab] = useState<'new_request' | 'in_process'>('new_request');
+
+    useEffect(() => {
+        if (!user || user.role !== 'SERVICE_PRO') {
+            navigate('/service-dashboard/login');
+        }
+    }, [user, navigate]);
 
     const filteredRequests = mockRequests.filter(req => req.tabStatus === activeTab);
 
@@ -77,8 +87,12 @@ const ServiceDashboard: React.FC = () => {
                             className="w-full h-full object-cover"
                         />
                     </div>
-                    <h2 className="text-xl font-bold text-gray-900">Siddak Bagga</h2>
-                    <p className="text-gray-500 text-sm">siddakbagga@gmail.com</p>
+                    <h2 className="text-xl font-bold text-gray-900">
+                        {user?.fullName ?? 'Service Provider'}
+                    </h2>
+                    <p className="text-gray-500 text-sm">
+                        {user?.email ?? ''}
+                    </p>
                 </div>
 
                 {/* Stats Cards Container */}
