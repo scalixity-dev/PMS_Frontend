@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRequestStore } from "../store/requestStore";
 import type { AvailabilityOption, ServiceRequest } from "../../../utils/types";
-import { categories } from "../constants/requestData";
+import { categories, propertiesList } from "../constants/requestData";
 
 export const useNewRequestForm = () => {
     const navigate = useNavigate();
@@ -211,7 +211,7 @@ export const useNewRequestForm = () => {
                 problem: selectedProblem || "",
                 subIssue: finalDetail || "",
                 description: description || "",
-                property: property === "1" ? "Main Street Apartment" : property === "2" ? "Sunset Villa" : "Main Street Apartment",
+                property: propertiesList.find(p => p.id === property)?.name || "Main Street Apartment",
                 equipment: selectedEquipment,
                 priority: priority,
                 authorizationToEnter: authorization ? (authorization === "yes" ? "Yes" : "No") : "No",

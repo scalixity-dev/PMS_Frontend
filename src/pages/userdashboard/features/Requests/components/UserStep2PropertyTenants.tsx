@@ -97,14 +97,14 @@ const UserStep2PropertyTenants: React.FC<UserStep2PropertyTenantsProps> = ({ onN
         serial: ''
     });
 
-    // Mock equipment data
-    const availableEquipment: Equipment[] = [
+    // Equipment list state
+    const [equipmentList, setEquipmentList] = useState<Equipment[]>(initialData?.equipmentList || [
         { id: '1', name: 'Air Conditioner Unit', category: 'HVAC' },
         { id: '2', name: 'Water Heater', category: 'Plumbing' },
         { id: '3', name: 'Refrigerator', category: 'Appliances' }
-    ];
+    ]);
 
-    const filteredEquipment = availableEquipment.filter(eq =>
+    const filteredEquipment = equipmentList.filter(eq =>
         eq.name.toLowerCase().includes(equipmentSearchQuery.toLowerCase())
     );
 
@@ -154,8 +154,16 @@ const UserStep2PropertyTenants: React.FC<UserStep2PropertyTenantsProps> = ({ onN
     };
 
     const handleCreateEquipment = () => {
-        // Handle equipment creation
-        console.log('Creating equipment:', newEquipment);
+        if (!newEquipment.category || !newEquipment.brand || !newEquipment.model) return;
+
+        const createdEquipment: Equipment = {
+            id: Math.random().toString(36).substr(2, 9),
+            name: `${newEquipment.brand} ${newEquipment.model}`,
+            category: newEquipment.category.toUpperCase()
+        };
+
+        setEquipmentList(prev => [...prev, createdEquipment]);
+        setSelectedEquipment(createdEquipment.id);
         setShowCreateEquipmentModal(false);
         setNewEquipment({
             category: '',
@@ -223,7 +231,7 @@ const UserStep2PropertyTenants: React.FC<UserStep2PropertyTenantsProps> = ({ onN
                             <label className="block text-sm font-bold text-gray-700 mb-2">Equipment *</label>
                             {selectedEquipment ? (
                                 <div className="w-full bg-[#7BD747] text-white font-bold rounded-full px-4 py-3 flex items-center justify-between">
-                                    <span>{availableEquipment.find(e => e.id === selectedEquipment)?.name}</span>
+                                    <span>{equipmentList.find(e => e.id === selectedEquipment)?.name}</span>
                                 </div>
                             ) : (
                                 <div className="w-full bg-white border border-gray-300 rounded-md px-4 py-3 flex items-center justify-between hover:border-gray-400 transition-colors">

@@ -7,19 +7,10 @@ import UnsavedChangesModal from "../../../Dashboard/components/UnsavedChangesMod
 import User__AdvancedRequestForm from "./components/UserRequestForm";
 import UserStep2PropertyTenants from "./components/UserStep2PropertyTenants";
 import UserStep3DueDateMaterials from "./components/UserStep3DueDateMaterials";
+import { propertiesList } from "./constants/requestData";
 
-const propertiesList = [
-  {
-    id: '1',
-    name: 'Main Street Apartment',
-    address: '123 Main St, Apartment 4B, New York, NY 10001',
-  },
-  {
-    id: '2',
-    name: 'Sunset Villa',
-    address: '456 Sunset Blvd, Los Angeles, CA 90028',
-  }
-];
+
+
 
 const NewRequest: React.FC = () => {
   const navigate = useNavigate();
@@ -40,16 +31,6 @@ const NewRequest: React.FC = () => {
     setSelectedProblem,
     finalDetail,
     setFinalDetail,
-    selectedEquipment,
-    setSelectedEquipment,
-    attachments,
-    setAttachments,
-    video,
-    setVideo,
-    attachmentsInputRef,
-    videoInputRef,
-    handleRemoveAttachment,
-    handleRemoveVideo,
     title,
     setTitle,
     description,
@@ -74,7 +55,14 @@ const NewRequest: React.FC = () => {
     hasFormData,
     property,
     setProperty,
+    attachments,
+    setAttachments,
+    video,
+    setVideo,
+    selectedEquipment,
+    setSelectedEquipment,
   } = useNewRequestForm();
+
 
 
 

@@ -104,10 +104,11 @@ const RequestDetails = () => {
         })(),
 
         assigneeInfo: {
-            name: foundRequest.assignee || "Ashendra Sharma",
-            email: "ashendarma360@gmail.com",
-            phone: "+1 (555) 012-3456",
-            avatarSeed: foundRequest.assignee || "Ashendra",
+            name: foundRequest.assignee || "",
+            email: foundRequest.assignee ? "ashendarma360@gmail.com" : "",
+            phone: foundRequest.assignee ? "+1 (555) 012-3456" : "",
+            avatarSeed: foundRequest.assignee || "",
+
             type: "One Time",
             dateInitiated: foundRequest.createdAt ? new Date(foundRequest.createdAt).toLocaleDateString() : "03/02/2026",
             dateDue: foundRequest.dateDue ? new Date(foundRequest.dateDue).toLocaleDateString() : "05/02/2026",
@@ -319,16 +320,29 @@ const RequestDetails = () => {
                             </div>
                             <div className="row-span-3">
                                 <div className="bg-white rounded-xl p-4 border border-gray-100 text-center shadow-sm">
-                                    <div className="w-20 h-20 mx-auto rounded-full flex items-center justify-center bg-[#E4F2E2] text-[#2E6819] font-bold text-2xl mb-3 shadow-inner">
-                                        {(() => {
-                                            const nameParts = (request.assigneeInfo.name || "Ashendra Sharma").split(' ');
-                                            return nameParts.map(n => n[0]).join('').toUpperCase().slice(0, 2);
-                                        })()}
-                                    </div>
-                                    <h3 className="font-semibold text-gray-900">{request.assigneeInfo.name}</h3>
-                                    <p className="text-xs text-gray-400 mt-1 truncate" title={request.assigneeInfo.email}>{request.assigneeInfo.email}</p>
+                                    {request.assigneeInfo.name ? (
+                                        <>
+                                            <div className="w-20 h-20 mx-auto rounded-full flex items-center justify-center bg-[#E4F2E2] text-[#2E6819] font-bold text-2xl mb-3 shadow-inner">
+                                                {(() => {
+                                                    const nameParts = request.assigneeInfo.name.split(' ');
+                                                    return nameParts.map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                                                })()}
+                                            </div>
+                                            <h3 className="font-semibold text-gray-900">{request.assigneeInfo.name}</h3>
+                                            <p className="text-xs text-gray-400 mt-1 truncate" title={request.assigneeInfo.email}>{request.assigneeInfo.email}</p>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="w-20 h-20 mx-auto rounded-full flex items-center justify-center bg-gray-100 text-gray-400 font-bold text-2xl mb-3 shadow-inner">
+                                                <User size={32} />
+                                            </div>
+                                            <h3 className="font-semibold text-gray-500">Not Assigned</h3>
+                                            <p className="text-xs text-gray-400 mt-1">No assignee yet</p>
+                                        </>
+                                    )}
                                 </div>
                             </div>
+
                             <div>
                                 <p className="text-gray-500 text-xs font-medium mb-1 uppercase tracking-wider">Priority</p>
                                 <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getPriorityColor(request.priority)}`}>
