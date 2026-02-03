@@ -3,19 +3,23 @@ import { ChevronLeft } from "lucide-react";
 import { useLocation, useNavigate, UNSAFE_NavigationContext } from "react-router-dom";
 import { useNewRequestForm } from "./hooks/useNewRequestForm";
 import Stepper from "./components/new-request/Stepper";
-import Step1Category from "./components/new-request/Step1Category";
-import Step2SubCategory from "./components/new-request/Step2SubCategory";
-import Step3Problem from "./components/new-request/Step3Problem";
-import Step4FinalDetail from "./components/new-request/Step4FinalDetail";
-import Step5Media from "./components/new-request/Step5Media";
-import Step6Detail from "./components/new-request/Step6Detail";
-import Step7Location from "./components/new-request/Step7Location";
-import Step8AuthChoice from "./components/new-request/Step8AuthChoice";
-import Step9AuthDetails from "./components/new-request/Step9AuthDetails";
-import Step10DateTimeChoice from "./components/new-request/Step10DateTimeChoice";
-import Step11Availability from "./components/new-request/Step11Availability";
-import Step12Priority from "./components/new-request/Step12Priority";
 import UnsavedChangesModal from "../../../Dashboard/components/UnsavedChangesModal";
+import User__AdvancedRequestForm from "./components/UserRequestForm";
+import UserStep2PropertyTenants from "./components/UserStep2PropertyTenants";
+import UserStep3DueDateMaterials from "./components/UserStep3DueDateMaterials";
+
+const propertiesList = [
+  {
+    id: '1',
+    name: 'Main Street Apartment',
+    address: '123 Main St, Apartment 4B, New York, NY 10001',
+  },
+  {
+    id: '2',
+    name: 'Sunset Villa',
+    address: '456 Sunset Blvd, Los Angeles, CA 90028',
+  }
+];
 
 const NewRequest: React.FC = () => {
   const navigate = useNavigate();
@@ -36,6 +40,8 @@ const NewRequest: React.FC = () => {
     setSelectedProblem,
     finalDetail,
     setFinalDetail,
+    selectedEquipment,
+    setSelectedEquipment,
     attachments,
     setAttachments,
     video,
@@ -48,32 +54,29 @@ const NewRequest: React.FC = () => {
     setTitle,
     description,
     setDescription,
-    location: locationField,
-    setLocation,
     authorization,
     setAuthorization,
     authCode,
     setAuthCode,
     pets,
-    handleTogglePet,
-    setUpDateTime,
-    setSetUpDateTime,
+    setPets,
     availability,
-    handleDateChange,
-    handleSlotToggle,
-    handleRemoveDate,
-    handleAddDate,
+    setAvailability,
+    dateDue,
+    setDateDue,
     priority,
     setPriority,
-    isPriorityDropdownOpen,
-    setIsPriorityDropdownOpen,
-    priorityDropdownRef,
+    materials,
+    setMaterials,
     submissionError,
     setSubmissionError,
-    isSubmitting,
     handleSubmit,
-    hasFormData
+    hasFormData,
+    property,
+    setProperty,
   } = useNewRequestForm();
+
+
 
   // Access the navigation context to intercept navigation
   const navigationContext = React.useContext(UNSAFE_NavigationContext);
@@ -190,180 +193,101 @@ const NewRequest: React.FC = () => {
     switch (currentStep) {
       case 1:
         return (
-          <Step1Category
-            selectedCategory={selectedCategory}
-            onSelect={(id) => {
-              setSelectedCategory(id);
-              setSelectedSubCategory(null);
-              setSelectedProblem(null);
-              setFinalDetail(null);
+          <User__AdvancedRequestForm
+            onNext={(data) => {
+              console.log('Advanced Data:', data);
+              setSelectedCategory(data.category);
+              setSelectedSubCategory(data.subCategory);
+              setSelectedProblem(data.issue);
+              setFinalDetail(data.subIssue);
+              setTitle(data.title);
+              setDescription(data.details);
+
+              // Correctly handle files from step 1
+              if (data.files && Array.isArray(data.files)) {
+                const newAttachments = data.files.filter((f: File) => !f.type.startsWith('video/'));
+                const newVideo = data.files.find((f: File) => f.type.startsWith('video/')) || null;
+                setAttachments(newAttachments);
+                setVideo(newVideo);
+              }
+
+              nextStep(2);
             }}
-            onNext={() => nextStep(2)}
+            onDiscard={() => navigate('/userdashboard/requests')}
+            initialData={{
+              category: selectedCategory,
+              subCategory: selectedSubCategory,
+              issue: selectedProblem,
+              subIssue: finalDetail,
+              title: title,
+              details: description,
+              attachments: attachments,
+              video: video
+            }}
           />
         );
       case 2:
         return (
-          <Step2SubCategory
-            selectedCategory={selectedCategory}
-            selectedSubCategory={selectedSubCategory}
-            onSelect={(item) => {
-              setSelectedSubCategory(item);
-              setSelectedProblem(null);
-              setFinalDetail(null);
+          <UserStep2PropertyTenants
+            onNext={(data) => {
+              console.log('Step 2 Data:', data);
+              setProperty(data.property);
+              setSelectedEquipment(data.equipment);
+
+              setAuthorization(data.tenantAuthorization ? 'yes' : 'no');
+              setAuthCode(data.accessCode);
+              setPets(data.selectedPets);
+              // Store availability data
+              const mappedAvailability = data.dateOptions.map((opt: any) => ({
+                id: opt.id,
+                date: opt.date ? opt.date.toISOString() : '',
+                timeSlots: opt.timeSlots
+              }));
+              setAvailability(mappedAvailability);
+              nextStep(3);
             }}
-            onNext={() => nextStep(3)}
-            onSkip={() => nextStep(3)}
+            onBack={prevStep}
+            properties={propertiesList}
+            initialData={{
+              property: property,
+              equipment: selectedEquipment,
+
+              tenantAuthorization: authorization === 'yes',
+              accessCode: authCode,
+              selectedPets: pets,
+              petsInResidence: pets.length > 0 ? 'yes' : (authorization ? 'no' : ''),
+              dateOptions: availability.map(opt => ({
+                id: opt.id.toString(),
+                date: opt.date ? new Date(opt.date) : undefined,
+                timeSlots: opt.timeSlots
+              })),
+            }}
           />
         );
       case 3:
         return (
-          <Step3Problem
-            selectedCategory={selectedCategory}
-            selectedSubCategory={selectedSubCategory}
-            selectedProblem={selectedProblem}
-            onSelect={(item) => {
-              setSelectedProblem(item);
-              setFinalDetail(null);
+          <UserStep3DueDateMaterials
+            onNext={(data) => {
+              console.log('Step 3 Data:', data);
+              setDateDue(data.dateDue ? data.dateDue.toISOString() : null);
+              setMaterials(data.materials);
+              // Map priority values
+              const priorityMap: Record<string, "Critical" | "Normal" | "Low"> = {
+                'low': 'Low',
+                'normal': 'Normal',
+                'high': 'Critical',
+                'urgent': 'Critical'
+              };
+              setPriority(priorityMap[data.priority] || 'Normal');
+              // Final submission
+              handleFormSubmit();
             }}
-            onNext={() => nextStep(4)}
-            onSkip={() => nextStep(4)}
-          />
-        );
-      case 4:
-        return (
-          <Step4FinalDetail
-            selectedCategory={selectedCategory}
-            selectedProblem={selectedProblem}
-            finalDetail={finalDetail}
-            onSelect={setFinalDetail}
-            onNext={() => nextStep(5)}
-            onSkip={() => nextStep(5)}
-          />
-        );
-      case 5:
-        return (
-          <Step5Media
-            attachments={attachments}
-            video={video}
-            attachmentsInputRef={attachmentsInputRef}
-            videoInputRef={videoInputRef}
-            onAttachmentsChange={(e) => {
-              if (e.target.files) {
-                const files = Array.from(e.target.files);
-                const MAX_SIZE = 10 * 1024 * 1024; // 10MB
-                const ALLOWED_TYPES = [
-                  'image/jpeg', 'image/png', 'image/webp', 'image/gif',
-                  'application/pdf', 'application/msword',
-                  'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-                ];
-
-                const validFiles = files.filter(file => {
-                  if (!ALLOWED_TYPES.includes(file.type)) {
-                    setSubmissionError(`File "${file.name}" is not a supported type.`);
-                    return false;
-                  }
-                  if (file.size > MAX_SIZE) {
-                    setSubmissionError(`File "${file.name}" is too large (max 10MB).`);
-                    return false;
-                  }
-                  return true;
-                });
-
-                if (validFiles.length > 0) {
-                  setAttachments(prev => [...prev, ...validFiles]);
-                  setSubmissionError(null);
-                }
-                e.target.value = '';
-              }
+            onBack={prevStep}
+            initialData={{
+              dateDue: dateDue ? new Date(dateDue) : undefined,
+              priority: priority?.toLowerCase() || 'normal',
+              materials: materials,
             }}
-            onVideoChange={(e) => {
-              if (e.target.files && e.target.files[0]) {
-                const file = e.target.files[0];
-                const MAX_SIZE = 50 * 1024 * 1024; // 50MB
-                if (!file.type.startsWith('video/')) {
-                  setSubmissionError("Please select a valid video file.");
-                  return;
-                }
-                if (file.size > MAX_SIZE) {
-                  setSubmissionError("Video file is too large (max 50MB).");
-                  return;
-                }
-                setVideo(file);
-                setSubmissionError(null);
-                e.target.value = '';
-              }
-            }}
-            onRemoveAttachment={handleRemoveAttachment}
-            onRemoveVideo={handleRemoveVideo}
-            onNext={() => nextStep(6)}
-            onSkip={() => nextStep(6)}
-          />
-        );
-      case 6:
-        return (
-          <Step6Detail
-            title={title}
-            description={description}
-            onTitleChange={setTitle}
-            onDescriptionChange={setDescription}
-            onNext={() => nextStep(7)}
-          />
-        );
-      case 7:
-        return (
-          <Step7Location
-            location={locationField}
-            onLocationChange={setLocation}
-            onNext={() => nextStep(8)}
-          />
-        );
-      case 8:
-        return (
-          <Step8AuthChoice
-            authorization={authorization}
-            onSelect={setAuthorization}
-            onNext={() => nextStep(authorization === "no" ? 10 : 9)}
-          />
-        );
-      case 9:
-        return (
-          <Step9AuthDetails
-            authCode={authCode}
-            pets={pets}
-            onAuthCodeChange={setAuthCode}
-            onTogglePet={handleTogglePet}
-            onNext={() => nextStep(10)}
-          />
-        );
-      case 10:
-        return (
-          <Step10DateTimeChoice
-            setUpDateTime={setUpDateTime}
-            onSelect={setSetUpDateTime}
-            onNext={() => nextStep(setUpDateTime === "No" ? 12 : 11)}
-          />
-        );
-      case 11:
-        return (
-          <Step11Availability
-            availability={availability}
-            onDateChange={handleDateChange}
-            onSlotToggle={handleSlotToggle}
-            onRemoveDate={handleRemoveDate}
-            onAddDate={handleAddDate}
-            onNext={() => nextStep(12)}
-          />
-        );
-      case 12:
-        return (
-          <Step12Priority
-            priority={priority}
-            isPriorityDropdownOpen={isPriorityDropdownOpen}
-            priorityDropdownRef={priorityDropdownRef}
-            setIsPriorityDropdownOpen={setIsPriorityDropdownOpen}
-            onSelect={setPriority}
-            onSubmit={handleFormSubmit}
-            isSubmitting={isSubmitting}
           />
         );
       default:
@@ -372,9 +296,9 @@ const NewRequest: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] p-4 md:p-10 relative">
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-[#F5F5F5] rounded-xl shadow-[0px_3.9px_3.9px_0px_#00000040] border border-gray-100 p-8 md:p-8 relative">
+    <div className="min-h-screen bg-[#F9FAFB] p-2 sm:p-4 md:p-10 relative">
+      <div className="max-w-5xl mx-auto">
+        <div className="bg-[#F5F5F5] rounded-xl shadow-[0px_3.9px_3.9px_0px_#00000040] border border-gray-100 p-4 sm:p-6 md:p-8 relative">
           <button
             onClick={prevStep}
             className="flex items-center gap-1 text-[#004D40] font-bold text-sm mb-6 hover:opacity-80 transition-opacity"

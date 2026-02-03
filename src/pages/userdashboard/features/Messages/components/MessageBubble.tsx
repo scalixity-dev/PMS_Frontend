@@ -5,10 +5,9 @@ interface MessageBubbleProps {
     message: Message;
     isOwnMessage: boolean;
     contactName: string;
-    contactAvatar: string;
 }
 
-const MessageBubble = ({ message, isOwnMessage, contactName, contactAvatar }: MessageBubbleProps) => {
+const MessageBubble = ({ message, isOwnMessage, contactName }: MessageBubbleProps) => {
     const formatTime = (timestamp: string) => {
         const date = new Date(timestamp);
         return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
@@ -31,11 +30,9 @@ const MessageBubble = ({ message, isOwnMessage, contactName, contactAvatar }: Me
         <div className={`flex gap-3 ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'} mb-4`}>
             {/* Avatar */}
             {!isOwnMessage && (
-                <img
-                    src={contactAvatar}
-                    alt={contactName}
-                    className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-                />
+                <div className="w-8 h-8 rounded-full bg-[#E4F2E2] text-[#2E6819] flex items-center justify-center font-bold text-xs flex-shrink-0 shadow-sm">
+                    {contactName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                </div>
             )}
 
             {/* Message Content */}
