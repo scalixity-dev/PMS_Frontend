@@ -1,11 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react';
 import CustomDropdown from '../../../components/CustomDropdown';
 import { Upload, Video, X } from 'lucide-react';
+import { useMaintenanceRequestFormStore } from '../store/maintenanceRequestStore';
+
+export interface AdvancedRequestFormFields {
+    category: string;
+    subCategory: string;
+    issue: string;
+    subIssue: string;
+    title: string;
+    details: string;
+    amount: string;
+}
+
+export interface AdvancedRequestFormData extends AdvancedRequestFormFields {
+    files: File[];
+}
 
 interface AdvancedRequestFormProps {
-    onNext: (data: any) => void;
+    onNext: (data: AdvancedRequestFormData) => void;
     onDiscard: () => void;
-    initialData?: any;
+    initialData?: Partial<AdvancedRequestFormFields>;
 }
 
 interface MediaFile {
@@ -15,16 +30,19 @@ interface MediaFile {
 }
 
 const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDiscard, initialData }) => {
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<AdvancedRequestFormFields>({
         category: initialData?.category || '',
         subCategory: initialData?.subCategory || '',
         issue: initialData?.issue || '',
         subIssue: initialData?.subIssue || '',
         title: initialData?.title || '',
-        details: initialData?.details || ''
+        details: initialData?.details || '',
+        amount: initialData?.amount || '',
     });
 
     const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
+
+    const setAdvanced = useMaintenanceRequestFormStore((state) => state.setAdvanced);
 
     // Track if user has edited the form to avoid clobbering their changes
     const formTouchedRef = useRef(false);
@@ -38,7 +56,8 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
                 issue: initialData.issue || '',
                 subIssue: initialData.subIssue || '',
                 title: initialData.title || '',
-                details: initialData.details || ''
+                details: initialData.details || '',
+                amount: initialData.amount || '',
             });
         }
     }, [initialData]);
@@ -211,7 +230,7 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
         return parts.join(' / ');
     };
 
-    const handleChange = (field: string, value: string) => {
+    const handleChange = (field: keyof AdvancedRequestFormFields, value: string) => {
         // Mark form as touched when user makes any change
         formTouchedRef.current = true;
 
@@ -337,13 +356,27 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
             </div>
 
             {/* Details */}
-            <div className="mb-12">
+            <div className="mb-8">
                 <h2 className="text-2xl font-bold text-gray-800 mb-4">Details</h2>
                 <textarea
                     value={formData.details}
                     onChange={(e) => handleChange('details', e.target.value)}
                     placeholder="Type Details here.."
                     className="w-full h-40 px-4 py-4 bg-[#F0F2F5] rounded-xl border-none outline-none placeholder-gray-500 resize-none"
+                />
+            </div>
+
+            {/* Amount */}
+            <div className="mb-12">
+                <label className="block text-sm font-bold text-gray-700 mb-2">Estimated Amount</label>
+                <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.amount}
+                    onChange={(e) => handleChange('amount', e.target.value)}
+                    placeholder="Enter estimated cost for this request"
+                    className="w-full px-4 py-3 bg-white rounded-md border-none outline-none placeholder-gray-400"
                 />
             </div>
 
@@ -382,7 +415,7 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
                             <input
                                 type="file"
                                 className="hidden"
-                                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                                accept=".pdf,.doc,.docx,.xls,.xlsx"
                                 onChange={handleFileSelect}
                             />
                         </label>
@@ -401,12 +434,21 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
                                     className="w-full h-full object-cover"
                                     controls
                                 />
-                            ) : (
+                            ) : media.file.type.startsWith('image/') ? (
                                 <img
                                     src={media.previewUrl}
                                     alt="preview"
                                     className="w-full h-full object-cover"
                                 />
+                            ) : (
+                                <div className="w-full h-full flex flex-col items-center justify-center px-2 text-center text-xs text-gray-600">
+                                    <span className="font-semibold truncate w-full">
+                                        {media.file.name}
+                                    </span>
+                                    <span className="mt-1 text-[10px] text-gray-400">
+                                        {media.file.type || 'Document'}
+                                    </span>
+                                </div>
                             )}
                             <button
                                 onClick={() => handleRemoveFile(media.id)}
@@ -428,7 +470,20 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
                     Discard
                 </button>
                 <button
-                    onClick={() => onNext({ ...formData, files: mediaFiles.map(m => m.file) })}
+                    onClick={() => {
+                        const files = mediaFiles.map((media) => media.file);
+                        setAdvanced({
+                            category: formData.category,
+                            subCategory: formData.subCategory,
+                            issue: formData.issue,
+                            subIssue: formData.subIssue,
+                            title: formData.title,
+                            details: formData.details,
+                            amount: formData.amount,
+                            files,
+                        });
+                        onNext({ ...formData, files });
+                    }}
                     className="flex-1 md:flex-none px-8 py-3 rounded-lg bg-[#3D7475] text-white font-bold hover:opacity-90 transition-opacity shadow-md"
                 >
                     Continue

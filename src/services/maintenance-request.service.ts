@@ -49,7 +49,53 @@ export interface MaintenanceRequestResponse {
   id: string;
 }
 
+export interface MaintenanceRequestDetail {
+  id: string;
+  property?: {
+    id: string;
+    propertyName?: string;
+  };
+  category?: MaintenanceCategory;
+  subcategory?: string;
+  issue?: string;
+  subissue?: string;
+  title?: string;
+  problemDetails?: string;
+  priority?: MaintenancePriority;
+  requestedAt?: string;
+  dueDate?: string;
+  equipmentLinked?: boolean;
+  equipmentId?: string | null;
+  tenantMeta?: MaintenanceTenantMeta;
+  materials?: CreateMaintenanceMaterialInput[];
+  attachments?: Array<{
+    id: string;
+    fileUrl: string;
+    fileType?: FileType;
+    description?: string | null;
+  }>;
+}
+
 class MaintenanceRequestService {
+  async getAll(): Promise<unknown[]> {
+    const response = await fetch(API_ENDPOINTS.MAINTENANCE_REQUEST.GET_ALL, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Failed to fetch maintenance requests';
+      throw new Error(message);
+    }
+
+    return response.json();
+  }
+
   async create(input: CreateMaintenanceRequestInput): Promise<MaintenanceRequestResponse> {
     const response = await fetch(API_ENDPOINTS.MAINTENANCE_REQUEST.CREATE, {
       method: 'POST',
@@ -70,7 +116,7 @@ class MaintenanceRequestService {
     return response.json();
   }
 
-  async getOne(id: string): Promise<unknown> {
+  async getOne(id: string): Promise<MaintenanceRequestDetail> {
     const response = await fetch(API_ENDPOINTS.MAINTENANCE_REQUEST.GET_ONE(id), {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },

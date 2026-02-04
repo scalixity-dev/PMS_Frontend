@@ -1,15 +1,21 @@
 // Fixed implicit any
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import CustomDropdown from '../../../components/CustomDropdown';
 import DatePicker from '../../../../../components/ui/DatePicker';
 import Toggle from '../../../../../components/Toggle';
 import { Plus, Trash2, X, AlertTriangle, ChevronLeft } from 'lucide-react';
+import {
+    useMaintenanceRequestFormStore,
+    type MaintenanceDateOption,
+    type MaintenanceTenantListItem,
+} from '../store/maintenanceRequestStore';
+import { useGetAllLeases } from '../../../../../hooks/useLeaseQueries';
+import type { BackendLease } from '../../../../../services/lease.service';
+import { useGetEquipmentByProperty } from '../../../../../hooks/useEquipmentQueries';
+import type { BackendEquipment } from '../../../../../services/equipment.service';
 
-interface DateOption {
-    id: string;
-    date: Date | undefined;
-    timeSlots: string[];
-}
+interface DateOption extends MaintenanceDateOption {}
 
 interface Equipment {
     id: string;
@@ -17,39 +23,88 @@ interface Equipment {
     category: string;
 }
 
-interface TenantListItem {
-    id: number;
-    name: string;
-    status: string;
-    share: boolean;
-    selected: boolean;
+interface TenantListItem extends MaintenanceTenantListItem {}
+
+interface PropertyTenantsStepData {
+    selectedProperty: string;
+    linkEquipment: boolean;
+    selectedEquipment: string;
+    tenantAuthorization: boolean;
+    dateOptions: DateOption[];
+    tenantList: TenantListItem[];
+    accessCode: string;
+    petsInResidence: string;
+    selectedPets: string[];
 }
 
 interface PropertyTenantsStepProps {
-    onNext: (data: any) => void;
+    onNext: (data: PropertyTenantsStepData) => void;
     onBack: () => void;
-    properties: Array<{ id: string; name: string; address: string }>;
-    initialData?: any;
+    properties?: Array<{ id: string; name: string; address: string }>;
+    initialData?: Partial<PropertyTenantsStepData>;
 }
 
 const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBack, properties, initialData }) => {
-    const [selectedProperty, setSelectedProperty] = useState(initialData?.property || '');
-    const [linkEquipment, setLinkEquipment] = useState(!!initialData?.equipment);
-    const [selectedEquipment, setSelectedEquipment] = useState(initialData?.equipment || '');
+    const navigate = useNavigate();
+    const [selectedProperty, setSelectedProperty] = useState(initialData?.selectedProperty || '');
+    const [linkEquipment, setLinkEquipment] = useState(!!initialData?.selectedEquipment);
+    const [selectedEquipment, setSelectedEquipment] = useState(initialData?.selectedEquipment || '');
     const [showEquipmentDropdown, setShowEquipmentDropdown] = useState(false);
     const [equipmentSearchQuery, setEquipmentSearchQuery] = useState('');
     const [showCreateEquipmentModal, setShowCreateEquipmentModal] = useState(false);
     const [showExitConfirmation, setShowExitConfirmation] = useState(false);
     const [tenantAuthorization, setTenantAuthorization] = useState(initialData?.tenantAuthorization || false);
     const [dateOptions, setDateOptions] = useState<DateOption[]>(initialData?.dateOptions || []);
-    const [tenantList, setTenantList] = useState<TenantListItem[]>(initialData?.tenantList || [
-        { id: 1, name: 'Atul', status: 'Pending', share: false, selected: false },
-        { id: 2, name: 'Ajay', status: 'Pending', share: false, selected: false },
-    ]);
+    const [tenantList, setTenantList] = useState<TenantListItem[]>(initialData?.tenantList || []);
     const [accessCode, setAccessCode] = useState(initialData?.accessCode || '');
     const [petsInResidence, setPetsInResidence] = useState(initialData?.petsInResidence || '');
     const [selectedPets, setSelectedPets] = useState<string[]>(initialData?.selectedPets || []);
     const [validationError, setValidationError] = useState('');
+
+    const setProperty = useMaintenanceRequestFormStore((state) => state.setProperty);
+
+    // Load all leases and derive properties that have active/pending leases
+    const {
+        data: allLeases = [],
+    } = useGetAllLeases(undefined, undefined, true);
+
+    const activeLeases = useMemo(
+        () =>
+            (allLeases as BackendLease[]).filter(
+                (lease) => lease.status === 'ACTIVE' || lease.status === 'PENDING',
+            ),
+        [allLeases],
+    );
+
+    const derivedPropertyOptions = useMemo(() => {
+        const map = new Map<string, { value: string; label: string }>();
+        activeLeases.forEach((lease) => {
+            const prop = lease.property;
+            if (!prop) return;
+            if (!map.has(prop.id)) {
+                map.set(prop.id, {
+                    value: prop.id,
+                    label: prop.propertyName,
+                });
+            }
+        });
+
+        // Fallback to props-based properties if no leases found
+        if (map.size === 0 && properties && properties.length > 0) {
+            properties.forEach((p) => {
+                if (!map.has(p.id)) {
+                    map.set(p.id, { value: p.id, label: p.name });
+                }
+            });
+        }
+
+        return Array.from(map.values());
+    }, [activeLeases, properties]);
+
+    // Load equipment for the selected property
+    const {
+        data: equipmentData = [],
+    } = useGetEquipmentByProperty(selectedProperty || null, !!selectedProperty);
 
     const handleContinue = () => {
         if (petsInResidence === 'yes' && selectedPets.length === 0) {
@@ -58,7 +113,7 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
         }
         setValidationError('');
 
-        onNext({
+        const payload: PropertyTenantsStepData = {
             selectedProperty,
             linkEquipment,
             selectedEquipment,
@@ -67,8 +122,22 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
             tenantList,
             accessCode,
             petsInResidence,
-            selectedPets
+            selectedPets,
+        };
+
+        setProperty({
+            propertyId: selectedProperty,
+            linkEquipment,
+            selectedEquipment,
+            tenantAuthorization,
+            dateOptions,
+            tenantList,
+            accessCode,
+            petsInResidence,
+            selectedPets,
         });
+
+        onNext(payload);
     };
 
     // Disable body scroll when modal is open
@@ -99,22 +168,6 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
         model: '',
         serial: ''
     });
-
-    // Mock equipment data
-    const availableEquipment: Equipment[] = [
-        { id: '1', name: 'Air Conditioner Unit', category: 'HVAC' },
-        { id: '2', name: 'Water Heater', category: 'Plumbing' },
-        { id: '3', name: 'Refrigerator', category: 'Appliances' }
-    ];
-
-    const filteredEquipment = availableEquipment.filter(eq =>
-        eq.name.toLowerCase().includes(equipmentSearchQuery.toLowerCase())
-    );
-
-    const propertyOptions = properties.map(p => ({
-        value: p.id,
-        label: p.name
-    }));
 
     const toggleTenantSelection = (id: number) => {
         setTenantList(prev => prev.map((tenant: TenantListItem) =>
@@ -157,8 +210,19 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
     };
 
     const handleCreateEquipment = () => {
-        // Handle equipment creation
-        console.log('Creating equipment:', newEquipment);
+        if (!selectedProperty) {
+            // Require a property before creating equipment so it can be linked
+            setValidationError('Please select a property before creating equipment.');
+            return;
+        }
+
+        // Navigate to the full Create Equipment flow with the selected property preselected
+        navigate('/dashboard/equipments/add', {
+            state: {
+                propertyId: selectedProperty,
+            },
+        });
+
         setShowCreateEquipmentModal(false);
         setNewEquipment({
             category: '',
@@ -172,6 +236,70 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
         setSelectedEquipment(equipmentId);
         setShowEquipmentDropdown(false);
     };
+
+    // Derive available equipment list from backend
+    const availableEquipment: Equipment[] = useMemo(() => {
+        return (equipmentData as BackendEquipment[]).map((eq) => ({
+            id: eq.id,
+            name: `${eq.brand} ${eq.model}`,
+            category: typeof eq.category === 'string' ? eq.category : eq.category?.name || 'Equipment',
+        }));
+    }, [equipmentData]);
+
+    const filteredEquipment = availableEquipment.filter((eq) =>
+        eq.name.toLowerCase().includes(equipmentSearchQuery.toLowerCase()),
+    );
+
+    const propertyOptions = derivedPropertyOptions;
+
+    // When property changes, derive tenant list from leases
+    useEffect(() => {
+        if (!selectedProperty) {
+            setTenantList(initialData?.tenantList || []);
+            return;
+        }
+
+        const leasesForProperty = (activeLeases as BackendLease[]).filter(
+            (lease) => lease.propertyId === selectedProperty,
+        );
+
+        if (leasesForProperty.length === 0) {
+            if (initialData?.tenantList && initialData.tenantList.length > 0) {
+                setTenantList(initialData.tenantList);
+            } else {
+                setTenantList([]);
+            }
+            return;
+        }
+
+        const items: TenantListItem[] = [];
+        let nextId = 1;
+
+        leasesForProperty.forEach((lease) => {
+            if (lease.tenant) {
+                items.push({
+                    id: nextId++,
+                    name: lease.tenant.fullName || lease.tenant.email,
+                    status: lease.status,
+                    share: false,
+                    selected: false,
+                });
+            }
+            if (lease.sharedTenants) {
+                lease.sharedTenants.forEach((shared) => {
+                    items.push({
+                        id: nextId++,
+                        name: shared.tenant.fullName || shared.tenant.email,
+                        status: 'Shared',
+                        share: false,
+                        selected: false,
+                    });
+                });
+            }
+        });
+
+        setTenantList(items);
+    }, [selectedProperty, activeLeases, initialData?.tenantList]);
 
     return (
         <div className="w-full max-w-5xl mx-auto pb-12">

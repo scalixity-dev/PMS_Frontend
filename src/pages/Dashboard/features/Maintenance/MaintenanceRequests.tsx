@@ -7,6 +7,7 @@ import DashboardFilter, { type FilterOption } from '../../components/DashboardFi
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import Pagination from '../../components/Pagination';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
+import { useGetAllMaintenanceRequests } from '../../../../hooks/useMaintenanceRequestQueries';
 
 // Row Action Dropdown Component
 interface RowActionDropdownProps {
@@ -100,98 +101,6 @@ const RowActionDropdown: React.FC<RowActionDropdownProps> = ({
     );
 };
 
-// Mock Data with property information
-const MOCK_REQUESTS = [
-    {
-        id: '1234',
-        index: 1,
-        status: 'New',
-        date: '10 Nov 2025',
-        category: 'Luxury',
-        subCategory: 'Lights/Beaping',
-        priority: 'Normal',
-        assignee: 'Vedh',
-        propertyName: 'Luxury Property',
-    },
-    {
-        id: '1235',
-        index: 2,
-        status: 'Reviews',
-        date: '10 Nov 2025',
-        category: 'Luxury',
-        subCategory: 'Lights/Beaping',
-        priority: 'Normal',
-        assignee: null, // Unassigned
-        propertyName: 'Luxury Property',
-    },
-    {
-        id: '1236',
-        index: 1,
-        status: 'New',
-        date: '10 Nov 2025',
-        category: 'Luxury',
-        subCategory: 'Lights/Beaping',
-        priority: 'Normal',
-        assignee: null, // Unassigned
-        propertyName: 'Abc Apartsment',
-    },
-    {
-        id: '1237',
-        index: 2,
-        status: 'Reviews',
-        date: '10 Nov 2025',
-        category: 'Luxury',
-        subCategory: 'Lights/Beaping',
-        priority: 'Normal',
-        assignee: 'Vedh',
-        propertyName: 'Abc Apartsment',
-    },
-    {
-        id: '1238',
-        index: 1,
-        status: 'New',
-        date: '12 Nov 2025',
-        category: 'Exterior',
-        subCategory: 'Roof & Gutters',
-        priority: 'High',
-        assignee: 'John',
-        propertyName: 'Sunset Villa',
-    },
-    {
-        id: '1239',
-        index: 1,
-        status: 'In Progress',
-        date: '13 Nov 2025',
-        category: 'Interior',
-        subCategory: 'Plumbing',
-        priority: 'Normal',
-        assignee: null, // Unassigned
-        propertyName: 'Ocean View Apartments',
-    },
-    {
-        id: '1240',
-        index: 1,
-        status: 'Completed',
-        date: '14 Nov 2025',
-        category: 'Exterior',
-        subCategory: 'Landscaping',
-        priority: 'Low',
-        assignee: 'Sarah',
-        propertyName: 'Garden Heights',
-    },
-    {
-        id: '1241',
-        index: 1,
-        status: 'New',
-        date: '15 Nov 2025',
-        category: 'Interior',
-        subCategory: 'Electrical',
-        priority: 'High',
-        assignee: 'Alex',
-        propertyName: 'Metro Living',
-    },
-];
-
 const PROPERTIES_PER_PAGE = 5;
 
 const Requests: React.FC = () => {
@@ -205,10 +114,10 @@ const Requests: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
     const [isRecurringModalOpen, setIsRecurringModalOpen] = useState(false);
-    const [selectedRequestForRecurring, setSelectedRequestForRecurring] = useState<typeof MOCK_REQUESTS[0] | null>(null);
+    const [selectedRequestForRecurring, setSelectedRequestForRecurring] = useState<any | null>(null);
     const [isAssigneeModalOpen, setIsAssigneeModalOpen] = useState(false);
     const [selectedRequestForAssign, setSelectedRequestForAssign] = useState<string | null>(null);
-    const [requestsData, setRequestsData] = useState(MOCK_REQUESTS);
+    const { data: backendRequests = [], isLoading, error } = useGetAllMaintenanceRequests(true);
     const [filters, setFilters] = useState<{
         status: string[];
         assignee: string[];
@@ -245,7 +154,7 @@ const Requests: React.FC = () => {
 
     const confirmBulkDelete = () => {
         console.log('Deleting requests:', selectedItems);
-        setRequestsData(prev => prev.filter(r => !selectedItems.includes(r.id)));
+        // TODO: Implement bulk delete API when backend supports it
         setSelectedItems([]);
         setIsBulkDeleteModalOpen(false);
     };
@@ -257,7 +166,7 @@ const Requests: React.FC = () => {
 
     const handleMakeRecurring = (id: string) => {
         console.log('Make Recurring clicked for:', id);
-        const request = requestsData.find(r => r.id === id);
+        const request = mappedRequests.find(r => r.id === id);
         if (request) {
             setSelectedRequestForRecurring(request);
             setIsRecurringModalOpen(true);
@@ -277,9 +186,7 @@ const Requests: React.FC = () => {
 
     const confirmDelete = () => {
         console.log('Deleting request:', requestToDelete);
-        if (requestToDelete) {
-            setRequestsData(prev => prev.filter(r => r.id !== requestToDelete));
-        }
+        // TODO: Implement delete API when backend supports it
         setIsDeleteModalOpen(false);
         setRequestToDelete(null);
     };
@@ -289,14 +196,8 @@ const Requests: React.FC = () => {
         setIsAssigneeModalOpen(true);
     };
 
-    const handleAssigneeChange = (newAssignee: string) => {
-        if (selectedRequestForAssign) {
-            setRequestsData(prev => prev.map(r =>
-                r.id === selectedRequestForAssign
-                    ? { ...r, assignee: newAssignee === 'Unassigned' ? null : newAssignee }
-                    : r
-            ));
-        }
+    const handleAssigneeChange = (_newAssignee: string) => {
+        // TODO: Implement assign API; currently just closes the modal
         setIsAssigneeModalOpen(false);
         setSelectedRequestForAssign(null);
     };
@@ -328,8 +229,54 @@ const Requests: React.FC = () => {
     };
 
     // Filter Logic
+    const mappedRequests = useMemo(() => {
+        // backendRequests comes directly from API; we map it into the shape the UI expects
+        return (backendRequests as any[]).map((req, index) => {
+            const propertyName: string =
+                req.property?.propertyName ?? req.property?.id ?? 'Property';
+
+            const status: string = req.status ?? 'NEW';
+            const priority: string = req.priority ?? 'MEDIUM';
+
+            const requestedAt: string | undefined = req.requestedAt;
+            let date = '';
+            if (requestedAt) {
+                const d = new Date(requestedAt);
+                if (!Number.isNaN(d.getTime())) {
+                    const day = d.getDate().toString().padStart(2, '0');
+                    const monthShort = d.toLocaleString('default', { month: 'short' });
+                    const year = d.getFullYear();
+                    date = `${day} ${monthShort} ${year}`;
+                }
+            }
+
+            const firstAssignment = Array.isArray(req.assignments) && req.assignments.length > 0
+                ? req.assignments[0]
+                : null;
+            const assigneeName: string | null =
+                firstAssignment?.serviceProvider?.companyName ||
+                (firstAssignment?.serviceProvider
+                    ? `${firstAssignment.serviceProvider.firstName ?? ''} ${firstAssignment.serviceProvider.lastName ?? ''}`.trim()
+                    : firstAssignment?.assignedToUser?.fullName ||
+                      firstAssignment?.assignedToUser?.email ||
+                      null);
+
+            return {
+                id: req.id as string,
+                index: index + 1,
+                status,
+                date,
+                category: req.category ?? '',
+                subCategory: req.subcategory ?? '',
+                priority,
+                assignee: assigneeName,
+                propertyName,
+            };
+        });
+    }, [backendRequests]);
+
     const filteredRequests = useMemo(() => {
-        return requestsData.filter(item => {
+        return mappedRequests.filter(item => {
             const assigneeName = item.assignee || '';
             const matchesSearch = searchQuery === '' ||
                 item.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -346,11 +293,11 @@ const Requests: React.FC = () => {
 
             return matchesSearch && matchesStatus && matchesAssignee && matchesProperty;
         });
-    }, [searchQuery, filters, requestsData]);
+    }, [searchQuery, filters, mappedRequests]);
 
     // Group requests by property
     const groupedByProperty = useMemo(() => {
-        const groups: Record<string, typeof requestsData> = {};
+        const groups: Record<string, typeof mappedRequests> = {};
         filteredRequests.forEach(req => {
             if (!groups[req.propertyName]) groups[req.propertyName] = [];
             groups[req.propertyName].push(req);
@@ -373,7 +320,7 @@ const Requests: React.FC = () => {
         }
     };
 
-    const toggleAllForProperty = (propertyRequests: typeof MOCK_REQUESTS) => {
+    const toggleAllForProperty = (propertyRequests: typeof mappedRequests) => {
         const propertyIds = propertyRequests.map(r => r.id);
         const allSelected = propertyIds.every(id => selectedItems.includes(id));
 
@@ -399,7 +346,7 @@ const Requests: React.FC = () => {
                 className="mb-6"
             />
 
-            <div className="p-6 bg-[#DFE5E3] min-h-screen rounded-[2rem] overflow-visible">
+                <div className="p-6 bg-[#DFE5E3] min-h-screen rounded-[2rem] overflow-visible">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 mb-6">
                     <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-xl font-bold text-gray-800 hover:text-gray-600 transition-colors">
@@ -444,6 +391,14 @@ const Requests: React.FC = () => {
 
                 {/* Property Tables */}
                 <div className="mt-8 space-y-8">
+                    {isLoading && (
+                        <div className="text-center text-gray-600 text-sm">Loading maintenance requests...</div>
+                    )}
+                    {error && !isLoading && (
+                        <div className="text-center text-red-600 text-sm">
+                            {(error as Error).message ?? 'Failed to load maintenance requests'}
+                        </div>
+                    )}
                     {paginatedProperties.map(([propertyName, requests]) => (
                         <div key={propertyName}>
                             {/* Property Pill */}
@@ -709,7 +664,7 @@ const Requests: React.FC = () => {
                     setIsAssigneeModalOpen(false);
                     setSelectedRequestForAssign(null);
                 }}
-                currentAssignee={requestsData.find(r => r.id === selectedRequestForAssign)?.assignee ?? 'Unassigned'}
+                currentAssignee={mappedRequests.find(r => r.id === selectedRequestForAssign)?.assignee ?? 'Unassigned'}
                 onSave={handleAssigneeChange}
             />
         </div>
