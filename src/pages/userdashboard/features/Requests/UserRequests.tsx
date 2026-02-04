@@ -88,10 +88,11 @@ interface ActionMenuProps {
   onPrint: () => void;
   onCancel: () => void;
   onDelete: () => void;
+  canCancel: boolean;
 }
 
 // Action Menu Component
-const ActionMenu: React.FC<ActionMenuProps> = ({ isOpen, position, onClose, onPrint, onCancel, onDelete }) => {
+const ActionMenu: React.FC<ActionMenuProps> = ({ isOpen, position, onClose, onPrint, onCancel, onDelete, canCancel }) => {
   if (!isOpen || !position) return null;
 
   return createPortal(
@@ -121,9 +122,11 @@ const ActionMenu: React.FC<ActionMenuProps> = ({ isOpen, position, onClose, onPr
           </button>
           <button
             onClick={onCancel}
-            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+            disabled={!canCancel}
+            className={`w-full flex items-center gap-3 px-4 py-2 text-sm rounded-lg transition-colors ${canCancel ? 'text-gray-700 hover:bg-gray-50' : 'text-gray-300 cursor-not-allowed'
+              }`}
           >
-            <XCircle size={14} className="text-gray-400" />
+            <XCircle size={14} className={canCancel ? "text-gray-400" : "text-gray-200"} />
             Cancel
           </button>
           <button
@@ -152,6 +155,7 @@ interface RequestRowProps {
   onCancel: () => void;
   onDelete: () => void;
   onChatClick: (e: React.MouseEvent) => void;
+  canCancel: boolean;
 }
 
 // Request Row Component
@@ -167,6 +171,7 @@ const RequestRow: React.FC<RequestRowProps> = ({
   onCancel,
   onDelete,
   onChatClick,
+  canCancel,
 }) => (
   <tr
     onClick={onRowClick}
@@ -182,7 +187,13 @@ const RequestRow: React.FC<RequestRowProps> = ({
     </td>
     <td className="px-6 py-4 text-sm text-gray-700">{request.requestId}</td>
     <td className="px-6 py-4 text-sm text-gray-700">{request.category}</td>
-    <td className="px-6 py-4 text-sm text-gray-700">{request.property}</td>
+    <td className="px-6 py-4 text-sm text-gray-700">
+      {new Date(request.createdAt).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })}
+    </td>
     <td className="px-6 py-4">
       <span className={`px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 w-fit ${getPriorityColor(request.priority)}`}>
         <div className="w-1.5 h-1.5 bg-current rounded-full" />
@@ -223,6 +234,7 @@ const RequestRow: React.FC<RequestRowProps> = ({
             onPrint={onPrint}
             onCancel={onCancel}
             onDelete={onDelete}
+            canCancel={canCancel}
           />
         </div>
       </div>
@@ -242,6 +254,7 @@ interface RequestMobileCardProps {
   onPrint: () => void;
   onCancel: () => void;
   onDelete: () => void;
+  canCancel: boolean;
 }
 
 const RequestMobileCard: React.FC<RequestMobileCardProps> = ({
@@ -256,6 +269,7 @@ const RequestMobileCard: React.FC<RequestMobileCardProps> = ({
   onPrint,
   onCancel,
   onDelete,
+  canCancel,
 }) => (
   <div
     onClick={onCardClick}
@@ -298,6 +312,7 @@ const RequestMobileCard: React.FC<RequestMobileCardProps> = ({
             onPrint={onPrint}
             onCancel={onCancel}
             onDelete={onDelete}
+            canCancel={canCancel}
           />
         </div>
       </div>
@@ -308,7 +323,13 @@ const RequestMobileCard: React.FC<RequestMobileCardProps> = ({
         <h3 className="text-[var(--dashboard-text-main)] font-semibold text-lg truncate">{request.category}</h3>
         <span className="text-gray-400 text-xs font-medium whitespace-nowrap uppercase tracking-wider">{request.requestId}</span>
       </div>
-      <p className="text-[var(--dashboard-secondary)] text-sm font-medium line-clamp-1">{request.property}</p>
+      <p className="text-[var(--dashboard-secondary)] text-sm font-medium line-clamp-1">
+        {new Date(request.createdAt).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })}
+      </p>
     </div>
 
     <div className="flex justify-between items-center pt-3 border-t border-dashed border-gray-100 mt-1">
@@ -457,6 +478,8 @@ const Requests: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [requestToDelete, setRequestToDelete] = useState<ServiceRequest | null>(null);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [requestToCancel, setRequestToCancel] = useState<ServiceRequest | null>(null);
   const { search: searchQuery, status: statusFilter, priority: priorityFilter, category: categoryFilter } = requestFilters;
 
   const showSuccess = location.state?.showSuccess;
@@ -487,10 +510,20 @@ const Requests: React.FC = () => {
     }, 100);
   }, []);
 
-  const handleCancel = useCallback((id: number) => {
-    updateRequestStatus(id, "Cancelled");
+  const handleCancel = useCallback((request: ServiceRequest) => {
+    if (request.status !== "New") return;
+    setRequestToCancel(request);
+    setIsCancelModalOpen(true);
     setActiveMenuId(null);
-  }, [updateRequestStatus]);
+  }, []);
+
+  const confirmCancel = useCallback(() => {
+    if (requestToCancel) {
+      updateRequestStatus(requestToCancel.id, "Cancelled");
+      setIsCancelModalOpen(false);
+      setRequestToCancel(null);
+    }
+  }, [updateRequestStatus, requestToCancel]);
 
   const handleDelete = useCallback((request: ServiceRequest) => {
     setRequestToDelete(request);
@@ -725,7 +758,7 @@ const Requests: React.FC = () => {
                     Category
                   </th>
                   <th className="px-6 py-4 text-left text-white font-semibold text-sm">
-                    Property
+                    Date
                   </th>
                   <th className="px-6 py-4 text-left text-white font-semibold text-sm">
                     Priority
@@ -751,8 +784,9 @@ const Requests: React.FC = () => {
                       menuPosition={menuPosition}
                       onMenuClose={() => setActiveMenuId(null)}
                       onPrint={() => handlePrint(request)}
-                      onCancel={() => handleCancel(request.id)}
+                      onCancel={() => handleCancel(request)}
                       onDelete={() => handleDelete(request)}
+                      canCancel={request.status === "New"}
                       onChatClick={(e) => {
                         e.stopPropagation();
                         navigate('/userdashboard/messages', {
@@ -841,8 +875,9 @@ const Requests: React.FC = () => {
                 menuPosition={menuPosition}
                 onMenuClose={() => setActiveMenuId(null)}
                 onPrint={() => handlePrint(request)}
-                onCancel={() => handleCancel(request.id)}
+                onCancel={() => handleCancel(request)}
                 onDelete={() => handleDelete(request)}
+                canCancel={request.status === "New"}
               />
             ))
           ) : (
@@ -913,29 +948,29 @@ const Requests: React.FC = () => {
         itemName={requestToDelete?.requestId}
       />
 
+      <DeleteConfirmationModal
+        isOpen={isCancelModalOpen}
+        onClose={() => setIsCancelModalOpen(false)}
+        onConfirm={confirmCancel}
+        title="Cancel Request"
+        message={
+          <>
+            Are you sure you want to cancel request <span className="font-bold text-gray-800">{requestToCancel?.requestId}</span>?
+            <br />This action will stop the maintenance process.
+          </>
+        }
+        confirmText="Cancel Request"
+        confirmButtonClass="bg-yellow-500 text-white px-4 py-2.5 rounded-lg font-bold hover:bg-yellow-600 transition-colors shadow-sm"
+        headerClassName="bg-yellow-500"
+      />
+
       <PrintableRequest request={printingRequest} />
 
-      <style dangerouslySetInnerHTML={{
-        __html: `
-        @media print {
-          body * {
-            visibility: hidden;
-          }
-          #printable-request, #printable-request * {
-            visibility: visible;
-          }
-          #printable-request {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-          }
-        }
-      `}} />
     </div>
   );
 };
 
 export default Requests;
+
 
 
