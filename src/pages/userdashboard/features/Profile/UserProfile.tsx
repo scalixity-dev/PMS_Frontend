@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Check, Eye, EyeOff, Camera } from "lucide-react";
+import { Check, Eye, EyeOff } from "lucide-react";
 import BaseModal from "../../../../components/common/modals/BaseModal";
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
-import profilePic from "../../../../assets/images/generated_profile_avatar.png";
 import UserAccountSettingsLayout from "../../components/layout/UserAccountSettingsLayout";
+
 
 import { useAuthStore } from "./store/authStore";
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
@@ -34,7 +34,7 @@ const Profile: React.FC = () => {
     confirm: false
   });
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
+
 
 
   const togglePasswordVisibility = (field: 'current' | 'new' | 'confirm') => {
@@ -106,115 +106,27 @@ const Profile: React.FC = () => {
     setPasswordData(prev => ({ ...prev, [name]: value }));
   };
 
-  const [profileImage, setProfileImage] = useState(userInfo?.profileImage || profilePic);
 
-  useEffect(() => {
-    if (userInfo?.profileImage) {
-      setProfileImage(userInfo.profileImage);
-    }
-  }, [userInfo?.profileImage]);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Validation: File Type
-      const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-      if (!ALLOWED_TYPES.includes(file.type)) {
-        setUploadError("Please select a valid image file (JPEG, PNG, GIF, or WebP).");
-        return;
-      }
-
-      // Validation: File Size (2MB limit)
-      const MAX_SIZE = 2 * 1024 * 1024;
-      if (file.size > MAX_SIZE) {
-        setUploadError("File is too large. Please select an image smaller than 2MB.");
-        return;
-      }
-
-      setUploadError(null);
-      const reader = new FileReader();
-
-      reader.onload = () => {
-        try {
-          const imageResult = reader.result as string;
-          setProfileImage(imageResult);
-          setUserInfo({ profileImage: imageResult });
-        } catch (error) {
-          console.error("Error processing image:", error);
-          setUploadError("Failed to process the selected image.");
-        }
-      };
-
-      reader.onerror = () => {
-        setUploadError("Failed to read the file. Please try again.");
-        console.error("FileReader error:", reader.error);
-      };
-
-      reader.readAsDataURL(file);
-
-      // Reset the input value so the same file can be selected again
-      e.target.value = '';
-    }
-  };
-
-  const handleCameraClick = () => {
-    fileInputRef.current?.click();
-  };
 
   return (
     <UserAccountSettingsLayout activeTab="Profile">
       {/* User Profile Overview */}
       <div className="flex flex-col md:flex-row px-4 md:px-8 items-center gap-4 md:gap-6 mb-6 md:mb-10">
-        <div className="relative group">
-          <div className="w-28 h-28 md:w-36 md:h-36 lg:w-44 lg:h-44 rounded-full bg-gradient-to-br from-orange-200 via-pink-200 to-orange-300 flex items-center justify-center overflow-hidden transition-all duration-500 relative">
-            <div className="w-full h-full flex items-center justify-center relative bg-[#F4D1AE]">
-              <img
-                src={profileImage}
-                alt="Profile"
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  e.currentTarget.parentElement!.innerHTML = `
-                  <svg width="100%" height="100%" viewBox="0 0 70 70" fill="none" xmlns="http://www.w3.org/2000/svg" class="absolute">
-                    <circle cx="35" cy="28" r="12" fill="#F4D1AE" />
-                    <path d="M35 16C28 16 23 20 23 26C23 28 24 30 25 31C25 25 28 20 35 20C42 20 45 25 45 31C46 30 47 28 47 26C47 20 42 16 35 16Z" fill="#2D3748" />
-                    <path d="M30 32Q35 36 40 32" stroke="#4A5568" stroke-width="2" stroke-linecap="round" fill="none" />
-                    <circle cx="31" cy="26" r="1.5" fill="#4A5568" />
-                    <circle cx="39" cy="26" r="1.5" fill="#4A5568" />
-                    <path d="M25 35C25 40 30 45 35 45C40 45 45 40 45 35L45 50C45 55 40 60 35 60C30 60 25 55 25 50Z" fill="#87CEEB" />
-                  </svg>
-                `;
-                }}
-              />
-            </div>
+        <div className="relative">
+          <div className="w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 rounded-full bg-gradient-to-br from-[#7CD947] to-[#5BB030] flex items-center justify-center overflow-hidden transition-all duration-500">
+            <span className="text-white font-bold text-2xl md:text-3xl lg:text-4xl">
+              {userInfo.firstName[0]?.toUpperCase()}{userInfo.lastName[0]?.toUpperCase()}
+            </span>
           </div>
-
-          <button
-            onClick={handleCameraClick}
-            className="absolute bottom-1 right-1 md:bottom-2 md:right-2 p-1.5 md:p-2 bg-white rounded-full shadow-md border border-gray-200 text-gray-600 hover:text-[#7CD947] transition-colors z-10"
-          >
-            <Camera size={16} className="md:w-5 md:h-5" />
-          </button>
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleImageUpload}
-            className="hidden"
-            accept="image/*"
-          />
         </div>
+
         <div className="space-y-0.5 md:space-y-1 text-center md:text-left">
           <h2 className="text-xl md:text-2xl lg:text-3xl font-medium text-[#1A1A1A]">{userInfo.firstName} {userInfo.lastName}</h2>
           <p className="text-sm md:text-base lg:text-lg text-[#6B7280] font-medium">{userInfo.role}</p>
           <p className="text-sm md:text-base lg:text-lg text-[#6B7280] font-medium break-all">{userInfo.email}</p>
-          {uploadError && (
-            <p className="text-xs md:text-sm text-red-500 font-medium mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
-              {uploadError}
-            </p>
-          )}
         </div>
       </div>
+
 
       {/* Divider */}
       <div className="border-t border-[#E5E7EB] mb-8"></div>

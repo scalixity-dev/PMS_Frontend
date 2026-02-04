@@ -78,7 +78,7 @@ const TransactionDetails = () => {
 
         // Determine transaction type
         const schedule = tx.isRecurring ? 'Monthly' : 'One-time';
-        const typeLabel = tx.type === 'INVOICE' 
+        const typeLabel = tx.type === 'INVOICE'
             ? (tx.payerId ? 'Income' : 'Expense')
             : tx.type;
         const type = `${typeLabel} / ${schedule}`;
@@ -87,11 +87,11 @@ const TransactionDetails = () => {
         const attachments = (tx.attachments || []).map((att, index) => {
             // Try to determine file size from URL or use default
             const fileExtension = att.fileName?.split('.').pop()?.toLowerCase() || 'file';
-            const fileType = fileExtension === 'pdf' ? 'PDF' 
+            const fileType = fileExtension === 'pdf' ? 'PDF'
                 : ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension) ? 'Image'
-                : ['doc', 'docx'].includes(fileExtension) ? 'Document'
-                : 'File';
-            
+                    : ['doc', 'docx'].includes(fileExtension) ? 'Document'
+                        : 'File';
+
             return {
                 id: att.id || `att-${index}`,
                 name: att.fileName || `attachment-${index}.${fileExtension}`,
@@ -140,10 +140,10 @@ const TransactionDetails = () => {
         }
 
         return backendTransaction.payments.map((payment) => {
-            const paymentDate = typeof payment.paymentDate === 'string' 
+            const paymentDate = typeof payment.paymentDate === 'string'
                 ? new Date(payment.paymentDate)
                 : payment.paymentDate;
-            
+
             return {
                 id: payment.id,
                 date: paymentDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
@@ -286,12 +286,8 @@ const TransactionDetails = () => {
                                 <span>Payer</span>
                             </div>
                             <div className="flex items-center gap-4 pl-1">
-                                <div className="w-14 h-14 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-md overflow-hidden bg-gray-100">
-                                    <img
-                                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${transaction.contact.name}`}
-                                        alt={transaction.contact.name}
-                                        className="w-full h-full object-cover"
-                                    />
+                                <div className="w-14 h-14 rounded-full flex items-center justify-center text-[#2E6819] bg-[#E4F2E2] text-xl font-bold shadow-md overflow-hidden">
+                                    {transaction.contact.initials}
                                 </div>
                                 <div>
                                     <p className="text-xl font-semibold text-gray-900">{transaction.contact.name}</p>
@@ -361,12 +357,8 @@ const TransactionDetails = () => {
                                                         <CheckCircle2 size={12} strokeWidth={3} />
                                                         {record.status}
                                                     </span>
-                                                    <div className="w-8 h-8 rounded-full overflow-hidden border border-gray-200">
-                                                        <img
-                                                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${transaction.contact.name}`}
-                                                            alt={transaction.contact.name}
-                                                            className="w-full h-full object-cover"
-                                                        />
+                                                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-[#2E6819] bg-[#E4F2E2] text-xs font-bold overflow-hidden border border-gray-100">
+                                                        {transaction.contact.initials}
                                                     </div>
                                                 </div>
                                                 <button className="p-1 hover:bg-gray-100 rounded-md transition-colors print:hidden">
