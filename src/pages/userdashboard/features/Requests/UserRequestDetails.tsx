@@ -467,41 +467,49 @@ const RequestDetails = () => {
                         </div>
                     </div>
                     <div className="p-0 bg-white">
-                        <div className="hidden md:grid grid-cols-3 px-8 py-3 bg-gray-50 border-b border-gray-100 text-xs font-black text-gray-400 uppercase tracking-widest">
-                            <div>Date</div>
-                            <div>Description</div>
-                            <div className="text-right">Amount</div>
-                        </div>
-                        <div className="divide-y divide-gray-100">
-                            {request.transactions.map((t) => (
-                                <div key={t.id} className="grid grid-cols-1 md:grid-cols-3 px-8 py-5 items-center hover:bg-gray-50 transition-colors gap-3 md:gap-0">
-                                    <div className="flex items-center gap-2.5 text-sm text-gray-500 font-semibold">
-                                        <Calendar size={16} className="text-gray-400" />
-                                        {t.date}
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-9 h-9 rounded-xl bg-[#F8FAFC] flex items-center justify-center text-[#64748B] shrink-0 border border-gray-100 shadow-sm">
-                                            {t.description.toLowerCase().includes('material') ? <ShoppingCart size={18} /> : <Wrench size={18} />}
-                                        </div>
-                                        <span className="text-sm text-gray-900 font-bold">{t.description}</span>
-                                    </div>
-                                    <div className={`text-right text-lg font-semibold ${t.amount < 0 ? 'text-[#FF3B30]' : 'text-[#34C759]'}`}>
-                                        {t.amount < 0 ? '-' : '+'}${Math.abs(t.amount).toFixed(2)}
-                                    </div>
+                        {request.transactions.length > 0 ? (
+                            <>
+                                <div className="hidden md:grid grid-cols-3 px-8 py-3 bg-gray-50 border-b border-gray-100 text-xs font-black text-gray-400 uppercase tracking-widest">
+                                    <div>Date</div>
+                                    <div>Description</div>
+                                    <div className="text-right">Amount</div>
                                 </div>
-                            ))}
-                        </div>
+                                <div className="divide-y divide-gray-100">
+                                    {request.transactions.map((t) => (
+                                        <div key={t.id} className="grid grid-cols-1 md:grid-cols-3 px-8 py-5 items-center hover:bg-gray-50 transition-colors gap-3 md:gap-0">
+                                            <div className="flex items-center gap-2.5 text-sm text-gray-500 font-semibold">
+                                                <Calendar size={16} className="text-gray-400" />
+                                                {t.date}
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-9 h-9 rounded-xl bg-[#F8FAFC] flex items-center justify-center text-[#64748B] shrink-0 border border-gray-100 shadow-sm">
+                                                    {t.description.toLowerCase().includes('material') ? <ShoppingCart size={18} /> : <Wrench size={18} />}
+                                                </div>
+                                                <span className="text-sm text-gray-900 font-bold">{t.description}</span>
+                                            </div>
+                                            <div className={`text-right text-lg font-semibold ${t.amount < 0 ? 'text-[#FF3B30]' : 'text-[#34C759]'}`}>
+                                                {t.amount < 0 ? '-' : '+'}${Math.abs(t.amount).toFixed(2)}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </>
+                        ) : (
+                            <div className="p-8 text-center text-gray-500 italic">
+                                No transaction found.
+                            </div>
+                        )}
                     </div>
                 </div>
 
                 {/* Materials Section */}
-                {request.materials && request.materials.length > 0 && (
-                    <div className="bg-[#F4F4F4] rounded-2xl border border-gray-200 shadow-[0px_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
-                        <div className="w-full px-6 py-4 flex items-center gap-2 text-xl font-semibold text-gray-900 border-b border-gray-200">
-                            <Tag size={20} />
-                            <span>Materials Used</span>
-                        </div>
-                        <div className="p-6">
+                <div className="bg-[#F4F4F4] rounded-2xl border border-gray-200 shadow-[0px_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+                    <div className="w-full px-6 py-4 flex items-center gap-2 text-xl font-semibold text-gray-900 border-b border-gray-200">
+                        <Tag size={20} />
+                        <span>Materials Used</span>
+                    </div>
+                    <div className="p-6 bg-white">
+                        {request.materials && request.materials.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {request.materials.map((material: any, index: number) => (
                                     <div key={material.id || index} className="bg-white rounded-xl border border-gray-100 p-4 flex items-center justify-between shadow-sm group">
@@ -533,9 +541,13 @@ const RequestDetails = () => {
                                     </div>
                                 ))}
                             </div>
-                        </div>
+                        ) : (
+                            <div className="text-center text-gray-500 italic py-4">
+                                No materials used found.
+                            </div>
+                        )}
                     </div>
-                )}
+                </div>
 
                 {/* Equipment Section */}
                 <div className="bg-[#F4F4F4] rounded-2xl border border-gray-200 shadow-[0px_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
@@ -545,43 +557,49 @@ const RequestDetails = () => {
                             <span>Linked Equipment</span>
                         </div>
                     </div>
-                    <div className="p-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {request.equipmentList.map((eq: any) => (
-                                <div key={eq.id} className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm group">
-                                    <div className="flex justify-between items-start mb-3">
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-2">
-                                                <h4 className="font-bold text-gray-900">{eq.name}</h4>
-                                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${eq.condition === 'Good' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
-                                                    {eq.condition}
-                                                </span>
+                    <div className="p-6 bg-white">
+                        {request.equipmentList && request.equipmentList.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {request.equipmentList.map((eq: any) => (
+                                    <div key={eq.id} className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm group">
+                                        <div className="flex justify-between items-start mb-3">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    <h4 className="font-bold text-gray-900">{eq.name}</h4>
+                                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${eq.condition === 'Good' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                                                        {eq.condition}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity translate-y-[-4px]">
+                                                <button
+                                                    onClick={() => handleEditEquipment(eq)}
+                                                    className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                                                    title="Edit Equipment"
+                                                >
+                                                    <Pencil size={14} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteClick('equipment', eq.id)}
+                                                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                    title="Delete Equipment"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity translate-y-[-4px]">
-                                            <button
-                                                onClick={() => handleEditEquipment(eq)}
-                                                className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
-                                                title="Edit Equipment"
-                                            >
-                                                <Pencil size={14} />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDeleteClick('equipment', eq.id)}
-                                                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                                title="Delete Equipment"
-                                            >
-                                                <Trash2 size={14} />
-                                            </button>
+                                        <div className="space-y-1">
+                                            <p className="text-[10px] text-gray-500 uppercase tracking-wider font-medium">Serial Number</p>
+                                            <p className="text-sm font-semibold text-gray-700">{eq.serialNumber}</p>
                                         </div>
                                     </div>
-                                    <div className="space-y-1">
-                                        <p className="text-[10px] text-gray-500 uppercase tracking-wider font-medium">Serial Number</p>
-                                        <p className="text-sm font-semibold text-gray-700">{eq.serialNumber}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center text-gray-500 italic py-4">
+                                No linked equipment found.
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -593,7 +611,7 @@ const RequestDetails = () => {
                             <span>Attachments</span>
                         </div>
                     </div>
-                    <div className="p-6">
+                    <div className="p-6 bg-white">
                         {request.attachments && request.attachments.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {request.attachments.map((file: File | string, index: number) => {
