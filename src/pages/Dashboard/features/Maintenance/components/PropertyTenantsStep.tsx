@@ -26,7 +26,7 @@ interface TenantListItem {
 }
 
 interface PropertyTenantsStepProps {
-    onNext: () => void;
+    onNext: (data: any) => void;
     onBack: () => void;
     properties: Array<{ id: string; name: string; address: string }>;
     initialData?: any;
@@ -57,7 +57,18 @@ const PropertyTenantsStep: React.FC<PropertyTenantsStepProps> = ({ onNext, onBac
             return;
         }
         setValidationError('');
-        onNext();
+
+        onNext({
+            selectedProperty,
+            linkEquipment,
+            selectedEquipment,
+            tenantAuthorization,
+            dateOptions,
+            tenantList,
+            accessCode,
+            petsInResidence,
+            selectedPets
+        });
     };
 
     // Disable body scroll when modal is open
