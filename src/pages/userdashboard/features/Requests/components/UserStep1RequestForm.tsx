@@ -21,7 +21,8 @@ const User__AdvancedRequestForm: React.FC<UserAdvancedRequestFormProps> = ({ onN
         issue: initialData?.issue || '',
         subIssue: initialData?.subIssue || '',
         title: initialData?.title || '',
-        details: initialData?.details || ''
+        details: initialData?.details || '',
+        amount: initialData?.amount || ''
     });
 
     const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
@@ -38,7 +39,8 @@ const User__AdvancedRequestForm: React.FC<UserAdvancedRequestFormProps> = ({ onN
                 issue: initialData.issue || '',
                 subIssue: initialData.subIssue || '',
                 title: initialData.title || '',
-                details: initialData.details || ''
+                details: initialData.details || '',
+                amount: initialData.amount || ''
             });
 
             // Restore media files
@@ -325,7 +327,19 @@ const User__AdvancedRequestForm: React.FC<UserAdvancedRequestFormProps> = ({ onN
                 />
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-8 sm:gap-12 items-center mb-8">
+            {/* Amount */}
+            <div className="mb-16">
+                <label className="block text-sm font-bold text-gray-700 mb-2">Amount*</label>
+                <input
+                    type="number"
+                    value={formData.amount}
+                    onChange={(e) => handleChange('amount', e.target.value)}
+                    placeholder="Enter amount (e.g. 500)"
+                    className="w-full px-4 py-3 bg-white rounded-md border-none outline-none placeholder-gray-400"
+                />
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-8 sm:gap-12 items-center my-8">
                 {/* Attachments Card */}
                 <div className="relative w-full sm:w-1/2 lg:w-80">
                     <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#7BD747] text-white px-6 sm:px-10 py-3 rounded-full flex items-center gap-2 font-bold shadow-sm z-10 whitespace-nowrap text-sm sm:text-base">

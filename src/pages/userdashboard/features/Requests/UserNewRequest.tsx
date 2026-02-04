@@ -63,6 +63,8 @@ const NewRequest: React.FC = () => {
     setSelectedEquipment,
     setEquipmentSerial,
     setEquipmentCondition,
+    amount,
+    setAmount,
   } = useNewRequestForm();
 
 
@@ -192,6 +194,7 @@ const NewRequest: React.FC = () => {
               setFinalDetail(data.subIssue);
               setTitle(data.title);
               setDescription(data.details);
+              setAmount(data.amount);
 
               // Correctly handle files from step 1
               if (data.files && Array.isArray(data.files)) {
@@ -211,6 +214,7 @@ const NewRequest: React.FC = () => {
               subIssue: finalDetail,
               title: title,
               details: description,
+              amount: amount,
               attachments: attachments,
               video: video
             }}

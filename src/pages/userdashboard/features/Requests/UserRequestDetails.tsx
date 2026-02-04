@@ -131,8 +131,8 @@ const RequestDetails = () => {
                 serialNumber: foundRequest.equipmentSerial || 'Not specified',
                 condition: foundRequest.equipmentCondition || 'Not specified'
             }
-        ] : []
-
+        ] : [],
+        amount: foundRequest.amount
     };
 
     const getPriorityColor = (priority: string) => {
@@ -264,12 +264,20 @@ const RequestDetails = () => {
                                     <div className="flex-1 space-y-1">
                                         <p className="text-gray-500 text-xs md:text-sm font-medium uppercase tracking-wider">Property</p>
                                         <p className="text-lg md:text-xl font-semibold text-gray-900">{request.property}</p>
-                                        {foundRequest.equipment && (
-                                            <div className="mt-2 inline-flex items-center gap-2 bg-[#E4F2E2] text-[#2E6819] px-3 py-1 rounded-full text-xs font-bold">
-                                                <div className="w-1.5 h-1.5 bg-[#2E6819] rounded-full"></div>
-                                                Linked Equipment: {foundRequest.equipment}
-                                            </div>
-                                        )}
+                                        <div className="flex flex-wrap gap-2 mt-2">
+                                            {request.amount !== undefined && (
+                                                <div className="inline-flex items-center gap-2 bg-[#E4F2E2] text-[#2E6819] px-3 py-1.5 rounded-full text-[10px] md:text-xs font-bold shadow-sm border border-[#2E6819]/10">
+                                                    <DollarSign size={14} strokeWidth={2.5} />
+                                                    <span>{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(request.amount)}</span>
+                                                </div>
+                                            )}
+                                            {foundRequest.equipment && (
+                                                <div className="inline-flex items-center gap-2 bg-[#E4F2E2] text-[#2E6819] px-3 py-1.5 rounded-full text-[10px] md:text-xs font-bold shadow-sm border border-[#2E6819]/10">
+                                                    <div className="w-1.5 h-1.5 bg-[#2E6819] rounded-full"></div>
+                                                    <span>Linked Equipment: {foundRequest.equipment}</span>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="space-y-1">
