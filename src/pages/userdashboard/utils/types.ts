@@ -178,6 +178,7 @@ export interface ServiceRequest {
     attachments?: (File | string)[]; // Can be File objects or data URL strings
     video?: File | string | null; // Can be File object or data URL string
     pets?: string[];
+    amount?: number;
 }
 
 export interface Publication {
