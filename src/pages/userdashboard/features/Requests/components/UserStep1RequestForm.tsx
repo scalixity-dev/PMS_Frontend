@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import CustomDropdown from '../../../components/CustomDropdown';
+import CustomDropdown from '../../../../Dashboard/components/CustomDropdown';
 import { Upload, Video, X } from 'lucide-react';
 
-interface AdvancedRequestFormProps {
+interface UserAdvancedRequestFormProps {
     onNext: (data: any) => void;
     onDiscard: () => void;
     initialData?: any;
@@ -14,7 +14,7 @@ interface MediaFile {
     previewUrl: string;
 }
 
-const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDiscard, initialData }) => {
+const User__AdvancedRequestForm: React.FC<UserAdvancedRequestFormProps> = ({ onNext, onDiscard, initialData }) => {
     const [formData, setFormData] = useState({
         category: initialData?.category || '',
         subCategory: initialData?.subCategory || '',
@@ -40,6 +40,26 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
                 title: initialData.title || '',
                 details: initialData.details || ''
             });
+
+            // Restore media files
+            const restoredMedia: MediaFile[] = [];
+            if (initialData.attachments && Array.isArray(initialData.attachments)) {
+                initialData.attachments.forEach((file: File) => {
+                    restoredMedia.push({
+                        id: crypto.randomUUID(),
+                        file,
+                        previewUrl: URL.createObjectURL(file)
+                    });
+                });
+            }
+            if (initialData.video && initialData.video instanceof File) {
+                restoredMedia.push({
+                    id: crypto.randomUUID(),
+                    file: initialData.video,
+                    previewUrl: URL.createObjectURL(initialData.video)
+                });
+            }
+            setMediaFiles(restoredMedia);
         }
     }, [initialData]);
 
@@ -174,43 +194,6 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
         ]
     };
 
-    // Helper function to get label from value
-    const getLabelForValue = (value: string, optionsMap: Record<string, Array<{ value: string; label: string }>>, key: string): string => {
-        const options = optionsMap[key];
-        if (!options) return value;
-        const option = options.find(opt => opt.value === value);
-        return option ? option.label : value;
-    };
-
-    // Generate title from selected fields
-    const generateTitle = (data: typeof formData): string => {
-        const parts: string[] = [];
-
-        if (data.category) {
-            const categoryLabels: Record<string, string> = {
-                'appliances': 'Appliances',
-                'electrical': 'Electrical',
-                'plumbing': 'Plumbing',
-                'other': 'Other'
-            };
-            parts.push(categoryLabels[data.category] || data.category);
-        }
-
-        if (data.subCategory) {
-            parts.push(getLabelForValue(data.subCategory, categorySubCategories, data.category));
-        }
-
-        if (data.issue) {
-            parts.push(getLabelForValue(data.issue, subCategoryIssues, data.subCategory));
-        }
-
-        if (data.subIssue) {
-            parts.push(getLabelForValue(data.subIssue, issueSubIssues, data.issue));
-        }
-
-        return parts.join(' / ');
-    };
-
     const handleChange = (field: string, value: string) => {
         // Mark form as touched when user makes any change
         formTouchedRef.current = true;
@@ -228,11 +211,6 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
                 updated.subIssue = '';
             } else if (field === 'issue') {
                 updated.subIssue = '';
-            }
-
-            // Auto-generate title if it's a category-related field
-            if (['category', 'subCategory', 'issue', 'subIssue'].includes(field)) {
-                updated.title = generateTitle(updated);
             }
 
             return updated;
@@ -257,8 +235,8 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
 
     return (
         <div className="w-full max-w-5xl mx-auto pb-12">
-            <div className="mb-8">
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">Category</h2>
+            <div className="mb-6 md:mb-8">
+                <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">Category</h2>
                 <p className="text-gray-500 text-sm">
                     Search or select the issue category. Only the main category is required, but you can select a sub-category, issue and sub-issue to narrow down the request.
                     Select 'other' option if the category you are looking for isn't here.
@@ -317,8 +295,8 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
                 />
             </div>
 
-            <div className="mb-8">
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">Issue details</h2>
+            <div className="mb-6 md:mb-8">
+                <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">Issue details</h2>
                 <p className="text-gray-500 text-sm">
                     Add any additional request details as a title or description to narrow down the issue.
                 </p>
@@ -337,8 +315,8 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
             </div>
 
             {/* Details */}
-            <div className="mb-12">
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">Details</h2>
+            <div className="mb-8 md:mb-12">
+                <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-4">Details</h2>
                 <textarea
                     value={formData.details}
                     onChange={(e) => handleChange('details', e.target.value)}
@@ -347,42 +325,40 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
                 />
             </div>
 
-            {/* Media & Attachments */}
-            <div className="flex flex-col md:flex-row gap-12 items-center mb-8">
-                {/* Media Card (formerly Video) */}
-                <div className="relative w-full md:w-80 max-w-[20rem] md:max-w-none">
-                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#7BD747] text-white px-10 py-3 rounded-full flex items-center gap-2 font-bold shadow-sm z-10 whitespace-nowrap">
-                        <Video size={20} strokeWidth={2.5} />
-                        <span>Media</span>
+            <div className="flex flex-col sm:flex-row gap-8 sm:gap-12 items-center mb-8">
+                {/* Attachments Card */}
+                <div className="relative w-full sm:w-1/2 lg:w-80">
+                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#7BD747] text-white px-6 sm:px-10 py-3 rounded-full flex items-center gap-2 font-bold shadow-sm z-10 whitespace-nowrap text-sm sm:text-base">
+                        <Upload size={18} className="sm:w-5 sm:h-5" strokeWidth={2.5} />
+                        <span>Attachments</span>
                     </div>
-                    <div className="bg-[#F0F0F6] border-2 border-[#7BD747] rounded-[2.5rem] p-8 pt-10 flex flex-col items-center justify-center h-48 w-full">
-                        <p className="text-[#5C6B7F] text-center font-medium mb-4">Add images and videos (15 sec) of the problem</p>
+                    <div className="bg-[#F0F0F6] border-2 border-[#7BD747] rounded-[2.5rem] p-6 sm:p-8 pt-10 flex flex-col items-center justify-center h-40 sm:h-48 w-full">
+                        <p className="text-[#5C6B7F] text-center font-medium mb-4 text-xs sm:text-sm">Add photos or upload a file</p>
                         <label className="cursor-pointer text-[#2E6819] font-bold text-sm hover:opacity-80 transition-opacity">
                             Choose File
                             <input
                                 type="file"
                                 className="hidden"
-                                accept="image/*,video/*"
+                                accept="image/*"
                                 onChange={handleFileSelect}
                             />
                         </label>
                     </div>
                 </div>
-
-                {/* Attachments Card */}
-                <div className="relative w-full md:w-80 max-w-[20rem] md:max-w-none">
-                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#7BD747] text-white px-10 py-3 rounded-full flex items-center gap-2 font-bold shadow-sm z-10 whitespace-nowrap">
-                        <Upload size={20} strokeWidth={2.5} />
-                        <span>Attachments</span>
+                {/* Video Card */}
+                <div className="relative w-full sm:w-1/2 lg:w-80">
+                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#7BD747] text-white px-6 sm:px-10 py-3 rounded-full flex items-center gap-2 font-bold shadow-sm z-10 whitespace-nowrap text-sm sm:text-base">
+                        <Video size={18} className="sm:w-5 sm:h-5" strokeWidth={2.5} />
+                        <span>Video</span>
                     </div>
-                    <div className="bg-[#F0F0F6] border-2 border-[#7BD747] rounded-[2.5rem] p-8 pt-10 flex flex-col items-center justify-center h-48 w-full">
-                        <p className="text-[#5C6B7F] text-center font-medium mb-4">Add Relevant Attachment</p>
+                    <div className="bg-[#F0F0F6] border-2 border-[#7BD747] rounded-[2.5rem] p-6 sm:p-8 pt-10 flex flex-col items-center justify-center h-40 sm:h-48 w-full">
+                        <p className="text-[#5C6B7F] text-center font-medium mb-4 text-xs sm:text-sm">Take 15 sec. video of the problem</p>
                         <label className="cursor-pointer text-[#2E6819] font-bold text-sm hover:opacity-80 transition-opacity">
                             Choose File
                             <input
                                 type="file"
                                 className="hidden"
-                                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                                accept="video/*"
                                 onChange={handleFileSelect}
                             />
                         </label>
@@ -438,4 +414,4 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
     );
 };
 
-export default AdvancedRequestForm;
+export default User__AdvancedRequestForm;

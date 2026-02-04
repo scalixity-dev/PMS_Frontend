@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRequestStore } from "../store/requestStore";
 import type { AvailabilityOption, ServiceRequest } from "../../../utils/types";
-import { categories } from "../constants/requestData";
+import { categories, propertiesList } from "../constants/requestData";
 
 export const useNewRequestForm = () => {
     const navigate = useNavigate();
@@ -13,13 +13,19 @@ export const useNewRequestForm = () => {
     const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
     const [selectedProblem, setSelectedProblem] = useState<string | null>(null);
     const [finalDetail, setFinalDetail] = useState<string | null>(null);
+    const [selectedEquipment, setSelectedEquipment] = useState<string | null>(null);
+    const [equipmentSerial, setEquipmentSerial] = useState<string | null>(null);
+    const [equipmentCondition, setEquipmentCondition] = useState<string | null>(null);
 
     const [title, setTitle] = useState<string>("");
     const [description, setDescription] = useState<string>("");
     const [location, setLocation] = useState<string>("Gandhi Path Rd, Jaipur, RJ 302020");
+    const [property, setProperty] = useState<string>("1"); // Default to first property
     const [authorization, setAuthorization] = useState<string | null>(null);
     const [authCode, setAuthCode] = useState<string>("");
     const [setUpDateTime, setSetUpDateTime] = useState<string | null>(null);
+    const [dateDue, setDateDue] = useState<string | null>(null);
+    const [materials, setMaterials] = useState<any[]>([]);
     const [availability, setAvailability] = useState<AvailabilityOption[]>([
         { id: 1, date: "", timeSlots: [] }
     ]);
@@ -201,15 +207,22 @@ export const useNewRequestForm = () => {
                 id: Date.now(),
                 requestId: `REQ-${Math.floor(1000 + Math.random() * 9000)}`,
                 status: "New",
+                title: title,
                 category: categories.find(c => c.id === selectedCategory)?.name || selectedCategory,
                 subCategory: selectedSubCategory || "",
                 problem: selectedProblem || "",
+                subIssue: finalDetail || "",
                 description: description || "",
-                property: "Main Street Apartment",
+                property: propertiesList.find(p => p.id === property)?.name || "Main Street Apartment",
+                equipment: selectedEquipment,
+                equipmentSerial: equipmentSerial,
+                equipmentCondition: equipmentCondition || 'Good',
                 priority: priority,
                 authorizationToEnter: authorization ? (authorization === "yes" ? "Yes" : "No") : "No",
                 authorizationCode: authCode,
                 setUpDateTime: setUpDateTime || "No",
+                dateDue: dateDue,
+                materials: materials,
                 availability: availability,
                 assignee: "",
                 createdAt: new Date().toISOString(),
@@ -241,21 +254,6 @@ export const useNewRequestForm = () => {
     };
 
     const nextStep = (step?: number) => {
-        const targetStep = step || (currentStep + 1);
-
-        // When reaching step 6, set default title if empty
-        if (targetStep === 6 && !title) {
-            const categoryName = categories.find(c => c.id === selectedCategory)?.name || selectedCategory || "";
-            const subCategoryName = selectedSubCategory || "";
-            const problemName = selectedProblem || "";
-
-            // Build title in format: category/subcategory/problem
-            const parts = [categoryName, subCategoryName, problemName].filter(Boolean);
-            if (parts.length > 0) {
-                setTitle(parts.join(" / "));
-            }
-        }
-
         if (step) {
             setCurrentStep(step);
         } else {
@@ -265,13 +263,7 @@ export const useNewRequestForm = () => {
 
     const prevStep = () => {
         if (currentStep > 1) {
-            if (currentStep === 10 && authorization === "no") {
-                setCurrentStep(8);
-            } else if (currentStep === 12 && setUpDateTime === "No") {
-                setCurrentStep(10);
-            } else {
-                setCurrentStep(currentStep - 1);
-            }
+            setCurrentStep(prev => prev - 1);
         } else {
             navigate(-1);
         }
@@ -288,6 +280,8 @@ export const useNewRequestForm = () => {
         setSelectedProblem,
         finalDetail,
         setFinalDetail,
+        selectedEquipment,
+        setSelectedEquipment,
         title,
         setTitle,
         description,
@@ -300,6 +294,10 @@ export const useNewRequestForm = () => {
         setAuthCode,
         setUpDateTime,
         setSetUpDateTime,
+        dateDue,
+        setDateDue,
+        materials,
+        setMaterials,
         availability,
         setAvailability,
         priority,
@@ -329,5 +327,11 @@ export const useNewRequestForm = () => {
         nextStep,
         prevStep,
         hasFormData,
+        property,
+        setProperty,
+        equipmentSerial,
+        setEquipmentSerial,
+        equipmentCondition,
+        setEquipmentCondition,
     };
 };

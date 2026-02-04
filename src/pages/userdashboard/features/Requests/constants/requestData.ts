@@ -106,3 +106,17 @@ export const requestMapping: Record<string, {
         }
     }
 };
+
+export const propertiesList = [
+    {
+        id: '1',
+        name: 'Main Street Apartment',
+        address: '123 Main St, Apartment 4B, New York, NY 10001',
+    },
+    {
+        id: '2',
+        name: 'Sunset Villa',
+        address: '456 Sunset Blvd, Los Angeles, CA 90028',
+    }
+];
+

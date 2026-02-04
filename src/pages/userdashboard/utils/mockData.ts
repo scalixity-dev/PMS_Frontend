@@ -109,27 +109,28 @@ export const mockLeases: Lease[] = [
         ],
         attachments: [
             {
-                id: 1,
+                id: "1",
                 name: "Lease Agreement.pdf",
                 size: "2.4 MB",
                 type: "PDF",
                 url: "https://pdfobject.com/pdf/sample.pdf"
             },
             {
-                id: 2,
+                id: "2",
                 name: "Move-in Notice.pdf",
                 size: "0.5 MB",
                 type: "PDF",
                 url: "https://pdfobject.com/pdf/sample.pdf"
             },
             {
-                id: 3,
+                id: "3",
                 name: "Property Rules.pdf",
                 size: "1.2 MB",
                 type: "PDF",
                 url: "https://pdfobject.com/pdf/sample.pdf"
             }
         ]
+
     },
     {
         id: "2",
