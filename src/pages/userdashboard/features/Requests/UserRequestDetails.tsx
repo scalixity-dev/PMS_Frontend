@@ -907,13 +907,6 @@ const RequestDetails = () => {
                 </div>
             )}
 
-            <style>{`
-                @media print {
-                    body * { visibility: hidden; }
-                    #printable-request, #printable-request * { visibility: visible; }
-                    #printable-request { position: absolute; left: 0; top: 0; width: 100%; }
-                }
-            `}</style>
         </div>
     );
 };

@@ -182,7 +182,13 @@ const RequestRow: React.FC<RequestRowProps> = ({
     </td>
     <td className="px-6 py-4 text-sm text-gray-700">{request.requestId}</td>
     <td className="px-6 py-4 text-sm text-gray-700">{request.category}</td>
-    <td className="px-6 py-4 text-sm text-gray-700">{request.property}</td>
+    <td className="px-6 py-4 text-sm text-gray-700">
+      {new Date(request.createdAt).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })}
+    </td>
     <td className="px-6 py-4">
       <span className={`px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 w-fit ${getPriorityColor(request.priority)}`}>
         <div className="w-1.5 h-1.5 bg-current rounded-full" />
@@ -308,7 +314,13 @@ const RequestMobileCard: React.FC<RequestMobileCardProps> = ({
         <h3 className="text-[var(--dashboard-text-main)] font-semibold text-lg truncate">{request.category}</h3>
         <span className="text-gray-400 text-xs font-medium whitespace-nowrap uppercase tracking-wider">{request.requestId}</span>
       </div>
-      <p className="text-[var(--dashboard-secondary)] text-sm font-medium line-clamp-1">{request.property}</p>
+      <p className="text-[var(--dashboard-secondary)] text-sm font-medium line-clamp-1">
+        {new Date(request.createdAt).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })}
+      </p>
     </div>
 
     <div className="flex justify-between items-center pt-3 border-t border-dashed border-gray-100 mt-1">
@@ -725,7 +737,7 @@ const Requests: React.FC = () => {
                     Category
                   </th>
                   <th className="px-6 py-4 text-left text-white font-semibold text-sm">
-                    Property
+                    Date
                   </th>
                   <th className="px-6 py-4 text-left text-white font-semibold text-sm">
                     Priority
@@ -915,23 +927,6 @@ const Requests: React.FC = () => {
 
       <PrintableRequest request={printingRequest} />
 
-      <style dangerouslySetInnerHTML={{
-        __html: `
-        @media print {
-          body * {
-            visibility: hidden;
-          }
-          #printable-request, #printable-request * {
-            visibility: visible;
-          }
-          #printable-request {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-          }
-        }
-      `}} />
     </div>
   );
 };
