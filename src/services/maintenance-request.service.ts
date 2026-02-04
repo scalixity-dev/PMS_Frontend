@@ -74,6 +74,21 @@ export interface MaintenanceRequestDetail {
     fileType?: FileType;
     description?: string | null;
   }>;
+  photos?: Array<{
+    id: string;
+    fileUrl: string;
+    description?: string | null;
+  }>;
+}
+
+export interface MaintenanceRequestTransaction {
+  id: string;
+  amount: number;
+  type: string;
+  currency?: string;
+  transactionDate?: string;
+  details?: string | null;
+  notes?: string | null;
 }
 
 class MaintenanceRequestService {
@@ -116,6 +131,26 @@ class MaintenanceRequestService {
     return response.json();
   }
 
+  async update(id: string, input: Partial<CreateMaintenanceRequestInput>): Promise<MaintenanceRequestDetail> {
+    const response = await fetch(API_ENDPOINTS.MAINTENANCE_REQUEST.UPDATE(id), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(input),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Failed to update maintenance request';
+      throw new Error(message);
+    }
+
+    return response.json();
+  }
+
   async getOne(id: string): Promise<MaintenanceRequestDetail> {
     const response = await fetch(API_ENDPOINTS.MAINTENANCE_REQUEST.GET_ONE(id), {
       method: 'GET',
@@ -129,6 +164,25 @@ class MaintenanceRequestService {
         err && typeof err === 'object' && 'message' in err
           ? String((err as { message?: unknown }).message)
           : 'Failed to fetch maintenance request';
+      throw new Error(message);
+    }
+
+    return response.json();
+  }
+
+  async listTransactions(id: string): Promise<MaintenanceRequestTransaction[]> {
+    const response = await fetch(API_ENDPOINTS.MAINTENANCE_REQUEST.LIST_TRANSACTIONS(id), {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Failed to fetch maintenance request transactions';
       throw new Error(message);
     }
 
@@ -165,6 +219,22 @@ class MaintenanceRequestService {
     }
 
     return response.json();
+  }
+
+  async delete(id: string): Promise<void> {
+    const response = await fetch(API_ENDPOINTS.MAINTENANCE_REQUEST.DELETE(id), {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Failed to delete maintenance request';
+      throw new Error(message);
+    }
   }
 }
 

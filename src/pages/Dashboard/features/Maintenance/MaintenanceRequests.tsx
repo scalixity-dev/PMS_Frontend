@@ -7,7 +7,7 @@ import DashboardFilter, { type FilterOption } from '../../components/DashboardFi
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import Pagination from '../../components/Pagination';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
-import { useGetAllMaintenanceRequests } from '../../../../hooks/useMaintenanceRequestQueries';
+import { useDeleteMaintenanceRequest, useGetAllMaintenanceRequests } from '../../../../hooks/useMaintenanceRequestQueries';
 
 // Row Action Dropdown Component
 interface RowActionDropdownProps {
@@ -118,6 +118,7 @@ const Requests: React.FC = () => {
     const [isAssigneeModalOpen, setIsAssigneeModalOpen] = useState(false);
     const [selectedRequestForAssign, setSelectedRequestForAssign] = useState<string | null>(null);
     const { data: backendRequests = [], isLoading, error } = useGetAllMaintenanceRequests(true);
+    const { mutateAsync: deleteRequest } = useDeleteMaintenanceRequest();
     const [filters, setFilters] = useState<{
         status: string[];
         assignee: string[];
@@ -152,11 +153,20 @@ const Requests: React.FC = () => {
         setIsBulkDeleteModalOpen(true);
     };
 
-    const confirmBulkDelete = () => {
-        console.log('Deleting requests:', selectedItems);
-        // TODO: Implement bulk delete API when backend supports it
-        setSelectedItems([]);
-        setIsBulkDeleteModalOpen(false);
+    const confirmBulkDelete = async () => {
+        if (selectedItems.length === 0) {
+            setIsBulkDeleteModalOpen(false);
+            return;
+        }
+        try {
+            await Promise.all(selectedItems.map((idToDelete) => deleteRequest(idToDelete)));
+        } catch (err) {
+            // eslint-disable-next-line no-console
+            console.error('Failed to bulk delete maintenance requests', err);
+        } finally {
+            setSelectedItems([]);
+            setIsBulkDeleteModalOpen(false);
+        }
     };
 
     const handleEdit = (id: string) => {
@@ -184,11 +194,20 @@ const Requests: React.FC = () => {
         // TODO: Implement API call
     };
 
-    const confirmDelete = () => {
-        console.log('Deleting request:', requestToDelete);
-        // TODO: Implement delete API when backend supports it
-        setIsDeleteModalOpen(false);
-        setRequestToDelete(null);
+    const confirmDelete = async () => {
+        if (!requestToDelete) {
+            setIsDeleteModalOpen(false);
+            return;
+        }
+        try {
+            await deleteRequest(requestToDelete);
+        } catch (err) {
+            // eslint-disable-next-line no-console
+            console.error('Failed to delete maintenance request', err);
+        } finally {
+            setIsDeleteModalOpen(false);
+            setRequestToDelete(null);
+        }
     };
 
     const handleAssignClick = (id: string) => {

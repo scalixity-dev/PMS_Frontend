@@ -51,6 +51,8 @@ export const API_ENDPOINTS = {
     CREATE: `${API_BASE_URL}/maintenance-request`,
     GET_ALL: `${API_BASE_URL}/maintenance-request`,
     GET_ONE: (id: string) => `${API_BASE_URL}/maintenance-request/${id}`,
+    UPDATE: (id: string) => `${API_BASE_URL}/maintenance-request/${id}`,
+    DELETE: (id: string) => `${API_BASE_URL}/maintenance-request/${id}`,
     LIST_TRANSACTIONS: (id: string) => `${API_BASE_URL}/maintenance-request/${id}/transactions`,
     CREATE_TRANSACTION: (id: string) => `${API_BASE_URL}/maintenance-request/${id}/transactions`,
   },

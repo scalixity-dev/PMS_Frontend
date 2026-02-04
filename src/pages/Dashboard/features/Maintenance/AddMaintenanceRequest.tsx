@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -18,7 +18,7 @@ import {
     type MaintenancePriority,
     type UploadCategory,
 } from '../../../../services/maintenance-request.service';
-import { useCreateMaintenanceRequest } from '../../../../hooks/useMaintenanceRequestQueries';
+import { useCreateMaintenanceRequest, useGetMaintenanceRequest, useUpdateMaintenanceRequest } from '../../../../hooks/useMaintenanceRequestQueries';
 
 const mapCategory = (category: string): MaintenanceCategory => {
     const normalized = category.toLowerCase();
@@ -36,6 +36,24 @@ const mapPriority = (priority: string): MaintenancePriority => {
     if (normalized === 'urgent') return 'URGENT';
     // Treat "normal" or empty as MEDIUM
     return 'MEDIUM';
+};
+
+const mapBackendCategoryToUi = (category?: MaintenanceCategory): string => {
+    if (!category) return '';
+    if (category === 'APPLIANCES') return 'appliances';
+    if (category === 'ELECTRICAL') return 'electrical';
+    if (category === 'PLUMBING') return 'plumbing';
+    // Fallback to 'other' for unmapped categories
+    return 'other';
+};
+
+const mapBackendPriorityToUi = (priority?: MaintenancePriority): string => {
+    if (!priority) return '';
+    if (priority === 'LOW') return 'low';
+    if (priority === 'HIGH') return 'high';
+    if (priority === 'URGENT') return 'urgent';
+    // Treat MEDIUM as "normal" in UI
+    return 'normal';
 };
 
 const getUploadCategoryForFile = (file: File): UploadCategory => {
@@ -63,10 +81,16 @@ const AddMaintenanceRequest: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const isEditMode = location.state?.editMode;
+    const editRequestId = (location.state?.id as string | undefined) ?? undefined;
     const targetSection = location.state?.targetSection;
 
-    const { advanced, property, due, reset } = useMaintenanceRequestFormStore();
+    const { advanced, property, due, reset, setAdvanced, setProperty, setDue } = useMaintenanceRequestFormStore();
     const { mutateAsync: createRequest } = useCreateMaintenanceRequest();
+    const { mutateAsync: updateRequest } = useUpdateMaintenanceRequest();
+    const { data: existingRequest } = useGetMaintenanceRequest(
+        editRequestId,
+        Boolean(isEditMode && editRequestId),
+    );
 
     // Flow State - Start directly at step 1 with advanced flow
     const [mainStep, setMainStep] = useState(
@@ -78,29 +102,53 @@ const AddMaintenanceRequest: React.FC = () => {
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [createdRequestId, setCreatedRequestId] = useState<string>('');
 
-    // Mock Initial Data for Edit Mode
-    const mockInitialData = {
-        advancedForm: {
-            category: 'appliances',
-            subCategory: 'refrigerator',
-            issue: 'not_cooling',
-            subIssue: 'completely_warm',
-            title: 'Refrigerator Warm',
-            details: 'The fridge is not cooling at all.'
-        },
-        propertyStep: {
-            property: '1',
-            equipment: '1',
-            tenantAuthorization: true,
-            // ... other fields
-        },
-        dueDateStep: {
-            dateInitiated: new Date('2025-11-24'),
-            dateDue: new Date('2025-11-26'),
-            priority: 'normal',
-            materials: [{ id: '1', name: 'Coolant', quantity: 2 }]
-        }
-    };
+    // Seed form store from existing request when editing
+    useEffect(() => {
+        if (!isEditMode || !existingRequest) return;
+
+        // Advanced section
+        setAdvanced({
+            category: mapBackendCategoryToUi(existingRequest.category),
+            subCategory: existingRequest.subcategory ?? '',
+            issue: existingRequest.issue ?? '',
+            subIssue: existingRequest.subissue ?? '',
+            title: existingRequest.title ?? '',
+            details: existingRequest.problemDetails ?? '',
+            amount: '',
+            files: [],
+        });
+
+        // Property & tenants
+        setProperty({
+            propertyId: existingRequest.property?.id ?? '',
+            linkEquipment: Boolean(existingRequest.equipmentLinked && existingRequest.equipmentId),
+            selectedEquipment: existingRequest.equipmentId ?? '',
+            tenantAuthorization: existingRequest.tenantMeta?.tenantAuthorization ?? false,
+            dateOptions:
+                existingRequest.tenantMeta?.dateOptions?.map((option, index) => ({
+                    id: `${index}`,
+                    date: option.date ? new Date(option.date) : undefined,
+                    timeSlots: option.timeSlots ?? [],
+                })) ?? [],
+            tenantList: [],
+            accessCode: existingRequest.tenantMeta?.accessCode ?? '',
+            petsInResidence: existingRequest.tenantMeta?.petsInResidence ?? '',
+            selectedPets: existingRequest.tenantMeta?.selectedPets ?? [],
+        });
+
+        // Due date & materials
+        setDue({
+            dateInitiated: existingRequest.requestedAt ? new Date(existingRequest.requestedAt) : undefined,
+            dateDue: existingRequest.dueDate ? new Date(existingRequest.dueDate) : undefined,
+            priority: mapBackendPriorityToUi(existingRequest.priority),
+            materials:
+                existingRequest.materials?.map((material, index) => ({
+                    id: `${index}`,
+                    name: material.materialName,
+                    quantity: material.quantity ?? 1,
+                })) ?? [],
+        });
+    }, [isEditMode, existingRequest, setAdvanced, setProperty, setDue]);
 
     const advancedSteps = [
         { id: 1, label: 'General Details' },
@@ -132,7 +180,9 @@ const AddMaintenanceRequest: React.FC = () => {
                 })),
             };
 
-            const created = await createRequest(payload);
+            const createdOrUpdated = isEditMode && editRequestId
+                ? await updateRequest({ id: editRequestId, input: payload })
+                : await createRequest(payload);
 
             // Upload media and attachments linked to this request
             const filesToUpload = advanced.files ?? [];
@@ -143,13 +193,13 @@ const AddMaintenanceRequest: React.FC = () => {
                             file,
                             category: getUploadCategoryForFile(file),
                             propertyId: property.propertyId || undefined,
-                            maintenanceRequestId: created.id,
+                            maintenanceRequestId: createdOrUpdated.id,
                             description: file.name,
                         }),
                     ),
                 );
             }
-            setCreatedRequestId(created.id);
+            setCreatedRequestId(createdOrUpdated.id);
             setShowSuccessModal(true);
             reset();
         } catch (error) {
@@ -214,7 +264,19 @@ const AddMaintenanceRequest: React.FC = () => {
                                 handleNext();
                             }}
                             onDiscard={() => navigate('/dashboard')}
-                            initialData={isEditMode ? mockInitialData.advancedForm : undefined}
+                            initialData={
+                                isEditMode && existingRequest
+                                    ? {
+                                          category: mapBackendCategoryToUi(existingRequest.category),
+                                          subCategory: existingRequest.subcategory ?? '',
+                                          issue: existingRequest.issue ?? '',
+                                          subIssue: existingRequest.subissue ?? '',
+                                          title: existingRequest.title ?? '',
+                                          details: existingRequest.problemDetails ?? '',
+                                          amount: '',
+                                      }
+                                    : undefined
+                            }
                         />
                     )}
 
@@ -225,7 +287,29 @@ const AddMaintenanceRequest: React.FC = () => {
                                 handleNext();
                             }}
                             onBack={handleBack}
-                            initialData={isEditMode ? mockInitialData.propertyStep : undefined}
+                            initialData={
+                                isEditMode && existingRequest
+                                    ? {
+                                          selectedProperty: existingRequest.property?.id ?? '',
+                                          linkEquipment: Boolean(
+                                              existingRequest.equipmentLinked && existingRequest.equipmentId,
+                                          ),
+                                          selectedEquipment: existingRequest.equipmentId ?? '',
+                                          tenantAuthorization:
+                                              existingRequest.tenantMeta?.tenantAuthorization ?? false,
+                                          dateOptions:
+                                              existingRequest.tenantMeta?.dateOptions?.map((option, index) => ({
+                                                  id: `${index}`,
+                                                  date: option.date ? new Date(option.date) : undefined,
+                                                  timeSlots: option.timeSlots ?? [],
+                                              })) ?? [],
+                                          tenantList: [],
+                                          accessCode: existingRequest.tenantMeta?.accessCode ?? '',
+                                          petsInResidence: existingRequest.tenantMeta?.petsInResidence ?? '',
+                                          selectedPets: existingRequest.tenantMeta?.selectedPets ?? [],
+                                      }
+                                    : undefined
+                            }
                         />
                     )}
 
@@ -236,7 +320,25 @@ const AddMaintenanceRequest: React.FC = () => {
                                 await handleSubmitRequest();
                             }}
                             onBack={handleBack}
-                            initialData={isEditMode ? mockInitialData.dueDateStep : undefined}
+                            initialData={
+                                isEditMode && existingRequest
+                                    ? {
+                                          dateInitiated: existingRequest.requestedAt
+                                              ? new Date(existingRequest.requestedAt)
+                                              : undefined,
+                                          dateDue: existingRequest.dueDate
+                                              ? new Date(existingRequest.dueDate)
+                                              : undefined,
+                                          priority: mapBackendPriorityToUi(existingRequest.priority),
+                                          materials:
+                                              existingRequest.materials?.map((material, index) => ({
+                                                  id: `${index}`,
+                                                  name: material.materialName,
+                                                  quantity: material.quantity ?? 1,
+                                              })) ?? [],
+                                      }
+                                    : undefined
+                            }
                         />
                     )}
 
