@@ -474,7 +474,7 @@ const RequestDetails = () => {
                             <span>Transactions</span>
                         </div>
                     </div>
-                    <div className="p-0 bg-white">
+                    <div className="p-0">
                         {request.transactions.length > 0 ? (
                             <>
                                 <div className="hidden md:grid grid-cols-3 px-8 py-3 bg-gray-50 border-b border-gray-100 text-xs font-black text-gray-400 uppercase tracking-widest">
@@ -516,11 +516,11 @@ const RequestDetails = () => {
                         <Tag size={20} />
                         <span>Materials Used</span>
                     </div>
-                    <div className="p-6 bg-white">
+                    <div className="p-6">
                         {request.materials && request.materials.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {request.materials.map((material: any, index: number) => (
-                                    <div key={material.id || index} className="bg-white rounded-xl border border-gray-100 p-4 flex items-center justify-between shadow-sm group">
+                                    <div key={material.id || index} className="bg-gray-50 rounded-xl border border-gray-100 p-4 flex items-center justify-between shadow-sm group">
                                         <div className="flex items-center gap-4">
                                             <div className="flex flex-col">
                                                 <span className="text-sm font-bold text-gray-900">{material.name}</span>
@@ -565,11 +565,11 @@ const RequestDetails = () => {
                             <span>Linked Equipment</span>
                         </div>
                     </div>
-                    <div className="p-6 bg-white">
+                    <div className="p-6">
                         {request.equipmentList && request.equipmentList.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {request.equipmentList.map((eq: any) => (
-                                    <div key={eq.id} className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm group">
+                                    <div key={eq.id} className="bg-gray-50 rounded-xl border border-gray-100 p-4 shadow-sm group">
                                         <div className="flex justify-between items-start mb-3">
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2">
@@ -619,7 +619,7 @@ const RequestDetails = () => {
                             <span>Attachments</span>
                         </div>
                     </div>
-                    <div className="p-6 bg-white">
+                    <div className="p-6">
                         {request.attachments && request.attachments.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {request.attachments.map((file: File | string, index: number) => {
@@ -628,7 +628,7 @@ const RequestDetails = () => {
                                     const fileType = file instanceof File ? file.type : 'unknown';
 
                                     return (
-                                        <div key={index} className="bg-white rounded-xl border border-gray-200 p-4 flex items-center justify-between hover:shadow-md transition-shadow group">
+                                        <div key={index} className="bg-gray-50 border border-gray-200 p-4 flex items-center justify-between hover:shadow-md transition-shadow group rounded-xl">
                                             <div className="flex items-center gap-3 overflow-hidden">
                                                 <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center shrink-0 text-gray-500 group-hover:bg-[#f0fdf4] group-hover:text-[#166534] transition-colors">
                                                     <FileText size={20} />
