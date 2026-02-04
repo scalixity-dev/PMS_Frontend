@@ -171,7 +171,8 @@ import ServiceFileManager from './pages/ServiceDashboard/pages/Dashboard/FileMan
 import ServiceMessages from './pages/ServiceDashboard/pages/Dashboard/Messages/ServiceMessages';
 import FindJob from './pages/ServiceDashboard/pages/Dashboard/FindJob/FindJob';
 import JobDetail from './pages/ServiceDashboard/pages/Dashboard/FindJob/JobDetail';
-import ServiceNotification from './pages/ServiceDashboard/pages/Dashboard/Notification/Notification';
+import ServiceNotification from './pages/ServiceDashboard/pages/Dashboard/Notification/ServiceNotification';
+import ServiceOnlinePayment from './pages/ServiceDashboard/pages/Dashboard/Settings/OnlinePayment/ServiceOnlinePayment';
 import GeneralReports from './pages/Dashboard/settings/report/general';
 import Reports from './pages/Dashboard/features/Reports/Reports';
 import Rentability from './pages/Dashboard/features/Reports/Rentability';
@@ -237,6 +238,10 @@ const App: React.FC = () => {
               <Route path="/service-dashboard/settings/integrations" element={<ProtectedRoute><ServiceDashboardIntegrationSettings /></ProtectedRoute>} />
               <Route path="/service-dashboard/settings/notifications" element={<ServiceProtectedRoute><ServiceDashboardNotificationSettings /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/settings/business-profile" element={<ProtectedRoute><ServiceBusinessProfile /></ProtectedRoute>} />
+              <Route path="/service-dashboard/settings/online-payment" element={<ServiceProtectedRoute><ServiceOnlinePayment /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/settings/bank-account" element={<ServiceProtectedRoute><ServiceOnlinePayment /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/settings/entities" element={<ServiceProtectedRoute><ServiceOnlinePayment /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/settings/tax-forms" element={<ServiceProtectedRoute><ServiceOnlinePayment /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/contacts" element={<ServiceProtectedRoute><ServiceContacts /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/calendar" element={<ProtectedRoute><ServiceDashboardCalendar /></ProtectedRoute>} />
               <Route path="/service-dashboard/file-manager" element={<ServiceProtectedRoute><ServiceFileManager /></ServiceProtectedRoute>} />

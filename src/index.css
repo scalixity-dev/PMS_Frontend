@@ -12,7 +12,7 @@
   --chart-3: 25 95% 53%;
   --chart-4: 43 96% 56%;
   --chart-5: 27 87% 67%;
-  
+
   --color-active: #20CC95;
   --color-nonactive: #355C7D;
   --color-heading: #1F2937;
@@ -255,6 +255,23 @@ input[type="submit"],
   body {
     background: white !important;
     background-image: none !important;
+  }
+
+  /* Maintenance Request Printing */
+  body * {
+    visibility: hidden;
+  }
+
+  #printable-request,
+  #printable-request * {
+    visibility: visible;
+  }
+
+  #printable-request {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
   }
 
   /* Hide interactive-only elements */

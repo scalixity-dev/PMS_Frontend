@@ -143,7 +143,6 @@ const MaintenanceRequestView = ({ request, onBack }: MaintenanceRequestViewProps
                             message={message}
                             isOwnMessage={message.senderId === userEmail}
                             contactName={message.senderName}
-                            contactAvatar={`https://api.dicebear.com/7.x/initials/svg?seed=${message.senderName}`}
                         />
                     ))}
                 </div>

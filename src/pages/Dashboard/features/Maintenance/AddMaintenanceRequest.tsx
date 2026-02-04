@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import GetStartedButton from '../../../../components/common/buttons/GetStartedButton';
+
 import MaintenanceStepper from './components/MaintenanceStepper';
 import CategorySelection from './steps/CategorySelection';
 import SubCategorySelection from './steps/SubCategorySelection';
@@ -18,50 +18,8 @@ import PropertyTenantsStep from './components/PropertyTenantsStep';
 import DueDateMaterialsStep from './components/DueDateMaterialsStep';
 import propertyImage from '../../../../assets/images/property.jpg';
 
-interface RequestTypeCardProps {
-    type: 'basic' | 'advanced';
-    selected: boolean;
-    onClick: () => void;
-}
 
-const RequestTypeCard: React.FC<RequestTypeCardProps> = ({ type, selected, onClick }) => {
-    const isBasic = type === 'basic';
-    const title = isBasic ? 'Basic request' : 'Advanced request';
-    const description = isBasic
-        ? 'Add the most basic information about the issue like category, description of the request and photos/video. You can always edit it later.'
-        : 'Add the most basic information about the issue like category, description of the request and photos/video. You can always edit it later.';
 
-    return (
-        <div
-            onClick={onClick}
-            className={`
-        relative flex flex-col items-start p-6 md:p-8 rounded-[2rem] cursor-pointer transition-all duration-300 w-full md:w-80 h-full
-        ${selected
-                    ? 'bg-[#F0F2F5] border-2 border-[#7BD747] shadow-none ring-1 ring-[#7BD747]/50'
-                    : 'bg-white shadow-md border-2 border-transparent hover:shadow-lg hover:-translate-y-1'
-                }
-      `}
-        >
-            {/* Pill Badge */}
-            <div className={`
-        flex items-center gap-2 px-4 py-1.5 rounded-full mb-6
-        ${selected ? 'bg-[#7BD747] text-white' : 'bg-[#7BD747] text-white'}
-      `}>
-                <div className={`
-          w-3 h-3 rounded-full border-[1.5px] border-white flex items-center justify-center
-        `}>
-                    {selected && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
-                </div>
-                <span className="font-bold text-sm md:text-base">{title}</span>
-            </div>
-
-            {/* Description */}
-            <p className="text-left text-gray-500 text-sm leading-relaxed">
-                {description}
-            </p>
-        </div>
-    );
-};
 
 const AddMaintenanceRequest: React.FC = () => {
     const navigate = useNavigate();
@@ -71,11 +29,11 @@ const AddMaintenanceRequest: React.FC = () => {
 
     const targetSection = location.state?.targetSection;
 
-    // Flow State
+    // Flow State - Start directly at step 1 with advanced flow
     const [mainStep, setMainStep] = useState(
         isEditMode
             ? (targetSection === 'materials' ? 3 : 1)
-            : 0
+            : 1 // Start directly at General Details step
     );
     const [generalSubStep, setGeneralSubStep] = useState(1);
 
@@ -103,7 +61,7 @@ const AddMaintenanceRequest: React.FC = () => {
         }
     };
 
-    const [selectedType, setSelectedType] = useState<'basic' | 'advanced' | null>(isEditMode ? 'advanced' : null);
+    const selectedType = 'advanced'; // Always use advanced flow
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
     const [selectedIssue, setSelectedIssue] = useState<string | null>(null);
@@ -248,25 +206,11 @@ const AddMaintenanceRequest: React.FC = () => {
     };
 
     const handleBack = () => {
-        if (mainStep === 0) {
+        if (mainStep === 1) {
+            // Go back to previous page from step 1
             navigate(-1);
-        } else if (mainStep === 1) {
-            if (generalSubStep === 1) {
-                setMainStep(0);
-            } else if (generalSubStep === 2) {
-                setGeneralSubStep(1);
-            } else if (generalSubStep === 3) {
-                setGeneralSubStep(2);
-            } else if (generalSubStep === 4) {
-                setGeneralSubStep(3);
-            } else if (generalSubStep === 5) {
-                setGeneralSubStep(4);
-            } else if (generalSubStep === 6) {
-                setGeneralSubStep(5);
-            }
         } else if (mainStep === 2) {
             setMainStep(1);
-            setGeneralSubStep(6); // Go back to issue description
         } else {
             setMainStep(prev => prev - 1);
         }
@@ -274,7 +218,6 @@ const AddMaintenanceRequest: React.FC = () => {
 
     // Helper to determine stepper current step
     const getStepperStep = () => {
-        if (mainStep === 0) return 0;
         return mainStep;
     };
 
@@ -297,6 +240,10 @@ const AddMaintenanceRequest: React.FC = () => {
                     {/* Stepper (Only show for Main Step 1+) */}
                     {mainStep >= 1 && (
                         <div className="w-full mt-8 mb-6">
+                            {/* Page Heading */}
+                            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-center mb-6">
+                                {isEditMode ? 'Edit Maintenance Request' : 'Add Maintenance Request'}
+                            </h1>
                             <MaintenanceStepper
                                 currentStep={getStepperStep()}
                                 steps={selectedType === 'advanced' ? advancedSteps : undefined}
@@ -304,35 +251,7 @@ const AddMaintenanceRequest: React.FC = () => {
                         </div>
                     )}
 
-                    {/* Step 0: Request Type Selection */}
-                    {mainStep === 0 && (
-                        <div className="flex flex-col items-center w-full mt-8">
-                            <div className="text-center mb-8 md:mb-10 max-w-lg">
-                                <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">Maintenance request</h1>
-                                <p className="text-gray-500 text-sm md:text-base">Select the request type to get started.</p>
-                            </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-12 w-full max-w-2xl">
-                                <RequestTypeCard
-                                    type="basic"
-                                    selected={selectedType === 'basic'}
-                                    onClick={() => setSelectedType('basic')}
-                                />
-                                <RequestTypeCard
-                                    type="advanced"
-                                    selected={selectedType === 'advanced'}
-                                    onClick={() => setSelectedType('advanced')}
-                                />
-                            </div>
-
-                            <GetStartedButton
-                                text="Get Started"
-                                widthClass="w-auto px-12"
-                                onClick={handleNext}
-                                disabled={!selectedType}
-                            />
-                        </div>
-                    )}
 
                     {/* Step 1: General Details */}
                     {mainStep === 1 && (
