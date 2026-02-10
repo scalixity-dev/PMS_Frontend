@@ -16,7 +16,7 @@ import { API_ENDPOINTS } from '../../../../config/api.config';
 const CreateEquipment = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
-    const isEditMode = !!id;
+    const isEditMode = !!id && id !== 'create';
 
     // Dirty state tracking for unsaved changes
     const [isDirty, setIsDirty] = useState(false);
@@ -28,7 +28,8 @@ const CreateEquipment = () => {
 
     const { data: properties = [], isLoading: isLoadingProperties } = useGetAllProperties();
     const { data: categories = [], isLoading: isLoadingCategories } = useGetEquipmentCategories();
-    const { data: existingEquipment, isLoading: isLoadingEquipment, error: equipmentError } = useGetEquipment(id || null, isEditMode);
+    const { data: existingEquipment, isLoading: isLoadingEquipment, error: equipmentError } =
+        useGetEquipment(isEditMode ? id || null : null, isEditMode);
     const createEquipmentMutation = useCreateEquipment();
     const updateEquipmentMutation = useUpdateEquipment();
     const fileInputRef = useRef<HTMLInputElement>(null);

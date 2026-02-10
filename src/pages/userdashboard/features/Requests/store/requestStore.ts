@@ -8,8 +8,36 @@ interface RequestState {
     setRequestFilters: (filters: Partial<RequestFilters>) => void;
     resetRequestFilters: () => void;
     addRequest: (request: ServiceRequest) => void;
+    updateRequest: (id: number | string, data: Partial<ServiceRequest>) => void;
     updateRequestStatus: (id: number, status: ServiceRequest["status"]) => void;
     deleteRequest: (id: number) => void;
+    newRequestForm: {
+        currentStep: number;
+        selectedCategory: string | null;
+        selectedSubCategory: string | null;
+        selectedProblem: string | null;
+        finalDetail: string | null;
+        selectedEquipment: string | null;
+        equipmentSerial: string | null;
+        equipmentCondition: string | null;
+        title: string;
+        description: string;
+        location: string;
+        property: string;
+        authorization: string | null;
+        authCode: string;
+        setUpDateTime: string | null;
+        dateDue: string | null;
+        materials: any[];
+        availability: any[];
+        priority: "Critical" | "Normal" | "Low" | null;
+        attachments: File[];
+        video: File | null;
+        pets: string[];
+        amount: string;
+    };
+    setNewRequestForm: (data: Partial<RequestState['newRequestForm']>) => void;
+    resetNewRequestForm: () => void;
 }
 
 const STORAGE_KEY = 'pms_user_requests';
@@ -145,6 +173,63 @@ export const useRequestStore = create<RequestState>((set) => ({
         category: null,
     },
     requests: loadRequests(),
+    newRequestForm: {
+        currentStep: 1,
+        selectedCategory: null,
+        selectedSubCategory: null,
+        selectedProblem: null,
+        finalDetail: null,
+        selectedEquipment: null,
+        equipmentSerial: null,
+        equipmentCondition: null,
+        title: "",
+        description: "",
+        location: "Gandhi Path Rd, Jaipur, RJ 302020",
+        property: "1",
+        authorization: null,
+        authCode: "",
+        setUpDateTime: null,
+        dateDue: null,
+        materials: [],
+        availability: [{ id: 1, date: "", timeSlots: [] }],
+        priority: null,
+        attachments: [],
+        video: null,
+        pets: [],
+        amount: "",
+    },
+    setNewRequestForm: (data) =>
+        set((state) => ({
+            newRequestForm: { ...state.newRequestForm, ...data }
+        })),
+    resetNewRequestForm: () =>
+        set({
+            newRequestForm: {
+                currentStep: 1,
+                selectedCategory: null,
+                selectedSubCategory: null,
+                selectedProblem: null,
+                finalDetail: null,
+                selectedEquipment: null,
+                equipmentSerial: null,
+                equipmentCondition: null,
+                title: "",
+                description: "",
+                location: "Gandhi Path Rd, Jaipur, RJ 302020",
+                property: "1",
+                authorization: null,
+                authCode: "",
+                setUpDateTime: null,
+                dateDue: null,
+                materials: [],
+                availability: [{ id: 1, date: "", timeSlots: [] }],
+                priority: null,
+                attachments: [],
+                video: null,
+                pets: [],
+                amount: "",
+            }
+        }),
     setRequestFilters: (filters) =>
         set((state) => ({
             requestFilters: { ...state.requestFilters, ...filters }
@@ -167,6 +252,16 @@ export const useRequestStore = create<RequestState>((set) => ({
                 console.warn('Request added to state but failed to persist to localStorage');
             }
 
+            return { requests: updatedRequests };
+        }),
+    updateRequest: (id, data) =>
+        set((state) => {
+            const updatedRequests = state.requests.map((req) => {
+                // Handle both number and string IDs
+                const matchId = String(req.id) === String(id) || req.requestId === id;
+                return matchId ? { ...req, ...data } : req;
+            });
+            saveRequests(updatedRequests);
             return { requests: updatedRequests };
         }),
     updateRequestStatus: (id, status) =>

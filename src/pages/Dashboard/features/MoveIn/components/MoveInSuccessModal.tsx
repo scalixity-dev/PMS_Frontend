@@ -4,6 +4,7 @@ import { Dialog, Transition } from '@headlessui/react';
 import { X } from 'lucide-react';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import successAnimationUrl from '../../ListUnit/Success.lottie?url';
+import { API_ENDPOINTS } from '../../../../../config/api.config';
 
 interface MoveInSuccessModalProps {
     isOpen: boolean;
@@ -12,6 +13,8 @@ interface MoveInSuccessModalProps {
     onRequestSignature: () => void;
     leaseNumber?: string;
     propertyName: string;
+    leaseId?: string;
+    propertyId?: string;
 }
 
 const MoveInSuccessModal: React.FC<MoveInSuccessModalProps> = ({
@@ -21,11 +24,16 @@ const MoveInSuccessModal: React.FC<MoveInSuccessModalProps> = ({
     onRequestSignature,
     leaseNumber = "9",
     propertyName,
+    leaseId,
+    propertyId,
 }) => {
     const navigate = useNavigate();
     const [isClosing, setIsClosing] = useState(false);
     const timeoutRef = useRef<number | null>(null);
     const [animationData, setAnimationData] = useState<ArrayBuffer | string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [uploadError, setUploadError] = useState<string | null>(null);
 
     // Load Lottie file as ArrayBuffer to avoid buffer size mismatch
     useEffect(() => {
@@ -63,6 +71,55 @@ const MoveInSuccessModal: React.FC<MoveInSuccessModalProps> = ({
         timeoutRef.current = window.setTimeout(() => {
             cb();
         }, 200);
+    };
+
+    const handleUploadClick = () => {
+        if (!leaseId) {
+            alert('Lease information is not available. Please go back to the lease and try again.');
+            return;
+        }
+        if (fileInputRef.current) {
+            fileInputRef.current.click();
+        }
+    };
+
+    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        setUploadError(null);
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('category', 'DOCUMENT');
+            if (propertyId) {
+                formData.append('propertyId', propertyId);
+            }
+
+            const response = await fetch(API_ENDPOINTS.UPLOAD.FILE, {
+                method: 'POST',
+                credentials: 'include',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: 'Failed to upload file' }));
+                throw new Error(errorData.message || 'Failed to upload file');
+            }
+
+            await response.json();
+            console.log('Success: Document uploaded successfully.');
+            setUploadError(null);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to upload file. Please try again.';
+            setUploadError(message);
+            console.error('Error:', message);
+        } finally {
+            setIsUploading(false);
+            event.target.value = '';
+        }
     };
 
     return (
@@ -156,13 +213,29 @@ const MoveInSuccessModal: React.FC<MoveInSuccessModalProps> = ({
                                             <p className="text-gray-500 text-xs mb-2">
                                                 Attach pre-signed documents or additional files to your lease.
                                             </p>
-                                            <button className="text-[#3D7475] font-bold text-xs hover:underline">
-                                                Upload
+                                            <button
+                                                type="button"
+                                                onClick={handleUploadClick}
+                                                disabled={isUploading}
+                                                className="text-[#3D7475] font-bold text-xs hover:underline disabled:opacity-60 disabled:cursor-not-allowed"
+                                            >
+                                                {isUploading ? 'Uploading...' : 'Upload'}
                                             </button>
+                                            <input
+                                                ref={fileInputRef}
+                                                type="file"
+                                                className="hidden"
+                                                onChange={handleFileChange}
+                                            />
+                                            {uploadError && (
+                                                <p className="text-red-500 text-xs mt-1">
+                                                    {uploadError}
+                                                </p>
+                                            )}
                                         </div>
 
                                         {/* Online Payments Card */}
-                                        <div className="w-full border border-gray-200 rounded-xl p-3 text-left mb-4 bg-white shadow-sm">
+                                        {/* <div className="w-full border border-gray-200 rounded-xl p-3 text-left mb-4 bg-white shadow-sm">
                                             <h4 className="font-bold text-gray-900 mb-1">Online Payments</h4>
                                             <p className="text-gray-500 text-xs mb-2">
                                                 Set up online payments and collect rent with ease.
@@ -170,7 +243,7 @@ const MoveInSuccessModal: React.FC<MoveInSuccessModalProps> = ({
                                             <button className="text-[#3D7475] font-bold text-xs hover:underline">
                                                 Set up payments
                                             </button>
-                                        </div>
+                                        </div> */}
 
                                         {/* Buttons */}
                                         <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">

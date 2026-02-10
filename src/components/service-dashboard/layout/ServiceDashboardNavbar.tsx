@@ -70,11 +70,11 @@ export default function ServiceDashboardNavbar({ setSidebarOpen }: NavbarProps) 
         try {
             await authService.logout();
             queryClient.clear();
-            navigate("/service-dashboard/login", { replace: true });
+            navigate("/login", { replace: true });
         } catch (error) {
             console.error("Logout error:", error);
             queryClient.clear();
-            navigate("/service-dashboard/login", { replace: true });
+            navigate("/login", { replace: true });
         } finally {
             setIsProfileDropdownOpen(false);
         }

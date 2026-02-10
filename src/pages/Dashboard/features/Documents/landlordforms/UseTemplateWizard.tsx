@@ -358,7 +358,7 @@ const UseTemplateWizard: React.FC = () => {
 
     const handleCloseSuccessModal = () => {
         setIsSuccessModalOpen(false);
-        const returnPath = state?.returnPath || (id ? `/dashboard/portfolio/leases/${id}` : `/dashboard/documents/landlord-forms/template/${templateName}`);
+        const returnPath = state?.returnPath || (id ? `/dashboard/leasing/leases/${id}` : `/dashboard/documents/landlord-forms/template/${templateName}`);
         navigate(returnPath, {
             // We pass state still, just in case checking for it elsewhere
             state: {

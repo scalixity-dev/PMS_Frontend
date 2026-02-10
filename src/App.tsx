@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TanStackDevtools } from '@tanstack/react-devtools';
 import AppLayout from './components/layout/AppLayout';
-import { ProtectedRoute } from './components/ProtectedRoute';
+import { ProtectedRoute, ServiceProtectedRoute } from './components/ProtectedRoute';
 import DashboardLayout from './components/dashboardlayout/DashboardLayout';
 import HomePage from './pages/basewebsite/home';
 import ScreeningPage from './pages/basewebsite/features/screening/index';
@@ -14,9 +14,6 @@ import { RentalApplicationSettingsLayout } from './components/common/RentalAppli
 import PricingPage from './pages/basewebsite/pricing';
 import LoginPage from './pages/basewebsite/auth/login';
 import SignUpPage from './pages/basewebsite/auth/signUp';
-import ServiceDashboardLogin from './pages/ServiceDashboard/pages/auth/Login';
-import ServiceDashboardSignup from './pages/ServiceDashboard/pages/auth/Signup';
-import ForgotPassword from './pages/ServiceDashboard/pages/auth/ForgotPassword';
 import Welcome from './pages/ServiceDashboard/pages/onboarding/Welcome';
 import SelectProfession from './pages/ServiceDashboard/pages/onboarding/SelectProfession';
 import ProfessionDetails from './pages/ServiceDashboard/pages/onboarding/ProfessionDetails';
@@ -175,7 +172,8 @@ import ServiceFileManager from './pages/ServiceDashboard/pages/Dashboard/FileMan
 import ServiceMessages from './pages/ServiceDashboard/pages/Dashboard/Messages/ServiceMessages';
 import FindJob from './pages/ServiceDashboard/pages/Dashboard/FindJob/FindJob';
 import JobDetail from './pages/ServiceDashboard/pages/Dashboard/FindJob/JobDetail';
-import ServiceNotification from './pages/ServiceDashboard/pages/Dashboard/Notification/Notification';
+import ServiceNotification from './pages/ServiceDashboard/pages/Dashboard/Notification/ServiceNotification';
+import ServiceOnlinePayment from './pages/ServiceDashboard/pages/Dashboard/Settings/OnlinePayment/ServiceOnlinePayment';
 import GeneralReports from './pages/Dashboard/settings/report/general';
 import Reports from './pages/Dashboard/features/Reports/Reports';
 import Rentability from './pages/Dashboard/features/Reports/Rentability';
@@ -212,10 +210,7 @@ const App: React.FC = () => {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <Routes>
-            {/* Service Dashboard Auth - Standalone Pages */}
-            <Route path="/service-dashboard/login" element={<ServiceDashboardLogin />} />
-            <Route path="/service-dashboard/signup" element={<ServiceDashboardSignup />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
+            {/* Forgot password route removed; use basewebsite auth flows instead */}
 
             {/* Service Dashboard Onboarding */}
             <Route path="/service-dashboard/welcome" element={<Welcome />} />
@@ -224,25 +219,37 @@ const App: React.FC = () => {
 
             {/* Service Dashboard Routes */}
             <Route element={<ServiceDashboardLayout />}>
-              <Route path="/service-dashboard" element={<ProtectedRoute><ServiceDashboard /></ProtectedRoute>} />
-              <Route path="/service-dashboard/requests" element={<ProtectedRoute><ServiceRequests /></ProtectedRoute>} />
-              <Route path="/service-dashboard/requests/:id" element={<ProtectedRoute><ServiceRequestDetail /></ProtectedRoute>} />
-              <Route path="/service-dashboard/requests-board" element={<ProtectedRoute><ServiceRequestsBoard /></ProtectedRoute>} />
-              <Route path="/service-dashboard/accounting" element={<ProtectedRoute><ServiceAccounting /></ProtectedRoute>} />
-              <Route path="/service-dashboard/accounting/transaction/:id" element={<ProtectedRoute><ServiceTransactionDetail /></ProtectedRoute>} />
+              <Route path="/service-dashboard" element={<ServiceProtectedRoute><ServiceDashboard /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/requests" element={<ServiceProtectedRoute><ServiceRequests /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/requests-board" element={<ServiceProtectedRoute><ServiceRequestsBoard /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/accounting" element={<ServiceProtectedRoute><ServiceAccounting /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/accounting/transaction/:id" element={<ServiceProtectedRoute><ServiceTransactionDetail /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/settings" element={<ServiceProtectedRoute><ServiceDashboardSettings /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/settings/profile" element={<ServiceProtectedRoute><ServiceDashboardProfileSettings /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/settings/business-profile" element={<ServiceProtectedRoute><ServiceBusinessProfile /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard" element={<ServiceProtectedRoute><ServiceDashboard /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/requests" element={<ServiceProtectedRoute><ServiceRequests /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/requests/:id" element={<ServiceProtectedRoute><ServiceRequestDetail /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/requests-board" element={<ServiceProtectedRoute><ServiceRequestsBoard /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/accounting" element={<ServiceProtectedRoute><ServiceAccounting /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/accounting/transaction/:id" element={<ServiceProtectedRoute><ServiceTransactionDetail /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/settings" element={<ProtectedRoute><ServiceDashboardSettings /></ProtectedRoute>} />
-              <Route path="/service-dashboard/settings/profile" element={<ProtectedRoute><ServiceDashboardProfileSettings /></ProtectedRoute>} />
-              <Route path="/service-dashboard/settings/security" element={<ProtectedRoute><ServiceDashboardSecuritySettings /></ProtectedRoute>} />
+              <Route path="/service-dashboard/settings/profile" element={<ServiceProtectedRoute><ServiceDashboardProfileSettings /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/settings/security" element={<ServiceProtectedRoute><ServiceDashboardSecuritySettings /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/settings/integrations" element={<ProtectedRoute><ServiceDashboardIntegrationSettings /></ProtectedRoute>} />
-              <Route path="/service-dashboard/settings/notifications" element={<ProtectedRoute><ServiceDashboardNotificationSettings /></ProtectedRoute>} />
+              <Route path="/service-dashboard/settings/notifications" element={<ServiceProtectedRoute><ServiceDashboardNotificationSettings /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/settings/business-profile" element={<ProtectedRoute><ServiceBusinessProfile /></ProtectedRoute>} />
-              <Route path="/service-dashboard/contacts" element={<ProtectedRoute><ServiceContacts /></ProtectedRoute>} />
-              <Route path="/service-dashboard/calendar" element={<ProtectedRoute><ServiceDashboardCalendar /></ProtectedRoute>} />
-              <Route path="/service-dashboard/file-manager" element={<ProtectedRoute><ServiceFileManager /></ProtectedRoute>} />
+              <Route path="/service-dashboard/settings/online-payment" element={<ServiceProtectedRoute><ServiceOnlinePayment /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/settings/bank-account" element={<ServiceProtectedRoute><ServiceOnlinePayment /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/settings/entities" element={<ServiceProtectedRoute><ServiceOnlinePayment /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/settings/tax-forms" element={<ServiceProtectedRoute><ServiceOnlinePayment /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/contacts" element={<ServiceProtectedRoute><ServiceContacts /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/calendar" element={<ServiceProtectedRoute><ServiceDashboardCalendar /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/file-manager" element={<ServiceProtectedRoute><ServiceFileManager /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/messages" element={<ProtectedRoute><ServiceMessages /></ProtectedRoute>} />
-              <Route path="/service-dashboard/find-job" element={<ProtectedRoute><FindJob /></ProtectedRoute>} />
-              <Route path="/service-dashboard/find-job/:id" element={<ProtectedRoute><JobDetail /></ProtectedRoute>} />
-              <Route path="/service-dashboard/notifications" element={<ProtectedRoute><ServiceNotification /></ProtectedRoute>} />
+              <Route path="/service-dashboard/find-job" element={<ServiceProtectedRoute><FindJob /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/find-job/:id" element={<ServiceProtectedRoute><JobDetail /></ServiceProtectedRoute>} />
+              <Route path="/service-dashboard/notifications" element={<ServiceProtectedRoute><ServiceNotification /></ServiceProtectedRoute>} />
             </Route>
 
             <Route element={<AppLayout />}>
@@ -377,7 +384,7 @@ const App: React.FC = () => {
                   </ProtectedRoute>
                 }
               />
-              <Route path="/dashboard/portfolio/leases/:id" element={<LeaseDetail />} />
+              <Route path="/dashboard/leasing/leases/:id" element={<LeaseDetail />} />
               <Route path="/dashboard/leasing/leases/:id/end-lease" element={<EndLease />} />
 
               <Route

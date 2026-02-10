@@ -37,9 +37,10 @@ const MessageBubble = ({ message, isOwnMessage, contactName, contactAvatar, isPe
                 <img
                     src={contactAvatar}
                     alt={contactName}
-                    className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                    className="w-8 h-8 rounded-full object-cover flex-shrink-0 shadow-sm"
                 />
             )}
+
 
             {/* Message Content */}
             <div className={`flex flex-col ${isOwnMessage ? 'items-end' : 'items-start'} max-w-[70%]`}>

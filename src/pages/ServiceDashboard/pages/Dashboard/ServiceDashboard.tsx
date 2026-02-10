@@ -74,8 +74,12 @@ const ServiceDashboard: React.FC = () => {
                     <div className="w-24 h-24 bg-coral-100 rounded-full mb-4 overflow-hidden relative flex items-center justify-center text-4xl font-bold text-gray-700">
                         SB
                     </div>
-                    <h2 className="text-xl font-bold text-gray-900">Siddak Bagga</h2>
-                    <p className="text-gray-500 text-sm">siddakbagga@gmail.com</p>
+                    <h2 className="text-xl font-bold text-gray-900">
+                        Service Provider
+                    </h2>
+                    <p className="text-gray-500 text-sm">
+                        {/* Email can be populated once a service auth context is wired */}
+                    </p>
                 </div>
 
                 {/* Stats Cards Container */}
