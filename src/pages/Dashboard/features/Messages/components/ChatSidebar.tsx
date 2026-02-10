@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Search, Pin, Check } from 'lucide-react';
+import { Search, Pin, Check, MessageCirclePlus } from 'lucide-react';
 import type { Chat, ChatCategory } from '../types';
 import Avatar from './Avatar';
 
@@ -12,6 +12,7 @@ interface ChatSidebarProps {
     onSearchChange: (query: string) => void;
     selectedCategory: ChatCategory;
     onSelectCategory: (category: ChatCategory) => void;
+    onNewChat?: () => void;
 }
 
 const ChatSidebar: React.FC<ChatSidebarProps> = ({
@@ -23,6 +24,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
     onSearchChange,
     selectedCategory,
     onSelectCategory,
+    onNewChat,
 }) => {
 
     const getCategoryShortForm = (category: ChatCategory) => {
@@ -59,6 +61,15 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                 <div className="px-5 py-4 border-b border-gray-50">
                     <div className="flex items-center justify-between mb-3">
                         <h1 className="text-lg font-bold text-gray-900">Messages</h1>
+                        {onNewChat && (
+                            <button
+                                onClick={onNewChat}
+                                className="p-2 rounded-lg bg-[var(--color-primary)] text-white hover:opacity-90"
+                                title="New conversation"
+                            >
+                                <MessageCirclePlus className="w-5 h-5" />
+                            </button>
+                        )}
                     </div>
                     <div className="relative group">
                         <input

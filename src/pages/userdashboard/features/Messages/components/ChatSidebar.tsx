@@ -1,4 +1,4 @@
-import { Search, Lightbulb, Microwave, Trees, AlertCircle, Wrench, ListPlus } from 'lucide-react';
+import { Search, Lightbulb, Microwave, Trees, AlertCircle, Wrench, ListPlus, MessageCirclePlus } from 'lucide-react';
 import type { Chat } from '../types';
 import type { ServiceRequest, Publication } from '../../../utils/types';
 import { useAuthStore } from '../../Profile/store/authStore';
@@ -17,6 +17,7 @@ interface ChatSidebarProps {
     onSearchChange: (query: string) => void;
     onSelectChat: (chat: Chat) => void;
     onSelectRequest: (request: ServiceRequest) => void;
+    onNewChat?: () => void;
 }
 
 const ChatSidebar = ({
@@ -33,6 +34,7 @@ const ChatSidebar = ({
     onSearchChange,
     onSelectChat,
     onSelectRequest,
+    onNewChat,
 }: ChatSidebarProps) => {
     const { userInfo } = useAuthStore();
 
@@ -43,6 +45,7 @@ const ChatSidebar = ({
         }
         try {
             const date = new Date(time);
+            if (Number.isNaN(date.getTime())) return '';
             const now = new Date();
             const isToday = date.getDate() === now.getDate() &&
                 date.getMonth() === now.getMonth() &&
@@ -163,6 +166,18 @@ const ChatSidebar = ({
 
             {/* Search Bar */}
             <div className={`px-3 md:px-4 py-3 md:py-4 border-b border-gray-200`}>
+                {activeTab === 'CHAT' && onNewChat && (
+                    <div className="flex justify-end mb-2">
+                        <button
+                            onClick={onNewChat}
+                            className="p-2 rounded-lg bg-[var(--color-primary)] text-white hover:opacity-90 text-xs font-medium"
+                            title="New conversation"
+                        >
+                            <MessageCirclePlus className="w-4 h-4 inline mr-1" />
+                            New chat
+                        </button>
+                    </div>
+                )}
                 <div className="relative">
                     <input
                         type="text"

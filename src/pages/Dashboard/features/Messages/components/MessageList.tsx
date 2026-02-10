@@ -25,6 +25,7 @@ const MessageList: React.FC<MessageListProps> = ({ activeChat, messagesEndRef })
                         key={msg.id}
                         message={msg}
                         activeChatName={activeChat.name}
+                        isPending={Boolean((msg as { isPending?: boolean }).isPending)}
                     />
                 ))}
                 <div ref={messagesEndRef} />

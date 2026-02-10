@@ -95,6 +95,7 @@ import ApplicationDetail from './pages/Dashboard/features/Application/Applicatio
 import ProviderStatement from './pages/Dashboard/features/ServicePros/ProviderStatement';
 import TransactionDetail from './pages/Dashboard/features/Transactions/TransactionDetail';
 import ChatPage from './pages/Dashboard/features/Messages/ChatPage';
+import { ChatToast } from './components/chat/ChatToast';
 // Documents pages
 import LandlordForms from './pages/Dashboard/features/Documents/landlordforms/LandlordForms';
 import TemplateView from './pages/Dashboard/features/Documents/landlordforms/TemplateView';
@@ -846,6 +847,7 @@ const App: React.FC = () => {
             <Route path="*" element={<HomePage />} />
           </Routes>
         </BrowserRouter>
+        <ChatToast />
         <TanStackDevtools />
       </QueryClientProvider>
     </>

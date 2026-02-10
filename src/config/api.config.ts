@@ -1,5 +1,6 @@
-// API Configuration
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+export const CHAT_API_BASE_URL = import.meta.env.VITE_CHAT_API_BASE_URL || 'http://localhost:3001';
+export const CHAT_WS_URL = import.meta.env.VITE_CHAT_WS_URL || 'ws://localhost:3001';
 
 export const API_ENDPOINTS = {
   AUTH: {
@@ -16,6 +17,7 @@ export const API_ENDPOINTS = {
     CHECK_DEVICE: (userId: string) => `${API_BASE_URL}/auth/check-device/${userId}`,
     ACTIVATE_ACCOUNT: (userId: string) => `${API_BASE_URL}/auth/activate-account/${userId}`,
     GET_CURRENT_USER: `${API_BASE_URL}/auth/me`,
+    CHAT_TOKEN: `${API_BASE_URL}/auth/chat-token`,
     LOGOUT: `${API_BASE_URL}/auth/logout`,
     UPDATE_PROFILE: `${API_BASE_URL}/auth/profile`,
     GOOGLE: `${API_BASE_URL}/auth/google`,
@@ -245,6 +247,17 @@ export const API_ENDPOINTS = {
     UPDATE_PAYMENT: (id: string, paymentId: string) => `${API_BASE_URL}/transactions/${id}/payment/${paymentId}`,
     DELETE_PAYMENT: (id: string, paymentId: string) => `${API_BASE_URL}/transactions/${id}/payment/${paymentId}`,
     DELETE: (id: string) => `${API_BASE_URL}/transactions/${id}`,
+  },
+  CHAT: {
+    BASE: CHAT_API_BASE_URL,
+    WS: CHAT_WS_URL,
+    CONVERSATIONS: `${CHAT_API_BASE_URL}/api/conversations`,
+    CONVERSATION: (id: string) => `${CHAT_API_BASE_URL}/api/conversations/${id}`,
+    MESSAGES: (id: string) => `${CHAT_API_BASE_URL}/api/conversations/${id}/messages`,
+    MARK_READ: (id: string) => `${CHAT_API_BASE_URL}/api/conversations/${id}/read`,
+  },
+  CONTACT_BOOK: {
+    GET_ALL: `${API_BASE_URL}/contact-book`,
   },
   GOOGLE_CALENDAR: {
     CONNECT: `${API_BASE_URL}/google-calendar/connect`,
