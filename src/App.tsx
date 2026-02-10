@@ -243,7 +243,7 @@ const App: React.FC = () => {
               <Route path="/service-dashboard/settings/entities" element={<ServiceProtectedRoute><ServiceOnlinePayment /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/settings/tax-forms" element={<ServiceProtectedRoute><ServiceOnlinePayment /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/contacts" element={<ServiceProtectedRoute><ServiceContacts /></ServiceProtectedRoute>} />
-              <Route path="/service-dashboard/calendar" element={<ProtectedRoute><ServiceDashboardCalendar /></ProtectedRoute>} />
+              <Route path="/service-dashboard/calendar" element={<ServiceProtectedRoute><ServiceDashboardCalendar /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/file-manager" element={<ServiceProtectedRoute><ServiceFileManager /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/messages" element={<ProtectedRoute><ServiceMessages /></ProtectedRoute>} />
               <Route path="/service-dashboard/find-job" element={<ServiceProtectedRoute><FindJob /></ServiceProtectedRoute>} />

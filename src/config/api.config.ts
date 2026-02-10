@@ -47,6 +47,15 @@ export const API_ENDPOINTS = {
     FILE: `${API_BASE_URL}/upload/file`,
     IMAGE: `${API_BASE_URL}/upload/image`,
   },
+  MAINTENANCE_REQUEST: {
+    CREATE: `${API_BASE_URL}/maintenance-request`,
+    GET_ALL: `${API_BASE_URL}/maintenance-request`,
+    GET_ONE: (id: string) => `${API_BASE_URL}/maintenance-request/${id}`,
+    UPDATE: (id: string) => `${API_BASE_URL}/maintenance-request/${id}`,
+    DELETE: (id: string) => `${API_BASE_URL}/maintenance-request/${id}`,
+    LIST_TRANSACTIONS: (id: string) => `${API_BASE_URL}/maintenance-request/${id}/transactions`,
+    CREATE_TRANSACTION: (id: string) => `${API_BASE_URL}/maintenance-request/${id}/transactions`,
+  },
   LEASING: {
     GET_ALL: `${API_BASE_URL}/leasing`,
     GET_ONE: (id: string) => `${API_BASE_URL}/leasing/${id}`,

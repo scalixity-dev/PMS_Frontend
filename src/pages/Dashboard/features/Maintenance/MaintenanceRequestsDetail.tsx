@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate, useParams, useOutletContext } from 'react-router-dom';
 import { ChevronLeft, ChevronDown, ChevronRight, Edit, Trash2, Plus, Repeat, Printer, Paperclip, FileText } from 'lucide-react';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
@@ -6,6 +6,8 @@ import ChangeStatusModal from './components/ChangeStatusModal';
 import AssigneeModal from './components/AssigneeModal';
 import MakeRecurringModal from './components/MakeRecurringModal';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
+import { useDeleteMaintenanceRequest, useGetMaintenanceRequest, useGetMaintenanceTransactions } from '../../../../hooks/useMaintenanceRequestQueries';
+import { useGetEquipment } from '../../../../hooks/useEquipmentQueries';
 
 // --- Reusable Components ---
 
@@ -42,16 +44,33 @@ const MaintenanceRequestsDetail: React.FC = () => {
     const { sidebarCollapsed = false } = useOutletContext<{ sidebarCollapsed?: boolean }>() || {}; const [isActionDropdownOpen, setIsActionDropdownOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+    const { data: request, isLoading, error } = useGetMaintenanceRequest(id, true);
+    const { data: backendTransactions = [] } = useGetMaintenanceTransactions(id, true);
+    const { data: linkedEquipment } = useGetEquipment(
+        request?.equipmentId ?? null,
+        !!request?.equipmentId,
+    );
     const [status, setStatus] = useState('New');
     const [isAssigneeModalOpen, setIsAssigneeModalOpen] = useState(false);
     const [assignee, setAssignee] = useState<string | null>(null); // null = unassigned
     const [isRecurringModalOpen, setIsRecurringModalOpen] = useState(false);
 
-    const handleDelete = () => {
-        // Implement delete logic here (API call)
-        console.log('Deleting request:', id);
-        setIsDeleteModalOpen(false);
-        navigate('/dashboard/maintenance/requests'); // Navigate back to list
+    const { mutateAsync: deleteRequest } = useDeleteMaintenanceRequest();
+
+    const handleDelete = async () => {
+        if (!id) {
+            setIsDeleteModalOpen(false);
+            return;
+        }
+        try {
+            await deleteRequest(id);
+            setIsDeleteModalOpen(false);
+            navigate('/dashboard/maintenance/requests');
+        } catch (err) {
+            // eslint-disable-next-line no-console
+            console.error('Failed to delete maintenance request', err);
+            setIsDeleteModalOpen(false);
+        }
     };
 
     const handleStatusChange = (newStatus: string) => {
@@ -71,46 +90,121 @@ const MaintenanceRequestsDetail: React.FC = () => {
         setIsRecurringModalOpen(false);
     };
 
-    // Mock Data for Materials
-    const materials = [
-        { id: 1, item: 'Paint (Gallon)', quantity: 2 },
-        { id: 2, item: 'Drywall Screws (Box)', quantity: 1 },
-        { id: 3, item: 'Lumber (2x4)', quantity: 5 },
-        { id: 4, item: 'Sandpaper (Pack)', quantity: 3 }
-    ];
+    const materials = useMemo(() => {
+        if (!request?.materials) return [];
+        return request.materials.map((m, index) => ({
+            id: index + 1,
+            item: m.materialName,
+            quantity: m.quantity ?? 1,
+        }));
+    }, [request]);
 
-    // Mock Data for Tenant Information
-    const tenantInfo = {
-        authorizationToEnter: 'Yes',
-        authorizationCode: '4521',
-        pets: ['Dog', 'Cat'],
-        setUpDateTime: '24 Nov 2025, 10:00 AM',
-        availability: [
-            { id: 1, date: '2025-11-24', timeSlots: ['9:00 AM - 12:00 PM', '2:00 PM - 5:00 PM'] },
-            { id: 2, date: '2025-11-25', timeSlots: ['10:00 AM - 1:00 PM'] }
-        ]
-    };
+    const tenantInfo = useMemo(() => {
+        const meta = request?.tenantMeta;
+        if (!meta) {
+            return {
+                authorizationToEnter: 'N/A',
+                authorizationCode: '-',
+                pets: [] as string[],
+                setUpDateTime: '-',
+                availability: [] as Array<{ id: number; date: string; timeSlots: string[] }>,
+            };
+        }
 
-    // Mock Data for Equipment
-    const equipment = [
-        { id: 1, name: 'Power Drill', serialNumber: 'PD-2024-001', condition: 'Good' },
-        { id: 2, name: 'Ladder (8ft)', serialNumber: 'LD-2024-015', condition: 'Fair' },
-        { id: 3, name: 'Paint Sprayer', serialNumber: 'PS-2024-003', condition: 'Excellent' }
-    ];
+        const availability =
+            meta.dateOptions?.map((opt, index) => ({
+                id: index + 1,
+                date: opt.date ?? '',
+                timeSlots: opt.timeSlots ?? [],
+            })) ?? [];
 
-    // Mock Data for Transactions
-    const transactions = [
-        { id: 1, date: '20 Nov 2025', type: 'Money Out', description: 'Materials Purchase', amount: -250.00 },
-        { id: 2, date: '22 Nov 2025', type: 'Money Out', description: 'Labor Cost', amount: -150.00 },
-        { id: 3, date: '24 Nov 2025', type: 'Money In', description: 'Tenant Payment', amount: 400.00 }
-    ];
+        return {
+            authorizationToEnter: meta.tenantAuthorization ? 'Yes' : 'No',
+            authorizationCode: meta.accessCode ?? '-',
+            pets: meta.selectedPets ?? [],
+            setUpDateTime: '-',
+            availability,
+        };
+    }, [request]);
 
-    // Mock Data for Attachments
-    const attachments = [
-        { id: 1, name: 'Invoice_Materials.pdf', size: '245 KB', type: 'application/pdf' },
-        { id: 2, name: 'Work_Order.pdf', size: '128 KB', type: 'application/pdf' },
-        { id: 3, name: 'Before_Photo.jpg', size: '1.2 MB', type: 'image/jpeg' }
-    ];
+    const attachments = useMemo(() => {
+        if (!request?.attachments) return [];
+        return request.attachments.map((a) => ({
+            id: a.id,
+            name: a.description || a.fileUrl.split('/').pop() || 'Attachment',
+            size: '',
+            type: a.fileType ?? 'OTHER',
+            fileUrl: a.fileUrl,
+        }));
+    }, [request]);
+
+    const mediaUrls = useMemo(() => {
+        const anyRequest = request as unknown as {
+            photos?: Array<{ fileUrl: string }>;
+            maintenancePhotos?: Array<{ fileUrl: string }>;
+            attachments?: Array<{ fileUrl: string; fileType?: string | null }>;
+        } | null;
+
+        if (!anyRequest) return [];
+
+        const rawPhotos = anyRequest.photos ?? anyRequest.maintenancePhotos ?? [];
+        const fromPhotos = rawPhotos.map((p) => p.fileUrl);
+
+        const fromImageAttachments =
+            anyRequest.attachments
+                ?.filter((a) => {
+                    const type = (a.fileType ?? '').toString().toUpperCase();
+                    if (!type) {
+                        return /\.(png|jpe?g|gif|webp)$/i.test(a.fileUrl);
+                    }
+                    return type === 'IMAGE';
+                })
+                .map((a) => a.fileUrl) ?? [];
+
+        return [...fromPhotos, ...fromImageAttachments];
+    }, [request]);
+
+    const equipment = useMemo(() => {
+        if (!linkedEquipment) return [];
+        return [
+            {
+                id: linkedEquipment.id,
+                name: `${linkedEquipment.brand ?? ''} ${linkedEquipment.model ?? ''}`.trim() || 'Equipment',
+                serialNumber: linkedEquipment.serialNumber ?? '',
+                condition: linkedEquipment.status ?? '',
+            },
+        ];
+    }, [linkedEquipment]);
+
+    const transactions: Array<{
+        id: string;
+        date: string;
+        type: 'Money In' | 'Money Out';
+        description: string;
+        amount: number;
+    }> = useMemo(() => {
+        return backendTransactions.map((t) => {
+            const isIncome = t.type === 'INCOME';
+            const amountNumber = Number(t.amount ?? 0);
+            const signedAmount = isIncome ? Math.abs(amountNumber) : -Math.abs(amountNumber);
+
+            return {
+                id: t.id,
+                date: t.transactionDate
+                    ? new Date(t.transactionDate).toLocaleDateString()
+                    : '',
+                type: isIncome ? 'Money In' : 'Money Out',
+                description: t.details ?? t.notes ?? '',
+                amount: signedAmount,
+            };
+        });
+    }, [backendTransactions]);
+
+    const totalCost = useMemo(() => {
+        return transactions.reduce((sum, t) => {
+            return t.amount < 0 ? sum + Math.abs(t.amount) : sum;
+        }, 0);
+    }, [transactions]);
 
     return (
         <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit pb-12 transition-all duration-300`}>
@@ -125,6 +219,15 @@ const MaintenanceRequestsDetail: React.FC = () => {
             />
 
             <div className="p-4 md:p-6 bg-[#DFE5E3] min-h-screen rounded-[2rem] overflow-visible">
+
+                {isLoading && (
+                    <div className="text-center text-gray-600 text-sm mb-4">Loading request...</div>
+                )}
+                {error && !isLoading && (
+                    <div className="text-center text-red-600 text-sm mb-4">
+                        {(error as Error).message ?? 'Failed to load maintenance request'}
+                    </div>
+                )}
 
                 {/* Header */}
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-8 mb-8">
@@ -206,45 +309,65 @@ const MaintenanceRequestsDetail: React.FC = () => {
                     </div>
                 </div>
 
-                {/* ID and Property Card */}
+                {/* ID, Property and Price Card */}
                 <div className="bg-[#f0f0f6] rounded-[2rem] md:rounded-[3rem] p-4 flex flex-col md:flex-row flex-wrap gap-4 items-stretch md:items-center mb-8 shadow-sm">
                     <div className="bg-[#7BD747] text-white px-6 py-3 rounded-full flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full md:w-auto md:min-w-[300px]">
                         <span className="font-bold text-sm whitespace-nowrap">ID - {id || '1331895'}</span>
                         <div className="bg-white/90 text-[#3A6D6C] text-[10px] px-2 py-0.5 rounded-full font-bold break-words whitespace-normal text-left">
-                            Exterior / Gates / Fences /Awning / landscape
+                            {request
+                                ? `${request.category ?? ''}${request.subcategory ? ` / ${request.subcategory}` : ''}${request.issue ? ` / ${request.issue}` : ''}${request.subissue ? ` / ${request.subissue}` : ''}`
+                                : 'Category / Subcategory'}
                         </div>
                     </div>
                     <div className="bg-[#7BD747] text-white px-6 py-3 rounded-full flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto md:min-w-[200px]">
                         <span className="font-bold text-sm">Property</span>
                         <div className="bg-white/90 text-[#3A6D6C] text-[10px] px-3 py-0.5 rounded-full font-bold">
-                            ABC
+                            {request?.property?.propertyName ?? request?.property?.id ?? 'Property'}
                         </div>
                     </div>
+                    {totalCost > 0 && (
+                        <div className="bg-[#7BD747] text-white px-6 py-3 rounded-full flex flex-col sm:flex-row items-center gap-2 w-full md:w-auto md:min-w-[200px]">
+                            <span className="font-bold text-sm">Estimated Cost</span>
+                            <div className="bg-white/90 text-[#3A6D6C] text-[10px] px-3 py-0.5 rounded-full font-bold">
+                                ${totalCost.toFixed(2)}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Description */}
                 <div className="mb-8">
                     <h2 className="text-lg font-bold text-gray-800 mb-4">Description</h2>
                     <div className="bg-[#F0F0F6] rounded-2xl p-6 min-h-[120px] shadow-sm">
-                        <span className="text-gray-500 text-sm">Type Details Here...</span>
+                        <span className="text-gray-700 text-sm">
+                            {request?.problemDetails ?? 'No description provided.'}
+                        </span>
                     </div>
                 </div>
 
                 {/* Media */}
                 <CollapsibleSection title="Media" defaultOpen={true}>
                     <div className="bg-[#F0F0F6] rounded-xl p-6 shadow-sm flex gap-4 overflow-x-auto">
-                        {[1, 2, 3, 4].map((i) => (
-                            <div key={i} className="w-32 h-32 rounded-xl overflow-hidden bg-white shadow-sm flex-shrink-0">
-                                <img
-                                    src={`https://images.unsplash.com/photo-${1580000000000 + i}?auto=format&fit=crop&w=200&q=80`}
-                                    alt={`Media ${i}`}
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                        (e.target as HTMLImageElement).src = 'https://placehold.co/200x200?text=No+Image';
-                                    }}
-                                />
-                            </div>
-                        ))}
+                        {mediaUrls.length === 0 ? (
+                            <span className="text-sm text-gray-500">No media available.</span>
+                        ) : (
+                            mediaUrls.map((url) => (
+                                <div
+                                    key={url}
+                                    className="w-32 h-32 rounded-xl overflow-hidden bg-white shadow-sm flex-shrink-0"
+                                >
+                                    <img
+                                        src={url}
+                                        alt="Media"
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            (e.target as HTMLImageElement).src =
+                                                'https://placehold.co/200x200?text=No+Image';
+                                        }}
+                                    />
+                                </div>
+                            ))
+                        )}
                     </div>
                 </CollapsibleSection>
 
@@ -595,21 +718,40 @@ const MaintenanceRequestsDetail: React.FC = () => {
                 {/* Attachments Section */}
                 <CollapsibleSection title="Attachments" defaultOpen={true}>
                     <div className="bg-[#F0F0F6] rounded-2xl p-4 shadow-sm">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {attachments.map((file) => (
-                                <div key={file.id} className="bg-white rounded-xl border border-gray-200 p-4 flex items-center hover:shadow-md transition-shadow group">
-                                    <div className="flex items-center gap-3 overflow-hidden">
-                                        <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center shrink-0 text-gray-500 group-hover:bg-[#f0fdf4] group-hover:text-[#166534] transition-colors">
-                                            {file.type.includes('pdf') ? <FileText className="w-5 h-5" /> : <Paperclip className="w-5 h-5" />}
+                        {attachments.length === 0 ? (
+                            <span className="text-sm text-gray-500">No attachments available.</span>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {attachments.map((file) => (
+                                    <a
+                                        key={file.id}
+                                        href={file.fileUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="bg-white rounded-xl border border-gray-200 p-4 flex items-center hover:shadow-md transition-shadow group"
+                                    >
+                                        <div className="flex items-center gap-3 overflow-hidden">
+                                            <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center shrink-0 text-gray-500 group-hover:bg-[#f0fdf4] group-hover:text-[#166534] transition-colors">
+                                                {file.type.toLowerCase() === 'pdf' ? (
+                                                    <FileText className="w-5 h-5" />
+                                                ) : (
+                                                    <Paperclip className="w-5 h-5" />
+                                                )}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p
+                                                    className="text-sm font-semibold text-gray-900 truncate"
+                                                    title={file.name}
+                                                >
+                                                    {file.name}
+                                                </p>
+                                                <p className="text-xs text-gray-500">{file.size}</p>
+                                            </div>
                                         </div>
-                                        <div className="min-w-0">
-                                            <p className="text-sm font-semibold text-gray-900 truncate" title={file.name}>{file.name}</p>
-                                            <p className="text-xs text-gray-500">{file.size}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                                    </a>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </CollapsibleSection>
 
