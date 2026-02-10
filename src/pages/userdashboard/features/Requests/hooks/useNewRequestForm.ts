@@ -6,39 +6,71 @@ import { categories, propertiesList } from "../constants/requestData";
 
 export const useNewRequestForm = () => {
     const navigate = useNavigate();
-    const { addRequest } = useRequestStore();
+    const { addRequest, newRequestForm, setNewRequestForm, resetNewRequestForm } = useRequestStore();
 
-    const [currentStep, setCurrentStep] = useState(1);
-    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-    const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
-    const [selectedProblem, setSelectedProblem] = useState<string | null>(null);
-    const [finalDetail, setFinalDetail] = useState<string | null>(null);
-    const [selectedEquipment, setSelectedEquipment] = useState<string | null>(null);
-    const [equipmentSerial, setEquipmentSerial] = useState<string | null>(null);
-    const [equipmentCondition, setEquipmentCondition] = useState<string | null>(null);
+    const {
+        currentStep,
+        selectedCategory,
+        selectedSubCategory,
+        selectedProblem,
+        finalDetail,
+        selectedEquipment,
+        equipmentSerial,
+        equipmentCondition,
+        title,
+        description,
+        location,
+        property,
+        authorization,
+        authCode,
+        setUpDateTime,
+        dateDue,
+        materials,
+        availability,
+        priority,
+        attachments,
+        video,
+        pets,
+        amount,
+    } = newRequestForm;
 
-    const [title, setTitle] = useState<string>("");
-    const [description, setDescription] = useState<string>("");
-    const [location, setLocation] = useState<string>("Gandhi Path Rd, Jaipur, RJ 302020");
-    const [property, setProperty] = useState<string>("1"); // Default to first property
-    const [authorization, setAuthorization] = useState<string | null>(null);
-    const [authCode, setAuthCode] = useState<string>("");
-    const [setUpDateTime, setSetUpDateTime] = useState<string | null>(null);
-    const [dateDue, setDateDue] = useState<string | null>(null);
-    const [materials, setMaterials] = useState<any[]>([]);
-    const [availability, setAvailability] = useState<AvailabilityOption[]>([
-        { id: 1, date: "", timeSlots: [] }
-    ]);
-    const [priority, setPriority] = useState<"Critical" | "Normal" | "Low" | null>(null);
     const [isPriorityDropdownOpen, setIsPriorityDropdownOpen] = useState(false);
     const priorityDropdownRef = useRef<HTMLDivElement>(null);
-    const [attachments, setAttachments] = useState<File[]>([]);
-    const [video, setVideo] = useState<File | null>(null);
-    const [pets, setPets] = useState<string[]>([]);
     const [submissionError, setSubmissionError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const attachmentsInputRef = useRef<HTMLInputElement>(null);
     const videoInputRef = useRef<HTMLInputElement>(null);
+
+    // Helpers to update store state
+    const setCurrentStep = (step: number) => setNewRequestForm({ currentStep: step });
+    const setSelectedCategory = (val: string | null) => setNewRequestForm({ selectedCategory: val });
+    const setSelectedSubCategory = (val: string | null) => setNewRequestForm({ selectedSubCategory: val });
+    const setSelectedProblem = (val: string | null) => setNewRequestForm({ selectedProblem: val });
+    const setFinalDetail = (val: string | null) => setNewRequestForm({ finalDetail: val });
+    const setSelectedEquipment = (val: string | null) => setNewRequestForm({ selectedEquipment: val });
+    const setEquipmentSerial = (val: string | null) => setNewRequestForm({ equipmentSerial: val });
+    const setEquipmentCondition = (val: string | null) => setNewRequestForm({ equipmentCondition: val });
+    const setTitle = (val: string) => setNewRequestForm({ title: val });
+    const setDescription = (val: string) => setNewRequestForm({ description: val });
+    const setLocation = (val: string) => setNewRequestForm({ location: val });
+    const setProperty = (val: string) => setNewRequestForm({ property: val });
+    const setAuthorization = (val: string | null) => setNewRequestForm({ authorization: val });
+    const setAuthCode = (val: string) => setNewRequestForm({ authCode: val });
+    const setSetUpDateTime = (val: string | null) => setNewRequestForm({ setUpDateTime: val });
+    const setDateDue = (val: string | null) => setNewRequestForm({ dateDue: val });
+    const setMaterials = (val: any[]) => setNewRequestForm({ materials: val });
+    const setAvailability = (val: AvailabilityOption[]) => setNewRequestForm({ availability: val });
+    const setPriority = (val: "Critical" | "Normal" | "Low" | null) => setNewRequestForm({ priority: val });
+    const setAttachments = (val: File[]) => setNewRequestForm({ attachments: val });
+    const setVideo = (val: File | null) => setNewRequestForm({ video: val });
+    const setAmount = (val: string) => setNewRequestForm({ amount: val });
+    const setPets = (val: string[] | ((prev: string[]) => string[])) => {
+        if (typeof val === 'function') {
+            setNewRequestForm({ pets: val(pets) });
+        } else {
+            setNewRequestForm({ pets: val });
+        }
+    };
 
     // Track if form has been modified
     const hasFormData = useMemo(() => {
@@ -55,8 +87,9 @@ export const useNewRequestForm = () => {
             attachments.length > 0 ||
             video !== null ||
             pets.length > 0 ||
+            amount !== "" ||
             priority !== null ||
-            availability.some(item => item.date !== "" || item.timeSlots.length > 0)
+            availability.some((item: any) => item.date !== "" || item.timeSlots.length > 0)
         );
     }, [
         selectedCategory,
@@ -71,6 +104,7 @@ export const useNewRequestForm = () => {
         attachments.length,
         video,
         pets.length,
+        amount,
         priority,
         availability
     ]);
@@ -82,7 +116,7 @@ export const useNewRequestForm = () => {
     };
 
     const handleRemoveAttachment = (indexToRemove: number) => {
-        setAttachments((prev) => prev.filter((_, index) => index !== indexToRemove));
+        setAttachments(attachments.filter((_, index) => index !== indexToRemove));
         if (attachmentsInputRef.current) {
             attachmentsInputRef.current.value = "";
         }
@@ -103,20 +137,20 @@ export const useNewRequestForm = () => {
     };
 
     const handleRemoveDate = (id: number) => {
-        setAvailability(availability.filter(item => item.id !== id));
+        setAvailability(availability.filter((item: any) => item.id !== id));
     };
 
     const handleDateChange = (id: number, date: string) => {
-        setAvailability(availability.map(item =>
+        setAvailability(availability.map((item: any) =>
             item.id === id ? { ...item, date } : item
         ));
     };
 
     const handleSlotToggle = (id: number, slot: string) => {
-        setAvailability(availability.map(item => {
+        setAvailability(availability.map((item: any) => {
             if (item.id === id) {
                 const slots = item.timeSlots.includes(slot)
-                    ? item.timeSlots.filter(s => s !== slot)
+                    ? item.timeSlots.filter((s: string) => s !== slot)
                     : [...item.timeSlots, slot];
                 return { ...item, timeSlots: slots };
             }
@@ -229,12 +263,14 @@ export const useNewRequestForm = () => {
                 attachments: attachments,
                 video: video,
                 pets: pets,
+                amount: amount ? parseFloat(amount) : undefined,
                 // Store data URLs separately for persistence
                 attachmentDataUrls: attachmentDataUrls.length > 0 ? attachmentDataUrls : undefined,
                 videoDataUrl: videoDataUrl,
             };
 
             addRequest(newRequest);
+            resetNewRequestForm(); // Clear the form on success
             setIsSubmitting(false);
             navigate("/userdashboard/requests", {
                 state: {
@@ -257,13 +293,13 @@ export const useNewRequestForm = () => {
         if (step) {
             setCurrentStep(step);
         } else {
-            setCurrentStep(prev => prev + 1);
+            setCurrentStep(currentStep + 1);
         }
     };
 
     const prevStep = () => {
         if (currentStep > 1) {
-            setCurrentStep(prev => prev - 1);
+            setCurrentStep(currentStep - 1);
         } else {
             navigate(-1);
         }
@@ -311,6 +347,8 @@ export const useNewRequestForm = () => {
         setVideo,
         pets,
         setPets,
+        amount,
+        setAmount,
         submissionError,
         setSubmissionError,
         isSubmitting,

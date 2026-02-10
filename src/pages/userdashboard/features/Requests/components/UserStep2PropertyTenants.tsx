@@ -17,13 +17,6 @@ interface Equipment {
     serial?: string;
 }
 
-interface TenantListItem {
-    id: number;
-    name: string;
-    status: string;
-    share: boolean;
-    selected: boolean;
-}
 
 interface UserStep2PropertyTenantsProps {
     onNext: (data: any) => void;
@@ -42,10 +35,6 @@ const UserStep2PropertyTenants: React.FC<UserStep2PropertyTenantsProps> = ({ onN
     const [showExitConfirmation, setShowExitConfirmation] = useState(false);
     const [tenantAuthorization, setTenantAuthorization] = useState(initialData?.tenantAuthorization || false);
     const [dateOptions, setDateOptions] = useState<DateOption[]>(initialData?.dateOptions || []);
-    const [tenantList, setTenantList] = useState<TenantListItem[]>(initialData?.tenantList || [
-        { id: 1, name: 'Atul', status: 'Pending', share: false, selected: false },
-        { id: 2, name: 'Ajay', status: 'Pending', share: false, selected: false },
-    ]);
     const [accessCode, setAccessCode] = useState(initialData?.accessCode || '');
     const [petsInResidence, setPetsInResidence] = useState(initialData?.petsInResidence || '');
     const [selectedPets, setSelectedPets] = useState<string[]>(initialData?.selectedPets || []);
@@ -64,7 +53,6 @@ const UserStep2PropertyTenants: React.FC<UserStep2PropertyTenantsProps> = ({ onN
             equipmentSerial: linkEquipment ? equipmentList.find(e => e.id === selectedEquipment)?.serial : null,
             tenantAuthorization,
             dateOptions,
-            tenantList,
             accessCode,
             petsInResidence,
             selectedPets
@@ -116,11 +104,6 @@ const UserStep2PropertyTenants: React.FC<UserStep2PropertyTenantsProps> = ({ onN
         label: p.name
     }));
 
-    const toggleTenantSelection = (id: number) => {
-        setTenantList(prev => prev.map((tenant: TenantListItem) =>
-            tenant.id === id ? { ...tenant, selected: !tenant.selected, share: !tenant.selected } : tenant
-        ));
-    };
 
     const handleAddDate = () => {
         const newOption: DateOption = {
@@ -302,57 +285,6 @@ const UserStep2PropertyTenants: React.FC<UserStep2PropertyTenantsProps> = ({ onN
                 )}
             </div>
 
-            {/* Tenant Information */}
-            <div className="mb-8 md:mb-12">
-                <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">Tenant Information</h2>
-                <p className="text-gray-500 text-sm mb-4">
-                    Pick the tenant from the table below. If your tenant is connected with you, the request will be automatically shared with them and posted on their SmartTenantAI Portal.
-                </p>
-                <p className="text-[#3D7475] text-[10px] font-bold md:hidden mb-2 animate-pulse flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 bg-[#3D7475] rounded-full"></span>
-                    Scroll horizontally to view table
-                </p>
-
-                <div className="bg-[#F0F2F5] rounded-[2rem] md:rounded-[3rem] p-4 md:p-6 overflow-x-auto">
-                    <div className="min-w-[600px]">
-                        <div className="bg-[#3D7475] text-white rounded-t-xl grid grid-cols-3 px-8 py-4 font-bold">
-                            <div>Name</div>
-                            <div>Status</div>
-                            <div>Share</div>
-                        </div>
-                        <div className="bg-white rounded-b-xl overflow-hidden">
-                            {tenantList.map((tenant: TenantListItem, index: number) => (
-                                <div key={tenant.id} className={`grid grid-cols-3 px-8 py-4 items-center ${index !== tenantList.length - 1 ? 'border-b border-gray-100' : ''}`}>
-                                    <div className="flex items-center gap-4">
-                                        <button
-                                            onClick={() => toggleTenantSelection(tenant.id)}
-                                            className="flex items-center justify-center border border-gray-200 transition-colors cursor-pointer"
-                                        >
-                                            <div className={`w-5 h-5 border-2 rounded-sm flex items-center justify-center transition-colors ${tenant.selected ? 'bg-[#7BD747] border-[#7BD747]' : 'border-gray-400 bg-white'}`}>
-                                                {tenant.selected && (
-                                                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                                    </svg>
-                                                )}
-                                            </div>
-                                        </button>
-                                        <span className="font-medium text-gray-700">{tenant.name}</span>
-                                    </div>
-                                    <div className="text-[#2E6819] font-bold">{tenant.status}</div>
-                                    <div>
-                                        <Toggle
-                                            checked={tenant.share}
-                                            onChange={() => { }}
-                                            size="small"
-                                            disabled={true}
-                                        />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             {/*      Date & Time */}
             <div className="mb-8 md:mb-12">

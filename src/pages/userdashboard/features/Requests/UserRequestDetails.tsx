@@ -131,8 +131,8 @@ const RequestDetails = () => {
                 serialNumber: foundRequest.equipmentSerial || 'Not specified',
                 condition: foundRequest.equipmentCondition || 'Not specified'
             }
-        ] : []
-
+        ] : [],
+        amount: foundRequest.amount
     };
 
     const getPriorityColor = (priority: string) => {
@@ -264,12 +264,20 @@ const RequestDetails = () => {
                                     <div className="flex-1 space-y-1">
                                         <p className="text-gray-500 text-xs md:text-sm font-medium uppercase tracking-wider">Property</p>
                                         <p className="text-lg md:text-xl font-semibold text-gray-900">{request.property}</p>
-                                        {foundRequest.equipment && (
-                                            <div className="mt-2 inline-flex items-center gap-2 bg-[#E4F2E2] text-[#2E6819] px-3 py-1 rounded-full text-xs font-bold">
-                                                <div className="w-1.5 h-1.5 bg-[#2E6819] rounded-full"></div>
-                                                Linked Equipment: {foundRequest.equipment}
-                                            </div>
-                                        )}
+                                        <div className="flex flex-wrap gap-2 mt-2">
+                                            {request.amount !== undefined && (
+                                                <div className="inline-flex items-center gap-2 bg-[#E4F2E2] text-[#2E6819] px-3 py-1.5 rounded-full text-[10px] md:text-xs font-bold shadow-sm border border-[#2E6819]/10">
+                                                    <DollarSign size={14} strokeWidth={2.5} />
+                                                    <span>{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(request.amount)}</span>
+                                                </div>
+                                            )}
+                                            {foundRequest.equipment && (
+                                                <div className="inline-flex items-center gap-2 bg-[#E4F2E2] text-[#2E6819] px-3 py-1.5 rounded-full text-[10px] md:text-xs font-bold shadow-sm border border-[#2E6819]/10">
+                                                    <div className="w-1.5 h-1.5 bg-[#2E6819] rounded-full"></div>
+                                                    <span>Linked Equipment: {foundRequest.equipment}</span>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="space-y-1">
@@ -466,7 +474,7 @@ const RequestDetails = () => {
                             <span>Transactions</span>
                         </div>
                     </div>
-                    <div className="p-0 bg-white">
+                    <div className="p-0">
                         {request.transactions.length > 0 ? (
                             <>
                                 <div className="hidden md:grid grid-cols-3 px-8 py-3 bg-gray-50 border-b border-gray-100 text-xs font-black text-gray-400 uppercase tracking-widest">
@@ -508,11 +516,11 @@ const RequestDetails = () => {
                         <Tag size={20} />
                         <span>Materials Used</span>
                     </div>
-                    <div className="p-6 bg-white">
+                    <div className="p-6">
                         {request.materials && request.materials.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {request.materials.map((material: any, index: number) => (
-                                    <div key={material.id || index} className="bg-white rounded-xl border border-gray-100 p-4 flex items-center justify-between shadow-sm group">
+                                    <div key={material.id || index} className="bg-gray-50 rounded-xl border border-gray-100 p-4 flex items-center justify-between shadow-sm group">
                                         <div className="flex items-center gap-4">
                                             <div className="flex flex-col">
                                                 <span className="text-sm font-bold text-gray-900">{material.name}</span>
@@ -557,11 +565,11 @@ const RequestDetails = () => {
                             <span>Linked Equipment</span>
                         </div>
                     </div>
-                    <div className="p-6 bg-white">
+                    <div className="p-6">
                         {request.equipmentList && request.equipmentList.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {request.equipmentList.map((eq: any) => (
-                                    <div key={eq.id} className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm group">
+                                    <div key={eq.id} className="bg-gray-50 rounded-xl border border-gray-100 p-4 shadow-sm group">
                                         <div className="flex justify-between items-start mb-3">
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2">
@@ -611,7 +619,7 @@ const RequestDetails = () => {
                             <span>Attachments</span>
                         </div>
                     </div>
-                    <div className="p-6 bg-white">
+                    <div className="p-6">
                         {request.attachments && request.attachments.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {request.attachments.map((file: File | string, index: number) => {
@@ -620,7 +628,7 @@ const RequestDetails = () => {
                                     const fileType = file instanceof File ? file.type : 'unknown';
 
                                     return (
-                                        <div key={index} className="bg-white rounded-xl border border-gray-200 p-4 flex items-center justify-between hover:shadow-md transition-shadow group">
+                                        <div key={index} className="bg-gray-50 border border-gray-200 p-4 flex items-center justify-between hover:shadow-md transition-shadow group rounded-xl">
                                             <div className="flex items-center gap-3 overflow-hidden">
                                                 <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center shrink-0 text-gray-500 group-hover:bg-[#f0fdf4] group-hover:text-[#166534] transition-colors">
                                                     <FileText size={20} />
