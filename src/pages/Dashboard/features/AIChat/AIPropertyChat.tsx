@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { X, Send } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import aiAvatar from '@/assets/images/ai-avatar.svg';
+import '@/styles/markdown.css';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -190,14 +193,22 @@ const AIPropertyChat: React.FC<AIPropertyChatProps> = ({ isOpen, onClose, onForm
                   <span className="text-[11px] font-semibold text-gray-600">{isUser ? 'You' : 'AI Assistant'}</span>
                 </div>
                 <div
-                  className="max-w-[80%] px-4 py-3 text-sm leading-relaxed shadow-sm whitespace-pre-wrap"
+                  className="max-w-[80%] px-4 py-3 text-sm leading-relaxed shadow-sm"
                   style={
                     isUser
                       ? { backgroundColor: PRIMARY, color: 'white', borderRadius: '1.25rem', borderTopRightRadius: '4px' }
                       : { backgroundColor: ASSISTANT_BG, color: '#1f2937', borderRadius: '1.25rem', borderTopLeftRadius: '4px' }
                   }
                 >
-                  {message.content}
+                  {isUser ? (
+                    <div className="whitespace-pre-wrap">{message.content}</div>
+                  ) : (
+                    <div className="markdown-content">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {message.content}
+                      </ReactMarkdown>
+                    </div>
+                  )}
                 </div>
               </div>
             );

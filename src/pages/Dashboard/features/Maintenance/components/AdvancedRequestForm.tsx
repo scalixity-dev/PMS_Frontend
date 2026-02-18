@@ -139,6 +139,22 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
             { value: 'leaking', label: 'Leaking' },
             { value: 'not_draining', label: 'Not Draining' }
         ],
+        washer: [
+            { value: 'not_spinning', label: 'Not Spinning' },
+            { value: 'leaking', label: 'Leaking' },
+            { value: 'not_draining', label: 'Not Draining' },
+            { value: 'not_filling', label: 'Not Filling with Water' },
+            { value: 'noise', label: 'Strange Noise' },
+            { value: 'wont_start', label: 'Won\'t Start' }
+        ],
+        dryer: [
+            { value: 'not_heating', label: 'Not Heating' },
+            { value: 'not_spinning', label: 'Not Spinning' },
+            { value: 'noise', label: 'Strange Noise' },
+            { value: 'wont_start', label: 'Won\'t Start' },
+            { value: 'overheating', label: 'Overheating' },
+            { value: 'door_issue', label: 'Door Won\'t Stay Closed' }
+        ],
         oven: [
             { value: 'not_heating', label: 'Not Heating' },
             { value: 'temperature', label: 'Temperature Issue' },

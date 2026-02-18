@@ -92,34 +92,19 @@ const AddProperty: React.FC = () => {
     setCountries(Country.getAllCountries());
   }, []);
 
-  // Load states when country changes
+  // Load states when country is selected (but don't reset existing values)
   useEffect(() => {
     if (formData.country) {
       const countryStates = State.getStatesOfCountry(formData.country);
       setStates(countryStates);
-      // Reset state and city when country changes
-      if (formData.stateRegion) {
-        updateFormData('stateRegion', '');
-      }
-      if (formData.city) {
-        updateFormData('city', '');
-      }
-    } else {
-      setStates([]);
     }
   }, [formData.country]);
 
-  // Load cities when state changes
+  // Load cities when state is selected (but don't reset existing values)
   useEffect(() => {
     if (formData.country && formData.stateRegion) {
       const stateCities = City.getCitiesOfState(formData.country, formData.stateRegion);
       setCities(stateCities);
-      // Reset city when state changes
-      if (formData.city) {
-        updateFormData('city', '');
-      }
-    } else {
-      setCities([]);
     }
   }, [formData.country, formData.stateRegion]);
 
@@ -756,6 +741,8 @@ const AddProperty: React.FC = () => {
   };
 
   const handleAIFormData = (aiData: any) => {
+    console.log('[AI Form Data] Received:', aiData);
+    
     const updates: any = {};
 
     Object.entries(aiData).forEach(([key, value]) => {
@@ -768,26 +755,66 @@ const AddProperty: React.FC = () => {
       }
     });
 
-    setFormData(prev => {
-      const newData = { ...prev, ...updates };
-
-      if (updates.country && !prev.country) {
-        const countryStates = State.getStatesOfCountry(updates.country as string);
-        setStates(countryStates);
+    // Convert country name to ISO code if needed
+    if (updates.country) {
+      const allCountries = Country.getAllCountries();
+      const foundCountry = allCountries.find(
+        c => c.name.toLowerCase() === updates.country.toLowerCase() || c.isoCode === updates.country
+      );
+      if (foundCountry) {
+        console.log('[AI Form Data] Country found:', foundCountry.name, '→', foundCountry.isoCode);
+        updates.country = foundCountry.isoCode;
+      } else {
+        console.warn('[AI Form Data] Country not found:', updates.country);
       }
+    }
 
-      if (updates.country && updates.stateRegion) {
-        const stateCities = City.getCitiesOfState(
-          updates.country as string,
-          updates.stateRegion as string
+    // Load states FIRST if country is present
+    if (updates.country) {
+      const countryStates = State.getStatesOfCountry(updates.country);
+      setStates(countryStates);
+      console.log('[AI Form Data] Loaded states for country:', updates.country, '→', countryStates.length, 'states');
+
+      // Convert state/region name to ISO code if needed
+      if (updates.stateRegion) {
+        const foundState = countryStates.find(
+          s => s.name.toLowerCase() === updates.stateRegion.toLowerCase() || s.isoCode === updates.stateRegion
         );
-        setCities(stateCities);
+        if (foundState) {
+          console.log('[AI Form Data] State found:', foundState.name, '→', foundState.isoCode);
+          updates.stateRegion = foundState.isoCode;
+
+          // Load cities SECOND if both country and state are present
+          const stateCities = City.getCitiesOfState(updates.country, foundState.isoCode);
+          setCities(stateCities);
+          console.log('[AI Form Data] Loaded cities for state:', foundState.name, '→', stateCities.length, 'cities');
+
+          // City names should match as-is (no conversion needed)
+          if (updates.city) {
+            const foundCity = stateCities.find(
+              c => c.name.toLowerCase() === updates.city.toLowerCase()
+            );
+            if (foundCity) {
+              console.log('[AI Form Data] City found:', foundCity.name);
+              updates.city = foundCity.name;
+            } else {
+              console.warn('[AI Form Data] City not found:', updates.city, 'in', stateCities.length, 'cities');
+            }
+          }
+        } else {
+          console.warn('[AI Form Data] State not found:', updates.stateRegion);
+        }
       }
+    }
 
-      return newData;
-    });
+    console.log('[AI Form Data] Final updates:', updates);
 
-    setIsDirty(true);
+    // Use setTimeout to ensure state/city arrays are updated before formData
+    // This allows the dropdown options to be computed before setting the values
+    setTimeout(() => {
+      setFormData(prev => ({ ...prev, ...updates }));
+      setIsDirty(true);
+    }, 0);
   };
 
   const handleConfirmNavigation = () => {
@@ -1088,9 +1115,9 @@ const AddProperty: React.FC = () => {
                       }
                     }}
                     options={stateOptions}
-                    placeholder={formData.country ? "Select state" : "Select country first"}
+                    placeholder="Select state"
                     required
-                    disabled={!formData.country || stateOptions.length === 0}
+                    disabled={stateOptions.length === 0}
                     searchable={true}
                     buttonClassName={`bg-white border-gray-200 px-3 py-2 ${validationErrors.stateRegion ? 'border-red-500' : ''}`}
                   />
@@ -1117,9 +1144,9 @@ const AddProperty: React.FC = () => {
                       }
                     }}
                     options={cityOptions}
-                    placeholder={formData.stateRegion ? "Select city" : formData.country ? "Select state first" : "Select country first"}
+                    placeholder="Select city"
                     required
-                    disabled={!formData.stateRegion || cityOptions.length === 0}
+                    disabled={cityOptions.length === 0}
                     searchable={true}
                     buttonClassName={`bg-white border-gray-200 px-3 py-2 ${validationErrors.city ? 'border-red-500' : ''}`}
                   />
