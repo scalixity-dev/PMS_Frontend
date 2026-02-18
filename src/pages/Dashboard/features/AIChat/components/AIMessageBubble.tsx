@@ -4,9 +4,10 @@ import aiAvatar from '@/assets/images/ai-avatar.svg';
 
 interface AIMessageBubbleProps {
   message: ChatMessage;
+  isStreaming?: boolean;
 }
 
-const AIMessageBubble: React.FC<AIMessageBubbleProps> = ({ message }) => {
+const AIMessageBubble: React.FC<AIMessageBubbleProps> = ({ message, isStreaming = false }) => {
   const isUser = message.role === 'user';
   const timeString = message.timestamp.toLocaleTimeString([], {
     hour: '2-digit',
@@ -14,14 +15,14 @@ const AIMessageBubble: React.FC<AIMessageBubbleProps> = ({ message }) => {
   });
 
   return (
-    <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} gap-2`}>
+    <div className={`flex flex-col gap-2 ${isUser ? 'items-end' : 'items-start'}`}>
       {isUser ? (
         <>
           <div className="flex items-center gap-2">
             <span className="text-[10px] text-gray-400 font-medium">{timeString}</span>
             <span className="text-[11px] font-semibold text-gray-700">You</span>
           </div>
-          <div className="bg-[#3D7475] text-white rounded-2xl rounded-tr-none px-4 py-3 text-sm leading-relaxed max-w-[75%] shadow-sm hover:shadow-md transition-shadow cursor-default whitespace-pre-wrap">
+          <div className="bg-[#3D7475] text-white rounded-2xl rounded-tr-none px-4 py-3 text-sm leading-relaxed max-w-[75%] shadow-sm hover:shadow-md transition-all duration-300 cursor-default whitespace-pre-wrap animate-chat-bubble-in">
             {message.content}
           </div>
         </>
@@ -33,10 +34,14 @@ const AIMessageBubble: React.FC<AIMessageBubbleProps> = ({ message }) => {
               <span className="text-[11px] font-semibold text-gray-700">AI Assistant</span>
               <span className="text-[10px] text-gray-400 font-medium">{timeString}</span>
             </div>
-            <div className="bg-[#EDF2F1] rounded-2xl rounded-tl-none px-4 py-3 text-sm text-gray-800 leading-relaxed shadow-sm hover:shadow-md transition-shadow cursor-default whitespace-pre-wrap">
-              {message.content}
+            <div
+              className={`bg-[#EDF2F1] rounded-2xl rounded-tl-none px-4 py-3 text-sm text-gray-800 leading-relaxed shadow-sm cursor-default whitespace-pre-wrap transition-all duration-200 ${
+                isStreaming ? 'animate-streaming-glow' : 'hover:shadow-md'
+              }`}
+            >
+              <span className="inline transition-opacity duration-150">{message.content}</span>
               {!message.content && (
-                <span className="inline-block w-2 h-4 bg-[#3D7475] animate-pulse ml-1" />
+                <span className="inline-block w-2 h-4 bg-[#3D7475] animate-cursor-blink ml-1 align-middle rounded-sm" />
               )}
             </div>
           </div>

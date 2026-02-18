@@ -7,11 +7,13 @@ interface StepperProps {
 
 const steps = [
     { id: 1, name: "General Details" },
-    { id: 2, name: "Authorization to enter" },
-    { id: 3, name: "Priority" },
+    { id: 2, name: "Property" },
+    { id: 3, name: "Due date & Priority" },
 ];
 
 const Stepper: React.FC<StepperProps> = ({ currentStep }) => {
+    if (currentStep === 0) return null;
+
     return (
         <div
             className="max-w-3xl mx-auto mb-6 md:mb-10 lg:mb-12 px-2 md:px-3 py-2 md:py-3 bg-[#F0F0F6] rounded-2xl md:rounded-3xl relative"
@@ -19,37 +21,9 @@ const Stepper: React.FC<StepperProps> = ({ currentStep }) => {
         >
             <div className="flex justify-between items-center relative z-10">
                 {steps.map((step, index) => {
-                    let isCompleted = false;
-                    let isCurrent = false;
-
-                    if (step.id === 1) {
-                        isCompleted = currentStep >= 7;
-                        isCurrent = currentStep >= 1 && currentStep <= 6;
-                    } else if (step.id === 2) {
-                        isCompleted = currentStep >= 12;
-                        isCurrent = currentStep >= 7 && currentStep <= 11;
-                    } else if (step.id === 3) {
-                        isCompleted = false;
-                        isCurrent = currentStep === 12;
-                    }
-
-                    let progressWidth = "0%";
-                    if (step.id === 1) {
-                        if (currentStep === 1) progressWidth = "0%";
-                        else if (currentStep === 2) progressWidth = "17%";
-                        else if (currentStep === 3) progressWidth = "33%";
-                        else if (currentStep === 4) progressWidth = "50%";
-                        else if (currentStep === 5) progressWidth = "67%";
-                        else if (currentStep === 6) progressWidth = "83%";
-                        else if (currentStep >= 7) progressWidth = "100%";
-                    } else if (step.id === 2) {
-                        if (currentStep === 7) progressWidth = "0%";
-                        else if (currentStep === 8) progressWidth = "20%";
-                        else if (currentStep === 9) progressWidth = "40%";
-                        else if (currentStep === 10) progressWidth = "60%";
-                        else if (currentStep === 11) progressWidth = "80%";
-                        else if (currentStep >= 12) progressWidth = "100%";
-                    }
+                    const isCompleted = currentStep > step.id;
+                    const isCurrent = currentStep === step.id;
+                    const progressWidth = isCompleted ? "100%" : "0%";
 
                     return (
                         <div key={step.id} className="flex flex-col items-center gap-0.5 md:gap-1 flex-1 relative">

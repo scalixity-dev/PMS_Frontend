@@ -95,7 +95,7 @@ const EndLease: React.FC = () => {
                     endDate: endDate.toISOString(),
                 },
             });
-            navigate('/dashboard/portfolio/leases');
+            navigate('/dashboard/leasing/leases');
         } catch (error) {
             console.error('Failed to end lease:', error);
             alert(error instanceof Error ? error.message : 'Failed to end lease. Please try again.');
@@ -123,7 +123,7 @@ const EndLease: React.FC = () => {
                         {error instanceof Error ? error.message : 'Failed to load lease details. Please try again.'}
                     </p>
                     <button
-                        onClick={() => navigate('/dashboard/portfolio/leases')}
+                        onClick={() => navigate('/dashboard/leasing/leases')}
                         className="mt-4 text-red-600 hover:text-red-800 underline text-sm"
                     >
                         Back to Leases
@@ -140,8 +140,8 @@ const EndLease: React.FC = () => {
             <div className="mb-6">
                 <Breadcrumb items={[
                     { label: 'Dashboard', path: '/dashboard' },
-                    { label: 'Leases', path: '/dashboard/portfolio/leases' },
-                    { label: id || 'Lease', path: `/dashboard/portfolio/leases/${id}` },
+                    { label: 'Leases', path: '/dashboard/leasing/leases' },
+                    { label: id || 'Lease', path: `/dashboard/leasing/leases/${id}` },
                     { label: 'End lease' }
                 ]} />
             </div>

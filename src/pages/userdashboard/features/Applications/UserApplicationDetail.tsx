@@ -420,12 +420,8 @@ const SummaryHeader = ({ application, navigate, getStatusColor }: any) => (
 
                 <div className="flex items-start justify-between pl-1">
                     <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-md overflow-hidden bg-gray-100">
-                            <img
-                                src={application.applicantInfo.photo || `https://api.dicebear.com/7.x/avataaars/svg?seed=${application.applicantName}`}
-                                alt={application.applicantName}
-                                className="w-full h-full object-cover"
-                            />
+                        <div className="w-14 h-14 rounded-full flex items-center justify-center text-[#2E6819] bg-[#E4F2E2] text-xl font-bold shadow-md overflow-hidden">
+                            {application.applicantName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()}
                         </div>
 
                         <div className="space-y-1">

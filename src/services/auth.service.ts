@@ -135,6 +135,43 @@ class AuthService {
   }
 
   /**
+   * Register a new service provider user
+   */
+  async registerServicePro(data: { email: string; password: string; fullName: string }): Promise<RegisterResponse> {
+    const response = await fetch(API_ENDPOINTS.AUTH.REGISTER_SERVICE_PRO, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Registration failed';
+
+      try {
+        const errorData = await response.json();
+
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join('. ');
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+      } catch (parseError) {
+        errorMessage = `Registration failed: ${response.statusText}`;
+        console.error('Failed to parse error response:', parseError);
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  }
+
+  /**
    * Register a new user
    */
   async register(data: RegisterRequest): Promise<RegisterResponse> {
@@ -187,13 +224,14 @@ class AuthService {
   /**
    * Resend email verification OTP
    */
-  async resendEmailOtp(userId: string): Promise<void> {
+  async resendEmailOtp(userId: string, email: string = ''): Promise<void> {
     const response = await fetch(API_ENDPOINTS.AUTH.RESEND_EMAIL_OTP(userId), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       credentials: 'include',
+      body: JSON.stringify({ email: email || '' }),
     });
 
     if (!response.ok) {
@@ -208,13 +246,14 @@ class AuthService {
   /**
    * Resend device verification OTP
    */
-  async resendDeviceOtp(userId: string): Promise<void> {
+  async resendDeviceOtp(userId: string, email: string = ''): Promise<void> {
     const response = await fetch(API_ENDPOINTS.AUTH.RESEND_DEVICE_OTP(userId), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       credentials: 'include',
+      body: JSON.stringify({ email: email || '' }),
     });
 
     if (!response.ok) {
@@ -323,6 +362,7 @@ class AuthService {
         'Content-Type': 'application/json',
       },
       credentials: 'include',
+      body: JSON.stringify({}),
     });
 
     if (!response.ok) {

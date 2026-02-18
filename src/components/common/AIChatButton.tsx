@@ -88,7 +88,7 @@ const AIChatButton: React.FC = () => {
 
     setMessages(prev => [...prev, assistantMessage]);
 
-    const useN8n = isAuthenticated === true && !!userEmail;
+    const useN8n = true;
     const currentThreadId = threadId || aiChatService.generateThreadId();
 
     if (!threadId) {
@@ -100,10 +100,11 @@ const AIChatButton: React.FC = () => {
       currentThreadId,
       (chunk: string) => {
         streamingMessageRef.current += chunk;
+        const contentToShow = streamingMessageRef.current;
         setMessages(prev =>
           prev.map(msg =>
             msg.id === assistantMessageId
-              ? { ...msg, content: streamingMessageRef.current }
+              ? { ...msg, content: contentToShow }
               : msg
           )
         );
@@ -186,7 +187,7 @@ const AIChatButton: React.FC = () => {
                       />
                       <h3 className="text-xl font-bold text-gray-800 mb-2">Welcome to AI Assistant</h3>
                       <p className="text-sm text-gray-600 mb-6">
-                        I'm here to help answer your questions about property management, leases, tenants, and more.
+                        I am a helpful assistant. If you have any questions related to PMS application feel free to ask.
                       </p>
                       <div className="space-y-2 text-left">
                         <div className="text-xs text-gray-500 bg-gray-50 rounded-lg px-4 py-2">
@@ -203,9 +204,17 @@ const AIChatButton: React.FC = () => {
                   </div>
                 ) : (
                   <div className="space-y-6 pb-4">
-                    {messages.map((message) => (
-                      <AIMessageBubble key={message.id} message={message} />
-                    ))}
+                    {messages.map((message, index) => {
+                      const isLastAssistant =
+                        message.role === 'assistant' && index === messages.length - 1;
+                      return (
+                        <AIMessageBubble
+                          key={message.id}
+                          message={message}
+                          isStreaming={isStreaming && isLastAssistant}
+                        />
+                      );
+                    })}
                     <div ref={messagesEndRef} />
                   </div>
                 )}

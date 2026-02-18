@@ -33,9 +33,38 @@ export interface LeaseInsuranceRef {
     openModal: () => void;
 }
 
+export interface BackendInsuranceItem {
+    id: string;
+    companyName: string;
+    policyNumber?: string | null;
+    effectiveDate?: string | null;
+    expirationDate?: string | null;
+    price?: string | null;
+    companyWebsite?: string | null;
+    details?: string | null;
+    agentName?: string | null;
+    agentEmail?: string | null;
+    agentPhone?: string | null;
+}
+
+export interface LeaseInsuranceProps {
+    leaseId?: string;
+    backendInsurances?: BackendInsuranceItem[];
+}
+
 const STORAGE_KEY = 'lease_insurance_data';
 
-export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
+const formatDateSafe = (value: string | null | undefined): string => {
+    if (!value) return '—';
+    try {
+        const d = new Date(value);
+        return isNaN(d.getTime()) ? '—' : format(d, 'MMM dd, yyyy');
+    } catch {
+        return '—';
+    }
+};
+
+export const LeaseInsurance = forwardRef<LeaseInsuranceRef, LeaseInsuranceProps>(({ backendInsurances = [] }, ref) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [insuranceData, setInsuranceData] = useState<InsuranceData | null>(null);
@@ -230,7 +259,53 @@ export const LeaseInsurance = forwardRef<LeaseInsuranceRef>((_props, ref) => {
     ], [handleUpdate, handleClose, isDateInvalid]);
 
     return (
-        <div className="w-full max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="w-full max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
+            {/* Backend/lease insurances from API (read-only) */}
+            {backendInsurances.length > 0 && (
+                <div className="space-y-3">
+                    <h3 className="text-[18px] font-semibold text-[#1A1A1A] border-b border-[#F1F1F1] pb-2">
+                        Renters insurance (from lease)
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {backendInsurances.map((ins) => (
+                            <div
+                                key={ins.id}
+                                className="bg-[#F7F7F7] rounded-[1.25rem] p-5 shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] border border-[#F1F1F1]"
+                            >
+                                <div className="grid grid-cols-1 gap-3">
+                                    <div className="flex flex-col gap-1">
+                                        <span className="text-xs font-semibold text-gray-500 uppercase">Company</span>
+                                        <span className="text-sm font-medium text-[#1A1A1A]">{ins.companyName || '—'}</span>
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <span className="text-xs font-semibold text-gray-500 uppercase">Policy</span>
+                                        <span className="text-sm font-medium text-[#1A1A1A]">{ins.policyNumber || '—'}</span>
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <span className="text-xs font-semibold text-gray-500 uppercase">Effective – Expiration</span>
+                                        <span className="text-sm font-medium text-[#1A1A1A]">
+                                            {formatDateSafe(ins.effectiveDate)} – {formatDateSafe(ins.expirationDate)}
+                                        </span>
+                                    </div>
+                                    {(ins.price != null && ins.price !== '') && (
+                                        <div className="flex flex-col gap-1">
+                                            <span className="text-xs font-semibold text-gray-500 uppercase">Price</span>
+                                            <span className="text-sm font-medium text-[#1A1A1A]">{ins.price}</span>
+                                        </div>
+                                    )}
+                                    {ins.details && (
+                                        <div className="flex flex-col gap-1 pt-2 border-t border-gray-200">
+                                            <span className="text-xs font-semibold text-gray-500 uppercase">Details</span>
+                                            <p className="text-sm text-gray-700 leading-relaxed line-clamp-3">{ins.details}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             {!insuranceData ? (
                 <div className="bg-[#F7F7F7] rounded-[1.25rem] p-5 flex items-center justify-between shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] border border-[#F1F1F1] hover:shadow-lg transition-all duration-300">
                     <div className="flex flex-col gap-1.5">
