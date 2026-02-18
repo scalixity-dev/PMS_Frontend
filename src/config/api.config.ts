@@ -5,6 +5,7 @@ export const API_ENDPOINTS = {
   AUTH: {
     REGISTER: `${API_BASE_URL}/auth/register`,
     REGISTER_TENANT: `${API_BASE_URL}/auth/register/tenant`,
+    REGISTER_SERVICE_PRO: `${API_BASE_URL}/auth/register/service-pro`,
     LOGIN: `${API_BASE_URL}/auth/login`,
     CHECK_EMAIL: `${API_BASE_URL}/auth/check-email`,
     CHECK_TENANT_EMAIL: `${API_BASE_URL}/auth/check-tenant-email`,
@@ -45,6 +46,15 @@ export const API_ENDPOINTS = {
   UPLOAD: {
     FILE: `${API_BASE_URL}/upload/file`,
     IMAGE: `${API_BASE_URL}/upload/image`,
+  },
+  MAINTENANCE_REQUEST: {
+    CREATE: `${API_BASE_URL}/maintenance-request`,
+    GET_ALL: `${API_BASE_URL}/maintenance-request`,
+    GET_ONE: (id: string) => `${API_BASE_URL}/maintenance-request/${id}`,
+    UPDATE: (id: string) => `${API_BASE_URL}/maintenance-request/${id}`,
+    DELETE: (id: string) => `${API_BASE_URL}/maintenance-request/${id}`,
+    LIST_TRANSACTIONS: (id: string) => `${API_BASE_URL}/maintenance-request/${id}/transactions`,
+    CREATE_TRANSACTION: (id: string) => `${API_BASE_URL}/maintenance-request/${id}/transactions`,
   },
   LEASING: {
     GET_ALL: `${API_BASE_URL}/leasing`,
@@ -205,6 +215,8 @@ export const API_ENDPOINTS = {
     CREATE: `${API_BASE_URL}/leases`,
     UPDATE: (id: string) => `${API_BASE_URL}/leases/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/leases/${id}`,
+    UPDATE_UTILITIES: (id: string) => `${API_BASE_URL}/leases/${id}/utilities`,
+    UPDATE_INSURANCES: (id: string) => `${API_BASE_URL}/leases/${id}/insurances`,
   },
   TRANSACTION: {
     CREATE_INCOME_INVOICE: `${API_BASE_URL}/transactions/income-invoice`,

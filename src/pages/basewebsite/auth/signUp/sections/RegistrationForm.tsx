@@ -6,6 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Search, ChevronDown } from 'lucide-react';
 import { useSignUpStore } from '../store/signUpStore';
 import { useRegister, useUpdateProfile, useGetCurrentUser } from '../../../../../hooks/useAuthQueries';
+import { authService } from '../../../../../services/auth.service';
 
 // Helper function to apply consistent styling to inputs/selects
 const inputClasses = (hasValue: boolean = true) =>
@@ -277,7 +278,43 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
     setError(null);
 
     try {
-      // Extract phone country code and number
+      const accountType = formData.accountType;
+
+      if (accountType === 'renting') {
+        await authService.registerTenant({
+          email: formData.email!,
+          password: formData.password!,
+          fullName: formData.fullName!,
+        });
+
+        navigate('/login', {
+          state: {
+            message: 'Account created successfully! Please log in to continue.',
+            email: formData.email,
+          },
+          replace: true,
+        });
+        return;
+      }
+
+      if (accountType === 'fix') {
+        await authService.registerServicePro({
+          email: formData.email!,
+          password: formData.password!,
+          fullName: formData.fullName!,
+        });
+
+        navigate('/login', {
+          state: {
+            message: 'Account created successfully! Please log in to continue.',
+            email: formData.email,
+          },
+          replace: true,
+        });
+        return;
+      }
+
+      // Default: property manager registration (manage)
       const [phoneCountryCode, phoneNumber] = formData.phoneCountryCode
         ? formData.phoneCountryCode.split('|')
         : [undefined, formData.phone];
@@ -294,18 +331,15 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
         address: formData.address,
       });
 
-      // Registration successful - redirect based on account type
-      if (formData.accountType === 'manage') {
-        // Property managers go to pricing page to select a plan
+      if (accountType === 'manage') {
         navigate(`/pricing?userId=${response.id}&email=${encodeURIComponent(formData.email!)}&newAccount=true`);
       } else {
-        // Tenants and Service Pros have free accounts - redirect to dashboard or login
-        navigate('/login', { 
-          state: { 
+        navigate('/login', {
+          state: {
             message: 'Account created successfully! Please log in to continue.',
-            email: formData.email 
+            email: formData.email,
           },
-          replace: true 
+          replace: true,
         });
       }
     } catch (err) {

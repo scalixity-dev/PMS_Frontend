@@ -6,6 +6,13 @@
   /* 🌈 Core Colors */
   --color-primary: #3D7475;
   --color-secondary: #819A78;
+  /* 📊 Shadcn Chart Colors */
+  --chart-1: 174 60% 51%;
+  --chart-2: 217 91% 60%;
+  --chart-3: 25 95% 53%;
+  --chart-4: 43 96% 56%;
+  --chart-5: 27 87% 67%;
+
   --color-active: #20CC95;
   --color-nonactive: #355C7D;
   --color-heading: #1F2937;
@@ -15,6 +22,10 @@
   --color-card-1: #9AD4AD;
   --color-card-2: #6EB5AA;
   --color-card-3: #9AD4AD;
+
+  /* 🏷️ Status Colors (Variables for JS usage) */
+  --color-inactive: #EF4444;
+  --color-pending: #F59E0B;
 
   /* 🧭 Gradients */
   --linear-card-1: linear-gradient(180deg, #9AD4AD 0%, #FFFFFF 100%);
@@ -244,6 +255,23 @@ input[type="submit"],
   body {
     background: white !important;
     background-image: none !important;
+  }
+
+  /* Maintenance Request Printing */
+  body * {
+    visibility: hidden;
+  }
+
+  #printable-request,
+  #printable-request * {
+    visibility: visible;
+  }
+
+  #printable-request {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
   }
 
   /* Hide interactive-only elements */

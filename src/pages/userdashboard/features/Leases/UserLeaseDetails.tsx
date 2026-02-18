@@ -32,6 +32,12 @@ const LEASE_TABS: { key: LeaseTab; label: string }[] = [
     { key: "UTILITIES", label: "Utilities" },
 ];
 
+interface LeaseUtility {
+    id: string;
+    utility: string;
+    payer: string;
+}
+
 const LeaseDetails = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -73,6 +79,25 @@ const LeaseDetails = () => {
                 .replace(/^, |, $/g, '').replace(/, ,/g, ',')
             : 'Address not available';
 
+        const documents = backendLease.documents ?? [];
+        const sharedDocuments = documents.filter((d) => d.visibility === 'SHARED');
+        const attachments = sharedDocuments.map((doc) => {
+            const nameFromUrl = doc.fileUrl?.split('/').pop() ?? '';
+            const name = nameFromUrl || `${doc.documentCategory ?? 'Document'} ${doc.id.slice(0, 8)}`;
+            const fileType = (doc.fileType ?? '').toLowerCase();
+            let type: 'PDF' | 'Image' | 'Document' | 'Video' = 'Document';
+            if (fileType.includes('pdf')) type = 'PDF';
+            else if (['image/jpeg', 'image/png', 'image/gif', 'image/webp'].some((t) => fileType.includes(t))) type = 'Image';
+            else if (fileType.includes('video')) type = 'Video';
+            return {
+                id: doc.id,
+                name,
+                size: '—',
+                type,
+                url: doc.fileUrl
+            };
+        });
+
         return {
             id: backendLease.id,
             number: backendLease.id.slice(-8).toUpperCase(),
@@ -88,9 +113,57 @@ const LeaseDetails = () => {
                 avatarSeed: 'PropertyManager'
             },
             tenants: allTenants,
-            attachments: [] // TODO: Map from backend if attachments are available
+            attachments
         };
     }, [backendLease]);
+
+    const leaseUtilities = useMemo<LeaseUtility[]>(() => {
+        if (!backendLease || !backendLease.utilities) {
+            return [];
+        }
+
+        return backendLease.utilities.map((utility): LeaseUtility => ({
+            id: utility.id,
+            utility: utility.utility,
+            payer: utility.payer,
+        }));
+    }, [backendLease]);
+
+    const getPayerLabel = (payer: string): string => {
+        const lower = payer.toLowerCase();
+
+        if (lower === "landlord") {
+            return "Paid by landlord";
+        }
+
+        if (lower === "tenant") {
+            return "Paid by you";
+        }
+
+        if (lower === "shared") {
+            return "Shared responsibility";
+        }
+
+        return payer;
+    };
+
+    const getPayerDotClass = (payer: string): string => {
+        const lower = payer.toLowerCase();
+
+        if (lower === "landlord") {
+            return "bg-emerald-500";
+        }
+
+        if (lower === "tenant") {
+            return "bg-blue-500";
+        }
+
+        if (lower === "shared") {
+            return "bg-purple-500";
+        }
+
+        return "bg-gray-300";
+    };
 
     // Filter transactions for this lease
     const leaseTransactions = useMemo(() => {
@@ -232,15 +305,88 @@ const LeaseDetails = () => {
 
                 {/* Insurance Section */}
                 {activeTab === "INSURANCE" && (
-                    <LeaseInsurance ref={insuranceRef} />
+                    <LeaseInsurance
+                        ref={insuranceRef}
+                        leaseId={id ?? undefined}
+                        backendInsurances={backendLease?.insurances ?? []}
+                    />
                 )}
 
                 {/* Utilities Section */}
                 {activeTab === "UTILITIES" && (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="text-gray-500 text-center py-12">
-                            Utilities information will be available soon.
+                        <div className="flex flex-col gap-3 mb-6">
+                            <h3 className="text-[18px] font-semibold text-[#1A1A1A]">
+                                Utilities &amp; Responsibilities
+                            </h3>
+                            <p className="text-sm text-gray-500 max-w-2xl">
+                                See which utilities are connected to this lease and who is responsible for paying them.
+                            </p>
                         </div>
+
+                        {leaseUtilities.length > 0 ? (
+                            <div className="bg-[#F4F4F4] rounded-2xl p-6 border border-[#E5E7EB]">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {leaseUtilities.map((item) => (
+                                        <div
+                                            key={item.id}
+                                            className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex flex-col gap-3"
+                                        >
+                                            <div className="flex items-center justify-between gap-3">
+                                                <div className="flex items-center gap-3 min-w-0">
+                                                    <div className="w-9 h-9 rounded-full bg-[#E3EBDE] flex items-center justify-center text-[#3A7D76] text-sm font-semibold">
+                                                        {item.utility.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-sm font-semibold text-gray-900 truncate">
+                                                            {item.utility}
+                                                        </p>
+                                                        <p className="text-xs text-gray-500">
+                                                            {getPayerLabel(item.payer)}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <span
+                                                    className={`w-2.5 h-2.5 rounded-full ${getPayerDotClass(item.payer)}`}
+                                                    aria-hidden="true"
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                                    <span className="font-medium text-gray-600">Legend:</span>
+                                    <span className="inline-flex items-center gap-1">
+                                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                                        Paid by landlord
+                                    </span>
+                                    <span className="inline-flex items-center gap-1">
+                                        <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                                        Paid by you
+                                    </span>
+                                    <span className="inline-flex items-center gap-1">
+                                        <span className="w-2.5 h-2.5 rounded-full bg-purple-500" />
+                                        Shared responsibility
+                                    </span>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="bg-[#F4F4F4] rounded-2xl p-8 min-h-[260px] flex items-center justify-center">
+                                <div className="bg-white border-2 border-dashed border-gray-200 rounded-2xl px-10 py-8 max-w-md text-center shadow-sm">
+                                    <div className="mb-4 inline-flex items-center justify-center rounded-full bg-gray-50 p-3">
+                                        <Calendar className="w-6 h-6 text-[#3A7D76]" />
+                                    </div>
+                                    <h4 className="text-base font-semibold text-gray-900 mb-2">
+                                        No utilities configured
+                                    </h4>
+                                    <p className="text-sm text-gray-500">
+                                        Your landlord has not configured any utilities for this lease yet. If you have
+                                        questions about utility responsibilities, please contact them directly.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

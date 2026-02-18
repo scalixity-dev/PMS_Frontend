@@ -12,8 +12,10 @@ import PropertyAttachmentsModal from './components/PropertyAttachmentsModal';
 import FinancialCard, { type FinancialRecord } from './components/FinancialCard';
 import AddInsuranceModal from '../Properties/components/AddInsuranceModal';
 import ResponsibilityModal, { type ResponsibilityItem } from '../Properties/components/ResponsibilityModal';
-import { useGetLease, useDeleteLease, useUpdateLease } from '../../../../hooks/useLeaseQueries';
+import { useGetLease, useDeleteLease, useUpdateLease, useUpdateLeaseUtilities, useUpdateLeaseInsurances } from '../../../../hooks/useLeaseQueries';
+import { useGetTenantByUserId } from '../../../../hooks/useTenantQueries';
 import type { BackendLease } from '../../../../services/lease.service';
+import { API_ENDPOINTS } from '../../../../config/api.config';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 
 
@@ -83,8 +85,17 @@ const LeaseDetail: React.FC = () => {
 
     // Fetch lease data
     const { data: backendLease, isLoading, error } = useGetLease(id);
+
+    // Fetch enriched tenant profile (pets, vehicles, emergency contacts, documents)
+    const tenantUserId = backendLease?.tenant?.id || backendLease?.tenantId || null;
+    const {
+        data: tenantProfile,
+        isLoading: isTenantProfileLoading,
+    } = useGetTenantByUserId(tenantUserId, !!tenantUserId);
     const deleteLeaseMutation = useDeleteLease();
     const updateLeaseMutation = useUpdateLease();
+    const updateUtilitiesMutation = useUpdateLeaseUtilities();
+    const updateInsurancesMutation = useUpdateLeaseInsurances();
 
     // Helper function to generate initials from name
     const getInitials = (name: string): string => {
@@ -164,6 +175,12 @@ const LeaseDetail: React.FC = () => {
                 amount: 'No late fees'
             };
 
+        // Compute agreements & notices from lease documents (shared only)
+        const documents = lease.documents || [];
+        const sharedDocuments = documents.filter(doc => doc.visibility === 'SHARED');
+        const agreementsCount = sharedDocuments.filter(doc => doc.documentCategory === 'AGREEMENT' || doc.documentCategory === 'ADDENDUM').length;
+        const noticesCount = sharedDocuments.filter(doc => doc.documentCategory === 'NOTICE').length;
+
         return {
             id: lease.id,
             property: {
@@ -176,10 +193,10 @@ const LeaseDetail: React.FC = () => {
             },
             lease: `Lease ${leaseNumber}`,
             agreements: {
-                requested: 'No' // TODO: Add agreements tracking
+                requested: agreementsCount > 0 ? String(agreementsCount) : 'No'
             },
             notices: {
-                requested: 'No' // TODO: Add notices tracking
+                requested: noticesCount > 0 ? String(noticesCount) : 'No'
             },
             tenant: {
                 name: tenantName,
@@ -219,6 +236,39 @@ const LeaseDetail: React.FC = () => {
         const transformed = transformLease(backendLease);
         // Reset image error state when lease data changes
         setTenantImageError(false);
+        // Sync insurance records from backend into local display state
+        if (backendLease.insurances) {
+            setInsurances(
+                backendLease.insurances.map((ins) => ({
+                    id: ins.id,
+                    companyName: ins.companyName,
+                    companyWebsite: ins.companyWebsite || '',
+                    agentName: ins.agentName || '',
+                    agentEmail: ins.agentEmail || '',
+                    agentPhone: ins.agentPhone || '',
+                    policyNumber: ins.policyNumber || '',
+                    price: ins.price ? String(ins.price) : '',
+                    effectiveDate: ins.effectiveDate || '',
+                    expirationDate: ins.expirationDate || '',
+                    details: ins.details || '',
+                    emailNotification: ins.emailNotification,
+                })),
+            );
+        } else {
+            setInsurances([]);
+        }
+        // Sync utilities/responsibilities from backend into local state
+        if (backendLease.utilities) {
+            setResponsibilities(
+                backendLease.utilities.map((u) => ({
+                    id: u.id,
+                    utility: u.utility,
+                    payer: u.payer,
+                })),
+            );
+        } else {
+            setResponsibilities([]);
+        }
         return transformed;
     }, [backendLease]);
 
@@ -390,15 +440,46 @@ const LeaseDetail: React.FC = () => {
     };
 
     // Handler for saving insurance
-    const handleSaveInsurance = (data: any) => {
+    const handleSaveInsurance = async (data: any) => {
+        // Update local state optimistically
+        let nextInsurances: any[];
         if (editingInsuranceId) {
-            setInsurances(prev => prev.map(i => i.id === editingInsuranceId ? { ...i, ...data } : i));
+            nextInsurances = insurances.map(i => i.id === editingInsuranceId ? { ...i, ...data } : i);
         } else {
             const newInsurance = { id: `ins-${Date.now()}`, ...data };
-            setInsurances(prev => [...prev, newInsurance]);
+            nextInsurances = [...insurances, newInsurance];
         }
-        setIsAddInsuranceModalOpen(false);
-        setEditingInsuranceId(null);
+        setInsurances(nextInsurances);
+
+        if (!id) {
+            setIsAddInsuranceModalOpen(false);
+            setEditingInsuranceId(null);
+            return;
+        }
+
+        try {
+            await updateInsurancesMutation.mutateAsync({
+                id,
+                insurances: nextInsurances.map((item) => ({
+                    companyName: item.companyName,
+                    companyWebsite: item.companyWebsite,
+                    agentName: item.agentName,
+                    agentEmail: item.agentEmail,
+                    agentPhone: item.agentPhone,
+                    policyNumber: item.policyNumber,
+                    price: item.price,
+                    effectiveDate: item.effectiveDate,
+                    expirationDate: item.expirationDate,
+                    details: item.details,
+                    emailNotification: item.emailNotification,
+                })),
+            });
+            setIsAddInsuranceModalOpen(false);
+            setEditingInsuranceId(null);
+        } catch (error) {
+            console.error('Failed to update insurances:', error);
+            alert(error instanceof Error ? error.message : 'Failed to update insurances. Please try again.');
+        }
     };
 
     // Handler for deleting insurance
@@ -420,6 +501,25 @@ const LeaseDetail: React.FC = () => {
             }));
             setIsDeleteAttachmentModalOpen(false);
             setAttachmentToDelete(null);
+        }
+    };
+
+    // Handler for saving utilities/responsibilities
+    const handleSaveResponsibilities = async (data: ResponsibilityItem[]) => {
+        setResponsibilities(data);
+        if (!id) return;
+
+        try {
+            await updateUtilitiesMutation.mutateAsync({
+                id,
+                utilities: data.map((item) => ({
+                    utility: item.utility,
+                    payer: item.payer,
+                })),
+            });
+        } catch (error) {
+            console.error('Failed to update utilities:', error);
+            alert(error instanceof Error ? error.message : 'Failed to update utilities. Please try again.');
         }
     };
 
@@ -563,16 +663,16 @@ const LeaseDetail: React.FC = () => {
                                     </button>
 
                                     {!isMoveInIncomplete && (
-                                        <button
-                                            onClick={() => {
-                                                setIsActionDropdownOpen(false);
-                                                navigate(`/dashboard/leasing/leases/${id}/end-lease`);
-                                            }}
-                                            className="flex items-center gap-3 w-full px-4 py-3 text-sm text-orange-600 hover:bg-orange-50 transition-colors border-b border-gray-50"
-                                        >
-                                            <XCircle className="w-4 h-4" />
-                                            End Lease
-                                        </button>
+                                    <button
+                                        onClick={() => {
+                                            setIsActionDropdownOpen(false);
+                                            setIsEndLeaseModalOpen(true);
+                                        }}
+                                        className="flex items-center gap-3 w-full px-4 py-3 text-sm text-orange-600 hover:bg-orange-50 transition-colors border-b border-gray-50"
+                                    >
+                                        <XCircle className="w-4 h-4" />
+                                        End Lease
+                                    </button>
                                     )}
 
                                     <button
@@ -724,21 +824,74 @@ const LeaseDetail: React.FC = () => {
 
                                     {/* Details Section */}
                                     <div className="lg:col-span-2">
-                                        <CustomTextBox
-                                            value={lease.tenant.description}
-                                            onChange={() => { }}
-                                            multiline={true}
-                                            className="w-full h-full rounded-lg p-6 items-start"
-                                            valueClassName="text-sm pl-0 w-full block"
-                                        />
+                                        {isTenantProfileLoading ? (
+                                            <div className="w-full h-full rounded-lg p-6 flex items-center justify-center bg-white/60">
+                                                <div className="flex items-center gap-2 text-gray-500 text-sm">
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                    <span>Loading tenant details...</span>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="w-full h-full rounded-lg p-6 bg-white shadow-sm flex flex-col gap-4">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                    <CustomTextBox
+                                                        label="Tenant ID"
+                                                        value={lease.tenantId || 'N/A'}
+                                                        onChange={() => { }}
+                                                    />
+                                                    <CustomTextBox
+                                                        label="Phone"
+                                                        value={tenantProfile?.phoneNumber || lease.tenant?.description?.split('| Phone: ')[1] || 'N/A'}
+                                                        onChange={() => { }}
+                                                    />
+                                                    <CustomTextBox
+                                                        label="Forwarding address"
+                                                        value={tenantProfile?.forwardingAddress || 'Not provided'}
+                                                        onChange={() => { }}
+                                                        multiline
+                                                    />
+                                                </div>
+
+                                                {tenantProfile && (
+                                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                                                        <div className="bg-[#F0F2F5] rounded-full px-4 py-2 flex flex-col justify-center">
+                                                            <span className="text-gray-500 font-medium">Documents</span>
+                                                            <span className="text-[#3D7475] font-bold">
+                                                                {tenantProfile.documents?.length || 0} uploaded
+                                                            </span>
+                                                        </div>
+                                                        <div className="bg-[#F0F2F5] rounded-full px-4 py-2 flex flex-col justify-center">
+                                                            <span className="text-gray-500 font-medium">Emergency contacts</span>
+                                                            <span className="text-[#3D7475] font-bold">
+                                                                {tenantProfile.emergencyContacts?.length || 0}
+                                                            </span>
+                                                        </div>
+                                                        <div className="bg-[#F0F2F5] rounded-full px-4 py-2 flex flex-col justify-center">
+                                                            <span className="text-gray-500 font-medium">Pets</span>
+                                                            <span className="text-[#3D7475] font-bold">
+                                                                {tenantProfile.pets?.length || 0}
+                                                            </span>
+                                                        </div>
+                                                        <div className="bg-[#F0F2F5] rounded-full px-4 py-2 flex flex-col justify-center">
+                                                            <span className="text-gray-500 font-medium">Vehicles</span>
+                                                            <span className="text-[#3D7475] font-bold">
+                                                                {tenantProfile.vehicles?.length || 0}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
 
-                                    {/* Status Badge */}
-                                    <div className="flex justify-center lg:col-span-3">
-                                        <div className="bg-[#b5e39e] text-[#3D7475] text-xs font-bold px-5 py-3 rounded-full w-min">
-                                            Pending
+                                    {/* Status Badge - show only when move-in is incomplete (lease status PENDING) */}
+                                    {isMoveInIncomplete && (
+                                        <div className="flex justify-center lg:col-span-3">
+                                            <div className="bg-[#b5e39e] text-[#3D7475] text-xs font-bold px-5 py-3 rounded-full w-min">
+                                                Move-in pending
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -1221,7 +1374,7 @@ const LeaseDetail: React.FC = () => {
                 isOpen={isResponsibilityModalOpen}
                 onClose={() => setIsResponsibilityModalOpen(false)}
                 initialData={responsibilities}
-                onSave={setResponsibilities}
+                onSave={handleSaveResponsibilities}
             />
 
             <AddInsuranceModal
@@ -1237,10 +1390,47 @@ const LeaseDetail: React.FC = () => {
             <PropertyAttachmentsModal
                 isOpen={isPropertyAttachmentsModalOpen}
                 onClose={() => setIsPropertyAttachmentsModalOpen(false)}
-                onUpdate={(files) => {
-                    console.log('Files updated:', files);
+                onUpdate={async (files) => {
                     setAttachments(files);
                     setIsPropertyAttachmentsModalOpen(false);
+
+                    if (!id) return;
+
+                    try {
+                        // Upload shared and private documents as lease documents
+                        const uploadFile = async (file: File, visibility: 'SHARED' | 'PRIVATE') => {
+                            const formData = new FormData();
+                            formData.append('file', file);
+                            formData.append('category', 'DOCUMENT');
+                            formData.append('leaseId', id);
+                            formData.append('visibility', visibility);
+                            // For now, treat all as generic agreements/other docs
+                            formData.append('documentCategory', 'AGREEMENT');
+
+                            const response = await fetch(API_ENDPOINTS.UPLOAD.FILE, {
+                                method: 'POST',
+                                credentials: 'include',
+                                body: formData,
+                            });
+
+                            if (!response.ok) {
+                                const errorData = await response.json().catch(() => ({ message: 'Failed to upload file' }));
+                                throw new Error(errorData.message || 'Failed to upload file');
+                            }
+                        };
+
+                        // Upload shared docs
+                        for (const file of files.shared) {
+                            await uploadFile(file, 'SHARED');
+                        }
+                        // Upload private docs
+                        for (const file of files.private) {
+                            await uploadFile(file, 'PRIVATE');
+                        }
+                    } catch (error) {
+                        console.error('Failed to upload lease documents:', error);
+                        alert(error instanceof Error ? error.message : 'Failed to upload documents. Please try again.');
+                    }
                 }}
             />
 

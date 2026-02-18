@@ -2,12 +2,9 @@ import React, { useState } from 'react';
 import { Plus, Minus, Trash2 } from 'lucide-react';
 import CustomDropdown from '../../../components/CustomDropdown';
 import DatePicker from '../../../../../components/ui/DatePicker';
+import { useMaintenanceRequestFormStore, type MaintenanceMaterial } from '../store/maintenanceRequestStore';
 
-interface Material {
-    id: string;
-    name: string;
-    quantity: number;
-}
+interface Material extends MaintenanceMaterial {}
 
 interface DueDateMaterialsStepProps {
     onNext: (data: { dateInitiated: Date | undefined; dateDue: Date | undefined; priority: string; materials: Material[] }) => void;
@@ -25,6 +22,8 @@ const DueDateMaterialsStep: React.FC<DueDateMaterialsStepProps> = ({ onNext, onB
     const [dateDue, setDateDue] = useState<Date | undefined>(initialData?.dateDue);
     const [priority, setPriority] = useState(initialData?.priority || '');
     const [materials, setMaterials] = useState<Material[]>(initialData?.materials || []);
+
+    const setDue = useMaintenanceRequestFormStore((state) => state.setDue);
 
     const handleAddMaterial = () => {
         const newMaterial: Material = {
@@ -178,7 +177,15 @@ const DueDateMaterialsStep: React.FC<DueDateMaterialsStepProps> = ({ onNext, onB
                         Back
                     </button>
                     <button
-                        onClick={() => onNext({ dateInitiated, dateDue, priority, materials })}
+                        onClick={() => {
+                            setDue({
+                                dateInitiated,
+                                dateDue,
+                                priority,
+                                materials,
+                            });
+                            onNext({ dateInitiated, dateDue, priority, materials });
+                        }}
                         className="flex-1 md:flex-none px-12 py-3 rounded-lg bg-[#3D7475] text-white font-bold hover:opacity-90 transition-opacity shadow-md"
                     >
                         Create Request

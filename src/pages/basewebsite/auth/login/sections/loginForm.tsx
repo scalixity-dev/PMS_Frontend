@@ -123,11 +123,19 @@ const LoginForm: React.FC = () => {
                     return;
                 }
                 
+                // Determine role first so we can short-circuit for service providers
+                const userRole = response.user?.role?.toUpperCase();
+
+                if (userRole === 'SERVICE_PRO') {
+                    console.log('Navigating to service provider dashboard');
+                    navigate('/service-dashboard', { replace: true });
+                    return;
+                }
+
                 // Wait a bit more to ensure cookie is fully propagated
                 await new Promise(resolve => setTimeout(resolve, 500));
                 
                 // Check if user is a tenant and needs onboarding
-                const userRole = response.user?.role?.toUpperCase();
                 if (userRole === 'TENANT') {
                     // Check if tenant has preferences (onboarding completed)
                     // Add retry logic in case cookie isn't ready yet
@@ -206,8 +214,10 @@ const LoginForm: React.FC = () => {
                         console.log('Error checking preferences, defaulting to tenant onboarding flow');
                         navigate('/signup/tenant-onboarding-flow', { replace: true });
                     }
+                } else if (userRole === 'SERVICE_PRO') {
+                    console.log('Navigating to service provider dashboard');
+                    navigate('/service-dashboard', { replace: true });
                 } else {
-                    // Property manager or other role - redirect to property manager dashboard
                     console.log('Navigating to property manager dashboard');
                     navigate('/dashboard', { replace: true });
                 }

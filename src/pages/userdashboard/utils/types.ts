@@ -45,7 +45,7 @@ export interface Lease {
     landlord: LandlordSummary;
     tenants: TenantSummary[];
     attachments?: {
-        id: number;
+        id: string;
         name: string;
         size: string;
         type: 'PDF' | 'Image' | 'Document' | 'Video';
@@ -156,21 +156,29 @@ export interface ServiceRequest {
     id: number;
     status: "New" | "In Progress" | "Completed" | "Cancelled";
     requestId: string;
+    title?: string;
     category: string;
     property: string;
+    equipment?: string | null;
+    equipmentSerial?: string | null;
+    equipmentCondition?: string | null;
     priority: "Critical" | "Normal" | "Low";
     assignee: string;
     subCategory?: string;
     problem?: string;
+    subIssue?: string;
     description?: string;
     authorizationToEnter?: string;
     authorizationCode?: string;
     setUpDateTime?: string;
+    dateDue?: string | null;
+    materials?: any[];
     availability?: AvailabilityOption[];
     createdAt: string;
     attachments?: (File | string)[]; // Can be File objects or data URL strings
     video?: File | string | null; // Can be File object or data URL string
     pets?: string[];
+    amount?: number;
 }
 
 export interface Publication {

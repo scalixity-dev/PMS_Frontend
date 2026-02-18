@@ -129,6 +129,84 @@ export const useUpdateLease = () => {
 };
 
 /**
+ * Hook to update lease insurances
+ */
+export const useUpdateLeaseInsurances = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      insurances,
+    }: {
+      id: string;
+      insurances: Array<{
+        companyName: string;
+        companyWebsite: string;
+        agentName: string;
+        agentEmail: string;
+        agentPhone: string;
+        policyNumber: string;
+        price: string;
+        effectiveDate: string;
+        expirationDate: string;
+        details: string;
+        emailNotification: boolean;
+      }>;
+    }): Promise<BackendLease> => {
+      return leaseService.updateInsurances(id, insurances);
+    },
+    onSuccess: (data) => {
+      // Invalidate and refetch leases list
+      queryClient.invalidateQueries({ queryKey: leaseQueryKeys.lists() });
+      // Invalidate property-specific leases
+      if (data.propertyId) {
+        queryClient.invalidateQueries({ queryKey: leaseQueryKeys.byProperty(data.propertyId) });
+      }
+      // Invalidate tenant-specific leases
+      if (data.tenantId) {
+        queryClient.invalidateQueries({ queryKey: leaseQueryKeys.byTenant(data.tenantId) });
+      }
+      // Update the cached lease detail
+      queryClient.setQueryData(leaseQueryKeys.detail(data.id), data);
+    },
+  });
+};
+
+/**
+ * Hook to update lease utilities/responsibilities
+ */
+export const useUpdateLeaseUtilities = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      utilities,
+    }: {
+      id: string;
+      utilities: Array<{ utility: string; payer: 'Landlord' | 'Tenant' }>;
+    }): Promise<BackendLease> => {
+      return leaseService.updateUtilities(id, utilities);
+    },
+    onSuccess: (data) => {
+      // Invalidate and refetch leases list
+      queryClient.invalidateQueries({ queryKey: leaseQueryKeys.lists() });
+      // Invalidate property-specific leases
+      if (data.propertyId) {
+        queryClient.invalidateQueries({ queryKey: leaseQueryKeys.byProperty(data.propertyId) });
+      }
+      // Invalidate tenant-specific leases
+      if (data.tenantId) {
+        queryClient.invalidateQueries({ queryKey: leaseQueryKeys.byTenant(data.tenantId) });
+      }
+      // Update the cached lease detail
+      queryClient.setQueryData(leaseQueryKeys.detail(data.id), data);
+    },
+  });
+};
+
+/**
  * Hook to delete a lease
  */
 export const useDeleteLease = () => {

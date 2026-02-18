@@ -20,7 +20,15 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [numberOfMonths, setNumberOfMonths] = useState(2);
+    const [month, setMonth] = useState<Date>(new Date());
     const containerRef = useRef<HTMLDivElement>(null);
+
+    // Sync month when opening
+    useEffect(() => {
+        if (isOpen) {
+            setMonth(dateRange?.from || new Date());
+        }
+    }, [isOpen]); // Only run when isOpen changes, not dateRange
 
     // Close on click outside & Handle Resize
     useEffect(() => {
@@ -31,6 +39,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
         };
 
         const handleResize = () => {
+            // ... existing resize logic
             if (window.innerWidth < 768) {
                 setNumberOfMonths(1);
             } else {
@@ -182,25 +191,18 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
                         .calendar-wrapper .rdp-nav_button:hover {
                             background-color: #F3F4F6;
                         }
-                        
-                        /* Mobile Responsive tweaks */
-                        @media (max-width: 768px) {
-                           .calendar-wrapper {
-                               --rdp-cell-size: 36px; /* Slightly smaller on mobile */
-                           }
-                           .calendar-wrapper .rdp-months {
-                               gap: 0 !important;
-                           }
-                        }
                     `}</style>
                     <div className="calendar-wrapper">
                         <Calendar
                             mode="range"
                             selected={dateRange}
                             onSelect={onDateRangeChange}
+                            month={month}
+                            onMonthChange={setMonth}
                             numberOfMonths={numberOfMonths}
                             // Using standard spacing classes from Tailwind to help layout
                             className="p-1 md:p-4"
+                            showOutsideDays={false}
                         />
                     </div>
                 </div>
