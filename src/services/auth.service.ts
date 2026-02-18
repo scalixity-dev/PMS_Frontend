@@ -187,13 +187,14 @@ class AuthService {
   /**
    * Resend email verification OTP
    */
-  async resendEmailOtp(userId: string): Promise<void> {
+  async resendEmailOtp(userId: string, email: string = ''): Promise<void> {
     const response = await fetch(API_ENDPOINTS.AUTH.RESEND_EMAIL_OTP(userId), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       credentials: 'include',
+      body: JSON.stringify({ email: email || '' }),
     });
 
     if (!response.ok) {
@@ -208,13 +209,14 @@ class AuthService {
   /**
    * Resend device verification OTP
    */
-  async resendDeviceOtp(userId: string): Promise<void> {
+  async resendDeviceOtp(userId: string, email: string = ''): Promise<void> {
     const response = await fetch(API_ENDPOINTS.AUTH.RESEND_DEVICE_OTP(userId), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       credentials: 'include',
+      body: JSON.stringify({ email: email || '' }),
     });
 
     if (!response.ok) {
@@ -323,6 +325,7 @@ class AuthService {
         'Content-Type': 'application/json',
       },
       credentials: 'include',
+      body: JSON.stringify({}),
     });
 
     if (!response.ok) {
