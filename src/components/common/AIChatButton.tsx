@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Sparkles, X, AlertCircle } from 'lucide-react';
+import { X, AlertCircle } from 'lucide-react';
+import aiAvatar from '@/assets/images/ai-avatar.svg';
 import { aiChatService } from '@/services/aiChat.service';
 import type { ChatMessage } from '@/services/aiChat.service';
 import { authService } from '@/services/auth.service';
@@ -89,11 +90,11 @@ const AIChatButton: React.FC = () => {
 
     const useN8n = isAuthenticated === true && !!userEmail;
     const currentThreadId = threadId || aiChatService.generateThreadId();
-    
+
     if (!threadId) {
       setThreadId(currentThreadId);
     }
-    
+
     await aiChatService.sendMessage(
       text.trim(),
       currentThreadId,
@@ -129,24 +130,30 @@ const AIChatButton: React.FC = () => {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-gradient-to-br from-[#3D7475] to-[#819A78] text-white shadow-lg hover:shadow-xl hover:scale-110 active:scale-95 transition-all duration-300 flex items-center justify-center group"
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full hover:scale-110 active:scale-95 transition-all duration-300 overflow-hidden p-0"
+        style={{ boxShadow: '0 0 0 3px rgba(61,116,117,0.25), 0 4px 20px rgba(61,116,117,0.45)' }}
+        onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 0 0 4px rgba(61,116,117,0.4), 0 6px 28px rgba(61,116,117,0.65)')}
+        onMouseLeave={e => (e.currentTarget.style.boxShadow = '0 0 0 3px rgba(61,116,117,0.25), 0 4px 20px rgba(61,116,117,0.45)')}
         aria-label="Open AI Chat"
       >
-        <Sparkles className="w-6 h-6 group-hover:rotate-12 transition-transform" />
+        <img src={aiAvatar} alt="AI" className="w-full h-full object-cover" />
       </button>
 
       {isOpen && (
         <>
-          <div 
+          <div
             className="fixed inset-0 z-[100] bg-black/30 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
             onClick={() => setIsOpen(false)}
           />
-          <div className="fixed right-0 top-0 bottom-0 z-[101] w-full max-w-md h-full flex flex-col bg-white shadow-2xl transform translate-x-0 transition-transform duration-300 ease-out">
-            <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#3D7475] to-[#819A78] flex items-center justify-between">
+          <div className="fixed right-0 top-0 bottom-0 z-[101] w-full max-w-md h-full flex flex-col bg-white shadow-2xl animate-slide-in-from-right">
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0" style={{ backgroundColor: '#3A6D6C' }}>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-white" />
-                </div>
+                <img
+                  src={aiAvatar}
+                  alt="AI Assistant"
+                  className="w-10 h-10 rounded-full flex-shrink-0"
+                  style={{ border: '2px solid rgba(255,255,255,0.3)' }}
+                />
                 <div>
                   <h2 className="text-lg font-semibold text-white">AI Assistant</h2>
                   <p className="text-xs text-white/80">Ask me anything about property management</p>
@@ -155,14 +162,10 @@ const AIChatButton: React.FC = () => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
-                  aria-label="Minimize chat"
-                >
-                  <span className="text-white text-lg leading-none">−</span>
-                </button>
-                <button
-                  onClick={() => setIsOpen(false)}
-                  className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+                  className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
+                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.25)')}
+                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)')}
                   aria-label="Close chat"
                 >
                   <X className="w-5 h-5 text-white" />
@@ -175,9 +178,12 @@ const AIChatButton: React.FC = () => {
                 {messages.length === 0 ? (
                   <div className="flex-1 flex items-center justify-center">
                     <div className="text-center max-w-md">
-                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#3D7475] to-[#819A78] flex items-center justify-center mx-auto mb-4 shadow-lg">
-                        <Sparkles className="w-8 h-8 text-white" />
-                      </div>
+                      <img
+                        src={aiAvatar}
+                        alt="AI Assistant"
+                        className="w-16 h-16 rounded-full mx-auto mb-4 shadow-lg"
+                        style={{ border: '3px solid rgba(61,116,117,0.2)' }}
+                      />
                       <h3 className="text-xl font-bold text-gray-800 mb-2">Welcome to AI Assistant</h3>
                       <p className="text-sm text-gray-600 mb-6">
                         I'm here to help answer your questions about property management, leases, tenants, and more.

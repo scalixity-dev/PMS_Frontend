@@ -305,7 +305,17 @@ const AddMaintenanceRequest: React.FC = () => {
                         {mainStep === 0 && (
                             <button
                                 onClick={() => setShowAIChat(true)}
-                                className="flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-full font-medium hover:from-teal-700 hover:to-teal-600 transition-all shadow-lg hover:shadow-xl"
+                                className="flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 active:scale-95"
+                                style={{
+                                    background: 'linear-gradient(135deg, #2D6A6A 0%, #3D9B6B 50%, #52C97A 100%)',
+                                    boxShadow: '0 4px 15px rgba(61, 155, 107, 0.4), 0 0 0 1px rgba(255,255,255,0.15) inset',
+                                }}
+                                onMouseEnter={e => {
+                                    (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 6px 20px rgba(61, 155, 107, 0.55), 0 0 0 1px rgba(255,255,255,0.2) inset';
+                                }}
+                                onMouseLeave={e => {
+                                    (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 15px rgba(61, 155, 107, 0.4), 0 0 0 1px rgba(255,255,255,0.15) inset';
+                                }}
                             >
                                 <Sparkles className="w-4 h-4 md:w-5 md:h-5" />
                                 <span className="text-sm md:text-base">Fill using AI</span>

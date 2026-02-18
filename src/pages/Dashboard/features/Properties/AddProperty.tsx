@@ -757,7 +757,7 @@ const AddProperty: React.FC = () => {
 
   const handleAIFormData = (aiData: any) => {
     const updates: any = {};
-    
+
     Object.entries(aiData).forEach(([key, value]) => {
       if (value !== null && value !== '' && value !== undefined) {
         if (Array.isArray(value) && value.length > 0) {
@@ -770,12 +770,12 @@ const AddProperty: React.FC = () => {
 
     setFormData(prev => {
       const newData = { ...prev, ...updates };
-      
+
       if (updates.country && !prev.country) {
         const countryStates = State.getStatesOfCountry(updates.country as string);
         setStates(countryStates);
       }
-      
+
       if (updates.country && updates.stateRegion) {
         const stateCities = City.getCitiesOfState(
           updates.country as string,
@@ -783,10 +783,10 @@ const AddProperty: React.FC = () => {
         );
         setCities(stateCities);
       }
-      
+
       return newData;
     });
-    
+
     setIsDirty(true);
   };
 
@@ -817,10 +817,20 @@ const AddProperty: React.FC = () => {
           <span className="text-gray-500 text-sm mx-1">/</span>
           <span className="text-gray-600 text-xs md:text-sm font-semibold">Add Property</span>
         </div>
-        
+
         <button
           onClick={() => setShowAIChat(true)}
-          className="flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-full font-medium hover:from-teal-700 hover:to-teal-600 transition-all shadow-lg hover:shadow-xl"
+          className="flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 active:scale-95"
+          style={{
+            background: 'linear-gradient(135deg, #2D6A6A 0%, #3D9B6B 50%, #52C97A 100%)',
+            boxShadow: '0 4px 15px rgba(61, 155, 107, 0.4), 0 0 0 1px rgba(255,255,255,0.15) inset',
+          }}
+          onMouseEnter={e => {
+            (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 6px 20px rgba(61, 155, 107, 0.55), 0 0 0 1px rgba(255,255,255,0.2) inset';
+          }}
+          onMouseLeave={e => {
+            (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 15px rgba(61, 155, 107, 0.4), 0 0 0 1px rgba(255,255,255,0.15) inset';
+          }}
         >
           <Sparkles className="w-4 h-4 md:w-5 md:h-5" />
           <span className="text-sm md:text-base">Fill using AI</span>

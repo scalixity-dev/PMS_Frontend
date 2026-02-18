@@ -4,7 +4,8 @@ import { aiChatService } from '@/services/aiChat.service';
 import type { ChatMessage } from '@/services/aiChat.service';
 import AIChatInput from './components/AIChatInput';
 import AIMessageBubble from './components/AIMessageBubble';
-import { Sparkles, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
+import aiAvatar from '@/assets/images/ai-avatar.svg';
 
 interface DashboardContext {
   sidebarCollapsed: boolean;
@@ -86,16 +87,18 @@ const AIChatPage: React.FC = () => {
 
   return (
     <div
-      className={`mx-auto h-[calc(100vh-theme(spacing.20))] bg-white flex flex-col overflow-hidden transition-all duration-300 ${
-        sidebarOpen ? 'max-w-7xl' : 'max-w-full'
-      }`}
+      className={`mx-auto h-[calc(100vh-theme(spacing.20))] bg-white flex flex-col overflow-hidden transition-all duration-300 ${sidebarOpen ? 'max-w-7xl' : 'max-w-full'
+        }`}
     >
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#3D7475] to-[#819A78]">
+        <div className="px-6 py-4 border-b border-gray-200 flex-shrink-0" style={{ backgroundColor: '#3A6D6C' }}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
+            <img
+              src={aiAvatar}
+              alt="AI Assistant"
+              className="w-10 h-10 rounded-full flex-shrink-0"
+              style={{ border: '2px solid rgba(255,255,255,0.3)' }}
+            />
             <div>
               <h2 className="text-lg font-semibold text-white">AI Assistant</h2>
               <p className="text-xs text-white/80">Ask me anything about your property management</p>
@@ -107,9 +110,12 @@ const AIChatPage: React.FC = () => {
           {messages.length === 0 ? (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center max-w-md">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#3D7475] to-[#819A78] flex items-center justify-center mx-auto mb-4 shadow-lg">
-                  <Sparkles className="w-8 h-8 text-white" />
-                </div>
+                <img
+                  src={aiAvatar}
+                  alt="AI Assistant"
+                  className="w-16 h-16 rounded-full mx-auto mb-4 shadow-lg"
+                  style={{ border: '3px solid rgba(61,116,117,0.2)' }}
+                />
                 <h3 className="text-xl font-bold text-gray-800 mb-2">Welcome to AI Assistant</h3>
                 <p className="text-sm text-gray-600 mb-6">
                   I'm here to help answer your questions about property management, leases, tenants, and more.
@@ -131,15 +137,11 @@ const AIChatPage: React.FC = () => {
               ))}
               {isStreaming && messages[messages.length - 1]?.content === '' && (
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#3D7475] to-[#819A78] flex items-center justify-center flex-shrink-0">
-                    <Sparkles className="w-4 h-4 text-white" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-[#3D7475] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <div className="w-2 h-2 bg-[#3D7475] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <div className="w-2 h-2 bg-[#3D7475] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                    </div>
+                  <img src={aiAvatar} alt="AI" className="w-8 h-8 rounded-full flex-shrink-0" />
+                  <div className="flex items-center gap-1 mt-1">
+                    <div className="w-2 h-2 bg-[#3D7475] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <div className="w-2 h-2 bg-[#3D7475] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <div className="w-2 h-2 bg-[#3D7475] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                   </div>
                 </div>
               )}

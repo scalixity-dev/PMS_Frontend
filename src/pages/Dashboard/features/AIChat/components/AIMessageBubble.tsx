@@ -1,6 +1,6 @@
-import React, { memo } from 'react';
+import { memo } from 'react';
 import type { ChatMessage } from '@/services/aiChat.service';
-import { Sparkles, User } from 'lucide-react';
+import aiAvatar from '@/assets/images/ai-avatar.svg';
 
 interface AIMessageBubbleProps {
   message: ChatMessage;
@@ -27,9 +27,7 @@ const AIMessageBubble: React.FC<AIMessageBubbleProps> = ({ message }) => {
         </>
       ) : (
         <div className="flex items-start gap-3 w-full max-w-[85%]">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#3D7475] to-[#819A78] flex items-center justify-center flex-shrink-0 shadow-sm">
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
+          <img src={aiAvatar} alt="AI" className="w-8 h-8 rounded-full flex-shrink-0 shadow-sm" />
           <div className="flex flex-col gap-2 flex-1">
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-semibold text-gray-700">AI Assistant</span>
