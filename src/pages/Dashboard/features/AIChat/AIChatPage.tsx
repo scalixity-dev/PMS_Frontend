@@ -60,7 +60,9 @@ const AIChatPage: React.FC = () => {
       text.trim(),
       threadId,
       (chunk: string) => {
+        console.log('[AIChatPage] Received chunk:', chunk);
         streamingMessageRef.current += chunk;
+        console.log('[AIChatPage] Accumulated content:', streamingMessageRef.current);
         setMessages(prev =>
           prev.map(msg =>
             msg.id === assistantMessageId
@@ -70,11 +72,13 @@ const AIChatPage: React.FC = () => {
         );
       },
       (newThreadId: string) => {
+        console.log('[AIChatPage] Stream completed, threadId:', newThreadId);
         setThreadId(newThreadId);
         setIsStreaming(false);
         streamingMessageRef.current = '';
       },
       (err: Error) => {
+        console.error('[AIChatPage] Stream error:', err);
         setError(err.message);
         setIsStreaming(false);
         setMessages(prev =>

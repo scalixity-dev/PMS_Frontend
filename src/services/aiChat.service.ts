@@ -166,6 +166,7 @@ class AIChatService {
       const decoder = new TextDecoder();
       let buffer = '';
       const finalThreadId = threadId || this.generateThreadId();
+      let hasReceivedContent = false;
 
       type N8nStreamEvent = {
         type?: string;
@@ -229,17 +230,45 @@ class AIChatService {
 
         try {
           const parsed = JSON.parse(trimmed) as N8nStreamEvent;
+          console.log('[N8N Stream] Event:', parsed);
 
-          if (parsed.type === 'item' && typeof parsed.content === 'string' && parsed.content.length > 0) {
-            onChunk(parsed.content);
-          } else if (parsed.type === 'end') {
-            onComplete(finalThreadId);
-            return true;
-          } else if (parsed.error) {
+          if (parsed.type === 'begin') {
+            console.log('[N8N Stream] Stream started');
+            return false;
+          }
+          
+          if (parsed.type === 'item' && typeof parsed.content === 'string') {
+            if (parsed.content.length > 0) {
+              console.log('[N8N Stream] Content chunk:', parsed.content);
+              hasReceivedContent = true;
+              onChunk(parsed.content);
+            }
+            return false;
+          }
+          
+          if (parsed.type === 'end') {
+            console.log('[N8N Stream] End event received, hasReceivedContent:', hasReceivedContent);
+            // Only complete if we've received actual content
+            // This handles cases where n8n sends multiple begin/end cycles
+            if (hasReceivedContent) {
+              console.log('[N8N Stream] Stream ended with content, completing...');
+              onComplete(finalThreadId);
+              return true;
+            } else {
+              console.log('[N8N Stream] End event without content, continuing...');
+              return false;
+            }
+          }
+          
+          if (parsed.error) {
+            console.error('[N8N Stream] Error:', parsed.error);
             throw new Error(parsed.error);
           }
         } catch (e) {
-          if (e instanceof SyntaxError) return false;
+          if (e instanceof SyntaxError) {
+            console.warn('[N8N Stream] JSON parse error, skipping:', trimmed);
+            return false;
+          }
           throw e;
         }
 
@@ -261,9 +290,14 @@ class AIChatService {
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {
+          console.log('[N8N Stream] Reader done');
+          break;
+        }
 
-        buffer += decoder.decode(value, { stream: true });
+        const chunk = decoder.decode(value, { stream: true });
+        console.log('[N8N Stream] Raw chunk received:', chunk);
+        buffer += chunk;
         if (processBuffer()) return;
       }
 
@@ -271,17 +305,27 @@ class AIChatService {
 
       const remaining = buffer.trim();
       if (remaining) {
+        console.log('[N8N Stream] Processing remaining buffer:', remaining);
         try {
           const data = JSON.parse(remaining);
           if (data && typeof data.output === 'string') {
+            console.log('[N8N Stream] Found output in remaining:', data.output);
+            hasReceivedContent = true;
             onChunk(data.output);
           }
-        } catch {
-          // not output format, skip
+        } catch (e) {
+          console.warn('[N8N Stream] Could not parse remaining buffer:', e);
         }
       }
 
-      onComplete(finalThreadId);
+      // Always complete at the end, but only if we received content
+      if (hasReceivedContent) {
+        console.log('[N8N Stream] Completing stream with threadId:', finalThreadId);
+        onComplete(finalThreadId);
+      } else {
+        console.warn('[N8N Stream] Stream ended without content');
+        onError(new Error('No content received from AI'));
+      }
     } catch (error) {
       onError(error instanceof Error ? error : new Error('Unknown error occurred'));
     }

@@ -1,6 +1,11 @@
-import { memo } from 'react';
+import { memo, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeHighlight from 'rehype-highlight';
 import type { ChatMessage } from '@/services/aiChat.service';
 import aiAvatar from '@/assets/images/ai-avatar.svg';
+import 'highlight.js/styles/github-dark.css';
+import '@/styles/markdown.css';
 
 interface AIMessageBubbleProps {
   message: ChatMessage;
@@ -9,10 +14,17 @@ interface AIMessageBubbleProps {
 
 const AIMessageBubble: React.FC<AIMessageBubbleProps> = ({ message, isStreaming = false }) => {
   const isUser = message.role === 'user';
+  
   const timeString = message.timestamp.toLocaleTimeString([], {
     hour: '2-digit',
     minute: '2-digit',
   });
+
+  useEffect(() => {
+    if (message.content) {
+      console.log('[AIMessageBubble] Rendering message:', message.id, 'Content length:', message.content.length);
+    }
+  }, [message.content, message.id]);
 
   return (
     <div className={`flex flex-col gap-2 ${isUser ? 'items-end' : 'items-start'}`}>
@@ -35,12 +47,45 @@ const AIMessageBubble: React.FC<AIMessageBubbleProps> = ({ message, isStreaming 
               <span className="text-[10px] text-gray-400 font-medium">{timeString}</span>
             </div>
             <div
-              className={`bg-[#EDF2F1] rounded-2xl rounded-tl-none px-4 py-3 text-sm text-gray-800 leading-relaxed shadow-sm cursor-default whitespace-pre-wrap transition-all duration-200 ${
+              className={`bg-[#EDF2F1] rounded-2xl rounded-tl-none px-4 py-3 text-sm text-gray-800 leading-relaxed shadow-sm cursor-default transition-all duration-200 ${
                 isStreaming ? 'animate-streaming-glow' : 'hover:shadow-md'
               }`}
             >
-              <span className="inline transition-opacity duration-150">{message.content}</span>
-              {!message.content && (
+              {message.content ? (
+                <div className="markdown-content">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeHighlight]}
+                    components={{
+                      code: ({ node, className, children, ...props }: any) => {
+                        const match = /language-(\w+)/.exec(className || '');
+                        const isInline = !match;
+                        
+                        if (isInline) {
+                          return (
+                            <code className="inline-code" {...props}>
+                              {children}
+                            </code>
+                          );
+                        }
+                        
+                        return (
+                          <code className={className} {...props}>
+                            {children}
+                          </code>
+                        );
+                      },
+                      pre: ({ children, ...props }: any) => (
+                        <pre {...props}>
+                          {children}
+                        </pre>
+                      ),
+                    }}
+                  >
+                    {message.content}
+                  </ReactMarkdown>
+                </div>
+              ) : (
                 <span className="inline-block w-2 h-4 bg-[#3D7475] animate-cursor-blink ml-1 align-middle rounded-sm" />
               )}
             </div>
