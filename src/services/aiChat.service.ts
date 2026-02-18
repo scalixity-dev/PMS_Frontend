@@ -167,43 +167,117 @@ class AIChatService {
       let buffer = '';
       const finalThreadId = threadId || this.generateThreadId();
 
+      type N8nStreamEvent = {
+        type?: string;
+        content?: string;
+        error?: string;
+      };
+
+      const extractNextJsonObject = (text: string): { object: string | null; rest: string } => {
+        const startIndex = text.indexOf('{');
+        if (startIndex === -1) {
+          return { object: null, rest: text };
+        }
+
+        let depth = 0;
+        let inString = false;
+        let escape = false;
+
+        for (let i = startIndex; i < text.length; i += 1) {
+          const char = text[i];
+
+          if (escape) {
+            escape = false;
+            continue;
+          }
+
+          if (char === '\\') {
+            escape = true;
+            continue;
+          }
+
+          if (char === '"') {
+            inString = !inString;
+            continue;
+          }
+
+          if (inString) {
+            continue;
+          }
+
+          if (char === '{') {
+            depth += 1;
+            continue;
+          }
+
+          if (char === '}') {
+            depth -= 1;
+            if (depth === 0) {
+              const object = text.slice(startIndex, i + 1);
+              const rest = text.slice(i + 1);
+              return { object, rest };
+            }
+          }
+        }
+
+        return { object: null, rest: text };
+      };
+
+      const processEvent = (rawObject: string): boolean => {
+        const trimmed = rawObject.trim();
+        if (!trimmed) return false;
+
+        try {
+          const parsed = JSON.parse(trimmed) as N8nStreamEvent;
+
+          if (parsed.type === 'item' && typeof parsed.content === 'string' && parsed.content.length > 0) {
+            onChunk(parsed.content);
+          } else if (parsed.type === 'end') {
+            onComplete(finalThreadId);
+            return true;
+          } else if (parsed.error) {
+            throw new Error(parsed.error);
+          }
+        } catch (e) {
+          if (e instanceof SyntaxError) return false;
+          throw e;
+        }
+
+        return false;
+      };
+
+      const processBuffer = (): boolean => {
+        while (true) {
+          const { object, rest } = extractNextJsonObject(buffer);
+          if (!object) break;
+
+          buffer = rest;
+          if (processEvent(object)) {
+            return true;
+          }
+        }
+        return false;
+      };
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split(/\r?\n/);
-        buffer = lines.pop() ?? '';
-
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed) continue;
-
-          try {
-            const parsed = JSON.parse(trimmed);
-            if (parsed.type === 'item' && typeof parsed.content === 'string' && parsed.content.length > 0) {
-              onChunk(parsed.content);
-            } else if (parsed.type === 'end') {
-              onComplete(finalThreadId);
-              return;
-            } else if (parsed.error) {
-              throw new Error(parsed.error);
-            }
-          } catch (e) {
-            if (e instanceof SyntaxError) continue;
-            throw e;
-          }
-        }
+        if (processBuffer()) return;
       }
 
-      if (buffer.trim()) {
+      if (processBuffer()) return;
+
+      const remaining = buffer.trim();
+      if (remaining) {
         try {
-          const data = JSON.parse(buffer.trim());
+          const data = JSON.parse(remaining);
           if (data && typeof data.output === 'string') {
             onChunk(data.output);
           }
         } catch {
-          // ignore leftover non-JSON
+          // not output format, skip
         }
       }
 

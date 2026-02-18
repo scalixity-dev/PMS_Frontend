@@ -198,9 +198,17 @@ const AIChatButton: React.FC = () => {
                   </div>
                 ) : (
                   <div className="space-y-6 pb-4">
-                    {messages.map((message) => (
-                      <AIMessageBubble key={message.id} message={message} />
-                    ))}
+                    {messages.map((message, index) => {
+                      const isLastAssistant =
+                        message.role === 'assistant' && index === messages.length - 1;
+                      return (
+                        <AIMessageBubble
+                          key={message.id}
+                          message={message}
+                          isStreaming={isStreaming && isLastAssistant}
+                        />
+                      );
+                    })}
                     <div ref={messagesEndRef} />
                   </div>
                 )}
