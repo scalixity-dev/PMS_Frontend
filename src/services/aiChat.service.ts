@@ -6,17 +6,18 @@ export type ChatMessage = {
 };
 
 export type StreamChunk = {
-  content: string;
-  thread_id: string;
+  content?: string;
+  thread_id?: string;
+  error?: string;
 };
 
 class AIChatService {
   private baseUrl: string;
-  private n8nWebhookUrl: string;
+  private n8nRagChatUrl: string;
 
   constructor() {
     this.baseUrl = import.meta.env.VITE_AI_CHAT_API_URL || 'http://localhost:8000';
-    this.n8nWebhookUrl = import.meta.env.VITE_N8N_WEBHOOK_URL || 'http://localhost:5678/webhook-test/86cfe5f2-a69d-44c0-b89e-a138126900ed';
+    this.n8nRagChatUrl = import.meta.env.VITE_N8N_RAG_CHAT_URL || '';
   }
 
   async sendMessage(
@@ -25,10 +26,10 @@ class AIChatService {
     onChunk: (chunk: string) => void,
     onComplete: (threadId: string) => void,
     onError: (error: Error) => void,
-    useN8n: boolean = false,
+    useN8n: boolean = true,
     userEmail?: string
   ): Promise<void> {
-    if (useN8n) {
+    if (useN8n && this.n8nRagChatUrl) {
       return this.sendMessageToN8n(query, threadId, onChunk, onComplete, onError, userEmail);
     }
     return this.sendMessageToFastAPI(query, threadId, onChunk, onComplete, onError);
@@ -123,6 +124,11 @@ class AIChatService {
     onError: (error: Error) => void,
     userEmail?: string
   ): Promise<void> {
+    if (!this.n8nRagChatUrl) {
+      onError(new Error('N8N RAG Chat URL is not configured. Please set VITE_N8N_RAG_CHAT_URL in your environment variables.'));
+      return;
+    }
+
     try {
       const requestBody: Record<string, unknown> = {
         query,
@@ -133,7 +139,7 @@ class AIChatService {
         requestBody.email = userEmail;
       }
 
-      const response = await fetch(this.n8nWebhookUrl, {
+      const response = await fetch(this.n8nRagChatUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -147,60 +153,61 @@ class AIChatService {
 
       const reader = response.body?.getReader();
       if (!reader) {
+        const rawText = await response.text();
+        const data = JSON.parse(rawText);
+        if (data && typeof data.output === 'string') {
+          onChunk(data.output);
+          onComplete(threadId || this.generateThreadId());
+          return;
+        }
         throw new Error('Response body is not readable');
       }
 
       const decoder = new TextDecoder();
       let buffer = '';
-      let currentThreadId: string | null = threadId;
-      let hasReceivedContent = false;
+      const finalThreadId = threadId || this.generateThreadId();
 
       while (true) {
         const { done, value } = await reader.read();
-        
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
+        const lines = buffer.split(/\r?\n/);
+        buffer = lines.pop() ?? '';
 
         for (const line of lines) {
-          const trimmedLine = line.trim();
-          if (!trimmedLine) continue;
+          const trimmed = line.trim();
+          if (!trimmed) continue;
 
           try {
-            const parsed = JSON.parse(trimmedLine);
-            
-            if (parsed.type === 'item' && parsed.content) {
-              hasReceivedContent = true;
+            const parsed = JSON.parse(trimmed);
+            if (parsed.type === 'item' && typeof parsed.content === 'string' && parsed.content.length > 0) {
               onChunk(parsed.content);
             } else if (parsed.type === 'end') {
-              if (currentThreadId) {
-                onComplete(currentThreadId);
-              } else if (threadId) {
-                onComplete(threadId);
-              } else {
-                onComplete(this.generateThreadId());
-              }
+              onComplete(finalThreadId);
               return;
-            } else if (parsed.thread_id) {
-              currentThreadId = parsed.thread_id;
             } else if (parsed.error) {
               throw new Error(parsed.error);
             }
-          } catch (parseError) {
-            continue;
+          } catch (e) {
+            if (e instanceof SyntaxError) continue;
+            throw e;
           }
         }
       }
 
-      if (currentThreadId) {
-        onComplete(currentThreadId);
-      } else if (threadId) {
-        onComplete(threadId);
-      } else {
-        onComplete(this.generateThreadId());
+      if (buffer.trim()) {
+        try {
+          const data = JSON.parse(buffer.trim());
+          if (data && typeof data.output === 'string') {
+            onChunk(data.output);
+          }
+        } catch {
+          // ignore leftover non-JSON
+        }
       }
+
+      onComplete(finalThreadId);
     } catch (error) {
       onError(error instanceof Error ? error : new Error('Unknown error occurred'));
     }
