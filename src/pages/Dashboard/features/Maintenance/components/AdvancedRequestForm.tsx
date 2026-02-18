@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import CustomDropdown from '../../../components/CustomDropdown';
-import AIMaintenanceChat from './AIMaintenanceChat';
-import { Upload, Video, X, Sparkles } from 'lucide-react';
+import { Upload, Video, X } from 'lucide-react';
 import { useMaintenanceRequestFormStore } from '../store/maintenanceRequestStore';
 
 export interface AdvancedRequestFormFields {
@@ -22,6 +21,7 @@ interface AdvancedRequestFormProps {
     onNext: (data: AdvancedRequestFormData) => void;
     onDiscard: () => void;
     initialData?: Partial<AdvancedRequestFormFields>;
+    aiPrefillData?: Partial<AdvancedRequestFormFields>;
 }
 
 interface MediaFile {
@@ -30,7 +30,7 @@ interface MediaFile {
     previewUrl: string;
 }
 
-const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDiscard, initialData }) => {
+const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDiscard, initialData, aiPrefillData }) => {
     const [formData, setFormData] = useState<AdvancedRequestFormFields>({
         category: initialData?.category || '',
         subCategory: initialData?.subCategory || '',
@@ -42,7 +42,7 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
     });
 
     const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
-    const [showAIChat, setShowAIChat] = useState(false);
+    // const [showAIChat, setShowAIChat] = useState(false); // Removed local state
 
     const setAdvanced = useMaintenanceRequestFormStore((state) => state.setAdvanced);
 
@@ -259,33 +259,37 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
         });
     };
 
-    const handleAIFormData = (aiData: any) => {
-        formTouchedRef.current = true;
+    // Handle AI Data Injection
+    useEffect(() => {
+        if (aiPrefillData) {
+            formTouchedRef.current = true;
 
-        const updates: any = {};
-        Object.entries(aiData).forEach(([key, value]) => {
-            if (value !== null && value !== '' && value !== undefined) {
-                updates[key] = value;
-            }
-        });
+            setFormData(prev => {
+                const updates: any = {};
+                Object.entries(aiPrefillData).forEach(([key, value]) => {
+                    if (value !== null && value !== '' && value !== undefined) {
+                        updates[key] = value;
+                    }
+                });
 
-        setFormData(prev => {
-            const updated = { ...prev, ...updates };
+                const updated = { ...prev, ...updates };
 
-            if (updates.category && prev.category !== updates.category) {
-                updated.subCategory = '';
-                updated.issue = '';
-                updated.subIssue = '';
-            } else if (updates.subCategory && prev.subCategory !== updates.subCategory) {
-                updated.issue = '';
-                updated.subIssue = '';
-            } else if (updates.issue && prev.issue !== updates.issue) {
-                updated.subIssue = '';
-            }
+                // Clear dependent fields if parent fields changed
+                if (updates.category && prev.category !== updates.category) {
+                    updated.subCategory = '';
+                    updated.issue = '';
+                    updated.subIssue = '';
+                } else if (updates.subCategory && prev.subCategory !== updates.subCategory) {
+                    updated.issue = '';
+                    updated.subIssue = '';
+                } else if (updates.issue && prev.issue !== updates.issue) {
+                    updated.subIssue = '';
+                }
 
-            return updated;
-        });
-    };
+                return updated;
+            });
+        }
+    }, [aiPrefillData]);
 
     // Get available options based on selections
     const getSubCategoryOptions = () => {
@@ -313,30 +317,8 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
                         Select 'other' option if the category you are looking for isn't here.
                     </p>
                 </div>
-                <button
-                    onClick={() => setShowAIChat(true)}
-                    className="flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 active:scale-95 flex-shrink-0"
-                    style={{
-                        background: 'linear-gradient(135deg, #2D6A6A 0%, #3D9B6B 50%, #52C97A 100%)',
-                        boxShadow: '0 4px 15px rgba(61, 155, 107, 0.4), 0 0 0 1px rgba(255,255,255,0.15) inset',
-                    }}
-                    onMouseEnter={e => {
-                        (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 6px 20px rgba(61, 155, 107, 0.55), 0 0 0 1px rgba(255,255,255,0.2) inset';
-                    }}
-                    onMouseLeave={e => {
-                        (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 15px rgba(61, 155, 107, 0.4), 0 0 0 1px rgba(255,255,255,0.15) inset';
-                    }}
-                >
-                    <Sparkles className="w-4 h-4 md:w-5 md:h-5" />
-                    <span className="text-sm md:text-base">Fill using AI</span>
-                </button>
+                {/* AI Chat Removed - Handled by parent */}
             </div>
-
-            <AIMaintenanceChat
-                isOpen={showAIChat}
-                onClose={() => setShowAIChat(false)}
-                onFormDataReceived={handleAIFormData}
-            />
 
             {/* Category & Sub-category */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
