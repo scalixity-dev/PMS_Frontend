@@ -4,19 +4,27 @@ import { LeftIcon, RightCircle } from './sections/otpBackgroundIcons';
 import OtpForm from './sections/OtpForm';
 import { authService } from '../../../../services/auth.service';
 import { API_ENDPOINTS } from '../../../../config/api.config';
+import { useOtpSessionStore } from '../store/otpSessionStore';
 
 const OtpPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const userId = searchParams.get('userId');
-  // Decode email from URL to handle URL-encoded characters
+  const { setOtpSession, clearOtpSession, userId: storeUserId, email: storeEmail } = useOtpSessionStore();
+  const userId = searchParams.get('userId') || storeUserId;
   const rawEmail = searchParams.get('email') || '';
-  const email = rawEmail ? decodeURIComponent(rawEmail) : '';
-  const otpType = (searchParams.get('type') || 'email') as 'email' | 'device'; // 'email' or 'device'
+  const emailFromUrl = rawEmail ? decodeURIComponent(rawEmail) : '';
+  const email = emailFromUrl || storeEmail || '';
+  const otpType = (searchParams.get('type') || 'email') as 'email' | 'device';
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, []);
+
+  useEffect(() => {
+    if (userId && email) {
+      setOtpSession({ userId, email, otpType });
+    }
+  }, [userId, email, otpType, setOtpSession]);
 
   const handleOtpSubmit = async (otpCode: string) => {
     // Check for missing userId and handle gracefully
@@ -28,13 +36,12 @@ const OtpPage: React.FC = () => {
 
     try {
       if (otpType === 'device') {
-        // Verify device OTP
         await authService.verifyDevice(userId, otpCode);
-        // After successful device verification, redirect to dashboard
+        clearOtpSession();
         navigate('/dashboard', { replace: true });
       } else {
-        // Verify email OTP
         await authService.verifyEmail(userId, otpCode);
+        clearOtpSession();
         // Wait a moment to ensure cookies are set
         await new Promise(resolve => setTimeout(resolve, 500));
         
@@ -95,7 +102,6 @@ const OtpPage: React.FC = () => {
   };
 
   const handleResendOtp = async () => {
-    // Check for missing userId and handle gracefully
     if (!userId) {
       alert('User ID is missing. Please try logging in again.');
       navigate('/login', { replace: true });
@@ -104,11 +110,9 @@ const OtpPage: React.FC = () => {
 
     try {
       if (otpType === 'device') {
-        // Resend device verification OTP
-        await authService.resendDeviceOtp(userId);
+        await authService.resendDeviceOtp(userId, email);
       } else {
-        // Resend email OTP
-        await authService.resendEmailOtp(userId);
+        await authService.resendEmailOtp(userId, email);
       }
     } catch (error) {
       console.error('OTP resend error:', error);

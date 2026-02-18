@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Sparkles } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 import MaintenanceStepper from './components/MaintenanceStepper';
@@ -7,6 +7,7 @@ import MaintenanceSuccessModal from './components/MaintenanceSuccessModal';
 import AdvancedRequestForm from './components/AdvancedRequestForm';
 import PropertyTenantsStep from './components/PropertyTenantsStep';
 import DueDateMaterialsStep from './components/DueDateMaterialsStep';
+import AIMaintenanceChat from './components/AIMaintenanceChat';
 import {
     useMaintenanceRequestFormStore,
     type MaintenancePropertyState,
@@ -100,6 +101,8 @@ const AddMaintenanceRequest: React.FC = () => {
     );
 
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showAIChat, setShowAIChat] = useState(false);
+    const [aiPrefillData, setAiPrefillData] = useState<any>(null); // To pass AI data to form
     const [createdRequestId, setCreatedRequestId] = useState<string>('');
 
     // Seed form store from existing request when editing
@@ -179,10 +182,10 @@ const AddMaintenanceRequest: React.FC = () => {
                     quantity: material.quantity,
                 })),
             };
-
-            const createdOrUpdated = isEditMode && editRequestId
-                ? await updateRequest({ id: editRequestId, input: payload })
-                : await createRequest(payload);
+            const createdOrUpdated =
+                isEditMode && editRequestId
+                    ? await updateRequest({ id: editRequestId, input: payload })
+                    : await createRequest(payload);
 
             // Upload media and attachments linked to this request
             const filesToUpload = advanced.files ?? [];
@@ -229,19 +232,81 @@ const AddMaintenanceRequest: React.FC = () => {
         return mainStep;
     };
 
+    const handleAIChatDataReceived = (data: any) => {
+        // Prepare updates for the store
+        const storeUpdates: any = {};
+        if (data.category) {
+            storeUpdates.category = mapBackendCategoryToUi(data.category);
+            setAdvanced({ category: storeUpdates.category });
+        }
+        if (data.title) {
+            storeUpdates.title = data.title;
+            setAdvanced({ title: storeUpdates.title });
+        }
+        if (data.description) {
+            storeUpdates.details = data.description;
+            setAdvanced({ details: storeUpdates.details });
+        }
+        // Amount is not typically returned by AI? If it is:
+        if (data.estimatedCost) {
+            storeUpdates.amount = data.estimatedCost;
+            setAdvanced({ amount: storeUpdates.amount });
+        }
+
+        if (data.priority) {
+            setDue({ priority: mapBackendPriorityToUi(data.priority) });
+        }
+
+        // Pass complete AI data to form for smart pre-filling (e.g. subcategories)
+        // Store updates handle persistence, but aiPrefillData handles form-specific logic
+        // We'll pass the raw data mapped to form fields
+        const formUpdates: any = { ...storeUpdates };
+        // Map any other fields if necessary, e.g. subCategory from AI might be raw string
+        // The form handles this mapping logic inside handleAIFormData effect?
+        // Actually, AdvancedRequestForm expects keys like category, subCategory, issue, subIssue...
+        // Let's pass the raw 'data' object but mapped closer to form fields if needed.
+        // The AI backend returns: category, subcategory, issue, subissue, title, problemDetails, etc...
+        // We need to map them to AdvancedRequestFormFields keys.
+
+        if (data.subcategory) formUpdates.subCategory = data.subcategory;
+        if (data.issue) formUpdates.issue = data.issue;
+        if (data.subissue) formUpdates.subIssue = data.subissue;
+        if (data.problemDetails) formUpdates.details = data.problemDetails;
+
+        setAiPrefillData(formUpdates);
+        setShowAIChat(false);
+    };
+
     return (
         <div className="flex flex-col h-full w-full bg-[var(--color-background)] px-6 overflow-y-auto">
             <div className="flex-1 flex items-start justify-center pt-8">
                 <div className="bg-[#DFE5E3] rounded-[2rem] p-6 md:p-12 flex flex-col items-center w-full shadow-sm min-h-[80vh] relative max-w-6xl">
 
-                    {/* Back Button */}
-                    <div className="w-full md:w-auto relative mb-4 md:mb-0 md:absolute md:top-8 md:left-8">
+                    {/* Back Button and AI Button */}
+                    <div className="w-full flex items-center justify-between mb-4 md:mb-0 md:absolute md:top-8 md:left-8 md:right-8 md:w-auto md:justify-between md:gap-4">
                         <button
                             onClick={handleBack}
                             className="flex items-center gap-2 text-[#3D7475] font-bold hover:opacity-80 transition-opacity uppercase tracking-wide"
                         >
                             <ArrowLeft size={20} strokeWidth={2.5} />
                             Back
+                        </button>
+                        <button
+                            onClick={() => setShowAIChat(true)}
+                            className="flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 active:scale-95"
+                            style={{
+                                background: 'linear-gradient(135deg, #2D6A6A 0%, #3D9B6B 50%, #52C97A 100%)',
+                                boxShadow: '0 4px 15px rgba(61, 155, 107, 0.4), 0 0 0 1px rgba(255,255,255,0.15) inset',
+                            }}
+                            onMouseEnter={e => {
+                                (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 6px 20px rgba(61, 155, 107, 0.55), 0 0 0 1px rgba(255,255,255,0.2) inset';
+                            }}
+                            onMouseLeave={e => {
+                                (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 15px rgba(61, 155, 107, 0.4), 0 0 0 1px rgba(255,255,255,0.15) inset';
+                            }}
+                        >
+                            <Sparkles className="w-4 h-4 md:w-5 md:h-5" />
+                            <span className="text-sm md:text-base">Fill using AI</span>
                         </button>
                     </div>
 
@@ -260,23 +325,12 @@ const AddMaintenanceRequest: React.FC = () => {
                     {/* Step 1: General Details */}
                     {mainStep === 1 && (
                         <AdvancedRequestForm
-                            onNext={() => {
+                            onNext={(_data) => {
                                 handleNext();
                             }}
                             onDiscard={() => navigate('/dashboard')}
-                            initialData={
-                                isEditMode && existingRequest
-                                    ? {
-                                          category: mapBackendCategoryToUi(existingRequest.category),
-                                          subCategory: existingRequest.subcategory ?? '',
-                                          issue: existingRequest.issue ?? '',
-                                          subIssue: existingRequest.subissue ?? '',
-                                          title: existingRequest.title ?? '',
-                                          details: existingRequest.problemDetails ?? '',
-                                          amount: '',
-                                      }
-                                    : undefined
-                            }
+                            initialData={advanced} // Always pass current store state
+                            aiPrefillData={aiPrefillData}
                         />
                     )}
 
@@ -290,24 +344,24 @@ const AddMaintenanceRequest: React.FC = () => {
                             initialData={
                                 isEditMode && existingRequest
                                     ? {
-                                          selectedProperty: existingRequest.property?.id ?? '',
-                                          linkEquipment: Boolean(
-                                              existingRequest.equipmentLinked && existingRequest.equipmentId,
-                                          ),
-                                          selectedEquipment: existingRequest.equipmentId ?? '',
-                                          tenantAuthorization:
-                                              existingRequest.tenantMeta?.tenantAuthorization ?? false,
-                                          dateOptions:
-                                              existingRequest.tenantMeta?.dateOptions?.map((option, index) => ({
-                                                  id: `${index}`,
-                                                  date: option.date ? new Date(option.date) : undefined,
-                                                  timeSlots: option.timeSlots ?? [],
-                                              })) ?? [],
-                                          tenantList: [],
-                                          accessCode: existingRequest.tenantMeta?.accessCode ?? '',
-                                          petsInResidence: existingRequest.tenantMeta?.petsInResidence ?? '',
-                                          selectedPets: existingRequest.tenantMeta?.selectedPets ?? [],
-                                      }
+                                        selectedProperty: existingRequest.property?.id ?? '',
+                                        linkEquipment: Boolean(
+                                            existingRequest.equipmentLinked && existingRequest.equipmentId,
+                                        ),
+                                        selectedEquipment: existingRequest.equipmentId ?? '',
+                                        tenantAuthorization:
+                                            existingRequest.tenantMeta?.tenantAuthorization ?? false,
+                                        dateOptions:
+                                            existingRequest.tenantMeta?.dateOptions?.map((option, index) => ({
+                                                id: `${index}`,
+                                                date: option.date ? new Date(option.date) : undefined,
+                                                timeSlots: option.timeSlots ?? [],
+                                            })) ?? [],
+                                        tenantList: [],
+                                        accessCode: existingRequest.tenantMeta?.accessCode ?? '',
+                                        petsInResidence: existingRequest.tenantMeta?.petsInResidence ?? '',
+                                        selectedPets: existingRequest.tenantMeta?.selectedPets ?? [],
+                                    }
                                     : undefined
                             }
                         />
@@ -323,20 +377,20 @@ const AddMaintenanceRequest: React.FC = () => {
                             initialData={
                                 isEditMode && existingRequest
                                     ? {
-                                          dateInitiated: existingRequest.requestedAt
-                                              ? new Date(existingRequest.requestedAt)
-                                              : undefined,
-                                          dateDue: existingRequest.dueDate
-                                              ? new Date(existingRequest.dueDate)
-                                              : undefined,
-                                          priority: mapBackendPriorityToUi(existingRequest.priority),
-                                          materials:
-                                              existingRequest.materials?.map((material, index) => ({
-                                                  id: `${index}`,
-                                                  name: material.materialName,
-                                                  quantity: material.quantity ?? 1,
-                                              })) ?? [],
-                                      }
+                                        dateInitiated: existingRequest.requestedAt
+                                            ? new Date(existingRequest.requestedAt)
+                                            : undefined,
+                                        dateDue: existingRequest.dueDate
+                                            ? new Date(existingRequest.dueDate)
+                                            : undefined,
+                                        priority: mapBackendPriorityToUi(existingRequest.priority),
+                                        materials:
+                                            existingRequest.materials?.map((material, index) => ({
+                                                id: `${index}`,
+                                                name: material.materialName,
+                                                quantity: material.quantity ?? 1,
+                                            })) ?? [],
+                                    }
                                     : undefined
                             }
                         />
@@ -352,6 +406,12 @@ const AddMaintenanceRequest: React.FC = () => {
                         }}
                         requestId={createdRequestId}
                         propertyName={property.propertyId || 'Property'}
+                    />
+
+                    <AIMaintenanceChat
+                        isOpen={showAIChat}
+                        onClose={() => setShowAIChat(false)}
+                        onFormDataReceived={handleAIChatDataReceived}
                     />
                 </div>
             </div>
