@@ -3,6 +3,28 @@ import { useNavigate } from "react-router-dom";
 import { useRequestStore } from "../store/requestStore";
 import type { AvailabilityOption, ServiceRequest } from "../../../utils/types";
 import { categories, propertiesList } from "../constants/requestData";
+import {
+    maintenanceRequestService,
+    type CreateMaintenanceRequestInput,
+    type MaintenanceCategory,
+    type MaintenancePriority,
+    type ChargeTo,
+} from "../../../../../services/maintenance-request.service";
+
+const CATEGORY_TO_API: Record<string, MaintenanceCategory> = {
+    appliances: "APPLIANCES",
+    electrical: "ELECTRICAL",
+    exterior: "EXTERIOR",
+    households: "HOUSEHOLD",
+    outdoors: "OUTDOORS",
+    plumbing: "PLUMBING",
+};
+
+const PRIORITY_TO_API: Record<string, MaintenancePriority> = {
+    Critical: "HIGH",
+    Normal: "MEDIUM",
+    Low: "LOW",
+};
 
 export const useNewRequestForm = () => {
     const navigate = useNavigate();
@@ -32,6 +54,9 @@ export const useNewRequestForm = () => {
         video,
         pets,
         amount,
+        chargeTo,
+        propertyId,
+        unitId,
     } = newRequestForm;
 
     const [isPriorityDropdownOpen, setIsPriorityDropdownOpen] = useState(false);
@@ -71,6 +96,9 @@ export const useNewRequestForm = () => {
             setNewRequestForm({ pets: val });
         }
     };
+    const setChargeTo = (val: 'LANDLORD' | 'TENANT' | 'PENDING') => setNewRequestForm({ chargeTo: val });
+    const setPropertyId = (val: string | undefined) => setNewRequestForm({ propertyId: val });
+    const setUnitId = (val: string | undefined) => setNewRequestForm({ unitId: val });
 
     // Track if form has been modified
     const hasFormData = useMemo(() => {
@@ -184,59 +212,100 @@ export const useNewRequestForm = () => {
     const handleSubmit = async (): Promise<boolean> => {
         if (!selectedCategory || !priority) return false;
 
-        // Clear any previous errors and set submitting state
         setSubmissionError(null);
         setIsSubmitting(true);
 
         try {
-            // Convert File objects to data URLs for persistence
+            // API path: when propertyId exists (tenant with lease)
+            if (propertyId) {
+                const categoryApi = CATEGORY_TO_API[selectedCategory] ?? "HOUSEHOLD";
+                const priorityApi = PRIORITY_TO_API[priority] ?? "MEDIUM";
+
+                const uploadAttachment = async (file: File, category: 'IMAGE' | 'VIDEO' | 'DOCUMENT') => {
+                    const result = await maintenanceRequestService.uploadFile({
+                        file,
+                        category,
+                        propertyId,
+                    });
+                    return result.url;
+                };
+
+                const attachmentDtos: { fileUrl: string; fileType: 'IMAGE' | 'OTHER' }[] = [];
+                if (attachments?.length) {
+                    for (const file of attachments) {
+                        const fileUrl = await uploadAttachment(file, 'IMAGE');
+                        attachmentDtos.push({ fileUrl, fileType: 'IMAGE' });
+                    }
+                }
+                if (video) {
+                    const fileUrl = await uploadAttachment(video, 'VIDEO');
+                    attachmentDtos.push({ fileUrl, fileType: 'OTHER' });
+                }
+
+                const chargeToApi: ChargeTo = chargeTo === 'TENANT' ? 'TENANT' : chargeTo === 'PENDING' ? 'PENDING' : 'LANDLORD';
+
+                const apiPayload: CreateMaintenanceRequestInput = {
+                    propertyId,
+                    unitId: unitId ?? undefined,
+                    category: categoryApi,
+                    subcategory: selectedSubCategory || title,
+                    issue: selectedProblem ?? undefined,
+                    subissue: finalDetail ?? undefined,
+                    title: title || `${categories.find(c => c.id === selectedCategory)?.name || selectedCategory} - ${selectedSubCategory || 'Request'}`,
+                    problemDetails: description || undefined,
+                    priority: priorityApi,
+                    dueDate: dateDue ?? undefined,
+                    equipmentLinked: !!selectedEquipment,
+                    equipmentId: selectedEquipment ?? undefined,
+                    tenantMeta: {
+                        tenantAuthorization: authorization === 'yes',
+                        accessCode: authCode || undefined,
+                        petsInResidence: pets.length > 0 ? 'yes' : 'no',
+                        selectedPets: pets,
+                        dateOptions: availability
+                            .filter((a: { date?: string; timeSlots?: string[] }) => a.date)
+                            .map((a: { date?: string; timeSlots?: string[] }) => ({
+                                date: a.date,
+                                timeSlots: a.timeSlots || [],
+                            })),
+                    },
+                    materials: materials
+                        ?.filter((m: { name?: string }) => m.name)
+                        .map((m: { name: string; quantity?: number }) => ({
+                            materialName: m.name,
+                            quantity: m.quantity ?? 1,
+                        })),
+                    chargeTo: chargeToApi,
+                    attachments: attachmentDtos.length > 0 ? attachmentDtos : undefined,
+                };
+
+                const created = await maintenanceRequestService.create(apiPayload);
+                resetNewRequestForm();
+                setIsSubmitting(false);
+                navigate("/userdashboard/requests", {
+                    state: { showSuccess: true, requestId: created.id }
+                });
+                return true;
+            }
+
+            // Fallback: store in Zustand + localStorage
             const convertFileToDataURL = (file: File): Promise<string> => {
                 return new Promise((resolve, reject) => {
                     const reader = new FileReader();
-                    reader.onload = () => {
-                        if (reader.result) {
-                            resolve(reader.result as string);
-                        } else {
-                            reject(new Error(`Failed to read file: ${file.name}`));
-                        }
-                    };
+                    reader.onload = () => (reader.result ? resolve(reader.result as string) : reject(new Error(`Failed to read file: ${file.name}`)));
                     reader.onerror = () => reject(new Error(`Error reading file: ${file.name}`));
                     reader.readAsDataURL(file);
                 });
             };
 
-            // Convert attachments to data URLs
             const attachmentDataUrls: string[] = [];
-            if (attachments && attachments.length > 0) {
-                try {
-                    const dataUrlPromises = attachments.map(file => convertFileToDataURL(file));
-                    const dataUrls = await Promise.all(dataUrlPromises);
-                    attachmentDataUrls.push(...dataUrls);
-                } catch (error) {
-                    const errorMessage = `Failed to process attachments: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again or remove the problematic files.`;
-                    console.error('Error converting attachments to data URLs:', error);
-                    setSubmissionError(errorMessage);
-                    setIsSubmitting(false);
-                    return false; // Prevent form submission
-                }
+            if (attachments?.length) {
+                const dataUrls = await Promise.all(attachments.map(convertFileToDataURL));
+                attachmentDataUrls.push(...dataUrls);
             }
-
-            // Convert video to data URL
             let videoDataUrl: string | null = null;
-            if (video) {
-                try {
-                    videoDataUrl = await convertFileToDataURL(video);
-                } catch (error) {
-                    const errorMessage = `Failed to process video: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again or remove the video.`;
-                    console.error('Error converting video to data URL:', error);
-                    setSubmissionError(errorMessage);
-                    setIsSubmitting(false);
-                    return false; // Prevent form submission
-                }
-            }
+            if (video) videoDataUrl = await convertFileToDataURL(video);
 
-            // Create request - we'll store data URLs in a way that works with the store
-            // The store will handle converting these properly
             const newRequest: ServiceRequest & { attachmentDataUrls?: string[]; videoDataUrl?: string | null } = {
                 id: Date.now(),
                 requestId: `REQ-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -264,25 +333,17 @@ export const useNewRequestForm = () => {
                 video: video,
                 pets: pets,
                 amount: amount ? parseFloat(amount) : undefined,
-                // Store data URLs separately for persistence
                 attachmentDataUrls: attachmentDataUrls.length > 0 ? attachmentDataUrls : undefined,
                 videoDataUrl: videoDataUrl,
             };
 
             addRequest(newRequest);
-            resetNewRequestForm(); // Clear the form on success
+            resetNewRequestForm();
             setIsSubmitting(false);
-            navigate("/userdashboard/requests", {
-                state: {
-                    showSuccess: true,
-                    requestId: newRequest.requestId
-                }
-            });
+            navigate("/userdashboard/requests", { state: { showSuccess: true, requestId: newRequest.requestId } });
             return true;
         } catch (error) {
-            // Catch any unexpected errors during submission
             const errorMessage = `Failed to submit request: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`;
-            console.error('Unexpected error during request submission:', error);
             setSubmissionError(errorMessage);
             setIsSubmitting(false);
             return false;
@@ -371,5 +432,11 @@ export const useNewRequestForm = () => {
         setEquipmentSerial,
         equipmentCondition,
         setEquipmentCondition,
+        chargeTo,
+        setChargeTo,
+        propertyId,
+        setPropertyId,
+        unitId,
+        setUnitId,
     };
 };

@@ -7,7 +7,7 @@ interface JobCardProps {
     title: string;
     location: string;
     address: string;
-    payout: number;
+    payout?: number;
     priority: string;
     jobsAvailable?: number;
 }
@@ -56,12 +56,21 @@ const JobCard = ({
                 </div>
 
                 <div className="flex items-end justify-between mt-4 pt-4 border-t border-gray-100">
-                    <div>
-                        <p className="text-[10px] text-gray-500 font-medium uppercase mb-0.5">Payout</p>
-                        <p className="text-xl font-bold text-[#7CD947] flex items-center">
-                            $<span className="ml-0.5">{payout}</span>
-                        </p>
-                    </div>
+                    {payout !== undefined && payout > 0 ? (
+                        <div>
+                            <p className="text-[10px] text-gray-500 font-medium uppercase mb-0.5">Payout</p>
+                            <p className="text-xl font-bold text-[#7CD947] flex items-center">
+                                $<span className="ml-0.5">{payout}</span>
+                            </p>
+                        </div>
+                    ) : (
+                        <div>
+                            <p className="text-[10px] text-gray-500 font-medium uppercase mb-0.5">Rate</p>
+                            <p className="text-sm font-medium text-gray-500">
+                                Contact for quote
+                            </p>
+                        </div>
+                    )}
 
                     <Link to={`/service-dashboard/find-job/${id}`} className="px-6 py-2 bg-[#7CD947] hover:bg-[#6BC939] text-white text-sm font-semibold rounded-xl transition-colors shadow-lg shadow-[#7CD947]/30">
                         View

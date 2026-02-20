@@ -2,18 +2,19 @@ import React, { useState } from 'react';
 import { Plus, Minus, Trash2 } from 'lucide-react';
 import CustomDropdown from '../../../components/CustomDropdown';
 import DatePicker from '../../../../../components/ui/DatePicker';
-import { useMaintenanceRequestFormStore, type MaintenanceMaterial } from '../store/maintenanceRequestStore';
+import { useMaintenanceRequestFormStore, type MaintenanceMaterial, type ChargeToOption } from '../store/maintenanceRequestStore';
 
 interface Material extends MaintenanceMaterial {}
 
 interface DueDateMaterialsStepProps {
-    onNext: (data: { dateInitiated: Date | undefined; dateDue: Date | undefined; priority: string; materials: Material[] }) => void;
+    onNext: (data: { dateInitiated: Date | undefined; dateDue: Date | undefined; priority: string; materials: Material[]; chargeTo: ChargeToOption }) => void;
     onBack: () => void;
     initialData?: {
         dateInitiated?: Date;
         dateDue?: Date;
         priority?: string;
         materials?: Material[];
+        chargeTo?: ChargeToOption;
     };
 }
 
@@ -21,6 +22,7 @@ const DueDateMaterialsStep: React.FC<DueDateMaterialsStepProps> = ({ onNext, onB
     const [dateInitiated, setDateInitiated] = useState<Date | undefined>(initialData?.dateInitiated || new Date());
     const [dateDue, setDateDue] = useState<Date | undefined>(initialData?.dateDue);
     const [priority, setPriority] = useState(initialData?.priority || '');
+    const [chargeTo, setChargeTo] = useState<ChargeToOption>(initialData?.chargeTo || 'LANDLORD');
     const [materials, setMaterials] = useState<Material[]>(initialData?.materials || []);
 
     const setDue = useMaintenanceRequestFormStore((state) => state.setDue);
@@ -63,8 +65,8 @@ const DueDateMaterialsStep: React.FC<DueDateMaterialsStepProps> = ({ onNext, onB
                 </p>
             </div>
 
-            {/* Date Initiated, Date Due & Priority */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            {/* Date Initiated, Date Due, Priority & Charge To */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                 <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">Date Initiated*</label>
                     <DatePicker
@@ -94,6 +96,20 @@ const DueDateMaterialsStep: React.FC<DueDateMaterialsStepProps> = ({ onNext, onB
                         ]}
                         placeholder="Normal"
                         required
+                        buttonClassName="!bg-white !border-none !rounded-md !py-2.5"
+                    />
+                </div>
+                <div>
+                    <CustomDropdown
+                        label="Charge To"
+                        value={chargeTo}
+                        onChange={(v) => setChargeTo(v as ChargeToOption)}
+                        options={[
+                            { value: 'LANDLORD', label: 'Landlord' },
+                            { value: 'TENANT', label: 'Tenant' },
+                            { value: 'PENDING', label: 'Pending' }
+                        ]}
+                        placeholder="Landlord"
                         buttonClassName="!bg-white !border-none !rounded-md !py-2.5"
                     />
                 </div>
@@ -183,8 +199,9 @@ const DueDateMaterialsStep: React.FC<DueDateMaterialsStepProps> = ({ onNext, onB
                                 dateDue,
                                 priority,
                                 materials,
+                                chargeTo,
                             });
-                            onNext({ dateInitiated, dateDue, priority, materials });
+                            onNext({ dateInitiated, dateDue, priority, materials, chargeTo });
                         }}
                         className="flex-1 md:flex-none px-12 py-3 rounded-lg bg-[#3D7475] text-white font-bold hover:opacity-90 transition-opacity shadow-md"
                     >

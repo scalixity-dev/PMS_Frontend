@@ -59,6 +59,34 @@ export interface BackendServiceProvider {
   documents?: BackendServiceProviderDocument[];
 }
 
+export interface AvailableJob {
+  id: string;
+  title: string;
+  category: string;
+  subcategory?: string | null;
+  priority: string;
+  status: string;
+  requestedAt: string;
+  property?: {
+    propertyName: string;
+    address?: {
+      streetAddress?: string | null;
+      city?: string | null;
+      stateRegion?: string | null;
+      zipCode?: string | null;
+      country?: string | null;
+    };
+  };
+  unit?: {
+    id: string;
+    unitName: string;
+  };
+  photos?: Array<{ id: string; photoUrl: string; isPrimary?: boolean }>;
+  materials?: Array<{ id: string; materialName: string; quantity: number }>;
+  location: string;
+  address: string;
+}
+
 class ServiceProviderService {
   /**
    * Create a new service provider
@@ -144,6 +172,308 @@ class ServiceProviderService {
       }
       
       throw new Error(errorMessage);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Self-register as a service provider (public, no auth)
+   */
+  async selfRegister(data: CreateServiceProviderDto): Promise<unknown> {
+    const response = await fetch(API_ENDPOINTS.SERVICE_PROVIDER.SELF_REGISTER, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Failed to submit registration';
+      throw new Error(message);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get pending self-registered service providers (PM only)
+   */
+  async getPending(): Promise<BackendServiceProvider[]> {
+    const response = await fetch(API_ENDPOINTS.SERVICE_PROVIDER.GET_PENDING, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Failed to fetch pending providers';
+      throw new Error(message);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Approve a self-registered service provider (PM only)
+   */
+  async approveSelfRegistered(id: string): Promise<unknown> {
+    const response = await fetch(API_ENDPOINTS.SERVICE_PROVIDER.APPROVE(id), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Failed to approve provider';
+      throw new Error(message);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Reject a self-registered service provider (PM only)
+   */
+  async rejectSelfRegistered(id: string): Promise<unknown> {
+    const response = await fetch(API_ENDPOINTS.SERVICE_PROVIDER.REJECT(id), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Failed to reject provider';
+      throw new Error(message);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get assignments for the current service provider (me)
+   */
+  async getMyAssignments(status?: string): Promise<unknown[]> {
+    const url = status
+      ? `${API_ENDPOINTS.SERVICE_PROVIDER.GET_ME_ASSIGNMENTS}?status=${status}`
+      : API_ENDPOINTS.SERVICE_PROVIDER.GET_ME_ASSIGNMENTS;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Failed to fetch assignments';
+      throw new Error(message);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get available jobs for the current service provider
+   */
+  async getAvailableJobs(filters?: {
+    radius?: string;
+    category?: string;
+    priority?: string;
+    search?: string;
+  }): Promise<AvailableJob[]> {
+    const params = new URLSearchParams();
+    if (filters?.radius) params.append('radius', filters.radius);
+    if (filters?.category) params.append('category', filters.category);
+    if (filters?.priority) params.append('priority', filters.priority);
+    if (filters?.search) params.append('search', filters.search);
+
+    const url = `${API_ENDPOINTS.SERVICE_PROVIDER.GET_AVAILABLE_JOBS}${params.toString() ? `?${params.toString()}` : ''}`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Failed to fetch available jobs';
+      throw new Error(message);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get a single available job by ID
+   */
+  async getAvailableJobById(requestId: string): Promise<AvailableJob & { hasApplied?: boolean } | null> {
+    const response = await fetch(API_ENDPOINTS.SERVICE_PROVIDER.GET_AVAILABLE_JOB_BY_ID(requestId), {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return null;
+      }
+      const err = await response.json().catch(() => null);
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Failed to fetch job';
+      throw new Error(message);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Apply to a job (submit interest/quote)
+   */
+  async applyToJob(requestId: string, data?: { quotedAmount?: number; message?: string }): Promise<{ id: string; requestId: string; quotedAmount: number; message: string }> {
+    const response = await fetch(API_ENDPOINTS.SERVICE_PROVIDER.APPLY_TO_JOB(requestId), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(data ?? {}),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Failed to apply to job';
+      throw new Error(message);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get current service provider's profile
+   */
+  async getMyProfile(): Promise<BackendServiceProvider | null> {
+    const response = await fetch(API_ENDPOINTS.SERVICE_PROVIDER.GET_MY_PROFILE, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return null;
+      }
+      const err = await response.json().catch(() => null);
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Failed to fetch profile';
+      throw new Error(message);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Create or update current service provider's profile
+   */
+  async createOrUpdateMyProfile(data: CreateServiceProviderDto): Promise<BackendServiceProvider> {
+    const response = await fetch(API_ENDPOINTS.SERVICE_PROVIDER.CREATE_OR_UPDATE_MY_PROFILE, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Failed to save profile';
+      throw new Error(message);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Update assignment status
+   */
+  async updateAssignmentStatus(
+    serviceProviderId: string,
+    assignmentId: string,
+    status: string,
+  ): Promise<unknown> {
+    const response = await fetch(
+      API_ENDPOINTS.SERVICE_PROVIDER.UPDATE_ASSIGNMENT_STATUS(serviceProviderId, assignmentId),
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ status }),
+      },
+    );
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Failed to update assignment status';
+      throw new Error(message);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Assign service provider to a maintenance request
+   */
+  async assignToMaintenanceRequest(
+    serviceProviderId: string,
+    requestId: string,
+    options?: { scheduledDate?: string; notes?: string; quotedAmount?: number; quotedAmountCurrency?: string },
+  ): Promise<unknown> {
+    const response = await fetch(API_ENDPOINTS.SERVICE_PROVIDER.ASSIGN_TO_REQUEST(serviceProviderId, requestId), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(options ?? {}),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Failed to assign service provider to request';
+      throw new Error(message);
     }
 
     return response.json();

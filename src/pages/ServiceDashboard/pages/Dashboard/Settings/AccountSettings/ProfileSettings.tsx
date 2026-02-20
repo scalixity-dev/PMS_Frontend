@@ -1,16 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-    Check,
-} from 'lucide-react';
+import { Check } from 'lucide-react';
 import ServiceBreadCrumb from '../../../../components/ServiceBreadCrumb';
+import { useGetCurrentUser, useUpdateProfile } from '../../../../../../hooks/useAuthQueries';
 import ServiceTabs from '../../../../components/ServiceTabs';
 import DashboardButton from '../../../../components/DashboardButton';
 import DeleteConfirmationModal from '../../../../../../components/common/modals/DeleteConfirmationModal';
-import DatePicker from '../../../../../../components/ui/DatePicker';
 import SearchableDropdown from '../../../../../../components/ui/SearchableDropdown';
-import { Country, State, City } from 'country-state-city';
-import type { ICountry, IState, ICity } from 'country-state-city';
+import { Country, State } from 'country-state-city';
+import type { ICountry, IState } from 'country-state-city';
 
 const ProfileSettings = () => {
     const navigate = useNavigate();
@@ -27,23 +25,39 @@ const ProfileSettings = () => {
     // Location Data
     const [countries, setCountries] = useState<ICountry[]>([]);
     const [states, setStates] = useState<IState[]>([]);
-    const [cities, setCities] = useState<ICity[]>([]);
 
-    // Form Data
+    // Form Data - initialized from API
     const [formData, setFormData] = useState({
-        firstName: 'Siddak',
-        lastName: 'Bagga',
-        dob: '2002-11-13', // YYYY-MM-DD
-        email: 'siddakbagga@gmail.com', // Display-only mostly
-        phone: '+91 7400908219',
-        role: 'Landlord',
-
-        // Address
-        country: 'India',
-        state: 'Madhya Pradesh',
-        city: 'Indore',
-        pincode: '452001',
+        fullName: '',
+        email: '',
+        phoneNumber: '',
+        phoneCountryCode: '',
+        role: '',
+        country: '',
+        state: '',
+        address: '',
+        pincode: '',
     });
+
+    const { data: currentUser, isLoading: userLoading } = useGetCurrentUser();
+    const updateProfileMutation = useUpdateProfile();
+
+    // Populate form from current user
+    useEffect(() => {
+        if (currentUser) {
+            setFormData({
+                fullName: currentUser.fullName ?? '',
+                email: currentUser.email ?? '',
+                phoneNumber: currentUser.phoneNumber ?? '',
+                phoneCountryCode: currentUser.phoneCountryCode ?? '',
+                role: currentUser.role ?? 'Service Provider',
+                country: currentUser.country ?? '',
+                state: currentUser.state ?? '',
+                address: currentUser.address ?? '',
+                pincode: currentUser.pincode ?? '',
+            });
+        }
+    }, [currentUser]);
 
     // Load API Data
     useEffect(() => {
@@ -68,21 +82,6 @@ const ProfileSettings = () => {
         }
     }, [formData.country, countries]);
 
-    // Load cities when state changes
-    useEffect(() => {
-        if (formData.country && formData.state) {
-            const selectedCountry = countries.find(c => c.name === formData.country || c.isoCode === formData.country);
-            const selectedState = states.find(s => s.name === formData.state || s.isoCode === formData.state);
-
-            if (selectedCountry && selectedState) {
-                const stateCities = City.getCitiesOfState(selectedCountry.isoCode, selectedState.isoCode);
-                setCities(stateCities);
-            }
-        } else {
-            setCities([]);
-        }
-    }, [formData.country, formData.state, countries, states]);
-
     // Password Form
     const [passwordForm, setPasswordForm] = useState({
         oldPassword: '',
@@ -91,9 +90,14 @@ const ProfileSettings = () => {
     });
 
     const userProfile = {
-        name: `${formData.firstName} ${formData.lastName}`,
-        email: formData.email,
-        avatar: 'https://cdn.usegalileo.ai/sdxl10/24036f56-0610-4762-8176-805bc9713602.png', // Placeholder
+        name: formData.fullName || currentUser?.fullName || 'Service Provider',
+        email: formData.email || currentUser?.email || '',
+        initials: (formData.fullName || currentUser?.fullName || 'SP')
+            .split(/\s+/)
+            .map((n) => n[0])
+            .join('')
+            .toUpperCase()
+            .slice(0, 2),
     };
 
     // -- Handlers --
@@ -106,7 +110,33 @@ const ProfileSettings = () => {
     };
 
     const handleInputChange = (field: string, value: string) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+        setFormData((prev) => ({ ...prev, [field]: value }));
+    };
+
+    const handleSavePersonal = () => {
+        updateProfileMutation.mutate(
+            {
+                phoneCountryCode: formData.phoneCountryCode || undefined,
+                phoneNumber: formData.phoneNumber || undefined,
+            },
+            {
+                onSuccess: () => setIsEditingPersonal(false),
+            }
+        );
+    };
+
+    const handleSaveAddress = () => {
+        updateProfileMutation.mutate(
+            {
+                country: formData.country || undefined,
+                state: formData.state || undefined,
+                pincode: formData.pincode || undefined,
+                address: formData.address || undefined,
+            },
+            {
+                onSuccess: () => setIsEditingAddress(false),
+            }
+        );
     };
 
     const handlePasswordChange = (field: string, value: string) => {
@@ -184,12 +214,16 @@ const ProfileSettings = () => {
                     </div>
 
                     <div className="p-4 sm:p-8">
+                        {userLoading ? (
+                            <div className="py-12 text-center text-gray-500">Loading profile...</div>
+                        ) : (
+                            <>
                         {/* 1. Header Section (Avatar) */}
                         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-8 sm:mb-10">
                             <div className="relative">
                                 <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-4 border-white shadow-md bg-blue-100">
                                     <div className="w-full h-full flex items-center justify-center text-3xl sm:text-4xl font-bold text-gray-700 bg-coral-100 uppercase">
-                                        SB
+                                        {userProfile.initials}
                                     </div>
                                 </div>
                             </div>
@@ -204,67 +238,24 @@ const ProfileSettings = () => {
                             <div className="flex justify-between items-center mb-6">
                                 <h2 className="text-xl font-bold text-gray-900">Personal Information</h2>
                                 <DashboardButton
-                                    onClick={() => setIsEditingPersonal(!isEditingPersonal)}
+                                    onClick={() => (isEditingPersonal ? handleSavePersonal() : setIsEditingPersonal(true))}
+                                    disabled={updateProfileMutation.isPending}
                                     className="h-8 text-xs font-bold px-4"
                                 >
-                                    {isEditingPersonal ? 'Save' : 'Edit'}
+                                    {isEditingPersonal ? (updateProfileMutation.isPending ? 'Saving...' : 'Save') : 'Edit'}
                                 </DashboardButton>
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 sm:gap-x-6 gap-y-4 sm:gap-y-6">
-                                {/* First Name */}
+                                {/* Full Name (read-only) */}
                                 <div>
-                                    <label className="block text-xs font-semibold text-gray-700 mb-2 ml-1">First Name</label>
-                                    {isEditingPersonal ? (
-                                        <input
-                                            type="text"
-                                            value={formData.firstName}
-                                            onChange={(e) => handleInputChange('firstName', e.target.value)}
-                                            className="w-full p-3 bg-white border border-gray-300 rounded-lg text-sm text-gray-800 shadow-sm focus:ring-2 focus:ring-green-500 outline-none"
-                                        />
-                                    ) : (
-                                        <div className="w-full p-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-800 shadow-sm">
-                                            {formData.firstName}
-                                        </div>
-                                    )}
-                                </div>
-                                {/* Last Name */}
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-700 mb-2 ml-1">Last Name</label>
-                                    {isEditingPersonal ? (
-                                        <input
-                                            type="text"
-                                            value={formData.lastName}
-                                            onChange={(e) => handleInputChange('lastName', e.target.value)}
-                                            className="w-full p-3 bg-white border border-gray-300 rounded-lg text-sm text-gray-800 shadow-sm focus:ring-2 focus:ring-green-500 outline-none"
-                                        />
-                                    ) : (
-                                        <div className="w-full p-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-800 shadow-sm">
-                                            {formData.lastName}
-                                        </div>
-                                    )}
-                                </div>
-                                {/* Date of Birth */}
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-700 mb-2 ml-1">Date of Birth</label>
-                                    <DatePicker
-                                        value={formData.dob ? new Date(formData.dob) : undefined}
-                                        onChange={(date) => {
-                                            if (date) {
-                                                // persistent format YYYY-MM-DD
-                                                const offsetDate = new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
-                                                const dateString = offsetDate.toISOString().split('T')[0];
-                                                handleInputChange('dob', dateString);
-                                            } else {
-                                                handleInputChange('dob', '');
-                                            }
-                                        }}
-                                        disabled={!isEditingPersonal}
-                                        className="w-full border-gray-300 rounded-lg text-sm text-gray-800 shadow-sm focus:ring-2 focus:ring-green-500 outline-none"
-                                    />
+                                    <label className="block text-xs font-semibold text-gray-700 mb-2 ml-1">Full Name</label>
+                                    <div className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600 shadow-sm">
+                                        {formData.fullName}
+                                    </div>
                                 </div>
 
-                                {/* Email Address (Form Field) */}
+                                {/* Email Address (read-only) */}
                                 <div>
                                     <label className="block text-xs font-semibold text-gray-700 mb-2 ml-1">Email Address</label>
                                     <div className="w-full p-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-800 shadow-sm flex items-center justify-between">
@@ -279,15 +270,24 @@ const ProfileSettings = () => {
                                 <div>
                                     <label className="block text-xs font-semibold text-gray-700 mb-2 ml-1">Phone Number</label>
                                     {isEditingPersonal ? (
-                                        <input
-                                            type="text"
-                                            value={formData.phone}
-                                            onChange={(e) => handleInputChange('phone', e.target.value)}
-                                            className="w-full p-3 bg-white border border-gray-300 rounded-lg text-sm text-gray-800 shadow-sm focus:ring-2 focus:ring-green-500 outline-none"
-                                        />
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                placeholder="Code"
+                                                value={formData.phoneCountryCode}
+                                                onChange={(e) => handleInputChange('phoneCountryCode', e.target.value)}
+                                                className="w-20 p-3 bg-white border border-gray-300 rounded-lg text-sm text-gray-800 shadow-sm focus:ring-2 focus:ring-green-500 outline-none"
+                                            />
+                                            <input
+                                                type="text"
+                                                value={formData.phoneNumber}
+                                                onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+                                                className="flex-1 p-3 bg-white border border-gray-300 rounded-lg text-sm text-gray-800 shadow-sm focus:ring-2 focus:ring-green-500 outline-none"
+                                            />
+                                        </div>
                                     ) : (
                                         <div className="w-full p-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-800 shadow-sm">
-                                            {formData.phone}
+                                            {formData.phoneCountryCode ? `${formData.phoneCountryCode} ` : ''}{formData.phoneNumber || '-'}
                                         </div>
                                     )}
                                 </div>
@@ -374,10 +374,11 @@ const ProfileSettings = () => {
                             <div className="flex justify-between items-center mb-6">
                                 <h2 className="text-xl font-bold text-gray-900">Address</h2>
                                 <DashboardButton
-                                    onClick={() => setIsEditingAddress(!isEditingAddress)}
+                                    onClick={() => (isEditingAddress ? handleSaveAddress() : setIsEditingAddress(true))}
+                                    disabled={updateProfileMutation.isPending}
                                     className="h-8 text-xs font-bold px-4"
                                 >
-                                    {isEditingAddress ? 'Save' : 'Edit'}
+                                    {isEditingAddress ? (updateProfileMutation.isPending ? 'Saving...' : 'Save') : 'Edit'}
                                 </DashboardButton>
                             </div>
 
@@ -390,8 +391,7 @@ const ProfileSettings = () => {
                                             options={countries.map(c => c.name)}
                                             onChange={(value) => {
                                                 handleInputChange('country', value);
-                                                handleInputChange('state', ''); // Reset state
-                                                handleInputChange('city', ''); // Reset city
+                                                handleInputChange('state', '');
                                             }}
                                             placeholder="Select Country"
                                             buttonClassName="w-full flex items-center justify-between bg-white border border-gray-300 px-3 py-2.5 rounded-lg text-sm shadow-sm hover:border-gray-400 transition-colors"
@@ -410,10 +410,7 @@ const ProfileSettings = () => {
                                         <SearchableDropdown
                                             value={formData.state}
                                             options={states.map(s => s.name)}
-                                            onChange={(value) => {
-                                                handleInputChange('state', value);
-                                                handleInputChange('city', ''); // Reset city
-                                            }}
+                                            onChange={(value) => handleInputChange('state', value)}
                                             placeholder="Select State"
                                             buttonClassName="w-full flex items-center justify-between bg-white border border-gray-300 px-3 py-2.5 rounded-lg text-sm shadow-sm hover:border-gray-400 transition-colors"
                                             className="w-full"
@@ -425,21 +422,19 @@ const ProfileSettings = () => {
                                         </div>
                                     )}
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-700 mb-2 ml-1">City</label>
+                                <div className="sm:col-span-2">
+                                    <label className="block text-xs font-semibold text-gray-700 mb-2 ml-1">Address</label>
                                     {isEditingAddress ? (
-                                        <SearchableDropdown
-                                            value={formData.city}
-                                            options={cities.map(c => c.name)}
-                                            onChange={(value) => handleInputChange('city', value)}
-                                            placeholder="Select City"
-                                            buttonClassName="w-full flex items-center justify-between bg-white border border-gray-300 px-3 py-2.5 rounded-lg text-sm shadow-sm hover:border-gray-400 transition-colors"
-                                            className="w-full"
-                                            allowCustomValue={true}
+                                        <input
+                                            type="text"
+                                            value={formData.address}
+                                            onChange={(e) => handleInputChange('address', e.target.value)}
+                                            placeholder="Street address, city"
+                                            className="w-full p-3 bg-white border border-gray-300 rounded-lg text-sm text-gray-800 shadow-sm focus:ring-2 focus:ring-green-500 outline-none"
                                         />
                                     ) : (
                                         <div className="w-full p-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-800 shadow-sm">
-                                            {formData.city}
+                                            {formData.address || '-'}
                                         </div>
                                     )}
                                 </div>
@@ -473,6 +468,8 @@ const ProfileSettings = () => {
                                 Delete Account
                             </button>
                         </div>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

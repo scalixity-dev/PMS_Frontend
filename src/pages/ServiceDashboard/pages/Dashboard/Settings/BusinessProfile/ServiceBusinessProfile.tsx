@@ -5,6 +5,7 @@ import {
     Camera,
     X
 } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import ServiceBreadCrumb from '../../../../components/ServiceBreadCrumb';
 import ServiceTabs from '../../../../components/ServiceTabs';
 import DashboardButton from '../../../../components/DashboardButton';
@@ -13,6 +14,8 @@ import SearchableDropdown from '../../../../../../components/ui/SearchableDropdo
 import DeleteConfirmationModal from '../../../../../../components/common/modals/DeleteConfirmationModal';
 import { Country, State, City } from 'country-state-city';
 import type { ICountry, IState, ICity } from 'country-state-city';
+import { useGetCurrentUser } from '../../../../../../hooks/useAuthQueries';
+import { serviceProviderService, type BackendServiceProvider, type CreateServiceProviderDto } from '../../../../../../services/service-provider.service';
 
 // Define service categories and their options
 const SERVICE_CATEGORIES = [
@@ -57,21 +60,62 @@ const ServiceBusinessProfile = () => {
     const [isChangingPassword, setIsChangingPassword] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [isSavingPersonal, setIsSavingPersonal] = useState(false);
+    const [isSavingAddress, setIsSavingAddress] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
+    const [saveSuccess, setSaveSuccess] = useState(false);
 
-    // Form Data State
+    // Fetch current user and service provider profile
+    const { data: currentUser, isLoading: isLoadingUser } = useGetCurrentUser();
+    const { data: profile, isLoading: isLoadingProfile, refetch: refetchProfile } = useQuery<BackendServiceProvider | null>({
+        queryKey: ['service-provider', 'my-profile'],
+        queryFn: async () => {
+            try {
+                return await serviceProviderService.getMyProfile();
+            } catch (error) {
+                // Profile doesn't exist yet, return null
+                return null;
+            }
+        },
+    });
+
+    const queryClient = useQueryClient();
+
+    const saveProfileMutation = useMutation({
+        mutationFn: (data: CreateServiceProviderDto) => serviceProviderService.createOrUpdateMyProfile(data),
+        onSuccess: () => {
+            setSaveSuccess(true);
+            setSaveError(null);
+            setIsEditingPersonal(false);
+            setIsEditingAddress(false);
+            refetchProfile();
+            queryClient.invalidateQueries({ queryKey: ['service-provider'] });
+            setTimeout(() => setSaveSuccess(false), 3000);
+        },
+        onError: (error: Error) => {
+            setSaveError(error.message);
+            setSaveSuccess(false);
+        },
+    });
+
+    // Form Data State - initialized from API
     const [formData, setFormData] = useState({
-        firstName: 'Siddak',
-        lastName: 'Bagga',
-        email: 'siddakbagga@gmail.com',
-        phone: '+91 9999999999',
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        phoneCountryCode: '',
         displayPhone: true,
-        password: '', // Should be empty initially
-        country: 'India',
-        state: 'Madhya Pradesh',
-        city: 'Indore',
-        pincode: '452001',
+        password: '',
+        country: '',
+        state: '',
+        city: '',
+        pincode: '',
+        address: '',
         description: '',
-        services: ['House Cleaning', 'Window', 'Commercial Cleaning Service'] as string[],
+        companyName: '',
+        category: '',
+        subcategory: '',
+        services: [] as string[],
         coverPhoto: null as string | null
     });
 
@@ -100,10 +144,51 @@ const ServiceBusinessProfile = () => {
         setPasswordForm({ oldPassword: '', newPassword: '', confirmPassword: '' });
     };
 
+    // Initialize form data from API
+    useEffect(() => {
+        if (profile) {
+            const phoneNumber = profile.phoneNumber || '';
+            const phoneCountryCode = profile.phoneCountryCode || '';
+            const fullPhone = phoneCountryCode && phoneNumber ? `${phoneCountryCode} ${phoneNumber}` : phoneNumber;
+
+            setFormData(prev => ({
+                ...prev,
+                firstName: profile.firstName || '',
+                lastName: profile.lastName || '',
+                email: profile.email || currentUser?.email || '',
+                phone: fullPhone,
+                phoneCountryCode: phoneCountryCode,
+                country: profile.country || '',
+                state: profile.state || '',
+                city: profile.city || '',
+                pincode: profile.zipCode || '',
+                address: profile.address || '',
+                companyName: profile.companyName || '',
+                category: profile.category || '',
+                subcategory: profile.subcategory || '',
+                coverPhoto: profile.photoUrl || null,
+                services: profile.subcategory ? [profile.subcategory] : [],
+            }));
+            if (profile.category) {
+                setSelectedCategory(profile.category);
+            }
+        } else if (currentUser) {
+            // If no profile exists, use user data
+            setFormData(prev => ({
+                ...prev,
+                email: currentUser.email || '',
+            }));
+        }
+    }, [profile, currentUser]);
+
+    // Compute user profile for display
+    const userName = profile ? `${profile.firstName} ${profile.lastName}`.trim() : currentUser?.fullName || 'Service Provider';
+    const userEmail = formData.email || currentUser?.email || '';
+    const userAvatar = profile?.photoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=7CD947&color=fff`;
     const userProfile = {
-        name: `${formData.firstName} ${formData.lastName}`,
-        email: formData.email,
-        avatar: 'https://cdn.usegalileo.ai/sdxl10/24036f56-0610-4762-8176-805bc9713602.png',
+        name: userName,
+        email: userEmail,
+        avatar: userAvatar,
     };
 
     // Derived available options based on selected category
@@ -152,22 +237,97 @@ const ServiceBusinessProfile = () => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
-    const handleSavePersonal = () => {
+    const handleSavePersonal = async () => {
         if (isEditingPersonal) {
             // Validation
             if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.email.trim()) {
-                alert("Please fill in First Name, Last Name and Email.");
+                setSaveError("Please fill in First Name, Last Name and Email.");
                 return;
             }
-            // Save Simulation
+            if (!formData.companyName.trim()) {
+                setSaveError("Company Name is required.");
+                return;
+            }
+            if (!formData.category) {
+                setSaveError("Please select a service category.");
+                return;
+            }
+
             setIsSavingPersonal(true);
-            setTimeout(() => {
-                setIsSavingPersonal(false);
-                setIsEditingPersonal(false);
-                // alert("Personal information updated.");
-            }, 800);
+            setSaveError(null);
+
+            // Parse phone number
+            const phoneParts = formData.phone.trim().split(' ');
+            const phoneCountryCode = phoneParts.length > 1 ? phoneParts[0] : formData.phoneCountryCode || '';
+            const phoneNumber = phoneParts.length > 1 ? phoneParts.slice(1).join(' ') : formData.phone;
+
+            const saveData: CreateServiceProviderDto = {
+                firstName: formData.firstName.trim(),
+                lastName: formData.lastName.trim(),
+                email: formData.email.trim(),
+                phoneNumber: phoneNumber.trim(),
+                phoneCountryCode: phoneCountryCode || undefined,
+                companyName: formData.companyName.trim(),
+                category: formData.category,
+                subcategory: formData.subcategory || formData.services[0] || undefined,
+                address: formData.address.trim(),
+                city: formData.city || undefined,
+                state: formData.state.trim(),
+                zipCode: formData.pincode.trim(),
+                country: formData.country.trim(),
+                photoUrl: formData.coverPhoto || undefined,
+            };
+
+            saveProfileMutation.mutate(saveData, {
+                onSettled: () => {
+                    setIsSavingPersonal(false);
+                },
+            });
         } else {
             setIsEditingPersonal(true);
+        }
+    };
+
+    const handleSaveAddress = async () => {
+        if (isEditingAddress) {
+            // Validation
+            if (!formData.address.trim() || !formData.state.trim() || !formData.country.trim() || !formData.pincode.trim()) {
+                setSaveError("Please fill in all required address fields.");
+                return;
+            }
+
+            setIsSavingAddress(true);
+            setSaveError(null);
+
+            // Parse phone number
+            const phoneParts = formData.phone.trim().split(' ');
+            const phoneCountryCode = phoneParts.length > 1 ? phoneParts[0] : formData.phoneCountryCode || '';
+            const phoneNumber = phoneParts.length > 1 ? phoneParts.slice(1).join(' ') : formData.phone;
+
+            const saveData: CreateServiceProviderDto = {
+                firstName: formData.firstName.trim() || 'Service',
+                lastName: formData.lastName.trim() || 'Provider',
+                email: formData.email.trim() || currentUser?.email || '',
+                phoneNumber: phoneNumber.trim(),
+                phoneCountryCode: phoneCountryCode || undefined,
+                companyName: formData.companyName.trim() || 'Company',
+                category: formData.category || selectedCategory,
+                subcategory: formData.subcategory || formData.services[0] || undefined,
+                address: formData.address.trim(),
+                city: formData.city || undefined,
+                state: formData.state.trim(),
+                zipCode: formData.pincode.trim(),
+                country: formData.country.trim(),
+                photoUrl: formData.coverPhoto || undefined,
+            };
+
+            saveProfileMutation.mutate(saveData, {
+                onSettled: () => {
+                    setIsSavingAddress(false);
+                },
+            });
+        } else {
+            setIsEditingAddress(true);
         }
     };
 
@@ -182,9 +342,11 @@ const ServiceBusinessProfile = () => {
         setFormData(prev => {
             const currentServices = prev.services;
             if (currentServices.includes(service)) {
-                return { ...prev, services: currentServices.filter(s => s !== service) };
+                const newServices = currentServices.filter(s => s !== service);
+                return { ...prev, services: newServices, subcategory: newServices[0] || prev.subcategory };
             } else {
-                return { ...prev, services: [...currentServices, service] };
+                const newServices = [...currentServices, service];
+                return { ...prev, services: newServices, subcategory: newServices[0] || prev.subcategory };
             }
         });
     };
@@ -263,25 +425,49 @@ const ServiceBusinessProfile = () => {
                     </div>
 
                     <div className="p-8">
+                        {/* Loading State */}
+                        {(isLoadingUser || isLoadingProfile) && (
+                            <div className="flex items-center justify-center py-12">
+                                <div className="text-gray-500">Loading profile...</div>
+                            </div>
+                        )}
+
+                        {/* Success Message */}
+                        {saveSuccess && (
+                            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
+                                <CheckCircle2 className="w-5 h-5 text-green-600" />
+                                <span className="text-sm text-green-700 font-medium">Profile saved successfully!</span>
+                            </div>
+                        )}
+
+                        {/* Error Message */}
+                        {saveError && (
+                            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                                <p className="text-sm text-red-700">{saveError}</p>
+                            </div>
+                        )}
+
                         {/* Profile Header */}
-                        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-12">
-                            <div className="relative">
-                                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-md bg-blue-100">
-                                    <img
-                                        src={userProfile.avatar}
-                                        alt={userProfile.name}
-                                        className="w-full h-full object-cover"
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).src = 'https://ui-avatars.com/api/?name=User&background=ff6b6b&color=fff';
-                                        }}
-                                    />
+                        {!isLoadingUser && !isLoadingProfile && (
+                            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-12">
+                                <div className="relative">
+                                    <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-md bg-blue-100">
+                                        <img
+                                            src={userProfile.avatar}
+                                            alt={userProfile.name}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                (e.target as HTMLImageElement).src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(userProfile.name) + '&background=7CD947&color=fff';
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="text-center sm:text-left mt-2">
+                                    <h1 className="text-2xl font-bold text-gray-900">{userProfile.name}</h1>
+                                    <p className="text-gray-500">{userProfile.email}</p>
                                 </div>
                             </div>
-                            <div className="text-center sm:text-left mt-2">
-                                <h1 className="text-2xl font-bold text-gray-900">{userProfile.name}</h1>
-                                <p className="text-gray-500">{userProfile.email}</p>
-                            </div>
-                        </div>
+                        )}
 
                         {/* Personal Information */}
                         <div className="mb-12">
@@ -330,11 +516,27 @@ const ServiceBusinessProfile = () => {
                                 <div>
                                     <label className="block text-xs font-semibold text-gray-700 mb-2 ml-1">Email Address</label>
                                     <div className="w-full p-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-800 shadow-sm flex items-center justify-between">
-                                        <span className="truncate pr-2">{formData.email}</span>
+                                        <span className="truncate pr-2">{formData.email || currentUser?.email || ''}</span>
                                         <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
                                             <Check className="w-3 h-3 text-green-600" />
                                         </div>
                                     </div>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-700 mb-2 ml-1">Company Name</label>
+                                    {isEditingPersonal ? (
+                                        <input
+                                            type="text"
+                                            value={formData.companyName}
+                                            onChange={(e) => handleInputChange('companyName', e.target.value)}
+                                            className="w-full p-3 bg-white border border-gray-300 rounded-lg text-sm text-gray-800 shadow-sm focus:ring-2 focus:ring-green-500 outline-none"
+                                            placeholder="Enter company name"
+                                        />
+                                    ) : (
+                                        <div className="w-full p-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-800 shadow-sm">
+                                            {formData.companyName || 'Not set'}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -347,10 +549,11 @@ const ServiceBusinessProfile = () => {
                                             value={formData.phone}
                                             onChange={(e) => handleInputChange('phone', e.target.value)}
                                             className="w-full p-3 bg-white border border-gray-300 rounded-lg text-sm text-gray-800 shadow-sm mb-3 focus:ring-2 focus:ring-green-500 outline-none"
+                                            placeholder="+1 1234567890"
                                         />
                                     ) : (
                                         <div className="w-full p-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-800 shadow-sm mb-3">
-                                            {formData.phone}
+                                            {formData.phone || profile?.phoneNumber || 'Not set'}
                                         </div>
                                     )}
                                     <div
@@ -386,7 +589,7 @@ const ServiceBusinessProfile = () => {
                                         </span>
                                     </div>
                                 </div>
-                                <div className="text-xs text-gray-400 mt-1 ml-1">Your email is {formData.email}</div>
+                                <div className="text-xs text-gray-400 mt-1 ml-1">Your email is {formData.email || currentUser?.email || ''}</div>
 
 
                                 <div className="flex justify-between items-center py-2 border-b border-gray-50 border-dashed mt-4">
@@ -455,11 +658,31 @@ const ServiceBusinessProfile = () => {
                             <div className="flex justify-between items-center mb-6">
                                 <h2 className="text-lg font-bold text-gray-900">Business Address</h2>
                                 <DashboardButton
-                                    onClick={() => setIsEditingAddress(!isEditingAddress)}
+                                    onClick={handleSaveAddress}
+                                    disabled={isSavingAddress}
                                     className="h-8 text-xs font-bold"
                                 >
-                                    {isEditingAddress ? 'Save' : 'Edit'}
+                                    {isSavingAddress ? 'Saving...' : (isEditingAddress ? 'Save' : 'Edit')}
                                 </DashboardButton>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                                <div className="lg:col-span-4">
+                                    <label className="block text-xs font-semibold text-gray-700 mb-2 ml-1">Street Address</label>
+                                    {isEditingAddress ? (
+                                        <input
+                                            type="text"
+                                            value={formData.address}
+                                            onChange={(e) => handleInputChange('address', e.target.value)}
+                                            className="w-full p-3 bg-white border border-gray-300 rounded-lg text-sm text-gray-800 shadow-sm focus:ring-2 focus:ring-green-500 outline-none"
+                                            placeholder="Enter street address"
+                                        />
+                                    ) : (
+                                        <div className="w-full p-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-800 shadow-sm">
+                                            {formData.address || 'Not set'}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -549,9 +772,12 @@ const ServiceBusinessProfile = () => {
 
                             <div className="mb-6 max-w-sm">
                                 <SearchableDropdown
-                                    value={selectedCategory}
+                                    value={selectedCategory || formData.category}
                                     options={SERVICE_CATEGORIES.map(c => c.label)}
-                                    onChange={(value) => setSelectedCategory(value)}
+                                    onChange={(value) => {
+                                        setSelectedCategory(value);
+                                        handleInputChange('category', value);
+                                    }}
                                     placeholder="Select a service category"
                                     buttonClassName="w-full flex items-center justify-between bg-white border border-gray-200 px-4 py-3 rounded-lg font-medium shadow-sm hover:border-gray-300 transition-colors"
                                     className="w-full"

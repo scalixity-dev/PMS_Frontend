@@ -33,6 +33,7 @@ import LandlordUseCasesPage from './pages/basewebsite/usecases/landlord';
 import ResourcePage from './pages/basewebsite/resources';
 import TenantPage from './pages/basewebsite/usecases/tenant';
 import ServiceProsPage from './pages/basewebsite/usecases/servicepros';
+import BecomeServiceProvider from './pages/basewebsite/features/BecomeServiceProvider';
 import Dashboard from './pages/Dashboard/Dashboard';
 import ListUnit from './pages/Dashboard/features/ListUnit';
 import AddProperty from './pages/Dashboard/features/Properties/AddProperty';
@@ -255,6 +256,7 @@ const App: React.FC = () => {
             <Route element={<AppLayout />}>
               <Route path="/" element={<HomePage />} />
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/forgot-password" element={<LoginPage />} />
               <Route path="/signup" element={<SignUpPage />} />
               <Route path="/signup/oauth-complete" element={<OAuthCompletePage />} />
               <Route path="/signup/tenant-onboarding-flow" element={<TenantOnboardingFlow />} />
@@ -267,6 +269,7 @@ const App: React.FC = () => {
               <Route path="/usecases/landlord" element={<LandlordUseCasesPage />} />
               <Route path="/usecases/tenant" element={<TenantPage />} />
               <Route path="/usecases/servicepros" element={<ServiceProsPage />} />
+              <Route path="/become-service-provider" element={<BecomeServiceProvider />} />
               <Route path="/features/screening" element={<ScreeningPage />} />
               <Route path="/features/lease" element={<LeasePage />} />
               <Route path="/features/finance" element={<FinancePage />} />

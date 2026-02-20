@@ -1,56 +1,61 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import RequestCard from './components/RequestCard';
 import DashboardButton from '../../components/DashboardButton';
 import ServiceTabs from '../../components/ServiceTabs';
 import { PiEnvelopeSimpleLight, PiToolboxLight } from 'react-icons/pi';
-
+import { useServiceProviderAssignments } from '../../../../hooks/useServiceProviderAssignments';
+import { useGetCurrentUser } from '../../../../hooks/useAuthQueries';
 
 interface RequestItem {
     id: string;
+    assignmentId?: string;
+    serviceProviderId?: string;
     status: 'Normal' | 'Urgent' | 'Critical';
     category: string;
     propertyName: string;
     tabStatus: 'new_request' | 'in_process';
 }
 
-const mockRequests: RequestItem[] = [
-    {
-        id: '1',
-        status: 'Normal',
-        category: 'Appliances / Refrigerator / Other',
-        propertyName: 'Luxury Application',
-        tabStatus: 'new_request'
-    },
-    {
-        id: '2',
-        status: 'Critical',
-        category: 'Plumbing / Leak',
-        propertyName: 'Sunset Apartments',
-        tabStatus: 'new_request'
-    },
-    {
-        id: '3',
-        status: 'Urgent',
-        category: 'Electrical / Outage',
-        propertyName: 'Downtown Lofts',
-        tabStatus: 'in_process'
-    },
-    {
-        id: '4',
-        status: 'Normal',
-        category: 'General / Maintenance',
-        propertyName: 'Green Valley',
-        tabStatus: 'new_request'
-    },
-    {
-        id: '5',
-        status: 'Normal',
-        category: 'HVAC / Heating',
-        propertyName: 'Skyline Tower',
-        tabStatus: 'in_process'
-    }
-];
+type AssignmentApi = {
+    id: string;
+    serviceProviderId?: string;
+    requestId: string;
+    status: string;
+    request?: {
+        id: string;
+        category?: string;
+        subcategory?: string;
+        issue?: string;
+        priority?: string;
+        property?: { propertyName?: string };
+    };
+};
+
+function mapAssignmentToRequestItem(a: AssignmentApi): RequestItem {
+    const statusMap: Record<string, 'Normal' | 'Urgent' | 'Critical'> = {
+        LOW: 'Normal',
+        MEDIUM: 'Normal',
+        HIGH: 'Urgent',
+        URGENT: 'Critical',
+    };
+    const req = a.request;
+    const category = req
+        ? [req.category, req.subcategory, req.issue].filter(Boolean).join(' / ') || 'Maintenance'
+        : 'Maintenance';
+    const tabStatus: 'new_request' | 'in_process' =
+        a.status === 'ASSIGNED' || a.status === 'VENDOR_NOTIFIED' ? 'new_request' : 'in_process';
+
+    return {
+        id: a.requestId ?? a.id,
+        assignmentId: a.id,
+        serviceProviderId: a.serviceProviderId,
+        status: statusMap[req?.priority ?? ''] ?? 'Normal',
+        category,
+        propertyName: req?.property?.propertyName ?? 'Property',
+        tabStatus,
+    };
+}
 
 interface DashboardContext {
     sidebarCollapsed: boolean;
@@ -61,7 +66,13 @@ const ServiceDashboard: React.FC = () => {
     const { sidebarCollapsed } = useOutletContext<DashboardContext>() || { sidebarCollapsed: false };
     const navigate = useNavigate();
 
-    const filteredRequests = mockRequests.filter(req => req.tabStatus === activeTab);
+    const { data: currentUser } = useGetCurrentUser();
+    const { data: assignments = [], isLoading: assignmentsLoading } = useServiceProviderAssignments();
+    const requests: RequestItem[] = useMemo(() => {
+        if (!Array.isArray(assignments)) return [];
+        return (assignments as AssignmentApi[]).map(mapAssignmentToRequestItem);
+    }, [assignments]);
+    const filteredRequests = requests.filter((req) => req.tabStatus === activeTab);
 
     return (
         <div className={`flex flex-col lg:flex-row gap-6 p-2 mx-auto transition-all duration-300 ${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'}`}>
@@ -72,13 +83,20 @@ const ServiceDashboard: React.FC = () => {
                 {/* Profile Card */}
                 <div className="bg-white rounded-3xl shadow-sm p-6 flex flex-col items-center text-center border border-gray-100">
                     <div className="w-24 h-24 bg-coral-100 rounded-full mb-4 overflow-hidden relative flex items-center justify-center text-4xl font-bold text-gray-700">
-                        SB
+                        {currentUser?.fullName
+                            ? currentUser.fullName
+                                  .split(/\s+/)
+                                  .map((n) => n[0])
+                                  .join('')
+                                  .toUpperCase()
+                                  .slice(0, 2) || 'SP'
+                            : 'SP'}
                     </div>
                     <h2 className="text-xl font-bold text-gray-900">
-                        Service Provider
+                        {currentUser?.fullName ?? 'Service Provider'}
                     </h2>
                     <p className="text-gray-500 text-sm">
-                        {/* Email can be populated once a service auth context is wired */}
+                        {currentUser?.email ?? ''}
                     </p>
                 </div>
 
@@ -180,7 +198,11 @@ const ServiceDashboard: React.FC = () => {
                 </div>
 
                 {/* Content Area - Request Cards */}
-                {filteredRequests.length > 0 ? (
+                {assignmentsLoading ? (
+                    <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-gray-200 shadow-sm">
+                        <p className="text-gray-500">Loading requests...</p>
+                    </div>
+                ) : filteredRequests.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {filteredRequests.map((request) => (
                             <RequestCard
@@ -200,7 +222,7 @@ const ServiceDashboard: React.FC = () => {
                                 : <PiToolboxLight size={40} className="text-gray-400" />
                             }
                         </div>
-                        {mockRequests.length === 0 ? (
+                        {requests.length === 0 ? (
                             <>
                                 <h3 className="text-xl font-bold text-gray-900 mb-2">No requests yet</h3>
                                 <p className="text-gray-500 text-center max-w-md px-6 leading-relaxed">

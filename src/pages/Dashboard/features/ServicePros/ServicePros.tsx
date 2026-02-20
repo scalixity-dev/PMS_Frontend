@@ -3,7 +3,7 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import DashboardFilter from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
 import ServiceProCard from './components/ServiceProCard';
-import { Plus, ChevronLeft, Loader2, AlertCircle } from 'lucide-react';
+import { Plus, ChevronLeft, Loader2, AlertCircle, Check, X } from 'lucide-react';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import { serviceProviderService, type BackendServiceProvider } from '../../../../services/service-provider.service';
 
@@ -23,6 +23,7 @@ const ServicePros = () => {
     const sidebarCollapsed = context?.sidebarCollapsed ?? false;
     const [, setFilters] = useState<Record<string, string[]>>({});
     const [servicePros, setServicePros] = useState<ServiceProCardData[]>([]);
+    const [pendingProviders, setPendingProviders] = useState<BackendServiceProvider[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -49,12 +50,25 @@ const ServicePros = () => {
         return category;
     };
 
+    const fetchPending = async () => {
+        try {
+            const pending = await serviceProviderService.getPending();
+            setPendingProviders(pending);
+        } catch {
+            setPendingProviders([]);
+        }
+    };
+
     // Fetch service providers from API
     const fetchServiceProviders = async () => {
         setIsLoading(true);
         setError(null);
         try {
-            const data = await serviceProviderService.getAll(true); // Only fetch active service providers
+            const [data, pending] = await Promise.all([
+                serviceProviderService.getAll(true),
+                serviceProviderService.getPending(),
+            ]);
+            setPendingProviders(pending);
 
             // Transform backend data to card format
             const transformedData: ServiceProCardData[] = data.map((provider: BackendServiceProvider) => ({
@@ -79,6 +93,25 @@ const ServicePros = () => {
     useEffect(() => {
         fetchServiceProviders();
     }, []);
+
+    const handleApprove = async (id: string) => {
+        try {
+            await serviceProviderService.approveSelfRegistered(id);
+            await fetchServiceProviders();
+            await fetchPending();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to approve');
+        }
+    };
+
+    const handleReject = async (id: string) => {
+        try {
+            await serviceProviderService.rejectSelfRegistered(id);
+            await fetchPending();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to reject');
+        }
+    };
 
     const handleSearchChange = (_search: string) => {
         // TODO: Implement search functionality
@@ -176,6 +209,50 @@ const ServicePros = () => {
                         </button>
                     </div>
                 </div>
+
+                {/* Pending Registrations */}
+                {pendingProviders.length > 0 && (
+                    <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                        <h3 className="text-lg font-semibold text-amber-900 mb-3 flex items-center gap-2">
+                            <AlertCircle size={20} />
+                            Pending Service Provider Registrations ({pendingProviders.length})
+                        </h3>
+                        <div className="space-y-2">
+                            {pendingProviders.map((p) => (
+                                <div
+                                    key={p.id}
+                                    className="flex items-center justify-between p-3 bg-white rounded-lg border border-amber-100"
+                                >
+                                    <div>
+                                        <p className="font-medium text-gray-900">
+                                            {p.firstName} {p.lastName} – {p.companyName}
+                                        </p>
+                                        <p className="text-sm text-gray-600">
+                                            {p.category}
+                                            {p.subcategory ? ` - ${p.subcategory}` : ''} • {p.email}
+                                        </p>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => handleApprove(p.id)}
+                                            className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 flex items-center gap-1"
+                                        >
+                                            <Check size={16} />
+                                            Approve
+                                        </button>
+                                        <button
+                                            onClick={() => handleReject(p.id)}
+                                            className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 flex items-center gap-1"
+                                        >
+                                            <X size={16} />
+                                            Reject
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* Filter Section */}
                 <DashboardFilter

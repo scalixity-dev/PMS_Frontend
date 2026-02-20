@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { ChevronLeft } from "lucide-react";
 import { useLocation, useNavigate, UNSAFE_NavigationContext } from "react-router-dom";
 import { useNewRequestForm } from "./hooks/useNewRequestForm";
@@ -8,6 +8,8 @@ import User__AdvancedRequestForm from "./components/UserStep1RequestForm";
 import UserStep2PropertyTenants from "./components/UserStep2PropertyTenants";
 import UserStep3DueDateMaterials from "./components/UserStep3DueDateMaterials";
 import { propertiesList } from "./constants/requestData";
+import { useGetCurrentUser } from "../../../../hooks/useAuthQueries";
+import { useGetLeasesByTenant } from "../../../../hooks/useLeaseQueries";
 
 
 
@@ -65,7 +67,29 @@ const NewRequest: React.FC = () => {
     setEquipmentCondition,
     amount,
     setAmount,
+    chargeTo,
+    setChargeTo,
+    propertyId,
+    setPropertyId,
+    unitId,
+    setUnitId,
   } = useNewRequestForm();
+
+  const { data: currentUser } = useGetCurrentUser();
+  const { data: leases = [] } = useGetLeasesByTenant(currentUser?.id ?? null);
+
+  const propertyOptions = useMemo(() => {
+    if (leases.length > 0) {
+      return leases.map((l) => ({
+        id: l.id,
+        name: `${l.property?.propertyName ?? "Property"}${l.unit ? ` - ${l.unit.unitName}` : ""}`,
+        address: l.property?.address
+          ? `${l.property.address.streetAddress}, ${l.property.address.city}`
+          : "",
+      }));
+    }
+    return propertiesList;
+  }, [leases]);
 
 
 
@@ -224,26 +248,33 @@ const NewRequest: React.FC = () => {
         return (
           <UserStep2PropertyTenants
             onNext={(data) => {
-              console.log('Step 2 Data:', data);
               setProperty(data.property);
+              if (leases.length > 0) {
+                const selectedLease = leases.find((l) => l.id === data.property);
+                if (selectedLease) {
+                  setPropertyId(selectedLease.propertyId);
+                  setUnitId(selectedLease.unitId ?? undefined);
+                }
+              } else {
+                setPropertyId(undefined);
+                setUnitId(undefined);
+              }
               setSelectedEquipment(data.equipmentName);
               setEquipmentSerial(data.equipmentSerial || null);
-              setEquipmentCondition('Good'); // Default condition for newly linked equipment
-
+              setEquipmentCondition('Good');
               setAuthorization(data.tenantAuthorization ? 'yes' : 'no');
               setAuthCode(data.accessCode);
               setPets(data.selectedPets);
-              // Store availability data
-              const mappedAvailability = data.dateOptions.map((opt: any) => ({
+              const mappedAvailability = data.dateOptions.map((opt: { id: string; date?: Date; timeSlots?: string[] }) => ({
                 id: opt.id,
                 date: opt.date ? opt.date.toISOString() : '',
-                timeSlots: opt.timeSlots
+                timeSlots: opt.timeSlots ?? [],
               }));
               setAvailability(mappedAvailability);
               nextStep(3);
             }}
             onBack={prevStep}
-            properties={propertiesList}
+            properties={propertyOptions}
             initialData={{
               property: property,
               equipment: selectedEquipment,
@@ -264,25 +295,24 @@ const NewRequest: React.FC = () => {
         return (
           <UserStep3DueDateMaterials
             onNext={(data) => {
-              console.log('Step 3 Data:', data);
               setDateDue(data.dateDue ? data.dateDue.toISOString() : null);
               setMaterials(data.materials);
-              // Map priority values
               const priorityMap: Record<string, "Critical" | "Normal" | "Low"> = {
-                'low': 'Low',
-                'normal': 'Normal',
-                'high': 'Critical',
-                'urgent': 'Critical'
+                low: 'Low',
+                normal: 'Normal',
+                high: 'Critical',
+                urgent: 'Critical'
               };
-              setPriority(priorityMap[data.priority] || 'Normal');
-              // Final submission
+              setPriority(priorityMap[data.priority] ?? 'Normal');
+              if (data.chargeTo) setChargeTo(data.chargeTo === 'TENANT' ? 'TENANT' : 'LANDLORD');
               handleFormSubmit();
             }}
             onBack={prevStep}
             initialData={{
               dateDue: dateDue ? new Date(dateDue) : undefined,
-              priority: priority?.toLowerCase() || 'normal',
+              priority: priority?.toLowerCase() ?? 'normal',
               materials: materials,
+              chargeTo: chargeTo === 'TENANT' ? 'TENANT' : 'LANDLORD',
             }}
           />
         );

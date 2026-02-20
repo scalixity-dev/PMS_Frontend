@@ -29,8 +29,16 @@ export interface CreateMaintenanceMaterialInput {
   description?: string;
 }
 
+export type ChargeTo = 'LANDLORD' | 'TENANT' | 'PENDING';
+
+export interface CreateMaintenanceAttachmentInput {
+  fileUrl: string;
+  fileType: FileType;
+}
+
 export interface CreateMaintenanceRequestInput {
   propertyId: string;
+  unitId?: string;
   category: MaintenanceCategory;
   subcategory: string;
   issue?: string;
@@ -43,6 +51,8 @@ export interface CreateMaintenanceRequestInput {
   equipmentId?: string;
   tenantMeta?: MaintenanceTenantMeta;
   materials?: CreateMaintenanceMaterialInput[];
+  chargeTo?: ChargeTo;
+  attachments?: CreateMaintenanceAttachmentInput[];
 }
 
 export interface MaintenanceRequestResponse {
@@ -89,6 +99,20 @@ export interface MaintenanceRequestTransaction {
   transactionDate?: string;
   details?: string | null;
   notes?: string | null;
+}
+
+export interface MaintenanceRequestApplicant {
+  id: string;
+  serviceProviderId: string;
+  quotedAmount: number;
+  quotedAt: string;
+  serviceProvider: {
+    id: string;
+    companyName: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
 }
 
 class MaintenanceRequestService {
@@ -221,6 +245,49 @@ class MaintenanceRequestService {
     return response.json();
   }
 
+  async assignInternal(
+    requestId: string,
+    assignedToUserId: string,
+    options?: { scheduledDate?: string; notes?: string; quotedAmount?: number; quotedAmountCurrency?: string },
+  ): Promise<unknown> {
+    const response = await fetch(API_ENDPOINTS.MAINTENANCE_REQUEST.ASSIGN_INTERNAL(requestId), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ assignedToUserId, ...options }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Failed to assign internal team member';
+      throw new Error(message);
+    }
+
+    return response.json();
+  }
+
+  async approveTenantCharge(id: string): Promise<MaintenanceRequestDetail> {
+    const response = await fetch(API_ENDPOINTS.MAINTENANCE_REQUEST.APPROVE_TENANT_CHARGE(id), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Failed to approve tenant charge';
+      throw new Error(message);
+    }
+
+    return response.json();
+  }
+
   async delete(id: string): Promise<void> {
     const response = await fetch(API_ENDPOINTS.MAINTENANCE_REQUEST.DELETE(id), {
       method: 'DELETE',
@@ -235,6 +302,25 @@ class MaintenanceRequestService {
           : 'Failed to delete maintenance request';
       throw new Error(message);
     }
+  }
+
+  async getApplicants(id: string): Promise<MaintenanceRequestApplicant[]> {
+    const response = await fetch(API_ENDPOINTS.MAINTENANCE_REQUEST.GET_APPLICANTS(id), {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Failed to fetch applicants';
+      throw new Error(message);
+    }
+
+    return response.json();
   }
 }
 

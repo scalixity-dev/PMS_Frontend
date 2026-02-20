@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useOutletContext } from 'react-router-dom';
+import { useParams, Link, useOutletContext, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Home, MapPin, CheckCircle2, Check } from 'lucide-react';
-import { MOCK_JOBS } from './data/jobData';
 import ServiceBreadCrumb from '@/pages/ServiceDashboard/components/ServiceBreadCrumb';
 import DashboardButton from '@/pages/ServiceDashboard/components/DashboardButton';
+import { useGetAvailableJobById, useApplyToJob } from '@/hooks/useAvailableJobs';
 
 interface DashboardContext {
     sidebarCollapsed: boolean;
@@ -12,13 +12,30 @@ interface DashboardContext {
 const JobDetail: React.FC = () => {
     const { sidebarCollapsed } = useOutletContext<DashboardContext>() || { sidebarCollapsed: false };
     const { id } = useParams<{ id: string }>();
-    const job = MOCK_JOBS.find(j => j.id === id);
-    const [isInterestSubmitted, setIsInterestSubmitted] = useState(false);
+    const navigate = useNavigate();
     const [showToast, setShowToast] = useState(false);
 
-    const handleInterestClick = () => {
-        setIsInterestSubmitted(true);
-        setShowToast(true);
+    // Fetch job from API
+    const { data: job, isLoading, error } = useGetAvailableJobById(id);
+    const applyToJobMutation = useApplyToJob();
+
+    const isInterestSubmitted = job?.hasApplied || false;
+
+    const handleInterestClick = async () => {
+        if (!id) return;
+
+        try {
+            await applyToJobMutation.mutateAsync({
+                requestId: id,
+                data: {
+                    // Could add quotedAmount input later
+                },
+            });
+            setShowToast(true);
+        } catch (error) {
+            console.error('Failed to apply to job:', error);
+            // Error handling could be improved with toast notifications
+        }
     };
 
     useEffect(() => {
@@ -30,13 +47,29 @@ const JobDetail: React.FC = () => {
         }
     }, [showToast]);
 
-    if (!job) {
+    if (isLoading) {
         return (
-            <div className="p-6 text-center text-gray-500">
-                Job not found
+            <div className={`mx-auto min-h-screen pb-20 transition-all duration-300 ${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'}`}>
+                <div className="p-6 text-center text-gray-500">
+                    Loading job details...
+                </div>
             </div>
         );
     }
+
+    if (error || !job) {
+        return (
+            <div className={`mx-auto min-h-screen pb-20 transition-all duration-300 ${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'}`}>
+                <div className="p-6 text-center text-gray-500">
+                    {error instanceof Error ? error.message : 'Job not found'}
+                </div>
+            </div>
+        );
+    }
+
+    // Get primary photo or first photo
+    const primaryPhoto = job.photos?.find(p => p.isPrimary)?.photoUrl || job.photos?.[0]?.photoUrl || '';
+    const allPhotos = job.photos?.map(p => p.photoUrl) || [];
 
     const getPriorityColor = (p: string) => {
         switch (p.toLowerCase()) {
@@ -84,12 +117,15 @@ const JobDetail: React.FC = () => {
                     <p className="text-gray-500 mt-1">{job.category}</p>
                 </div>
 
-                <div className="flex flex-col items-end">
-                    <span className="text-xs text-gray-500 font-medium uppercase mb-0.5">Payout</span>
-                    <div className="px-4 py-2 bg-[#7CD947] text-white rounded-lg font-bold text-2xl shadow-sm">
-                        ${job.payout}
+                {/* Payout section - could be hidden or show "Contact for quote" if not available */}
+                {job.materials && job.materials.length > 0 && (
+                    <div className="flex flex-col items-end">
+                        <span className="text-xs text-gray-500 font-medium uppercase mb-0.5">Materials Required</span>
+                        <div className="px-4 py-2 bg-[#7CD947] text-white rounded-lg font-bold text-sm shadow-sm">
+                            {job.materials.length} item{job.materials.length !== 1 ? 's' : ''}
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -101,20 +137,28 @@ const JobDetail: React.FC = () => {
                             <h2 className="text-lg font-bold text-gray-900">Photos</h2>
                         </div>
 
-                        <div className="aspect-video w-full overflow-hidden rounded-xl mb-4 bg-gray-100 relative">
-                            <img
-                                src={job.image}
-                                alt={job.title}
-                                className="w-full h-full object-cover"
-                            />
-                        </div>
-                        {job.images && job.images.length > 0 && (
-                            <div className="flex gap-4 overflow-x-auto pb-2">
-                                {job.images.map((img, index) => (
-                                    <div key={index} className={`w-32 h-24 flex-shrink-0 rounded-lg overflow-hidden border-2 cursor-pointer transition-all ${index === 0 ? 'border-[#7CD947]' : 'border-transparent hover:border-gray-300'}`}>
-                                        <img src={img} alt={`Job detail ${index}`} className="w-full h-full object-cover" />
+                        {primaryPhoto ? (
+                            <>
+                                <div className="aspect-video w-full overflow-hidden rounded-xl mb-4 bg-gray-100 relative">
+                                    <img
+                                        src={primaryPhoto}
+                                        alt={job.title}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                                {allPhotos.length > 1 && (
+                                    <div className="flex gap-4 overflow-x-auto pb-2">
+                                        {allPhotos.map((img, index) => (
+                                            <div key={index} className={`w-32 h-24 flex-shrink-0 rounded-lg overflow-hidden border-2 cursor-pointer transition-all ${index === 0 ? 'border-[#7CD947]' : 'border-transparent hover:border-gray-300'}`}>
+                                                <img src={img} alt={`Job detail ${index}`} className="w-full h-full object-cover" />
+                                            </div>
+                                        ))}
                                     </div>
-                                ))}
+                                )}
+                            </>
+                        ) : (
+                            <div className="aspect-video w-full overflow-hidden rounded-xl mb-4 bg-gray-100 relative flex items-center justify-center">
+                                <p className="text-gray-400">No photos available</p>
                             </div>
                         )}
                     </div>
@@ -123,7 +167,7 @@ const JobDetail: React.FC = () => {
                     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
                         <h2 className="text-lg font-bold text-gray-900 mb-4">Issue Description</h2>
                         <p className="text-gray-600 leading-relaxed">
-                            {job.description || "No description provided."}
+                            {job.subcategory || "No description provided."}
                         </p>
                     </div>
 
@@ -170,14 +214,18 @@ const JobDetail: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Total Payout Section */}
-                    {/* Total Payout Section */}
+                    {/* Job Info Section */}
                     <div className={`bg-gradient-to-b from-[#7CD947] to-[#5BB82F] rounded-2xl shadow-lg shadow-[#7CD947]/20 relative overflow-hidden transition-all duration-300 ${isInterestSubmitted ? 'pb-0' : 'p-6'}`}>
                         <div className={`relative z-10 ${isInterestSubmitted ? 'p-6 pb-20' : ''}`}>
-                            <p className="text-sm font-medium text-white/90 mb-1">Total Payout</p>
-                            <h3 className="text-4xl text-white/90 font-bold mb-4">${job.payout}</h3>
+                            <p className="text-sm font-medium text-white/90 mb-1">Job Details</p>
+                            <h3 className="text-2xl text-white/90 font-bold mb-4">{job.category}</h3>
+                            {job.subcategory && (
+                                <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3 text-xs font-medium text-white/90 mb-2">
+                                    {job.subcategory}
+                                </div>
+                            )}
                             <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3 text-xs font-medium text-white/90 mb-0">
-                                Competitive rate for {job.category} work
+                                Requested: {new Date(job.requestedAt).toLocaleDateString()}
                             </div>
                         </div>
 
@@ -200,9 +248,10 @@ const JobDetail: React.FC = () => {
                         <DashboardButton
                             onClick={handleInterestClick}
                             bgColor="#7CD947"
-                            className="w-full py-4 rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 text-white font-semibold"
+                            className="w-full py-4 rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={applyToJobMutation.isPending}
                         >
-                            I'm Interested in This Job
+                            {applyToJobMutation.isPending ? 'Submitting...' : "I'm Interested in This Job"}
                         </DashboardButton>
                     ) : (
                         <div className="bg-[#f0fdf4] border border-green-100 rounded-2xl p-4 text-center animate-fadeIn">
