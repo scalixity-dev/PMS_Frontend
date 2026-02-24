@@ -74,6 +74,7 @@ export interface MaintenanceRequestDetail {
   priority?: MaintenancePriority;
   requestedAt?: string;
   dueDate?: string;
+  completedAt?: string;
   equipmentLinked?: boolean;
   equipmentId?: string | null;
   tenantMeta?: MaintenanceTenantMeta;

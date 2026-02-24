@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useParams, useOutletContext } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, ChevronDown, ChevronRight, Edit, Trash2, Plus, Repeat, Printer, Paperclip, FileText } from 'lucide-react';
@@ -61,16 +61,41 @@ const MaintenanceRequestsDetail: React.FC = () => {
     const [isAddingToContact, setIsAddingToContact] = useState(false);
     const queryClient = useQueryClient();
 
-    const assignee = useMemo(() => {
+    const assigneeInfo = useMemo(() => {
         const req = request as { assignments?: unknown[] } | null;
-        type Assignment = { serviceProvider?: { companyName?: string; firstName?: string; lastName?: string }; assignedToUser?: { fullName?: string; email?: string } };
+        type Assignment = {
+            serviceProvider?: {
+                companyName?: string;
+                firstName?: string;
+                lastName?: string;
+                email?: string;
+            };
+            assignedToUser?: {
+                fullName?: string;
+                email?: string;
+            };
+        };
         const first = req?.assignments?.[0] as Assignment | undefined;
         if (!first) return null;
-        return first.serviceProvider?.companyName
-            || (first.serviceProvider ? `${first.serviceProvider.firstName ?? ''} ${first.serviceProvider.lastName ?? ''}`.trim() : null)
-            || first.assignedToUser?.fullName
-            || first.assignedToUser?.email
-            || null;
+
+        const name =
+            first.serviceProvider?.companyName ||
+            (first.serviceProvider
+                ? `${first.serviceProvider.firstName ?? ''} ${first.serviceProvider.lastName ?? ''}`.trim()
+                : null) ||
+            first.assignedToUser?.fullName ||
+            first.assignedToUser?.email ||
+            null;
+
+        const email =
+            first.serviceProvider?.email ||
+            first.assignedToUser?.email ||
+            undefined;
+
+        return {
+            name,
+            email,
+        };
     }, [request]);
 
     const { mutateAsync: deleteRequest } = useDeleteMaintenanceRequest();
@@ -103,10 +128,28 @@ const MaintenanceRequestsDetail: React.FC = () => {
         }
     };
 
+    useEffect(() => {
+        const backendStatus = (request as { status?: string | null } | null)?.status;
+        if (!backendStatus) return;
+
+        const normalized = backendStatus.toUpperCase();
+        const statusLabelMap: Record<string, string> = {
+            NEW: 'New',
+            IN_PROGRESS: 'In progress',
+            IN_REVIEW: 'In review',
+            RESOLVED: 'Resolved',
+            CANCELLED: 'Canceled',
+            ARCHIVED: 'Archived',
+        };
+
+        const label = statusLabelMap[normalized] ?? backendStatus;
+        setStatus(label);
+    }, [request]);
+
     const handleStatusChange = (newStatus: string) => {
         setStatus(newStatus);
         setIsStatusModalOpen(false);
-        console.log('Status updated to:', newStatus);
+        // Backend update for status can be wired here if needed
     };
 
     const handleAssigneeSuccess = () => {
@@ -491,16 +534,23 @@ const MaintenanceRequestsDetail: React.FC = () => {
                             onClick={() => setIsAssigneeModalOpen(true)}
                             className="px-4 py-1.5 bg-[#3A6D6C] text-white rounded-full text-xs font-medium hover:bg-[#2c5251] transition-colors"
                         >
-                            {assignee ? 'Re-Assign' : 'Add Assignee'}
+                            {assigneeInfo?.name ? 'Re-Assign' : 'Add Assignee'}
                         </button>
                     }
                 >
                     <div className="flex flex-col xl:flex-row gap-6 bg-[#f0f0f6] p-4 md:p-6 rounded-xl">
                         {/* Profile Card */}
                         <div className="bg-[#F0F0F6] rounded-3xl p-4 md:p-6 w-full xl:w-80 flex flex-col items-center justify-center shadow-sm">
-                            <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl overflow-hidden mb-4 bg-gray-200">
-                                {assignee ? (
-                                    <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200" alt="Profile" className="w-full h-full object-cover" />
+                            <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl overflow-hidden mb-4 bg-gray-200 flex items-center justify-center">
+                                {assigneeInfo?.name ? (
+                                    <div className="w-full h-full flex items-center justify-center bg-[#3A6D6C] text-white text-xl md:text-2xl font-bold">
+                                        {(assigneeInfo.name || '')
+                                            .split(' ')
+                                            .filter(Boolean)
+                                            .map(part => part[0]?.toUpperCase())
+                                            .join('')
+                                            .slice(0, 2)}
+                                    </div>
                                 ) : (
                                     <button
                                         onClick={() => setIsAssigneeModalOpen(true)}
@@ -511,11 +561,12 @@ const MaintenanceRequestsDetail: React.FC = () => {
                                 )}
                             </div>
 
-                            {assignee ? (
+                            {assigneeInfo?.name ? (
                                 <div className="bg-[#3A6D6C] text-white text-center py-2 px-6 rounded-xl w-full mb-4">
-                                    <h3 className="font-bold text-sm">{assignee}</h3>
-                                    <p className="text-[10px] opacity-90">+91 9876543210</p>
-                                    <p className="text-[10px] opacity-90 break-all">{assignee.toLowerCase().replace(' ', '')}@gmail.com</p>
+                                    <h3 className="font-bold text-sm">{assigneeInfo.name}</h3>
+                                    {assigneeInfo.email && (
+                                        <p className="text-[10px] opacity-90 break-all">{assigneeInfo.email}</p>
+                                    )}
                                 </div>
                             ) : (
                                 <button
@@ -529,7 +580,7 @@ const MaintenanceRequestsDetail: React.FC = () => {
                                 </button>
                             )}
 
-                            {assignee && (
+                            {assigneeInfo?.name && (
                                 <button className="bg-[#D1D1D1] text-gray-700 text-xs font-bold py-2 px-8 rounded-full hover:bg-gray-300 transition-colors">
                                     View Profile
                                 </button>
@@ -564,20 +615,23 @@ const MaintenanceRequestsDetail: React.FC = () => {
                             <div className="space-y-4">
                                 <div className="bg-white rounded-full px-4 py-2 flex items-center justify-between shadow-sm">
                                     <span className="text-gray-500 text-xs font-medium">Started work</span>
-                                    <span className="text-gray-800 text-xs font-bold">-</span>
+                                    <span className="text-gray-800 text-xs font-bold">
+                                        {request?.requestedAt
+                                            ? new Date(request.requestedAt).toLocaleString()
+                                            : '-'}
+                                    </span>
                                 </div>
                                 <div className="bg-white rounded-full px-4 py-2 flex items-center justify-between shadow-sm">
                                     <span className="text-gray-500 text-xs font-medium">Ended work</span>
-                                    <span className="text-gray-800 text-xs font-bold">-</span>
+                                    <span className="text-gray-800 text-xs font-bold">
+                                        {(request as { completedAt?: string | null } | null)?.completedAt
+                                            ? new Date(
+                                                  (request as { completedAt?: string | null }).completedAt as string,
+                                              ).toLocaleString()
+                                            : '-'}
+                                    </span>
                                 </div>
-                                <div className="bg-white rounded-full px-4 py-2 flex items-center justify-between shadow-sm">
-                                    <span className="text-gray-500 text-xs font-medium">Labor time</span>
-                                    <span className="text-gray-800 text-xs font-bold">-</span>
-                                </div>
-                                <div className="bg-white rounded-full px-4 py-2 flex items-center justify-between shadow-sm">
-                                    <span className="text-gray-500 text-xs font-medium">Key returned</span>
-                                    <span className="text-gray-800 text-xs font-bold">-</span>
-                                </div>
+                              
                             </div>
                         </div>
                     </div>
@@ -924,7 +978,7 @@ const MaintenanceRequestsDetail: React.FC = () => {
                     isOpen={isAssigneeModalOpen}
                     onClose={() => setIsAssigneeModalOpen(false)}
                     requestId={id}
-                    currentAssignee={assignee ?? 'Unassigned'}
+                    currentAssignee={assigneeInfo?.name ?? 'Unassigned'}
                     requestCategory={request?.category}
                     onSuccess={handleAssigneeSuccess}
                 />

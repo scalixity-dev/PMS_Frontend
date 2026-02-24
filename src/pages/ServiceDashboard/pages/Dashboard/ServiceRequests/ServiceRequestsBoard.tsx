@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { PiChatCircleText, PiDotsThreeOutlineFill, PiKanbanLight } from "react-icons/pi";
 import {
     DndContext,
@@ -24,6 +25,7 @@ import { CSS } from '@dnd-kit/utilities';
 import ServiceBreadCrumb from '../../../components/ServiceBreadCrumb';
 import ServiceFilters from '../../../components/ServiceFilters';
 import DashboardButton from '../../../components/DashboardButton';
+import { serviceProviderService } from '../../../../../services/service-provider.service';
 
 // Types
 type Request = {
@@ -148,18 +150,92 @@ interface DashboardContext {
     sidebarCollapsed: boolean;
 }
 
+interface ServiceAssignmentRequest {
+    id: string;
+    category?: string | null;
+    subcategory?: string | null;
+    issue?: string | null;
+    subissue?: string | null;
+    priority?: string | null;
+    property?: {
+        id: string;
+        propertyName?: string | null;
+    } | null;
+}
+
+interface ServiceAssignment {
+    id: string;
+    status?: string | null;
+    request?: ServiceAssignmentRequest | null;
+}
+
 const ServiceRequestsBoard = () => {
     const { sidebarCollapsed } = useOutletContext<DashboardContext>() || { sidebarCollapsed: false };
-    const [requests, setRequests] = useState<Request[]>([
-        { id: '12345', status: 'New', category: 'Appliances', subCategory: 'General', property: 'Sunset Apartments', priority: 'Critical', client: 'Alice Johnson', avatar: 'https://i.pravatar.cc/150?u=1' },
-        { id: '12346', status: 'In Progress', category: 'Plumbing', subCategory: 'Leak', property: 'Downtown Lofts', priority: 'Normal', client: 'Bob Smith', avatar: 'https://i.pravatar.cc/150?u=2' },
-        { id: '12347', status: 'On Hold', category: 'Electrical', subCategory: 'Wiring', property: 'Sunset Apartments', priority: 'High', client: 'Charlie Davis', avatar: 'https://i.pravatar.cc/150?u=3' },
-        { id: '12348', status: 'Completed', category: 'HVAC', subCategory: 'AC', property: 'Ocean View Villa', priority: 'Low', client: 'Diana Evans', avatar: 'https://i.pravatar.cc/150?u=4' },
-        { id: '12349', status: 'Cancelled', category: 'Appliances', subCategory: 'Oven', property: 'Downtown Lofts', priority: 'Normal', client: 'Ethan Foster', avatar: 'https://i.pravatar.cc/150?u=5' },
-        { id: '12350', status: 'New', category: 'General', subCategory: 'Maintenance', property: 'Mountain Retreat', priority: 'Critical', client: 'Fiona Green', avatar: 'https://i.pravatar.cc/150?u=6' },
-        { id: '12351', status: 'In Progress', category: 'Plumbing', subCategory: 'Toilet', property: 'Sunset Apartments', priority: 'High', client: 'George Hill', avatar: 'https://i.pravatar.cc/150?u=7' },
-        { id: '12352', status: 'New', category: 'HVAC', subCategory: 'Heater', property: 'Downtown Lofts', priority: 'Normal', client: 'Hannah Iver', avatar: 'https://i.pravatar.cc/150?u=8' }
-    ]);
+    const { data: assignments = [] } = useQuery<ServiceAssignment[]>({
+        queryKey: ['service-requests-board'],
+        queryFn: async () => {
+            const raw = await serviceProviderService.getMyAssignments();
+            return raw as ServiceAssignment[];
+        },
+        staleTime: 2 * 60 * 1000,
+        retry: 1,
+    });
+
+    const [requests, setRequests] = useState<Request[]>([]);
+
+    const mappedRequests: Request[] = useMemo(() => {
+        const statusLabelMap: Record<string, string> = {
+            NEW: 'New',
+            IN_PROGRESS: 'In Progress',
+            ON_HOLD: 'On Hold',
+            COMPLETED: 'Completed',
+            CANCELLED: 'Cancelled',
+        };
+
+        const priorityLabelMap: Record<string, string> = {
+            URGENT: 'Critical',
+            HIGH: 'High',
+            MEDIUM: 'Normal',
+            LOW: 'Low',
+        };
+
+        return assignments.map((assignment) => {
+            const req = assignment.request;
+            const rawStatus = (assignment.status ?? '').toUpperCase();
+            const status = statusLabelMap[rawStatus] ?? (assignment.status ?? 'New');
+
+            const rawPriority = (req?.priority ?? '').toUpperCase();
+            const priority = priorityLabelMap[rawPriority] ?? 'Normal';
+
+            const categoryParts: string[] = [];
+            if (req?.category) categoryParts.push(req.category);
+            const subCategory = req?.subcategory ?? '';
+            if (subCategory) categoryParts.push(subCategory);
+
+            const categoryLabel = categoryParts.join(' / ') || 'Maintenance';
+            const propertyLabel = req?.property?.propertyName ?? 'Property';
+
+            const clientLabel = propertyLabel;
+
+            return {
+                id: req?.id ?? assignment.id,
+                status,
+                category: categoryLabel,
+                subCategory,
+                property: propertyLabel,
+                priority,
+                client: clientLabel,
+                avatar: '',
+            };
+        });
+    }, [assignments]);
+
+    // Keep local draggable state in sync with latest mapped data initially
+    if (requests.length === 0 && mappedRequests.length > 0) {
+        // This is safe because it's a simple initialization guard
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        setRequests(mappedRequests);
+    }
 
     const navigate = useNavigate();
 

@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { PiChatCircleText, PiKanban, PiMagnifyingGlassLight } from "react-icons/pi";
 import ServiceBreadCrumb from '../../../components/ServiceBreadCrumb';
 import ServiceFilters from '../../../components/ServiceFilters';
 import DashboardButton from '../../../components/DashboardButton';
+import { serviceProviderService } from '../../../../../services/service-provider.service';
 
 interface Request {
     id: string;
@@ -20,64 +22,80 @@ interface DashboardContext {
     sidebarCollapsed: boolean;
 }
 
+interface ServiceAssignmentRequest {
+    id: string;
+    category?: string | null;
+    subcategory?: string | null;
+    issue?: string | null;
+    subissue?: string | null;
+    priority?: string | null;
+    property?: {
+        id: string;
+        propertyName?: string | null;
+    } | null;
+}
+
+interface ServiceAssignment {
+    id: string;
+    status?: string | null;
+    request?: ServiceAssignmentRequest | null;
+}
+
 const ServiceRequests = () => {
-    // Enhanced Mock Data
-    const [requests] = useState<Request[]>([
-        {
-            id: '123',
-            status: 'New',
-            category: 'Appliances',
-            property: 'Sunset Apartments',
-            priority: 'Critical',
-            client: 'Alice Johnson',
-            avatar: 'https://i.pravatar.cc/150?u=1'
+    const { data: assignments = [] } = useQuery<ServiceAssignment[]>({
+        queryKey: ['service-requests-list'],
+        queryFn: async () => {
+            const raw = await serviceProviderService.getMyAssignments();
+            return raw as ServiceAssignment[];
         },
-        {
-            id: '124',
-            status: 'New',
-            category: 'Plumbing',
-            property: 'Downtown Lofts',
-            priority: 'Normal',
-            client: 'Bob Smith',
-            avatar: 'https://i.pravatar.cc/150?u=2'
-        },
-        {
-            id: '125',
-            status: 'In Progress',
-            category: 'Electrical',
-            property: 'Sunset Apartments',
-            priority: 'High',
-            client: 'Charlie Davis',
-            avatar: 'https://i.pravatar.cc/150?u=3'
-        },
-        {
-            id: '126',
-            status: 'Completed',
-            category: 'HVAC',
-            property: 'Ocean View Villa',
-            priority: 'Low',
-            client: 'Diana Evans',
-            avatar: 'https://i.pravatar.cc/150?u=4'
-        },
-        {
-            id: '127',
-            status: 'Cancelled',
-            category: 'Appliances',
-            property: 'Downtown Lofts',
-            priority: 'Normal',
-            client: 'Ethan Foster',
-            avatar: 'https://i.pravatar.cc/150?u=5'
-        },
-        {
-            id: '128',
-            status: 'On Hold',
-            category: 'General',
-            property: 'Mountain Retreat',
-            priority: 'Critical',
-            client: 'Fiona Green',
-            avatar: 'https://i.pravatar.cc/150?u=6'
-        }
-    ]);
+        staleTime: 2 * 60 * 1000,
+        retry: 1,
+    });
+
+    const requests: Request[] = useMemo(() => {
+        const statusLabelMap: Record<string, string> = {
+            NEW: 'New',
+            IN_PROGRESS: 'In Progress',
+            ON_HOLD: 'On Hold',
+            COMPLETED: 'Completed',
+            CANCELLED: 'Cancelled',
+        };
+
+        const priorityLabelMap: Record<string, string> = {
+            URGENT: 'Critical',
+            HIGH: 'High',
+            MEDIUM: 'Normal',
+            LOW: 'Low',
+        };
+
+        return assignments.map((assignment) => {
+            const req = assignment.request;
+            const rawStatus = (assignment.status ?? '').toUpperCase();
+            const status = statusLabelMap[rawStatus] ?? (assignment.status ?? 'New');
+
+            const rawPriority = (req?.priority ?? '').toUpperCase();
+            const priority = priorityLabelMap[rawPriority] ?? 'Normal';
+
+            const categoryParts: string[] = [];
+            if (req?.category) categoryParts.push(req.category);
+            if (req?.subcategory) categoryParts.push(req.subcategory);
+
+            const categoryLabel = categoryParts.join(' / ') || 'Maintenance';
+            const propertyLabel = req?.property?.propertyName ?? 'Property';
+
+            const clientLabel = propertyLabel;
+
+            return {
+                id: req?.id ?? assignment.id,
+                status,
+                category: categoryLabel,
+                property: propertyLabel,
+                priority,
+                client: clientLabel,
+                avatar: '',
+            };
+        });
+    }, [assignments]);
 
     const navigate = useNavigate();
     const { sidebarCollapsed } = useOutletContext<DashboardContext>() || { sidebarCollapsed: false };
