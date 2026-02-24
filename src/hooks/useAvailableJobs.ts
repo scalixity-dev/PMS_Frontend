@@ -53,7 +53,7 @@ export const useApplyToJob = () => {
       data,
     }: {
       requestId: string;
-      data?: { quotedAmount?: number; message?: string };
+      data?: { quotedAmount?: number; message?: string; bypassLocationCheck?: boolean };
     }) => serviceProviderService.applyToJob(requestId, data),
     onSuccess: (_data, variables) => {
       // Invalidate the list and detail queries

@@ -6,9 +6,11 @@ import DeleteConfirmationModal from '../../../../components/common/modals/Delete
 import ChangeStatusModal from './components/ChangeStatusModal';
 import AssigneeModal from './components/AssigneeModal';
 import MakeRecurringModal from './components/MakeRecurringModal';
+import ApplicantsSection from './components/ApplicantsSection';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import { maintenanceRequestQueryKeys, useDeleteMaintenanceRequest, useGetMaintenanceRequest, useGetMaintenanceTransactions } from '../../../../hooks/useMaintenanceRequestQueries';
 import { maintenanceRequestService } from '../../../../services/maintenance-request.service';
+import { serviceProviderService } from '../../../../services/service-provider.service';
 import { useGetEquipment } from '../../../../hooks/useEquipmentQueries';
 
 // --- Reusable Components ---
@@ -55,6 +57,8 @@ const MaintenanceRequestsDetail: React.FC = () => {
     const [status, setStatus] = useState('New');
     const [isAssigneeModalOpen, setIsAssigneeModalOpen] = useState(false);
     const [isRecurringModalOpen, setIsRecurringModalOpen] = useState(false);
+    const [isAssigningApplicant, setIsAssigningApplicant] = useState(false);
+    const [isAddingToContact, setIsAddingToContact] = useState(false);
     const queryClient = useQueryClient();
 
     const assignee = useMemo(() => {
@@ -108,6 +112,42 @@ const MaintenanceRequestsDetail: React.FC = () => {
     const handleAssigneeSuccess = () => {
         queryClient.invalidateQueries({ queryKey: maintenanceRequestQueryKeys.all });
         if (id) queryClient.invalidateQueries({ queryKey: maintenanceRequestQueryKeys.detail(id) });
+    };
+
+    const handleAssignApplicant = async (serviceProviderId: string) => {
+        if (!id) return;
+        
+        setIsAssigningApplicant(true);
+        try {
+            await serviceProviderService.assignToMaintenanceRequest(serviceProviderId, id);
+            handleAssigneeSuccess();
+        } catch (err) {
+            console.error('Failed to assign applicant:', err);
+            // Error handling could be improved with toast notifications
+        } finally {
+            setIsAssigningApplicant(false);
+        }
+    };
+
+    const handleAddToContact = async (serviceProviderId: string) => {
+        setIsAddingToContact(true);
+        try {
+            // Ensure a contact book entry exists linking this owner and service provider
+            await serviceProviderService.addToContact(serviceProviderId);
+
+            // Navigate using the service provider ID (API expects serviceProviderId in the route)
+            navigate(`/dashboard/contacts/service-pros/${serviceProviderId}`, {
+                state: { fromApplicants: true, addedToContact: true },
+            });
+        } catch (err) {
+            console.error('Failed to add service provider to contact:', err);
+            // On error, still try to navigate to the list (contact might already exist)
+            navigate(`/dashboard/contacts/service-pros`, {
+                state: { fromApplicants: true },
+            });
+        } finally {
+            setIsAddingToContact(false);
+        }
     };
 
     const handleRecurringCreate = (data: any) => {
@@ -542,6 +582,18 @@ const MaintenanceRequestsDetail: React.FC = () => {
                         </div>
                     </div>
                 </CollapsibleSection>
+
+                {/* Applicants Section */}
+                {id && (
+                    <ApplicantsSection
+                        requestId={id}
+                        onOpenAssigneeModal={() => setIsAssigneeModalOpen(true)}
+                        onAssignApplicant={handleAssignApplicant}
+                        onAddToContact={handleAddToContact}
+                        isAssigning={isAssigningApplicant}
+                        isAddingToContact={isAddingToContact}
+                    />
+                )}
 
                 {/* Tenant Information */}
                 <CollapsibleSection title="Tenant information" defaultOpen={true}>

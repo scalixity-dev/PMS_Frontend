@@ -146,6 +146,7 @@ export const API_ENDPOINTS = {
     UPDATE_ASSIGNMENT_STATUS: (id: string, assignmentId: string) => `${API_BASE_URL}/service-provider/${id}/assignments/${assignmentId}/status`,
     GET_BY_CATEGORY: (category: string) => `${API_BASE_URL}/service-provider/category/${category}`,
     ASSIGN_TO_REQUEST: (id: string, requestId: string) => `${API_BASE_URL}/service-provider/${id}/assignments/${requestId}`,
+    ADD_TO_CONTACT: (id: string) => `${API_BASE_URL}/service-provider/${id}/add-to-contact`,
     CREATE: `${API_BASE_URL}/service-provider`,
     UPDATE: (id: string) => `${API_BASE_URL}/service-provider/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/service-provider/${id}`,

@@ -4,6 +4,7 @@ import { ArrowLeft, Home, MapPin, CheckCircle2, Check } from 'lucide-react';
 import ServiceBreadCrumb from '@/pages/ServiceDashboard/components/ServiceBreadCrumb';
 import DashboardButton from '@/pages/ServiceDashboard/components/DashboardButton';
 import { useGetAvailableJobById, useApplyToJob } from '@/hooks/useAvailableJobs';
+import LocationMismatchModal from './components/LocationMismatchModal';
 
 interface DashboardContext {
     sidebarCollapsed: boolean;
@@ -14,6 +15,8 @@ const JobDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [showToast, setShowToast] = useState(false);
+    const [showLocationModal, setShowLocationModal] = useState(false);
+    const [pendingApplication, setPendingApplication] = useState<{ requestId: string; data?: { quotedAmount?: number; message?: string } } | null>(null);
 
     // Fetch job from API
     const { data: job, isLoading, error } = useGetAvailableJobById(id);
@@ -24,17 +27,49 @@ const JobDetail: React.FC = () => {
     const handleInterestClick = async () => {
         if (!id) return;
 
+        const applicationData = {
+            requestId: id,
+            data: {
+                // Could add quotedAmount input later
+            },
+        };
+
+        try {
+            await applyToJobMutation.mutateAsync(applicationData);
+            setShowToast(true);
+            setShowLocationModal(false);
+            setPendingApplication(null);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Failed to apply to job';
+            
+            // Check if it's a location mismatch error
+            if (errorMessage.includes('outside your service area') || errorMessage.includes('service area')) {
+                setPendingApplication(applicationData);
+                setShowLocationModal(true);
+            } else {
+                console.error('Failed to apply to job:', error);
+                // Could show a generic error toast here
+            }
+        }
+    };
+
+    const handleConfirmLocationMismatch = async () => {
+        if (!pendingApplication) return;
+
         try {
             await applyToJobMutation.mutateAsync({
-                requestId: id,
+                ...pendingApplication,
                 data: {
-                    // Could add quotedAmount input later
+                    ...pendingApplication.data,
+                    bypassLocationCheck: true,
                 },
             });
             setShowToast(true);
+            setShowLocationModal(false);
+            setPendingApplication(null);
         } catch (error) {
             console.error('Failed to apply to job:', error);
-            // Error handling could be improved with toast notifications
+            // Error is already handled by the mutation
         }
     };
 
@@ -269,6 +304,21 @@ const JobDetail: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Location Mismatch Modal */}
+            {job && (
+                <LocationMismatchModal
+                    isOpen={showLocationModal}
+                    onClose={() => {
+                        setShowLocationModal(false);
+                        setPendingApplication(null);
+                    }}
+                    onConfirm={handleConfirmLocationMismatch}
+                    jobLocation={job.location}
+                    jobAddress={job.address}
+                    isLoading={applyToJobMutation.isPending}
+                />
+            )}
         </div>
     );
 };

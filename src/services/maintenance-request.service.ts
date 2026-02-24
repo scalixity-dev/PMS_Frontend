@@ -112,6 +112,15 @@ export interface MaintenanceRequestApplicant {
     firstName: string;
     lastName: string;
     email: string;
+    phoneNumber: string;
+    phoneCountryCode?: string | null;
+    category: string;
+    subcategory?: string | null;
+    address: string;
+    city?: string | null;
+    state: string;
+    zipCode: string;
+    country: string;
   };
 }
 

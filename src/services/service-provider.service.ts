@@ -354,7 +354,7 @@ class ServiceProviderService {
   /**
    * Apply to a job (submit interest/quote)
    */
-  async applyToJob(requestId: string, data?: { quotedAmount?: number; message?: string }): Promise<{ id: string; requestId: string; quotedAmount: number; message: string }> {
+  async applyToJob(requestId: string, data?: { quotedAmount?: number; message?: string; bypassLocationCheck?: boolean }): Promise<{ id: string; requestId: string; quotedAmount: number; message: string }> {
     const response = await fetch(API_ENDPOINTS.SERVICE_PROVIDER.APPLY_TO_JOB(requestId), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -368,6 +368,29 @@ class ServiceProviderService {
         err && typeof err === 'object' && 'message' in err
           ? String((err as { message?: unknown }).message)
           : 'Failed to apply to job';
+      throw new Error(message);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Add service provider to contact book
+   */
+  async addToContact(serviceProviderId: string): Promise<{ id: string; email?: string; firstName?: string; lastName?: string }> {
+    const response = await fetch(API_ENDPOINTS.SERVICE_PROVIDER.ADD_TO_CONTACT(serviceProviderId), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({}),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Failed to add service provider to contact book';
       throw new Error(message);
     }
 
