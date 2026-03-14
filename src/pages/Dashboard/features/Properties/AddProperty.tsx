@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { Upload, Trash2, Plus, X, Check, FileText, Undo2, ChevronLeft } from 'lucide-react';
+import { Upload, Trash2, Plus, X, Check, FileText, Undo2, ChevronLeft, Sparkles } from 'lucide-react';
 import { Country, State, City } from 'country-state-city';
 import type { ICountry, IState, ICity } from 'country-state-city';
 import Input from '../../../../components/common/Input';
 import CustomDropdown from '../../components/CustomDropdown';
 import UnsavedChangesModal from '../../components/UnsavedChangesModal';
+import AIPropertyChat from './components/AIPropertyChat';
 import { propertyService } from '../../../../services/property.service';
 import { API_ENDPOINTS } from '../../../../config/api.config';
 import { getCurrencySymbol } from '../../../../utils/currency.utils';
@@ -70,6 +71,7 @@ const AddProperty: React.FC = () => {
   const [isDirty, setIsDirty] = useState(false);
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
   const [pendingNavigationPath, setPendingNavigationPath] = useState<string | null>(null);
+  const [showAIChat, setShowAIChat] = useState(false);
 
   // Allowed MIME types for document attachments
   const allowedDocumentTypes = [
@@ -90,34 +92,19 @@ const AddProperty: React.FC = () => {
     setCountries(Country.getAllCountries());
   }, []);
 
-  // Load states when country changes
+  // Load states when country is selected (but don't reset existing values)
   useEffect(() => {
     if (formData.country) {
       const countryStates = State.getStatesOfCountry(formData.country);
       setStates(countryStates);
-      // Reset state and city when country changes
-      if (formData.stateRegion) {
-        updateFormData('stateRegion', '');
-      }
-      if (formData.city) {
-        updateFormData('city', '');
-      }
-    } else {
-      setStates([]);
     }
   }, [formData.country]);
 
-  // Load cities when state changes
+  // Load cities when state is selected (but don't reset existing values)
   useEffect(() => {
     if (formData.country && formData.stateRegion) {
       const stateCities = City.getCitiesOfState(formData.country, formData.stateRegion);
       setCities(stateCities);
-      // Reset city when state changes
-      if (formData.city) {
-        updateFormData('city', '');
-      }
-    } else {
-      setCities([]);
     }
   }, [formData.country, formData.stateRegion]);
 
@@ -753,6 +740,83 @@ const AddProperty: React.FC = () => {
     }
   };
 
+  const handleAIFormData = (aiData: any) => {
+    console.log('[AI Form Data] Received:', aiData);
+    
+    const updates: any = {};
+
+    Object.entries(aiData).forEach(([key, value]) => {
+      if (value !== null && value !== '' && value !== undefined) {
+        if (Array.isArray(value) && value.length > 0) {
+          updates[key] = value;
+        } else if (!Array.isArray(value)) {
+          updates[key] = value;
+        }
+      }
+    });
+
+    // Convert country name to ISO code if needed
+    if (updates.country) {
+      const allCountries = Country.getAllCountries();
+      const foundCountry = allCountries.find(
+        c => c.name.toLowerCase() === updates.country.toLowerCase() || c.isoCode === updates.country
+      );
+      if (foundCountry) {
+        console.log('[AI Form Data] Country found:', foundCountry.name, '→', foundCountry.isoCode);
+        updates.country = foundCountry.isoCode;
+      } else {
+        console.warn('[AI Form Data] Country not found:', updates.country);
+      }
+    }
+
+    // Load states FIRST if country is present
+    if (updates.country) {
+      const countryStates = State.getStatesOfCountry(updates.country);
+      setStates(countryStates);
+      console.log('[AI Form Data] Loaded states for country:', updates.country, '→', countryStates.length, 'states');
+
+      // Convert state/region name to ISO code if needed
+      if (updates.stateRegion) {
+        const foundState = countryStates.find(
+          s => s.name.toLowerCase() === updates.stateRegion.toLowerCase() || s.isoCode === updates.stateRegion
+        );
+        if (foundState) {
+          console.log('[AI Form Data] State found:', foundState.name, '→', foundState.isoCode);
+          updates.stateRegion = foundState.isoCode;
+
+          // Load cities SECOND if both country and state are present
+          const stateCities = City.getCitiesOfState(updates.country, foundState.isoCode);
+          setCities(stateCities);
+          console.log('[AI Form Data] Loaded cities for state:', foundState.name, '→', stateCities.length, 'cities');
+
+          // City names should match as-is (no conversion needed)
+          if (updates.city) {
+            const foundCity = stateCities.find(
+              c => c.name.toLowerCase() === updates.city.toLowerCase()
+            );
+            if (foundCity) {
+              console.log('[AI Form Data] City found:', foundCity.name);
+              updates.city = foundCity.name;
+            } else {
+              console.warn('[AI Form Data] City not found:', updates.city, 'in', stateCities.length, 'cities');
+            }
+          }
+        } else {
+          console.warn('[AI Form Data] State not found:', updates.stateRegion);
+        }
+      }
+    }
+
+    console.log('[AI Form Data] Final updates:', updates);
+
+    // Use setTimeout to ensure state/city arrays are updated before formData
+    // This allows the dropdown options to be computed before setting the values
+    setTimeout(() => {
+      setFormData(prev => ({ ...prev, ...updates }));
+      setIsDirty(true);
+    }, 0);
+  };
+
   const handleConfirmNavigation = () => {
     if (pendingNavigationPath) {
       navigate(pendingNavigationPath);
@@ -771,14 +835,41 @@ const AddProperty: React.FC = () => {
         onConfirm={handleConfirmNavigation}
       />
 
-      {/* Breadcrumb */}
-      <div className="inline-flex items-center px-3 md:px-4 py-2 bg-[#E0E8E7] rounded-full mb-4 md:mb-6 shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
-        <span className="text-[#4ad1a6] text-xs md:text-sm font-semibold cursor-pointer" onClick={() => handleNavigation('/dashboard')}>Dashboard</span>
-        <span className="text-gray-500 text-sm mx-1">/</span>
-        <span className="text-[#4ad1a6] text-xs md:text-sm font-semibold cursor-pointer" onClick={() => handleNavigation('/dashboard/properties')}>Properties</span>
-        <span className="text-gray-500 text-sm mx-1">/</span>
-        <span className="text-gray-600 text-xs md:text-sm font-semibold">Add Property</span>
+      {/* Breadcrumb and AI Button */}
+      <div className="flex items-center justify-between mb-4 md:mb-6">
+        <div className="inline-flex items-center px-3 md:px-4 py-2 bg-[#E0E8E7] rounded-full shadow-[inset_0_4px_2px_rgba(0,0,0,0.1)]">
+          <span className="text-[#4ad1a6] text-xs md:text-sm font-semibold cursor-pointer" onClick={() => handleNavigation('/dashboard')}>Dashboard</span>
+          <span className="text-gray-500 text-sm mx-1">/</span>
+          <span className="text-[#4ad1a6] text-xs md:text-sm font-semibold cursor-pointer" onClick={() => handleNavigation('/dashboard/properties')}>Properties</span>
+          <span className="text-gray-500 text-sm mx-1">/</span>
+          <span className="text-gray-600 text-xs md:text-sm font-semibold">Add Property</span>
+        </div>
+
+        <button
+          onClick={() => setShowAIChat(true)}
+          className="flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 text-white rounded-full font-medium transition-all duration-300 hover:scale-105 active:scale-95"
+          style={{
+            background: 'linear-gradient(135deg, #2D6A6A 0%, #3D9B6B 50%, #52C97A 100%)',
+            boxShadow: '0 4px 15px rgba(61, 155, 107, 0.4), 0 0 0 1px rgba(255,255,255,0.15) inset',
+          }}
+          onMouseEnter={e => {
+            (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 6px 20px rgba(61, 155, 107, 0.55), 0 0 0 1px rgba(255,255,255,0.2) inset';
+          }}
+          onMouseLeave={e => {
+            (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 15px rgba(61, 155, 107, 0.4), 0 0 0 1px rgba(255,255,255,0.15) inset';
+          }}
+        >
+          <Sparkles className="w-4 h-4 md:w-5 md:h-5" />
+          <span className="text-sm md:text-base">Fill using AI</span>
+        </button>
       </div>
+
+      {/* AI Chat Modal */}
+      <AIPropertyChat
+        isOpen={showAIChat}
+        onClose={() => setShowAIChat(false)}
+        onFormDataReceived={handleAIFormData}
+      />
 
       <div className={`bg-[#E0E8E7] min-h-screen p-4 md:p-8 font-sans rounded-[1.5rem] md:rounded-[2rem] text-[#4B5563]`}>
         {/* Header */}
@@ -1024,9 +1115,9 @@ const AddProperty: React.FC = () => {
                       }
                     }}
                     options={stateOptions}
-                    placeholder={formData.country ? "Select state" : "Select country first"}
+                    placeholder="Select state"
                     required
-                    disabled={!formData.country || stateOptions.length === 0}
+                    disabled={stateOptions.length === 0}
                     searchable={true}
                     buttonClassName={`bg-white border-gray-200 px-3 py-2 ${validationErrors.stateRegion ? 'border-red-500' : ''}`}
                   />
@@ -1053,9 +1144,9 @@ const AddProperty: React.FC = () => {
                       }
                     }}
                     options={cityOptions}
-                    placeholder={formData.stateRegion ? "Select city" : formData.country ? "Select state first" : "Select country first"}
+                    placeholder="Select city"
                     required
-                    disabled={!formData.stateRegion || cityOptions.length === 0}
+                    disabled={cityOptions.length === 0}
                     searchable={true}
                     buttonClassName={`bg-white border-gray-200 px-3 py-2 ${validationErrors.city ? 'border-red-500' : ''}`}
                   />

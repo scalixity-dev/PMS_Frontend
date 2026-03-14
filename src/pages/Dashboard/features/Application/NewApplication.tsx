@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Sparkles } from 'lucide-react';
 import ApplicationStepper from './components/ApplicationStepper';
 import PropertySelectionStep from './steps/PropertySelectionStep';
 import ApplicantInfoStep from './steps/ApplicantInfoStep';
@@ -17,6 +17,7 @@ import DocumentsStep from './steps/DocumentsStep';
 import { useApplicationStore } from './store/applicationStore';
 import ApplicationSuccessModal from './components/ApplicationSuccessModal';
 import ApplicationErrorModal from './components/ApplicationErrorModal';
+import AIApplicationChat from './components/AIApplicationChat';
 
 const STORAGE_KEY = 'application_draft';
 
@@ -156,6 +157,7 @@ const NewApplication: React.FC = () => {
     const [showErrorModal, setShowErrorModal] = React.useState(false);
     const [errorMessages, setErrorMessages] = React.useState<string[]>([]);
     const [documentsNeedReupload, setDocumentsNeedReupload] = React.useState(false);
+    const [showAIChat, setShowAIChat] = React.useState(false);
 
     const handleCancel = () => {
         if (isFormDirty) {
@@ -216,6 +218,41 @@ const NewApplication: React.FC = () => {
 
     const handlePropertySelected = () => {
         setIsPropertySelected(true);
+    };
+
+    const handleAIFormData = (aiData: any) => {
+        const updates: any = {};
+        
+        Object.entries(aiData).forEach(([key, value]) => {
+            if (value !== null && value !== '' && value !== undefined) {
+                if (Array.isArray(value) && value.length > 0) {
+                    updates[key] = value.map((item: any) => {
+                        const converted: any = {
+                            ...item,
+                            id: Math.random().toString(36).substr(2, 9),
+                        };
+                        
+                        if (item.dob) converted.dob = new Date(item.dob);
+                        if (item.moveInDate) converted.moveInDate = new Date(item.moveInDate);
+                        if (item.moveOutDate) converted.moveOutDate = new Date(item.moveOutDate);
+                        if (item.startDate) converted.startDate = new Date(item.startDate);
+                        if (item.endDate) converted.endDate = new Date(item.endDate);
+                        
+                        return converted;
+                    });
+                } else if (key === 'dob' || key === 'moveInDate') {
+                    updates[key] = value ? new Date(value) : undefined;
+                } else {
+                    updates[key] = value;
+                }
+            }
+        });
+
+        setFormData(prev => ({ ...prev, ...updates }));
+        
+        if (updates.propertyId) {
+            setIsPropertySelected(true);
+        }
     };
 
     /**
@@ -323,14 +360,25 @@ const NewApplication: React.FC = () => {
                     <ChevronLeft size={20} strokeWidth={3} />
                     BACK
                 </button>
-                {isFormDirty && (
-                    <button
-                        onClick={handleCancel}
-                        className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors"
-                    >
-                        Cancel Application
-                    </button>
-                )}
+                <div className="flex items-center gap-4">
+                    {currentStep === 1 && !isPropertySelected && (
+                        <button
+                            onClick={() => setShowAIChat(true)}
+                            className="flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-full font-medium hover:from-teal-700 hover:to-teal-600 transition-all shadow-lg hover:shadow-xl"
+                        >
+                            <Sparkles className="w-4 h-4 md:w-5 md:h-5" />
+                            <span className="text-sm md:text-base">Fill using AI</span>
+                        </button>
+                    )}
+                    {isFormDirty && (
+                        <button
+                            onClick={handleCancel}
+                            className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-red-600 transition-colors"
+                        >
+                            Cancel Application
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Stepper */}
@@ -387,6 +435,12 @@ const NewApplication: React.FC = () => {
                 isOpen={showErrorModal}
                 onClose={() => setShowErrorModal(false)}
                 errors={errorMessages}
+            />
+
+            <AIApplicationChat
+                isOpen={showAIChat}
+                onClose={() => setShowAIChat(false)}
+                onFormDataReceived={handleAIFormData}
             />
         </div>
     );
