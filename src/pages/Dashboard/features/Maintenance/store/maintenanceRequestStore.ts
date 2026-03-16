@@ -43,11 +43,14 @@ export interface MaintenanceMaterial {
   quantity: number;
 }
 
+export type ChargeToOption = 'LANDLORD' | 'TENANT' | 'PENDING';
+
 export interface MaintenanceDueState {
   dateInitiated?: Date;
   dateDue?: Date;
   priority: string;
   materials: MaintenanceMaterial[];
+  chargeTo: ChargeToOption;
 }
 
 interface MaintenanceRequestFormState {
@@ -89,6 +92,7 @@ const initialDue: MaintenanceDueState = {
   dateDue: undefined,
   priority: '',
   materials: [],
+  chargeTo: 'LANDLORD',
 };
 
 export const useMaintenanceRequestFormStore = create<MaintenanceRequestFormState>((set) => ({

@@ -8,6 +8,8 @@ import RequestSuccessModal from "./components/RequestSuccessModal";
 import DeleteConfirmationModal from "../../../../components/common/modals/DeleteConfirmationModal";
 import { useRequestStore } from "./store/requestStore";
 import type { ServiceRequest, AvailabilityOption } from "../../utils/types";
+import { useGetAllMaintenanceRequests } from "../../../../hooks/useMaintenanceRequestQueries";
+import { mapApiToServiceRequest } from "./utils/mapApiToServiceRequest";
 
 // Constants
 const STATUS_OPTIONS = [
@@ -471,8 +473,15 @@ const ROWS_PER_PAGE = 10;
 const Requests: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { requestFilters, setRequestFilters, resetRequestFilters, requests, updateRequestStatus, deleteRequest } = useRequestStore();
-  const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
+  const { requestFilters, setRequestFilters, resetRequestFilters, requests: storeRequests, updateRequestStatus, deleteRequest } = useRequestStore();
+  const { data: apiRequests = [], isLoading: apiLoading, isSuccess: apiSuccess } = useGetAllMaintenanceRequests(true);
+  const requests: ServiceRequest[] = useMemo(() => {
+    if (apiSuccess && Array.isArray(apiRequests) && apiRequests.length >= 0) {
+      return (apiRequests as unknown[]).map((r) => mapApiToServiceRequest(r as Parameters<typeof mapApiToServiceRequest>[0]));
+    }
+    return storeRequests;
+  }, [apiSuccess, apiRequests, storeRequests]);
+  const [activeMenuId, setActiveMenuId] = useState<string | number | null>(null);
   const [menuPosition, setMenuPosition] = useState<MenuPosition | null>(null);
   const [printingRequest, setPrintingRequest] = useState<ServiceRequest | null>(null);
   const [currentPage, setCurrentPage] = useState(1);

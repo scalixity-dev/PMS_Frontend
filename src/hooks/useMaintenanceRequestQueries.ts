@@ -5,6 +5,7 @@ import {
   type MaintenanceRequestResponse,
   type MaintenanceRequestDetail,
   type MaintenanceRequestTransaction,
+  type MaintenanceRequestApplicant,
 } from '../services/maintenance-request.service';
 
 export const maintenanceRequestQueryKeys = {
@@ -12,6 +13,7 @@ export const maintenanceRequestQueryKeys = {
   list: () => [...maintenanceRequestQueryKeys.all, 'list'] as const,
   detail: (id: string) => [...maintenanceRequestQueryKeys.all, 'detail', id] as const,
   transactions: (id: string) => [...maintenanceRequestQueryKeys.all, 'transactions', id] as const,
+  applicants: (id: string) => [...maintenanceRequestQueryKeys.all, 'applicants', id] as const,
 };
 
 export const useGetAllMaintenanceRequests = (enabled: boolean = true) => {
@@ -98,6 +100,18 @@ export const useDeleteMaintenanceRequest = () => {
         queryKey: maintenanceRequestQueryKeys.detail(id),
       });
     },
+  });
+};
+
+export const useGetMaintenanceRequestApplicants = (id: string | undefined, enabled: boolean = true) => {
+  return useQuery<MaintenanceRequestApplicant[]>({
+    queryKey: maintenanceRequestQueryKeys.applicants(id ?? ''),
+    queryFn: async () => {
+      if (!id) return [];
+      return maintenanceRequestService.getApplicants(id);
+    },
+    enabled: enabled && !!id,
+    retry: 1,
   });
 };
 

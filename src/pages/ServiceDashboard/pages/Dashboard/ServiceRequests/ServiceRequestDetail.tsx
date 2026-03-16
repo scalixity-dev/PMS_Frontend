@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
     ChevronLeft,
     ChevronDown,
@@ -14,10 +15,33 @@ import {
     DollarSign,
     Paperclip,
     Image as ImageIcon,
-    Download
 } from 'lucide-react';
 import { PiChatCircleText } from "react-icons/pi";
 import ServiceBreadCrumb from '../../../components/ServiceBreadCrumb';
+import { serviceProviderService, type BackendServiceProvider } from '../../../../../services/service-provider.service';
+import { maintenanceRequestService, type MaintenanceRequestDetail as BackendMaintenanceRequestDetail } from '../../../../../services/maintenance-request.service';
+
+interface ServiceAssignmentRequest {
+    id: string;
+    category?: string | null;
+    subcategory?: string | null;
+    issue?: string | null;
+    subissue?: string | null;
+    problemDetails?: string | null;
+    priority?: string | null;
+    requestedAt?: string | null;
+    dueDate?: string | null;
+    property?: {
+        id: string;
+        propertyName?: string | null;
+    } | null;
+}
+
+interface ServiceAssignment {
+    id: string;
+    status?: string | null;
+    request?: ServiceAssignmentRequest | null;
+}
 
 interface CollapsibleSectionProps {
     title: string;
@@ -54,71 +78,147 @@ const ServiceRequestDetail: React.FC = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const [showActionDropdown, setShowActionDropdown] = useState(false);
+    const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+    const queryClient = useQueryClient();
 
-    // Mock Data (In a real app, this would be fetched based on :id)
-    const requestData = {
-        id: id || '123456',
-        category: 'Electrical / Outlets / Interior / Sparkling',
-        property: 'Luxury Apartment',
-        description: 'Mock Description: The electrical outlets in the main living area have been sparking when devices are plugged in. This is a potential fire hazard and needs immediate attention from a qualified electrician. Please check all outlets in the apartment to ensure safety.',
-        assignee: {
-            name: 'Siddak Bagga',
-            email: 'siddakbagga@gmail.com',
-            type: 'One Time',
-            priority: 'Normal',
-            dateInitiated: '-',
-            dateDue: '-',
-            avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix'
+    const { data: assignment, isLoading, error } = useQuery<ServiceAssignment | null>({
+        queryKey: ['service-request-detail', id],
+        queryFn: async () => {
+            if (!id) return null;
+            const raw = await serviceProviderService.getMyAssignments();
+            const list = raw as ServiceAssignment[];
+            const foundByRequest = list.find(a => a.request?.id === id);
+            if (foundByRequest) return foundByRequest;
+            const foundByAssignment = list.find(a => a.id === id);
+            return foundByAssignment ?? null;
         },
-        tenant: {
-            type: 'One Time',
-            dateInitiated: '-',
-            dateDue: '-'
+        enabled: !!id,
+        staleTime: 2 * 60 * 1000,
+        retry: 1,
+    });
+
+    const request = assignment?.request ?? null;
+
+    const displayId = request?.id ?? id ?? '';
+    const displayCategory = useMemo(() => {
+        if (!request) return '';
+        const parts: string[] = [];
+        if (request.category) parts.push(request.category);
+        if (request.subcategory) parts.push(request.subcategory);
+        if (request.issue) parts.push(request.issue);
+        if (request.subissue) parts.push(request.subissue);
+        return parts.join(' / ');
+    }, [request]);
+
+    const displayProperty = request?.property?.propertyName ?? 'Property';
+    const displayDescription =
+        request?.problemDetails ?? 'No description provided.';
+
+    const { data: requestDetail } = useQuery<BackendMaintenanceRequestDetail | null>({
+        queryKey: ['service-request-detail-request', id],
+        queryFn: async () => {
+            if (!id) return null;
+            const data = await maintenanceRequestService.getOne(id);
+            return data as BackendMaintenanceRequestDetail;
         },
-        // Mock Media
-        media: [
-            {
-                id: '1',
-                type: 'image',
-                url: 'https://images.unsplash.com/photo-1550989460-0adf9ea622e2?q=80&w=600&auto=format&fit=crop', // Sparking outlet example
-                name: 'Outlet_Damage.jpg'
-            },
-            {
-                id: '2',
-                type: 'image',
-                url: 'https://images.unsplash.com/photo-1581092921461-eab62e97a782?q=80&w=600&auto=format&fit=crop', // Electrician working
-                name: 'Repair_Progress.jpg'
-            }
-        ],
-        // Mock Transactions
-        transactions: [
-            {
-                id: 't1',
-                description: 'Initial Inspection Fee',
-                date: '2023-10-25',
-                amount: 50.00,
-                status: 'Paid',
-                invoiceUrl: '#'
-            },
-            {
-                id: 't2',
-                description: 'Outlet Replacement Parts',
-                date: '2023-10-26',
-                amount: 125.50,
-                status: 'Pending',
-                invoiceUrl: '#'
-            }
-        ]
+        enabled: !!id,
+        staleTime: 2 * 60 * 1000,
+        retry: 1,
+    });
+
+    const mediaUrls = useMemo(() => {
+        if (!requestDetail) return [];
+
+        const fromPhotos =
+            requestDetail.photos?.map((p) => p.fileUrl) ?? [];
+
+        const fromImageAttachments =
+            requestDetail.attachments
+                ?.filter((a) => {
+                    const type = (a.fileType ?? '').toString().toUpperCase();
+                    if (type) return type === 'IMAGE';
+                    return /\.(png|jpe?g|gif|webp)$/i.test(a.fileUrl);
+                })
+                .map((a) => a.fileUrl) ?? [];
+
+        return [...fromPhotos, ...fromImageAttachments];
+    }, [requestDetail]);
+
+    const { data: currentProvider } = useQuery<BackendServiceProvider | null>({
+        queryKey: ['service-provider-me'],
+        queryFn: () => serviceProviderService.getMyProfile(),
+        staleTime: 5 * 60 * 1000,
+    });
+
+    const rawStatus = (assignment?.status ?? '').toUpperCase();
+    const statusLabelMap: Record<string, string> = {
+        NEW: 'New',
+        ASSIGNED: 'Assigned',
+        IN_PROGRESS: 'In Progress',
+        ON_HOLD: 'On Hold',
+        COMPLETED: 'Completed',
+        CANCELLED: 'Cancelled',
     };
+    const currentStatusLabel = statusLabelMap[rawStatus] ?? (assignment?.status ?? 'New');
+
+    const handleUpdateAssignmentStatus = async (nextStatus: string) => {
+        if (!assignment?.id || !currentProvider?.id) return;
+        setIsUpdatingStatus(true);
+        try {
+            await serviceProviderService.updateAssignmentStatus(currentProvider.id, assignment.id, nextStatus);
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ['service-requests-list'] }),
+                queryClient.invalidateQueries({ queryKey: ['service-requests-board'] }),
+                queryClient.invalidateQueries({ queryKey: ['service-request-detail', id] }),
+            ]);
+        } catch (e) {
+            console.error('Failed to update assignment status:', e);
+        } finally {
+            setIsUpdatingStatus(false);
+        }
+    };
+
+    if (!isLoading && !error && !assignment) {
+        return (
+            <div className="p-6 max-w-3xl mx-auto text-center">
+                <ServiceBreadCrumb
+                    items={[
+                        { label: 'Dashboard', to: '/service-dashboard' },
+                        { label: 'Requests', to: '/service-dashboard/requests' },
+                    ]}
+                />
+                <p className="mt-8 text-gray-600 text-sm">
+                    This request is not currently assigned to you.
+                </p>
+                <button
+                    className="mt-4 px-4 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors"
+                    onClick={() => navigate('/service-dashboard/requests')}
+                >
+                    Back to Requests
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div className="p-2 flex flex-col gap-6">
+            {isLoading && (
+                <div className="text-center text-gray-500 py-8 text-sm">
+                    Loading request details...
+                </div>
+            )}
+            {error && !isLoading && (
+                <div className="text-center text-red-600 py-8 text-sm">
+                    {error instanceof Error ? error.message : 'Failed to load request'}
+                </div>
+            )}
+
             {/* Breadcrumb */}
             <ServiceBreadCrumb
                 items={[
                     { label: 'Dashboard', to: '/service-dashboard' },
                     { label: 'Requests', to: '/service-dashboard/requests' },
-                    { label: `Requests #${requestData.id}`, active: true }
+                    { label: `Requests #${displayId}`, active: true }
                 ]}
             />
 
@@ -145,11 +245,43 @@ const ServiceRequestDetail: React.FC = () => {
                                 onClick={() => setShowActionDropdown(!showActionDropdown)}
                                 className="bg-[#7CD947] hover:bg-[#6bc23d] text-white px-8 py-2 rounded-lg font-bold transition-colors flex items-center gap-2"
                             >
-                                Action
+                                Actions
                             </button>
 
                             {showActionDropdown && (
-                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden py-1">
+                                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden py-1">
+                                    {rawStatus === 'NEW' || rawStatus === 'ASSIGNED' ? (
+                                        <button
+                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center justify-between gap-2"
+                                            disabled={isUpdatingStatus}
+                                            onClick={() => {
+                                                setShowActionDropdown(false);
+                                                handleUpdateAssignmentStatus('IN_PROGRESS');
+                                            }}
+                                        >
+                                            <span>Start work</span>
+                                            {isUpdatingStatus && (
+                                                <span className="text-[10px] text-gray-400">Updating…</span>
+                                            )}
+                                        </button>
+                                    ) : null}
+
+                                    {rawStatus === 'IN_PROGRESS' && (
+                                        <button
+                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center justify-between gap-2"
+                                            disabled={isUpdatingStatus}
+                                            onClick={() => {
+                                                setShowActionDropdown(false);
+                                                handleUpdateAssignmentStatus('COMPLETED');
+                                            }}
+                                        >
+                                            <span>Mark completed</span>
+                                            {isUpdatingStatus && (
+                                                <span className="text-[10px] text-gray-400">Updating…</span>
+                                            )}
+                                        </button>
+                                    )}
+
                                     <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2">
                                         <Printer size={16} />
                                         Print
@@ -168,8 +300,10 @@ const ServiceRequestDetail: React.FC = () => {
                     <div className="flex items-start gap-3">
                         <Tag className="text-gray-700 mt-1" size={24} />
                         <div>
-                            <p className="text-sm font-bold text-gray-900">No. {requestData.id}</p>
-                            <p className="text-xl font-bold text-gray-900">{requestData.category}</p>
+                            <p className="text-sm font-bold text-gray-900">No. {displayId}</p>
+                            <p className="text-xl font-bold text-gray-900">
+                                {displayCategory || 'Maintenance Request'}
+                            </p>
                         </div>
                     </div>
 
@@ -177,7 +311,9 @@ const ServiceRequestDetail: React.FC = () => {
                         <Home className="text-gray-700 mt-1" size={24} />
                         <div>
                             <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">Property</p>
-                            <p className="text-xl font-bold text-gray-900">{requestData.property}</p>
+                            <p className="text-xl font-bold text-gray-900">
+                                {displayProperty}
+                            </p>
                         </div>
                     </div>
 
@@ -185,7 +321,9 @@ const ServiceRequestDetail: React.FC = () => {
                         <AlignLeft className="text-gray-700 mt-1" size={24} />
                         <div>
                             <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">Description</p>
-                            <p className="text-lg font-bold text-gray-900 mt-1">{requestData.description}</p>
+                            <p className="text-lg font-bold text-gray-900 mt-1">
+                                {displayDescription}
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -193,14 +331,22 @@ const ServiceRequestDetail: React.FC = () => {
 
             {/* Collapsible Sections */}
             <CollapsibleSection title="Media" icon={<ImageIcon size={24} />}>
-                {requestData.media && requestData.media.length > 0 ? (
+                {mediaUrls.length > 0 ? (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {requestData.media.map(item => (
-                            <div key={item.id} className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 shadow-sm group">
-                                <img src={item.url} alt={item.name} className="w-full h-full object-cover" />
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                    <span className="text-white text-xs font-medium bg-black/50 px-2 py-1 rounded">{item.name}</span>
-                                </div>
+                        {mediaUrls.map((url) => (
+                            <div
+                                key={url}
+                                className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 shadow-sm group"
+                            >
+                                <img
+                                    src={url}
+                                    alt="Maintenance media"
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                        (e.target as HTMLImageElement).src =
+                                            'https://placehold.co/300x300?text=No+Image';
+                                    }}
+                                />
                             </div>
                         ))}
                     </div>
@@ -215,38 +361,101 @@ const ServiceRequestDetail: React.FC = () => {
                 <div className="bg-[#F6F6F6] rounded-[20px] p-8">
                     <div className="flex items-center gap-3 mb-8">
                         <User size={24} className="text-gray-900" />
-                        <h3 className="text-xl font-bold text-gray-900">Assignee Information</h3>
+                        <div>
+                            <h3 className="text-xl font-bold text-gray-900">Your Assignment</h3>
+                            <p className="text-xs text-gray-500 mt-1">This job is currently assigned to you as the service provider.</p>
+                        </div>
                     </div>
 
                     <div className="flex flex-col md:flex-row gap-8">
                         <div className="flex-1 space-y-4">
                             <div>
                                 <p className="text-xs font-bold text-gray-500 uppercase">Type</p>
-                                <p className="text-lg font-bold text-gray-900">{requestData.assignee.type}</p>
+                                <p className="text-lg font-bold text-gray-900">One Time</p>
                             </div>
                             <div>
                                 <p className="text-xs font-bold text-gray-500 uppercase">Priority</p>
                                 <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#7CD94733] text-[#7CD947] rounded-full text-xs font-bold mt-1">
                                     <span className="w-2 h-2 rounded-full bg-[#7CD947]"></span>
-                                    {requestData.assignee.priority}
+                                    {request?.priority ?? 'Normal'}
                                 </span>
                             </div>
                             <div>
+                                <p className="text-xs font-bold text-gray-500 uppercase">Status</p>
+                                <p className="text-lg font-bold text-gray-900">
+                                    {currentStatusLabel}
+                                </p>
+                            </div>
+                            <div>
                                 <p className="text-xs font-bold text-gray-500 uppercase">Date Initiated</p>
-                                <p className="text-lg font-bold text-gray-900">{requestData.assignee.dateInitiated}</p>
+                                <p className="text-lg font-bold text-gray-900">
+                                    {request?.requestedAt
+                                        ? new Date(request.requestedAt).toLocaleDateString()
+                                        : '-'}
+                                </p>
                             </div>
                             <div>
                                 <p className="text-xs font-bold text-gray-500 uppercase">Date Due</p>
-                                <p className="text-lg font-bold text-gray-900">{requestData.assignee.dateDue}</p>
+                                <p className="text-lg font-bold text-gray-900">
+                                    {request?.dueDate
+                                        ? new Date(request.dueDate).toLocaleDateString()
+                                        : '-'}
+                                </p>
                             </div>
                         </div>
 
                         <div className="bg-white rounded-2xl p-6 border border-gray-100 flex flex-col items-center text-center shadow-sm w-full md:w-48">
+                            {(() => {
+                                const assigneeName =
+                                    currentProvider?.companyName ||
+                                    [currentProvider?.firstName, currentProvider?.lastName]
+                                        .filter((part) => !!part && part.trim().length > 0)
+                                        .join(' ') ||
+                                    'You';
+                                const initials = assigneeName
+                                    .split(' ')
+                                    .filter((part) => part.length > 0)
+                                    .map((part) => part[0])
+                                    .join('')
+                                    .slice(0, 2)
+                                    .toUpperCase();
+                                return (
+                                    <>
                             <div className="w-20 h-20 rounded-full mb-3 bg-coral-100 border-2 border-white flex items-center justify-center text-2xl font-bold text-gray-700 shadow-sm">
-                                {requestData.assignee.name.split(' ').map(n => n[0]).join('')}
+                                        {initials}
                             </div>
-                            <h4 className="font-bold text-gray-900">{requestData.assignee.name}</h4>
-                            <p className="text-[10px] text-gray-400 break-all">{requestData.assignee.email}</p>
+                                        <h4 className="font-bold text-gray-900 truncate max-w-full">{assigneeName}</h4>
+                                        <p className="text-[10px] text-gray-400 break-all">
+                                            You (Assigned Service Pro)
+                                        </p>
+                                        {currentProvider?.email && (
+                                            <p className="mt-1 text-[10px] text-gray-500 break-all">
+                                                {currentProvider.email}
+                                            </p>
+                                        )}
+                                    </>
+                                );
+                            })()}
+                            <div className="mt-4 flex flex-col gap-2 w-full">
+                                {rawStatus === 'NEW' && (
+                                    <button
+                                        disabled={isUpdatingStatus}
+                                        onClick={() => handleUpdateAssignmentStatus('IN_PROGRESS')}
+                                        className="w-full px-4 py-2 bg-[#3A6D6C] text-white rounded-full text-xs font-semibold hover:bg-[#2c5251] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {isUpdatingStatus ? 'Starting...' : 'Start Work'}
+                                    </button>
+                                )}
+                                {rawStatus === 'IN_PROGRESS' && (
+                                    <button
+                                        disabled={isUpdatingStatus}
+                                        onClick={() => handleUpdateAssignmentStatus('COMPLETED')}
+                                        className="w-full px-4 py-2 bg-[#7BD747] text-white rounded-full text-xs font-semibold hover:bg-[#6BC837] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {isUpdatingStatus ? 'Updating...' : 'Mark Completed'}
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -261,99 +470,36 @@ const ServiceRequestDetail: React.FC = () => {
                     <div className="grid grid-cols-2 gap-8">
                         <div>
                             <p className="text-xs font-bold text-gray-500 uppercase">Type</p>
-                            <p className="text-lg font-bold text-gray-900">{requestData.tenant.type}</p>
+                            <p className="text-lg font-bold text-gray-900">One Time</p>
                         </div>
                         <div>
                             <p className="text-xs font-bold text-gray-500 uppercase">Type</p>
-                            <p className="text-lg font-bold text-gray-900">{requestData.tenant.type}</p>
+                            <p className="text-lg font-bold text-gray-900">One Time</p>
                         </div>
                         <div>
                             <p className="text-xs font-bold text-gray-500 uppercase">Date Initiated</p>
-                            <p className="text-lg font-bold text-gray-900">{requestData.tenant.dateInitiated}</p>
+                            <p className="text-lg font-bold text-gray-900">
+                                {request?.requestedAt
+                                    ? new Date(request.requestedAt).toLocaleDateString()
+                                    : '-'}
+                            </p>
                         </div>
                         <div>
                             <p className="text-xs font-bold text-gray-500 uppercase">Date Due</p>
-                            <p className="text-lg font-bold text-gray-900">{requestData.tenant.dateDue}</p>
+                            <p className="text-lg font-bold text-gray-900">
+                                {request?.dueDate
+                                    ? new Date(request.dueDate).toLocaleDateString()
+                                    : '-'}
+                            </p>
                         </div>
                     </div>
                 </div>
             </div>
 
             <CollapsibleSection title="Transactions" icon={<DollarSign size={24} />}>
-                {requestData.transactions && requestData.transactions.length > 0 ? (
-                    <>
-                        {/* Mobile Card View */}
-                        <div className="md:hidden space-y-4">
-                            {requestData.transactions.map((tx) => (
-                                <div key={tx.id} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                                    <div className="flex justify-between items-start mb-3">
-                                        <span className="text-gray-500 font-medium text-sm">#{tx.id}</span>
-                                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${tx.status === 'Paid' ? 'bg-green-50 text-green-700' :
-                                            tx.status === 'Pending' ? 'bg-blue-50 text-blue-600' :
-                                                'bg-yellow-50 text-yellow-700'
-                                            }`}>
-                                            {tx.status}
-                                        </span>
-                                    </div>
-                                    <div className="mb-4">
-                                        <h3 className="font-semibold text-gray-900 text-base mb-1">{tx.description}</h3>
-                                        <p className="text-gray-500 text-sm">{tx.date}</p>
-                                    </div>
-                                    <div className="flex items-center justify-between pt-3 border-t border-gray-50">
-                                        <span className="text-sm font-bold text-gray-900">${tx.amount.toFixed(2)}</span>
-                                        <button className="text-[#3A6D6C] hover:text-[#2c5252] text-xs font-bold hover:underline flex items-center gap-1">
-                                            Download Invoice
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Desktop Table View */}
-                        <div className="hidden md:block bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
-                            <table className="w-full text-left border-collapse">
-                                <thead className="bg-[#7BE156] text-white">
-                                    <tr>
-                                        <th className="px-6 py-4 font-semibold">Status</th>
-                                        <th className="px-6 py-4 font-semibold">Description</th>
-                                        <th className="px-6 py-4 font-semibold">Date</th>
-                                        <th className="px-6 py-4 font-semibold text-right">Amount</th>
-                                        <th className="px-6 py-4 font-semibold text-center">Invoice</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100">
-                                    {requestData.transactions.map((tx) => (
-                                        <tr key={tx.id} className="hover:bg-gray-50">
-                                            <td className="px-6 py-4">
-                                                <div className={`flex items-center gap-2 font-medium text-sm ${tx.status === 'Paid' ? 'text-green-600' :
-                                                    tx.status === 'Pending' ? 'text-blue-500' :
-                                                        'text-yellow-600'
-                                                    }`}>
-                                                    <span className={`w-2 h-2 rounded-full ${tx.status === 'Paid' ? 'bg-green-600' :
-                                                        tx.status === 'Pending' ? 'bg-blue-500' :
-                                                            'bg-yellow-600'
-                                                        }`}></span>
-                                                    {tx.status}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 text-sm font-medium text-gray-900">{tx.description}</td>
-                                            <td className="px-6 py-4 text-sm text-gray-500">{tx.date}</td>
-                                            <td className="px-6 py-4 text-sm font-bold text-gray-900 text-right">${tx.amount.toFixed(2)}</td>
-                                            <td className="px-6 py-4 text-center">
-                                                <button className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 relative group">
-                                                    <Download size={20} />
-                                                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Download</span>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </>
-                ) : (
-                    <div className="text-gray-400 italic text-center py-8">No transactions found</div>
-                )}
+                <div className="text-gray-400 italic text-center py-8">
+                    No transactions found
+                </div>
             </CollapsibleSection>
 
             <CollapsibleSection title="Attachments" icon={<Paperclip size={24} />}>

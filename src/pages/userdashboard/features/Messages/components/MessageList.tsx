@@ -48,6 +48,7 @@ const MessageList = ({ chat, currentUserId }: MessageListProps) => {
                         isOwnMessage={message.senderId === currentUserId}
                         contactName={chat.contactName}
                         contactAvatar={chat.contactAvatar}
+                        isPending={Boolean((message as { isPending?: boolean }).isPending)}
                     />
                 ))}
                 <div ref={messagesEndRef} />

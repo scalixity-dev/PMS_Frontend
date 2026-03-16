@@ -1,42 +1,40 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
     ChevronLeft, ImageIcon, Tag, FileText, Settings, DollarSign, Paperclip,
     Download, X, MessageSquare, User, Printer, Calendar, ShoppingCart, Wrench,
-    Pencil, Trash2
+    Pencil, Trash2, AlertCircle
 } from 'lucide-react';
 import { useRequestStore } from './store/requestStore';
+import { useGetMaintenanceRequest } from '../../../../hooks/useMaintenanceRequestQueries';
+import { mapApiDetailToServiceRequest } from './utils/mapApiToServiceRequest';
 
 const RequestDetails = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const { requests } = useRequestStore();
+    const { requests: storeRequests } = useRequestStore();
     const [selectedMedia, setSelectedMedia] = useState<{ type: string; url: string; name: string } | null>(null);
     const { updateRequest } = useRequestStore();
 
-    // Materials Editing State
-    const [editingItem, setEditingItem] = useState<{ type: 'material' | 'equipment'; data: any } | null>(null);
+    const { data: apiRequest, isLoading: apiLoading } = useGetMaintenanceRequest(id, !!id);
+    const storeRequest = storeRequests.find(r =>
+        String(r.id) === id || Number(r.id) === Number(id) || r.requestId === id
+    );
+    const foundRequest = apiRequest
+        ? mapApiDetailToServiceRequest(apiRequest as Parameters<typeof mapApiDetailToServiceRequest>[0])
+        : storeRequest;
+
+    const [editingItem, setEditingItem] = useState<{ type: 'material' | 'equipment'; data: { index?: number; name?: string; quantity?: number; condition?: string; serialNumber?: string } } | null>(null);
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-    const [itemToDelete, setItemToDelete] = useState<{ type: 'material' | 'equipment'; id: any } | null>(null);
+    const [itemToDelete, setItemToDelete] = useState<{ type: 'material' | 'equipment'; id: string | number } | null>(null);
 
-    // Find the request from the store - try matching by both id and requestId
-    const foundRequest = requests.find(r => {
-        const requestIdStr = String(r.id);
-        const requestIdNum = Number(r.id);
-        const urlIdNum = Number(id);
+    if (apiLoading && !storeRequest) {
         return (
-            requestIdStr === id ||
-            requestIdNum === urlIdNum ||
-            r.requestId === id
+            <div className="flex flex-col items-center justify-center min-h-screen">
+                <p className="text-gray-600">Loading request...</p>
+            </div>
         );
-    });
-
-    // Debug logging
-    useEffect(() => {
-        console.log('RequestDetails - URL id:', id);
-        console.log('RequestDetails - Total requests:', requests.length);
-        console.log('RequestDetails - Found request:', foundRequest);
-    }, [id, requests, foundRequest]);
+    }
 
     if (!foundRequest) {
         return (
@@ -192,8 +190,9 @@ const RequestDetails = () => {
 
         if (editingItem.type === 'material') {
             const updatedMaterials = [...(foundRequest.materials || [])];
-            updatedMaterials[editingItem.data.index] = {
-                ...updatedMaterials[editingItem.data.index],
+            const idx = editingItem.data.index ?? 0;
+            updatedMaterials[idx] = {
+                ...updatedMaterials[idx],
                 ...updatedData
             };
             updateRequest(foundRequest.id, { materials: updatedMaterials });
@@ -227,6 +226,12 @@ const RequestDetails = () => {
             </nav>
 
             <div className="max-w-7xl mx-auto w-full space-y-6">
+                {foundRequest.chargeTo === 'TENANT' && !foundRequest.tenantChargeApprovedAt && (
+                    <div className="flex items-center gap-2 p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-800">
+                        <AlertCircle size={20} className="flex-shrink-0" />
+                        <p className="text-sm font-medium">Pending landlord approval for charges. Landlord must approve before any tenant-caused repair charges can be applied.</p>
+                    </div>
+                )}
                 {/* Header / Main Info Card */}
                 <div className="bg-[#F4F4F4] rounded-2xl border border-gray-200 shadow-[0px_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
                     <div className="px-2 py-3 border-b border-[#E5E7EB] flex items-center justify-between">
@@ -850,7 +855,7 @@ const RequestDetails = () => {
                                 <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">Name</label>
                                 <input
                                     name="name"
-                                    defaultValue={editingItem.data.name}
+                                    defaultValue={editingItem.data.name ?? ''}
                                     className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#7ED957] focus:ring-4 focus:ring-[#7ED957]/10 outline-none transition-all font-semibold"
                                     placeholder="Enter name"
                                     required
@@ -863,7 +868,7 @@ const RequestDetails = () => {
                                     <input
                                         name="quantity"
                                         type="number"
-                                        defaultValue={editingItem.data.quantity}
+                                        defaultValue={editingItem.data.quantity ?? 1}
                                         className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#7ED957] focus:ring-4 focus:ring-[#7ED957]/10 outline-none transition-all font-semibold"
                                         placeholder="Enter quantity"
                                         required
@@ -875,7 +880,7 @@ const RequestDetails = () => {
                                         <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">Condition</label>
                                         <select
                                             name="condition"
-                                            defaultValue={editingItem.data.condition}
+                                            defaultValue={editingItem.data.condition ?? 'Good'}
                                             className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#7ED957] focus:ring-4 focus:ring-[#7ED957]/10 outline-none transition-all font-semibold appearance-none bg-white"
                                         >
                                             <option value="Good">Good</option>
@@ -887,7 +892,7 @@ const RequestDetails = () => {
                                         <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">Serial Number</label>
                                         <input
                                             name="serialNumber"
-                                            defaultValue={editingItem.data.serialNumber}
+                                            defaultValue={editingItem.data.serialNumber ?? ''}
                                             className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#7ED957] focus:ring-4 focus:ring-[#7ED957]/10 outline-none transition-all font-semibold"
                                             placeholder="Enter serial number"
                                         />

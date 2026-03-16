@@ -264,6 +264,72 @@ class AuthService {
   }
 
   /**
+   * Request password reset (forgot password). Sends a reset link/OTP to the given email.
+   */
+  async requestPasswordReset(email: string): Promise<void> {
+    const response = await fetch(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ email }),
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to send password reset email';
+
+      try {
+        const errorData = await response.json();
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join('. ');
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+      } catch {
+        errorMessage = `Failed to send password reset: ${response.statusText}`;
+      }
+
+      throw new Error(errorMessage);
+    }
+  }
+
+  /**
+   * Reset password using OTP and new password (forgot password flow).
+   */
+  async resetPassword(email: string, code: string, newPassword: string): Promise<void> {
+    const response = await fetch(API_ENDPOINTS.AUTH.RESET_PASSWORD, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ email, code: code.trim(), newPassword }),
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to reset password';
+
+      try {
+        const errorData = await response.json();
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join('. ');
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+      } catch {
+        errorMessage = `Failed to reset password: ${response.statusText}`;
+      }
+
+      throw new Error(errorMessage);
+    }
+  }
+
+  /**
    * Verify email OTP
    */
   async verifyEmail(userId: string, code: string): Promise<void> {

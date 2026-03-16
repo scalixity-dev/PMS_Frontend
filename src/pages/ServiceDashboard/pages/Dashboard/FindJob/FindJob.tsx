@@ -1,11 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { PiBriefcaseLight } from 'react-icons/pi';
 import ServiceFilters from '../../../components/ServiceFilters';
 import JobCard from './components/JobCard';
 import ServiceBreadCrumb from '@/pages/ServiceDashboard/components/ServiceBreadCrumb';
-
-import { MOCK_JOBS } from './data/jobData';
+import { useGetAvailableJobs } from '@/hooks/useAvailableJobs';
 
 interface DashboardContext {
     sidebarCollapsed: boolean;
@@ -18,17 +17,41 @@ const FindJob = () => {
     const [radiusFilter, setRadiusFilter] = useState('All');
     const [categoryFilter] = useState('All');
 
-    // Filter Logic
-    const filteredJobs = MOCK_JOBS.filter(job => {
-        const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            job.location.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesPriority = priorityFilter === 'All' ||
-            (Array.isArray(priorityFilter) ? (priorityFilter.includes('All') || priorityFilter.includes(job.priority)) : job.priority === priorityFilter);
-        const matchesCategory = categoryFilter === 'All' || job.category === categoryFilter;
-        // Radius logic would go here in a real app
+    // Build filters for API call
+    const apiFilters = useMemo(() => {
+        const filters: { radius?: string; category?: string; priority?: string; search?: string } = {};
+        if (radiusFilter !== 'All') {
+            filters.radius = radiusFilter;
+        }
+        if (categoryFilter !== 'All') {
+            filters.category = categoryFilter;
+        }
+        if (priorityFilter !== 'All' && !Array.isArray(priorityFilter)) {
+            filters.priority = priorityFilter;
+        }
+        if (searchTerm.trim()) {
+            filters.search = searchTerm.trim();
+        }
+        return filters;
+    }, [radiusFilter, categoryFilter, priorityFilter, searchTerm]);
 
-        return matchesSearch && matchesPriority && matchesCategory;
-    });
+    // Fetch available jobs from API
+    const { data: jobs = [], isLoading, error } = useGetAvailableJobs(apiFilters);
+
+    // Map API response to JobCard props format
+    const mappedJobs = useMemo(() => {
+        return jobs.map(job => ({
+            id: job.id,
+            title: job.title,
+            location: job.location,
+            address: job.address,
+            payout: 0, // Payout not available in API response yet
+            priority: job.priority,
+            image: job.photos && job.photos.length > 0 
+                ? job.photos.find(p => p.isPrimary)?.photoUrl || job.photos[0].photoUrl 
+                : '',
+        }));
+    }, [jobs]);
 
     return (
         <div className={`mx-auto min-h-screen pb-20 transition-all duration-300 ${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'}`}>
@@ -48,7 +71,7 @@ const FindJob = () => {
                     </p>
                 </div>
                 <div className="bg-[#7CD947] text-white px-4 py-2 rounded-full text-sm font-bold shadow-sm">
-                    {filteredJobs.length} Jobs Available
+                    {isLoading ? 'Loading...' : `${mappedJobs.length} Jobs Available`}
                 </div>
             </div>
 
@@ -74,37 +97,79 @@ const FindJob = () => {
                 />
             </div>
 
-            {/* Job Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredJobs.map(job => (
-                    <JobCard
-                        key={job.id}
-                        {...job}
-                    />
-                ))}
-            </div>
-
-            {filteredJobs.length === 0 && (
+            {/* Loading State */}
+            {isLoading && (
                 <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-gray-200 shadow-sm mt-8">
                     <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
-                        <PiBriefcaseLight size={40} className="text-gray-400" />
+                        <PiBriefcaseLight size={40} className="text-gray-400 animate-pulse" />
                     </div>
-                    {MOCK_JOBS.length === 0 ? (
-                        <>
-                            <h3 className="text-xl font-bold text-gray-900 mb-2">No jobs available</h3>
-                            <p className="text-gray-500 text-center max-w-md px-6 leading-relaxed">
-                                There are currently no maintenance jobs available for application. Check back later for new opportunities.
-                            </p>
-                        </>
-                    ) : (
-                        <>
-                            <h3 className="text-xl font-bold text-gray-900 mb-2">No jobs found</h3>
-                            <p className="text-gray-500 text-center max-w-md px-6 leading-relaxed">
-                                We couldn't find any jobs matching your current filters. Try adjusting your search or radius to see more opportunities.
-                            </p>
-                        </>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Loading jobs...</h3>
+                    <p className="text-gray-500 text-center max-w-md px-6 leading-relaxed">
+                        Please wait while we fetch available jobs for you.
+                    </p>
+                </div>
+            )}
+
+            {/* Error State */}
+            {error && (
+                <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-red-200 shadow-sm mt-8">
+                    <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mb-6">
+                        <PiBriefcaseLight size={40} className="text-red-400" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">
+                        {error instanceof Error && error.message.includes('Complete your business profile')
+                            ? 'Business Profile Required'
+                            : 'Error loading jobs'}
+                    </h3>
+                    <p className="text-gray-500 text-center max-w-md px-6 leading-relaxed mb-6">
+                        {error instanceof Error ? error.message : 'Failed to load available jobs. Please try again later.'}
+                    </p>
+                    {error instanceof Error && error.message.includes('Complete your business profile') && (
+                        <a
+                            href="/service-dashboard/settings/business-profile"
+                            className="px-6 py-3 bg-[#3A6D6C] text-white rounded-lg font-medium shadow-sm hover:bg-[#2c5251] transition-colors"
+                        >
+                            Complete Business Profile
+                        </a>
                     )}
                 </div>
+            )}
+
+            {/* Job Grid */}
+            {!isLoading && !error && (
+                <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {mappedJobs.map(job => (
+                            <JobCard
+                                key={job.id}
+                                {...job}
+                            />
+                        ))}
+                    </div>
+
+                    {mappedJobs.length === 0 && (
+                        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-gray-200 shadow-sm mt-8">
+                            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                                <PiBriefcaseLight size={40} className="text-gray-400" />
+                            </div>
+                            {jobs.length === 0 ? (
+                                <>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-2">No jobs available</h3>
+                                    <p className="text-gray-500 text-center max-w-md px-6 leading-relaxed">
+                                        There are currently no maintenance jobs available for application. Check back later for new opportunities.
+                                    </p>
+                                </>
+                            ) : (
+                                <>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-2">No jobs found</h3>
+                                    <p className="text-gray-500 text-center max-w-md px-6 leading-relaxed">
+                                        We couldn't find any jobs matching your current filters. Try adjusting your search or radius to see more opportunities.
+                                    </p>
+                                </>
+                            )}
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );

@@ -1,9 +1,14 @@
 import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { LeftIcon, RightCircle } from './sections/loginBackgroundIcons';
 import LoginFormImage from './sections/LoginFormImage';
 import LoginForm from './sections/loginForm';
+import ForgotPasswordForm from './sections/forgotPasswordForm';
 
 const LoginPage: React.FC = () => {
+  const location = useLocation();
+  const isForgotPassword = location.pathname === '/forgot-password';
+
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, []);
@@ -17,7 +22,7 @@ const LoginPage: React.FC = () => {
       </div>
 
       <div className="flex flex-col lg:flex-row max-w-5xl w-full bg-white rounded-lg overflow-hidden">
-        <LoginForm />
+        {isForgotPassword ? <ForgotPasswordForm /> : <LoginForm />}
         <LoginFormImage />
       </div>
     </div>

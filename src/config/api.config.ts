@@ -1,5 +1,6 @@
-// API Configuration
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+export const CHAT_API_BASE_URL = import.meta.env.VITE_CHAT_API_BASE_URL || 'http://localhost:3001';
+export const CHAT_WS_URL = import.meta.env.VITE_CHAT_WS_URL || 'ws://localhost:3001';
 
 export const API_ENDPOINTS = {
   AUTH: {
@@ -16,7 +17,10 @@ export const API_ENDPOINTS = {
     CHECK_DEVICE: (userId: string) => `${API_BASE_URL}/auth/check-device/${userId}`,
     ACTIVATE_ACCOUNT: (userId: string) => `${API_BASE_URL}/auth/activate-account/${userId}`,
     GET_CURRENT_USER: `${API_BASE_URL}/auth/me`,
+    CHAT_TOKEN: `${API_BASE_URL}/auth/chat-token`,
     LOGOUT: `${API_BASE_URL}/auth/logout`,
+    FORGOT_PASSWORD: `${API_BASE_URL}/auth/forgot-password`,
+    RESET_PASSWORD: `${API_BASE_URL}/auth/reset-password`,
     UPDATE_PROFILE: `${API_BASE_URL}/auth/profile`,
     GOOGLE: `${API_BASE_URL}/auth/google`,
     FACEBOOK: `${API_BASE_URL}/auth/facebook`,
@@ -55,6 +59,9 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `${API_BASE_URL}/maintenance-request/${id}`,
     LIST_TRANSACTIONS: (id: string) => `${API_BASE_URL}/maintenance-request/${id}/transactions`,
     CREATE_TRANSACTION: (id: string) => `${API_BASE_URL}/maintenance-request/${id}/transactions`,
+    APPROVE_TENANT_CHARGE: (id: string) => `${API_BASE_URL}/maintenance-request/${id}/approve-tenant-charge`,
+    ASSIGN_INTERNAL: (id: string) => `${API_BASE_URL}/maintenance-request/${id}/assign-internal`,
+    GET_APPLICANTS: (id: string) => `${API_BASE_URL}/maintenance-request/${id}/applicants`,
   },
   LEASING: {
     GET_ALL: `${API_BASE_URL}/leasing`,
@@ -126,7 +133,20 @@ export const API_ENDPOINTS = {
   SERVICE_PROVIDER: {
     GET_ALL: `${API_BASE_URL}/service-provider`,
     GET_ONE: (id: string) => `${API_BASE_URL}/service-provider/${id}`,
+    SELF_REGISTER: `${API_BASE_URL}/service-provider/self-register`,
+    GET_PENDING: `${API_BASE_URL}/service-provider/pending`,
+    APPROVE: (id: string) => `${API_BASE_URL}/service-provider/${id}/approve`,
+    REJECT: (id: string) => `${API_BASE_URL}/service-provider/${id}/reject`,
+    GET_ME_ASSIGNMENTS: `${API_BASE_URL}/service-provider/me/assignments`,
+    GET_AVAILABLE_JOBS: `${API_BASE_URL}/service-provider/me/available-jobs`,
+    GET_AVAILABLE_JOB_BY_ID: (requestId: string) => `${API_BASE_URL}/service-provider/me/available-jobs/${requestId}`,
+    APPLY_TO_JOB: (requestId: string) => `${API_BASE_URL}/service-provider/me/available-jobs/${requestId}/apply`,
+    GET_MY_PROFILE: `${API_BASE_URL}/service-provider/me/profile`,
+    CREATE_OR_UPDATE_MY_PROFILE: `${API_BASE_URL}/service-provider/me/profile`,
+    UPDATE_ASSIGNMENT_STATUS: (id: string, assignmentId: string) => `${API_BASE_URL}/service-provider/${id}/assignments/${assignmentId}/status`,
     GET_BY_CATEGORY: (category: string) => `${API_BASE_URL}/service-provider/category/${category}`,
+    ASSIGN_TO_REQUEST: (id: string, requestId: string) => `${API_BASE_URL}/service-provider/${id}/assignments/${requestId}`,
+    ADD_TO_CONTACT: (id: string) => `${API_BASE_URL}/service-provider/${id}/add-to-contact`,
     CREATE: `${API_BASE_URL}/service-provider`,
     UPDATE: (id: string) => `${API_BASE_URL}/service-provider/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/service-provider/${id}`,
@@ -245,6 +265,17 @@ export const API_ENDPOINTS = {
     UPDATE_PAYMENT: (id: string, paymentId: string) => `${API_BASE_URL}/transactions/${id}/payment/${paymentId}`,
     DELETE_PAYMENT: (id: string, paymentId: string) => `${API_BASE_URL}/transactions/${id}/payment/${paymentId}`,
     DELETE: (id: string) => `${API_BASE_URL}/transactions/${id}`,
+  },
+  CHAT: {
+    BASE: CHAT_API_BASE_URL,
+    WS: CHAT_WS_URL,
+    CONVERSATIONS: `${CHAT_API_BASE_URL}/api/conversations`,
+    CONVERSATION: (id: string) => `${CHAT_API_BASE_URL}/api/conversations/${id}`,
+    MESSAGES: (id: string) => `${CHAT_API_BASE_URL}/api/conversations/${id}/messages`,
+    MARK_READ: (id: string) => `${CHAT_API_BASE_URL}/api/conversations/${id}/read`,
+  },
+  CONTACT_BOOK: {
+    GET_ALL: `${API_BASE_URL}/contact-book`,
   },
   GOOGLE_CALENDAR: {
     CONNECT: `${API_BASE_URL}/google-calendar/connect`,

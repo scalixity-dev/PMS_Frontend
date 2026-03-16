@@ -153,7 +153,7 @@ export interface AvailabilityOption {
 }
 
 export interface ServiceRequest {
-    id: number;
+    id: string | number;
     status: "New" | "In Progress" | "Completed" | "Cancelled";
     requestId: string;
     title?: string;
@@ -179,6 +179,8 @@ export interface ServiceRequest {
     video?: File | string | null; // Can be File object or data URL string
     pets?: string[];
     amount?: number;
+    chargeTo?: string;
+    tenantChargeApprovedAt?: string | null;
 }
 
 export interface Publication {
