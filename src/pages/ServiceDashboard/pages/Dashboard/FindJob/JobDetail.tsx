@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useOutletContext, useNavigate } from 'react-router-dom';
+import { useParams, Link, useOutletContext } from 'react-router-dom';
 import { ArrowLeft, Home, MapPin, CheckCircle2, Check } from 'lucide-react';
 import ServiceBreadCrumb from '@/pages/ServiceDashboard/components/ServiceBreadCrumb';
 import DashboardButton from '@/pages/ServiceDashboard/components/DashboardButton';
@@ -13,7 +13,6 @@ interface DashboardContext {
 const JobDetail: React.FC = () => {
     const { sidebarCollapsed } = useOutletContext<DashboardContext>() || { sidebarCollapsed: false };
     const { id } = useParams<{ id: string }>();
-    const navigate = useNavigate();
     const [showToast, setShowToast] = useState(false);
     const [showLocationModal, setShowLocationModal] = useState(false);
     const [pendingApplication, setPendingApplication] = useState<{ requestId: string; data?: { quotedAmount?: number; message?: string } } | null>(null);

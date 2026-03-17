@@ -9,7 +9,7 @@ import {
     PiCreditCardFill,
     PiGearFill
 } from "react-icons/pi";
-import { useLocation, useNavigate, NavLink } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Dialog, Transition } from '@headlessui/react';
 // import artworkImage from "../../../assets/images/Artwork.png"; // Assuming same asset location
 
@@ -41,25 +41,6 @@ interface SidebarDropdownLinkProps {
 }
 
 // --- Component Implementations ---
-
-interface SidebarSubLinkProps { label: string; to: string; }
-
-function SidebarSubLink({ label, to }: SidebarSubLinkProps) {
-    return (
-        <NavLink
-            to={to}
-            className={({ isActive }) =>
-                `block w-full text-left py-2 px-3 rounded-md text-sm transition-colors ${isActive
-                    ? "text-green-600 font-semibold"
-                    : "text-gray-600 hover:text-green-600 hover:bg-gray-50"
-                }`
-            }
-            end
-        >
-            {label}
-        </NavLink>
-    );
-}
 
 
 function SidebarLink({ label, icon, children, to, activeDropdown, setActiveDropdown, exact }: SidebarDropdownLinkProps) {
@@ -226,31 +207,6 @@ function SidebarContent({ collapsed, setCollapsed, isMobile = false, closeMobile
         if (isMobile && closeMobileDrawer) closeMobileDrawer();
     }
 
-
-    // Enhance SidebarSubLink to close drawer on mobile click
-    const MobileSidebarSubLink = ({ label, to }: { label: string, to: string }) => {
-        return (
-            <NavLink
-                to={to}
-                onClick={() => {
-                    if (isMobile && closeMobileDrawer) closeMobileDrawer();
-                }}
-                className={({ isActive }) =>
-                    `block py-2 px-3 rounded-md text-sm transition-colors ${isActive
-                        ? "text-green-600 font-semibold"
-                        : "text-gray-600 hover:text-green-600 hover:bg-gray-50"
-                    }`
-                }
-                end
-            >
-                {label}
-            </NavLink>
-        )
-    }
-
-    // Wrapper to inject closing behavior into standard SubLink if mobile
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    // const SubLink = isMobile ? MobileSidebarSubLink : SidebarSubLink;
 
 
     return (

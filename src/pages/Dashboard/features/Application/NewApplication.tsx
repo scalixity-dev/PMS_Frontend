@@ -241,7 +241,7 @@ const NewApplication: React.FC = () => {
                         return converted;
                     });
                 } else if (key === 'dob' || key === 'moveInDate') {
-                    updates[key] = value ? new Date(value) : undefined;
+                    updates[key] = value ? new Date(value as string | number | Date) : undefined;
                 } else {
                     updates[key] = value;
                 }
