@@ -8,9 +8,10 @@ interface ChatHeaderProps {
     onPrint: () => void;
     onDelete: () => void;
     onBack?: () => void;
+    pendingCount?: number;
 }
 
-const ChatHeader: React.FC<ChatHeaderProps> = ({ activeChat, onPrint, onDelete, onBack }) => {
+const ChatHeader: React.FC<ChatHeaderProps> = ({ activeChat, onPrint, onDelete, onBack, pendingCount = 0 }) => {
     return (
         <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-gray-100">
             <div className="flex items-center gap-3 sm:gap-4">
@@ -44,7 +45,13 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ activeChat, onPrint, onDelete, 
                 </div>
             </div>
 
-            <div className="flex items-center bg-[#8AD241] rounded-full px-3 py-1 gap-3 shadow-sm border border-transparent hover:border-[#7ab93a] transition-all print:hidden">
+            <div className="flex items-center gap-2 print:hidden">
+                {pendingCount > 0 && (
+                    <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full font-medium">
+                        {pendingCount} pending
+                    </span>
+                )}
+            <div className="flex items-center bg-[#8AD241] rounded-full px-3 py-1 gap-3 shadow-sm border border-transparent hover:border-[#7ab93a] transition-all">
                 <button
                     onClick={onPrint}
                     className="text-white hover:scale-110 active:scale-95 transition-transform duration-200"
@@ -60,6 +67,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ activeChat, onPrint, onDelete, 
                 >
                     <Trash2 className="w-4 h-4" />
                 </button>
+            </div>
             </div>
         </div>
     );

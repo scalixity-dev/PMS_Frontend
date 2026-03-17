@@ -9,8 +9,8 @@ interface RequestState {
     resetRequestFilters: () => void;
     addRequest: (request: ServiceRequest) => void;
     updateRequest: (id: number | string, data: Partial<ServiceRequest>) => void;
-    updateRequestStatus: (id: number, status: ServiceRequest["status"]) => void;
-    deleteRequest: (id: number) => void;
+    updateRequestStatus: (id: string | number, status: ServiceRequest["status"]) => void;
+    deleteRequest: (id: string | number) => void;
     newRequestForm: {
         currentStep: number;
         selectedCategory: string | null;
@@ -35,6 +35,9 @@ interface RequestState {
         video: File | null;
         pets: string[];
         amount: string;
+        chargeTo: 'LANDLORD' | 'TENANT' | 'PENDING';
+        propertyId?: string;
+        unitId?: string;
     };
     setNewRequestForm: (data: Partial<RequestState['newRequestForm']>) => void;
     resetNewRequestForm: () => void;
@@ -197,6 +200,9 @@ export const useRequestStore = create<RequestState>((set) => ({
         video: null,
         pets: [],
         amount: "",
+        chargeTo: "LANDLORD",
+        propertyId: undefined,
+        unitId: undefined,
     },
     setNewRequestForm: (data) =>
         set((state) => ({
@@ -228,6 +234,9 @@ export const useRequestStore = create<RequestState>((set) => ({
                 video: null,
                 pets: [],
                 amount: "",
+                chargeTo: "LANDLORD",
+                propertyId: undefined,
+                unitId: undefined,
             }
         }),
     setRequestFilters: (filters) =>
@@ -267,7 +276,7 @@ export const useRequestStore = create<RequestState>((set) => ({
     updateRequestStatus: (id, status) =>
         set((state) => {
             const updatedRequests = state.requests.map((req) =>
-                req.id === id ? { ...req, status } : req
+                String(req.id) === String(id) ? { ...req, status } : req
             );
             const saved = saveRequests(updatedRequests);
 
@@ -279,7 +288,7 @@ export const useRequestStore = create<RequestState>((set) => ({
         }),
     deleteRequest: (id) =>
         set((state) => {
-            const updatedRequests = state.requests.filter((req) => req.id !== id);
+            const updatedRequests = state.requests.filter((req) => String(req.id) !== String(id));
             const saved = saveRequests(updatedRequests);
 
             if (!saved) {

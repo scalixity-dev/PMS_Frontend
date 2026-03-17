@@ -9,14 +9,17 @@ interface Material {
     quantity: number;
 }
 
+export type ChargeToOption = 'LANDLORD' | 'TENANT';
+
 interface UserStep3DueDateMaterialsProps {
-    onNext: (data: { dateInitiated: Date | undefined; dateDue: Date | undefined; priority: string; materials: Material[] }) => void;
+    onNext: (data: { dateInitiated: Date | undefined; dateDue: Date | undefined; priority: string; materials: Material[]; chargeTo?: ChargeToOption }) => void;
     onBack: () => void;
     initialData?: {
         dateInitiated?: Date;
         dateDue?: Date;
         priority?: string;
         materials?: Material[];
+        chargeTo?: ChargeToOption;
     };
 }
 
@@ -25,6 +28,7 @@ const UserStep3DueDateMaterials: React.FC<UserStep3DueDateMaterialsProps> = ({ o
     const [dateDue, setDateDue] = useState<Date | undefined>(initialData?.dateDue);
     const [priority, setPriority] = useState(initialData?.priority || '');
     const [materials, setMaterials] = useState<Material[]>(initialData?.materials || []);
+    const [chargeTo, setChargeTo] = useState<ChargeToOption>(initialData?.chargeTo || 'LANDLORD');
 
     const handleAddMaterial = () => {
         const newMaterial: Material = {
@@ -97,6 +101,23 @@ const UserStep3DueDateMaterials: React.FC<UserStep3DueDateMaterialsProps> = ({ o
                         required
                         buttonClassName="!bg-white !border-none !rounded-md !py-2.5"
                     />
+                </div>
+                <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Charge To</label>
+                    <CustomDropdown
+                        label="Charge To"
+                        value={chargeTo}
+                        onChange={(v) => setChargeTo(v as ChargeToOption)}
+                        options={[
+                            { value: 'LANDLORD', label: 'Landlord (normal wear)' },
+                            { value: 'TENANT', label: 'Tenant (tenant-caused damage)' }
+                        ]}
+                        placeholder="Landlord"
+                        buttonClassName="!bg-white !border-none !rounded-md !py-2.5"
+                    />
+                    <p className="text-gray-500 text-xs mt-1">
+                        {chargeTo === 'TENANT' ? 'Landlord must approve charges for tenant-caused issues.' : 'Landlord covers maintenance for normal wear.'}
+                    </p>
                 </div>
             </div>
 
@@ -175,7 +196,7 @@ const UserStep3DueDateMaterials: React.FC<UserStep3DueDateMaterialsProps> = ({ o
                     Back
                 </button>
                 <button
-                    onClick={() => onNext({ dateInitiated, dateDue, priority, materials })}
+                    onClick={() => onNext({ dateInitiated, dateDue, priority, materials, chargeTo })}
                     className="flex-1 sm:flex-none px-12 py-3 rounded-lg bg-[#3D7475] text-white font-bold hover:opacity-90 transition-opacity shadow-md"
                 >
                     Create Request

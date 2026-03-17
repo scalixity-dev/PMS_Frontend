@@ -181,6 +181,7 @@ const AddMaintenanceRequest: React.FC = () => {
                     materialName: material.name,
                     quantity: material.quantity,
                 })),
+                chargeTo: due.chargeTo ?? 'LANDLORD',
             };
             const createdOrUpdated =
                 isEditMode && editRequestId

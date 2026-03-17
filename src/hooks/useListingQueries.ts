@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { listingService, type BackendListing, type CreateListingDto } from '../services/listing.service';
+import { listingService, type BackendListing, type CreateListingDto, type ListingDashboardQuery, type ListingDashboardResponse } from '../services/listing.service';
 
 // Query keys for React Query
 export const listingQueryKeys = {
   all: ['listings'] as const,
   lists: () => [...listingQueryKeys.all, 'list'] as const,
   list: (filters?: any) => [...listingQueryKeys.lists(), filters] as const,
+  dashboardView: (query?: ListingDashboardQuery) => [...listingQueryKeys.all, 'dashboard-view', query] as const,
   details: () => [...listingQueryKeys.all, 'detail'] as const,
   detail: (id: string) => [...listingQueryKeys.details(), id] as const,
   byProperty: (propertyId: string) => [...listingQueryKeys.all, 'property', propertyId] as const,
@@ -22,6 +23,21 @@ export const useGetAllListings = (enabled: boolean = true) => {
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes
     gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
     retry: 1,
+  });
+};
+
+/**
+ * Hook to get the listing dashboard view (paginated cards for the Listings page)
+ */
+export const useGetListingDashboard = (query: ListingDashboardQuery = {}, enabled: boolean = true) => {
+  return useQuery<ListingDashboardResponse>({
+    queryKey: listingQueryKeys.dashboardView(query),
+    queryFn: () => listingService.getDashboardView(query),
+    enabled,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    retry: 1,
+    placeholderData: (prev) => prev,
   });
 };
 
@@ -66,6 +82,8 @@ export const useCreateListing = () => {
     onSuccess: (data) => {
       // Invalidate and refetch listings list
       queryClient.invalidateQueries({ queryKey: listingQueryKeys.lists() });
+      // Invalidate dashboard view
+      queryClient.invalidateQueries({ queryKey: [...listingQueryKeys.all, 'dashboard-view'] });
       // Invalidate property-specific listings
       queryClient.invalidateQueries({ queryKey: listingQueryKeys.byProperty(data.propertyId) });
       // Cache the newly created listing
@@ -89,6 +107,8 @@ export const useUpdateListing = () => {
     onSuccess: (data) => {
       // Invalidate and refetch listings list
       queryClient.invalidateQueries({ queryKey: listingQueryKeys.lists() });
+      // Invalidate dashboard view
+      queryClient.invalidateQueries({ queryKey: [...listingQueryKeys.all, 'dashboard-view'] });
       // Invalidate property-specific listings
       queryClient.invalidateQueries({ queryKey: listingQueryKeys.byProperty(data.propertyId) });
       // Cache the updated listing

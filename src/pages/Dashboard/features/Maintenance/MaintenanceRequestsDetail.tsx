@@ -1,12 +1,16 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useParams, useOutletContext } from 'react-router-dom';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, ChevronDown, ChevronRight, Edit, Trash2, Plus, Repeat, Printer, Paperclip, FileText } from 'lucide-react';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import ChangeStatusModal from './components/ChangeStatusModal';
 import AssigneeModal from './components/AssigneeModal';
 import MakeRecurringModal from './components/MakeRecurringModal';
+import ApplicantsSection from './components/ApplicantsSection';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
-import { useDeleteMaintenanceRequest, useGetMaintenanceRequest, useGetMaintenanceTransactions } from '../../../../hooks/useMaintenanceRequestQueries';
+import { maintenanceRequestQueryKeys, useDeleteMaintenanceRequest, useGetMaintenanceRequest, useGetMaintenanceTransactions } from '../../../../hooks/useMaintenanceRequestQueries';
+import { maintenanceRequestService } from '../../../../services/maintenance-request.service';
+import { serviceProviderService } from '../../../../services/service-provider.service';
 import { useGetEquipment } from '../../../../hooks/useEquipmentQueries';
 
 // --- Reusable Components ---
@@ -52,10 +56,61 @@ const MaintenanceRequestsDetail: React.FC = () => {
     );
     const [status, setStatus] = useState('New');
     const [isAssigneeModalOpen, setIsAssigneeModalOpen] = useState(false);
-    const [assignee, setAssignee] = useState<string | null>(null); // null = unassigned
     const [isRecurringModalOpen, setIsRecurringModalOpen] = useState(false);
+    const [isAssigningApplicant, setIsAssigningApplicant] = useState(false);
+    const [isAddingToContact, setIsAddingToContact] = useState(false);
+    const queryClient = useQueryClient();
+
+    const assigneeInfo = useMemo(() => {
+        const req = request as { assignments?: unknown[] } | null;
+        type Assignment = {
+            serviceProvider?: {
+                companyName?: string;
+                firstName?: string;
+                lastName?: string;
+                email?: string;
+            };
+            assignedToUser?: {
+                fullName?: string;
+                email?: string;
+            };
+        };
+        const first = req?.assignments?.[0] as Assignment | undefined;
+        if (!first) return null;
+
+        const name =
+            first.serviceProvider?.companyName ||
+            (first.serviceProvider
+                ? `${first.serviceProvider.firstName ?? ''} ${first.serviceProvider.lastName ?? ''}`.trim()
+                : null) ||
+            first.assignedToUser?.fullName ||
+            first.assignedToUser?.email ||
+            null;
+
+        const email =
+            first.serviceProvider?.email ||
+            first.assignedToUser?.email ||
+            undefined;
+
+        return {
+            name,
+            email,
+        };
+    }, [request]);
 
     const { mutateAsync: deleteRequest } = useDeleteMaintenanceRequest();
+    const approveTenantChargeMutation = useMutation({
+        mutationFn: (reqId: string) => maintenanceRequestService.approveTenantCharge(reqId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: maintenanceRequestQueryKeys.all });
+            if (id) queryClient.invalidateQueries({ queryKey: maintenanceRequestQueryKeys.detail(id) });
+        },
+    });
+
+    const reqChargeTo = (request as { chargeTo?: string; tenantChargeApprovedAt?: string | null } | null)?.chargeTo;
+    const reqTenantApproved = (request as { tenantChargeApprovedAt?: string | null } | null)?.tenantChargeApprovedAt;
+    const showApproveTenantCharge =
+        (reqChargeTo === 'TENANT' || reqChargeTo === 'PENDING') && !reqTenantApproved;
 
     const handleDelete = async () => {
         if (!id) {
@@ -73,16 +128,69 @@ const MaintenanceRequestsDetail: React.FC = () => {
         }
     };
 
+    useEffect(() => {
+        const backendStatus = (request as { status?: string | null } | null)?.status;
+        if (!backendStatus) return;
+
+        const normalized = backendStatus.toUpperCase();
+        const statusLabelMap: Record<string, string> = {
+            NEW: 'New',
+            IN_PROGRESS: 'In progress',
+            IN_REVIEW: 'In review',
+            RESOLVED: 'Resolved',
+            CANCELLED: 'Canceled',
+            ARCHIVED: 'Archived',
+        };
+
+        const label = statusLabelMap[normalized] ?? backendStatus;
+        setStatus(label);
+    }, [request]);
+
     const handleStatusChange = (newStatus: string) => {
         setStatus(newStatus);
         setIsStatusModalOpen(false);
-        console.log('Status updated to:', newStatus);
+        // Backend update for status can be wired here if needed
     };
 
-    const handleAssigneeChange = (newAssignee: string) => {
-        setAssignee(newAssignee === 'Unassigned' ? null : newAssignee);
-        setIsAssigneeModalOpen(false);
-        console.log('Assignee updated to:', newAssignee);
+    const handleAssigneeSuccess = () => {
+        queryClient.invalidateQueries({ queryKey: maintenanceRequestQueryKeys.all });
+        if (id) queryClient.invalidateQueries({ queryKey: maintenanceRequestQueryKeys.detail(id) });
+    };
+
+    const handleAssignApplicant = async (serviceProviderId: string) => {
+        if (!id) return;
+        
+        setIsAssigningApplicant(true);
+        try {
+            await serviceProviderService.assignToMaintenanceRequest(serviceProviderId, id);
+            handleAssigneeSuccess();
+        } catch (err) {
+            console.error('Failed to assign applicant:', err);
+            // Error handling could be improved with toast notifications
+        } finally {
+            setIsAssigningApplicant(false);
+        }
+    };
+
+    const handleAddToContact = async (serviceProviderId: string) => {
+        setIsAddingToContact(true);
+        try {
+            // Ensure a contact book entry exists linking this owner and service provider
+            await serviceProviderService.addToContact(serviceProviderId);
+
+            // Navigate using the service provider ID (API expects serviceProviderId in the route)
+            navigate(`/dashboard/contacts/service-pros/${serviceProviderId}`, {
+                state: { fromApplicants: true, addedToContact: true },
+            });
+        } catch (err) {
+            console.error('Failed to add service provider to contact:', err);
+            // On error, still try to navigate to the list (contact might already exist)
+            navigate(`/dashboard/contacts/service-pros`, {
+                state: { fromApplicants: true },
+            });
+        } finally {
+            setIsAddingToContact(false);
+        }
     };
 
     const handleRecurringCreate = (data: any) => {
@@ -97,6 +205,23 @@ const MaintenanceRequestsDetail: React.FC = () => {
             item: m.materialName,
             quantity: m.quantity ?? 1,
         }));
+    }, [request]);
+
+    // Get tenant information
+    const tenantData = useMemo(() => {
+        const req = request as {
+            requestedByTenant?: { fullName?: string; email?: string };
+        } | null;
+        
+        // Get from requestedByTenant (tenant who created the request)
+        if (req?.requestedByTenant) {
+            return {
+                name: req.requestedByTenant.fullName || req.requestedByTenant.email || 'Unknown Tenant',
+                email: req.requestedByTenant.email || '',
+            };
+        }
+        
+        return null;
     }, [request]);
 
     const tenantInfo = useMemo(() => {
@@ -229,6 +354,26 @@ const MaintenanceRequestsDetail: React.FC = () => {
                     </div>
                 )}
 
+                {showApproveTenantCharge && request && (
+                    <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between">
+                        <div>
+                            <p className="font-medium text-amber-900">
+                                Tenant charge requires approval
+                            </p>
+                            <p className="text-sm text-amber-800 mt-1">
+                                Tenant cannot charge landlord without your approval. Approve to authorize charges for this request.
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => id && approveTenantChargeMutation.mutate(id)}
+                            disabled={approveTenantChargeMutation.isPending}
+                            className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-60"
+                        >
+                            {approveTenantChargeMutation.isPending ? 'Approving...' : 'Approve'}
+                        </button>
+                    </div>
+                )}
+
                 {/* Header */}
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-8 mb-8">
                     <div className="flex items-center gap-4">
@@ -319,12 +464,20 @@ const MaintenanceRequestsDetail: React.FC = () => {
                                 : 'Category / Subcategory'}
                         </div>
                     </div>
-                    <div className="bg-[#7BD747] text-white px-6 py-3 rounded-full flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto md:min-w-[200px]">
+                    <button
+                        onClick={() => {
+                            if (request?.property?.id) {
+                                navigate(`/dashboard/properties/${request.property.id}`);
+                            }
+                        }}
+                        className={`bg-[#7BD747] text-white px-6 py-3 rounded-full flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto md:min-w-[200px] transition-all hover:bg-[#6BC837] ${request?.property?.id ? 'cursor-pointer' : 'cursor-default'}`}
+                        disabled={!request?.property?.id}
+                    >
                         <span className="font-bold text-sm">Property</span>
-                        <div className="bg-white/90 text-[#3A6D6C] text-[10px] px-3 py-0.5 rounded-full font-bold">
+                        <div className="bg-white/90 text-[#3A6D6C] text-[10px] px-3 py-0.5 rounded-full font-bold truncate max-w-[200px]">
                             {request?.property?.propertyName ?? request?.property?.id ?? 'Property'}
                         </div>
-                    </div>
+                    </button>
                     {totalCost > 0 && (
                         <div className="bg-[#7BD747] text-white px-6 py-3 rounded-full flex flex-col sm:flex-row items-center gap-2 w-full md:w-auto md:min-w-[200px]">
                             <span className="font-bold text-sm">Estimated Cost</span>
@@ -381,16 +534,23 @@ const MaintenanceRequestsDetail: React.FC = () => {
                             onClick={() => setIsAssigneeModalOpen(true)}
                             className="px-4 py-1.5 bg-[#3A6D6C] text-white rounded-full text-xs font-medium hover:bg-[#2c5251] transition-colors"
                         >
-                            {assignee ? 'Re-Assign' : 'Add Assignee'}
+                            {assigneeInfo?.name ? 'Re-Assign' : 'Add Assignee'}
                         </button>
                     }
                 >
                     <div className="flex flex-col xl:flex-row gap-6 bg-[#f0f0f6] p-4 md:p-6 rounded-xl">
                         {/* Profile Card */}
-                        <div className="bg-[#F0F0F6] rounded-3xl p-6 w-full xl:w-80 flex flex-col items-center justify-center shadow-sm">
-                            <div className="w-32 h-32 rounded-2xl overflow-hidden mb-4 bg-gray-200">
-                                {assignee ? (
-                                    <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200" alt="Profile" className="w-full h-full object-cover" />
+                        <div className="bg-[#F0F0F6] rounded-3xl p-4 md:p-6 w-full xl:w-80 flex flex-col items-center justify-center shadow-sm">
+                            <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl overflow-hidden mb-4 bg-gray-200 flex items-center justify-center">
+                                {assigneeInfo?.name ? (
+                                    <div className="w-full h-full flex items-center justify-center bg-[#3A6D6C] text-white text-xl md:text-2xl font-bold">
+                                        {(assigneeInfo.name || '')
+                                            .split(' ')
+                                            .filter(Boolean)
+                                            .map(part => part[0]?.toUpperCase())
+                                            .join('')
+                                            .slice(0, 2)}
+                                    </div>
                                 ) : (
                                     <button
                                         onClick={() => setIsAssigneeModalOpen(true)}
@@ -401,11 +561,12 @@ const MaintenanceRequestsDetail: React.FC = () => {
                                 )}
                             </div>
 
-                            {assignee ? (
+                            {assigneeInfo?.name ? (
                                 <div className="bg-[#3A6D6C] text-white text-center py-2 px-6 rounded-xl w-full mb-4">
-                                    <h3 className="font-bold text-sm">{assignee}</h3>
-                                    <p className="text-[10px] opacity-90">+91 9876543210</p>
-                                    <p className="text-[10px] opacity-90 break-all">{assignee.toLowerCase().replace(' ', '')}@gmail.com</p>
+                                    <h3 className="font-bold text-sm">{assigneeInfo.name}</h3>
+                                    {assigneeInfo.email && (
+                                        <p className="text-[10px] opacity-90 break-all">{assigneeInfo.email}</p>
+                                    )}
                                 </div>
                             ) : (
                                 <button
@@ -419,7 +580,7 @@ const MaintenanceRequestsDetail: React.FC = () => {
                                 </button>
                             )}
 
-                            {assignee && (
+                            {assigneeInfo?.name && (
                                 <button className="bg-[#D1D1D1] text-gray-700 text-xs font-bold py-2 px-8 rounded-full hover:bg-gray-300 transition-colors">
                                     View Profile
                                 </button>
@@ -427,80 +588,120 @@ const MaintenanceRequestsDetail: React.FC = () => {
                         </div>
 
                         {/* Details Grid */}
-                        <div className="flex-1 bg-[#7BD747] rounded-3xl p-4 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-x-4 md:gap-x-12 gap-y-4 shadow-sm">
+                        <div className="flex-1 bg-[#7BD747] rounded-3xl p-4 md:p-8 grid grid-cols-1 sm:grid-cols-2 gap-x-4 md:gap-x-12 gap-y-4 shadow-sm">
                             <div className="space-y-4">
-                                <div className="bg-white rounded-full px-4 py-2 flex items-center justify-between shadow-sm">
+                                <div className="bg-white rounded-full px-4 py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shadow-sm">
                                     <span className="text-gray-500 text-xs font-medium">Type</span>
                                     <span className="text-gray-800 text-xs font-bold">One time</span>
                                 </div>
-                                <div className="bg-white rounded-full px-4 py-2 flex items-center justify-between shadow-sm">
+                                <div className="bg-white rounded-full px-4 py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shadow-sm">
                                     <span className="text-gray-500 text-xs font-medium">Priority</span>
-                                    <span className="text-gray-800 text-xs font-bold">Normal</span>
+                                    <span className="text-gray-800 text-xs font-bold">{request?.priority || 'Normal'}</span>
                                 </div>
-                                <div className="bg-white rounded-full px-4 py-2 flex items-center justify-between shadow-sm">
+                                <div className="bg-white rounded-full px-4 py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shadow-sm">
                                     <span className="text-gray-500 text-xs font-medium">Date initiated</span>
-                                    <span className="text-gray-800 text-xs font-bold">24 Nov, 2025</span>
+                                    <span className="text-gray-800 text-xs font-bold">
+                                        {request?.requestedAt ? new Date(request.requestedAt).toLocaleDateString() : 'N/A'}
+                                    </span>
                                 </div>
-                                <div className="bg-white rounded-full px-4 py-2 flex items-center justify-between shadow-sm">
+                                <div className="bg-white rounded-full px-4 py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shadow-sm">
                                     <span className="text-gray-500 text-xs font-medium">Date due</span>
-                                    <span className="text-gray-800 text-xs font-bold">24 Nov, 2025</span>
+                                    <span className="text-gray-800 text-xs font-bold">
+                                        {request?.dueDate ? new Date(request.dueDate).toLocaleDateString() : '-'}
+                                    </span>
                                 </div>
                             </div>
 
                             <div className="space-y-4">
                                 <div className="bg-white rounded-full px-4 py-2 flex items-center justify-between shadow-sm">
                                     <span className="text-gray-500 text-xs font-medium">Started work</span>
-                                    <span className="text-gray-800 text-xs font-bold">-</span>
+                                    <span className="text-gray-800 text-xs font-bold">
+                                        {request?.requestedAt
+                                            ? new Date(request.requestedAt).toLocaleString()
+                                            : '-'}
+                                    </span>
                                 </div>
                                 <div className="bg-white rounded-full px-4 py-2 flex items-center justify-between shadow-sm">
                                     <span className="text-gray-500 text-xs font-medium">Ended work</span>
-                                    <span className="text-gray-800 text-xs font-bold">-</span>
+                                    <span className="text-gray-800 text-xs font-bold">
+                                        {(request as { completedAt?: string | null } | null)?.completedAt
+                                            ? new Date(
+                                                  (request as { completedAt?: string | null }).completedAt as string,
+                                              ).toLocaleString()
+                                            : '-'}
+                                    </span>
                                 </div>
-                                <div className="bg-white rounded-full px-4 py-2 flex items-center justify-between shadow-sm">
-                                    <span className="text-gray-500 text-xs font-medium">Labor time</span>
-                                    <span className="text-gray-800 text-xs font-bold">-</span>
-                                </div>
-                                <div className="bg-white rounded-full px-4 py-2 flex items-center justify-between shadow-sm">
-                                    <span className="text-gray-500 text-xs font-medium">Key returned</span>
-                                    <span className="text-gray-800 text-xs font-bold">-</span>
-                                </div>
+                              
                             </div>
                         </div>
                     </div>
                 </CollapsibleSection>
 
+                {/* Applicants Section */}
+                {id && (
+                    <ApplicantsSection
+                        requestId={id}
+                        onOpenAssigneeModal={() => setIsAssigneeModalOpen(true)}
+                        onAssignApplicant={handleAssignApplicant}
+                        onAddToContact={handleAddToContact}
+                        isAssigning={isAssigningApplicant}
+                        isAddingToContact={isAddingToContact}
+                    />
+                )}
+
                 {/* Tenant Information */}
                 <CollapsibleSection title="Tenant information" defaultOpen={true}>
-                    <div className="bg-[#f0f0f6] p-6 rounded-xl shadow-sm">
+                    <div className="bg-[#f0f0f6] p-4 md:p-6 rounded-xl shadow-sm">
+                        {/* Tenant Name Section */}
+                        {tenantData && (
+                            <div className="mb-6 bg-white rounded-2xl p-4 md:p-6 shadow-sm">
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                    <div>
+                                        <h3 className="text-sm font-semibold text-gray-500 mb-1">Tenant Name</h3>
+                                        <p className="text-lg font-bold text-gray-900">{tenantData.name}</p>
+                                        {tenantData.email && (
+                                            <p className="text-sm text-gray-600 mt-1">{tenantData.email}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        
                         <div className="bg-[#7BD747] rounded-3xl p-4 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-x-4 md:gap-x-12 gap-y-4 shadow-sm max-w-4xl">
                             <div className="space-y-4">
-                                <div className="bg-white rounded-full px-4 py-2 flex items-center justify-between shadow-sm">
+                                <div className="bg-white rounded-full px-4 py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shadow-sm">
                                     <span className="text-gray-500 text-xs font-medium">Authorization to Enter</span>
                                     <span className="text-gray-800 text-xs font-bold">{tenantInfo.authorizationToEnter}</span>
                                 </div>
-                                <div className="bg-white rounded-full px-4 py-2 flex items-center justify-between shadow-sm">
+                                <div className="bg-white rounded-full px-4 py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shadow-sm">
                                     <span className="text-gray-500 text-xs font-medium">Authorization Code</span>
-                                    <span className="text-gray-800 text-xs font-bold">{tenantInfo.authorizationCode}</span>
+                                    <span className="text-gray-800 text-xs font-bold break-all">{tenantInfo.authorizationCode}</span>
                                 </div>
-                                <div className="bg-white rounded-full px-4 py-2 flex items-center justify-between shadow-sm">
+                                <div className="bg-white rounded-full px-4 py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shadow-sm">
                                     <span className="text-gray-500 text-xs font-medium">Pets</span>
-                                    <span className="text-gray-800 text-xs font-bold">{tenantInfo.pets.join(', ')}</span>
+                                    <span className="text-gray-800 text-xs font-bold">{tenantInfo.pets.length > 0 ? tenantInfo.pets.join(', ') : 'None'}</span>
                                 </div>
-                                <div className="bg-white rounded-full px-4 py-2 flex items-center justify-between shadow-sm">
+                                <div className="bg-white rounded-full px-4 py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shadow-sm">
                                     <span className="text-gray-500 text-xs font-medium">Set Up Date/Time</span>
                                     <span className="text-gray-800 text-xs font-bold">{tenantInfo.setUpDateTime}</span>
                                 </div>
                             </div>
                             <div className="space-y-4">
-                                {tenantInfo.availability.map((slot, index) => (
-                                    <div key={slot.id} className="bg-white rounded-2xl px-4 py-3 shadow-sm">
-                                        <span className="text-gray-500 text-xs font-medium block mb-1">Availability {index + 1}</span>
-                                        <div className="text-gray-800 text-xs font-bold">
-                                            <p>Date: {new Date(slot.date).toLocaleDateString()}</p>
-                                            <p className="text-gray-600">Time: {slot.timeSlots.join(', ')}</p>
+                                {tenantInfo.availability.length > 0 ? (
+                                    tenantInfo.availability.map((slot, index) => (
+                                        <div key={slot.id} className="bg-white rounded-2xl px-4 py-3 shadow-sm">
+                                            <span className="text-gray-500 text-xs font-medium block mb-1">Availability {index + 1}</span>
+                                            <div className="text-gray-800 text-xs font-bold">
+                                                <p>Date: {slot.date ? new Date(slot.date).toLocaleDateString() : 'N/A'}</p>
+                                                <p className="text-gray-600">Time: {slot.timeSlots.length > 0 ? slot.timeSlots.join(', ') : 'N/A'}</p>
+                                            </div>
                                         </div>
+                                    ))
+                                ) : (
+                                    <div className="bg-white rounded-2xl px-4 py-3 shadow-sm">
+                                        <span className="text-gray-500 text-xs">No availability information provided</span>
                                     </div>
-                                ))}
+                                )}
                             </div>
                         </div>
                     </div>
@@ -772,12 +973,16 @@ const MaintenanceRequestsDetail: React.FC = () => {
                 onSave={handleStatusChange}
             />
 
-            <AssigneeModal
-                isOpen={isAssigneeModalOpen}
-                onClose={() => setIsAssigneeModalOpen(false)}
-                currentAssignee={assignee || 'Unassigned'}
-                onSave={handleAssigneeChange}
-            />
+            {id && (
+                <AssigneeModal
+                    isOpen={isAssigneeModalOpen}
+                    onClose={() => setIsAssigneeModalOpen(false)}
+                    requestId={id}
+                    currentAssignee={assigneeInfo?.name ?? 'Unassigned'}
+                    requestCategory={request?.category}
+                    onSuccess={handleAssigneeSuccess}
+                />
+            )}
 
             <MakeRecurringModal
                 isOpen={isRecurringModalOpen}

@@ -1,37 +1,18 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { useQueries } from '@tanstack/react-query';
 import ListingHeader from './components/ListingHeader';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
 import ListingCard from './components/ListingCard';
-import { useGetAllListings } from '../../../../hooks/useListingQueries';
-import { useGetAllProperties } from '../../../../hooks/usePropertyQueries';
-import { unitService } from '../../../../services/unit.service';
-import type { BackendListing } from '../../../../services/listing.service';
-import type { BackendProperty } from '../../../../services/property.service';
-import type { BackendUnit } from '../../../../services/unit.service';
+import { useGetListingDashboard } from '../../../../hooks/useListingQueries';
+import type { ListingDashboardQuery } from '../../../../services/listing.service';
 
-// Interface for the combined listing data
-interface ListingCardData {
-    id: string;
-    name: string;
-    address: string;
-    price: number | null;
-    status: 'listed' | 'unlisted';
-    daysListed?: number; // Days since listing was created
-    isSyndicated?: boolean; // Whether listing is syndicated
-    bathrooms: number;
-    bedrooms: number;
-    image: string;
-    country?: string; // Country code for currency
-    listingId?: string; // For navigation to listing detail
-    propertyId: string; // For navigation to list unit
-}
+const ITEMS_PER_PAGE = 9;
 
 const Listing: React.FC = () => {
     const navigate = useNavigate();
     const { sidebarCollapsed = false } = useOutletContext<{ sidebarCollapsed: boolean }>() ?? {};
+    const [currentPage, setCurrentPage] = useState(1);
     const [searchQuery, setSearchQuery] = useState('');
     const [filters, setFilters] = useState<{
         status: string[];
@@ -47,36 +28,83 @@ const Listing: React.FC = () => {
         bathrooms: []
     });
 
-    const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 9;
+    // Build the server query from current state
+    const dashboardQuery = useMemo<ListingDashboardQuery>(() => {
+        const q: ListingDashboardQuery = {
+            page: currentPage,
+            limit: ITEMS_PER_PAGE,
+        };
 
-    // Fetch listings and properties using React Query
-    const { data: listings = [], isLoading: listingsLoading, error: listingsError } = useGetAllListings();
-    const { data: backendProperties = [], isLoading: propertiesLoading, error: propertiesError } = useGetAllProperties();
+        if (searchQuery) q.search = searchQuery;
 
-    // Get all MULTI properties to fetch their units
-    const multiProperties = useMemo(() => {
-        return backendProperties.filter(p => p.propertyType === 'MULTI') || [];
-    }, [backendProperties]);
+        // Status filter — only send if exactly one is selected (both = no filter)
+        if (filters.status.length === 1) {
+            q.status = filters.status[0];
+        }
 
-    // Fetch units for all MULTI properties in parallel
-    const unitQueries = useQueries({
-        queries: multiProperties.map(property => ({
-            queryKey: ['units', 'list', property.id],
-            queryFn: () => unitService.getAllByProperty(property.id),
-            enabled: !!property.id,
-            staleTime: 2 * 60 * 1000,
-            gcTime: 5 * 60 * 1000,
-            retry: 1,
-        })),
-    });
+        // Bedrooms filter — convert discrete values to min/max range
+        if (filters.bedrooms.length > 0) {
+            const nums = filters.bedrooms.map((v) => (v === '5+' ? 5 : parseInt(v, 10)));
+            q.minBeds = Math.min(...nums);
+            if (!filters.bedrooms.includes('5+')) {
+                q.maxBeds = Math.max(...nums);
+            }
+        }
 
-    // Combine loading and error states for units
-    const isLoadingUnits = unitQueries.some(query => query.isLoading);
-    const unitsError = unitQueries.find(query => query.error)?.error;
+        // Bathrooms filter
+        if (filters.bathrooms.length > 0) {
+            const nums = filters.bathrooms.map((v) => (v === '4+' ? 4 : parseInt(v, 10)));
+            q.minBaths = Math.min(...nums);
+            if (!filters.bathrooms.includes('4+')) {
+                q.maxBaths = Math.max(...nums);
+            }
+        }
+
+        return q;
+    }, [currentPage, searchQuery, filters]);
+
+    // Server-side paginated + filtered query
+    const { data: response, isLoading, error, isFetching } = useGetListingDashboard(dashboardQuery);
+
+    const cards = response?.data ?? [];
+    const pagination = response?.pagination;
+    const totalPages = pagination?.totalPages ?? 0;
+
+    // Client-side filters that don't have server equivalents (daysListed, syndication)
+    const filteredCards = useMemo(() => {
+        return cards.filter((listing) => {
+            const matchesDaysListed = !filters.daysListed?.length ||
+                (listing.daysListed !== null && (
+                    (filters.daysListed.includes('new') && listing.daysListed < 7) ||
+                    (filters.daysListed.includes('recent') && listing.daysListed >= 7 && listing.daysListed <= 30) ||
+                    (filters.daysListed.includes('old') && listing.daysListed > 30)
+                ));
+
+            const matchesSyndication = !filters.syndication?.length ||
+                (filters.syndication.includes('yes') && listing.isSyndicated) ||
+                (filters.syndication.includes('no') && !listing.isSyndicated);
+
+            return matchesDaysListed && matchesSyndication;
+        });
+    }, [cards, filters.daysListed, filters.syndication]);
 
     const handleAddListing = () => {
         navigate('/dashboard/list-unit');
+    };
+
+    const handleSearchChange = useCallback((value: string) => {
+        setSearchQuery(value);
+        setCurrentPage(1);
+    }, []);
+
+    const handleFiltersChange = useCallback((newFilters: any) => {
+        setFilters(newFilters);
+        setCurrentPage(1);
+    }, []);
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const filterOptions: Record<string, FilterOption[]> = {
@@ -116,314 +144,7 @@ const Listing: React.FC = () => {
         bathrooms: 'Bathrooms'
     };
 
-    // Transform listings and properties into ListingCardData
-    const allListingsData = useMemo(() => {
-        // Create a map of propertyId -> active listing (for properties)
-        const activeListingsMap = new Map<string, BackendListing>();
-        // Create a map of unitId -> active listing (for units)
-        const activeUnitListingsMap = new Map<string, BackendListing>();
-
-        listings.forEach((listing: BackendListing) => {
-            if (listing.listingStatus === 'ACTIVE' && listing.isActive) {
-                // Check if listing is for a unit or property
-                if (listing.unitId) {
-                    // Unit listing
-                    const existing = activeUnitListingsMap.get(listing.unitId);
-                    if (!existing || new Date(listing.listedAt) > new Date(existing.listedAt)) {
-                        activeUnitListingsMap.set(listing.unitId, listing);
-                    }
-                } else {
-                    // Property listing
-                    const existing = activeListingsMap.get(listing.propertyId);
-                    if (!existing || new Date(listing.listedAt) > new Date(existing.listedAt)) {
-                        activeListingsMap.set(listing.propertyId, listing);
-                    }
-                }
-            }
-        });
-
-        // Create a set of property IDs that have active listings
-        const listedPropertyIds = new Set(activeListingsMap.keys());
-
-        // Create a map of propertyId -> units data from unit queries
-        const unitsByPropertyId = new Map<string, BackendUnit[]>();
-        multiProperties.forEach((property, index) => {
-            const unitsData = unitQueries[index]?.data;
-            if (unitsData && Array.isArray(unitsData)) {
-                unitsByPropertyId.set(property.id, unitsData);
-            }
-        });
-
-        const transformed: ListingCardData[] = [];
-
-        // Process MULTI properties - each unit becomes a separate listing
-        backendProperties.forEach((backendProperty: BackendProperty) => {
-            if (backendProperty.propertyType === 'MULTI') {
-                const units = unitsByPropertyId.get(backendProperty.id) || [];
-
-                // Format address for the property
-                let propertyAddress = 'Address not available';
-                let country: string | undefined;
-                if (backendProperty.address) {
-                    country = backendProperty.address.country;
-                    const addressParts = [
-                        backendProperty.address.streetAddress,
-                        backendProperty.address.city,
-                        backendProperty.address.stateRegion,
-                        backendProperty.address.zipCode,
-                        backendProperty.address.country,
-                    ].filter(part => part && part.trim() !== '');
-
-                    if (addressParts.length > 0) {
-                        propertyAddress = addressParts.join(', ');
-                    }
-                }
-
-                // Transform each unit into a ListingCardData
-                units.forEach((unit: BackendUnit) => {
-                    const activeListing = activeUnitListingsMap.get(unit.id);
-                    const hasActiveListing = !!activeListing;
-
-                    // Calculate days listed
-                    let daysListed: number | undefined;
-                    if (activeListing && activeListing.listedAt) {
-                        const listedDate = new Date(activeListing.listedAt);
-                        const today = new Date();
-                        const diffTime = today.getTime() - listedDate.getTime();
-                        daysListed = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                    }
-
-                    // Check if listing is syndicated (has external listing URL)
-                    const isSyndicated = activeListing ? !!(activeListing.externalListingUrl) : false;
-
-                    // Get price from unit listing, unit leasing, or unit rent
-                    let price: number | null = null;
-                    if (hasActiveListing && activeListing) {
-                        if (activeListing.listingPrice !== null && activeListing.listingPrice !== undefined) {
-                            price = typeof activeListing.listingPrice === 'string'
-                                ? parseFloat(activeListing.listingPrice)
-                                : Number(activeListing.listingPrice);
-                        } else if (activeListing.monthlyRent !== null && activeListing.monthlyRent !== undefined) {
-                            price = typeof activeListing.monthlyRent === 'string'
-                                ? parseFloat(activeListing.monthlyRent)
-                                : Number(activeListing.monthlyRent);
-                        }
-                    } else if (unit.leasing?.monthlyRent) {
-                        price = typeof unit.leasing.monthlyRent === 'string'
-                            ? parseFloat(unit.leasing.monthlyRent) || 0
-                            : Number(unit.leasing.monthlyRent) || 0;
-                        if (price === 0) price = null;
-                    } else if (unit.rent) {
-                        price = typeof unit.rent === 'string'
-                            ? parseFloat(unit.rent) || 0
-                            : Number(unit.rent) || 0;
-                        if (price === 0) price = null;
-                    }
-
-                    // Get bedrooms and bathrooms from unit
-                    const bedrooms = unit.beds || 0;
-                    const bathrooms = unit.baths
-                        ? typeof unit.baths === 'string'
-                            ? parseFloat(unit.baths) || 0
-                            : Number(unit.baths) || 0
-                        : 0;
-
-                    // Get image from unit photos or coverPhotoUrl
-                    let image = '';
-                    if (unit.photos && Array.isArray(unit.photos) && unit.photos.length > 0) {
-                        const primaryPhoto = unit.photos.find((p) => p.isPrimary);
-                        image = primaryPhoto?.photoUrl || unit.photos[0].photoUrl;
-                    } else if (unit.coverPhotoUrl) {
-                        image = unit.coverPhotoUrl;
-                    } else if (backendProperty.coverPhotoUrl) {
-                        image = backendProperty.coverPhotoUrl;
-                    } else if (backendProperty.photos && backendProperty.photos.length > 0) {
-                        const primaryPhoto = backendProperty.photos.find((p) => p.isPrimary);
-                        image = primaryPhoto?.photoUrl || backendProperty.photos[0].photoUrl;
-                    }
-
-                    transformed.push({
-                        id: unit.id,
-                        name: `${backendProperty.propertyName} - ${unit.unitName || 'Unit'}`,
-                        address: propertyAddress,
-                        price,
-                        status: hasActiveListing ? 'listed' : 'unlisted',
-                        daysListed,
-                        isSyndicated,
-                        bathrooms,
-                        bedrooms,
-                        image,
-                        country,
-                        listingId: activeListing?.id,
-                        propertyId: backendProperty.id,
-                    });
-                });
-            }
-        });
-
-        // Process SINGLE properties - show as before
-        backendProperties.forEach((backendProperty: BackendProperty) => {
-            if (backendProperty.propertyType === 'SINGLE') {
-                const hasActiveListing = listedPropertyIds.has(backendProperty.id);
-                const activeListing = activeListingsMap.get(backendProperty.id);
-
-                // Calculate days listed
-                let daysListed: number | undefined;
-                if (activeListing && activeListing.listedAt) {
-                    const listedDate = new Date(activeListing.listedAt);
-                    const today = new Date();
-                    const diffTime = today.getTime() - listedDate.getTime();
-                    daysListed = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                }
-
-                // Check if listing is syndicated (has external listing URL)
-                const isSyndicated = activeListing ? !!(activeListing.externalListingUrl) : false;
-
-                // Format address
-                let address = 'Address not available';
-                let country: string | undefined;
-                if (backendProperty.address) {
-                    country = backendProperty.address.country;
-                    const addressParts = [
-                        backendProperty.address.streetAddress,
-                        backendProperty.address.city,
-                        backendProperty.address.stateRegion,
-                        backendProperty.address.zipCode,
-                        backendProperty.address.country,
-                    ].filter(part => part && part.trim() !== '');
-
-                    if (addressParts.length > 0) {
-                        address = addressParts.join(', ');
-                    }
-                }
-
-                // Get price from listing or property
-                let price: number | null = null;
-                if (hasActiveListing && activeListing) {
-                    // Prefer listingPrice, fallback to monthlyRent
-                    if (activeListing.listingPrice !== null && activeListing.listingPrice !== undefined) {
-                        price = typeof activeListing.listingPrice === 'string'
-                            ? parseFloat(activeListing.listingPrice)
-                            : Number(activeListing.listingPrice);
-                    } else if (activeListing.monthlyRent !== null && activeListing.monthlyRent !== undefined) {
-                        price = typeof activeListing.monthlyRent === 'string'
-                            ? parseFloat(activeListing.monthlyRent)
-                            : Number(activeListing.monthlyRent);
-                    }
-                } else if (backendProperty.marketRent) {
-                    price = typeof backendProperty.marketRent === 'string'
-                        ? parseFloat(backendProperty.marketRent) || 0
-                        : Number(backendProperty.marketRent) || 0;
-                    if (price === 0) price = null;
-                }
-
-                // Get bedrooms and bathrooms
-                const bedrooms = backendProperty.singleUnitDetails?.beds || 0;
-                const bathrooms = backendProperty.singleUnitDetails?.baths
-                    ? typeof backendProperty.singleUnitDetails.baths === 'string'
-                        ? parseFloat(backendProperty.singleUnitDetails.baths) || 0
-                        : Number(backendProperty.singleUnitDetails.baths) || 0
-                    : 0;
-
-                // Get image
-                const image = backendProperty.coverPhotoUrl
-                    || backendProperty.photos?.find((p) => p.isPrimary)?.photoUrl
-                    || backendProperty.photos?.[0]?.photoUrl
-                    || '';
-
-                transformed.push({
-                    id: backendProperty.id,
-                    name: backendProperty.propertyName,
-                    address,
-                    price,
-                    status: hasActiveListing ? 'listed' : 'unlisted',
-                    daysListed,
-                    isSyndicated,
-                    bathrooms,
-                    bedrooms,
-                    image,
-                    country,
-                    listingId: activeListing?.id,
-                    propertyId: backendProperty.id,
-                });
-            }
-        });
-
-        return transformed;
-    }, [listings, backendProperties, multiProperties, unitQueries]);
-
-    // Filter listings based on search and filters
-    const filteredListings = useMemo(() => {
-        return allListingsData.filter(listing => {
-            // Search filter
-            const matchesSearch = searchQuery === '' ||
-                listing.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                listing.address.toLowerCase().includes(searchQuery.toLowerCase());
-
-            // Status filter (listing status: listed/unlisted)
-            const matchesStatus = !filters.status?.length ||
-                filters.status.includes(listing.status);
-
-            // Days listed filter (only applies to listed items with a listing date)
-            // If no filter selected, show all. If filter selected, only show items that match
-            const matchesDaysListed = !filters.daysListed?.length || 
-                (listing.daysListed !== undefined && (
-                    (filters.daysListed.includes('new') && listing.daysListed < 7) ||
-                    (filters.daysListed.includes('recent') && listing.daysListed >= 7 && listing.daysListed <= 30) ||
-                    (filters.daysListed.includes('old') && listing.daysListed > 30)
-                ));
-
-            // Syndication filter
-            const matchesSyndication = !filters.syndication?.length ||
-                (filters.syndication.includes('yes') && listing.isSyndicated) ||
-                (filters.syndication.includes('no') && !listing.isSyndicated);
-
-            // Bedrooms filter
-            const matchesBedrooms = !filters.bedrooms?.length ||
-                filters.bedrooms.some(filterValue => {
-                    if (filterValue === '5+') {
-                        return listing.bedrooms >= 5;
-                    }
-                    const filterBedrooms = parseInt(filterValue, 10);
-                    return listing.bedrooms === filterBedrooms;
-                });
-
-            // Bathrooms filter
-            const matchesBathrooms = !filters.bathrooms?.length ||
-                filters.bathrooms.some(filterValue => {
-                    if (filterValue === '4+') {
-                        return listing.bathrooms >= 4;
-                    }
-                    const filterBathrooms = parseInt(filterValue, 10);
-                    return listing.bathrooms === filterBathrooms;
-                });
-
-            return matchesSearch && matchesStatus && matchesDaysListed && matchesSyndication && matchesBedrooms && matchesBathrooms;
-        });
-    }, [allListingsData, searchQuery, filters]);
-
-    // Reset to first page when filters change
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [searchQuery, filters]);
-
-    const totalPages = Math.ceil(filteredListings.length / itemsPerPage);
-
-    const currentListings = useMemo(() => {
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        return filteredListings.slice(startIndex, startIndex + itemsPerPage);
-    }, [filteredListings, currentPage]);
-
-    const handlePageChange = (page: number) => {
-        setCurrentPage(page);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
-    // Loading state
-    const isLoading = listingsLoading || propertiesLoading || isLoadingUnits;
-
-    // Error state
-    const error = listingsError || propertiesError || unitsError;
+    const showLoading = isLoading;
 
     return (
         <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen transition-all duration-300`}>
@@ -439,15 +160,15 @@ const Listing: React.FC = () => {
                 <DashboardFilter
                     filterOptions={filterOptions}
                     filterLabels={filterLabels}
-                    onSearchChange={setSearchQuery}
-                    onFiltersChange={(newFilters) => setFilters(newFilters as any)}
+                    onSearchChange={handleSearchChange}
+                    onFiltersChange={handleFiltersChange}
                     initialFilters={filters}
                     showMoreFilters={false}
                     showClearAll={true}
                 />
 
                 <div className="flex-1 flex flex-col">
-                    {isLoading ? (
+                    {showLoading ? (
                         <div className="text-center py-12 bg-white rounded-2xl">
                             <p className="text-gray-500 text-lg">Loading listings...</p>
                         </div>
@@ -458,10 +179,10 @@ const Listing: React.FC = () => {
                                 {error instanceof Error ? error.message : 'An unexpected error occurred'}
                             </p>
                         </div>
-                    ) : filteredListings.length > 0 ? (
+                    ) : filteredCards.length > 0 ? (
                         <>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-                                {currentListings.map((listing) => (
+                            <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12 ${isFetching ? 'opacity-60 transition-opacity' : ''}`}>
+                                {filteredCards.map((listing) => (
                                     <ListingCard
                                         key={listing.id}
                                         id={listing.id}
@@ -472,22 +193,23 @@ const Listing: React.FC = () => {
                                         bathrooms={listing.bathrooms}
                                         bedrooms={listing.bedrooms}
                                         image={listing.image}
-                                        country={listing.country}
-                                        listingId={listing.listingId}
+                                        country={listing.country ?? undefined}
+                                        listingId={listing.listingId ?? undefined}
                                         propertyId={listing.propertyId}
                                     />
                                 ))}
                             </div>
 
-                            {/* Pagination */}
-                            <div className="mt-auto">
-                                <Pagination
-                                    currentPage={currentPage}
-                                    totalPages={totalPages}
-                                    onPageChange={handlePageChange}
-                                    className="pb-8"
-                                />
-                            </div>
+                            {totalPages > 1 && (
+                                <div className="mt-auto">
+                                    <Pagination
+                                        currentPage={currentPage}
+                                        totalPages={totalPages}
+                                        onPageChange={handlePageChange}
+                                        className="pb-8"
+                                    />
+                                </div>
+                            )}
                         </>
                     ) : (
                         <div className="text-center py-12 bg-white rounded-2xl">
