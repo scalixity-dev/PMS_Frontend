@@ -18,7 +18,8 @@ import {
 // Path from src/components/service-dashboard/layout/: ../../../assets/images/logo.png
 import logo from "../../../assets/images/logo.png";
 
-import { authService } from "../../../services/auth.service"; // Adjust path: ../../../services/auth.service
+import { authService } from "../../../services/auth.service";
+import { useGetCurrentUser } from "../../../hooks/useAuthQueries";
 
 interface NavbarProps {
     setSidebarOpen: (open: boolean) => void;
@@ -29,11 +30,19 @@ export default function ServiceDashboardNavbar({ setSidebarOpen }: NavbarProps) 
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
 
-    // Hardcoded User Data as placeholder for Service Dashboard
-    const [userName] = useState<string>("Siddak Bagga");
-    const [userEmail] = useState<string>("siddakbagga@gmail.com");
-    const [userRole] = useState<string>("Service Provider");
-    const [isLoading] = useState(false);
+    const { data: currentUser, isLoading } = useGetCurrentUser();
+    const userName = currentUser?.fullName ?? "";
+    const userEmail = currentUser?.email ?? "";
+    const userRole = currentUser?.role ?? "Service Provider";
+
+    const userInitials = userName
+        ? userName
+              .split(" ")
+              .map((n) => n[0])
+              .join("")
+              .toUpperCase()
+              .slice(0, 2)
+        : "SP";
 
     const dropdownRef = useRef<HTMLDivElement>(null);
     const mobileMenuRef = useRef<HTMLDivElement>(null);
@@ -234,7 +243,7 @@ export default function ServiceDashboardNavbar({ setSidebarOpen }: NavbarProps) 
                                     {isLoading ? "Loading..." : userName}
                                 </span>
                                 <div className="w-6 h-6 rounded-full bg-gray-800 flex items-center justify-center overflow-hidden">
-                                    <span className="text-white text-[10px] font-bold">SB</span>
+                                    <span className="text-white text-[10px] font-bold">{userInitials}</span>
                                 </div>
                             </div>
 
@@ -244,7 +253,7 @@ export default function ServiceDashboardNavbar({ setSidebarOpen }: NavbarProps) 
                                     <div className="px-5 pt-5 pb-4">
                                         <div className="flex items-start gap-3">
                                             <div className="w-14 h-14 rounded-full bg-gray-900 flex items-center justify-center text-white self-start">
-                                                <span className="text-xl font-bold">SB</span>
+                                                <span className="text-xl font-bold">{userInitials}</span>
                                             </div>
                                             <div className="flex flex-col items-start space-y-0.5">
                                                 <p className="text-xs text-gray-500">{userRole}</p>

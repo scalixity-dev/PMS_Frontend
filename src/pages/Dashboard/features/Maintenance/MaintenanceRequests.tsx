@@ -7,7 +7,8 @@ import DashboardFilter, { type FilterOption } from '../../components/DashboardFi
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import Pagination from '../../components/Pagination';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
-import { useDeleteMaintenanceRequest, useGetAllMaintenanceRequests } from '../../../../hooks/useMaintenanceRequestQueries';
+import { useQueryClient } from '@tanstack/react-query';
+import { maintenanceRequestQueryKeys, useDeleteMaintenanceRequest, useGetAllMaintenanceRequests } from '../../../../hooks/useMaintenanceRequestQueries';
 
 // Row Action Dropdown Component
 interface RowActionDropdownProps {
@@ -215,10 +216,9 @@ const Requests: React.FC = () => {
         setIsAssigneeModalOpen(true);
     };
 
-    const handleAssigneeChange = (_newAssignee: string) => {
-        // TODO: Implement assign API; currently just closes the modal
-        setIsAssigneeModalOpen(false);
-        setSelectedRequestForAssign(null);
+    const queryClient = useQueryClient();
+    const handleAssigneeSuccess = () => {
+        queryClient.invalidateQueries({ queryKey: maintenanceRequestQueryKeys.all });
     };
 
     const handleChatClick = (assignee: string) => {
@@ -290,6 +290,7 @@ const Requests: React.FC = () => {
                 priority,
                 assignee: assigneeName,
                 propertyName,
+                applicantCount: (req as { applicantCount?: number }).applicantCount ?? 0,
             };
         });
     }, [backendRequests]);
@@ -498,20 +499,34 @@ const Requests: React.FC = () => {
                                             </div>
 
                                             <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-gray-400 text-xs">Assignee:</span>
-                                                    {item.assignee ? (
-                                                        <span className="text-[#4ad1a6] text-sm font-semibold">{item.assignee}</span>
-                                                    ) : (
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-gray-400 text-xs">Assignee:</span>
+                                                        {item.assignee ? (
+                                                            <span className="text-[#4ad1a6] text-sm font-semibold">{item.assignee}</span>
+                                                        ) : (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleAssignClick(item.id);
+                                                                }}
+                                                                className="flex items-center gap-1 text-[#3A6D6C] text-sm font-semibold hover:text-[#2c5251] transition-colors"
+                                                            >
+                                                                <UserPlus className="w-4 h-4" />
+                                                                Assign
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    {item.applicantCount > 0 && (
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                handleAssignClick(item.id);
+                                                                navigate(`/dashboard/maintenance/requests/${item.id}`);
                                                             }}
-                                                            className="flex items-center gap-1 text-[#3A6D6C] text-sm font-semibold hover:text-[#2c5251] transition-colors"
+                                                            className="flex items-center gap-1 bg-[#7BD747] text-white text-xs font-semibold px-2 py-1 rounded-full hover:bg-[#6BC837] transition-colors"
                                                         >
-                                                            <UserPlus className="w-4 h-4" />
-                                                            Assign
+                                                            <span>{item.applicantCount}</span>
+                                                            <span>applicant{item.applicantCount !== 1 ? 's' : ''}</span>
                                                         </button>
                                                     )}
                                                 </div>
@@ -576,7 +591,7 @@ const Requests: React.FC = () => {
                                                 {item.category} <span className="text-gray-400">/</span>{item.subCategory}
                                             </div>
                                             <div className="text-[#3A6D6C] text-sm font-semibold">{item.priority}</div>
-                                            <div className="text-sm font-semibold">
+                                            <div className="text-sm font-semibold flex items-center gap-2">
                                                 {item.assignee ? (
                                                     <span className="text-[#4ad1a6]">{item.assignee}</span>
                                                 ) : (
@@ -589,6 +604,19 @@ const Requests: React.FC = () => {
                                                     >
                                                         <UserPlus className="w-4 h-4" />
                                                         Assign
+                                                    </button>
+                                                )}
+                                                {item.applicantCount > 0 && (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            navigate(`/dashboard/maintenance/requests/${item.id}`);
+                                                        }}
+                                                        className="flex items-center gap-1 bg-[#7BD747] text-white text-xs font-semibold px-2 py-1 rounded-full hover:bg-[#6BC837] transition-colors"
+                                                        title={`${item.applicantCount} applicant${item.applicantCount !== 1 ? 's' : ''}`}
+                                                    >
+                                                        <span>{item.applicantCount}</span>
+                                                        <span className="hidden sm:inline">applicant{item.applicantCount !== 1 ? 's' : ''}</span>
                                                     </button>
                                                 )}
                                             </div>
@@ -677,15 +705,19 @@ const Requests: React.FC = () => {
             />
 
             {/* Assignee Modal */}
-            <AssigneeModal
-                isOpen={isAssigneeModalOpen}
-                onClose={() => {
-                    setIsAssigneeModalOpen(false);
-                    setSelectedRequestForAssign(null);
-                }}
-                currentAssignee={mappedRequests.find(r => r.id === selectedRequestForAssign)?.assignee ?? 'Unassigned'}
-                onSave={handleAssigneeChange}
-            />
+            {selectedRequestForAssign && (
+                <AssigneeModal
+                    isOpen={isAssigneeModalOpen}
+                    onClose={() => {
+                        setIsAssigneeModalOpen(false);
+                        setSelectedRequestForAssign(null);
+                    }}
+                    requestId={selectedRequestForAssign}
+                    currentAssignee={mappedRequests.find(r => r.id === selectedRequestForAssign)?.assignee ?? 'Unassigned'}
+                    requestCategory={mappedRequests.find(r => r.id === selectedRequestForAssign)?.category}
+                    onSuccess={handleAssigneeSuccess}
+                />
+            )}
         </div>
     );
 };

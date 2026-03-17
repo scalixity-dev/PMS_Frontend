@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import FeatureShowcaseWithCards from "./sections/FeatureShowcaseWithCards";
 import SkillFeaturesSection from "./sections/SkillFeaturesSection";
 import ServiceProsHero from "./sections/serviceproshero";
@@ -19,6 +20,14 @@ const ServiceProsPage: React.FC = () => {
   return (
     <div className="w-full">
       <ServiceProsHero />
+      <div className="flex justify-center py-6 bg-white">
+        <Link
+          to="/become-service-provider"
+          className="px-8 py-3 bg-[#3A6D6C] text-white font-semibold rounded-lg hover:bg-[#2c5251] transition-colors"
+        >
+          Register as Service Provider
+        </Link>
+      </div>
       <SkillFeaturesSection />
     
       {/* Section 1: Create a business profile in minutes */}
