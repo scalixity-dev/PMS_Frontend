@@ -69,14 +69,12 @@ const NewRequest: React.FC = () => {
     setAmount,
     chargeTo,
     setChargeTo,
-    propertyId,
     setPropertyId,
-    unitId,
     setUnitId,
   } = useNewRequestForm();
 
   const { data: currentUser } = useGetCurrentUser();
-  const { data: leases = [] } = useGetLeasesByTenant(currentUser?.id ?? null);
+  const { data: leases = [] } = useGetLeasesByTenant(currentUser?.userId ?? null);
 
   const propertyOptions = useMemo(() => {
     if (leases.length > 0) {

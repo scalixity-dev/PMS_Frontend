@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Edit, CreditCard, Wifi, HelpCircle, Plus, Building2, Trash2, X, Check } from 'lucide-react';
 
 const BankAccount = () => {

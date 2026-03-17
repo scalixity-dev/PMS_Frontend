@@ -474,7 +474,7 @@ const Requests: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { requestFilters, setRequestFilters, resetRequestFilters, requests: storeRequests, updateRequestStatus, deleteRequest } = useRequestStore();
-  const { data: apiRequests = [], isLoading: apiLoading, isSuccess: apiSuccess } = useGetAllMaintenanceRequests(true);
+  const { data: apiRequests = [], isSuccess: apiSuccess } = useGetAllMaintenanceRequests(true);
   const requests: ServiceRequest[] = useMemo(() => {
     if (apiSuccess && Array.isArray(apiRequests) && apiRequests.length >= 0) {
       return (apiRequests as unknown[]).map((r) => mapApiToServiceRequest(r as Parameters<typeof mapApiToServiceRequest>[0]));
@@ -610,7 +610,7 @@ const Requests: React.FC = () => {
     });
   }, []);
 
-  const handleMenuClick = useCallback((event: React.MouseEvent<HTMLButtonElement>, id: number) => {
+  const handleMenuClick = useCallback((event: React.MouseEvent<HTMLButtonElement>, id: string | number) => {
     event.stopPropagation();
     if (activeMenuId === id) {
       setActiveMenuId(null);

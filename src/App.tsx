@@ -1,6 +1,8 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools as TanStackDevtools } from '@tanstack/react-query-devtools';
+import { ChatToast } from './components/chat/ChatToast';
 import AppLayout from './components/layout/AppLayout';
 import { ProtectedRoute, ServiceProtectedRoute } from './components/ProtectedRoute';
 import DashboardLayout from './components/dashboardlayout/DashboardLayout';

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, Users } from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useGetMaintenanceRequestApplicants } from '../../../../../hooks/useMaintenanceRequestQueries';
 import ApplicantCard from './ApplicantCard';
 

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Upload, Trash2, FileText, Download, X } from 'lucide-react';
+import { Upload, Trash2, FileText, Download } from 'lucide-react';
 import DeleteConfirmationModal from '../../../../../../components/common/modals/DeleteConfirmationModal';
 
 
