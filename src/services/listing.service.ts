@@ -74,6 +74,43 @@ export interface BackendListing {
   unit?: any;
 }
 
+export interface ListingDashboardCard {
+  id: string;
+  propertyId: string;
+  name: string;
+  address: string;
+  country: string | null;
+  price: number | null;
+  status: 'listed' | 'unlisted';
+  daysListed: number | null;
+  isSyndicated: boolean;
+  bedrooms: number;
+  bathrooms: number;
+  image: string;
+  listingId: string | null;
+}
+
+export interface ListingDashboardQuery {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+  minBeds?: number;
+  maxBeds?: number;
+  minBaths?: number;
+  maxBaths?: number;
+}
+
+export interface ListingDashboardResponse {
+  data: ListingDashboardCard[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
 export interface CreateListingDto {
   propertyId: string;
   unitId?: string;
@@ -127,6 +164,51 @@ class ListingService {
         }
       } catch (parseError) {
         errorMessage = `Failed to create listing: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get the listing dashboard view (paginated cards for the Listings page)
+   */
+  async getDashboardView(query: ListingDashboardQuery = {}): Promise<ListingDashboardResponse> {
+    const params = new URLSearchParams();
+    if (query.page != null) params.set('page', String(query.page));
+    if (query.limit != null) params.set('limit', String(query.limit));
+    if (query.search) params.set('search', query.search);
+    if (query.status) params.set('status', query.status);
+    if (query.minBeds != null) params.set('minBeds', String(query.minBeds));
+    if (query.maxBeds != null) params.set('maxBeds', String(query.maxBeds));
+    if (query.minBaths != null) params.set('minBaths', String(query.minBaths));
+    if (query.maxBaths != null) params.set('maxBaths', String(query.maxBaths));
+
+    const qs = params.toString();
+    const url = `${API_ENDPOINTS.LISTING.DASHBOARD_VIEW}${qs ? `?${qs}` : ''}`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to fetch listing dashboard';
+      try {
+        const errorData = await response.json();
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join('. ');
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+      } catch (parseError) {
+        errorMessage = `Failed to fetch listing dashboard: ${response.statusText}`;
       }
       throw new Error(errorMessage);
     }

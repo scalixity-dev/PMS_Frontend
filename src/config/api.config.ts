@@ -76,6 +76,7 @@ export const API_ENDPOINTS = {
   },
   LISTING: {
     GET_ALL: `${API_BASE_URL}/listing`,
+    DASHBOARD_VIEW: `${API_BASE_URL}/listing/dashboard-view`,
     GET_ONE: (id: string) => `${API_BASE_URL}/listing/${id}`,
     GET_BY_PROPERTY: (propertyId: string) => `${API_BASE_URL}/listing/property/${propertyId}`,
     CREATE: `${API_BASE_URL}/listing`,
