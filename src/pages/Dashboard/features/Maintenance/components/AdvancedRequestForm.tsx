@@ -21,6 +21,7 @@ interface AdvancedRequestFormProps {
     onNext: (data: AdvancedRequestFormData) => void;
     onDiscard: () => void;
     initialData?: Partial<AdvancedRequestFormFields>;
+    aiPrefillData?: Partial<AdvancedRequestFormFields>;
 }
 
 interface MediaFile {
@@ -29,7 +30,7 @@ interface MediaFile {
     previewUrl: string;
 }
 
-const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDiscard, initialData }) => {
+const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDiscard, initialData, aiPrefillData }) => {
     const [formData, setFormData] = useState<AdvancedRequestFormFields>({
         category: initialData?.category || '',
         subCategory: initialData?.subCategory || '',
@@ -41,6 +42,7 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
     });
 
     const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
+    // const [showAIChat, setShowAIChat] = useState(false); // Removed local state
 
     const setAdvanced = useMaintenanceRequestFormStore((state) => state.setAdvanced);
 
@@ -136,6 +138,22 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
             { value: 'not_cleaning', label: 'Not Cleaning' },
             { value: 'leaking', label: 'Leaking' },
             { value: 'not_draining', label: 'Not Draining' }
+        ],
+        washer: [
+            { value: 'not_spinning', label: 'Not Spinning' },
+            { value: 'leaking', label: 'Leaking' },
+            { value: 'not_draining', label: 'Not Draining' },
+            { value: 'not_filling', label: 'Not Filling with Water' },
+            { value: 'noise', label: 'Strange Noise' },
+            { value: 'wont_start', label: 'Won\'t Start' }
+        ],
+        dryer: [
+            { value: 'not_heating', label: 'Not Heating' },
+            { value: 'not_spinning', label: 'Not Spinning' },
+            { value: 'noise', label: 'Strange Noise' },
+            { value: 'wont_start', label: 'Won\'t Start' },
+            { value: 'overheating', label: 'Overheating' },
+            { value: 'door_issue', label: 'Door Won\'t Stay Closed' }
         ],
         oven: [
             { value: 'not_heating', label: 'Not Heating' },
@@ -237,7 +255,6 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
         setFormData(prev => {
             const updated = { ...prev, [field]: value };
 
-            // Reset dependent fields when parent field changes
             if (field === 'category') {
                 updated.subCategory = '';
                 updated.issue = '';
@@ -258,6 +275,38 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
         });
     };
 
+    // Handle AI Data Injection
+    useEffect(() => {
+        if (aiPrefillData) {
+            formTouchedRef.current = true;
+
+            setFormData(prev => {
+                const updates: any = {};
+                Object.entries(aiPrefillData).forEach(([key, value]) => {
+                    if (value !== null && value !== '' && value !== undefined) {
+                        updates[key] = value;
+                    }
+                });
+
+                const updated = { ...prev, ...updates };
+
+                // Clear dependent fields if parent fields changed
+                if (updates.category && prev.category !== updates.category) {
+                    updated.subCategory = '';
+                    updated.issue = '';
+                    updated.subIssue = '';
+                } else if (updates.subCategory && prev.subCategory !== updates.subCategory) {
+                    updated.issue = '';
+                    updated.subIssue = '';
+                } else if (updates.issue && prev.issue !== updates.issue) {
+                    updated.subIssue = '';
+                }
+
+                return updated;
+            });
+        }
+    }, [aiPrefillData]);
+
     // Get available options based on selections
     const getSubCategoryOptions = () => {
         if (!formData.category) return [];
@@ -276,12 +325,15 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
 
     return (
         <div className="w-full max-w-5xl mx-auto pb-12">
-            <div className="mb-8">
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">Category</h2>
-                <p className="text-gray-500 text-sm">
-                    Search or select the issue category. Only the main category is required, but you can select a sub-category, issue and sub-issue to narrow down the request.
-                    Select 'other' option if the category you are looking for isn't here.
-                </p>
+            <div className="mb-8 flex items-center justify-between">
+                <div>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-2">Category</h2>
+                    <p className="text-gray-500 text-sm">
+                        Search or select the issue category. Only the main category is required, but you can select a sub-category, issue and sub-issue to narrow down the request.
+                        Select 'other' option if the category you are looking for isn't here.
+                    </p>
+                </div>
+                {/* AI Chat Removed - Handled by parent */}
             </div>
 
             {/* Category & Sub-category */}
