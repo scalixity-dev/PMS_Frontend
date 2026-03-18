@@ -270,6 +270,17 @@ export interface CreateApplicationDto {
   }[];
 }
 
+export interface ApplicationAttachment {
+  id: string;
+  applicationId: string;
+  fileUrl: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number | null;
+  category: 'IMAGE' | 'DOCUMENT';
+  uploadedAt: string;
+}
+
 class ApplicationService {
   /**
    * Transform frontend form data to backend DTO format
@@ -840,6 +851,33 @@ class ApplicationService {
         errorMessage = `Failed to delete application: ${response.statusText}`;
       }
       throw new Error(errorMessage);
+    }
+  }
+  async getAttachments(applicationId: string): Promise<ApplicationAttachment[]> {
+    const response = await fetch(API_ENDPOINTS.APPLICATION.GET_ATTACHMENTS(applicationId), {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Failed to fetch attachments');
+    }
+
+    return response.json();
+  }
+
+  async deleteAttachment(applicationId: string, attachmentId: string): Promise<void> {
+    const response = await fetch(API_ENDPOINTS.APPLICATION.DELETE_ATTACHMENT(applicationId, attachmentId), {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Failed to delete attachment');
     }
   }
 }

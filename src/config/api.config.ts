@@ -82,6 +82,7 @@ export const API_ENDPOINTS = {
     CREATE: `${API_BASE_URL}/listing`,
     UPDATE: (id: string) => `${API_BASE_URL}/listing/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/listing/${id}`,
+    GET_STATISTICS: (id: string) => `${API_BASE_URL}/listing/${id}/statistics`,
   },
   KEYS: {
     GET_ALL: `${API_BASE_URL}/keys-and-locks`,
@@ -130,6 +131,8 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `${API_BASE_URL}/application/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/application/${id}`,
     INVITE: `${API_BASE_URL}/application/invite`,
+    GET_ATTACHMENTS: (id: string) => `${API_BASE_URL}/application/${id}/attachments`,
+    DELETE_ATTACHMENT: (id: string, attachmentId: string) => `${API_BASE_URL}/application/${id}/attachments/${attachmentId}`,
   },
   SERVICE_PROVIDER: {
     GET_ALL: `${API_BASE_URL}/service-provider`,
