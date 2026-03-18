@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { listingService, type BackendListing, type CreateListingDto, type ListingDashboardQuery, type ListingDashboardResponse } from '../services/listing.service';
+import { listingService, type BackendListing, type CreateListingDto, type ListingDashboardQuery, type ListingDashboardResponse, type ListingStatistics } from '../services/listing.service';
 
 // Query keys for React Query
 export const listingQueryKeys = {
@@ -10,6 +10,7 @@ export const listingQueryKeys = {
   details: () => [...listingQueryKeys.all, 'detail'] as const,
   detail: (id: string) => [...listingQueryKeys.details(), id] as const,
   byProperty: (propertyId: string) => [...listingQueryKeys.all, 'property', propertyId] as const,
+  statistics: (id: string) => [...listingQueryKeys.detail(id), 'statistics'] as const,
 };
 
 /**
@@ -121,4 +122,16 @@ export const useUpdateListing = () => {
   });
 };
 
-
+/**
+ * Hook to get listing statistics
+ */
+export const useGetListingStatistics = (listingId: string | null | undefined, enabled: boolean = true) => {
+  return useQuery<ListingStatistics>({
+    queryKey: listingId ? listingQueryKeys.statistics(listingId) : ['listings', 'statistics', 'null'] as const,
+    queryFn: () => listingService.getStatistics(listingId!),
+    enabled: enabled && !!listingId,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+};

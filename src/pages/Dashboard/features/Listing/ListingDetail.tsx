@@ -22,7 +22,7 @@ import DatePicker from '../../../../components/ui/DatePicker';
 import OnlineApplicationModal from './components/OnlineApplicationModal';
 import InviteToApplyModal from './components/InviteToApplyModal';
 import DetailTabs from '../../components/DetailTabs';
-import { useGetListing, useUpdateListing } from '../../../../hooks/useListingQueries';
+import { useGetListing, useUpdateListing, useGetListingStatistics } from '../../../../hooks/useListingQueries';
 import { getCurrencySymbol } from '../../../../utils/currency.utils';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
@@ -67,6 +67,7 @@ const ListingDetail: React.FC = () => {
     // Fetch listing data from backend
     const { data: backendListing, isLoading, error } = useGetListing(id || null, !!id);
     const updateListing = useUpdateListing();
+    const { data: stats, isLoading: isLoadingStats } = useGetListingStatistics(id || null, activeTab === 'statistics');
 
     const handleToggleListing = () => {
         if (!backendListing?.id) return;
@@ -1092,13 +1093,18 @@ const ListingDetail: React.FC = () => {
                     <div className="space-y-8">
                         {/* Stats Grid */}
                         <div className="bg-[#F0F0F6] rounded-[2rem] p-6">
+                            {isLoadingStats ? (
+                                <div className="flex items-center justify-center py-12">
+                                    <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                                </div>
+                            ) : (
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 {/* Days listed */}
                                 <div className="bg-[#82D64D] rounded-[2rem] p-6 text-white h-32 flex flex-col justify-between">
                                     <h3 className="font-bold">Days listed</h3>
                                     <div className="flex gap-2">
                                         <span className="bg-white text-[#82D64D] px-4 py-1 rounded-full text-xs font-bold flex items-center gap-2">
-                                            <span className="font-extrabold">1</span> Days
+                                            <span className="font-extrabold">{stats?.daysListed ?? 0}</span> Days
                                         </span>
                                     </div>
                                 </div>
@@ -1108,10 +1114,10 @@ const ListingDetail: React.FC = () => {
                                     <h3 className="font-bold">Enquiries</h3>
                                     <div className="flex gap-2 flex-wrap">
                                         <span className="bg-white text-[#82D64D] px-4 py-1 rounded-full text-xs font-bold flex items-center gap-2">
-                                            <span className="font-extrabold">1</span> Messages sent
+                                            <span className="font-extrabold">{stats?.messagesSent ?? 0}</span> Messages sent
                                         </span>
                                         <span className="bg-white text-[#82D64D] px-4 py-1 rounded-full text-xs font-bold flex items-center gap-2">
-                                            <span className="font-extrabold">0</span> Tours requested
+                                            <span className="font-extrabold">{stats?.toursRequested ?? 0}</span> Tours requested
                                         </span>
                                     </div>
                                 </div>
@@ -1121,7 +1127,7 @@ const ListingDetail: React.FC = () => {
                                     <h3 className="font-bold">Activity</h3>
                                     <div className="flex gap-2">
                                         <span className="bg-white text-[#82D64D] px-4 py-1 rounded-full text-xs font-bold flex items-center gap-2">
-                                            <span className="font-extrabold">1</span> Added to favorite
+                                            <span className="font-extrabold">{stats?.addedToFavorite ?? 0}</span> Added to favorite
                                         </span>
                                     </div>
                                 </div>
@@ -1131,7 +1137,7 @@ const ListingDetail: React.FC = () => {
                                     <h3 className="font-bold">Applications</h3>
                                     <div className="flex gap-2">
                                         <span className="bg-white text-[#82D64D] px-4 py-1 rounded-full text-xs font-bold flex items-center gap-2">
-                                            <span className="font-extrabold">1</span> New
+                                            <span className="font-extrabold">{stats?.applicationsNew ?? 0}</span> New
                                         </span>
                                     </div>
                                 </div>
@@ -1141,10 +1147,10 @@ const ListingDetail: React.FC = () => {
                                     <h3 className="font-bold">Leads</h3>
                                     <div className="flex gap-2 flex-wrap">
                                         <span className="bg-white text-[#82D64D] px-4 py-1 rounded-full text-xs font-bold flex items-center gap-2">
-                                            <span className="font-extrabold">1</span> Leads
+                                            <span className="font-extrabold">{stats?.leads ?? 0}</span> Leads
                                         </span>
                                         <span className="bg-white text-[#82D64D] px-4 py-1 rounded-full text-xs font-bold flex items-center gap-2">
-                                            <span className="font-extrabold">0</span> Premium leads
+                                            <span className="font-extrabold">{stats?.premiumLeads ?? 0}</span> Premium leads
                                         </span>
                                     </div>
                                 </div>
@@ -1154,11 +1160,12 @@ const ListingDetail: React.FC = () => {
                                     <h3 className="font-bold">Listing views</h3>
                                     <div className="flex gap-2">
                                         <span className="bg-white text-[#82D64D] px-4 py-1 rounded-full text-xs font-bold flex items-center gap-2">
-                                            <span className="font-extrabold">1</span> Views
+                                            <span className="font-extrabold">{stats?.listingViews ?? 0}</span> Views
                                         </span>
                                     </div>
                                 </div>
                             </div>
+                            )}
                         </div>
 
                         {/* Listing views sources */}

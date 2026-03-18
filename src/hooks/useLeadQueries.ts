@@ -142,8 +142,8 @@ export const useGetAllNotes = (leadId: string | null | undefined, enabled: boole
     queryKey: leadId ? leadQueryKeys.notes(leadId) : ['leads', 'notes', 'null'] as const,
     queryFn: () => leadService.getAllNotes(leadId!),
     enabled: enabled && !!leadId,
-    staleTime: 1 * 60 * 1000, // Cache for 1 minute
-    gcTime: 5 * 60 * 1000,
+    staleTime: 0, // Always refetch on mount to ensure fresh data
+    gcTime: 10 * 60 * 1000,
     retry: 1,
   });
 };
@@ -225,8 +225,8 @@ export const useGetAllTasks = (leadId: string | null | undefined, enabled: boole
     queryKey: leadId ? leadQueryKeys.tasks(leadId) : ['leads', 'tasks', 'null'] as const,
     queryFn: () => leadService.getAllTasks(leadId!),
     enabled: enabled && !!leadId,
-    staleTime: 1 * 60 * 1000,
-    gcTime: 5 * 60 * 1000,
+    staleTime: 0,
+    gcTime: 10 * 60 * 1000,
     retry: 1,
   });
 };
@@ -308,8 +308,8 @@ export const useGetAllActivities = (leadId: string | null | undefined, enabled: 
     queryKey: leadId ? leadQueryKeys.activities(leadId) : ['leads', 'activities', 'null'] as const,
     queryFn: () => leadService.getAllActivities(leadId!),
     enabled: enabled && !!leadId,
-    staleTime: 1 * 60 * 1000,
-    gcTime: 5 * 60 * 1000,
+    staleTime: 0,
+    gcTime: 10 * 60 * 1000,
     retry: 1,
   });
 };
@@ -372,8 +372,8 @@ export const useGetAllCalls = (leadId: string | null | undefined, enabled: boole
     queryKey: leadId ? leadQueryKeys.calls(leadId) : ['leads', 'calls', 'null'] as const,
     queryFn: () => leadService.getAllCalls(leadId!),
     enabled: enabled && !!leadId,
-    staleTime: 1 * 60 * 1000,
-    gcTime: 5 * 60 * 1000,
+    staleTime: 0,
+    gcTime: 10 * 60 * 1000,
     retry: 1,
   });
 };
@@ -455,8 +455,8 @@ export const useGetAllMeetings = (leadId: string | null | undefined, enabled: bo
     queryKey: leadId ? leadQueryKeys.meetings(leadId) : ['leads', 'meetings', 'null'] as const,
     queryFn: () => leadService.getAllMeetings(leadId!),
     enabled: enabled && !!leadId,
-    staleTime: 1 * 60 * 1000,
-    gcTime: 5 * 60 * 1000,
+    staleTime: 0,
+    gcTime: 10 * 60 * 1000,
     retry: 1,
   });
 };

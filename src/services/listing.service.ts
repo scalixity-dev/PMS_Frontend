@@ -137,6 +137,17 @@ export interface CreateListingDto {
   description?: string;
 }
 
+export interface ListingStatistics {
+  daysListed: number;
+  messagesSent: number;
+  toursRequested: number;
+  addedToFavorite: number;
+  applicationsNew: number;
+  leads: number;
+  premiumLeads: number;
+  listingViews: number;
+}
+
 class ListingService {
   /**
    * Create a new listing
@@ -338,6 +349,31 @@ class ListingService {
         }
       } catch (parseError) {
         errorMessage = `Failed to fetch listings: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  }
+  /**
+   * Get statistics for a listing
+   */
+  async getStatistics(id: string): Promise<ListingStatistics> {
+    const response = await fetch(API_ENDPOINTS.LISTING.GET_STATISTICS(id), {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to fetch listing statistics';
+      try {
+        const errorData = await response.json();
+        errorMessage = Array.isArray(errorData.message)
+          ? errorData.message.join('. ')
+          : errorData.message || errorData.error || errorMessage;
+      } catch {
+        errorMessage = `Failed to fetch listing statistics: ${response.statusText}`;
       }
       throw new Error(errorMessage);
     }

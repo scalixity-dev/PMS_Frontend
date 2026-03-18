@@ -9,6 +9,7 @@ export const applicationQueryKeys = {
   details: () => [...applicationQueryKeys.all, 'detail'] as const,
   detail: (id: string) => [...applicationQueryKeys.details(), id] as const,
   byLeasing: (leasingId: string) => [...applicationQueryKeys.all, 'leasing', leasingId] as const,
+  attachments: (id: string) => [...applicationQueryKeys.detail(id), 'attachments'] as const,
 };
 
 /**
@@ -104,3 +105,31 @@ export const useDeleteApplication = () => {
   });
 };
 
+/**
+ * Hook to get attachments for an application
+ */
+export const useGetApplicationAttachments = (applicationId: string | null | undefined, enabled: boolean = true) => {
+  return useQuery({
+    queryKey: applicationId ? applicationQueryKeys.attachments(applicationId) : ['applications', 'attachments', 'null'] as const,
+    queryFn: () => applicationService.getAttachments(applicationId!),
+    enabled: enabled && !!applicationId,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+};
+
+/**
+ * Hook to delete an application attachment
+ */
+export const useDeleteApplicationAttachment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ applicationId, attachmentId }: { applicationId: string; attachmentId: string }) =>
+      applicationService.deleteAttachment(applicationId, attachmentId),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: applicationQueryKeys.attachments(variables.applicationId) });
+    },
+  });
+};

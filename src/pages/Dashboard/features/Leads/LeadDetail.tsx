@@ -35,6 +35,7 @@ import {
 import type { LeadStatus, CreateActivityDto } from '../../../../services/lead.service';
 import { authService } from '../../../../services/auth.service';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
+import { useLeadDetailStore } from '../../../../store/leadDetailStore';
 
 interface ActivityItem {
     id: string; // Changed to string to use UUID directly
@@ -61,12 +62,30 @@ const LeadDetail = () => {
     const updateLeadMutation = useUpdateLead();
     const deleteLeadMutation = useDeleteLead();
 
+    // Zustand store for instant data display
+    const store = useLeadDetailStore();
+
     // Fetch notes, tasks, activities, calls, and meetings
-    const { data: notes = [] } = useGetAllNotes(id || null, !!id);
-    const { data: tasks = [] } = useGetAllTasks(id || null, !!id);
-    const { data: activities = [] } = useGetAllActivities(id || null, !!id);
-    const { data: calls = [] } = useGetAllCalls(id || null, !!id);
-    const { data: meetings = [] } = useGetAllMeetings(id || null, !!id);
+    const { data: queryNotes = [] } = useGetAllNotes(id || null, !!id);
+    const { data: queryTasks = [] } = useGetAllTasks(id || null, !!id);
+    const { data: queryActivities = [] } = useGetAllActivities(id || null, !!id);
+    const { data: queryCalls = [] } = useGetAllCalls(id || null, !!id);
+    const { data: queryMeetings = [] } = useGetAllMeetings(id || null, !!id);
+
+    // Sync React Query data into Zustand store
+    useEffect(() => { if (id) store.setLeadId(id); return () => { store.reset(); }; }, [id]);
+    useEffect(() => { store.setNotes(queryNotes); }, [queryNotes]);
+    useEffect(() => { store.setTasks(queryTasks); }, [queryTasks]);
+    useEffect(() => { store.setActivities(queryActivities); }, [queryActivities]);
+    useEffect(() => { store.setCalls(queryCalls); }, [queryCalls]);
+    useEffect(() => { store.setMeetings(queryMeetings); }, [queryMeetings]);
+
+    // Read from store for rendering
+    const notes = store.notes;
+    const tasks = store.tasks;
+    const activities = store.activities;
+    const calls = store.calls;
+    const meetings = store.meetings;
 
     // Mutations
     const createNoteMutation = useCreateNote();

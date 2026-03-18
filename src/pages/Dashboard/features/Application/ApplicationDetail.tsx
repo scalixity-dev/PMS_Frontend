@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
 import {
     ChevronLeft,
@@ -13,7 +14,7 @@ import {
     Camera,
     Dog
 } from 'lucide-react';
-import { useGetApplication, useUpdateApplication } from '../../../../hooks/useApplicationQueries';
+import { useGetApplication, useUpdateApplication, useGetApplicationAttachments, useDeleteApplicationAttachment, applicationQueryKeys } from '../../../../hooks/useApplicationQueries';
 import { API_ENDPOINTS } from '../../../../config/api.config';
 import AddOccupantModal from './components/AddOccupantModal';
 import AddPetModal from './components/AddPetModal';
@@ -245,6 +246,7 @@ const ApplicationDetail = () => {
                 const formData = new FormData();
                 formData.append('file', file);
                 formData.append('category', category);
+                if (id) formData.append('applicationId', id);
 
                 const response = await fetch(API_ENDPOINTS.UPLOAD.FILE, {
                     method: 'POST',
@@ -260,17 +262,13 @@ const ApplicationDetail = () => {
                 const data = await response.json();
                 const fileUrl = data.url;
 
-                // Update attachment with URL and remove uploading state
-                setAttachments(prev =>
-                    prev.map((att, idx) =>
-                        idx === prev.length - 1
-                            ? { ...att, url: fileUrl, uploading: false }
-                            : att
-                    )
-                );
+                // Remove the uploading placeholder from local state
+                setAttachments(prev => prev.filter((_, idx) => idx !== prev.length - 1));
 
-                // Optionally save the URL to the application if there's a documents field
-                // For now, we'll just store it in local state
+                // Invalidate the attachments query to refetch from backend
+                if (id) {
+                    queryClient.invalidateQueries({ queryKey: applicationQueryKeys.attachments(id) });
+                }
             } catch (error) {
                 // Update attachment with error
                 setAttachments(prev =>
@@ -438,6 +436,11 @@ const ApplicationDetail = () => {
         setAttachments(prev => prev.filter((_, i) => i !== index));
     };
 
+    const removePersistedAttachment = (attachmentId: string) => {
+        if (!id) return;
+        deleteAttachmentMutation.mutate({ applicationId: id, attachmentId });
+    };
+
     const handleConfirmDelete = async () => {
         if (!deleteConfirmation) return;
         const { type, id } = deleteConfirmation;
@@ -490,6 +493,9 @@ const ApplicationDetail = () => {
 
     const { data: application, isLoading, error } = useGetApplication(id);
     const updateApplication = useUpdateApplication();
+    const { data: persistedAttachments = [] } = useGetApplicationAttachments(id);
+    const deleteAttachmentMutation = useDeleteApplicationAttachment();
+    const queryClient = useQueryClient();
 
     if (isLoading) {
         return (
@@ -1954,7 +1960,7 @@ const ApplicationDetail = () => {
                     {/* 9. Attachments */}
                     < Section
                         title="Attachments"
-                        isEmpty={attachments.length === 0}
+                        isEmpty={persistedAttachments.length === 0 && attachments.length === 0}
                         emptyText="No attachments yet"
                         secondaryButton={
                             <>
@@ -1976,8 +1982,61 @@ const ApplicationDetail = () => {
                         }
                     >
                         <div className="space-y-3">
+                            {/* Persisted attachments from API */}
+                            {persistedAttachments.map((att) => (
+                                <div key={att.id} className="flex items-center justify-between bg-[#F6F6F8] p-4 rounded-xl border border-gray-100/50">
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                        <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center border border-gray-100 flex-shrink-0">
+                                            <FileText className="text-[#3A6D6C]" size={20} />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <a
+                                                href={att.fileUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-sm font-bold text-[#3A6D6C] hover:text-[#2c5251] hover:underline truncate block"
+                                                title="Click to open file"
+                                            >
+                                                {att.fileName}
+                                            </a>
+                                            <div className="flex items-center gap-2">
+                                                {att.fileSize && (
+                                                    <p className="text-xs text-gray-500">
+                                                        {(att.fileSize / 1024).toFixed(1)} KB
+                                                    </p>
+                                                )}
+                                                <span className="text-xs text-gray-400">{att.fileType}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <a
+                                            href={att.fileUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="p-2 hover:bg-white rounded-full transition-colors text-[#3A6D6C] hover:text-[#2c5251]"
+                                            title="Open file in new tab"
+                                        >
+                                            <ExternalLink size={18} />
+                                        </a>
+                                        <button
+                                            onClick={() => removePersistedAttachment(att.id)}
+                                            className="p-2 hover:bg-white rounded-full transition-colors text-gray-400 hover:text-red-500"
+                                            title="Remove attachment"
+                                            disabled={deleteAttachmentMutation.isPending}
+                                        >
+                                            {deleteAttachmentMutation.isPending ? (
+                                                <Loader2 size={18} className="animate-spin" />
+                                            ) : (
+                                                <Trash2 size={18} />
+                                            )}
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                            {/* In-progress uploads (local state) */}
                             {attachments.map((attachment, index) => (
-                                <div key={index} className="flex items-center justify-between bg-[#F6F6F8] p-4 rounded-xl border border-gray-100/50">
+                                <div key={`uploading-${index}`} className="flex items-center justify-between bg-[#F6F6F8] p-4 rounded-xl border border-gray-100/50">
                                     <div className="flex items-center gap-3 flex-1 min-w-0">
                                         <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center border border-gray-100 flex-shrink-0">
                                             {attachment.uploading ? (
@@ -1989,21 +2048,9 @@ const ApplicationDetail = () => {
                                             )}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            {attachment.url && !attachment.uploading && !attachment.error ? (
-                                                <a
-                                                    href={attachment.url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-sm font-bold text-[#3A6D6C] hover:text-[#2c5251] hover:underline truncate block"
-                                                    title="Click to open file"
-                                                >
-                                                    {attachment.file.name}
-                                                </a>
-                                            ) : (
-                                                <p className="text-sm font-bold text-gray-800 truncate">
-                                                    {attachment.file.name}
-                                                </p>
-                                            )}
+                                            <p className="text-sm font-bold text-gray-800 truncate">
+                                                {attachment.file.name}
+                                            </p>
                                             <div className="flex items-center gap-2">
                                                 <p className="text-xs text-gray-500">
                                                     {(attachment.file.size / 1024).toFixed(1)} KB
@@ -2014,38 +2061,18 @@ const ApplicationDetail = () => {
                                                 {attachment.error && (
                                                     <span className="text-xs text-red-600 font-medium">{attachment.error}</span>
                                                 )}
-                                                {attachment.url && !attachment.uploading && !attachment.error && (
-                                                    <span className="text-xs text-green-600 font-medium">Uploaded</span>
-                                                )}
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        {attachment.url && !attachment.uploading && !attachment.error && (
-                                            <a
-                                                href={attachment.url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="p-2 hover:bg-white rounded-full transition-colors text-[#3A6D6C] hover:text-[#2c5251]"
-                                                title="Open file in new tab"
-                                            >
-                                                <ExternalLink size={18} />
-                                            </a>
-                                        )}
+                                    {attachment.error && (
                                         <button
-                                            onClick={() => setDeleteConfirmation({
-                                                isOpen: true,
-                                                type: 'attachment',
-                                                id: index,
-                                                title: 'Delete Attachment',
-                                                itemName: attachment.file.name
-                                            })}
+                                            onClick={() => removeAttachment(index)}
                                             className="p-2 hover:bg-white rounded-full transition-colors text-gray-400 hover:text-red-500"
-                                            title="Remove attachment"
+                                            title="Remove"
                                         >
                                             <Trash2 size={18} />
                                         </button>
-                                    </div>
+                                    )}
                                 </div>
                             ))}
                         </div>
