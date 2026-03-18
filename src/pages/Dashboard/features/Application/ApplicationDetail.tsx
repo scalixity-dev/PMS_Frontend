@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom';
 import {
@@ -259,8 +259,7 @@ const ApplicationDetail = () => {
                     throw new Error(errorData.message || 'Failed to upload file');
                 }
 
-                const data = await response.json();
-                const fileUrl = data.url;
+                await response.json();
 
                 // Remove the uploading placeholder from local state
                 setAttachments(prev => prev.filter((_, idx) => idx !== prev.length - 1));
