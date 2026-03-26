@@ -20,11 +20,6 @@ const MessageList = ({ chat, currentUserId }: MessageListProps) => {
 
     const otherLastReadAt = chat.otherLastReadAt;
 
-    const isMessageRead = (msgTimestamp: string, senderId: string): boolean => {
-        if (senderId === currentUserId) return false; // not own message
-        return false;
-    };
-
     const isOwnMessageRead = (msgTimestamp: string): boolean => {
         if (!otherLastReadAt || !msgTimestamp) return false;
         return new Date(msgTimestamp) <= new Date(otherLastReadAt);
