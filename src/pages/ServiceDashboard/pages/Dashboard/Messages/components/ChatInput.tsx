@@ -4,9 +4,10 @@ import { Send, Paperclip, Image as ImageIcon, X } from 'lucide-react';
 interface ChatInputProps {
     onSendMessage: (text: string, files?: File[]) => void;
     disabled?: boolean;
+    onTyping?: () => void;
 }
 
-const ChatInput = ({ onSendMessage, disabled = false }: ChatInputProps) => {
+const ChatInput = ({ onSendMessage, disabled = false, onTyping }: ChatInputProps) => {
     const [message, setMessage] = useState('');
     const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -45,6 +46,7 @@ const ChatInput = ({ onSendMessage, disabled = false }: ChatInputProps) => {
 
     const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setMessage(e.target.value);
+        onTyping?.();
         // Auto-resize textarea
         if (textareaRef.current) {
             textareaRef.current.style.height = 'auto';

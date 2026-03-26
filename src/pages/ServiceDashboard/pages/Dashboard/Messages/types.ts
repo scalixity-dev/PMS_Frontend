@@ -5,6 +5,7 @@ export interface Message {
     text: string;
     timestamp: string;
     isRead?: boolean;
+    isPending?: boolean;
     attachments?: Attachment[];
 }
 
@@ -29,17 +30,6 @@ export interface Chat {
     isPinned?: boolean;
     messages: Message[];
     propertyAddress?: string;
-}
-
-export interface ChatStore {
-    chats: Chat[];
-    activeChat: Chat | null;
-    searchQuery: string;
-    setChats: (chats: Chat[]) => void;
-    setActiveChat: (chat: Chat | null) => void;
-    setSearchQuery: (query: string) => void;
-    sendMessage: (chatId: string, message: Omit<Message, 'id' | 'timestamp'>) => void;
-    markAsRead: (chatId: string) => void;
-    togglePin: (chatId: string) => void;
-    addChat: (chat: Chat) => void;
+    otherLastReadAt?: string | null;
+    typingText?: string;
 }
