@@ -15,13 +15,13 @@ import {
   useContacts,
   useCreateConversation,
   useMarkAsRead,
+  useOnlineUsers,
   chatQueryKeys,
 } from '../../../../hooks/useChatQueries';
 import { useChatToken, useChatWebSocket } from '../../../../hooks/useChatWebSocket';
 import { useOfflineQueue } from '../../../../hooks/useOfflineQueue';
 import { useChatToastStore } from '../../../../store/chatToastStore';
 import { useGetCurrentUser } from '../../../../hooks/useAuthQueries';
-import { mockPublications } from './utils/mockData';
 import type { Chat } from './types';
 import type { ServiceRequest, Publication } from '../../utils/types';
 
@@ -63,7 +63,7 @@ const Messages = () => {
   const [mrSearch, setMrSearch] = useState('');
   const [pbSearch, setPbSearch] = useState('');
   const [activeRequest, setActiveRequest] = useState<ServiceRequest | null>(null);
-  const [publications, setPublications] = useState<Publication[]>([]);
+  const [publications] = useState<Publication[]>([]);
   const [activePublication, setActivePublication] = useState<Publication | null>(null);
   const [showMobileChat, setShowMobileChat] = useState(false);
   const [viewMode, setViewMode] = useState<'CHAT' | 'MR' | 'PB'>('CHAT');
@@ -83,6 +83,20 @@ const Messages = () => {
   const { data: messagesData } = useMessages(activeChatId, !!activeChatId);
   const apiMessages = messagesData ?? [];
 
+  // Collect other participant user IDs for presence
+  const otherUserIds = useMemo(() => {
+    const ids = new Set<string>();
+    conversations.forEach((c) => {
+      c.participants.forEach((p: { userId: string }) => {
+        if (p.userId !== currentUserId) ids.add(p.userId);
+      });
+    });
+    return Array.from(ids);
+  }, [conversations, currentUserId]);
+
+  const { data: onlineUserIds } = useOnlineUsers(otherUserIds, !!currentUserId);
+  const onlineSet = useMemo(() => new Set(onlineUserIds ?? []), [onlineUserIds]);
+
   const onNewMessage = useCallback(
     (data: unknown) => {
       const m = data as { conversationId: string; sender?: { id: string } };
@@ -94,7 +108,7 @@ const Messages = () => {
     [activeChatId, currentUserId, qc]
   );
 
-  const { sendMessage, isConnected } = useChatWebSocket(
+  const { sendMessage, sendTyping, sendTypingStop, isConnected, typingUsers } = useChatWebSocket(
     token ?? null,
     activeChatId,
     currentUserId,
@@ -119,6 +133,9 @@ const Messages = () => {
       const name = other?.displayName ?? other?.email ?? 'Unknown';
       const contact = contacts?.find((ct) => ct.userId === other?.userId);
       const lastMsg = c.lastMessage;
+      const isOnline = other ? onlineSet.has(other.userId) : false;
+      const otherLastReadAt = other?.lastReadAt ?? null;
+
       return {
         id: c.id,
         contactName: name,
@@ -128,13 +145,14 @@ const Messages = () => {
         lastMessage: lastMsg?.content ?? 'No messages yet',
         lastMessageTime: safeFormatTime(lastMsg?.createdAt),
         unreadCount: c.unreadCount ?? 0,
-        isOnline: isConnected,
+        isOnline,
         isPinned: false,
         messages: [],
         propertyAddress: undefined,
+        otherLastReadAt,
       };
     });
-  }, [conversations, contacts, currentUserId, isConnected]);
+  }, [conversations, contacts, currentUserId, onlineSet]);
 
   const messages = useMemo(() => {
     const api = apiMessages.map((m) => ({
@@ -158,6 +176,17 @@ const Messages = () => {
     return [...api, ...pending];
   }, [apiMessages, currentUserId, activeChatId, pendingForConv]);
 
+  // Typing text for active chat
+  const activeTypingText = useMemo(() => {
+    if (!activeChatId) return undefined;
+    const users = typingUsers[activeChatId];
+    if (!users || users.length === 0) return undefined;
+    const others = users.filter((u) => u.userId !== currentUserId);
+    if (others.length === 0) return undefined;
+    if (others.length === 1) return `${others[0].email.split('@')[0]} is typing...`;
+    return `${others.length} people are typing...`;
+  }, [typingUsers, activeChatId, currentUserId]);
+
   const activeChat: Chat | null = useMemo(() => {
     if (pendingNewChat) {
       return {
@@ -169,16 +198,17 @@ const Messages = () => {
         lastMessage: 'No messages yet',
         lastMessageTime: '',
         unreadCount: 0,
-        isOnline: isConnected,
+        isOnline: false,
         isPinned: false,
         messages,
         propertyAddress: undefined,
+        typingText: activeTypingText,
       };
     }
     const base = chats.find((c) => c.id === activeChatId);
     if (!base) return null;
-    return { ...base, messages };
-  }, [chats, activeChatId, messages, pendingNewChat, isConnected]);
+    return { ...base, messages, typingText: activeTypingText };
+  }, [chats, activeChatId, messages, pendingNewChat, activeTypingText]);
 
   const filteredChats = useMemo(() => {
     const baseChats = chats.filter((chat) => {
@@ -237,10 +267,6 @@ const Messages = () => {
   );
 
   useEffect(() => {
-    setPublications(mockPublications);
-  }, []);
-
-  useEffect(() => {
     if (location.state?.viewMode === 'MR' && location.state?.requestId) {
       const reqId = location.state.requestId;
       setViewMode('MR');
@@ -291,6 +317,7 @@ const Messages = () => {
         messageText = text ? `${text}\n\n📎 Attached: ${names}` : `📎 Attached: ${names}`;
       }
       if (!messageText.trim()) return;
+      sendTypingStop();
       const sent = trySend(activeChatId, messageText);
       if (sent) {
         qc.invalidateQueries({ queryKey: chatQueryKeys.messages(activeChatId) });
@@ -299,8 +326,12 @@ const Messages = () => {
         useChatToastStore.getState().showInfo('Message saved. Will send when back online.');
       }
     },
-    [activeChat, activeChatId, trySend, qc]
+    [activeChat, activeChatId, trySend, qc, sendTypingStop]
   );
+
+  const handleTyping = useCallback(() => {
+    sendTyping();
+  }, [sendTyping]);
 
   const handleStartNewChat = useCallback(
     (contact: { userId: string; email: string; fullName: string }) => {
@@ -376,7 +407,7 @@ const Messages = () => {
                   pendingCount={pendingCount}
                 />
                 <MessageList chat={activeChat} currentUserId="user" />
-                <ChatInput onSendMessage={handleSendMessage} />
+                <ChatInput onSendMessage={handleSendMessage} onTyping={handleTyping} />
               </>
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center text-gray-400 bg-gray-50 px-4">
@@ -414,9 +445,9 @@ const Messages = () => {
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center bg-[#f8fafc] px-4 md:px-6 text-center">
                 <ListPlus className="w-16 h-16 md:w-24 md:h-24 mb-3 md:mb-4 text-gray-300" />
-                <h3 className="text-lg md:text-xl font-semibold text-[#1e293b] mb-2">No publication selected</h3>
+                <h3 className="text-lg md:text-xl font-semibold text-[#1e293b] mb-2">No publications yet</h3>
                 <p className="text-xs md:text-sm text-[#64748b] max-w-md">
-                  Choose a publication from the sidebar.
+                  Publications from your property manager will appear here.
                 </p>
               </div>
             )
@@ -433,7 +464,7 @@ const Messages = () => {
                 onClick={() => setShowNewChatModal(false)}
                 className="text-gray-500 hover:text-gray-700 text-xl"
               >
-                ×
+                x
               </button>
             </div>
             <div className="overflow-y-auto flex-1 p-4">

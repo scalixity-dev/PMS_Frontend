@@ -7,9 +7,10 @@ interface MessageBubbleProps {
     message: Message;
     activeChatName: string;
     isPending?: boolean;
+    isRead?: boolean;
 }
 
-const MessageBubble: React.FC<MessageBubbleProps> = ({ message, activeChatName, isPending }) => {
+const MessageBubble: React.FC<MessageBubbleProps> = ({ message, activeChatName, isPending, isRead }) => {
     const isMe = message.senderId === CURRENT_USER_ID;
 
     return (
@@ -35,10 +36,14 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, activeChatName, 
                     <div className="flex items-center gap-2">
                         {isPending ? (
                             <span className="text-[10px] text-amber-600 font-medium">Sending...</span>
-                        ) : (
-                            <div className="flex">
+                        ) : isRead ? (
+                            <div className="flex" title="Read">
                                 <Check className="w-3.5 h-3.5 text-[#41C1A6]" />
                                 <Check className="w-3.5 h-3.5 text-[#41C1A6] -ml-2.5" />
+                            </div>
+                        ) : (
+                            <div className="flex" title="Sent">
+                                <Check className="w-3.5 h-3.5 text-gray-400" />
                             </div>
                         )}
                         <span className="text-[10px] text-gray-400 font-medium">{message.time}</span>

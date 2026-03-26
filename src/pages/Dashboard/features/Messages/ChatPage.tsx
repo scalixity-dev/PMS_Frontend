@@ -7,6 +7,7 @@ import {
   useContacts,
   useCreateConversation,
   useMarkAsRead,
+  useOnlineUsers,
   chatQueryKeys,
 } from '../../../../hooks/useChatQueries';
 import { useChatToken, useChatWebSocket } from '../../../../hooks/useChatWebSocket';
@@ -77,6 +78,20 @@ const ChatPage: React.FC = () => {
   const { data: messagesData } = useMessages(activeChatId, !!activeChatId);
   const apiMessages = messagesData ?? [];
 
+  // Collect other participant user IDs for presence query
+  const otherUserIds = useMemo(() => {
+    const ids = new Set<string>();
+    conversations.forEach((c) => {
+      c.participants.forEach((p: { userId: string }) => {
+        if (p.userId !== currentUserId) ids.add(p.userId);
+      });
+    });
+    return Array.from(ids);
+  }, [conversations, currentUserId]);
+
+  const { data: onlineUserIds } = useOnlineUsers(otherUserIds, !!currentUserId);
+  const onlineSet = useMemo(() => new Set(onlineUserIds ?? []), [onlineUserIds]);
+
   const onNewMessage = useCallback(
     (data: unknown) => {
       const m = data as { conversationId: string; sender?: { id: string } };
@@ -88,7 +103,7 @@ const ChatPage: React.FC = () => {
     [activeChatId, currentUserId, qc]
   );
 
-  const { sendMessage, isConnected } = useChatWebSocket(
+  const { sendMessage, sendTyping, sendTypingStop, isConnected, typingUsers } = useChatWebSocket(
     token ?? null,
     activeChatId,
     currentUserId,
@@ -102,26 +117,31 @@ const ChatPage: React.FC = () => {
   }, [activeChatId, markRead]);
 
   const chats: Chat[] = useMemo(() => {
-    return conversations.map((c: { id: string; participants: { userId: string; displayName?: string; email?: string }[]; lastMessage?: { content: string; createdAt: string } | null; updatedAt: string }) => {
+    return conversations.map((c: { id: string; participants: { userId: string; displayName?: string; email?: string; lastReadAt?: string | null }[]; lastMessage?: { content: string; createdAt: string } | null; updatedAt: string }) => {
       const other = c.participants.find((p: { userId: string }) => p.userId !== currentUserId);
       const name = other?.displayName ?? other?.email ?? 'Unknown';
       const contact = contacts?.find((ct: { userId: string; contactType: string }) => ct.userId === other?.userId);
       const category = contact ? toChatCategory(contact.contactType) : 'Leads';
       const lastMsg = c.lastMessage;
+      const isOnline = other ? onlineSet.has(other.userId) : false;
+      const otherLastReadAt = other?.lastReadAt ?? null;
+
       return {
         id: c.id,
         name,
         role: contact?.contactType?.replace('_', ' ') ?? 'Contact',
         category,
-        status: isConnected ? 'Active Now' : 'Offline',
+        status: isOnline ? 'Active Now' : 'Offline',
         avatar: avatarUrl(name),
         lastMessage: lastMsg?.content ?? 'No messages yet',
         time: lastMsg ? formatTime(lastMsg.createdAt) : '',
         messages: [],
         isPinned: false,
+        isOnline,
+        otherLastReadAt,
       };
     });
-  }, [conversations, contacts, currentUserId, isConnected]);
+  }, [conversations, contacts, currentUserId, onlineSet]);
 
   const messages: (Message & { isPending?: boolean })[] = useMemo(() => {
     const api = apiMessages.map((m: { id: string; sender: { id: string; displayName: string }; content: string; createdAt: string }) => ({
@@ -130,6 +150,7 @@ const ChatPage: React.FC = () => {
       senderName: m.sender.id === currentUserId ? 'Me' : m.sender.displayName,
       text: m.content,
       time: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      createdAt: m.createdAt,
       isPending: false,
     }));
     const pending = (activeChatId ? pendingForConv(activeChatId) : []).map((q) => ({
@@ -138,6 +159,7 @@ const ChatPage: React.FC = () => {
       senderName: 'Me',
       text: q.content,
       time: '',
+      createdAt: new Date().toISOString(),
       isPending: true,
     }));
     return [...api, ...pending];
@@ -149,6 +171,18 @@ const ChatPage: React.FC = () => {
     }
   }, [conversations, pendingNewChat]);
 
+  // Typing text for active chat
+  const activeTypingText = useMemo(() => {
+    if (!activeChatId) return undefined;
+    const users = typingUsers[activeChatId];
+    if (!users || users.length === 0) return undefined;
+    // Don't show own typing
+    const others = users.filter((u) => u.userId !== currentUserId);
+    if (others.length === 0) return undefined;
+    if (others.length === 1) return `${others[0].email.split('@')[0]} is typing...`;
+    return `${others.length} people are typing...`;
+  }, [typingUsers, activeChatId, currentUserId]);
+
   const activeChat: Chat | null = useMemo(() => {
     if (pendingNewChat) {
       return {
@@ -156,17 +190,18 @@ const ChatPage: React.FC = () => {
         name: pendingNewChat.name,
         role: 'Contact',
         category: 'Leads',
-        status: isConnected ? 'Active Now' : 'Offline',
+        status: 'Offline',
         avatar: avatarUrl(pendingNewChat.name),
         lastMessage: 'No messages yet',
         time: '',
         messages,
+        typingText: activeTypingText,
       };
     }
     const base = chats.find((c) => c.id === activeChatId);
     if (!base) return null;
-    return { ...base, messages };
-  }, [chats, activeChatId, messages, pendingNewChat, isConnected]);
+    return { ...base, messages, typingText: activeTypingText };
+  }, [chats, activeChatId, messages, pendingNewChat, activeTypingText]);
 
   const filteredChats = useMemo(
     () =>
@@ -207,6 +242,7 @@ const ChatPage: React.FC = () => {
       let finalText = text;
       if (file) finalText = text ? `${text}\n📎 ${file.name}` : `📎 ${file.name}`;
       if (!finalText.trim() || !activeChatId) return;
+      sendTypingStop();
       const sent = trySend(activeChatId, finalText);
       if (sent) {
         qc.invalidateQueries({ queryKey: chatQueryKeys.messages(activeChatId) });
@@ -215,7 +251,7 @@ const ChatPage: React.FC = () => {
         useChatToastStore.getState().showInfo('Message saved. Will send when back online.');
       }
     },
-    [trySend, activeChatId, qc]
+    [trySend, activeChatId, qc, sendTypingStop]
   );
 
   const handleStartNewChat = useCallback(
@@ -243,6 +279,10 @@ const ChatPage: React.FC = () => {
     },
     [createConv, qc]
   );
+
+  const handleTyping = useCallback(() => {
+    sendTyping();
+  }, [sendTyping]);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -289,7 +329,7 @@ const ChatPage: React.FC = () => {
               pendingCount={pendingCount}
             />
             <MessageList activeChat={activeChat} messagesEndRef={messagesEndRef} />
-            <ChatInput onSendMessage={handleSendMessage} />
+            <ChatInput onSendMessage={handleSendMessage} onTyping={handleTyping} />
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center text-gray-400">
@@ -307,7 +347,7 @@ const ChatPage: React.FC = () => {
                 onClick={() => setShowNewChatModal(false)}
                 className="text-gray-500 hover:text-gray-700"
               >
-                ×
+                x
               </button>
             </div>
             <div className="overflow-y-auto flex-1 p-4">

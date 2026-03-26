@@ -4,6 +4,7 @@ import { Smile, Paperclip, Send, Mic, Trash2 } from 'lucide-react';
 
 interface ChatInputProps {
     onSendMessage: (text: string, file: File | null) => void;
+    onTyping?: () => void;
 }
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -14,7 +15,7 @@ const ALLOWED_FILE_TYPES = [
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 ];
 
-const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
+const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, onTyping }) => {
     const [inputText, setInputText] = useState('');
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -143,7 +144,10 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage }) => {
                     ref={textareaRef}
                     rows={1}
                     value={inputText}
-                    onChange={(e) => setInputText(e.target.value)}
+                    onChange={(e) => {
+                        setInputText(e.target.value);
+                        onTyping?.();
+                    }}
                     onKeyDown={handleKeyDown}
                     placeholder="Write messages..."
                     className="flex-1 bg-transparent border-none focus:outline-none text-xs text-gray-800 placeholder-gray-400 py-2 resize-none max-h-[120px] custom-scrollbar"
