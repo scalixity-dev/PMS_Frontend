@@ -697,6 +697,44 @@ class AuthService {
       throw new Error(errorMessage);
     }
   }
+  /**
+   * Verify a mobile redirect token for auto-login.
+   * Called when the frontend detects ?token= in the URL.
+   * The backend sets the auth cookie on success.
+   */
+  async verifyMobileToken(token: string): Promise<{
+    user: {
+      id: string;
+      email: string;
+      fullName: string;
+      role: string;
+      isEmailVerified: boolean;
+      isActive: boolean;
+    };
+    message: string;
+  }> {
+    const response = await fetch(API_ENDPOINTS.AUTH.VERIFY_MOBILE_TOKEN, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ token }),
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Auto-login failed';
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorMessage;
+      } catch {
+        errorMessage = `Auto-login failed: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  }
 }
 
 export const authService = new AuthService();

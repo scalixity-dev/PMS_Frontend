@@ -29,6 +29,8 @@ import ServiceDashboardNotificationSettings from './pages/ServiceDashboard/pages
 import OtpPage from './pages/basewebsite/auth/otp';
 import OAuthCallbackPage from './pages/basewebsite/auth/otp'; // Note: This might have been a mistake in the original or I misread, checking...
 import OAuthCompletePage from './pages/basewebsite/auth/signUp/oauth-complete';
+import MobileAutoLogin from './pages/basewebsite/auth/mobile-auto-login/MobileAutoLogin';
+import AutoLoginProvider from './components/AutoLoginProvider';
 import { TenantOnboardingFlow } from './pages/basewebsite/auth/signUp/sections/TenantOnboardingFlow';
 import TeamPage from './pages/basewebsite/features/team/index';
 import LandlordUseCasesPage from './pages/basewebsite/usecases/landlord';
@@ -212,6 +214,7 @@ const App: React.FC = () => {
     <>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
+          <AutoLoginProvider>
           <AIChatButton />
           <Routes>
             {/* Forgot password route removed; use basewebsite auth flows instead */}
@@ -265,6 +268,7 @@ const App: React.FC = () => {
               <Route path="/signup/tenant-onboarding-flow" element={<TenantOnboardingFlow />} />
               <Route path="/otp" element={<OtpPage />} />
               <Route path="/auth/callback" element={<OAuthCallbackPage />} />
+              <Route path="/auth/mobile-login" element={<MobileAutoLogin />} />
 
 
 
@@ -860,6 +864,7 @@ const App: React.FC = () => {
             {/* Catch-all route */}
             <Route path="*" element={<HomePage />} />
           </Routes>
+          </AutoLoginProvider>
         </BrowserRouter>
         <ChatToast />
         <TanStackDevtools />
