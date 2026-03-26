@@ -22,6 +22,7 @@ export const API_ENDPOINTS = {
     FORGOT_PASSWORD: `${API_BASE_URL}/auth/forgot-password`,
     RESET_PASSWORD: `${API_BASE_URL}/auth/reset-password`,
     UPDATE_PROFILE: `${API_BASE_URL}/auth/profile`,
+    VERIFY_MOBILE_TOKEN: `${API_BASE_URL}/auth/verify-mobile-token`,
     GOOGLE: `${API_BASE_URL}/auth/google`,
     FACEBOOK: `${API_BASE_URL}/auth/facebook`,
     APPLE: `${API_BASE_URL}/auth/apple`,
