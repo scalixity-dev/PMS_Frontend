@@ -1,4 +1,4 @@
-import { Search, Home, User } from 'lucide-react';
+import { Search, Home, User, MessageCirclePlus } from 'lucide-react';
 import type { Chat } from '../types';
 
 interface ChatSidebarProps {
@@ -9,6 +9,7 @@ interface ChatSidebarProps {
     onSelectChat: (chat: Chat) => void;
     activeTab: 'All' | 'MR' | 'PM';
     onTabChange: (tab: 'All' | 'MR' | 'PM') => void;
+    onNewChat?: () => void;
 }
 
 const ChatSidebar = ({
@@ -19,6 +20,7 @@ const ChatSidebar = ({
     onSelectChat,
     activeTab,
     onTabChange,
+    onNewChat,
 }: ChatSidebarProps) => {
 
     const formatTime = (time: string) => {
@@ -91,7 +93,8 @@ const ChatSidebar = ({
 
             {/* Search Bar */}
             <div className={`px-4 py-4 border-b border-gray-200`}>
-                <div className="relative">
+                <div className="flex items-center gap-2">
+                <div className="relative flex-1">
                     <input
                         type="text"
                         placeholder={
@@ -104,6 +107,16 @@ const ChatSidebar = ({
                         className={`w-full pl-3 pr-10 py-2 rounded-lg text-base md:text-sm focus:outline-none transition-all bg-white border border-gray-200 focus:ring-2 focus:ring-[#3A6D6C] focus:border-transparent`}
                     />
                     <Search className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400`} />
+                </div>
+                {onNewChat && (
+                    <button
+                        onClick={onNewChat}
+                        className="p-2 rounded-lg bg-[#3A6D6C] text-white hover:bg-[#2F5952] transition-colors flex-shrink-0"
+                        title="New conversation"
+                    >
+                        <MessageCirclePlus className="w-4 h-4" />
+                    </button>
+                )}
                 </div>
             </div>
 

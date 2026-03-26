@@ -1,21 +1,15 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, Printer } from 'lucide-react';
 import type { ServiceRequest } from '@/pages/userdashboard/utils/types';
+import type { Message } from '../types';
 import ChatInput from './ChatInput';
 import MessageBubble from './MessageBubble';
-import { useServiceMessagesStore } from '../store/messagesStore';
 
 const MaintenanceRequestView = ({ request, onBack }: { request: ServiceRequest; onBack?: () => void }) => {
-    const { chats, addChat, sendMessage } = useServiceMessagesStore();
-
-    const chatId = request.requestId.toString();
-    const chat = chats.find((c) => c.id === chatId);
-    const messages = chat?.messages || [];
+    const [messages, setMessages] = useState<Message[]>([]);
 
     useEffect(() => {
-        if (chat) return;
-
-        const initialMessages = [
+        setMessages([
             {
                 id: '1',
                 senderId: 'tenant',
@@ -32,30 +26,19 @@ const MaintenanceRequestView = ({ request, onBack }: { request: ServiceRequest; 
                 timestamp: new Date(new Date(request.createdAt).getTime() + 3600000).toISOString(),
                 isRead: true,
             },
-        ];
-
-        addChat({
-            id: chatId,
-            contactName: 'Tenant',
-            contactRole: 'Tenant',
-            contactEmail: '',
-            contactAvatar: `https://api.dicebear.com/7.x/initials/svg?seed=Tenant`,
-            lastMessage: initialMessages[1].text,
-            lastMessageTime: initialMessages[1].timestamp,
-            unreadCount: 0,
-            isOnline: false,
-            messages: initialMessages,
-            propertyAddress: request.property,
-        });
-    }, [chat, chatId, request, addChat]);
+        ]);
+    }, [request]);
 
     const handleSendMessage = (text: string) => {
-        sendMessage(chatId, {
+        const newMessage: Message = {
+            id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
             senderId: 'user',
             senderName: 'You',
-            text: text,
+            text,
+            timestamp: new Date().toISOString(),
             isRead: true,
-        });
+        };
+        setMessages((prev) => [...prev, newMessage]);
     };
 
     return (
