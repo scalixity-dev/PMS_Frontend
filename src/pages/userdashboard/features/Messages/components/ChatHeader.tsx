@@ -9,6 +9,12 @@ interface ChatHeaderProps {
 }
 
 const ChatHeader = ({ chat, onBack, showBackButton = false, pendingCount = 0 }: ChatHeaderProps) => {
+    const statusText = chat.typingText
+        ? chat.typingText
+        : chat.isOnline
+            ? 'Active now'
+            : chat.contactRole;
+
     return (
         <div className="bg-white border-b border-gray-200 px-3 md:px-4 py-2 md:py-2.5">
             <div className="flex items-center justify-between">
@@ -36,8 +42,14 @@ const ChatHeader = ({ chat, onBack, showBackButton = false, pendingCount = 0 }: 
 
                     <div>
                         <h2 className="font-semibold text-gray-800 text-xs md:text-sm">{chat.contactName}</h2>
-                        <p className="text-[10px] md:text-xs text-gray-600">
-                            {chat.isOnline ? 'Active now' : chat.contactRole}
+                        <p className={`text-[10px] md:text-xs ${
+                            chat.typingText
+                                ? 'text-[var(--dashboard-accent)] italic'
+                                : chat.isOnline
+                                    ? 'text-green-500'
+                                    : 'text-gray-600'
+                        }`}>
+                            {statusText}
                         </p>
                     </div>
                 </div>
@@ -62,4 +74,3 @@ const ChatHeader = ({ chat, onBack, showBackButton = false, pendingCount = 0 }: 
 };
 
 export default ChatHeader;
-

@@ -12,6 +12,13 @@ interface ChatHeaderProps {
 }
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({ activeChat, onPrint, onDelete, onBack, pendingCount = 0 }) => {
+    const isOnline = activeChat.isOnline || activeChat.status === 'Active Now';
+    const statusText = activeChat.typingText
+        ? activeChat.typingText
+        : isOnline
+            ? 'Active Now'
+            : activeChat.role;
+
     return (
         <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-gray-100">
             <div className="flex items-center gap-3 sm:gap-4">
@@ -28,7 +35,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ activeChat, onPrint, onDelete, 
                         name={activeChat.name}
                         className="transition-transform group-hover:scale-105 duration-300"
                     />
-                    <div className={`absolute top-0 right-0 w-3.5 h-3.5 border-2 border-white rounded-full ${activeChat.status === 'Active Now' ? 'bg-green-500' : 'bg-gray-300'
+                    <div className={`absolute top-0 right-0 w-3.5 h-3.5 border-2 border-white rounded-full ${isOnline ? 'bg-green-500' : 'bg-gray-300'
                         }`}></div>
                 </div>
                 <div>
@@ -38,9 +45,13 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ activeChat, onPrint, onDelete, 
                     <p className="text-[9px] text-gray-500 uppercase tracking-wider font-semibold">
                         {activeChat.role}
                     </p>
-                    <p className={`text-[10px] font-medium transition-all ${activeChat.status === 'Active Now' ? 'text-[#41C1A6]' : 'text-gray-400'
+                    <p className={`text-[10px] font-medium transition-all ${activeChat.typingText
+                            ? 'text-[#3D7068] italic'
+                            : isOnline
+                                ? 'text-[#41C1A6]'
+                                : 'text-gray-400'
                         }`}>
-                        {activeChat.status}
+                        {statusText}
                     </p>
                 </div>
             </div>

@@ -1,4 +1,4 @@
-import { FileText, Image as ImageIcon, Video } from 'lucide-react';
+import { Check, FileText, Image as ImageIcon, Video } from 'lucide-react';
 import type { Message } from '../types';
 
 interface MessageBubbleProps {
@@ -7,9 +7,10 @@ interface MessageBubbleProps {
     contactName: string;
     contactAvatar: string;
     isPending?: boolean;
+    isRead?: boolean;
 }
 
-const MessageBubble = ({ message, isOwnMessage, contactName, contactAvatar, isPending }: MessageBubbleProps) => {
+const MessageBubble = ({ message, isOwnMessage, contactName, contactAvatar, isPending, isRead }: MessageBubbleProps) => {
     const formatTime = (timestamp: string) => {
         if (!timestamp) return '';
         const date = new Date(timestamp);
@@ -80,10 +81,25 @@ const MessageBubble = ({ message, isOwnMessage, contactName, contactAvatar, isPe
                     )}
                 </div>
 
-                <span className={`text-xs text-gray-500 mt-1 px-1`}>
-                    {isPending ? 'Sending...' : formatTime(message.timestamp)}
-                    {isOwnMessage && !isPending && message.isRead && (
-                        <span className="ml-1 text-[var(--dashboard-accent)]">• Read</span>
+                <span className="text-xs text-gray-500 mt-1 px-1 flex items-center gap-1">
+                    {isPending ? (
+                        'Sending...'
+                    ) : (
+                        <>
+                            {formatTime(message.timestamp)}
+                            {isOwnMessage && (
+                                isRead ? (
+                                    <span className="inline-flex ml-1" title="Read">
+                                        <Check className="w-3 h-3 text-[var(--dashboard-accent)]" />
+                                        <Check className="w-3 h-3 text-[var(--dashboard-accent)] -ml-1.5" />
+                                    </span>
+                                ) : (
+                                    <span className="inline-flex ml-1" title="Sent">
+                                        <Check className="w-3 h-3 text-gray-400" />
+                                    </span>
+                                )
+                            )}
+                        </>
                     )}
                 </span>
             </div>
@@ -92,4 +108,3 @@ const MessageBubble = ({ message, isOwnMessage, contactName, contactAvatar, isPe
 };
 
 export default MessageBubble;
-

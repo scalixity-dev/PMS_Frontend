@@ -277,6 +277,7 @@ export const API_ENDPOINTS = {
     CONVERSATION: (id: string) => `${CHAT_API_BASE_URL}/api/conversations/${id}`,
     MESSAGES: (id: string) => `${CHAT_API_BASE_URL}/api/conversations/${id}/messages`,
     MARK_READ: (id: string) => `${CHAT_API_BASE_URL}/api/conversations/${id}/read`,
+    PRESENCE: `${CHAT_API_BASE_URL}/api/presence`,
   },
   CONTACT_BOOK: {
     GET_ALL: `${API_BASE_URL}/contact-book`,

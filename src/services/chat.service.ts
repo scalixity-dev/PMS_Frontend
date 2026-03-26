@@ -155,3 +155,12 @@ export async function markAsRead(conversationId: string, token?: string): Promis
   });
   if (!res.ok) throw new Error('Failed to mark as read');
 }
+
+export async function getOnlineUsers(userIds: string[], token?: string): Promise<string[]> {
+  if (userIds.length === 0) return [];
+  const url = `${API_ENDPOINTS.CHAT.PRESENCE}?userIds=${userIds.join(',')}`;
+  const res = await chatFetch(url, { token });
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.online ?? [];
+}

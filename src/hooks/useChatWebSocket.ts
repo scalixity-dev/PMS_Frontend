@@ -11,6 +11,14 @@ const RECONNECT_MIN_INTERVAL_MS = 2000;
 const RECONNECT_MAX_MS = 30000;
 const RECONNECT_ATTEMPTS_MAX = 10;
 const TOKEN_REFRESH_INTERVAL_MS = 3.5 * 60 * 1000;
+const TYPING_THROTTLE_MS = 2000;
+const TYPING_STOP_DELAY_MS = 3000;
+const TYPING_TIMEOUT_MS = 5000;
+
+export interface TypingUser {
+  userId: string;
+  email: string;
+}
 
 export function useChatToken(enabled = true) {
   const qc = useQueryClient();
@@ -46,6 +54,55 @@ export function useChatWebSocket(
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const queryClient = useQueryClient();
   const [isConnected, setIsConnected] = useState(false);
+  const [typingUsers, setTypingUsers] = useState<Record<string, TypingUser[]>>({});
+
+  // Typing indicator timers
+  const typingTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const lastTypingSentRef = useRef<number>(0);
+  const typingStopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear typing user after timeout
+  const removeTypingUser = useCallback((convId: string, userId: string) => {
+    const timerKey = `${convId}:${userId}`;
+    const timer = typingTimersRef.current.get(timerKey);
+    if (timer) {
+      clearTimeout(timer);
+      typingTimersRef.current.delete(timerKey);
+    }
+    setTypingUsers((prev) => {
+      const current = prev[convId];
+      if (!current) return prev;
+      const filtered = current.filter((u) => u.userId !== userId);
+      if (filtered.length === 0) {
+        const { [convId]: _, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [convId]: filtered };
+    });
+  }, []);
+
+  const addTypingUser = useCallback(
+    (convId: string, user: TypingUser) => {
+      const timerKey = `${convId}:${user.userId}`;
+
+      // Clear existing timer for this user
+      const existing = typingTimersRef.current.get(timerKey);
+      if (existing) clearTimeout(existing);
+
+      // Auto-remove after timeout
+      typingTimersRef.current.set(
+        timerKey,
+        setTimeout(() => removeTypingUser(convId, user.userId), TYPING_TIMEOUT_MS)
+      );
+
+      setTypingUsers((prev) => {
+        const current = prev[convId] ?? [];
+        if (current.some((u) => u.userId === user.userId)) return prev;
+        return { ...prev, [convId]: [...current, user] };
+      });
+    },
+    [removeTypingUser]
+  );
 
   const connect = useCallback(() => {
     const t = tokenRef.current;
@@ -107,6 +164,7 @@ export function useChatWebSocket(
     };
   }, [token, connect]);
 
+  // Join/leave conversation
   useEffect(() => {
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN || !conversationId) return;
     wsRef.current.send(
@@ -121,20 +179,54 @@ export function useChatWebSocket(
     };
   }, [conversationId, isConnected]);
 
+  // Handle all incoming WebSocket messages
   useEffect(() => {
     const ws = wsRef.current;
     if (!ws) return;
     const handler = (ev: MessageEvent) => {
       try {
         const msg = JSON.parse(ev.data as string);
-        if (msg.type === 'new_message' && msg.data && onNewMessage) {
-          onNewMessage(msg.data);
+        switch (msg.type) {
+          case 'new_message':
+            if (msg.data && onNewMessage) {
+              onNewMessage(msg.data);
+            }
+            break;
+          case 'user_typing':
+            if (msg.data) {
+              addTypingUser(msg.data.conversationId, {
+                userId: msg.data.userId,
+                email: msg.data.email,
+              });
+            }
+            break;
+          case 'user_typing_stop':
+            if (msg.data) {
+              removeTypingUser(msg.data.conversationId, msg.data.userId);
+            }
+            break;
+          case 'messages_read':
+            if (msg.data) {
+              queryClient.invalidateQueries({ queryKey: ['chat', 'conversations'] });
+              queryClient.invalidateQueries({
+                queryKey: ['chat', 'messages', msg.data.conversationId],
+              });
+            }
+            break;
+          case 'error':
+            if (msg.error) {
+              console.warn('[WS] Server error:', msg.error);
+            }
+            break;
+          // connected, joined, left are acknowledgements - no action needed
         }
-      } catch {}
+      } catch {
+        // ignore parse errors
+      }
     };
     ws.addEventListener('message', handler);
     return () => ws.removeEventListener('message', handler);
-  }, [onNewMessage]);
+  }, [onNewMessage, addTypingUser, removeTypingUser, queryClient]);
 
   const sendMessage = useCallback((content: string, targetConvId?: string) => {
     const convId = targetConvId ?? conversationId;
@@ -151,7 +243,51 @@ export function useChatWebSocket(
     return true;
   }, [conversationId]);
 
-  return { sendMessage, isConnected };
+  // Send typing indicator (throttled)
+  const sendTyping = useCallback((targetConvId?: string) => {
+    const convId = targetConvId ?? conversationId;
+    if (!convId || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+
+    const now = Date.now();
+    if (now - lastTypingSentRef.current < TYPING_THROTTLE_MS) return;
+    lastTypingSentRef.current = now;
+
+    wsRef.current.send(
+      JSON.stringify({ type: 'typing', conversationId: convId, timestamp: now })
+    );
+
+    // Auto send typing_stop after delay
+    if (typingStopTimerRef.current) clearTimeout(typingStopTimerRef.current);
+    typingStopTimerRef.current = setTimeout(() => {
+      sendTypingStop(convId);
+    }, TYPING_STOP_DELAY_MS);
+  }, [conversationId]);
+
+  const sendTypingStop = useCallback((targetConvId?: string) => {
+    const convId = targetConvId ?? conversationId;
+    if (!convId || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+
+    if (typingStopTimerRef.current) {
+      clearTimeout(typingStopTimerRef.current);
+      typingStopTimerRef.current = null;
+    }
+    lastTypingSentRef.current = 0;
+
+    wsRef.current.send(
+      JSON.stringify({ type: 'typing_stop', conversationId: convId, timestamp: Date.now() })
+    );
+  }, [conversationId]);
+
+  // Cleanup typing timers on unmount
+  useEffect(() => {
+    return () => {
+      typingTimersRef.current.forEach((timer) => clearTimeout(timer));
+      typingTimersRef.current.clear();
+      if (typingStopTimerRef.current) clearTimeout(typingStopTimerRef.current);
+    };
+  }, []);
+
+  return { sendMessage, sendTyping, sendTypingStop, isConnected, typingUsers };
 }
 
 async function getChatTokenForWs(): Promise<string> {

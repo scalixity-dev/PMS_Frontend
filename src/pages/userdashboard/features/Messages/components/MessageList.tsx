@@ -18,6 +18,18 @@ const MessageList = ({ chat, currentUserId }: MessageListProps) => {
         scrollToBottom();
     }, [chat.messages]);
 
+    const otherLastReadAt = chat.otherLastReadAt;
+
+    const isMessageRead = (msgTimestamp: string, senderId: string): boolean => {
+        if (senderId === currentUserId) return false; // not own message
+        return false;
+    };
+
+    const isOwnMessageRead = (msgTimestamp: string): boolean => {
+        if (!otherLastReadAt || !msgTimestamp) return false;
+        return new Date(msgTimestamp) <= new Date(otherLastReadAt);
+    };
+
     return (
         <div className="flex-1 overflow-y-auto px-3 md:px-4 py-2 md:py-3 bg-gray-50">
             {/* Welcome Section */}
@@ -41,16 +53,44 @@ const MessageList = ({ chat, currentUserId }: MessageListProps) => {
 
             {/* Messages */}
             <div className="space-y-1">
-                {chat.messages.map((message) => (
-                    <MessageBubble
-                        key={message.id}
-                        message={message}
-                        isOwnMessage={message.senderId === currentUserId}
-                        contactName={chat.contactName}
-                        contactAvatar={chat.contactAvatar}
-                        isPending={Boolean((message as { isPending?: boolean }).isPending)}
-                    />
-                ))}
+                {chat.messages.map((message) => {
+                    const isOwn = message.senderId === currentUserId;
+                    return (
+                        <MessageBubble
+                            key={message.id}
+                            message={message}
+                            isOwnMessage={isOwn}
+                            contactName={chat.contactName}
+                            contactAvatar={chat.contactAvatar}
+                            isPending={Boolean(message.isPending)}
+                            isRead={isOwn ? isOwnMessageRead(message.timestamp) : false}
+                        />
+                    );
+                })}
+
+                {/* Typing indicator */}
+                {chat.typingText && (
+                    <div className="flex gap-3 mb-4">
+                        <img
+                            src={chat.contactAvatar}
+                            alt={chat.contactName}
+                            className="w-8 h-8 rounded-full object-cover flex-shrink-0 shadow-sm"
+                        />
+                        <div className="flex flex-col items-start max-w-[70%]">
+                            <div className="rounded-2xl px-4 py-2.5 bg-gray-100 rounded-bl-sm">
+                                <div className="flex items-center gap-1.5">
+                                    <div className="flex gap-1">
+                                        <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                        <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                        <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                                    </div>
+                                </div>
+                            </div>
+                            <span className="text-[10px] text-gray-500 mt-0.5 px-1 italic">{chat.typingText}</span>
+                        </div>
+                    </div>
+                )}
+
                 <div ref={messagesEndRef} />
             </div>
         </div>
@@ -58,4 +98,3 @@ const MessageList = ({ chat, currentUserId }: MessageListProps) => {
 };
 
 export default MessageList;
-

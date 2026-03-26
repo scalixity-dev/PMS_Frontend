@@ -4,6 +4,7 @@ import {
   createConversation,
   getMessages,
   markAsRead,
+  getOnlineUsers,
 } from '../services/chat.service';
 import { getContacts } from '../services/contact.service';
 import { useChatToastStore } from '../store/chatToastStore';
@@ -13,6 +14,7 @@ export const chatQueryKeys = {
   conversations: () => [...chatQueryKeys.all, 'conversations'] as const,
   messages: (convId: string) => [...chatQueryKeys.all, 'messages', convId] as const,
   contacts: () => [...chatQueryKeys.all, 'contacts'] as const,
+  presence: (userIds: string[]) => [...chatQueryKeys.all, 'presence', ...userIds.sort()] as const,
 };
 
 export function useConversations(enabled = true) {
@@ -47,7 +49,7 @@ export function useCreateConversation() {
 export function useMessages(conversationId: string | null, enabled = true) {
   return useQuery({
     queryKey: chatQueryKeys.messages(conversationId ?? ''),
-    queryFn: () => getMessages(conversationId!),
+    queryFn: () => getMessages(conversationId!, 100),
     enabled: enabled && !!conversationId,
     staleTime: 10 * 1000,
   });
@@ -70,5 +72,15 @@ export function useContacts(enabled = true) {
     queryFn: getContacts,
     enabled,
     staleTime: 60 * 1000,
+  });
+}
+
+export function useOnlineUsers(userIds: string[], enabled = true) {
+  return useQuery({
+    queryKey: chatQueryKeys.presence(userIds),
+    queryFn: () => getOnlineUsers(userIds),
+    enabled: enabled && userIds.length > 0,
+    staleTime: 15 * 1000,
+    refetchInterval: 30 * 1000,
   });
 }
