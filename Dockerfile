@@ -9,7 +9,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 
 # Install dependencies (production + dev for build)
-RUN npm ci
+RUN npm cache clean --force && npm ci
 
 # Copy source and config
 COPY . .
