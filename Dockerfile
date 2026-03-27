@@ -5,16 +5,19 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
-COPY package.json package-lock.json ./
+# Enable pnpm via corepack
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Install dependencies (production + dev for build)
-RUN npm cache clean --force && npm ci
+# Copy package files (pnpm)
+COPY package.json pnpm-lock.yaml ./
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
 
 # Copy source and config
 COPY . .
 
-# Build arguments for Vite env vars (passed at build time)
+# Build arguments for Vite env vars
 ARG VITE_API_BASE_URL
 ARG VITE_CHAT_API_BASE_URL
 ARG VITE_CHAT_WS_URL
@@ -30,7 +33,8 @@ ENV VITE_N8N_WEBHOOK_URL=$VITE_N8N_WEBHOOK_URL
 ENV VITE_N8N_RAG_CHAT_URL=$VITE_N8N_RAG_CHAT_URL
 
 # Build the app
-RUN npm run build
+RUN pnpm build
+
 
 # ============================================
 # Stage 2: Serve (minimal runtime)
@@ -39,8 +43,11 @@ FROM node:20-alpine AS runner
 
 WORKDIR /app
 
-# Install serve globally (lightweight static file server with SPA support)
-RUN npm install -g serve
+# Enable pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# Install serve globally
+RUN pnpm add serve
 
 # Copy built assets from builder
 COPY --from=builder /app/dist ./dist
@@ -48,5 +55,5 @@ COPY --from=builder /app/dist ./dist
 # Expose port
 EXPOSE 5741
 
-# Serve with SPA mode (-s) for client-side routing, listen on all interfaces
+# Start server
 CMD ["serve", "-s", "dist", "-l", "5741"]
