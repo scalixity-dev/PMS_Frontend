@@ -77,32 +77,47 @@ ENVEOF
 fi
 
 # -----------------------------------------------------------------------------
-# 4. Fetch latest from origin/main
+# 4. Load .env into shell environment
+# -----------------------------------------------------------------------------
+echo ""
+echo ">>> Loading .env..."
+set -a
+# shellcheck disable=SC1091
+source .env
+set +a
+echo ">>> Environment loaded."
+
+# -----------------------------------------------------------------------------
+# 5. Fetch latest from origin/main
 # -----------------------------------------------------------------------------
 if [ -d .git ]; then
     echo ""
     echo ">>> Fetching latest changes from origin/main..."
-    git fetch origin main 2>/dev/null || git fetch origin 2>/dev/null || true
-    git pull origin main 2>/dev/null || git pull origin 2>/dev/null || true
-    echo ">>> Repository is up to date."
+    if git diff --quiet && git diff --cached --quiet; then
+        git fetch origin main 2>/dev/null || git fetch origin 2>/dev/null || true
+        git pull origin main 2>/dev/null || git pull origin 2>/dev/null || true
+        echo ">>> Repository is up to date."
+    else
+        echo ">>> Local changes detected — skipping pull to avoid overwriting them."
+    fi
 else
     echo ">>> Not a git repo, skipping pull."
 fi
 
 # -----------------------------------------------------------------------------
-# 5. Build and run
+# 6. Build and run
 # -----------------------------------------------------------------------------
 echo ""
 echo ">>> Building Docker image..."
-$COMPOSE_CMD build --no-cache
+$COMPOSE_CMD --env-file .env build --no-cache
 
 echo ""
 echo ">>> Stopping any existing container..."
-$COMPOSE_CMD down 2>/dev/null || true
+$COMPOSE_CMD --env-file .env down 2>/dev/null || true
 
 echo ""
 echo ">>> Starting PMS Frontend..."
-$COMPOSE_CMD up -d
+$COMPOSE_CMD --env-file .env up -d
 
 echo ""
 echo "=========================================="
