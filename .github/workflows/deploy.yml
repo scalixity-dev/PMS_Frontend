@@ -1,0 +1,118 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches: [CICD]
+  pull_request:
+    branches: [main]
+    types: [closed]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to deploy"
+        required: true
+        default: "main"
+
+concurrency:
+  group: deploy-frontend
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy Frontend (Zero Downtime)
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.merged == true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch || github.sha }}
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script_stop: false
+          script: |
+            set -e
+
+            DEPLOY_DIR="/home/ubuntu/smarttenantai/PMS_Frontend"
+            BRANCH="${{ github.event.inputs.branch || 'main' }}"
+            NEW_CONTAINER="pms-frontend-blue"
+            OLD_CONTAINER="pms-frontend"
+            IMAGE_TAG="pms-frontend:$(date +%Y%m%d%H%M%S)"
+
+            echo "==> Pulling latest code from branch: $BRANCH"
+            cd "$DEPLOY_DIR"
+            git fetch origin
+            git checkout "$BRANCH"
+            git pull origin "$BRANCH"
+
+            echo "==> Building new Docker image via docker compose: $IMAGE_TAG"
+            docker compose build pms-frontend
+            # Tag the image built by compose so blue-green swap can reference it
+            docker tag pms_frontend-pms-frontend:latest "$IMAGE_TAG"
+
+            docker rm -f "$NEW_CONTAINER" 2>/dev/null || true
+
+            echo "==> Starting new container on probe port for health check"
+            docker run -d \
+              --name "$NEW_CONTAINER" \
+              --env-file .env \
+              -p 5740:5741 \
+              --restart unless-stopped \
+              "$IMAGE_TAG"
+
+            echo "==> Waiting for new container to become healthy (max 90s)"
+            HEALTHY=false
+            for i in $(seq 1 18); do
+              sleep 5
+              STATUS=$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "$NEW_CONTAINER" 2>/dev/null || echo "none")
+              echo "  Attempt $i/18 — health: $STATUS"
+              if [ "$STATUS" = "healthy" ]; then
+                HEALTHY=true
+                break
+              fi
+              # Fallback HTTP probe if no HEALTHCHECK in Dockerfile
+              if [ "$STATUS" = "none" ] || [ "$STATUS" = "starting" ]; then
+                HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5740/ 2>/dev/null || echo "000")
+                echo "  HTTP probe: $HTTP_CODE"
+                if [ "$HTTP_CODE" = "200" ]; then
+                  HEALTHY=true
+                  break
+                fi
+              fi
+            done
+
+            if [ "$HEALTHY" = "false" ]; then
+              echo "==> HEALTH CHECK FAILED — rolling back"
+              docker rm -f "$NEW_CONTAINER" || true
+              docker rmi "$IMAGE_TAG" || true
+              echo "==> Old container '$OLD_CONTAINER' is still running. Rollback complete."
+              exit 1
+            fi
+
+            echo "==> New container is healthy. Swapping to production port."
+            docker rm -f "$OLD_CONTAINER" || true
+            docker rm -f "$NEW_CONTAINER"
+
+            docker run -d \
+              --name "$OLD_CONTAINER" \
+              --env-file .env \
+              -p 5741:5741 \
+              --restart unless-stopped \
+              --label "deploy.image=$IMAGE_TAG" \
+              "$IMAGE_TAG"
+
+            echo "==> Pruning old images (keep last 3)"
+            docker images "pms-frontend" --format "{{.Tag}} {{.ID}}" \
+              | sort -r | tail -n +4 | awk '{print $2}' \
+              | xargs -r docker rmi || true
+
+            echo "==> Deployment successful. Container: $OLD_CONTAINER"
