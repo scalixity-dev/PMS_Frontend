@@ -63,36 +63,40 @@ jobs:
             docker rm -f "$NEW_CONTAINER" 2>/dev/null || true
 
             echo "==> Starting new container on probe port for health check"
+            # .env is optional for frontend (build-time vars baked in at build)
+            ENV_FLAG=""
+            [ -f .env ] && ENV_FLAG="--env-file .env"
             docker run -d \
               --name "$NEW_CONTAINER" \
-              --env-file .env \
+              $ENV_FLAG \
               -p 5740:5741 \
-              --restart unless-stopped \
               "$IMAGE_TAG"
 
             echo "==> Container status after start:"
-            sleep 5
+            sleep 8
             docker inspect --format='Status={{.State.Status}} ExitCode={{.State.ExitCode}}' "$NEW_CONTAINER" || true
             docker logs "$NEW_CONTAINER" 2>&1 | tail -20 || true
 
             echo "==> Waiting for new container to become healthy (max 90s)"
-            sleep 5
             HEALTHY=false
             for i in $(seq 1 18); do
+              # Check container is still running
+              RUNNING=$(docker inspect --format='{{.State.Running}}' "$NEW_CONTAINER" 2>/dev/null || echo "false")
+              if [ "$RUNNING" = "false" ]; then
+                echo "  Container exited! Logs:"
+                docker logs "$NEW_CONTAINER" 2>&1 | tail -10 || true
+                break
+              fi
               STATUS=$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "$NEW_CONTAINER" 2>/dev/null || echo "none")
-              echo "  Attempt $i/18 — health: $STATUS"
+              echo "  Attempt $i/18 — running=$RUNNING health=$STATUS"
               if [ "$STATUS" = "healthy" ]; then
                 HEALTHY=true
                 break
               fi
-              # Fallback HTTP probe if no HEALTHCHECK in Dockerfile
-              if [ "$STATUS" = "none" ] || [ "$STATUS" = "starting" ]; then
-                HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5740/ 2>/dev/null; true)
-                echo "  HTTP probe: $HTTP_CODE"
-                if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "301" ]; then
-                  HEALTHY=true
-                  break
-                fi
+              # Probe from inside the container (avoids host port binding issues)
+              if docker exec "$NEW_CONTAINER" wget -qO- http://localhost:5741/ >/dev/null 2>&1; then
+                HEALTHY=true
+                break
               fi
               sleep 5
             done
