@@ -70,8 +70,13 @@ jobs:
               --restart unless-stopped \
               "$IMAGE_TAG"
 
+            echo "==> Container status after start:"
+            sleep 5
+            docker inspect --format='Status={{.State.Status}} ExitCode={{.State.ExitCode}}' "$NEW_CONTAINER" || true
+            docker logs "$NEW_CONTAINER" 2>&1 | tail -20 || true
+
             echo "==> Waiting for new container to become healthy (max 90s)"
-            sleep 10
+            sleep 5
             HEALTHY=false
             for i in $(seq 1 18); do
               STATUS=$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "$NEW_CONTAINER" 2>/dev/null || echo "none")
