@@ -2,7 +2,7 @@ name: Deploy Frontend
 
 on:
   push:
-    branches: [main]
+    branches: [CICD]
   pull_request:
     branches: [main]
     types: [closed]
@@ -52,6 +52,7 @@ jobs:
             cd "$DEPLOY_DIR"
             git fetch origin
             git checkout "$BRANCH"
+            git reset --hard origin/"$BRANCH"
             git pull origin "$BRANCH"
 
             echo "==> Building new Docker image via docker compose: $IMAGE_TAG"
