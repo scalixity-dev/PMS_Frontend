@@ -43,7 +43,7 @@ jobs:
             set -e
 
             DEPLOY_DIR="/home/ubuntu/smarttenantai/PMS_Frontend"
-            BRANCH="${{ github.event.inputs.branch || 'main' }}"
+            BRANCH="${{ github.event.inputs.branch || github.ref_name }}"
             NEW_CONTAINER="pms-frontend-blue"
             OLD_CONTAINER="pms-frontend"
             IMAGE_TAG="pms-frontend:$(date +%Y%m%d%H%M%S)"
