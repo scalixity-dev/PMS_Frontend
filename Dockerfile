@@ -47,7 +47,7 @@ WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Install serve globally
-RUN pnpm add serve
+RUN npm install -g serve
 
 # Copy built assets from builder
 COPY --from=builder /app/dist ./dist
