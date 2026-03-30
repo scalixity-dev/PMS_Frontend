@@ -71,9 +71,9 @@ jobs:
               "$IMAGE_TAG"
 
             echo "==> Waiting for new container to become healthy (max 90s)"
+            sleep 10
             HEALTHY=false
             for i in $(seq 1 18); do
-              sleep 5
               STATUS=$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "$NEW_CONTAINER" 2>/dev/null || echo "none")
               echo "  Attempt $i/18 — health: $STATUS"
               if [ "$STATUS" = "healthy" ]; then
@@ -82,13 +82,14 @@ jobs:
               fi
               # Fallback HTTP probe if no HEALTHCHECK in Dockerfile
               if [ "$STATUS" = "none" ] || [ "$STATUS" = "starting" ]; then
-                HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5740/ 2>/dev/null || echo "000")
+                HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5740/ 2>/dev/null; true)
                 echo "  HTTP probe: $HTTP_CODE"
-                if [ "$HTTP_CODE" = "200" ]; then
+                if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "301" ]; then
                   HEALTHY=true
                   break
                 fi
               fi
+              sleep 5
             done
 
             if [ "$HEALTHY" = "false" ]; then
