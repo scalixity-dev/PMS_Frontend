@@ -90,7 +90,7 @@ const MyTemplateDetail: React.FC = () => {
         }
 
         const saved = localStorage.getItem('myTemplates');
-        let found = null;
+        let found: { id: number; title: string; subtitle: string; content?: string } | null = null;
         if (saved) {
             const templates = JSON.parse(saved);
             found = templates.find((t: any) => t.id.toString() === id);

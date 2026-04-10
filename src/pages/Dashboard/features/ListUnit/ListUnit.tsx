@@ -21,7 +21,7 @@ import { useGetUnit } from '../../../../hooks/useUnitQueries';
 import { propertyService } from '../../../../services/property.service';
 import { useListUnitStore } from './store/listUnitStore';
 import { useCreatePropertyStore } from './store/createPropertyStore';
-import type { LeaseDuration } from '../../../../services/leasing.service';
+import type { LeaseDuration, BackendLeasing } from '../../../../services/leasing.service';
 
 // Reverse mapping from backend enum to frontend numeric string
 const LEASE_DURATION_REVERSE_MAP: Record<string, string> = {
@@ -227,7 +227,7 @@ const ListUnit: React.FC = () => {
       // For property-level leasing (SINGLE properties or when no unit is selected)
       // First, check if leasing data is already available in propertyData (from backend)
       // This avoids unnecessary API calls when we know leasing doesn't exist
-      let leasing = null;
+      let leasing: BackendLeasing | null = null;
 
       if (propertyData) {
         // Property data is loaded - check if leasing exists

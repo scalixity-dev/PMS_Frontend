@@ -1,5 +1,6 @@
 import { Archive, ChevronLeft, Settings } from 'lucide-react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useGetNotifications, useMarkAllAsRead } from '../../../../hooks/useNotificationQueries';
 
 interface DashboardContext {
     sidebarCollapsed: boolean;
@@ -8,45 +9,32 @@ interface DashboardContext {
 const Notification = () => {
     const navigate = useNavigate();
     const { sidebarCollapsed } = useOutletContext<DashboardContext>() || { sidebarCollapsed: false };
+    const { data: notificationsData, isLoading } = useGetNotifications();
+    const markAllAsRead = useMarkAllAsRead();
 
-    const notifications = [
-        {
-            id: 1,
-            title: "New Maintence Request",
-            description: "You received a new maintenance request #1351147 from Siddak Bagga regarding Appliances / Refrigerator / Temperature / Too cold for property bhbh at Silicon City Rd, Indore Division, MP, 452012, IN. Check it out!",
-            date: "04/04/19",
-            time: "01:44 PM",
-            isNew: true,
-            type: "maintenance"
-        },
-        {
-            id: 2,
-            title: "New Application",
-            description: "You received a new application from Siddak Bagga for property Grand Villa at Gandhi Path Rd, Jaipur, RJ, 302020, IN .",
-            date: "04/04/19",
-            time: "01:44 PM",
-            isNew: true,
-            type: "application"
-        },
-        {
-            id: 3,
-            title: "New Maintence Request",
-            description: "You received a new maintenance request #1351147 from Siddak Bagga regarding Appliances / Refrigerator / Temperature / Too cold for property bhbh at Silicon City Rd, Indore Division, MP, 452012, IN. Check it out!",
-            date: "04/04/19",
-            time: "01:44 PM",
-            isNew: true,
-            type: "maintenance"
-        },
-        {
-            id: 4,
-            title: "New Maintence Request",
-            description: "You received a new maintenance request #1351147 from Siddak Bagga regarding Appliances / Refrigerator / Temperature / Too cold for property bhbh at Silicon City Rd, Indore Division, MP, 452012, IN. Check it out!",
-            date: "04/04/19",
-            time: "01:44 PM",
-            isNew: true,
-            type: "maintenance"
-        }
-    ];
+    const notifications = notificationsData?.data || [];
+
+    const getTypeFromNotificationType = (type: string): string => {
+        const typeMap: Record<string, string> = {
+            'MAINTENANCE': 'maintenance',
+            'APPLICATION': 'application',
+            'PAYMENT': 'payment',
+            'LEASE': 'lease',
+            'GENERAL': 'general',
+        };
+        return typeMap[type] || 'general';
+    };
+
+    const formatDateTime = (dateStr: string) => {
+        const date = new Date(dateStr);
+        const dateOnly = date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' });
+        const timeOnly = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+        return { date: dateOnly, time: timeOnly };
+    };
+
+    const handleMarkAllAsRead = () => {
+        markAllAsRead.mutate();
+    };
 
     const handleNotificationClick = (type: string) => {
         switch (type) {
@@ -101,49 +89,63 @@ const Notification = () => {
                         <span className="font-bold text-sm">What's New</span>
                         <Archive size={16} className="text-gray-800" />
                     </div>
-                    <button className="text-sm font-medium hover:text-white/80 transition-colors w-full sm:w-auto text-center sm:text-right sm:mr-4">
+                    <button
+                        onClick={handleMarkAllAsRead}
+                        disabled={markAllAsRead.isPending}
+                        className="text-sm font-medium hover:text-white/80 transition-colors w-full sm:w-auto text-center sm:text-right sm:mr-4 disabled:opacity-50"
+                    >
                         Mark all as read
                     </button>
                 </div>
 
                 {/* Notifications List */}
-                <div className="space-y-4">
-                    {notifications.map((notification, index) => (
-                        <div
-                            key={index}
-                            onClick={() => handleNotificationClick(notification.type)}
-                            className="group relative bg-white rounded-xl p-4 sm:p-6 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden cursor-pointer active:scale-[0.99]"
-                        >
-                            {/* Teal Left Border */}
-                            <div className="absolute left-0 top-0 bottom-0 w-3 bg-[#3A6D6C] rounded-l-xl"></div>
+                {isLoading ? (
+                    <div className="text-center py-8 text-gray-500">Loading notifications...</div>
+                ) : notifications.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">No notifications</div>
+                ) : (
+                    <div className="space-y-4">
+                        {notifications.map((notification: any) => {
+                            const { date, time } = formatDateTime(notification.createdAt);
+                            const type = getTypeFromNotificationType(notification.type);
+                            return (
+                                <div
+                                    key={notification.id}
+                                    onClick={() => handleNotificationClick(type)}
+                                    className="group relative bg-white rounded-xl p-4 sm:p-6 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden cursor-pointer active:scale-[0.99]"
+                                >
+                                    {/* Teal Left Border */}
+                                    <div className={`absolute left-0 top-0 bottom-0 w-3 ${notification.isRead ? 'bg-gray-300' : 'bg-[#3A6D6C]'} rounded-l-xl`}></div>
 
-                            <div className="flex flex-col sm:flex-row justify-between items-start gap-4 pl-4">
-                                <div className="space-y-2 max-w-4xl w-full">
-                                    <h3 className="text-gray-900 font-bold text-base">
-                                        {notification.title}
-                                    </h3>
-                                    <p className="text-gray-500 text-xs leading-relaxed">
-                                        {notification.description}
-                                    </p>
-                                </div>
-
-                                <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-start w-full sm:w-auto gap-2 flex-shrink-0 border-t sm:border-t-0 border-gray-100 pt-3 sm:pt-0 mt-1 sm:mt-0">
-                                    {notification.isNew && (
-                                        <span className="text-[#3A6D6C] text-xs font-bold animate-pulse order-2 sm:order-1">New</span>
-                                    )}
-                                    <div className="flex flex-col items-start sm:items-end text-right order-1 sm:order-2">
-                                        <div className="text-gray-500 text-sm font-medium">
-                                            {notification.date}
+                                    <div className="flex flex-col sm:flex-row justify-between items-start gap-4 pl-4">
+                                        <div className="space-y-2 max-w-4xl w-full">
+                                            <h3 className="text-gray-900 font-bold text-base">
+                                                {notification.title}
+                                            </h3>
+                                            <p className="text-gray-500 text-xs leading-relaxed">
+                                                {notification.body}
+                                            </p>
                                         </div>
-                                        <div className="text-gray-400 text-xs font-medium">
-                                            {notification.time}
+
+                                        <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-start w-full sm:w-auto gap-2 flex-shrink-0 border-t sm:border-t-0 border-gray-100 pt-3 sm:pt-0 mt-1 sm:mt-0">
+                                            {!notification.isRead && (
+                                                <span className="text-[#3A6D6C] text-xs font-bold animate-pulse order-2 sm:order-1">New</span>
+                                            )}
+                                            <div className="flex flex-col items-start sm:items-end text-right order-1 sm:order-2">
+                                                <div className="text-gray-500 text-sm font-medium">
+                                                    {date}
+                                                </div>
+                                                <div className="text-gray-400 text-xs font-medium">
+                                                    {time}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -1,10 +1,11 @@
 import React from 'react';
-import { Edit2, Trash2 } from 'lucide-react';
+import { Edit2, Trash2, Loader2 } from 'lucide-react';
 import SectionHeader from './SectionHeader';
 import AddInsuranceModal from './AddInsuranceModal';
 import AddLoanModal from './AddLoanModal';
 import AddPurchaseModal from './AddPurchaseModal';
 import { useState } from 'react';
+import { useGetPropertyFinancials } from '../../../../../hooks/usePropertyDetailQueries';
 
 // --- Types ---
 
@@ -69,10 +70,18 @@ const FinancialCard: React.FC<FinancialCardProps> = ({ record, onEdit, onDelete 
     );
 };
 
-const FinancialsTab: React.FC = () => {
+interface FinancialsTabProps {
+    propertyId: string;
+    unitId?: string;
+}
+
+const FinancialsTab: React.FC<FinancialsTabProps> = ({ propertyId, unitId }) => {
     const [isAddInsuranceModalOpen, setIsAddInsuranceModalOpen] = useState(false);
     const [isAddLoanModalOpen, setIsAddLoanModalOpen] = useState(false);
     const [isAddPurchaseModalOpen, setIsAddPurchaseModalOpen] = useState(false);
+
+    // Fetch real financials data
+    const { data: financialsData = {}, isLoading, error } = useGetPropertyFinancials(propertyId, unitId);
 
     // Mock Data
     const [insurances, setInsurances] = useState<FinancialRecord[]>([
@@ -231,25 +240,80 @@ const FinancialsTab: React.FC = () => {
         setPurchases([...purchases, newRecord]);
     };
 
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-[#3A6D6C]" />
+                <span className="ml-3 text-gray-600">Loading financials...</span>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-red-800">Failed to load financials. Please try again.</p>
+            </div>
+        );
+    }
+
+    // Extract real data from API
+    const summary = financialsData.summary || { totalIncome: 0, totalExpenses: 0, noi: 0 };
+    const realInsurances = financialsData.insurances || [];
+    const realLoans = financialsData.loans || [];
+
     return (
         <div className="space-y-8">
+            {/* Financial Summary Section */}
+            <div className="bg-gradient-to-r from-[#82D64D] to-[#7BD747] rounded-[2rem] p-6 md:p-8 text-white shadow-lg">
+                <h3 className="text-xl font-bold mb-6">Financial Summary</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="bg-white/20 rounded-2xl p-4 backdrop-blur">
+                        <p className="text-sm font-medium opacity-90">Total Income</p>
+                        <p className="text-2xl font-bold">₹{summary.totalIncome.toLocaleString('en-IN')}</p>
+                    </div>
+                    <div className="bg-white/20 rounded-2xl p-4 backdrop-blur">
+                        <p className="text-sm font-medium opacity-90">Total Expenses</p>
+                        <p className="text-2xl font-bold">₹{summary.totalExpenses.toLocaleString('en-IN')}</p>
+                    </div>
+                    <div className="bg-white/20 rounded-2xl p-4 backdrop-blur">
+                        <p className="text-sm font-medium opacity-90">Net Operating Income</p>
+                        <p className="text-2xl font-bold">₹{summary.noi.toLocaleString('en-IN')}</p>
+                    </div>
+                </div>
+            </div>
+
             {/* Insurances Section */}
             <div className="bg-[#E9E9E9] shadow-lg rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6">
                 <SectionHeader
                     title="Insurances"
-                    count={insurances.length}
+                    count={realInsurances.length}
                     actionLabel="Add"
                     onAction={() => setIsAddInsuranceModalOpen(true)}
                 />
                 <div>
-                    {insurances.map(record => (
-                        <FinancialCard
-                            key={record.id}
-                            record={record}
-                            onEdit={() => console.log('Edit Insurance', record.id)}
-                            onDelete={() => console.log('Delete Insurance', record.id)}
-                        />
-                    ))}
+                    {realInsurances.length > 0 ? (
+                        realInsurances.map((insurance: any) => (
+                            <div key={insurance.id} className="bg-[#F0F0F6] rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6 mb-4">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h4 className="font-bold text-lg">{insurance.policyName}</h4>
+                                        <p className="text-sm text-gray-600">{insurance.provider}</p>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button className="text-[#3A6D6C] hover:bg-gray-200 p-2 rounded-full"><Edit2 className="w-5 h-5" /></button>
+                                        <button className="text-red-500 hover:bg-gray-200 p-2 rounded-full"><Trash2 className="w-5 h-5" /></button>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3 text-sm">
+                                    {insurance.premium && <div><span className="text-gray-600">Premium:</span> <span className="font-bold">₹{insurance.premium}</span></div>}
+                                    {insurance.coverageType && <div><span className="text-gray-600">Type:</span> <span className="font-bold">{insurance.coverageType}</span></div>}
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <p className="text-gray-500 py-4">No insurances added</p>
+                    )}
                 </div>
             </div>
 
@@ -257,19 +321,35 @@ const FinancialsTab: React.FC = () => {
             <div className="bg-[#E9E9E9] shadow-lg rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6">
                 <SectionHeader
                     title="Loans"
-                    count={loans.length}
+                    count={realLoans.length}
                     actionLabel="Add"
                     onAction={() => setIsAddLoanModalOpen(true)}
                 />
                 <div>
-                    {loans.map(record => (
-                        <FinancialCard
-                            key={record.id}
-                            record={record}
-                            onEdit={() => console.log('Edit Loan', record.id)}
-                            onDelete={() => console.log('Delete Loan', record.id)}
-                        />
-                    ))}
+                    {realLoans.length > 0 ? (
+                        realLoans.map((loan: any) => (
+                            <div key={loan.id} className="bg-[#F0F0F6] rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6 mb-4">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h4 className="font-bold text-lg">{loan.lenderName}</h4>
+                                        <p className="text-sm text-gray-600">{loan.loanType || 'Loan'}</p>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button className="text-[#3A6D6C] hover:bg-gray-200 p-2 rounded-full"><Edit2 className="w-5 h-5" /></button>
+                                        <button className="text-red-500 hover:bg-gray-200 p-2 rounded-full"><Trash2 className="w-5 h-5" /></button>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3 text-sm">
+                                    {loan.principalAmount && <div><span className="text-gray-600">Principal:</span> <span className="font-bold">₹{loan.principalAmount}</span></div>}
+                                    {loan.monthlyPayment && <div><span className="text-gray-600">Monthly:</span> <span className="font-bold">₹{loan.monthlyPayment}</span></div>}
+                                    {loan.interestRate && <div><span className="text-gray-600">Rate:</span> <span className="font-bold">{loan.interestRate}%</span></div>}
+                                    {loan.currentBalance && <div><span className="text-gray-600">Balance:</span> <span className="font-bold">₹{loan.currentBalance}</span></div>}
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <p className="text-gray-500 py-4">No loans added</p>
+                    )}
                 </div>
             </div>
 

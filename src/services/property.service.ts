@@ -752,6 +752,311 @@ class PropertyService {
 
     return response.json();
   }
+
+  /**
+   * Get property specs (paint, doors, flooring, etc)
+   */
+  async getSpecs(propertyId: string, unitId?: string): Promise<any> {
+    const url = unitId
+      ? API_ENDPOINTS.UNIT.GET_SPECS(unitId)
+      : API_ENDPOINTS.PROPERTY.GET_SPECS(propertyId);
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch specs: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Create a property spec
+   */
+  async createSpec(propertyId: string, specData: any): Promise<any> {
+    const response = await fetch(API_ENDPOINTS.PROPERTY.CREATE_SPEC(propertyId), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(specData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to create spec: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Update a property spec
+   */
+  async updateSpec(propertyId: string, specId: string, specData: any): Promise<any> {
+    const response = await fetch(API_ENDPOINTS.PROPERTY.UPDATE_SPEC(propertyId, specId), {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(specData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to update spec: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Delete a property spec
+   */
+  async deleteSpec(propertyId: string, specId: string): Promise<any> {
+    const response = await fetch(API_ENDPOINTS.PROPERTY.DELETE_SPEC(propertyId, specId), {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to delete spec: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get property financials (summary, transactions, insurance, loans)
+   */
+  async getFinancials(propertyId: string, unitId?: string): Promise<any> {
+    const url = unitId
+      ? API_ENDPOINTS.UNIT.GET_FINANCIALS(unitId)
+      : API_ENDPOINTS.PROPERTY.GET_FINANCIALS(propertyId);
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch financials: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Create property insurance
+   */
+  async createInsurance(propertyId: string, insuranceData: any): Promise<any> {
+    const response = await fetch(API_ENDPOINTS.PROPERTY.CREATE_INSURANCE(propertyId), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(insuranceData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to create insurance: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Update property insurance
+   */
+  async updateInsurance(propertyId: string, insuranceId: string, insuranceData: any): Promise<any> {
+    const response = await fetch(API_ENDPOINTS.PROPERTY.UPDATE_INSURANCE(propertyId, insuranceId), {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(insuranceData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to update insurance: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Delete property insurance
+   */
+  async deleteInsurance(propertyId: string, insuranceId: string): Promise<any> {
+    const response = await fetch(API_ENDPOINTS.PROPERTY.DELETE_INSURANCE(propertyId, insuranceId), {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to delete insurance: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Create property loan
+   */
+  async createLoan(propertyId: string, loanData: any): Promise<any> {
+    const response = await fetch(API_ENDPOINTS.PROPERTY.CREATE_LOAN(propertyId), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(loanData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to create loan: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Update property loan
+   */
+  async updateLoan(propertyId: string, loanId: string, loanData: any): Promise<any> {
+    const response = await fetch(API_ENDPOINTS.PROPERTY.UPDATE_LOAN(propertyId, loanId), {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(loanData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to update loan: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Delete property loan
+   */
+  async deleteLoan(propertyId: string, loanId: string): Promise<any> {
+    const response = await fetch(API_ENDPOINTS.PROPERTY.DELETE_LOAN(propertyId, loanId), {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to delete loan: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get property service providers
+   */
+  async getServiceProviders(propertyId: string, unitId?: string): Promise<any> {
+    const url = unitId
+      ? API_ENDPOINTS.UNIT.GET_SERVICE_PROVIDERS(unitId)
+      : API_ENDPOINTS.PROPERTY.GET_SERVICE_PROVIDERS(propertyId);
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch service providers: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Create utility provider
+   */
+  async createUtilityProvider(propertyId: string, providerData: any): Promise<any> {
+    const response = await fetch(API_ENDPOINTS.PROPERTY.CREATE_UTILITY_PROVIDER(propertyId), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(providerData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to create utility provider: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Update utility provider
+   */
+  async updateUtilityProvider(propertyId: string, providerId: string, providerData: any): Promise<any> {
+    const response = await fetch(API_ENDPOINTS.PROPERTY.UPDATE_UTILITY_PROVIDER(propertyId, providerId), {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(providerData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to update utility provider: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Delete utility provider
+   */
+  async deleteUtilityProvider(propertyId: string, providerId: string): Promise<any> {
+    const response = await fetch(API_ENDPOINTS.PROPERTY.DELETE_UTILITY_PROVIDER(propertyId, providerId), {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to delete utility provider: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
 }
 
 export const propertyService = new PropertyService();

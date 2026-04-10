@@ -13,8 +13,9 @@ import MarkAsPaidModal from '../Transactions/components/MarkAsPaidModal';
 import VoidTransactionModal from '../Transactions/components/VoidTransactionModal';
 import EditPaymentModal from './components/EditPaymentModal';
 import RefundPaymentModal from './components/RefundPaymentModal';
+import DeletePaymentModal from '../Transactions/components/DeletePaymentModal';
 import { utils, writeFile } from 'xlsx';
-import { useGetPayments } from '../../../../hooks/useTransactionQueries';
+import { useGetPayments, useDeletePayment } from '../../../../hooks/useTransactionQueries';
 import type { Payment } from '../../../../services/transaction.service';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 
@@ -31,6 +32,12 @@ const Payments: React.FC = () => {
 
     // Fetch payments from backend
     const { data: payments = [], isLoading, error } = useGetPayments();
+
+    // Delete payment mutation
+    const deletePaymentMutation = useDeletePayment();
+
+    // Use transaction store for delete modal state
+    const { setDeleteModalOpen, selectedPayment } = useTransactionStore();
 
     // Helper to convert Payment to PaymentData for modals
     const convertPaymentToPaymentData = (payment: Payment) => ({
@@ -212,6 +219,23 @@ const Payments: React.FC = () => {
                     setDeleteTransactionOpen(false);
                     setSelectedTransactionId(null);
                 }}
+            />
+            <DeletePaymentModal
+                onConfirm={async () => {
+                    if (selectedPayment?.id && selectedPayment?.paymentId) {
+                        try {
+                            await deletePaymentMutation.mutateAsync({
+                                transactionId: selectedPayment.id as string,
+                                paymentId: selectedPayment.paymentId,
+                            });
+                            setDeleteModalOpen(false);
+                            setSelectedPayment(null);
+                        } catch (error) {
+                            console.error('Failed to delete payment:', error);
+                        }
+                    }
+                }}
+                isLoading={deletePaymentMutation.isPending}
             />
             <ApplyDepositsModal
                 onConfirm={(data) => {
@@ -471,8 +495,13 @@ const Payments: React.FC = () => {
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        setDeleteTransactionOpen(true);
-                                                        setSelectedTransactionId(item.id);
+                                                        setSelectedPayment({
+                                                            id: item.id,
+                                                            paymentId: item.id,
+                                                            amount: item.amount,
+                                                            status: item.status,
+                                                        });
+                                                        setDeleteModalOpen(true);
                                                         setMoreMenuOpenId(null);
                                                     }}
                                                     className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
@@ -568,8 +597,13 @@ const Payments: React.FC = () => {
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                setDeleteTransactionOpen(true);
-                                                setSelectedTransactionId(item.id);
+                                                setSelectedPayment({
+                                                    id: item.id,
+                                                    paymentId: item.id,
+                                                    amount: item.amount,
+                                                    status: item.status,
+                                                });
+                                                setDeleteModalOpen(true);
                                                 setMoreMenuOpenId(null);
                                             }}
                                             className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"

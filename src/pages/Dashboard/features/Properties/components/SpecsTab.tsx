@@ -5,7 +5,8 @@ import {
     DoorOpen,
     Edit2,
     Trash2,
-    Grid
+    Grid,
+    Loader2
 } from 'lucide-react';
 import SectionHeader from './SectionHeader';
 import ConfirmationModal from '../../KeysLocks/ConfirmationModal';
@@ -14,6 +15,7 @@ import AssignKeyModal from './AssignKeyModal';
 import AddPaintModal from './AddPaintModal';
 import AddDoorModal from './AddDoorModal';
 import AddFloorModal from './AddFloorModal';
+import { useGetPropertySpecs, useDeletePropertySpec } from '../../../../../hooks/usePropertyDetailQueries';
 
 interface SpecItemProps {
     icon: React.ReactNode;
@@ -61,28 +63,22 @@ const SpecItem: React.FC<SpecItemProps> = ({ icon, title, badges, onEdit, onDele
     );
 };
 
-const SpecsTab: React.FC = () => {
+interface SpecsTabProps {
+    propertyId: string;
+    unitId?: string;
+}
+
+const SpecsTab: React.FC<SpecsTabProps> = ({ propertyId, unitId }) => {
     const navigate = useNavigate();
-    // State for mock data to allow deletion
-    const [keys, setKeys] = useState([
-        { id: 1, name: 'Key 1', keyName: 'xyz', type: 'Main door' },
-        { id: 2, name: 'Key 2', keyName: 'xyz', type: 'Main door' },
-    ]);
 
-    const [paints, setPaints] = useState([
-        { id: 1, name: 'Paint 1', color: 'red', description: 'scjjsc snckns zcsc' },
-        { id: 2, name: 'Paint 2', color: 'red', description: 'scjjsc snckns zcsc' },
-    ]);
+    // Fetch specs from API
+    const { data: specsData = { paints: [], doors: [], flooring: [], keys: [] }, isLoading, error } = useGetPropertySpecs(propertyId, unitId);
+    const deleteSpecMutation = useDeletePropertySpec();
 
-    const [doors, setDoors] = useState([
-        { id: 1, name: 'Door 1', type: 'huh', lockType: '1' },
-        { id: 2, name: 'Door 1', type: 'huh', lockType: '1' },
-    ]);
-
-    const [flooring, setFlooring] = useState([
-        { id: 1, name: 'Flooring 1', type: 'Black', description: 'jsbfbsf sjfbsjff sjbjs' },
-        { id: 2, name: 'Flooring 2', type: 'Black', description: 'jsbfbsf sjfbsjff sjbjs' },
-    ]);
+    const [paints, setPaints] = useState(specsData.paints || []);
+    const [doors, setDoors] = useState(specsData.doors || []);
+    const [flooring, setFlooring] = useState(specsData.flooring || []);
+    const keys = specsData.keys || [];
 
     // Delete Modal State
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -105,22 +101,19 @@ const SpecsTab: React.FC = () => {
         setDeleteModalOpen(true);
     };
 
-    const handleConfirmDelete = () => {
+    const handleConfirmDelete = async () => {
         if (!itemToDelete) return;
 
-        switch (itemToDelete.type) {
-            case 'key':
-                setKeys(keys.filter(item => item.id !== itemToDelete.id));
-                break;
-            case 'paint':
-                setPaints(paints.filter(item => item.id !== itemToDelete.id));
-                break;
-            case 'door':
-                setDoors(doors.filter(item => item.id !== itemToDelete.id));
-                break;
-            case 'flooring':
-                setFlooring(flooring.filter(item => item.id !== itemToDelete.id));
-                break;
+        // For paints, doors, flooring - call API
+        if (itemToDelete.type !== 'key') {
+            try {
+                await deleteSpecMutation.mutateAsync({
+                    propertyId,
+                    specId: String(itemToDelete.id),
+                });
+            } catch (error) {
+                console.error('Failed to delete spec:', error);
+            }
         }
 
         setDeleteModalOpen(false);
@@ -156,6 +149,23 @@ const SpecsTab: React.FC = () => {
         };
         setFlooring([...flooring, newFloor]);
     };
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-[#3A6D6C]" />
+                <span className="ml-3 text-gray-600">Loading specs...</span>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-red-800">Failed to load specs. Please try again.</p>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-8">

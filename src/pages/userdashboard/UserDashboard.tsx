@@ -48,6 +48,7 @@ const UserDashboard = () => {
     // We'll determine this after leases load, but start fetching early for better UX
     const shouldFetchApplications = isAuthenticated === true;
     const { data: backendApplications, isLoading: applicationsLoading } = useGetAllApplications(
+        undefined,
         shouldFetchApplications
     );
 

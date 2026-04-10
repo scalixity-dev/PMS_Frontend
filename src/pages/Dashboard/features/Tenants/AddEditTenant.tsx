@@ -386,7 +386,7 @@ const AddEditTenant = () => {
 
         try {
             // Build forwarding address string from form data
-            const forwardingAddressParts = [];
+            const forwardingAddressParts: string[] = [];
             if (formData.forwardingAddress.address) forwardingAddressParts.push(formData.forwardingAddress.address);
             if (formData.forwardingAddress.unit) forwardingAddressParts.push(`Unit ${formData.forwardingAddress.unit}`);
             if (formData.forwardingAddress.city) forwardingAddressParts.push(formData.forwardingAddress.city);

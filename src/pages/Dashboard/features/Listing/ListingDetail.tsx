@@ -996,6 +996,8 @@ const ListingDetail: React.FC = () => {
                             onClose={() => setActiveModal(null)}
                             onSave={(selected) => {
                                 setFeatures(selected);
+                                // Note: propertyFeatures are part of amenities table, not listing table
+                                // Would require separate property amenity update endpoint
                                 setActiveModal(null);
                             }}
                             title="Property features"
@@ -1009,6 +1011,8 @@ const ListingDetail: React.FC = () => {
                             onClose={() => setActiveModal(null)}
                             onSave={(selected) => {
                                 setAmenities(selected);
+                                // Note: propertyAmenities are part of amenities table, not listing table
+                                // Would require separate property amenity update endpoint
                                 setActiveModal(null);
                             }}
                             title="Amenities"
@@ -1203,6 +1207,24 @@ const ListingDetail: React.FC = () => {
                     onSave={(status, fee) => {
                         setOnlineApplicationStatus(status);
                         setApplicationFee(fee);
+                        if (backendListing?.id) {
+                            updateListing.mutate(
+                                {
+                                    id: backendListing.id,
+                                    data: {
+                                        onlineApplicationAvailable: status === 'Enabled',
+                                        applicationFee: fee ? parseFloat(fee) : undefined
+                                    }
+                                },
+                                {
+                                    onSuccess: () => {
+                                        setIsOnlineApplicationModalOpen(false);
+                                    }
+                                }
+                            );
+                        } else {
+                            setIsOnlineApplicationModalOpen(false);
+                        }
                     }}
                     initialStatus={onlineApplicationStatus}
                     initialFee={applicationFee}

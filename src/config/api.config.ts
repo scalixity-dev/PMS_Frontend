@@ -40,6 +40,22 @@ export const API_ENDPOINTS = {
     GET_IMPORT_FIELDS: `${API_BASE_URL}/property/import-fields`,
     GET_PUBLIC_LISTINGS: `${API_BASE_URL}/property/public/listings`,
     GET_PUBLIC_DETAIL: (id: string) => `${API_BASE_URL}/property/public/${id}`,
+    // Property detail tabs
+    GET_SPECS: (id: string) => `${API_BASE_URL}/property/${id}/specs`,
+    CREATE_SPEC: (id: string) => `${API_BASE_URL}/property/${id}/specs`,
+    UPDATE_SPEC: (id: string, specId: string) => `${API_BASE_URL}/property/${id}/specs/${specId}`,
+    DELETE_SPEC: (id: string, specId: string) => `${API_BASE_URL}/property/${id}/specs/${specId}`,
+    GET_FINANCIALS: (id: string) => `${API_BASE_URL}/property/${id}/financials`,
+    CREATE_INSURANCE: (id: string) => `${API_BASE_URL}/property/${id}/insurances`,
+    UPDATE_INSURANCE: (id: string, insuranceId: string) => `${API_BASE_URL}/property/${id}/insurances/${insuranceId}`,
+    DELETE_INSURANCE: (id: string, insuranceId: string) => `${API_BASE_URL}/property/${id}/insurances/${insuranceId}`,
+    CREATE_LOAN: (id: string) => `${API_BASE_URL}/property/${id}/loans`,
+    UPDATE_LOAN: (id: string, loanId: string) => `${API_BASE_URL}/property/${id}/loans/${loanId}`,
+    DELETE_LOAN: (id: string, loanId: string) => `${API_BASE_URL}/property/${id}/loans/${loanId}`,
+    GET_SERVICE_PROVIDERS: (id: string) => `${API_BASE_URL}/property/${id}/service-providers`,
+    CREATE_UTILITY_PROVIDER: (id: string) => `${API_BASE_URL}/property/${id}/utility-providers`,
+    UPDATE_UTILITY_PROVIDER: (id: string, providerId: string) => `${API_BASE_URL}/property/${id}/utility-providers/${providerId}`,
+    DELETE_UTILITY_PROVIDER: (id: string, providerId: string) => `${API_BASE_URL}/property/${id}/utility-providers/${providerId}`,
   },
   UNIT: {
     GET_ALL_BY_PROPERTY: (propertyId: string) => `${API_BASE_URL}/unit/property/${propertyId}`,
@@ -47,6 +63,10 @@ export const API_ENDPOINTS = {
     CREATE: (propertyId: string) => `${API_BASE_URL}/unit/property/${propertyId}`,
     UPDATE: (id: string) => `${API_BASE_URL}/unit/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/unit/${id}`,
+    // Unit detail tabs
+    GET_SPECS: (id: string) => `${API_BASE_URL}/unit/${id}/specs`,
+    GET_FINANCIALS: (id: string) => `${API_BASE_URL}/unit/${id}/financials`,
+    GET_SERVICE_PROVIDERS: (id: string) => `${API_BASE_URL}/unit/${id}/service-providers`,
   },
   UPLOAD: {
     FILE: `${API_BASE_URL}/upload/file`,
@@ -290,6 +310,24 @@ export const API_ENDPOINTS = {
     DISCONNECT: `${API_BASE_URL}/google-calendar/disconnect`,
     SYNC_EVENTS: `${API_BASE_URL}/google-calendar/events/sync`,
     CREATE_EVENT: `${API_BASE_URL}/google-calendar/events`,
+  },
+  BACKGROUND_QUESTIONS: {
+    GET_ALL: `${API_BASE_URL}/background-questions`,
+    GET_ONE: (id: string) => `${API_BASE_URL}/background-questions/${id}`,
+    CREATE: `${API_BASE_URL}/background-questions`,
+    UPDATE: (id: string) => `${API_BASE_URL}/background-questions/${id}`,
+    DELETE: (id: string) => `${API_BASE_URL}/background-questions/${id}`,
+    REORDER: `${API_BASE_URL}/background-questions/reorder`,
+  },
+  DASHBOARD: {
+    GET_STATS: `${API_BASE_URL}/dashboard`,
+  },
+  NOTIFICATION: {
+    GET_ALL: `${API_BASE_URL}/notifications`,
+    GET_ONE: (id: string) => `${API_BASE_URL}/notifications/${id}`,
+    MARK_READ: (id: string) => `${API_BASE_URL}/notifications/${id}/read`,
+    MARK_ALL_READ: `${API_BASE_URL}/notifications/read-all`,
+    DELETE: (id: string) => `${API_BASE_URL}/notifications/${id}`,
   },
   AI_CHAT: {
     STREAM: `${import.meta.env.VITE_AI_CHAT_API_URL || 'http://localhost:8000'}/chat/stream`,

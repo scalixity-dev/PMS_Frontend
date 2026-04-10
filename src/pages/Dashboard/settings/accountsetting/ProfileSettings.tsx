@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { User, X, Eye, EyeOff } from "lucide-react";
 import Button from "../../../../components/common/Button";
 import { authService } from "../../../../services/auth.service";
+import { useUpdateProfile } from "../../../../hooks/useAuthQueries";
 import { AccountSettingsLayout } from "../../../../components/common/AccountSettingsLayout";
 
 interface ProfileUser {
@@ -818,6 +819,8 @@ export default function ProfileSettings() {
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
+  const updateProfile = useUpdateProfile();
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -882,10 +885,17 @@ export default function ProfileSettings() {
       phoneNumber: values.phoneNumber,
     }));
 
+    const fullName = `${values.firstName} ${values.lastName}`.trim();
     setUser((previous) => ({
       ...previous,
-      fullName: `${values.firstName} ${values.lastName}`.trim(),
+      fullName: fullName,
     }));
+
+    // Call API to persist changes
+    updateProfile.mutate({
+      fullName: fullName,
+      phoneNumber: values.phoneNumber,
+    });
   };
 
   const handleSaveAddress = (values: { country: string; city: string; postalCode: string }) => {
@@ -895,6 +905,13 @@ export default function ProfileSettings() {
       city: values.city,
       postalCode: values.postalCode,
     }));
+
+    // Call API to persist changes
+    updateProfile.mutate({
+      country: values.country,
+      state: values.city, // Note: API uses 'state' field, not 'city'
+      pincode: values.postalCode,
+    });
   };
 
   const handleSaveEmail = (newEmail: string) => {

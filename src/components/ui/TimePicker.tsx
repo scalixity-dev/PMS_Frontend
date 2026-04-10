@@ -16,7 +16,7 @@ const TimePicker: React.FC<TimePickerProps> = ({ value, onChange, placeholder = 
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
 
-    const times = [];
+    const times: string[] = [];
     for (let i = 0; i < 24; i++) {
         for (let j = 0; j < 60; j += 30) {
             const hour = i === 0 ? 12 : i > 12 ? i - 12 : i;
