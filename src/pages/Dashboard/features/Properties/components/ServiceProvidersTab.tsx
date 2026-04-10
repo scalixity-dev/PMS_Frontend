@@ -1,9 +1,10 @@
 import React from 'react';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Loader2 } from 'lucide-react';
 import SectionHeader from './SectionHeader';
 import ResponsibilityModal, { type ResponsibilityItem } from './ResponsibilityModal';
 import AddUtilityProviderModal from './AddUtilityProviderModal';
 import { currencyOptions } from '../../../../../components/ui/CurrencySelector';
+import { useGetPropertyServiceProviders } from '../../../../../hooks/usePropertyDetailQueries';
 
 // --- Types ---
 interface DetailField {
@@ -52,10 +53,21 @@ const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({ record }) => 
     );
 };
 
-const ServiceProvidersTab: React.FC = () => {
+interface ServiceProvidersTabProps {
+    propertyId: string;
+    unitId?: string;
+}
+
+const ServiceProvidersTab: React.FC<ServiceProvidersTabProps> = ({ propertyId, unitId }) => {
     const [isResponsibilityModalOpen, setIsResponsibilityModalOpen] = React.useState(false);
     const [responsibilities, setResponsibilities] = React.useState<ResponsibilityItem[]>([]);
     const [isAddUtilityModalOpen, setIsAddUtilityModalOpen] = React.useState(false);
+
+    // Fetch real service providers data
+    const { data: providersData = {}, isLoading, error } = useGetPropertyServiceProviders(propertyId, unitId);
+    const assignedServiceProviders = providersData.assignedServiceProviders || [];
+    const realUtilityProviders = providersData.utilityProviders || [];
+
     const [utilityProviders, setUtilityProviders] = React.useState<ServiceProviderRecord[]>([
         {
             id: 1,
@@ -89,6 +101,23 @@ const ServiceProvidersTab: React.FC = () => {
         };
         setUtilityProviders([...utilityProviders, newProvider]);
     };
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-[#3A6D6C]" />
+                <span className="ml-3 text-gray-600">Loading service providers...</span>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-red-800">Failed to load service providers. Please try again.</p>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-8">

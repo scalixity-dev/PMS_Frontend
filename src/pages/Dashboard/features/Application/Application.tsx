@@ -78,10 +78,24 @@ const Application = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [searchQuery, setSearchQuery] = useState('');
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-    const itemsPerPage = 6;
+    const itemsPerPage = 10;
 
-    // Fetch applications from API
-    const { data: applications = [], isLoading, error } = useGetAllApplications();
+    // Map screening status filter to API status param
+    const apiStatus = filters.screeningStatus?.[0]?.toLowerCase() || undefined;
+
+    // Fetch applications from API with server-side pagination
+    const { data: apiResponse = {}, isLoading, error } = useGetAllApplications({
+        search: searchQuery || undefined,
+        status: apiStatus,
+        page: currentPage,
+        limit: itemsPerPage,
+    });
+
+    // Extract applications array and pagination info from response
+    // Support both old format (array) and new format (object with data and pagination)
+    const applications = Array.isArray(apiResponse) ? apiResponse : (apiResponse.data || apiResponse.applications || []);
+    const pagination = apiResponse.pagination;
+    const totalPages = pagination?.totalPages || Math.ceil((pagination?.total || applications.length) / itemsPerPage);
 
     // Mutation for updating application status
     const updateApplicationMutation = useUpdateApplication();
@@ -97,7 +111,7 @@ const Application = () => {
     };
 
     // Get unique property/units for filters
-    const uniquePropertyUnits = useMemo(() => {
+    const uniquePropertyUnits = useMemo((): FilterOption[] => {
         const propertyUnits = new Set(
             applications
                 .map(app => {
@@ -113,7 +127,7 @@ const Application = () => {
                 })
                 .filter((pu): pu is string => pu !== null)
         );
-        return Array.from(propertyUnits).map(pu => ({
+        return (Array.from(propertyUnits) as string[]).map((pu: string) => ({
             value: pu,
             label: pu,
         }));
@@ -143,60 +157,10 @@ const Application = () => {
         setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
     };
 
-    // Transform and filter applications
+    // Transform applications from API response
     const transformedApplications = useMemo(() => {
-        let filtered = applications.map(transformApplicationToCard);
-
-        // Apply search filter
-        if (searchQuery.trim()) {
-            const query = searchQuery.toLowerCase();
-            filtered = filtered.filter(app =>
-                app.name.toLowerCase().includes(query) ||
-                app.appliedDate.toLowerCase().includes(query) ||
-                app.propertyUnit.toLowerCase().includes(query)
-            );
-        }
-
-        // Apply screening status filter
-        if (filters.screeningStatus && filters.screeningStatus.length > 0) {
-            filtered = filtered.filter(app => {
-                const appStatus = app.status.toLowerCase();
-                return filters.screeningStatus.some(filterStatus =>
-                    appStatus === filterStatus.toLowerCase()
-                );
-            });
-        }
-
-        // Apply property/unit filter (ignore placeholder value)
-        if (filters.propertyUnits && filters.propertyUnits.length > 0) {
-            const validFilters = filters.propertyUnits.filter(v => v !== '__no_items__');
-            if (validFilters.length > 0) {
-                filtered = filtered.filter(app =>
-                    validFilters.includes(app.propertyUnit)
-                );
-            }
-        }
-
-        // Screening status and application type filters are placeholders for now
-        // They will be ignored if only placeholder is selected
-
-        return filtered;
-    }, [applications, searchQuery, filters]);
-
-    // Sort applications
-    const sortedApplications = useMemo(() => {
-        return [...transformedApplications].sort((a, b) => {
-            return sortOrder === 'asc'
-                ? a.name.localeCompare(b.name)
-                : b.name.localeCompare(a.name);
-        });
-    }, [transformedApplications, sortOrder]);
-
-    const totalPages = Math.ceil(sortedApplications.length / itemsPerPage);
-    const currentApplications = sortedApplications.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    );
+        return applications.map(transformApplicationToCard);
+    }, [applications]);
 
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
@@ -292,7 +256,7 @@ const Application = () => {
                                 .filter((name): name is string => name !== null);
 
                             // Get unique property names
-                            const uniqueNames = Array.from(new Set(propertyNames));
+                            const uniqueNames: string[] = Array.from(new Set(propertyNames));
 
                             // Only show if we have property names from backend
                             if (uniqueNames.length === 0) return null;
@@ -324,7 +288,7 @@ const Application = () => {
                         })()}
 
                         <div className="bg-[#3A6D6C] text-white px-4 py-1 rounded-full text-sm">
-                            {sortedApplications.length} Application{sortedApplications.length !== 1 ? 's' : ''}
+                            {transformedApplications.length} Application{transformedApplications.length !== 1 ? 's' : ''}
                         </div>
                     </div>
                 )}
@@ -349,8 +313,8 @@ const Application = () => {
                 {/* Applications Grid */}
                 {!isLoading && !error && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                        {currentApplications.length > 0 ? (
-                            currentApplications.map((app) => (
+                        {transformedApplications.length > 0 ? (
+                            transformedApplications.map((app) => (
                                 <ApplicationCard
                                     key={app.id}
                                     id={app.id}

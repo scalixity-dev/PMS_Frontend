@@ -1269,7 +1269,13 @@ const ApplicationDetail = () => {
                                             Decline application
                                         </button>
                                         <div className="border-b border-gray-100 my-1" />
-                                        <button className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 font-medium transition-colors">
+                                        <button
+                                            onClick={() => {
+                                                window.print();
+                                                setIsActionDropdownOpen(false);
+                                            }}
+                                            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 font-medium transition-colors"
+                                        >
                                             Export application
                                         </button>
                                         <div className="border-b border-gray-100 my-1" />

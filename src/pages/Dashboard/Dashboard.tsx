@@ -4,10 +4,12 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import profilePic from "../../assets/images/profilepic.png";
 import propertyPic from "../../assets/images/propertypic.png";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { useGetDashboardStats } from '../../hooks/useDashboardQueries';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
+  const { data: dashboardStats } = useGetDashboardStats();
   // Data for charts
   const accountingData = [
     { name: '11 Nov', value: 2000 },
@@ -124,22 +126,22 @@ export default function Dashboard() {
   const metrics = [
     {
       label: "Total Income",
-      value: "80%",
-      amount: "₹ 120,000.00",
+      value: `${dashboardStats?.financial.thisMonthIncome ? Math.round((dashboardStats.financial.thisMonthIncome / (dashboardStats.financial.thisMonthIncome + dashboardStats.financial.thisMonthExpenses) * 100)) || 0 : 0}%`,
+      amount: `$${(dashboardStats?.financial.thisMonthIncome || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       change: "+3.96%",
       color: "text-orange-500",
     },
     {
       label: "Total Overdue",
-      value: "79%",
-      amount: "₹ 8,210.00",
+      value: `${dashboardStats?.financial.overdueInvoicesCount || 0} invoices`,
+      amount: `$${(dashboardStats?.financial.overdueInvoicesAmount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       change: "+0.46%",
       color: "text-blue-600",
     },
     {
       label: "Total Expenses",
-      value: "52%",
-      amount: "₹ 8,210.00",
+      value: `${dashboardStats?.financial.thisMonthExpenses ? Math.round((dashboardStats.financial.thisMonthExpenses / (dashboardStats.financial.thisMonthIncome + dashboardStats.financial.thisMonthExpenses) * 100)) || 0 : 0}%`,
+      amount: `$${(dashboardStats?.financial.thisMonthExpenses || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       change: "+9.13%",
       color: "text-orange-500",
     },

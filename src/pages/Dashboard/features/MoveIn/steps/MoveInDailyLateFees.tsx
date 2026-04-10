@@ -99,7 +99,7 @@ const MoveInDailyLateFees: React.FC<MoveInDailyLateFeesProps> = ({ onNext }) => 
             <div className="grid grid-cols-1 md:grid-cols-[0.8fr_1.2fr] gap-x-8 gap-y-6 w-full max-w-2xl bg-transparent">
                 {/* Type of fee */}
                 <div className="flex flex-col gap-2">
-                    <label className="text-xs font-bold text-gray-700 ml-1">Type of fee *</label>
+                    <label className="text-xs font-bold text-gray-700 ml-1">Amount of fees *</label>
                     <CustomDropdown
                         value={lateFeeType}
                         onChange={setLateFeeType}

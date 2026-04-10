@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import SpecsTab from '../Properties/components/SpecsTab';
 import ServiceProvidersTab from '../Properties/components/ServiceProvidersTab';
+import FinancialsTab from '../Properties/components/FinancialsTab';
 import PhotoGalleryModal from '../Properties/components/PhotoGalleryModal';
 import DetailTabs from '../../components/DetailTabs';
 import { useGetProperty } from '../../../../hooks/usePropertyQueries';
@@ -389,7 +390,7 @@ const UnitPropertyDetail: React.FC = () => {
 
                 {/* Tabs */}
                 <DetailTabs
-                    tabs={['Profile', 'Specs', 'Service Providers']}
+                    tabs={['Profile', 'Specs', 'Financials', 'Service Providers']}
                     activeTab={activeTab}
                     onTabChange={setActiveTab}
                 />
@@ -581,8 +582,9 @@ const UnitPropertyDetail: React.FC = () => {
                     </>
                 )}
 
-                {activeTab === 'specs' && <SpecsTab />}
-                {activeTab === 'service providers' && <ServiceProvidersTab />}
+                {activeTab === 'specs' && propertyId && unitId && <SpecsTab propertyId={propertyId} unitId={unitId} />}
+                {activeTab === 'financials' && propertyId && unitId && <FinancialsTab propertyId={propertyId} unitId={unitId} />}
+                {activeTab === 'service providers' && propertyId && unitId && <ServiceProvidersTab propertyId={propertyId} unitId={unitId} />}
 
                 <PhotoGalleryModal
                     isOpen={isGalleryOpen}

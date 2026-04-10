@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useMemo, useEffect, useCallback, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Trash2, CheckSquare, Square, Loader2, Building2 } from 'lucide-react';
 import PropertiesHeader from './components/PropertiesHeader';
@@ -7,6 +7,7 @@ import DashboardFilter, { type FilterOption } from '../../components/DashboardFi
 import Pagination from '../../components/Pagination';
 import PropertyCard from './components/PropertyCard';
 import { propertyService, type BackendProperty } from '../../../../services/property.service';
+import { usePropertyStore } from '../../../../stores/propertyStore';
 
 // Property interface for the component
 interface Property {
@@ -28,9 +29,11 @@ interface Property {
 const Properties: React.FC = () => {
     const navigate = useNavigate();
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
-    const [searchQuery, setSearchQuery] = useState('');
-    const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 9;
+
+    // Zustand store - persisted state
+    const { currentPage, itemsPerPage, searchQuery, filters, setCurrentPage, setSearchQuery, setFilters } = usePropertyStore();
+
+    // Local state - non-persisted
     const [properties, setProperties] = useState<Property[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -38,20 +41,6 @@ const Properties: React.FC = () => {
     const [selectedProperties, setSelectedProperties] = useState<Set<string>>(new Set());
     const [isDeleting, setIsDeleting] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
-    const [filters, setFilters] = useState<{
-        status: string[];
-        occupancy: string[];
-        propertyType: string[];
-        marketingStatus: string[];
-        balance: string[];
-    }>({
-        status: [],
-        occupancy: [],
-        propertyType: [],
-        marketingStatus: [],
-        balance: []
-    });
 
     // Transform backend property to frontend format
     const transformProperty = (backendProperty: BackendProperty): Property => {
@@ -204,6 +193,7 @@ const Properties: React.FC = () => {
         };
     };
 
+    // Fetch properties on component mount
     useEffect(() => {
         const fetchProperties = async () => {
             try {
@@ -224,20 +214,21 @@ const Properties: React.FC = () => {
         fetchProperties();
     }, []);
 
-    const handleAddProperty = () => {
+    // Callback functions wrapped with useCallback to prevent unnecessary re-renders
+    const handleAddProperty = useCallback(() => {
         navigate('/dashboard/property/add');
-    };
+    }, [navigate]);
 
-    const handleImport = () => {
+    const handleImport = useCallback(() => {
         navigate('/dashboard/properties/import');
-    };
+    }, [navigate]);
 
-    const handleToggleSelectionMode = () => {
-        setSelectionMode(!selectionMode);
+    const handleToggleSelectionMode = useCallback(() => {
+        setSelectionMode(prev => !prev);
         setSelectedProperties(new Set());
-    };
+    }, []);
 
-    const handleSelectProperty = (id: string | number, selected: boolean) => {
+    const handleSelectProperty = useCallback((id: string | number, selected: boolean) => {
         const idString = String(id);
         setSelectedProperties(prev => {
             const newSet = new Set(prev);
@@ -248,17 +239,9 @@ const Properties: React.FC = () => {
             }
             return newSet;
         });
-    };
+    }, []);
 
-    const handleSelectAll = () => {
-        if (selectedProperties.size === filteredProperties.length) {
-            setSelectedProperties(new Set());
-        } else {
-            setSelectedProperties(new Set(filteredProperties.map(p => p.id)));
-        }
-    };
-
-    const handleBulkDelete = async () => {
+    const handleBulkDelete = useCallback(async () => {
         if (selectedProperties.size === 0) return;
 
         setIsDeleting(true);
@@ -284,7 +267,6 @@ const Properties: React.FC = () => {
             setShowDeleteConfirm(false);
 
             if (result.deleted > 0) {
-                // Show success message (you can add a toast notification here)
                 console.log(`Successfully deleted ${result.deleted} property(ies)`);
             }
         } catch (err) {
@@ -293,7 +275,7 @@ const Properties: React.FC = () => {
         } finally {
             setIsDeleting(false);
         }
-    };
+    }, [selectedProperties]);
 
     const filterOptions: Record<string, FilterOption[]> = useMemo(() => ({
         status: [
@@ -329,6 +311,7 @@ const Properties: React.FC = () => {
         balance: 'Balance'
     }), []);
 
+    // Memoized filter predicate function
     const filteredProperties = useMemo(() => {
         return properties.filter(property => {
             const matchesSearch = searchQuery === '' ||
@@ -355,21 +338,32 @@ const Properties: React.FC = () => {
         });
     }, [properties, searchQuery, filters]);
 
+    // Reset to page 1 when filters change
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchQuery, filters]);
+    }, [searchQuery, filters, setCurrentPage]);
 
     const totalPages = Math.ceil(filteredProperties.length / itemsPerPage);
 
+    // Memoized current page data
     const currentProperties = useMemo(() => {
         const startIndex = (currentPage - 1) * itemsPerPage;
         return filteredProperties.slice(startIndex, startIndex + itemsPerPage);
-    }, [filteredProperties, currentPage]);
+    }, [filteredProperties, currentPage, itemsPerPage]);
 
-    const handlePageChange = (page: number) => {
+    const handlePageChange = useCallback((page: number) => {
         setCurrentPage(page);
         window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
+    }, [setCurrentPage]);
+
+    const handleSelectAll = useCallback(() => {
+        setSelectedProperties(prev => {
+            if (prev.size === filteredProperties.length) {
+                return new Set();
+            }
+            return new Set(filteredProperties.map(p => p.id));
+        });
+    }, [filteredProperties]);
 
     return (
         <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen transition-all duration-300`}>

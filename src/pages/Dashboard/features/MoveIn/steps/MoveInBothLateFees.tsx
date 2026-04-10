@@ -119,9 +119,9 @@ const MoveInBothLateFees: React.FC<MoveInBothLateFeesProps> = ({ onNext }) => {
                 <div className="bg-white/50 p-6 rounded-3xl border border-gray-100">
                     <h3 className="text-lg font-bold text-[#374151] mb-6 border-b pb-2">1. One Time Rent Late Fee</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                        {/* Type of fee */}
+                        {/* Amount of fees */}
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-700 ml-1">Type of fee *</label>
+                            <label className="text-xs font-bold text-gray-700 ml-1">Amount of fees *</label>
                             <CustomDropdown
                                 value={oneTimeType}
                                 onChange={setOneTimeType}
@@ -217,9 +217,9 @@ const MoveInBothLateFees: React.FC<MoveInBothLateFeesProps> = ({ onNext }) => {
 
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
-                        {/* Type of fee */}
+                        {/* Amount of fees */}
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-gray-700 ml-1">Type of fee *</label>
+                            <label className="text-xs font-bold text-gray-700 ml-1">Amount of fees *</label>
                             <CustomDropdown
                                 value={dailyType}
                                 onChange={setDailyType}

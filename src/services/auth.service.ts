@@ -75,6 +75,7 @@ export interface CurrentUser {
 }
 
 export interface UpdateProfileRequest {
+  fullName?: string;
   phoneCountryCode?: string;
   phoneNumber?: string;
   country?: string;

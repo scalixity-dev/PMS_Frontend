@@ -1,31 +1,46 @@
 import { useState } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
 import { Plus } from 'lucide-react';
-
-interface Question {
-    id: number;
-    text: string;
-}
+import { useGetBackgroundQuestions, useCreateBackgroundQuestion, useUpdateBackgroundQuestion, useDeleteBackgroundQuestion } from '../../../../hooks/useBackgroundQuestionQueries';
 
 export default function BackgroundQuestions() {
-    const [questions, setQuestions] = useState<Question[]>([
-        { id: 1, text: "" }
-    ]);
+    const { data: questions = [], isLoading } = useGetBackgroundQuestions();
+    const createQuestion = useCreateBackgroundQuestion();
+    const updateQuestion = useUpdateBackgroundQuestion();
+    const deleteQuestion = useDeleteBackgroundQuestion();
+    const [newQuestionText, setNewQuestionText] = useState('');
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editingText, setEditingText] = useState('');
 
-    const addQuestion = () => {
-        setQuestions([...questions, { id: Date.now(), text: "" }]);
-    };
-
-    const deleteQuestion = (id: number) => {
-        if (questions.length > 1) {
-            setQuestions(questions.filter(q => q.id !== id));
+    const handleAddQuestion = async () => {
+        if (newQuestionText.trim()) {
+            createQuestion.mutate(
+                { question: newQuestionText, order: questions.length + 1 },
+                {
+                    onSuccess: () => {
+                        setNewQuestionText('');
+                    },
+                }
+            );
         }
     };
 
+    const handleDeleteQuestion = (id: string) => {
+        if (questions.length > 0) {
+            deleteQuestion.mutate(id);
+        }
+    };
 
-
-    const updateQuestionText = (id: number, text: string) => {
-        setQuestions(questions.map(q => q.id === id ? { ...q, text } : q));
+    const handleUpdateQuestion = (id: string, text: string) => {
+        updateQuestion.mutate({
+            id,
+            data: { question: text }
+        }, {
+            onSuccess: () => {
+                setEditingId(null);
+                setEditingText('');
+            }
+        });
     };
 
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
@@ -55,57 +70,85 @@ export default function BackgroundQuestions() {
                     </div>
 
                     <div className="px-4 sm:px-8 pb-8 pt-6 space-y-6">
-                        <div className="space-y-6">
-                            {questions.map((question, index) => (
-                                <div key={question.id} className="bg-white rounded-md p-6 border border-gray-200 shadow-sm">
-                                    <div className="mb-4">
-                                        <h3 className="text-lg font-medium text-gray-900">Question {index + 1}</h3>
-                                    </div>
+                        {isLoading ? (
+                            <div className="text-center py-8">Loading questions...</div>
+                        ) : (
+                            <>
+                                <div className="space-y-6">
+                                    {questions.map((question: any, index: number) => (
+                                        <div key={question.id} className="bg-white rounded-md p-6 border border-gray-200 shadow-sm">
+                                            <div className="mb-4">
+                                                <h3 className="text-lg font-medium text-gray-900">Question {index + 1}</h3>
+                                            </div>
 
-                                    <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-start">
-                                        <input
-                                            type="text"
-                                            value={question.text}
-                                            onChange={(e) => updateQuestionText(question.id, e.target.value)}
-                                            className="w-full sm:flex-1 border border-gray-300 rounded-md px-4 py-2.5 focus:outline-none focus:ring-1 focus:ring-[#7CD947]"
-                                            placeholder="Enter your question here"
-                                        />
+                                            <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-start">
+                                                <input
+                                                    type="text"
+                                                    value={editingId === question.id ? editingText : question.question}
+                                                    onChange={(e) => {
+                                                        if (editingId === question.id) {
+                                                            setEditingText(e.target.value);
+                                                        }
+                                                    }}
+                                                    onBlur={() => {
+                                                        if (editingId === question.id && editingText.trim()) {
+                                                            handleUpdateQuestion(question.id, editingText);
+                                                        }
+                                                    }}
+                                                    onFocus={() => {
+                                                        setEditingId(question.id);
+                                                        setEditingText(question.question);
+                                                    }}
+                                                    className="w-full sm:flex-1 border border-gray-300 rounded-md px-4 py-2.5 focus:outline-none focus:ring-1 focus:ring-[#7CD947]"
+                                                    placeholder="Enter your question here"
+                                                />
 
-                                        <button
-                                            onClick={() => deleteQuestion(question.id)}
-                                            disabled={questions.length <= 1}
-                                            className={`flex items-center justify-center sm:justify-start gap-2 px-4 py-2.5 border border-red-200 rounded-md text-red-600 hover:bg-red-50 bg-white text-sm font-medium w-full sm:w-auto ${questions.length <= 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                        >
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                            Delete
-                                        </button>
-                                    </div>
+                                                <button
+                                                    onClick={() => handleDeleteQuestion(question.id)}
+                                                    disabled={questions.length <= 1}
+                                                    className={`flex items-center justify-center sm:justify-start gap-2 px-4 py-2.5 border border-red-200 rounded-md text-red-600 hover:bg-red-50 bg-white text-sm font-medium w-full sm:w-auto ${questions.length <= 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                    Delete
+                                                </button>
+                                            </div>
 
-                                    <div className="mt-4 flex flex-col gap-2">
-                                        <p className="text-gray-600 text-sm">Answer type: <span className="font-medium text-gray-900">Yes / No (fixed)</span></p>
+                                            <div className="mt-4 flex flex-col gap-2">
+                                                <p className="text-gray-600 text-sm">Answer type: <span className="font-medium text-gray-900">Yes / No (fixed)</span></p>
 
-                                        <div className="flex items-center gap-2 text-gray-500 text-sm">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            <span>This question is required by default</span>
+                                                <div className="flex items-center gap-2 text-gray-500 text-sm">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    <span>This question is required by default</span>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
+                                    ))}
                                 </div>
-                            ))}
-                        </div>
 
-                        <div className="mt-8 flex justify-center">
-                            <button
-                                onClick={addQuestion}
-                                className="flex items-center justify-center gap-2 text-[#7CD947] border border-[#7CD947] px-8 py-3 rounded-md hover:bg-[#7CD947] hover:text-white transition-colors font-medium bg-white w-full sm:w-auto"
-                            >
-                                <Plus className="h-5 w-5" />
-                                Add New Yes / No Question
-                            </button>
-                        </div>
+                                <div className="mt-8 flex justify-center gap-3">
+                                    <input
+                                        type="text"
+                                        value={newQuestionText}
+                                        onChange={(e) => setNewQuestionText(e.target.value)}
+                                        onKeyPress={(e) => e.key === 'Enter' && handleAddQuestion()}
+                                        placeholder="Enter new question"
+                                        className="flex-1 border border-gray-300 rounded-md px-4 py-3 focus:outline-none focus:ring-1 focus:ring-[#7CD947]"
+                                    />
+                                    <button
+                                        onClick={handleAddQuestion}
+                                        disabled={!newQuestionText.trim()}
+                                        className="flex items-center justify-center gap-2 text-[#7CD947] border border-[#7CD947] px-8 py-3 rounded-md hover:bg-[#7CD947] hover:text-white transition-colors font-medium bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <Plus className="h-5 w-5" />
+                                        Add
+                                    </button>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

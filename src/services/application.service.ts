@@ -658,8 +658,26 @@ class ApplicationService {
   /**
    * Get all applications
    */
-  async getAll(): Promise<BackendApplication[]> {
-    const response = await fetch(API_ENDPOINTS.APPLICATION.GET_ALL, {
+  async getAll(filters?: {
+    search?: string;
+    status?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<any> {
+    let url = API_ENDPOINTS.APPLICATION.GET_ALL;
+
+    // Build query parameters
+    const params = new URLSearchParams();
+    if (filters?.search) params.append('search', filters.search);
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.page) params.append('_page', String(filters.page));
+    if (filters?.limit) params.append('_limit', String(filters.limit));
+
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
+
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

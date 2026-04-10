@@ -13,12 +13,20 @@ export const applicationQueryKeys = {
 };
 
 /**
- * Hook to get all applications for the authenticated user
+ * Hook to get all applications for the authenticated user with optional filters
  */
-export const useGetAllApplications = (enabled: boolean = true) => {
+export const useGetAllApplications = (
+  filters?: {
+    search?: string;
+    status?: string;
+    page?: number;
+    limit?: number;
+  },
+  enabled: boolean = true
+) => {
   return useQuery({
-    queryKey: applicationQueryKeys.lists(),
-    queryFn: () => applicationService.getAll(),
+    queryKey: applicationQueryKeys.list(filters),
+    queryFn: () => applicationService.getAll(filters),
     enabled,
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes
     gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes

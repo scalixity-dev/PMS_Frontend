@@ -383,7 +383,7 @@ const PropertyDetailUser: React.FC = () => {
 
 
                 // Build lease terms
-                const leaseTerms = [];
+                const leaseTerms: { label: string; value: string }[] = [];
                 if (data.listing?.minLeaseDuration && data.listing?.maxLeaseDuration) {
                     leaseTerms.push({
                         label: "Lease Duration",
@@ -410,7 +410,7 @@ const PropertyDetailUser: React.FC = () => {
                 }
 
                 // Build policies
-                const policies = [];
+                const policies: { label: string; value: string }[] = [];
                 if (data.listing?.petsAllowed) {
                     if (data.listing.petCategory?.length > 0) {
                         data.listing.petCategory.forEach((category: string) => {

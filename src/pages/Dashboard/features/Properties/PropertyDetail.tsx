@@ -1291,9 +1291,9 @@ const PropertyDetail: React.FC = () => {
                     )
                 }
 
-                {activeTab === 'specs' && <SpecsTab />}
-                {activeTab === 'financials' && !property.isUnitView && <FinancialsTab />}
-                {activeTab === 'service providers' && <ServiceProvidersTab />}
+                {activeTab === 'specs' && id && <SpecsTab propertyId={id} />}
+                {activeTab === 'financials' && !property.isUnitView && id && <FinancialsTab propertyId={id} />}
+                {activeTab === 'service providers' && id && <ServiceProvidersTab propertyId={id} />}
 
                 <PhotoGalleryModal
                     isOpen={isGalleryOpen}
