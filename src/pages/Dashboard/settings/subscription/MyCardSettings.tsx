@@ -1,19 +1,34 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Button from "../../../../components/common/Button";
 import { CreditCard, Trash2, Plus } from "lucide-react";
 import { SubscriptionSettingsLayout } from "../../../../components/common/SubscriptionSettingsLayout";
+import { useGetSettingsSection, useUpdateSettingsSection } from "../../../../hooks/useSettingsQueries";
+
+interface SavedCard {
+  id: number;
+  last4: string;
+  brand: string;
+  expiryMonth: number;
+  expiryYear: number;
+  isDefault: boolean;
+}
 
 const MyCardSettings: React.FC = () => {
-  const [savedCards, setSavedCards] = useState([
-    {
-      id: 1,
-      last4: "4242",
-      brand: "Visa",
-      expiryMonth: 12,
-      expiryYear: 2025,
-      isDefault: true,
-    },
-  ]);
+  const { data } = useGetSettingsSection<{ savedCards: SavedCard[] }>("subscription_my_card");
+  const updateSettings = useUpdateSettingsSection<{ savedCards: SavedCard[] }>("subscription_my_card");
+  const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
+
+  useEffect(() => {
+    const nextCards = data?.values?.savedCards;
+    if (nextCards && Array.isArray(nextCards)) {
+      setSavedCards(nextCards);
+    }
+  }, [data]);
+
+  const persistSavedCards = (nextCards: SavedCard[]) => {
+    setSavedCards(nextCards);
+    updateSettings.mutate({ savedCards: nextCards });
+  };
 
   const [showAddCard, setShowAddCard] = useState(false);
   const [cardNumber, setCardNumber] = useState("");
@@ -52,19 +67,19 @@ const MyCardSettings: React.FC = () => {
 
     // If deleting the default card and there are remaining cards, set the first one as default
     if (cardToDelete?.isDefault && remainingCards.length > 0) {
-      setSavedCards(
+      persistSavedCards(
         remainingCards.map((card, index) => ({
           ...card,
           isDefault: index === 0,
         }))
       );
     } else {
-      setSavedCards(remainingCards);
+      persistSavedCards(remainingCards);
     }
   };
 
   const handleSetDefault = (cardId: number) => {
-    setSavedCards(
+    persistSavedCards(
       savedCards.map((card) => ({
         ...card,
         isDefault: card.id === cardId,
@@ -118,7 +133,7 @@ const MyCardSettings: React.FC = () => {
       isDefault: savedCards.length === 0,
     };
 
-    setSavedCards([...savedCards, newCard]);
+    persistSavedCards([...savedCards, newCard]);
     setShowAddCard(false);
 
     // Reset form
@@ -324,5 +339,3 @@ const MyCardSettings: React.FC = () => {
 };
 
 export default MyCardSettings;
-
-

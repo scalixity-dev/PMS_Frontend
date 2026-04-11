@@ -15,7 +15,7 @@ import AssignKeyModal from './AssignKeyModal';
 import AddPaintModal from './AddPaintModal';
 import AddDoorModal from './AddDoorModal';
 import AddFloorModal from './AddFloorModal';
-import { useGetPropertySpecs, useDeletePropertySpec } from '../../../../../hooks/usePropertyDetailQueries';
+import { useCreatePropertySpec, useGetPropertySpecs, useDeletePropertySpec } from '../../../../../hooks/usePropertyDetailQueries';
 
 interface SpecItemProps {
     icon: React.ReactNode;
@@ -73,16 +73,17 @@ const SpecsTab: React.FC<SpecsTabProps> = ({ propertyId, unitId }) => {
 
     // Fetch specs from API
     const { data: specsData = { paints: [], doors: [], flooring: [], keys: [] }, isLoading, error } = useGetPropertySpecs(propertyId, unitId);
+    const createSpecMutation = useCreatePropertySpec();
     const deleteSpecMutation = useDeletePropertySpec();
 
-    const [paints, setPaints] = useState(specsData.paints || []);
-    const [doors, setDoors] = useState(specsData.doors || []);
-    const [flooring, setFlooring] = useState(specsData.flooring || []);
+    const paints = specsData.paints || [];
+    const doors = specsData.doors || [];
+    const flooring = specsData.flooring || [];
     const keys = specsData.keys || [];
 
     // Delete Modal State
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-    const [itemToDelete, setItemToDelete] = useState<{ id: number, type: 'key' | 'paint' | 'door' | 'flooring' } | null>(null);
+    const [itemToDelete, setItemToDelete] = useState<{ id: number | string, type: 'key' | 'paint' | 'door' | 'flooring' } | null>(null);
 
     // Assign Key Modal State
     const [isAssignKeyModalOpen, setIsAssignKeyModalOpen] = useState(false);
@@ -96,7 +97,7 @@ const SpecsTab: React.FC<SpecsTabProps> = ({ propertyId, unitId }) => {
     // Add Floor Modal State
     const [isAddFloorModalOpen, setIsAddFloorModalOpen] = useState(false);
 
-    const handleDeleteClick = (id: number, type: 'key' | 'paint' | 'door' | 'flooring') => {
+    const handleDeleteClick = (id: number | string, type: 'key' | 'paint' | 'door' | 'flooring') => {
         setItemToDelete({ id, type });
         setDeleteModalOpen(true);
     };
@@ -120,34 +121,44 @@ const SpecsTab: React.FC<SpecsTabProps> = ({ propertyId, unitId }) => {
         setItemToDelete(null);
     };
 
-    const handleAddPaint = (data: { color: string; description: string }) => {
-        const newPaint = {
-            id: Date.now(), // Simple ID generation
-            name: `Paint ${paints.length + 1}`,
-            color: data.color,
-            description: data.description
-        };
-        setPaints([...paints, newPaint]);
+    const handleAddPaint = async (data: { color: string; description: string }) => {
+        await createSpecMutation.mutateAsync({
+            propertyId,
+            specData: {
+                unitId,
+                type: 'PAINT',
+                name: `Paint ${paints.length + 1}`,
+                color: data.color,
+                description: data.description,
+            },
+        });
     };
 
-    const handleAddDoor = (data: { doorType: string; lockType: string; insideDoorColor: string; exteriorDoorColor: string; screenDoorAttached: boolean }) => {
-        const newDoor = {
-            id: Date.now(),
-            name: `Door ${doors.length + 1}`,
-            type: data.doorType,
-            lockType: data.lockType
-        };
-        setDoors([...doors, newDoor]);
+    const handleAddDoor = async (data: { doorType: string; lockType: string; insideDoorColor: string; exteriorDoorColor: string; screenDoorAttached: boolean }) => {
+        await createSpecMutation.mutateAsync({
+            propertyId,
+            specData: {
+                unitId,
+                type: 'DOOR',
+                name: `Door ${doors.length + 1}`,
+                description: `Lock type: ${data.lockType}. Inside color: ${data.insideDoorColor}. Exterior color: ${data.exteriorDoorColor}. Screen door: ${data.screenDoorAttached ? 'Yes' : 'No'}`,
+                notes: data.lockType,
+                brand: data.doorType,
+            },
+        });
     };
 
-    const handleAddFlooring = (data: { flooringType: string; description: string }) => {
-        const newFloor = {
-            id: Date.now(),
-            name: `Flooring ${flooring.length + 1}`,
-            type: data.flooringType,
-            description: data.description || 'No description'
-        };
-        setFlooring([...flooring, newFloor]);
+    const handleAddFlooring = async (data: { flooringType: string; description: string }) => {
+        await createSpecMutation.mutateAsync({
+            propertyId,
+            specData: {
+                unitId,
+                type: 'FLOORING',
+                name: `Flooring ${flooring.length + 1}`,
+                brand: data.flooringType,
+                description: data.description || 'No description',
+            },
+        });
     };
 
     if (isLoading) {
@@ -235,8 +246,8 @@ const SpecsTab: React.FC<SpecsTabProps> = ({ propertyId, unitId }) => {
                             icon={<DoorOpen className="w-6 h-6 text-orange-400" />}
                             title={item.name}
                             badges={[
-                                { label: 'Door type', value: item.type },
-                                { label: 'Lock type', value: item.lockType }
+                                { label: 'Door type', value: item.brand || '-' },
+                                { label: 'Lock type', value: item.notes || '-' }
                             ]}
                             onEdit={() => console.log('Edit door:', item.id)}
 
@@ -261,7 +272,7 @@ const SpecsTab: React.FC<SpecsTabProps> = ({ propertyId, unitId }) => {
                             icon={<Grid className="w-6 h-6 text-gray-500" />}
                             title={item.name}
                             badges={[
-                                { label: 'Flooring type', value: item.type },
+                                { label: 'Flooring type', value: item.brand || '-' },
                                 { label: 'Description', value: item.description }
                             ]}
                             onEdit={() => console.log('Edit flooring:', item.id)}

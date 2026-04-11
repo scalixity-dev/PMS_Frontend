@@ -107,7 +107,13 @@ const Equipments: React.FC = () => {
                 model: eq.model,
                 serial: eq.serialNumber,
                 price: typeof eq.price === 'string' ? eq.price : `$${eq.price}`,
-                warrantyExpiration: '', // Not in backend model, can be added
+                warrantyExpiration: eq.hasWarranty
+                    ? (eq.isLifetimeWarranty
+                        ? 'Lifetime'
+                        : (eq.warrantyExpirationDate
+                            ? new Date(eq.warrantyExpirationDate).toLocaleDateString('en-GB')
+                            : '-'))
+                    : 'No warranty',
                 additionalEmail: '', // Not in backend model
                 image: eq.photoUrl || '',
             };

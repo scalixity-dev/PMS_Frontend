@@ -89,9 +89,11 @@ const CreateEquipment = () => {
                 propertyId: eq.propertyId || '',
                 serial: eq.serialNumber || '',
                 installationDate: eq.dateOfInstallation || '',
-                hasWarranty: false, // Warranty fields not in backend yet
-                warrantyExpirationDate: '',
-                isLifetimeWarranty: false,
+                hasWarranty: !!eq.hasWarranty,
+                warrantyExpirationDate: eq.warrantyExpirationDate
+                    ? String(eq.warrantyExpirationDate).split('T')[0]
+                    : '',
+                isLifetimeWarranty: !!eq.isLifetimeWarranty,
                 description: eq.equipmentDetails || '',
                 currency: 'USD'
             });
@@ -288,6 +290,11 @@ const CreateEquipment = () => {
             return;
         }
 
+        if (formData.hasWarranty && !formData.isLifetimeWarranty && !formData.warrantyExpirationDate) {
+            alert('Please select warranty expiration date or enable lifetime warranty');
+            return;
+        }
+
         try {
             const equipmentData = {
                 propertyId: formData.propertyId,
@@ -298,6 +305,11 @@ const CreateEquipment = () => {
                 serialNumber: formData.serial,
                 price: parseFloat(formData.price.replace(/[^0-9.]/g, '')) || 0,
                 dateOfInstallation: formData.installationDate,
+                hasWarranty: formData.hasWarranty,
+                warrantyExpirationDate: formData.isLifetimeWarranty
+                    ? undefined
+                    : (formData.warrantyExpirationDate || undefined),
+                isLifetimeWarranty: formData.isLifetimeWarranty,
                 equipmentDetails: formData.description || undefined,
                 photoUrl: uploadedImageUrl || undefined,
                 ...(isEditMode ? {} : { status: 'ACTIVE' as const }),

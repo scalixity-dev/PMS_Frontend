@@ -26,6 +26,9 @@ export interface BackendEquipment {
   serialNumber: string;
   price: string | number;
   dateOfInstallation: string;
+  hasWarranty?: boolean;
+  warrantyExpirationDate?: string | null;
+  isLifetimeWarranty?: boolean;
   equipmentDetails?: string | null;
   photoUrl?: string | null;
   status: EquipmentStatus;
@@ -69,6 +72,9 @@ export interface CreateEquipmentDto {
   serialNumber: string;
   price: number;
   dateOfInstallation: string;
+  hasWarranty?: boolean;
+  warrantyExpirationDate?: string;
+  isLifetimeWarranty?: boolean;
   equipmentDetails?: string;
   photoUrl?: string;
   status?: EquipmentStatus;
@@ -85,6 +91,9 @@ export interface UpdateEquipmentDto {
   serialNumber?: string;
   price?: number;
   dateOfInstallation?: string;
+  hasWarranty?: boolean;
+  warrantyExpirationDate?: string | null;
+  isLifetimeWarranty?: boolean;
   equipmentDetails?: string;
   photoUrl?: string;
   status?: EquipmentStatus;
@@ -317,4 +326,3 @@ class EquipmentService {
 }
 
 export const equipmentService = new EquipmentService();
-

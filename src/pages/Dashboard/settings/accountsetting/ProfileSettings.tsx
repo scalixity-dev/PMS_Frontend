@@ -21,6 +21,43 @@ interface ProfileDetails {
   postalCode: string;
 }
 
+const formatDateForDisplay = (raw?: string): string => {
+  if (!raw) return "";
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return "";
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = String(date.getFullYear());
+  return `${day}/${month}/${year}`;
+};
+
+const normalizeDateForApi = (raw: string): string | undefined => {
+  const trimmed = raw.trim();
+  if (!trimmed) return undefined;
+
+  // DD/MM/YYYY or DD-MM-YYYY -> YYYY-MM-DD
+  const parts = trimmed.split(/[/-]/);
+  if (parts.length === 3) {
+    const [dayStr, monthStr, yearStr] = parts;
+    if (
+      /^\d{1,2}$/.test(dayStr) &&
+      /^\d{1,2}$/.test(monthStr) &&
+      /^\d{4}$/.test(yearStr)
+    ) {
+      const day = dayStr.padStart(2, "0");
+      const month = monthStr.padStart(2, "0");
+      return `${yearStr}-${month}-${day}`;
+    }
+  }
+
+  // already ISO-ish date
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  return undefined;
+};
+
 interface EditPersonalInfoModalProps {
   isOpen: boolean;
   initialValues: {
@@ -854,11 +891,10 @@ export default function ProfileSettings() {
           ...previous,
           firstName: firstNameFromUser,
           lastName: lastNameFromUser,
+          dateOfBirth: formatDateForDisplay(currentUser.dateOfBirth),
           phoneNumber: currentUser.phoneNumber || previous.phoneNumber,
           country: currentUser.country || previous.country,
-          // Note: currentUser.address is a full address string, not just city
-          // Since CurrentUser interface doesn't have a city field, we keep the previous city value
-          city: previous.city,
+          city: currentUser.state || previous.city,
           postalCode: currentUser.pincode || previous.postalCode,
         }));
       } catch (error) {
@@ -894,6 +930,7 @@ export default function ProfileSettings() {
     // Call API to persist changes
     updateProfile.mutate({
       fullName: fullName,
+      dateOfBirth: normalizeDateForApi(values.dateOfBirth),
       phoneNumber: values.phoneNumber,
     });
   };
@@ -1139,5 +1176,4 @@ export default function ProfileSettings() {
     </AccountSettingsLayout>
   );
 }
-
 

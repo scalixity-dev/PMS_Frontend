@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
+import { useGetSettingsSection, useUpdateSettingsSection } from "../../../../hooks/useSettingsQueries";
 
 interface ConfigurationOption {
     id: "basic" | "custom";
@@ -21,7 +22,21 @@ const CONFIGURATION_OPTIONS: ConfigurationOption[] = [
 ];
 
 export default function FormConfiguration() {
+    const { data } = useGetSettingsSection<{ selectedMode: "basic" | "custom" }>("rental_form_configuration");
+    const updateSettings = useUpdateSettingsSection<{ selectedMode: "basic" | "custom" }>("rental_form_configuration");
     const [selectedMode, setSelectedMode] = useState<"basic" | "custom">("basic");
+
+    useEffect(() => {
+        const value = data?.values?.selectedMode;
+        if (value === "basic" || value === "custom") {
+            setSelectedMode(value);
+        }
+    }, [data]);
+
+    const handleModeChange = (mode: "basic" | "custom") => {
+        setSelectedMode(mode);
+        updateSettings.mutate({ selectedMode: mode });
+    };
 
     return (
         <div className="space-y-6 w-full md:w-3/5">
@@ -40,7 +55,7 @@ export default function FormConfiguration() {
                 {CONFIGURATION_OPTIONS.map((option) => (
                     <div
                         key={option.id}
-                        onClick={() => setSelectedMode(option.id)}
+                        onClick={() => handleModeChange(option.id)}
                         className={`relative rounded-lg p-6 border transition-all cursor-pointer ${selectedMode === option.id
                             ? "border-[#7CD947] bg-white ring-1 ring-[#7CD947]"
                             : "border-gray-300 bg-[#E8E8E8] hover:border-gray-400"

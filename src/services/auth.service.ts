@@ -64,6 +64,7 @@ export interface CurrentUser {
   email: string;
   role: string;
   fullName: string;
+  dateOfBirth?: string;
   isEmailVerified: boolean;
   isActive: boolean;
   country?: string;
@@ -76,6 +77,7 @@ export interface CurrentUser {
 
 export interface UpdateProfileRequest {
   fullName?: string;
+  dateOfBirth?: string;
   phoneCountryCode?: string;
   phoneNumber?: string;
   country?: string;
@@ -739,4 +741,3 @@ class AuthService {
 }
 
 export const authService = new AuthService();
-

@@ -125,6 +125,18 @@ const EquipmentDetail = () => {
         equipmentTyped.property?.photos?.[0]?.photoUrl ||
         imageUrl;
 
+    const warrantyDisplay = equipmentTyped.hasWarranty
+        ? (equipmentTyped.isLifetimeWarranty
+            ? 'Lifetime'
+            : (equipmentTyped.warrantyExpirationDate
+                ? new Date(equipmentTyped.warrantyExpirationDate).toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                })
+                : '-'))
+        : 'No warranty';
+
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit">
             <div className="mb-6">
@@ -269,8 +281,7 @@ const EquipmentDetail = () => {
                                 <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
                                     <label className="w-auto md:w-48 text-sm font-medium text-gray-600">Warranty expiration date</label>
                                     <CustomTextBox
-                                        // Warranty is not in backend model yet
-                                        value={'-'}
+                                        value={warrantyDisplay}
                                         readOnly={true}
                                         className="bg-[#E0E8E7] rounded-full h-10 flex-1"
                                         valueClassName="text-gray-700 text-sm"

@@ -1,7 +1,9 @@
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { TeamManagementSettingsLayout } from "../../../../components/common/TeamManagementSettingsLayout";
 import Pagination from "../../components/Pagination";
 import propertyPlaceholder from "../../../../assets/images/property_placeholder.png";
+import { useGetAllPropertiesTransformed } from "../../../../hooks/usePropertyQueries";
+import { useGetSettingsSection, useUpdateSettingsSection } from "../../../../hooks/useSettingsQueries";
 
 interface Property {
     id: string;
@@ -10,59 +12,88 @@ interface Property {
     image: string;
 }
 
-// Mock data - replace with actual data from API
-const ALL_PROPERTIES: Property[] = [
-    {
-        id: "1",
-        name: "abc",
-        address: "78 Scheme No 78 - II, Indore, MP, 452010, IN",
-        image: propertyPlaceholder,
-    },
-    {
-        id: "2",
-        name: "abc",
-        address: "78 Scheme No 78 - II, Indore, MP, 452010, IN",
-        image: propertyPlaceholder,
-    },
-    {
-        id: "3",
-        name: "abc",
-        address: "78 Scheme No 78 - II, Indore, MP, 452010, IN",
-        image: propertyPlaceholder,
-    },
-    {
-        id: "4",
-        name: "abc",
-        address: "78 Scheme No 78 - II, Indore, MP, 452010, IN",
-        image: propertyPlaceholder,
-    },
-];
+interface TeamMember {
+    id: string;
+    name: string;
+}
+
+interface TeamRolesPermissionsValues {
+    members: TeamMember[];
+}
+
+interface TeamPropertyPermissionAssignment {
+    propertyId: string;
+    memberIds: string[];
+}
+
+interface TeamPropertyPermissionsValues {
+    assignments: TeamPropertyPermissionAssignment[];
+}
 
 export default function PropertyPermissions() {
+    const { data: transformedProperties = [] } = useGetAllPropertiesTransformed(true);
+    const { data: rolesData } = useGetSettingsSection<TeamRolesPermissionsValues>("team_roles_permissions");
+    const { data: propertyPermissionsData } = useGetSettingsSection<TeamPropertyPermissionsValues>("team_property_permissions");
+    const updatePropertyPermissions = useUpdateSettingsSection<TeamPropertyPermissionsValues>("team_property_permissions");
+
     const [currentPage, setCurrentPage] = useState(1);
+    const [searchQuery, setSearchQuery] = useState("");
     const ITEMS_PER_PAGE = 4;
 
-    // Calculate pagination values
+    const allProperties: Property[] = transformedProperties.map((property) => ({
+        id: property.id,
+        name: property.name,
+        address: property.address,
+        image: property.image || propertyPlaceholder,
+    }));
+
+    const teamMembers = rolesData?.values?.members ?? [];
+    const assignments = propertyPermissionsData?.values?.assignments ?? [];
+
     const { totalPages, paginatedProperties } = useMemo(() => {
-        const total = Math.ceil(ALL_PROPERTIES.length / ITEMS_PER_PAGE);
+        const filtered = allProperties.filter((property) =>
+            `${property.name} ${property.address}`.toLowerCase().includes(searchQuery.toLowerCase()),
+        );
+        const total = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
         const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
         const endIndex = startIndex + ITEMS_PER_PAGE;
-        const paginated = ALL_PROPERTIES.slice(startIndex, endIndex);
+        const paginated = filtered.slice(startIndex, endIndex);
 
         return {
             totalPages: total,
             paginatedProperties: paginated,
         };
-    }, [currentPage, ITEMS_PER_PAGE]);
+    }, [allProperties, currentPage, searchQuery, ITEMS_PER_PAGE]);
 
     const handleAddTeamMember = (propertyId: string) => {
-        console.log("Add team member to property:", propertyId);
-        // Implement add team member logic
+        if (teamMembers.length === 0) {
+            return;
+        }
+        const existingAssignment = assignments.find((assignment) => assignment.propertyId === propertyId);
+        const existingIds = existingAssignment?.memberIds ?? [];
+        const nextMemberId = teamMembers.find((member) => !existingIds.includes(member.id))?.id;
+        if (!nextMemberId) {
+            return;
+        }
+
+        const nextAssignments = existingAssignment
+            ? assignments.map((assignment) =>
+                assignment.propertyId === propertyId
+                    ? { ...assignment, memberIds: [...assignment.memberIds, nextMemberId] }
+                    : assignment,
+            )
+            : [...assignments, { propertyId, memberIds: [nextMemberId] }];
+
+        updatePropertyPermissions.mutate({ assignments: nextAssignments });
     };
 
     const handleSearchChange = (query: string) => {
-        // Add search logic here to filter properties
-        console.log("Searching for:", query);
+        setSearchQuery(query);
+        setCurrentPage(1);
+    };
+
+    const getAssignedCount = (propertyId: string) => {
+        return assignments.find((assignment) => assignment.propertyId === propertyId)?.memberIds.length ?? 0;
     };
 
     return (
@@ -106,13 +137,16 @@ export default function PropertyPermissions() {
                                             onClick={() => handleAddTeamMember(property.id)}
                                             className="w-full sm:w-auto px-5 py-2 bg-[#4A9B8E] text-white text-sm font-medium rounded-lg hover:bg-[#3d8275] transition-colors"
                                         >
-                                            Add Team member
+                                            Add Team member ({getAssignedCount(property.id)})
                                         </button>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     ))}
+                    {paginatedProperties.length === 0 && (
+                        <p className="text-sm text-gray-500">No properties found.</p>
+                    )}
                 </div>
 
                 {/* Pagination */}

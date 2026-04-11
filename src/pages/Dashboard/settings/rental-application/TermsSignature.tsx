@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { ReactNode } from "react";
 import Toggle from "../../../../components/Toggle";
+import { useGetSettingsSection, useUpdateSettingsSection } from "../../../../hooks/useSettingsQueries";
 
 interface SectionConfig {
     title: string;
@@ -65,8 +66,17 @@ const SettingSection = ({ config, isFirst = false, toggleState, onToggleChange }
 };
 
 export default function TermsSignature() {
+    const { data } = useGetSettingsSection<{ eSignEnabled: boolean }>("rental_terms_signature");
+    const updateSettings = useUpdateSettingsSection<{ eSignEnabled: boolean }>("rental_terms_signature");
     const [eSignEnabled, setESignEnabled] = useState(true);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const persistedValue = data?.values?.eSignEnabled;
+        if (typeof persistedValue === "boolean") {
+            setESignEnabled(persistedValue);
+        }
+    }, [data]);
 
     const sections: SectionConfig[] = [
         {
@@ -113,7 +123,10 @@ export default function TermsSignature() {
                     config={section}
                     isFirst={index === 0}
                     toggleState={section.actionType === "toggle" ? eSignEnabled : undefined}
-                    onToggleChange={section.actionType === "toggle" ? setESignEnabled : undefined}
+                    onToggleChange={section.actionType === "toggle" ? (value) => {
+                        setESignEnabled(value);
+                        updateSettings.mutate({ eSignEnabled: value });
+                    } : undefined}
                 />
             ))}
         </div>

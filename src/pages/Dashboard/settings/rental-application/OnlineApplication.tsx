@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Lightbulb } from "lucide-react";
+import { useGetSettingsSection, useUpdateSettingsSection } from "../../../../hooks/useSettingsQueries";
 
 interface FeeCollectionOption {
     value: "auto" | "request";
@@ -18,7 +19,21 @@ const FEE_COLLECTION_OPTIONS: FeeCollectionOption[] = [
 ];
 
 export default function OnlineApplication() {
+    const { data } = useGetSettingsSection<{ feeCollection: "auto" | "request" }>("rental_online_application");
+    const updateSettings = useUpdateSettingsSection<{ feeCollection: "auto" | "request" }>("rental_online_application");
     const [feeCollection, setFeeCollection] = useState<"auto" | "request">("auto");
+
+    useEffect(() => {
+        const value = data?.values?.feeCollection;
+        if (value === "auto" || value === "request") {
+            setFeeCollection(value);
+        }
+    }, [data]);
+
+    const handleChange = (value: "auto" | "request") => {
+        setFeeCollection(value);
+        updateSettings.mutate({ feeCollection: value });
+    };
 
     return (
         <div className="space-y-6">
@@ -45,7 +60,7 @@ export default function OnlineApplication() {
                                 name="feeCollection"
                                 value={option.value}
                                 checked={feeCollection === option.value}
-                                onChange={() => setFeeCollection(option.value)}
+                                onChange={() => handleChange(option.value)}
                                 className="peer sr-only"
                             />
                             <div

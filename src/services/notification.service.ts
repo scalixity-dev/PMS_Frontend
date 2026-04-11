@@ -22,6 +22,26 @@ export interface NotificationsListResponse {
   };
 }
 
+export interface NotificationSettings {
+  emailNotification: boolean;
+  moreActivity: boolean;
+  newsAndUpdates: boolean;
+  notificationChannel: boolean;
+  feedbackNotification: boolean;
+  integrationAlert: boolean;
+  leadsFrequency: 'frequency' | 'instant' | 'hourly' | 'daily';
+}
+
+export interface UpdateNotificationSettingsRequest {
+  emailNotification?: boolean;
+  moreActivity?: boolean;
+  newsAndUpdates?: boolean;
+  notificationChannel?: boolean;
+  feedbackNotification?: boolean;
+  integrationAlert?: boolean;
+  leadsFrequency?: 'frequency' | 'instant' | 'hourly' | 'daily';
+}
+
 export const notificationService = {
   /**
    * Get all notifications with pagination
@@ -137,6 +157,39 @@ export const notificationService = {
 
     if (!response.ok) {
       throw new Error(`Failed to delete notification: ${response.statusText}`);
+    }
+
+    return response.json();
+  },
+
+  async getSettings(): Promise<NotificationSettings> {
+    const response = await fetch(API_ENDPOINTS.NOTIFICATION.GET_SETTINGS, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch notification settings: ${response.statusText}`);
+    }
+
+    return response.json();
+  },
+
+  async updateSettings(data: UpdateNotificationSettingsRequest): Promise<NotificationSettings> {
+    const response = await fetch(API_ENDPOINTS.NOTIFICATION.UPDATE_SETTINGS, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to update notification settings: ${response.statusText}`);
     }
 
     return response.json();
