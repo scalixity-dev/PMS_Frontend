@@ -1,10 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
 import Toggle from "../../../../components/Toggle";
 import CustomDropdown from "../../../Dashboard/components/CustomDropdown";
+import { useGetTenantPreferences, useSaveTenantPreferences } from "../../../../hooks/useTenantQueries";
 
 const PublicRenterProfile: React.FC = () => {
+    const { data: prefs } = useGetTenantPreferences();
+    const savePrefs = useSaveTenantPreferences();
+
     const [lookingForPlace, setLookingForPlace] = useState(true);
     const [petsAllowed, setPetsAllowed] = useState(true);
     const [location, setLocation] = useState("");
@@ -15,6 +19,27 @@ const PublicRenterProfile: React.FC = () => {
     const [maxPrice, setMaxPrice] = useState(10000);
     const [renterType, setRenterType] = useState("");
     const [size, setSize] = useState("");
+    const [saveStatus, setSaveStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+
+    // Load from API
+    useEffect(() => {
+        if (prefs) {
+            const loc = prefs.location;
+            if (loc) {
+                setLocation([loc.city, loc.state, loc.country].filter(Boolean).join(', '));
+            }
+            if (Array.isArray(prefs.rentalTypes) && prefs.rentalTypes.length > 0) {
+                setRenterType(prefs.rentalTypes[0]);
+            }
+            if (prefs.criteria) {
+                if (prefs.criteria.beds) setBeds(prefs.criteria.beds);
+                if (prefs.criteria.baths) setBaths(prefs.criteria.baths);
+                if (typeof prefs.criteria.minPrice === 'number') setMinPrice(prefs.criteria.minPrice);
+                if (typeof prefs.criteria.maxPrice === 'number') setMaxPrice(prefs.criteria.maxPrice);
+                if (typeof prefs.criteria.petsAllowed === 'boolean') setPetsAllowed(prefs.criteria.petsAllowed);
+            }
+        }
+    }, [prefs]);
 
     const bedsOptions = [
         { label: "Any", value: "Any" },
@@ -50,19 +75,44 @@ const PublicRenterProfile: React.FC = () => {
     const MAX_VAL = 20000;
     const MIN_VAL = 0;
 
-    const handleUpdate = () => {
-        console.log("Updating preferences...", {
-            lookingForPlace,
-            location,
-            profileLink,
-            beds,
-            baths,
-            minPrice,
-            maxPrice,
-            renterType,
-            size,
-            petsAllowed
-        });
+    const handleUpdate = async () => {
+        setSaveStatus(null);
+
+        // Parse location "city, state, country" or fall back
+        const parts = location.split(',').map(s => s.trim()).filter(Boolean);
+        const locationObj = {
+            city: parts[0] || '',
+            state: parts[1] || '',
+            country: parts[2] || '',
+        };
+
+        if (!locationObj.city || !locationObj.state || !locationObj.country) {
+            setSaveStatus({ type: 'error', msg: 'Location must be in format: City, State, Country' });
+            return;
+        }
+
+        if (!renterType) {
+            setSaveStatus({ type: 'error', msg: 'Please select a renter type' });
+            return;
+        }
+
+        try {
+            await savePrefs.mutateAsync({
+                location: locationObj,
+                rentalTypes: [renterType],
+                criteria: {
+                    beds: beds === 'Any' ? null : beds,
+                    baths: baths === 'Any' ? null : baths,
+                    minPrice,
+                    maxPrice,
+                    petsAllowed,
+                },
+            });
+            setSaveStatus({ type: 'success', msg: 'Preferences saved' });
+            setTimeout(() => setSaveStatus(null), 2000);
+        } catch (err: any) {
+            setSaveStatus({ type: 'error', msg: err?.message || 'Save failed' });
+        }
     };
 
     return (
@@ -280,10 +330,15 @@ const PublicRenterProfile: React.FC = () => {
                                     />
                                 </div>
 
+                                {saveStatus && (
+                                    <div className={`rounded-md p-2 text-xs ${saveStatus.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+                                        {saveStatus.msg}
+                                    </div>
+                                )}
                                 {/* Update Button */}
                                 <PrimaryActionButton
                                     onClick={handleUpdate}
-                                    text="Update"
+                                    text={savePrefs.isPending ? 'Saving...' : 'Update'}
                                     className="w-full sm:w-auto"
                                 />
                             </div>
