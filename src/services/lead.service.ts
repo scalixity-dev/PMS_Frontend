@@ -195,7 +195,10 @@ class LeadService {
       await handleApiError(response, 'Failed to fetch leads');
     }
 
-    return response.json();
+    const data = await response.json();
+    if (Array.isArray(data)) return data;
+    if (data && typeof data === 'object' && Array.isArray(data.data)) return data.data;
+    return [];
   }
 
   /**
