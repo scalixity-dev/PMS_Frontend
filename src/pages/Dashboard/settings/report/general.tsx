@@ -1,11 +1,24 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ReportSettingsLayout } from "../../../../components/common/ReportSettingsLayout";
 import Toggle from "../../../../components/Toggle";
 import { User } from "lucide-react";
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
 import CustomDropdown from "../../components/CustomDropdown";
+import { useGetSettingsSection, useUpdateSettingsSection } from "../../../../hooks/useSettingsQueries";
+
+interface ReportGeneralValues {
+    orientation: string;
+    autoSetRotation: string;
+    scaling: string;
+    displayGridlines: boolean;
+    repeatHeadings: boolean;
+    displayStriped: boolean;
+    displayEveryProperty: boolean;
+}
 
 const GeneralReportSettings: React.FC = () => {
+    const { data } = useGetSettingsSection<ReportGeneralValues>("reports_general");
+    const updateSettings = useUpdateSettingsSection<ReportGeneralValues>("reports_general");
     const [orientation, setOrientation] = useState("");
     const [autoSetRotation, setAutoSetRotation] = useState("");
     const [scaling, setScaling] = useState("");
@@ -32,6 +45,31 @@ const GeneralReportSettings: React.FC = () => {
     ];
 
     const dropdownButtonClass = "w-full flex items-center justify-between bg-white border border-[#E8E8E8] text-gray-500 text-sm rounded-lg px-4 py-2.5 hover:border-gray-400 focus:ring-2 focus:ring-[#7BD747] transition-all";
+
+    useEffect(() => {
+        if (data?.values) {
+            setOrientation(data.values.orientation ?? "");
+            setAutoSetRotation(data.values.autoSetRotation ?? "");
+            setScaling(data.values.scaling ?? "");
+            setDisplayGridlines(Boolean(data.values.displayGridlines));
+            setRepeatHeadings(Boolean(data.values.repeatHeadings));
+            setDisplayStriped(Boolean(data.values.displayStriped));
+            setDisplayEveryProperty(Boolean(data.values.displayEveryProperty));
+        }
+    }, [data]);
+
+    const persist = (next: Partial<ReportGeneralValues> = {}) => {
+        updateSettings.mutate({
+            orientation,
+            autoSetRotation,
+            scaling,
+            displayGridlines,
+            repeatHeadings,
+            displayStriped,
+            displayEveryProperty,
+            ...next,
+        });
+    };
 
     return (
         <ReportSettingsLayout activeTab="general">
@@ -91,7 +129,7 @@ const GeneralReportSettings: React.FC = () => {
                     </div>
                 </div>
 
-                <PrimaryActionButton text="Update" />
+                <PrimaryActionButton text="Update" onClick={() => persist()} />
             </section>
 
             {/* Scaling */}
@@ -113,7 +151,7 @@ const GeneralReportSettings: React.FC = () => {
                     />
                 </div>
 
-                <PrimaryActionButton text="Update" />
+                <PrimaryActionButton text="Update" onClick={() => persist()} />
             </section>
 
             {/* Format */}
@@ -130,22 +168,34 @@ const GeneralReportSettings: React.FC = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
                     <div className="flex items-center gap-3">
-                        <Toggle checked={displayGridlines} onChange={setDisplayGridlines} />
+                        <Toggle checked={displayGridlines} onChange={(value) => {
+                            setDisplayGridlines(value);
+                            persist({ displayGridlines: value });
+                        }} />
                         <span className="text-sm font-medium text-gray-700">Display Gridlines</span>
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <Toggle checked={repeatHeadings} onChange={setRepeatHeadings} />
+                        <Toggle checked={repeatHeadings} onChange={(value) => {
+                            setRepeatHeadings(value);
+                            persist({ repeatHeadings: value });
+                        }} />
                         <span className="text-sm font-medium text-gray-700">Repeat headings on each page</span>
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <Toggle checked={displayStriped} onChange={setDisplayStriped} />
+                        <Toggle checked={displayStriped} onChange={(value) => {
+                            setDisplayStriped(value);
+                            persist({ displayStriped: value });
+                        }} />
                         <span className="text-sm font-medium text-gray-700">Display Striped row</span>
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <Toggle checked={displayEveryProperty} onChange={setDisplayEveryProperty} />
+                        <Toggle checked={displayEveryProperty} onChange={(value) => {
+                            setDisplayEveryProperty(value);
+                            persist({ displayEveryProperty: value });
+                        }} />
                         <span className="text-sm font-medium text-gray-700">Display every property on each page</span>
                     </div>
                 </div>

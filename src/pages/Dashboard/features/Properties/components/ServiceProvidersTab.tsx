@@ -4,7 +4,7 @@ import SectionHeader from './SectionHeader';
 import ResponsibilityModal, { type ResponsibilityItem } from './ResponsibilityModal';
 import AddUtilityProviderModal from './AddUtilityProviderModal';
 import { currencyOptions } from '../../../../../components/ui/CurrencySelector';
-import { useGetPropertyServiceProviders } from '../../../../../hooks/usePropertyDetailQueries';
+import { useCreateUtilityProvider, useGetPropertyServiceProviders } from '../../../../../hooks/usePropertyDetailQueries';
 
 // --- Types ---
 interface DetailField {
@@ -13,7 +13,7 @@ interface DetailField {
 }
 
 interface ServiceProviderRecord {
-    id: number;
+    id: number | string;
     avatar: string;
     serviceType: string;
     details: DetailField[];
@@ -65,41 +65,29 @@ const ServiceProvidersTab: React.FC<ServiceProvidersTabProps> = ({ propertyId, u
 
     // Fetch real service providers data
     const { data: providersData = {}, isLoading, error } = useGetPropertyServiceProviders(propertyId, unitId);
+    const createUtilityProviderMutation = useCreateUtilityProvider();
     const assignedServiceProviders = providersData.assignedServiceProviders || [];
     const realUtilityProviders = providersData.utilityProviders || [];
 
-    const [utilityProviders, setUtilityProviders] = React.useState<ServiceProviderRecord[]>([
-        {
-            id: 1,
-            avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=256&q=80',
-            serviceType: 'Cable/Satellite',
-            details: [
-                { label: 'Service Pro', value: 'DirectTV Services Inc.' },
-                { label: 'Phone number', value: '+91 78541 23697' },
-                { label: 'Email', value: 'support@directtv.com' },
-                { label: 'Estimated monthly cost', value: '$85.00' },
-                { label: 'Website', value: 'https://www.directtv.com' },
-            ]
-        }
-    ]);
+    const mapProviderTypeToServiceType = (providerType: string) => {
+        const normalized = providerType.toUpperCase();
+        if (normalized.includes('WATER') || normalized.includes('SEWER')) return 'WATER';
+        if (normalized.includes('GAS')) return 'GAS';
+        if (normalized.includes('INTERNET') || normalized.includes('CABLE') || normalized.includes('PHONE')) return 'INTERNET';
+        if (normalized.includes('ELECTRIC')) return 'ELECTRICITY';
+        return 'OTHER';
+    };
 
-    const handleAddUtilityProvider = (data: { providerType: string; servicePro: string; estimatedCost: string; currency: string }) => {
+    const handleAddUtilityProvider = async (data: { providerType: string; servicePro: string; estimatedCost: string; currency: string }) => {
         const currencySymbol = currencyOptions.find(c => c.code === data.currency)?.symbol || data.currency || '$';
-
-        const newProvider: ServiceProviderRecord = {
-            id: Date.now(),
-            avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=256&q=80', // Placeholder
-            serviceType: data.providerType,
-            details: [
-                { label: 'Service Pro', value: data.servicePro },
-                { label: 'Estimated monthly cost', value: data.estimatedCost ? `${currencySymbol}${data.estimatedCost}` : '-' },
-                // Mocking other required details for display consistency
-                { label: 'Phone number', value: '-' },
-                { label: 'Email', value: '-' },
-                { label: 'Website', value: '-' },
-            ]
-        };
-        setUtilityProviders([...utilityProviders, newProvider]);
+        await createUtilityProviderMutation.mutateAsync({
+            propertyId,
+            providerData: {
+                providerName: data.servicePro,
+                serviceType: mapProviderTypeToServiceType(data.providerType),
+                notes: data.estimatedCost ? `Estimated monthly cost: ${currencySymbol}${data.estimatedCost}` : undefined,
+            },
+        });
     };
 
     if (isLoading) {
@@ -165,16 +153,30 @@ const ServiceProvidersTab: React.FC<ServiceProvidersTabProps> = ({ propertyId, u
             <div className="bg-[#E9E9E9] shadow-lg rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6">
                 <SectionHeader
                     title="Utility providers"
-                    count={utilityProviders.length}
+                    count={realUtilityProviders.length}
                     onAction={() => setIsAddUtilityModalOpen(true)}
                 />
                 <div>
-                    {utilityProviders.map(record => (
+                    {realUtilityProviders.map((provider: any) => {
+                        const record: ServiceProviderRecord = {
+                            id: provider.id,
+                            avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=256&q=80',
+                            serviceType: provider.serviceType || 'OTHER',
+                            details: [
+                                { label: 'Provider', value: provider.providerName || '-' },
+                                { label: 'Contact', value: provider.contactName || '-' },
+                                { label: 'Phone number', value: provider.contactPhone || '-' },
+                                { label: 'Account #', value: provider.accountNumber || '-' },
+                                { label: 'Notes', value: provider.notes || '-' },
+                            ],
+                        };
+                        return (
                         <ServiceProviderCard
-                            key={record.id}
+                            key={String(record.id)}
                             record={record}
                         />
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
 

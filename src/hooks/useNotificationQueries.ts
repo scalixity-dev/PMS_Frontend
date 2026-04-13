@@ -6,6 +6,7 @@ export const notificationQueryKeys = {
   list: () => [...notificationQueryKeys.all, 'list'] as const,
   detail: (id: string) => [...notificationQueryKeys.all, id] as const,
   unreadCount: () => [...notificationQueryKeys.all, 'unreadCount'] as const,
+  settings: () => [...notificationQueryKeys.all, 'settings'] as const,
 };
 
 /**
@@ -76,6 +77,29 @@ export const useDeleteNotification = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: notificationQueryKeys.list() });
       queryClient.invalidateQueries({ queryKey: notificationQueryKeys.unreadCount() });
+    },
+  });
+};
+
+export const useGetNotificationSettings = (enabled: boolean = true) => {
+  return useQuery({
+    queryKey: notificationQueryKeys.settings(),
+    queryFn: () => notificationService.getSettings(),
+    enabled,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+};
+
+export const useUpdateNotificationSettings = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: Parameters<typeof notificationService.updateSettings>[0]) =>
+      notificationService.updateSettings(data),
+    onSuccess: (settings) => {
+      queryClient.setQueryData(notificationQueryKeys.settings(), settings);
     },
   });
 };

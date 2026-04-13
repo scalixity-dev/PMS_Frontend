@@ -1,148 +1,210 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 
 import profilePic from "../../assets/images/profilepic.png";
 import propertyPic from "../../assets/images/propertypic.png";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useGetDashboardStats } from '../../hooks/useDashboardQueries';
+import { useGetAllTasks } from '../../hooks/useTaskQueries';
+import { useGetAllApplications } from '../../hooks/useApplicationQueries';
+import { useGetAllMaintenanceRequests } from '../../hooks/useMaintenanceRequestQueries';
+import { useGetAllProperties } from '../../hooks/usePropertyQueries';
+import { useGetAllLeases } from '../../hooks/useLeaseQueries';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
   const { data: dashboardStats } = useGetDashboardStats();
-  // Data for charts
-  const accountingData = [
-    { name: '11 Nov', value: 2000 },
-    { name: '12 Nov', value: 3000 },
-    { name: '13 Nov', value: 3500 },
-    { name: '14 Nov', value: 4500 },
-    { name: '15 Nov', value: 2500 },
-    { name: '16 Nov', value: 3200 },
-    { name: '17 Nov', value: 4000 },
-    { name: '18 Nov', value: 3800 },
-  ];
+  const { data: tasksData = [] } = useGetAllTasks();
+  const { data: applicationsResponse = [] } = useGetAllApplications();
+  const { data: maintenanceData = [] } = useGetAllMaintenanceRequests(true);
+  const { data: propertiesData = [] } = useGetAllProperties(true, false);
+  const { data: leasesData = [] } = useGetAllLeases(undefined, undefined, true);
 
-  const leasesFunnelData = [
-    { name: 'Active Leases', value: 410, color: '#3b82f6' },
-    { name: 'Future', value: 142, color: '#06b6d4' },
-    { name: 'Leases Drafted', value: 340, color: '#f97316' },
-    { name: 'Leases Ended', value: 590, color: '#fbbf24' },
-  ];
+  const applicationsData = useMemo(() => {
+    if (Array.isArray(applicationsResponse)) return applicationsResponse;
+    return applicationsResponse?.data || applicationsResponse?.applications || [];
+  }, [applicationsResponse]);
 
-  const propertiesUnitsData = [
-    { name: 'Occupied', value: 65, color: '#8b5cf6' },
-    { name: 'Vacant', value: 35, color: '#c084fc' },
-  ];
+  const accountingData = useMemo(() => ([
+    { name: 'Income', value: Number(dashboardStats?.financial.thisMonthIncome || 0) },
+    { name: 'Expenses', value: Number(dashboardStats?.financial.thisMonthExpenses || 0) },
+    { name: 'NOI', value: Number(dashboardStats?.financial.thisMonthNOI || 0) },
+    { name: 'Overdue', value: Number(dashboardStats?.financial.overdueInvoicesAmount || 0) },
+  ]), [dashboardStats]);
 
-  const depositsData = [
-    { name: 'Credits', value: 245, color: '#f97316' },
-    { name: 'Security deposits', value: 610, color: '#06b6d4' },
-    { name: 'Other deposits', value: 1775, color: '#fbbf24' },
-  ];
+  const leasesFunnelData = useMemo(() => ([
+    { name: 'Pending Apps', value: Number(dashboardStats?.applications.pending || 0), color: '#3b82f6' },
+    { name: 'Approved Apps', value: Number(dashboardStats?.applications.approved || 0), color: '#06b6d4' },
+    { name: 'Rejected Apps', value: Number(dashboardStats?.applications.rejected || 0), color: '#f97316' },
+    { name: 'Active Tenants', value: Number(dashboardStats?.overview.tenantsCount || 0), color: '#fbbf24' },
+  ]), [dashboardStats]);
 
-  const tasks = [
-    { id: 1, title: "Verify props", subtitle: "54321, ABC 123 st ave", avatar: profilePic },
-    { id: 2, title: "Verify props", subtitle: "54321, ABC 123 st ave", avatar: profilePic },
-  ];
+  const propertiesUnitsData = useMemo(() => {
+    const total = propertiesData.length;
+    if (!total) {
+      return [
+        { name: 'Occupied', value: 0, color: '#8b5cf6' },
+        { name: 'Vacant', value: 0, color: '#c084fc' },
+      ];
+    }
+    const vacant = propertiesData.filter((property: any) =>
+      Array.isArray(property.listings) && property.listings.some((listing: any) => listing?.occupancyStatus === 'VACANT')
+    ).length;
+    const occupied = Math.max(total - vacant, 0);
+    return [
+      { name: 'Occupied', value: occupied, color: '#8b5cf6' },
+      { name: 'Vacant', value: vacant, color: '#c084fc' },
+    ];
+  }, [propertiesData]);
 
-  const applications = [
-    { id: 1, title: "America Apartment", subtitle: "54321, ABC 123 st ave", avatar: profilePic },
-  ];
+  const depositsData = useMemo(() => ([
+    { name: 'Income', value: Number(dashboardStats?.financial.thisMonthIncome || 0), color: '#f97316' },
+    { name: 'Expenses', value: Number(dashboardStats?.financial.thisMonthExpenses || 0), color: '#06b6d4' },
+    { name: 'Overdue', value: Number(dashboardStats?.financial.overdueInvoicesAmount || 0), color: '#fbbf24' },
+  ]), [dashboardStats]);
 
-  const maintenanceItems = [
-    {
-      id: 1,
-      iconType: "wrench",
-      type: "Plumbing",
-      location: "721 Meadowview",
-      request: "MR-001",
-      issue: "Broken Garbage",
-      assignee: "Jacob Jones",
-      avatar: profilePic,
-    },
-    {
-      id: 2,
-      iconType: "bolt",
-      type: "Electrical",
-      location: "721 Meadowview",
-      request: "MR-001",
-      issue: "No Heat Bathroom",
-      assignee: "Albert Flores",
-      avatar: profilePic,
-    },
-    {
-      id: 3,
-      iconType: "snowflake",
-      type: "HVAC",
-      location: "721 Meadowview",
-      request: "MR-001",
-      issue: "Non Functional Fan",
-      assignee: "Robert Fox",
-      avatar: profilePic,
-    },
-  ];
+  const tasks = useMemo(() => {
+    return (tasksData as any[]).slice(0, 3).map((task) => ({
+      id: task.id,
+      title: task.title || 'Untitled Task',
+      subtitle: task.property || task.date || '-',
+      avatar: task.avatar || profilePic,
+    }));
+  }, [tasksData]);
 
-  const properties = [
-    {
-      id: 1,
-      image: propertyPic,
-      address: "123 Maple Avenue Springfield",
-      unit: "75 Scheme No 78 - H",
-      status: "Vacant",
-    },
-    {
-      id: 2,
-      image: propertyPic,
-      address: "123 Maple Avenue Springfield",
-      unit: "75 Scheme No 78 - H",
-      status: "Vacant",
-    },
-    {
-      id: 3,
-      image: propertyPic,
-      address: "123 Maple Avenue Springfield",
-      unit: "75 Scheme No 78 - H",
-      status: "Occupied",
-    },
-  ];
+  const applications = useMemo(() => {
+    return (applicationsData as any[]).slice(0, 3).map((app: any) => {
+      const property = app.leasing?.property;
+      const address = property?.address
+        ? [
+          property.address.streetAddress,
+          property.address.city,
+          property.address.stateRegion,
+          property.address.zipCode,
+        ].filter(Boolean).join(', ')
+        : '-';
+      return {
+        id: app.id,
+        title: property?.propertyName || 'Application',
+        subtitle: address,
+        avatar: app.imageUrl || profilePic,
+      };
+    });
+  }, [applicationsData]);
 
-  const leases = [
-    {
-      id: 1,
-      property: "America Apartment",
-      address: "54321, ABC 123 st ave",
-      avatar: profilePic,
-      tenant: "Jacob Jones",
-    },
-    {
-      id: 2,
-      property: "America Apartment",
-      address: "54321, ABC 123 st ave",
-      avatar: profilePic,
-      tenant: "Jacob Jones",
-    },
-  ];
+  const maintenanceItems = useMemo(() => {
+    return (maintenanceData as any[]).slice(0, 3).map((item: any) => {
+      const assignment = Array.isArray(item.assignments) ? item.assignments[0] : undefined;
+      const assigneeName =
+        assignment?.serviceProvider?.companyName ||
+        assignment?.assignedToUser?.fullName ||
+        assignment?.assignedToUser?.email ||
+        'Unassigned';
+      return {
+        id: item.id,
+        iconType: item.category === 'ELECTRICAL' ? 'bolt' : item.category === 'HVAC' ? 'snowflake' : 'wrench',
+        type: item.category || 'Maintenance',
+        location: item.property?.propertyName || '-',
+        request: item.id?.slice(0, 8) || '-',
+        issue: item.title || item.subcategory || '-',
+        assignee: assigneeName,
+        avatar: profilePic,
+      };
+    });
+  }, [maintenanceData]);
+
+  const properties = useMemo(() => {
+    return (propertiesData as any[]).slice(0, 3).map((property: any) => {
+      const address = property.address
+        ? [
+          property.address.streetAddress,
+          property.address.city,
+          property.address.stateRegion,
+        ].filter(Boolean).join(', ')
+        : property.propertyName || '-';
+      const isVacant = Array.isArray(property.listings)
+        ? property.listings.some((listing: any) => listing?.occupancyStatus === 'VACANT')
+        : false;
+      return {
+        id: property.id,
+        image: property.coverPhotoUrl || property.photos?.[0]?.photoUrl || propertyPic,
+        address,
+        unit: property.propertyName || 'Property',
+        status: isVacant ? 'Vacant' : 'Occupied',
+      };
+    });
+  }, [propertiesData]);
+
+  const leases = useMemo(() => {
+    return (leasesData as any[])
+      .filter((lease: any) => !!lease.endDate)
+      .sort((a: any, b: any) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime())
+      .slice(0, 3)
+      .map((lease: any) => {
+        const property = lease.property;
+        const address = property?.address
+          ? [
+            property.address.streetAddress,
+            property.address.city,
+            property.address.stateRegion,
+          ].filter(Boolean).join(', ')
+          : '-';
+        return {
+          id: lease.id,
+          property: property?.propertyName || 'Lease',
+          address,
+          avatar: lease.tenant?.tenantProfile?.profilePhotoUrl || profilePic,
+          tenant: lease.tenant?.fullName || lease.tenant?.email || 'Tenant',
+        };
+      });
+  }, [leasesData]);
+
+  const leaseAverageWeeks = useMemo(() => {
+    const now = Date.now();
+    const activeLeasesWithEndDate = (leasesData as any[])
+      .filter((lease: any) => lease?.endDate && new Date(lease.endDate).getTime() > now);
+    if (activeLeasesWithEndDate.length === 0) return 0;
+
+    const avgWeeks = activeLeasesWithEndDate
+      .map((lease: any) => (new Date(lease.endDate).getTime() - now) / (1000 * 60 * 60 * 24 * 7))
+      .reduce((sum: number, weeks: number) => sum + weeks, 0) / activeLeasesWithEndDate.length;
+
+    return Number(avgWeeks.toFixed(2));
+  }, [leasesData]);
+
+  const depositsHeldPercent = useMemo(() => {
+    const total = depositsData.reduce((sum, item) => sum + Number(item.value || 0), 0);
+    if (total <= 0) return 0;
+    const incomeValue = Number(depositsData.find((item) => item.name === 'Income')?.value || 0);
+    return Math.round((incomeValue / total) * 100);
+  }, [depositsData]);
+
+  const todayLabel = useMemo(
+    () => new Date().toLocaleDateString('en-US', { weekday: 'long', day: '2-digit', month: 'short' }),
+    [],
+  );
 
   const metrics = [
     {
       label: "Total Income",
       value: `${dashboardStats?.financial.thisMonthIncome ? Math.round((dashboardStats.financial.thisMonthIncome / (dashboardStats.financial.thisMonthIncome + dashboardStats.financial.thisMonthExpenses) * 100)) || 0 : 0}%`,
       amount: `$${(dashboardStats?.financial.thisMonthIncome || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      change: "+3.96%",
+      change: "Live",
       color: "text-orange-500",
     },
     {
       label: "Total Overdue",
       value: `${dashboardStats?.financial.overdueInvoicesCount || 0} invoices`,
       amount: `$${(dashboardStats?.financial.overdueInvoicesAmount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      change: "+0.46%",
+      change: "Live",
       color: "text-blue-600",
     },
     {
       label: "Total Expenses",
       value: `${dashboardStats?.financial.thisMonthExpenses ? Math.round((dashboardStats.financial.thisMonthExpenses / (dashboardStats.financial.thisMonthIncome + dashboardStats.financial.thisMonthExpenses) * 100)) || 0 : 0}%`,
       amount: `$${(dashboardStats?.financial.thisMonthExpenses || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      change: "+9.13%",
+      change: "Live",
       color: "text-orange-500",
     },
   ];
@@ -168,7 +230,7 @@ export default function Dashboard() {
           </div>
           <div className="space-y-3">
             <div>
-              <p className="text-sm font-medium text-gray-900">Today, 08 Nov</p>
+              <p className="text-sm font-medium text-gray-900">{todayLabel}</p>
               <p className="text-xs text-gray-500">There are no reminders for today</p>
             </div>
           </div>
@@ -198,7 +260,9 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="space-y-3">
-            {tasks.map((task, idx) => (
+            {tasks.length === 0 ? (
+              <p className="text-sm text-gray-500">No tasks found.</p>
+            ) : tasks.map((task, idx) => (
               <div key={task.id} className="flex items-center justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3">
@@ -232,7 +296,9 @@ export default function Dashboard() {
             </button>
           </div>
           <div className="space-y-3">
-            {applications.map((app, idx) => (
+            {applications.length === 0 ? (
+              <p className="text-sm text-gray-500">No applications found.</p>
+            ) : applications.map((app, idx) => (
               <div key={app.id} className="flex items-center justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3">
@@ -269,8 +335,10 @@ export default function Dashboard() {
           </div>
           <div className="mb-4">
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-gray-900">$ 3,600.00</span>
-              <span className="text-sm text-gray-500">This Week</span>
+              <span className="text-3xl font-bold text-gray-900">
+                ${Number(dashboardStats?.financial.thisMonthIncome || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+              <span className="text-sm text-gray-500">This Month</span>
             </div>
           </div>
           <div className="h-48">
@@ -324,7 +392,7 @@ export default function Dashboard() {
               </ResponsiveContainer>
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-gray-900">1.05</div>
+                  <div className="text-3xl font-bold text-gray-900">{leaseAverageWeeks.toFixed(2)}</div>
                   <div className="text-xs text-gray-500">Average Weeks</div>
                 </div>
               </div>
@@ -355,7 +423,9 @@ export default function Dashboard() {
             </button>
           </div>
           <div className="space-y-4">
-            {maintenanceItems.map((item, idx) => (
+            {maintenanceItems.length === 0 ? (
+              <p className="text-sm text-gray-500">No maintenance requests found.</p>
+            ) : maintenanceItems.map((item, idx) => (
               <React.Fragment key={item.id}>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-3 last:pb-0 gap-3 sm:gap-0">
                   <div className="flex-1 w-full sm:w-auto">
@@ -414,7 +484,9 @@ export default function Dashboard() {
             </button>
           </div>
           <div className="space-y-4">
-            {properties.map((property, idx) => (
+            {properties.length === 0 ? (
+              <p className="text-sm text-gray-500">No properties found.</p>
+            ) : properties.map((property, idx) => (
               <div key={property.id} className="flex items-center justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-4">
@@ -527,7 +599,7 @@ export default function Dashboard() {
                   {metric.amount && (
                     <p className="text-lg font-bold text-gray-900">{metric.amount}</p>
                   )}
-                  <p className={`text-xs font-medium ${metric.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
+                  <p className={`text-xs font-medium ${metric.change.startsWith('+') ? 'text-green-600' : metric.change.startsWith('-') ? 'text-red-600' : 'text-gray-500'}`}>
                     {metric.change}
                   </p>
                 </div>
@@ -559,7 +631,7 @@ export default function Dashboard() {
             </ResponsiveContainer>
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">
-                <div className="text-4xl font-bold text-gray-900">69%</div>
+                <div className="text-4xl font-bold text-gray-900">{depositsHeldPercent}%</div>
               </div>
             </div>
           </div>
@@ -594,7 +666,9 @@ export default function Dashboard() {
               </button>
             </div>
             <div className="space-y-3">
-              {leases.map((lease, idx) => (
+              {leases.length === 0 ? (
+                <p className="text-sm text-gray-500">No expiring leases found.</p>
+              ) : leases.map((lease, idx) => (
                 <div key={lease.id} className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
@@ -631,8 +705,14 @@ export default function Dashboard() {
               </button>
             </div>
             <div className="text-center py-8">
-              <p className="text-base font-semibold text-gray-900">No overdue invoices</p>
-              <p className="text-sm text-gray-500 mt-1">There are no overdue invoices.</p>
+              <p className="text-base font-semibold text-gray-900">
+                {Number(dashboardStats?.financial.overdueInvoicesCount || 0) === 0
+                  ? 'No overdue invoices'
+                  : `${dashboardStats?.financial.overdueInvoicesCount || 0} overdue invoices`}
+              </p>
+              <p className="text-sm text-gray-500 mt-1">
+                Amount: ${Number(dashboardStats?.financial.overdueInvoicesAmount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
             </div>
           </div>
         </div>

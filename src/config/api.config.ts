@@ -324,14 +324,20 @@ export const API_ENDPOINTS = {
   },
   NOTIFICATION: {
     GET_ALL: `${API_BASE_URL}/notifications`,
+    GET_SETTINGS: `${API_BASE_URL}/notifications/settings`,
+    UPDATE_SETTINGS: `${API_BASE_URL}/notifications/settings`,
     GET_ONE: (id: string) => `${API_BASE_URL}/notifications/${id}`,
     MARK_READ: (id: string) => `${API_BASE_URL}/notifications/${id}/read`,
     MARK_ALL_READ: `${API_BASE_URL}/notifications/read-all`,
     DELETE: (id: string) => `${API_BASE_URL}/notifications/${id}`,
+  },
+  SETTINGS: {
+    GET_SECTION: (section: string) => `${API_BASE_URL}/settings/${section}`,
+    UPDATE_SECTION: (section: string) => `${API_BASE_URL}/settings/${section}`,
+    SECURITY_SESSIONS: `${API_BASE_URL}/settings/security/sessions`,
   },
   AI_CHAT: {
     STREAM: `${import.meta.env.VITE_AI_CHAT_API_URL || 'http://localhost:8000'}/chat/stream`,
     CHAT: `${import.meta.env.VITE_AI_CHAT_API_URL || 'http://localhost:8000'}/chat`,
   },
 };
-

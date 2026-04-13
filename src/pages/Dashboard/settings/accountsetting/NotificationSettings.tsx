@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AccountSettingsLayout } from "../../../../components/common/AccountSettingsLayout";
+import { useGetNotificationSettings, useUpdateNotificationSettings } from "../../../../hooks/useNotificationQueries";
 
 interface ToggleSwitchProps {
   checked: boolean;
@@ -71,18 +72,39 @@ function CheckboxRow({ label, description, checked, onToggle }: CheckboxRowProps
 }
 
 export default function NotificationSettings() {
-  // State for Toggles
+  const { data: settings, isLoading, isError } = useGetNotificationSettings();
+  const updateSettingsMutation = useUpdateNotificationSettings();
+
   const [emailNotification, setEmailNotification] = useState(true);
   const [moreActivity, setMoreActivity] = useState(true);
-
-  // State for Checkboxes
   const [newsSettings, setNewsSettings] = useState(true);
-  const [notificationChannel, setNotificationChannel] = useState(false); // Default unchecked as per "Black border" request context
+  const [notificationChannel, setNotificationChannel] = useState(false);
   const [feedbackNotification, setFeedbackNotification] = useState(true);
   const [integrationAlert, setIntegrationAlert] = useState(true);
-
-  // State for Dropdown
   const [leadsFrequency, setLeadsFrequency] = useState("frequency");
+
+  useEffect(() => {
+    if (!settings) return;
+    setEmailNotification(settings.emailNotification);
+    setMoreActivity(settings.moreActivity);
+    setNewsSettings(settings.newsAndUpdates);
+    setNotificationChannel(settings.notificationChannel);
+    setFeedbackNotification(settings.feedbackNotification);
+    setIntegrationAlert(settings.integrationAlert);
+    setLeadsFrequency(settings.leadsFrequency);
+  }, [settings]);
+
+  const patchSetting = (payload: {
+    emailNotification?: boolean;
+    moreActivity?: boolean;
+    newsAndUpdates?: boolean;
+    notificationChannel?: boolean;
+    feedbackNotification?: boolean;
+    integrationAlert?: boolean;
+    leadsFrequency?: "frequency" | "instant" | "hourly" | "daily";
+  }) => {
+    updateSettingsMutation.mutate(payload);
+  };
 
   return (
     <AccountSettingsLayout activeTab="notifications">
@@ -96,6 +118,15 @@ export default function NotificationSettings() {
         </section>
 
         <div className="space-y-10">
+          {isLoading && (
+            <p className="text-sm text-gray-500">Loading notification settings...</p>
+          )}
+          {isError && (
+            <p className="text-sm text-red-500">Failed to load notification settings.</p>
+          )}
+          {updateSettingsMutation.isPending && (
+            <p className="text-sm text-gray-500">Saving changes...</p>
+          )}
 
           {/* Email Notification */}
           <section>
@@ -108,7 +139,11 @@ export default function NotificationSettings() {
             <div className="flex items-center gap-3 mt-4">
               <ToggleSwitch
                 checked={emailNotification}
-                onChange={() => setEmailNotification(!emailNotification)}
+                onChange={() => {
+                  const next = !emailNotification;
+                  setEmailNotification(next);
+                  patchSetting({ emailNotification: next });
+                }}
               />
               <span className={`text-sm font-semibold ${emailNotification ? 'text-[#1F2933]' : 'text-[#1F2933]'}`}>
                 {emailNotification ? 'On' : 'Off'}
@@ -122,21 +157,33 @@ export default function NotificationSettings() {
               label="News and update settings"
               description="Get notification what's happening right now, you can turn off at any time"
               checked={newsSettings}
-              onToggle={() => setNewsSettings(!newsSettings)}
+              onToggle={() => {
+                const next = !newsSettings;
+                setNewsSettings(next);
+                patchSetting({ newsAndUpdates: next });
+              }}
             />
 
             <CheckboxRow
               label="Notification Channel"
               description="Get notification what's happening right now, you can turn off at any time"
               checked={notificationChannel}
-              onToggle={() => setNotificationChannel(!notificationChannel)}
+              onToggle={() => {
+                const next = !notificationChannel;
+                setNotificationChannel(next);
+                patchSetting({ notificationChannel: next });
+              }}
             />
 
             <CheckboxRow
               label="Feedback notifications"
               description="Get notification what's happening right now, you can turn off at any time"
               checked={feedbackNotification}
-              onToggle={() => setFeedbackNotification(!feedbackNotification)}
+              onToggle={() => {
+                const next = !feedbackNotification;
+                setFeedbackNotification(next);
+                patchSetting({ feedbackNotification: next });
+              }}
             />
           </section>
 
@@ -152,7 +199,11 @@ export default function NotificationSettings() {
               <div className="relative inline-block">
                 <select
                   value={leadsFrequency}
-                  onChange={(e) => setLeadsFrequency(e.target.value)}
+                  onChange={(e) => {
+                    const next = e.target.value as "frequency" | "instant" | "hourly" | "daily";
+                    setLeadsFrequency(next);
+                    patchSetting({ leadsFrequency: next });
+                  }}
                   className="h-10 w-[200px] rounded-md border border-[#E4E4E4] bg-white pl-4 pr-10 text-sm text-gray-500 shadow-sm appearance-none outline-none focus:border-[#7CD947] focus:ring-1 focus:ring-[#7CD947]"
                 >
                   <option value="frequency">Frequency</option>
@@ -180,7 +231,11 @@ export default function NotificationSettings() {
             <div className="flex items-center gap-3 mt-4">
               <ToggleSwitch
                 checked={moreActivity}
-                onChange={() => setMoreActivity(!moreActivity)}
+                onChange={() => {
+                  const next = !moreActivity;
+                  setMoreActivity(next);
+                  patchSetting({ moreActivity: next });
+                }}
               />
               <span className={`text-sm font-semibold ${moreActivity ? 'text-[#1F2933]' : 'text-[#1F2933]'}`}>
                 {moreActivity ? 'On' : 'Off'}
@@ -194,7 +249,11 @@ export default function NotificationSettings() {
               label="Integration Alert"
               description="Get notification what's happening right now, you can turn off at any time"
               checked={integrationAlert}
-              onToggle={() => setIntegrationAlert(!integrationAlert)}
+              onToggle={() => {
+                const next = !integrationAlert;
+                setIntegrationAlert(next);
+                patchSetting({ integrationAlert: next });
+              }}
             />
           </section>
 
@@ -203,7 +262,6 @@ export default function NotificationSettings() {
     </AccountSettingsLayout>
   );
 }
-
 
 
 

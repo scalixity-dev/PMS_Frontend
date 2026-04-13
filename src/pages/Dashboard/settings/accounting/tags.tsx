@@ -2,6 +2,7 @@ import { type FC, useState, useRef, useEffect } from "react";
 import { AccountingSettingsLayout } from "../../../../components/common/AccountingSettingsLayout";
 import Button from "../../../../components/common/Button";
 import { Plus, X, MoreHorizontal, Edit2, Trash2 } from "lucide-react";
+import { useGetSettingsSection, useUpdateSettingsSection } from "../../../../hooks/useSettingsQueries";
 
 interface Tag {
   id: string;
@@ -9,24 +10,27 @@ interface Tag {
   color: string;
 }
 
-const TAG_COLORS = [
-  "#FF9EA2", // Red/Pink
-  "#FFF59E", // Yellow
-  "#9EFFA6", // Green
-  "#9EDFFF", // Light Blue
-  "#AA9EFF", // Purple
-];
+interface TagSettingsValues {
+  tags: Tag[];
+}
+
+const TAG_COLORS = ["#FF9EA2", "#FFF59E", "#9EFFA6", "#9EDFFF", "#AA9EFF"];
 
 const AccountingTagsSettings: FC = () => {
-  const [tags, setTags] = useState<Tag[]>([
-    { id: "1", name: "Main", color: "#FFB5B9" }, // Example mock data matching image style loosely
-  ]);
+  const { data } = useGetSettingsSection<TagSettingsValues>("accounting_tags");
+  const updateSettings = useUpdateSettingsSection<TagSettingsValues>("accounting_tags");
+
+  const [tags, setTags] = useState<Tag[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newTagName, setNewTagName] = useState("");
   const [selectedColor, setSelectedColor] = useState(TAG_COLORS[0]);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
   const menuRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  useEffect(() => {
+    setTags(data?.values?.tags ?? []);
+  }, [data]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -52,25 +56,30 @@ const AccountingTagsSettings: FC = () => {
     }
   }, [openMenuId]);
 
+  const persistTags = (nextTags: Tag[]) => {
+    setTags(nextTags);
+    updateSettings.mutate({ tags: nextTags });
+  };
+
   const handleAddTag = () => {
     if (!newTagName.trim()) return;
 
     if (editingTag) {
-      // Update existing tag
-      setTags(tags.map((tag) =>
-        tag.id === editingTag.id
-          ? { ...tag, name: newTagName, color: selectedColor }
-          : tag
-      ));
+      const nextTags = tags.map((tag) =>
+        tag.id === editingTag.id ? { ...tag, name: newTagName, color: selectedColor } : tag,
+      );
+      persistTags(nextTags);
       setEditingTag(null);
     } else {
-      // Add new tag
-      const newTag: Tag = {
-        id: Date.now().toString(),
-        name: newTagName,
-        color: selectedColor,
-      };
-      setTags([...tags, newTag]);
+      const nextTags = [
+        ...tags,
+        {
+          id: Date.now().toString(),
+          name: newTagName,
+          color: selectedColor,
+        },
+      ];
+      persistTags(nextTags);
     }
 
     setNewTagName("");
@@ -87,7 +96,8 @@ const AccountingTagsSettings: FC = () => {
   };
 
   const handleDelete = (tagId: string) => {
-    setTags(tags.filter((tag) => tag.id !== tagId));
+    const nextTags = tags.filter((tag) => tag.id !== tagId);
+    persistTags(nextTags);
     setOpenMenuId(null);
   };
 
@@ -163,7 +173,6 @@ const AccountingTagsSettings: FC = () => {
           </div>
         ))}
 
-        {/* Add Tag Placeholder/Button in Grid */}
         <button
           onClick={handleOpenModal}
           className="flex items-center justify-center w-10 h-10 rounded-full bg-[#272727] text-white hover:bg-black transition-colors self-center ml-2"
@@ -172,11 +181,9 @@ const AccountingTagsSettings: FC = () => {
         </button>
       </div>
 
-      {/* Add Tag Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/30 ">
           <div className="bg-[#FBFBFB] rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-[#E8E8E8]">
               <h3 className="text-lg font-semibold text-gray-900">
                 {editingTag ? "Edit Tag" : "Add Tag"}
@@ -194,7 +201,6 @@ const AccountingTagsSettings: FC = () => {
               </button>
             </div>
 
-            {/* Modal Body */}
             <div className="p-6 space-y-6">
               <div className="space-y-2">
                 <input
@@ -214,8 +220,7 @@ const AccountingTagsSettings: FC = () => {
                       key={color}
                       type="button"
                       onClick={() => setSelectedColor(color)}
-                      className={`w-8 h-8 rounded-full transition-transform hover:scale-110 focus:outline-none ring-2 ring-offset-2 ${selectedColor === color ? "ring-[#7BD747] scale-110" : "ring-transparent"
-                        }`}
+                      className={`w-8 h-8 rounded-full transition-transform hover:scale-110 focus:outline-none ring-2 ring-offset-2 ${selectedColor === color ? "ring-[#7BD747] scale-110" : "ring-transparent"}`}
                       style={{ backgroundColor: color }}
                     />
                   ))}
@@ -223,11 +228,6 @@ const AccountingTagsSettings: FC = () => {
               </div>
             </div>
 
-            {/* Modal Footer (Optional - purely visual based on image, image doesn't show buttons but usually needed. 
-               The image shows just inputs. I'll add a hidden submit or rely on Enter key/auto-save/outside click? 
-               Wait, the image just shows the popup content. I should probably add a "Save" button or at least make "Enter" work.
-               I'll add a button for better UX even if not explicitly in the crop.)
-            */}
             <div className="px-6 pb-6">
               <Button
                 onClick={handleAddTag}
@@ -244,5 +244,3 @@ const AccountingTagsSettings: FC = () => {
 };
 
 export default AccountingTagsSettings;
-
-

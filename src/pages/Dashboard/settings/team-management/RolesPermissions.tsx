@@ -1,6 +1,7 @@
-import { useState, useCallback, memo } from "react";
+import { useState, useCallback, memo, useEffect } from "react";
 import { TeamManagementSettingsLayout } from "../../../../components/common/TeamManagementSettingsLayout";
 import { X } from "lucide-react";
+import { useGetSettingsSection, useUpdateSettingsSection } from "../../../../hooks/useSettingsQueries";
 
 // Constants
 const INPUT_CLASS = "w-full px-4 py-3 border-b border-gray-300 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-500 transition-colors";
@@ -20,6 +21,10 @@ interface TeamMember {
     role: string;
 }
 
+interface TeamRolesPermissionsValues {
+    members: TeamMember[];
+}
+
 interface FormInputProps {
     type: "text" | "tel" | "email";
     name: keyof FormData;
@@ -27,17 +32,6 @@ interface FormInputProps {
     value: string;
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
-
-// Mock Data - Single admin member
-const mockTeamMembers: TeamMember[] = [
-    {
-        id: "1",
-        name: "Shawn James",
-        phoneNumber: "+1 569 349 495",
-        emailAddress: "shawn.james@example.com",
-        role: "Admin"
-    }
-];
 
 // Reusable Components
 const FormInput = ({ type, name, placeholder, value, onChange }: FormInputProps) => (
@@ -151,12 +145,20 @@ UserAvatar.displayName = "UserAvatar";
 
 // Main Component
 export default function RolesPermissions() {
+    const { data } = useGetSettingsSection<TeamRolesPermissionsValues>("team_roles_permissions");
+    const updateSettings = useUpdateSettingsSection<TeamRolesPermissionsValues>("team_roles_permissions");
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+    const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
     const [formData, setFormData] = useState<FormData>({
         name: "",
         phoneNumber: "",
         emailAddress: "",
     });
+    const [searchQuery, setSearchQuery] = useState("");
+
+    useEffect(() => {
+        setTeamMembers(data?.values?.members ?? []);
+    }, [data]);
 
     const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -175,15 +177,27 @@ export default function RolesPermissions() {
     }, []);
 
     const handleInvite = useCallback(() => {
-        // Handle invite logic here
-        console.log("Inviting member:", formData);
+        if (!formData.name.trim() || !formData.emailAddress.trim()) {
+            return;
+        }
+        const nextMembers = [
+            ...teamMembers,
+            {
+                id: Date.now().toString(),
+                name: formData.name.trim(),
+                phoneNumber: formData.phoneNumber.trim(),
+                emailAddress: formData.emailAddress.trim(),
+                role: "Member",
+            },
+        ];
+        setTeamMembers(nextMembers);
+        updateSettings.mutate({ members: nextMembers });
         setIsInviteModalOpen(false);
         setFormData({ name: "", phoneNumber: "", emailAddress: "" });
-    }, [formData]);
+    }, [formData, teamMembers, updateSettings]);
 
     const handleSearchChange = useCallback((query: string) => {
-        // Add search logic here to filter team members
-        console.log("Searching for:", query);
+        setSearchQuery(query.toLowerCase());
     }, []);
 
     const headerActions = (
@@ -194,6 +208,13 @@ export default function RolesPermissions() {
         >
             Invite Team member
         </button>
+    );
+
+    const filteredMembers = teamMembers.filter((member) =>
+        [member.name, member.emailAddress, member.phoneNumber]
+            .join(" ")
+            .toLowerCase()
+            .includes(searchQuery),
     );
 
     return (
@@ -214,7 +235,7 @@ export default function RolesPermissions() {
                 <div className="space-y-6">
                     {/* Admin Role Section */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {mockTeamMembers.map(member => (
+                        {filteredMembers.map(member => (
                             <div key={member.id} className="relative">
                                 {/* Role Label - positioned at top left */}
                                 <div className="absolute -top-3 left-6 z-10 px-5 py-2.5 bg-[#D9D9D9] rounded-xl">
@@ -235,6 +256,9 @@ export default function RolesPermissions() {
                                 </div>
                             </div>
                         ))}
+                        {filteredMembers.length === 0 && (
+                            <p className="text-sm text-gray-500">No team members found.</p>
+                        )}
                     </div>
                 </div>
             </TeamManagementSettingsLayout>

@@ -42,6 +42,8 @@ const Payments: React.FC = () => {
     // Helper to convert Payment to PaymentData for modals
     const convertPaymentToPaymentData = (payment: Payment) => ({
         id: payment.id,
+        transactionId: payment.id,
+        paymentId: payment.payments?.[0]?.id,
         status: payment.status,
         datePaid: typeof payment.datePaid === 'string' ? payment.datePaid : payment.datePaid.toISOString(),
         category: payment.category,
@@ -222,10 +224,10 @@ const Payments: React.FC = () => {
             />
             <DeletePaymentModal
                 onConfirm={async () => {
-                    if (selectedPayment?.id && selectedPayment?.paymentId) {
+                    if (selectedPayment?.transactionId && selectedPayment?.paymentId) {
                         try {
                             await deletePaymentMutation.mutateAsync({
-                                transactionId: selectedPayment.id as string,
+                                transactionId: selectedPayment.transactionId,
                                 paymentId: selectedPayment.paymentId,
                             });
                             setDeleteModalOpen(false);
@@ -495,9 +497,12 @@ const Payments: React.FC = () => {
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
+                                                        const paymentId = item.payments?.[0]?.id;
+                                                        if (!paymentId) return;
                                                         setSelectedPayment({
                                                             id: item.id,
-                                                            paymentId: item.id,
+                                                            transactionId: item.id,
+                                                            paymentId,
                                                             amount: item.amount,
                                                             status: item.status,
                                                         });
@@ -597,9 +602,12 @@ const Payments: React.FC = () => {
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
+                                                const paymentId = item.payments?.[0]?.id;
+                                                if (!paymentId) return;
                                                 setSelectedPayment({
                                                     id: item.id,
-                                                    paymentId: item.id,
+                                                    transactionId: item.id,
+                                                    paymentId,
                                                     amount: item.amount,
                                                     status: item.status,
                                                 });
