@@ -17,7 +17,10 @@ export const backgroundQuestionService = {
       throw new Error(`Failed to fetch background questions: ${response.statusText}`);
     }
 
-    return response.json();
+    const data = await response.json();
+    if (Array.isArray(data)) return data;
+    if (data && typeof data === 'object' && Array.isArray(data.data)) return data.data;
+    return [];
   },
 
   /**

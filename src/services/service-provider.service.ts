@@ -170,11 +170,14 @@ class ServiceProviderService {
         errorMessage = `Failed to fetch service providers: ${response.statusText}`;
         console.error('Failed to parse error response:', parseError);
       }
-      
+
       throw new Error(errorMessage);
     }
 
-    return response.json();
+    const data = await response.json();
+    if (Array.isArray(data)) return data;
+    if (data && typeof data === 'object' && Array.isArray(data.data)) return data.data;
+    return [];
   }
 
   /**

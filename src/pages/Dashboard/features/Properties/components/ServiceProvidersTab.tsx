@@ -177,16 +177,21 @@ const ServiceProvidersTab: React.FC<ServiceProvidersTabProps> = ({ propertyId, u
                 />
                 <div>
                     {realUtilityProviders.map((provider: any) => {
+                        // Parse cost from notes if present (legacy)
+                        const costMatch = typeof provider.notes === 'string' ? provider.notes.match(/Estimated monthly cost:\s*([^,]+)/) : null;
+                        const estimatedCost = costMatch ? costMatch[1].trim() : (provider.estimatedMonthlyCost || '-');
+
                         const record: ServiceProviderRecord = {
                             id: provider.id,
                             avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=256&q=80',
                             serviceType: provider.serviceType || 'OTHER',
                             details: [
-                                { label: 'Provider', value: provider.providerName || '-' },
+                                { label: 'Provider Type', value: provider.providerType || provider.serviceType || '-' },
+                                { label: 'Service Pro', value: provider.providerName || '-' },
+                                { label: 'Est. Cost', value: estimatedCost },
                                 { label: 'Contact', value: provider.contactName || '-' },
-                                { label: 'Phone number', value: provider.contactPhone || '-' },
+                                { label: 'Phone', value: provider.contactPhone || '-' },
                                 { label: 'Account #', value: provider.accountNumber || '-' },
-                                { label: 'Notes', value: provider.notes || '-' },
                             ],
                         };
                         return (

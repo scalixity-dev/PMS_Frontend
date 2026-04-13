@@ -39,15 +39,31 @@ const FinancialsTab: React.FC<FinancialsTabProps> = ({ propertyId, unitId }) => 
         details: string;
         emailNotification: boolean;
     }) => {
+        // Map free-text details to valid CoverageType enum
+        const normalizeCoverageType = (txt?: string): 'HOMEOWNERS' | 'LIABILITY' | 'FLOOD' | 'OTHER' | undefined => {
+            if (!txt) return undefined;
+            const upper = txt.toUpperCase();
+            if (upper.includes('HOMEOWNER')) return 'HOMEOWNERS';
+            if (upper.includes('LIABILIT')) return 'LIABILITY';
+            if (upper.includes('FLOOD')) return 'FLOOD';
+            return 'OTHER';
+        };
+
         const insuranceData = {
             policyName: data.policyNumber || data.companyName,
             provider: data.companyName,
             policyNumber: data.policyNumber || undefined,
-            coverageType: data.details || undefined,
+            coverageType: normalizeCoverageType(data.details),
             premium: data.price ? Number(data.price) : undefined,
-            startDate: data.effectiveDate || undefined,
-            endDate: data.expirationDate || undefined,
-            notes: `Agent: ${data.agentName || '-'}, Email: ${data.agentEmail || '-'}, Phone: ${data.agentPhone || '-'}`,
+            startDate: data.effectiveDate ? new Date(data.effectiveDate).toISOString() : undefined,
+            endDate: data.expirationDate ? new Date(data.expirationDate).toISOString() : undefined,
+            notes: [
+                data.details ? `Details: ${data.details}` : null,
+                `Agent: ${data.agentName || '-'}`,
+                `Email: ${data.agentEmail || '-'}`,
+                `Phone: ${data.agentPhone || '-'}`,
+                data.companyWebsite ? `Website: ${data.companyWebsite}` : null,
+            ].filter(Boolean).join(', '),
         };
 
         if (editingInsurance?.id) {
@@ -80,16 +96,34 @@ const FinancialsTab: React.FC<FinancialsTabProps> = ({ propertyId, unitId }) => 
         email: string;
         phone: string;
     }) => {
+        // Map free-text loanType to valid LoanType enum
+        const normalizeLoanType = (txt?: string): 'MORTGAGE' | 'HELOC' | 'BRIDGE' | 'OTHER' | undefined => {
+            if (!txt) return undefined;
+            const upper = txt.toUpperCase();
+            if (upper.includes('MORTGAGE')) return 'MORTGAGE';
+            if (upper.includes('HELOC') || upper.includes('EQUITY')) return 'HELOC';
+            if (upper.includes('BRIDGE')) return 'BRIDGE';
+            return 'OTHER';
+        };
+
         const loanData = {
             lenderName: data.bankName || data.title || 'Lender',
-            loanType: data.loanType || undefined,
+            loanType: normalizeLoanType(data.loanType),
             principalAmount: data.loanAmount ? Number(data.loanAmount) : undefined,
             currentBalance: data.currentLoanBalance ? Number(data.currentLoanBalance) : undefined,
             interestRate: data.annualInterestRate ? Number(data.annualInterestRate) : undefined,
             monthlyPayment: undefined,
-            startDate: data.loanStartDate || undefined,
+            startDate: data.loanStartDate ? new Date(data.loanStartDate).toISOString() : undefined,
             maturityDate: undefined,
-            notes: `Contact: ${data.contactPerson || '-'}, Email: ${data.email || '-'}, Phone: ${data.phone || '-'}`,
+            notes: [
+                data.title ? `Title: ${data.title}` : null,
+                data.loanType ? `Type: ${data.loanType}` : null,
+                data.loanPeriod ? `Period: ${data.loanPeriod}` : null,
+                data.paymentsDue ? `Payments Due: ${data.paymentsDue}` : null,
+                `Contact: ${data.contactPerson || '-'}`,
+                `Email: ${data.email || '-'}`,
+                `Phone: ${data.phone || '-'}`,
+            ].filter(Boolean).join(', '),
         };
 
         if (editingLoan?.id) {
