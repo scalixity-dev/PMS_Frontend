@@ -393,6 +393,48 @@ class ListingService {
 
     return response.json();
   }
+
+  /**
+   * Toggle favorite on a listing. Returns { favorited: boolean }
+   */
+  async toggleFavorite(listingId: string): Promise<{ favorited: boolean }> {
+    const response = await fetch(API_ENDPOINTS.LISTING.TOGGLE_FAVORITE(listingId), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+    if (!response.ok) throw new Error(`Failed to toggle favorite: ${response.statusText}`);
+    return response.json();
+  }
+
+  /**
+   * Check if current user has favorited this listing
+   */
+  async isFavorited(listingId: string): Promise<{ favorited: boolean }> {
+    const response = await fetch(API_ENDPOINTS.LISTING.IS_FAVORITED(listingId), {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+    if (!response.ok) throw new Error(`Failed to check favorite: ${response.statusText}`);
+    return response.json();
+  }
+
+  /**
+   * Get all listings favorited by current user
+   */
+  async getMyFavorites(): Promise<any[]> {
+    const response = await fetch(API_ENDPOINTS.LISTING.MY_FAVORITES, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+    if (!response.ok) throw new Error(`Failed to fetch favorites: ${response.statusText}`);
+    const data = await response.json();
+    if (Array.isArray(data)) return data;
+    if (data && typeof data === 'object' && Array.isArray(data.data)) return data.data;
+    return [];
+  }
 }
 
 export const listingService = new ListingService();
