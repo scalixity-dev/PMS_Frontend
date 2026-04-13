@@ -164,7 +164,20 @@ class TenantService {
       throw new Error(errorMessage);
     }
 
-    return response.json();
+    const data = await response.json();
+
+    // Handle both array response and pagination response
+    if (Array.isArray(data)) {
+      return data;
+    }
+
+    if (data && typeof data === 'object' && Array.isArray(data.data)) {
+      return data.data;
+    }
+
+    // Fallback: return empty array if response is unexpected
+    console.warn('Unexpected tenant response format:', data);
+    return [];
   }
 
   /**
