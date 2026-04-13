@@ -976,6 +976,17 @@ const LeadDetail = () => {
                             </div>
                         </div>
 
+                        {/* Leases Section */}
+                        {lead?.listingId && (
+                            <div className="bg-[#F0F0F6] p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2.5rem] border border-[#E0E0E0] shadow-sm mb-6">
+                                <h3 className="text-lg font-bold text-gray-800 mb-4">Associated Listing</h3>
+                                <div className="bg-white rounded-[1.5rem] p-4 sm:p-6 border border-[#E0E0E0]">
+                                    <p className="text-sm text-gray-600 mb-2"><strong>Listing ID:</strong> {lead.listingId}</p>
+                                    <p className="text-xs text-gray-500 italic mt-4">Lease details will display here once leasing data is available.</p>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Timeline Section */}
                         <div className="bg-[#F0F0F650] p-4 sm:p-8 rounded-[1.5rem] sm:rounded-[2.5rem] border border-white shadow-sm">
                             {/* Timeline */}

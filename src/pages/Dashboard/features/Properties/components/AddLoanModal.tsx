@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Lightbulb } from 'lucide-react';
 import DatePicker from '../../../../../components/ui/DatePicker';
@@ -23,9 +23,23 @@ interface AddLoanModalProps {
         email: string;
         phone: string;
     }) => void;
+    initialData?: {
+        title: string;
+        loanAmount: string;
+        annualInterestRate: string;
+        loanStartDate: string;
+        loanPeriod: string;
+        loanType: string;
+        paymentsDue: string;
+        currentLoanBalance: string;
+        bankName: string;
+        contactPerson: string;
+        email: string;
+        phone: string;
+    };
 }
 
-const AddLoanModal: React.FC<AddLoanModalProps> = ({ isOpen, onClose, onAdd }) => {
+const AddLoanModal: React.FC<AddLoanModalProps> = ({ isOpen, onClose, onAdd, initialData }) => {
     // Form State
     const [title, setTitle] = useState('');
     const [loanAmount, setLoanAmount] = useState('');
@@ -42,6 +56,36 @@ const AddLoanModal: React.FC<AddLoanModalProps> = ({ isOpen, onClose, onAdd }) =
 
     // Validation State
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+    useEffect(() => {
+        if (isOpen && initialData) {
+            setTitle(initialData.title);
+            setLoanAmount(initialData.loanAmount);
+            setAnnualInterestRate(initialData.annualInterestRate);
+            setLoanStartDate(initialData.loanStartDate ? new Date(initialData.loanStartDate) : undefined);
+            setLoanPeriod(initialData.loanPeriod);
+            setLoanType(initialData.loanType);
+            setPaymentsDue(initialData.paymentsDue);
+            setCurrentLoanBalance(initialData.currentLoanBalance);
+            setBankName(initialData.bankName);
+            setContactPerson(initialData.contactPerson);
+            setEmail(initialData.email);
+            setPhone(initialData.phone);
+        } else if (isOpen) {
+            setTitle('');
+            setLoanAmount('');
+            setAnnualInterestRate('');
+            setLoanStartDate(undefined);
+            setLoanPeriod('');
+            setLoanType('');
+            setPaymentsDue('');
+            setCurrentLoanBalance('');
+            setBankName('');
+            setContactPerson('');
+            setEmail('');
+            setPhone('');
+        }
+    }, [isOpen, initialData]);
 
     const handleAdd = () => {
         const newErrors: { [key: string]: string } = {};

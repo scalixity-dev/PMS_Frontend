@@ -148,7 +148,12 @@ const Applications: React.FC = () => {
         });
 
         if (response.ok) {
-          const data = await response.json();
+          const responseData = await response.json();
+
+          // Handle both array and pagination responses
+          const data = Array.isArray(responseData)
+            ? responseData
+            : (responseData?.data || []);
 
           // Normalization helper for status
           const normalizeStatus = (status: string): "Approved" | "Rejected" | "Submitted" | "Draft" => {

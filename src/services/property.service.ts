@@ -178,10 +178,10 @@ class PropertyService {
 
     if (!response.ok) {
       let errorMessage = 'Failed to fetch properties';
-      
+
       try {
         const errorData = await response.json();
-        
+
         if (Array.isArray(errorData.message)) {
           errorMessage = errorData.message.join('. ');
         } else if (errorData.message) {
@@ -189,7 +189,7 @@ class PropertyService {
         } else if (errorData.error) {
           errorMessage = errorData.error;
         }
-        
+
         console.error('Property fetch error:', {
           status: response.status,
           statusText: response.statusText,
@@ -199,11 +199,24 @@ class PropertyService {
         errorMessage = `Failed to fetch properties: ${response.statusText}`;
         console.error('Failed to parse error response:', parseError);
       }
-      
+
       throw new Error(errorMessage);
     }
 
-    return response.json();
+    const data = await response.json();
+
+    // Handle both array response and pagination response
+    if (Array.isArray(data)) {
+      return data;
+    }
+
+    if (data && typeof data === 'object' && Array.isArray(data.data)) {
+      return data.data;
+    }
+
+    // Fallback: return empty array if response is unexpected
+    console.warn('Unexpected property response format:', data);
+    return [];
   }
 
   /**

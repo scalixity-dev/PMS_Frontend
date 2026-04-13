@@ -295,7 +295,12 @@ const Properties: React.FC = () => {
           throw new Error('Failed to fetch properties');
         }
 
-        const data = await response.json();
+        const responseData = await response.json();
+
+        // Handle both array and pagination responses
+        const data = Array.isArray(responseData)
+          ? responseData
+          : (responseData?.data || []);
 
         // Map backend response to Property type
         const mappedProperties: Property[] = data.map((item: any, index: number) => {

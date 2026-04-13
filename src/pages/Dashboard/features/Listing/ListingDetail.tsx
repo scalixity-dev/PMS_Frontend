@@ -91,6 +91,32 @@ const ListingDetail: React.FC = () => {
         }
     };
 
+    const handleSaveLeaseTerms = () => {
+        if (!backendListing?.id || !leaseTerms) return;
+
+        updateListing.mutate({
+            id: backendListing.id,
+            data: {
+                monthlyRent: leaseTerms.monthlyRent,
+                securityDeposit: leaseTerms.securityDeposit,
+                amountRefundable: leaseTerms.amountRefundable,
+                availableFrom: leaseTerms.dateAvailable,
+            },
+        });
+    };
+
+    const handleSaveDescription = () => {
+        if (!backendListing?.id) return;
+
+        updateListing.mutate({
+            id: backendListing.id,
+            data: {
+                title: promotionRibbon || listing?.name,
+                description: promotionDescription,
+            },
+        });
+    };
+
     const handleConfirmUnlist = () => {
         if (!backendListing?.id) return;
 
@@ -664,11 +690,17 @@ const ListingDetail: React.FC = () => {
                             </div>
                             <div className="bg-[#F0F0F6] rounded-[2rem] p-6 relative">
                                 <button
-                                    onClick={() => setIsLeaseTermsEditing(!isLeaseTermsEditing)}
-                                    className={`absolute top-6 right-6 ${isLeaseTermsEditing ? 'bg-[#3A6D6C] text-white px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 z-10' : 'text-gray-500 hover:text-gray-700'}`}
+                                    onClick={() => {
+                                        if (isLeaseTermsEditing) {
+                                            handleSaveLeaseTerms();
+                                        }
+                                        setIsLeaseTermsEditing(!isLeaseTermsEditing);
+                                    }}
+                                    disabled={updateListing.isPending}
+                                    className={`absolute top-6 right-6 ${isLeaseTermsEditing ? 'bg-[#3A6D6C] text-white px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 z-10 disabled:opacity-50' : 'text-gray-500 hover:text-gray-700'}`}
                                 >
                                     {isLeaseTermsEditing ? (
-                                        <>Done <Check className="w-4 h-4" /></>
+                                        <>{updateListing.isPending ? 'Saving...' : 'Done'} <Check className="w-4 h-4" /></>
                                     ) : (
                                         <SquarePen className="w-5 h-5" />
                                     )}
@@ -899,16 +931,28 @@ const ListingDetail: React.FC = () => {
                                 <ChevronLeft className="w-4 h-4 -rotate-90 text-gray-800" />
                                 <div className="flex gap-2 ml-4">
                                     <button
-                                        onClick={() => setIsDescriptionEditing(!isDescriptionEditing)}
-                                        className={`${isDescriptionEditing ? 'bg-[#3A6D6C]' : 'bg-[#888888]'} text-white px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-colors`}
+                                        onClick={() => {
+                                            if (isDescriptionEditing) {
+                                                handleSaveDescription();
+                                            }
+                                            setIsDescriptionEditing(!isDescriptionEditing);
+                                        }}
+                                        disabled={updateListing.isPending}
+                                        className={`${isDescriptionEditing ? 'bg-[#3A6D6C]' : 'bg-[#888888]'} text-white px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-colors disabled:opacity-50`}
                                     >
-                                        {isDescriptionEditing ? 'Done' : 'Edit description'} <SquarePen className="w-3 h-3" />
+                                        {isDescriptionEditing ? (updateListing.isPending ? 'Saving...' : 'Done') : 'Edit description'} <SquarePen className="w-3 h-3" />
                                     </button>
                                     <button
-                                        onClick={() => setIsRibbonEditing(!isRibbonEditing)}
-                                        className={`${isRibbonEditing ? 'bg-[#3A6D6C]' : 'bg-[#888888]'} text-white px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-colors`}
+                                        onClick={() => {
+                                            if (isRibbonEditing) {
+                                                handleSaveDescription();
+                                            }
+                                            setIsRibbonEditing(!isRibbonEditing);
+                                        }}
+                                        disabled={updateListing.isPending}
+                                        className={`${isRibbonEditing ? 'bg-[#3A6D6C]' : 'bg-[#888888]'} text-white px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-colors disabled:opacity-50`}
                                     >
-                                        {isRibbonEditing ? 'Done' : 'Edit ribbon'} <SquarePen className="w-3 h-3" />
+                                        {isRibbonEditing ? (updateListing.isPending ? 'Saving...' : 'Done') : 'Edit ribbon'} <SquarePen className="w-3 h-3" />
                                     </button>
                                 </div>
                             </div>
