@@ -232,8 +232,12 @@ const Payments: React.FC = () => {
                             });
                             setDeleteModalOpen(false);
                             setSelectedPayment(null);
+                            // Show success feedback
+                            alert(`Payment of ${selectedPayment.amount} deleted successfully`);
                         } catch (error) {
                             console.error('Failed to delete payment:', error);
+                            // Show error feedback
+                            alert(`Failed to delete payment: ${error instanceof Error ? error.message : 'Unknown error'}`);
                         }
                     }
                 }}

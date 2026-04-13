@@ -4,7 +4,7 @@ import SectionHeader from './SectionHeader';
 import AddInsuranceModal from './AddInsuranceModal';
 import AddLoanModal from './AddLoanModal';
 import { useState } from 'react';
-import { useCreatePropertyInsurance, useCreatePropertyLoan, useGetPropertyFinancials } from '../../../../../hooks/usePropertyDetailQueries';
+import { useCreatePropertyInsurance, useCreatePropertyLoan, useDeletePropertyInsurance, useUpdatePropertyInsurance, useDeletePropertyLoan, useUpdatePropertyLoan, useGetPropertyFinancials } from '../../../../../hooks/usePropertyDetailQueries';
 
 interface FinancialsTabProps {
     propertyId: string;
@@ -14,11 +14,17 @@ interface FinancialsTabProps {
 const FinancialsTab: React.FC<FinancialsTabProps> = ({ propertyId, unitId }) => {
     const [isAddInsuranceModalOpen, setIsAddInsuranceModalOpen] = useState(false);
     const [isAddLoanModalOpen, setIsAddLoanModalOpen] = useState(false);
+    const [editingInsurance, setEditingInsurance] = useState<any>(null);
+    const [editingLoan, setEditingLoan] = useState<any>(null);
 
     // Fetch real financials data
     const { data: financialsData = {}, isLoading, error } = useGetPropertyFinancials(propertyId, unitId);
     const createInsuranceMutation = useCreatePropertyInsurance();
+    const updateInsuranceMutation = useUpdatePropertyInsurance();
+    const deleteInsuranceMutation = useDeletePropertyInsurance();
     const createLoanMutation = useCreatePropertyLoan();
+    const updateLoanMutation = useUpdatePropertyLoan();
+    const deleteLoanMutation = useDeletePropertyLoan();
 
     const handleAddInsurance = (data: {
         companyName: string;
@@ -33,19 +39,31 @@ const FinancialsTab: React.FC<FinancialsTabProps> = ({ propertyId, unitId }) => 
         details: string;
         emailNotification: boolean;
     }) => {
-        createInsuranceMutation.mutate({
-            propertyId,
-            insuranceData: {
-                policyName: data.policyNumber || data.companyName,
-                provider: data.companyName,
-                policyNumber: data.policyNumber || undefined,
-                coverageType: data.details || undefined,
-                premium: data.price ? Number(data.price) : undefined,
-                startDate: data.effectiveDate || undefined,
-                endDate: data.expirationDate || undefined,
-                notes: `Agent: ${data.agentName || '-'}, Email: ${data.agentEmail || '-'}, Phone: ${data.agentPhone || '-'}`,
-            },
-        });
+        const insuranceData = {
+            policyName: data.policyNumber || data.companyName,
+            provider: data.companyName,
+            policyNumber: data.policyNumber || undefined,
+            coverageType: data.details || undefined,
+            premium: data.price ? Number(data.price) : undefined,
+            startDate: data.effectiveDate || undefined,
+            endDate: data.expirationDate || undefined,
+            notes: `Agent: ${data.agentName || '-'}, Email: ${data.agentEmail || '-'}, Phone: ${data.agentPhone || '-'}`,
+        };
+
+        if (editingInsurance?.id) {
+            updateInsuranceMutation.mutate({
+                propertyId,
+                insuranceId: editingInsurance.id,
+                insuranceData,
+            });
+            setEditingInsurance(null);
+        } else {
+            createInsuranceMutation.mutate({
+                propertyId,
+                insuranceData,
+            });
+        }
+        setIsAddInsuranceModalOpen(false);
     };
 
     const handleAddLoan = (data: {
@@ -62,20 +80,54 @@ const FinancialsTab: React.FC<FinancialsTabProps> = ({ propertyId, unitId }) => 
         email: string;
         phone: string;
     }) => {
-        createLoanMutation.mutate({
-            propertyId,
-            loanData: {
-                lenderName: data.bankName || data.title || 'Lender',
-                loanType: data.loanType || undefined,
-                principalAmount: data.loanAmount ? Number(data.loanAmount) : undefined,
-                currentBalance: data.currentLoanBalance ? Number(data.currentLoanBalance) : undefined,
-                interestRate: data.annualInterestRate ? Number(data.annualInterestRate) : undefined,
-                monthlyPayment: undefined,
-                startDate: data.loanStartDate || undefined,
-                maturityDate: undefined,
-                notes: `Contact: ${data.contactPerson || '-'}, Email: ${data.email || '-'}, Phone: ${data.phone || '-'}`,
-            },
-        });
+        const loanData = {
+            lenderName: data.bankName || data.title || 'Lender',
+            loanType: data.loanType || undefined,
+            principalAmount: data.loanAmount ? Number(data.loanAmount) : undefined,
+            currentBalance: data.currentLoanBalance ? Number(data.currentLoanBalance) : undefined,
+            interestRate: data.annualInterestRate ? Number(data.annualInterestRate) : undefined,
+            monthlyPayment: undefined,
+            startDate: data.loanStartDate || undefined,
+            maturityDate: undefined,
+            notes: `Contact: ${data.contactPerson || '-'}, Email: ${data.email || '-'}, Phone: ${data.phone || '-'}`,
+        };
+
+        if (editingLoan?.id) {
+            updateLoanMutation.mutate({
+                propertyId,
+                loanId: editingLoan.id,
+                loanData,
+            });
+            setEditingLoan(null);
+        } else {
+            createLoanMutation.mutate({
+                propertyId,
+                loanData,
+            });
+        }
+        setIsAddLoanModalOpen(false);
+    };
+
+    const handleDeleteInsurance = (insuranceId: string) => {
+        if (window.confirm('Delete this insurance?')) {
+            deleteInsuranceMutation.mutate({ propertyId, insuranceId });
+        }
+    };
+
+    const handleDeleteLoan = (loanId: string) => {
+        if (window.confirm('Delete this loan?')) {
+            deleteLoanMutation.mutate({ propertyId, loanId });
+        }
+    };
+
+    const handleEditInsurance = (insurance: any) => {
+        setEditingInsurance(insurance);
+        setIsAddInsuranceModalOpen(true);
+    };
+
+    const handleEditLoan = (loan: any) => {
+        setEditingLoan(loan);
+        setIsAddLoanModalOpen(true);
     };
 
     if (isLoading) {
@@ -139,8 +191,8 @@ const FinancialsTab: React.FC<FinancialsTabProps> = ({ propertyId, unitId }) => 
                                         <p className="text-sm text-gray-600">{insurance.provider}</p>
                                     </div>
                                     <div className="flex gap-2">
-                                        <button className="text-[#3A6D6C] hover:bg-gray-200 p-2 rounded-full"><Edit2 className="w-5 h-5" /></button>
-                                        <button className="text-red-500 hover:bg-gray-200 p-2 rounded-full"><Trash2 className="w-5 h-5" /></button>
+                                        <button onClick={() => handleEditInsurance(insurance)} className="text-[#3A6D6C] hover:bg-gray-200 p-2 rounded-full"><Edit2 className="w-5 h-5" /></button>
+                                        <button onClick={() => handleDeleteInsurance(insurance.id)} className="text-red-500 hover:bg-gray-200 p-2 rounded-full"><Trash2 className="w-5 h-5" /></button>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-3 text-sm">
@@ -173,8 +225,8 @@ const FinancialsTab: React.FC<FinancialsTabProps> = ({ propertyId, unitId }) => 
                                         <p className="text-sm text-gray-600">{loan.loanType || 'Loan'}</p>
                                     </div>
                                     <div className="flex gap-2">
-                                        <button className="text-[#3A6D6C] hover:bg-gray-200 p-2 rounded-full"><Edit2 className="w-5 h-5" /></button>
-                                        <button className="text-red-500 hover:bg-gray-200 p-2 rounded-full"><Trash2 className="w-5 h-5" /></button>
+                                        <button onClick={() => handleEditLoan(loan)} className="text-[#3A6D6C] hover:bg-gray-200 p-2 rounded-full"><Edit2 className="w-5 h-5" /></button>
+                                        <button onClick={() => handleDeleteLoan(loan.id)} className="text-red-500 hover:bg-gray-200 p-2 rounded-full"><Trash2 className="w-5 h-5" /></button>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-3 text-sm">
@@ -193,13 +245,46 @@ const FinancialsTab: React.FC<FinancialsTabProps> = ({ propertyId, unitId }) => 
 
             <AddInsuranceModal
                 isOpen={isAddInsuranceModalOpen}
-                onClose={() => setIsAddInsuranceModalOpen(false)}
+                onClose={() => {
+                    setIsAddInsuranceModalOpen(false);
+                    setEditingInsurance(null);
+                }}
                 onAdd={handleAddInsurance}
+                initialData={editingInsurance ? {
+                    companyName: editingInsurance.provider || '',
+                    companyWebsite: '',
+                    agentName: '',
+                    agentEmail: '',
+                    agentPhone: '',
+                    policyNumber: editingInsurance.policyNumber || '',
+                    price: editingInsurance.premium?.toString() || '',
+                    effectiveDate: editingInsurance.startDate || '',
+                    expirationDate: editingInsurance.endDate || '',
+                    details: editingInsurance.coverageType || '',
+                    emailNotification: false,
+                } : undefined}
             />
             <AddLoanModal
                 isOpen={isAddLoanModalOpen}
-                onClose={() => setIsAddLoanModalOpen(false)}
+                onClose={() => {
+                    setIsAddLoanModalOpen(false);
+                    setEditingLoan(null);
+                }}
                 onAdd={handleAddLoan}
+                initialData={editingLoan ? {
+                    title: editingLoan.lenderName || '',
+                    loanAmount: editingLoan.principalAmount?.toString() || '',
+                    annualInterestRate: editingLoan.interestRate?.toString() || '',
+                    loanStartDate: editingLoan.startDate || '',
+                    loanPeriod: '',
+                    loanType: editingLoan.loanType || '',
+                    paymentsDue: '',
+                    currentLoanBalance: editingLoan.currentBalance?.toString() || '',
+                    bankName: editingLoan.lenderName || '',
+                    contactPerson: '',
+                    email: '',
+                    phone: '',
+                } : undefined}
             />
         </div>
     );

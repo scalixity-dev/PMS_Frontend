@@ -1,10 +1,10 @@
 import React from 'react';
-import { RefreshCw, Loader2 } from 'lucide-react';
+import { RefreshCw, Loader2, Trash2 } from 'lucide-react';
 import SectionHeader from './SectionHeader';
 import ResponsibilityModal, { type ResponsibilityItem } from './ResponsibilityModal';
 import AddUtilityProviderModal from './AddUtilityProviderModal';
 import { currencyOptions } from '../../../../../components/ui/CurrencySelector';
-import { useCreateUtilityProvider, useGetPropertyServiceProviders } from '../../../../../hooks/usePropertyDetailQueries';
+import { useCreateUtilityProvider, useDeleteUtilityProvider, useGetPropertyServiceProviders } from '../../../../../hooks/usePropertyDetailQueries';
 
 // --- Types ---
 interface DetailField {
@@ -23,22 +23,34 @@ interface ServiceProviderRecord {
 
 interface ServiceProviderCardProps {
     record: ServiceProviderRecord;
+    onDelete?: (id: string | number) => void;
 }
 
-const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({ record }) => {
+const ServiceProviderCard: React.FC<ServiceProviderCardProps> = ({ record, onDelete }) => {
     return (
         <div className="bg-[#F0F0F6] rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-6 mb-4">
-            <div className="flex items-center gap-3 md:gap-4 mb-4 md:mb-6">
-                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm">
-                    <img
-                        src={record.avatar}
-                        alt="Provider"
-                        className="w-full h-full object-cover"
-                    />
+            <div className="flex items-center justify-between gap-3 md:gap-4 mb-4 md:mb-6">
+                <div className="flex items-center gap-3 md:gap-4">
+                    <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm">
+                        <img
+                            src={record.avatar}
+                            alt="Provider"
+                            className="w-full h-full object-cover"
+                        />
+                    </div>
+                    <div className="bg-[#82D64D] text-white px-4 md:px-6 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-bold">
+                        {record.serviceType}
+                    </div>
                 </div>
-                <div className="bg-[#82D64D] text-white px-4 md:px-6 py-1.5 md:py-2 rounded-full text-xs md:text-sm font-bold">
-                    {record.serviceType}
-                </div>
+                {onDelete && (
+                    <button
+                        onClick={() => onDelete(record.id)}
+                        className="text-red-500 hover:bg-gray-200 p-2 rounded-full"
+                        aria-label="Delete provider"
+                    >
+                        <Trash2 className="w-5 h-5" />
+                    </button>
+                )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-x-8 md:gap-y-4">
@@ -66,8 +78,15 @@ const ServiceProvidersTab: React.FC<ServiceProvidersTabProps> = ({ propertyId, u
     // Fetch real service providers data
     const { data: providersData = {}, isLoading, error } = useGetPropertyServiceProviders(propertyId, unitId);
     const createUtilityProviderMutation = useCreateUtilityProvider();
+    const deleteUtilityProviderMutation = useDeleteUtilityProvider();
     const assignedServiceProviders = providersData.assignedServiceProviders || [];
     const realUtilityProviders = providersData.utilityProviders || [];
+
+    const handleDeleteUtilityProvider = (providerId: string | number) => {
+        if (window.confirm('Delete this utility provider?')) {
+            deleteUtilityProviderMutation.mutate({ propertyId, providerId: String(providerId) });
+        }
+    };
 
     const mapProviderTypeToServiceType = (providerType: string) => {
         const normalized = providerType.toUpperCase();
@@ -174,6 +193,7 @@ const ServiceProvidersTab: React.FC<ServiceProvidersTabProps> = ({ propertyId, u
                         <ServiceProviderCard
                             key={String(record.id)}
                             record={record}
+                            onDelete={handleDeleteUtilityProvider}
                         />
                         );
                     })}

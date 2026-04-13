@@ -1,11 +1,44 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { OnlinePaymentsSettingsLayout } from "../../../../components/common/OnlinePaymentsSettingsLayout";
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
 import SearchableDropdown from "../../../../components/ui/SearchableDropdown";
+import { useGetSettingsSection, useUpdateSettingsSection } from "../../../../hooks/useSettingsQueries";
 
 export default function Configurations() {
     const [country, setCountry] = useState("");
+    const [publicApiKey, setPublicApiKey] = useState("");
+    const [secretApiKey, setSecretApiKey] = useState("");
     const countries = ["United States", "Canada", "United Kingdom"];
+
+    const { data: onlinePaymentsSettings } = useGetSettingsSection<{
+        country: string;
+        publicApiKey: string;
+        secretApiKey: string;
+        isConnected: boolean;
+    }>('online_payments');
+    const updateSettings = useUpdateSettingsSection('online_payments');
+
+    useEffect(() => {
+        if (onlinePaymentsSettings?.values) {
+            setCountry((onlinePaymentsSettings.values.country as string) || "");
+            setPublicApiKey((onlinePaymentsSettings.values.publicApiKey as string) || "");
+            setSecretApiKey((onlinePaymentsSettings.values.secretApiKey as string) || "");
+        }
+    }, [onlinePaymentsSettings]);
+
+    const handleSetup = () => {
+        if (!country || !publicApiKey || !secretApiKey) {
+            alert("Please fill in all fields");
+            return;
+        }
+
+        updateSettings.mutate({
+            country,
+            publicApiKey,
+            secretApiKey,
+            isConnected: true,
+        });
+    };
 
     return (
         <OnlinePaymentsSettingsLayout>
@@ -55,6 +88,8 @@ export default function Configurations() {
                             <input
                                 type="text"
                                 placeholder="Public API Key"
+                                value={publicApiKey}
+                                onChange={(e) => setPublicApiKey(e.target.value)}
                                 className="w-full bg-white border border-gray-200 rounded-lg h-[50px] px-4 text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:border-[#5AB049] focus:ring-1 focus:ring-[#5AB049] transition-all"
                             />
                             <a href="#" className="block text-[#4B8F77] text-xs hover:underline">
@@ -67,6 +102,8 @@ export default function Configurations() {
                             <input
                                 type="text"
                                 placeholder="Secret API Key"
+                                value={secretApiKey}
+                                onChange={(e) => setSecretApiKey(e.target.value)}
                                 className="w-full bg-white border border-gray-200 rounded-lg h-[50px] px-4 text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:border-[#5AB049] focus:ring-1 focus:ring-[#5AB049] transition-all"
                             />
                         </div>
@@ -74,7 +111,13 @@ export default function Configurations() {
 
                     {/* Setup Button */}
                     <div className="mt-8 mb-8">
-                        <PrimaryActionButton />
+                        <button
+                            onClick={handleSetup}
+                            disabled={updateSettings.isPending}
+                            className="px-6 py-2 bg-[#5AB049] text-white font-medium rounded-lg hover:bg-[#4a9540] disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {updateSettings.isPending ? 'Setting up...' : 'Setup'}
+                        </button>
                     </div>
 
                     {/* Footer - Stripe Account */}

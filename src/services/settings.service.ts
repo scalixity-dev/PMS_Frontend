@@ -13,7 +13,8 @@ export type SettingsSection =
   | 'rental_terms_signature'
   | 'team_roles_permissions'
   | 'team_property_permissions'
-  | 'reports_general';
+  | 'reports_general'
+  | 'online_payments';
 
 export interface UserSettingsResponse<T = Record<string, unknown>> {
   section: SettingsSection;
