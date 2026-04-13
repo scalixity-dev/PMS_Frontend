@@ -135,3 +135,42 @@ export const useGetListingStatistics = (listingId: string | null | undefined, en
     retry: 1,
   });
 };
+
+/**
+ * Hook to toggle favorite on a listing
+ */
+export const useToggleFavorite = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (listingId: string) => listingService.toggleFavorite(listingId),
+    onSuccess: (_, listingId) => {
+      queryClient.invalidateQueries({ queryKey: ['listings', 'favorite', listingId] });
+      queryClient.invalidateQueries({ queryKey: ['listings', 'favorites', 'mine'] });
+      queryClient.invalidateQueries({ queryKey: listingQueryKeys.statistics(listingId) });
+    },
+  });
+};
+
+/**
+ * Hook to check if listing is favorited by current user
+ */
+export const useIsFavorited = (listingId: string | null | undefined, enabled: boolean = true) => {
+  return useQuery({
+    queryKey: ['listings', 'favorite', listingId] as const,
+    queryFn: () => listingService.isFavorited(listingId!),
+    enabled: enabled && !!listingId,
+    staleTime: 1 * 60 * 1000,
+  });
+};
+
+/**
+ * Hook to get all favorites of current user
+ */
+export const useGetMyFavorites = (enabled: boolean = true) => {
+  return useQuery({
+    queryKey: ['listings', 'favorites', 'mine'] as const,
+    queryFn: () => listingService.getMyFavorites(),
+    enabled,
+    staleTime: 2 * 60 * 1000,
+  });
+};

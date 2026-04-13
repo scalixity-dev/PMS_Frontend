@@ -104,6 +104,9 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `${API_BASE_URL}/listing/${id}`,
     DELETE: (id: string) => `${API_BASE_URL}/listing/${id}`,
     GET_STATISTICS: (id: string) => `${API_BASE_URL}/listing/${id}/statistics`,
+    TOGGLE_FAVORITE: (id: string) => `${API_BASE_URL}/listing/${id}/favorite`,
+    IS_FAVORITED: (id: string) => `${API_BASE_URL}/listing/${id}/favorite`,
+    MY_FAVORITES: `${API_BASE_URL}/listing/favorites/mine`,
   },
   KEYS: {
     GET_ALL: `${API_BASE_URL}/keys-and-locks`,

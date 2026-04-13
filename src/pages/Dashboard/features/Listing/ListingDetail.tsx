@@ -94,13 +94,26 @@ const ListingDetail: React.FC = () => {
     const handleSaveLeaseTerms = () => {
         if (!backendListing?.id || !leaseTerms) return;
 
+        // Convert 'dd MMM, yyyy' format to ISO string for backend
+        let availableFromISO: string | undefined;
+        if (leaseTerms.dateAvailable) {
+            try {
+                const parsed = parse(leaseTerms.dateAvailable, 'dd MMM, yyyy', new Date());
+                if (!isNaN(parsed.getTime())) {
+                    availableFromISO = parsed.toISOString();
+                }
+            } catch (e) {
+                console.warn('Failed to parse dateAvailable:', leaseTerms.dateAvailable);
+            }
+        }
+
         updateListing.mutate({
             id: backendListing.id,
             data: {
                 monthlyRent: leaseTerms.monthlyRent,
                 securityDeposit: leaseTerms.securityDeposit,
                 amountRefundable: leaseTerms.amountRefundable,
-                availableFrom: leaseTerms.dateAvailable,
+                availableFrom: availableFromISO,
             },
         });
     };
