@@ -1070,6 +1070,82 @@ class PropertyService {
 
     return response.json();
   }
+
+  /**
+   * Fetch public listings with pagination and filtering (tenant-facing)
+   */
+  async getPublicListings(filters?: {
+    search?: string;
+    country?: string;
+    state?: string;
+    city?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    beds?: number;
+    baths?: number;
+    propertyType?: string;
+    petsAllowed?: boolean;
+    page?: number;
+    limit?: number;
+  }): Promise<any> {
+    const params = new URLSearchParams();
+
+    if (filters?.search) params.append('search', filters.search);
+    if (filters?.country) params.append('country', filters.country);
+    if (filters?.state) params.append('state', filters.state);
+    if (filters?.city) params.append('city', filters.city);
+    if (filters?.minPrice) params.append('minPrice', String(filters.minPrice));
+    if (filters?.maxPrice) params.append('maxPrice', String(filters.maxPrice));
+    if (filters?.beds) params.append('beds', String(filters.beds));
+    if (filters?.baths) params.append('baths', String(filters.baths));
+    if (filters?.propertyType) params.append('propertyType', filters.propertyType);
+    if (filters?.petsAllowed !== undefined) params.append('petsAllowed', String(filters.petsAllowed));
+    if (filters?.page) params.append('_page', String(filters.page));
+    if (filters?.limit) params.append('_limit', String(filters.limit));
+
+    let url = API_ENDPOINTS.PROPERTY.GET_PUBLIC_LISTINGS;
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to fetch public listings';
+      try {
+        const errorData = await response.json();
+        if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+      } catch (e) {
+        // fallback to default error message
+      }
+      throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+
+    // Handle both array and pagination response
+    if (Array.isArray(data)) {
+      return data;
+    }
+
+    if (data && typeof data === 'object' && Array.isArray(data.data)) {
+      return data;
+    }
+
+    // Fallback: wrap array in pagination object if needed
+    console.warn('Unexpected public listings response format:', data);
+    return { data: Array.isArray(data) ? data : [], pagination: { page: 1, limit: 12, total: 0, totalPages: 0 } };
+  }
 }
 
 export const propertyService = new PropertyService();

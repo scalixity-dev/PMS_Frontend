@@ -19,10 +19,18 @@ export const tenantQueryKeys = {
 /**
  * Hook to get all tenant profiles
  */
-export const useGetAllTenants = (enabled: boolean = true) => {
+export const useGetAllTenants = (
+  filters?: {
+    search?: string;
+    status?: string;
+    page?: number;
+    limit?: number;
+  },
+  enabled: boolean = true
+) => {
   return useQuery({
-    queryKey: tenantQueryKeys.lists(),
-    queryFn: () => tenantService.getAll(),
+    queryKey: ['tenants', 'list', filters],
+    queryFn: () => tenantService.getAll(filters),
     enabled,
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes
     gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes

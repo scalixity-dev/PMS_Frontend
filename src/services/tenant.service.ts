@@ -128,8 +128,25 @@ class TenantService {
   /**
    * Get all tenant profiles
    */
-  async getAll(): Promise<BackendTenantProfile[]> {
-    const response = await fetch(API_ENDPOINTS.TENANT.GET_ALL, {
+  async getAll(filters?: {
+    search?: string;
+    status?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<BackendTenantProfile[]> {
+    let url = API_ENDPOINTS.TENANT.GET_ALL;
+    const params = new URLSearchParams();
+
+    if (filters?.search) params.append('search', filters.search);
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.page) params.append('_page', String(filters.page));
+    if (filters?.limit) params.append('_limit', String(filters.limit));
+
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
+
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -139,10 +156,10 @@ class TenantService {
 
     if (!response.ok) {
       let errorMessage = 'Failed to fetch tenants';
-      
+
       try {
         const errorData = await response.json();
-        
+
         if (Array.isArray(errorData.message)) {
           errorMessage = errorData.message.join('. ');
         } else if (errorData.message) {
@@ -150,7 +167,7 @@ class TenantService {
         } else if (errorData.error) {
           errorMessage = errorData.error;
         }
-        
+
         console.error('Tenant fetch error:', {
           status: response.status,
           statusText: response.statusText,
@@ -160,7 +177,7 @@ class TenantService {
         errorMessage = `Failed to fetch tenants: ${response.statusText}`;
         console.error('Failed to parse error response:', parseError);
       }
-      
+
       throw new Error(errorMessage);
     }
 
