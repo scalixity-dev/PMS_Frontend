@@ -16,6 +16,9 @@ import AddPaintModal from './AddPaintModal';
 import AddDoorModal from './AddDoorModal';
 import AddFloorModal from './AddFloorModal';
 import { useCreatePropertySpec, useGetPropertySpecs, useDeletePropertySpec } from '../../../../../hooks/usePropertyDetailQueries';
+import { useDeleteKey } from '../../../../../hooks/useKeysQueries';
+import { useQueryClient } from '@tanstack/react-query';
+import { propertyDetailQueryKeys } from '../../../../../hooks/usePropertyDetailQueries';
 
 interface SpecItemProps {
     icon: React.ReactNode;
@@ -75,6 +78,8 @@ const SpecsTab: React.FC<SpecsTabProps> = ({ propertyId, unitId }) => {
     const { data: specsData = { paints: [], doors: [], flooring: [], keys: [] }, isLoading, error } = useGetPropertySpecs(propertyId, unitId);
     const createSpecMutation = useCreatePropertySpec();
     const deleteSpecMutation = useDeletePropertySpec();
+    const deleteKeyMutation = useDeleteKey();
+    const queryClient = useQueryClient();
 
     const paints = specsData.paints || [];
     const doors = specsData.doors || [];
@@ -105,16 +110,18 @@ const SpecsTab: React.FC<SpecsTabProps> = ({ propertyId, unitId }) => {
     const handleConfirmDelete = async () => {
         if (!itemToDelete) return;
 
-        // For paints, doors, flooring - call API
-        if (itemToDelete.type !== 'key') {
-            try {
+        try {
+            if (itemToDelete.type === 'key') {
+                await deleteKeyMutation.mutateAsync(String(itemToDelete.id));
+                queryClient.invalidateQueries({ queryKey: propertyDetailQueryKeys.specs(propertyId) });
+            } else {
                 await deleteSpecMutation.mutateAsync({
                     propertyId,
                     specId: String(itemToDelete.id),
                 });
-            } catch (error) {
-                console.error('Failed to delete spec:', error);
             }
+        } catch (error) {
+            console.error('Failed to delete item:', error);
         }
 
         setDeleteModalOpen(false);
@@ -295,9 +302,10 @@ const SpecsTab: React.FC<SpecsTabProps> = ({ propertyId, unitId }) => {
             <AssignKeyModal
                 isOpen={isAssignKeyModalOpen}
                 onClose={() => setIsAssignKeyModalOpen(false)}
-                onAssign={(keyId) => {
-                    console.log('Assigned key:', keyId);
-                    // In real app, you'd add the key to the list or make an API call
+                propertyId={propertyId}
+                unitId={unitId}
+                onAssign={() => {
+                    queryClient.invalidateQueries({ queryKey: propertyDetailQueryKeys.specs(propertyId) });
                 }}
             />
 
