@@ -29,8 +29,12 @@ const Tenants = () => {
     }, [location.state]);
     const itemsPerPage = 9;
 
-    // Fetch tenants using React Query
-    const { data: backendTenants = [], isLoading, error, refetch } = useGetAllTenants();
+    // Server-side filtering: pass search + status to API
+    const statusFilter = (filters.tenantType || []).filter((v: string) => v !== '__no_items__')[0];
+    const { data: backendTenants = [], isLoading, error, refetch } = useGetAllTenants({
+        search: searchQuery || undefined,
+        status: statusFilter || undefined,
+    });
     const { sidebarCollapsed = false } = useOutletContext<{ sidebarCollapsed: boolean }>() ?? {};
 
     // Transform backend tenants to frontend format

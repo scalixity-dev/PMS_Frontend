@@ -57,6 +57,7 @@ const MaintenanceRequestsDetail: React.FC = () => {
     const [status, setStatus] = useState('New');
     const [isAssigneeModalOpen, setIsAssigneeModalOpen] = useState(false);
     const [isRecurringModalOpen, setIsRecurringModalOpen] = useState(false);
+    const [mediaPreview, setMediaPreview] = useState<{ url: string; name: string; kind: 'image' | 'pdf' | 'file' } | null>(null);
     const [isAssigningApplicant, setIsAssigningApplicant] = useState(false);
     const [isAddingToContact, setIsAddingToContact] = useState(false);
     const queryClient = useQueryClient();
@@ -253,12 +254,23 @@ const MaintenanceRequestsDetail: React.FC = () => {
 
     const tenantInfo = useMemo(() => {
         const meta = request?.tenantMeta;
+
+        // Read scheduled date from first assignment if available
+        const firstAssignment = (request as any)?.assignments?.[0];
+        const scheduledDateRaw = firstAssignment?.scheduledDate;
+        const scheduledDateFormatted = scheduledDateRaw
+            ? new Date(scheduledDateRaw).toLocaleString('en-GB', {
+                day: '2-digit', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit',
+              })
+            : '-';
+
         if (!meta) {
             return {
                 authorizationToEnter: 'N/A',
                 authorizationCode: '-',
                 pets: [] as string[],
-                setUpDateTime: '-',
+                setUpDateTime: scheduledDateFormatted,
                 availability: [] as Array<{ id: number; date: string; timeSlots: string[] }>,
             };
         }
@@ -274,7 +286,7 @@ const MaintenanceRequestsDetail: React.FC = () => {
             authorizationToEnter: meta.tenantAuthorization ? 'Yes' : 'No',
             authorizationCode: meta.accessCode ?? '-',
             pets: meta.selectedPets ?? [],
-            setUpDateTime: '-',
+            setUpDateTime: scheduledDateFormatted,
             availability,
         };
     }, [request]);
@@ -527,29 +539,78 @@ const MaintenanceRequestsDetail: React.FC = () => {
 
                 {/* Media */}
                 <CollapsibleSection title="Media" defaultOpen={true}>
-                    <div className="bg-[#F0F0F6] rounded-xl p-6 shadow-sm flex gap-4 overflow-x-auto">
-                        {mediaUrls.length === 0 ? (
+                    <div className="bg-[#F0F0F6] rounded-xl p-6 shadow-sm flex flex-wrap gap-4 overflow-x-auto">
+                        {mediaUrls.length === 0 && attachments.length === 0 ? (
                             <span className="text-sm text-gray-500">No media available.</span>
                         ) : (
-                            mediaUrls.map((url) => (
-                                <div
-                                    key={url}
-                                    className="w-32 h-32 rounded-xl overflow-hidden bg-white shadow-sm flex-shrink-0"
-                                >
-                                    <img
-                                        src={url}
-                                        alt="Media"
-                                        className="w-full h-full object-cover"
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).src =
-                                                'https://placehold.co/200x200?text=No+Image';
-                                        }}
-                                    />
-                                </div>
-                            ))
+                            <>
+                                {mediaUrls.map((url) => (
+                                    <button
+                                        key={url}
+                                        type="button"
+                                        onClick={() => setMediaPreview({ url, name: url.split('/').pop() || 'Media', kind: 'image' })}
+                                        className="w-32 h-32 rounded-xl overflow-hidden bg-white shadow-sm flex-shrink-0 hover:opacity-90 transition-opacity"
+                                    >
+                                        <img
+                                            src={url}
+                                            alt="Media"
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                (e.target as HTMLImageElement).src =
+                                                    'https://placehold.co/200x200?text=No+Image';
+                                            }}
+                                        />
+                                    </button>
+                                ))}
+                                {/* PDFs and other attachments */}
+                                {attachments
+                                    .filter((a) => !/\.(png|jpe?g|gif|webp)$/i.test(a.fileUrl))
+                                    .map((a) => {
+                                        const isPdf = /\.pdf$/i.test(a.fileUrl);
+                                        return (
+                                            <button
+                                                key={a.id}
+                                                type="button"
+                                                onClick={() => setMediaPreview({ url: a.fileUrl, name: a.name, kind: isPdf ? 'pdf' : 'file' })}
+                                                className="w-32 h-32 rounded-xl bg-white shadow-sm flex-shrink-0 flex flex-col items-center justify-center p-3 hover:bg-gray-50 transition-colors"
+                                            >
+                                                <div className="text-3xl mb-2">{isPdf ? '📄' : '📎'}</div>
+                                                <span className="text-xs text-gray-700 text-center truncate w-full">{a.name}</span>
+                                            </button>
+                                        );
+                                    })}
+                            </>
                         )}
                     </div>
                 </CollapsibleSection>
+
+                {/* Inline media/PDF preview modal */}
+                {mediaPreview && (
+                    <div
+                        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+                        onClick={() => setMediaPreview(null)}
+                    >
+                        <div
+                            className="bg-white rounded-xl w-full max-w-5xl h-[85vh] flex flex-col shadow-2xl overflow-hidden"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+                                <h4 className="font-semibold text-gray-800 truncate">{mediaPreview.name}</h4>
+                                <div className="flex gap-2">
+                                    <a href={mediaPreview.url} download className="text-sm text-[#3A6D6C] hover:underline px-3 py-1">Download</a>
+                                    <button onClick={() => setMediaPreview(null)} className="text-gray-500 hover:text-gray-700 px-3 py-1 text-xl leading-none">×</button>
+                                </div>
+                            </div>
+                            <div className="flex-1 bg-gray-100 flex items-center justify-center overflow-auto">
+                                {mediaPreview.kind === 'image' ? (
+                                    <img src={mediaPreview.url} alt={mediaPreview.name} className="max-w-full max-h-full object-contain" />
+                                ) : (
+                                    <iframe src={mediaPreview.url} title={mediaPreview.name} className="w-full h-full" />
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
 
 
                 {/* Assignee Information */}
