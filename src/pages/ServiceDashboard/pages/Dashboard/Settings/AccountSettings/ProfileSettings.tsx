@@ -113,11 +113,22 @@ const ProfileSettings = () => {
         setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
+    const normalizePhone = (raw: string) => (raw || '').replace(/\D/g, '');
+    const normalizeCountryCode = (raw: string) => {
+        const trimmed = (raw || '').trim();
+        if (!trimmed) return undefined;
+        // Allow optional leading '+', rest must be digits.
+        return trimmed.startsWith('+') ? `+${trimmed.slice(1).replace(/\D/g, '')}` : trimmed.replace(/\D/g, '');
+    };
+
     const handleSavePersonal = () => {
+        // Strip formatting chars before send — backend regex requires pure digits.
+        const phoneNumber = normalizePhone(formData.phoneNumber);
+        const phoneCountryCode = normalizeCountryCode(formData.phoneCountryCode);
         updateProfileMutation.mutate(
             {
-                phoneCountryCode: formData.phoneCountryCode || undefined,
-                phoneNumber: formData.phoneNumber || undefined,
+                phoneCountryCode: phoneCountryCode || undefined,
+                phoneNumber: phoneNumber || undefined,
             },
             {
                 onSuccess: () => setIsEditingPersonal(false),
@@ -128,10 +139,10 @@ const ProfileSettings = () => {
     const handleSaveAddress = () => {
         updateProfileMutation.mutate(
             {
-                country: formData.country || undefined,
-                state: formData.state || undefined,
-                pincode: formData.pincode || undefined,
-                address: formData.address || undefined,
+                country: formData.country?.trim() || undefined,
+                state: formData.state?.trim() || undefined,
+                pincode: formData.pincode?.trim() || undefined,
+                address: formData.address?.trim() || undefined,
             },
             {
                 onSuccess: () => setIsEditingAddress(false),

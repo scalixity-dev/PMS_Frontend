@@ -118,6 +118,23 @@ const ServiceDashboard: React.FC = () => {
                     </div>
                     <div className="border-t border-gray-100"></div>
 
+                    {/* Outstanding Balance */}
+                    <div className="flex items-center justify-between p-2">
+                        <div>
+                            <p className="text-gray-500 text-sm mb-1">Outstanding</p>
+                            <p className="text-xl font-bold text-gray-900">
+                                ₹{(stats?.outstandingBalance ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => navigate('/service-dashboard/accounting')}
+                            className="text-[#7BD747] text-sm font-medium hover:underline"
+                        >
+                            View
+                        </button>
+                    </div>
+                    <div className="border-t border-gray-100"></div>
+
                     {/* Completed This Month */}
                     <div className="flex items-center justify-between p-2">
                         <div>
@@ -138,7 +155,7 @@ const ServiceDashboard: React.FC = () => {
                         <div>
                             <p className="text-gray-500 text-sm mb-1">Earnings This Month</p>
                             <p className="text-xl font-bold text-gray-900">
-                                ${(stats?.earningsThisMonth ?? 0).toFixed(2)}
+                                ₹{(stats?.earningsThisMonth ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </p>
                         </div>
                         <button
@@ -155,7 +172,7 @@ const ServiceDashboard: React.FC = () => {
                         <div>
                             <p className="text-gray-500 text-sm mb-1">Total Earnings</p>
                             <p className="text-xl font-bold text-gray-900">
-                                ${(stats?.totalEarnings ?? 0).toFixed(2)}
+                                ₹{(stats?.totalEarnings ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </p>
                         </div>
                         <button
@@ -180,6 +197,21 @@ const ServiceDashboard: React.FC = () => {
                             View
                         </button>
                     </div>
+                    <div className="border-t border-gray-100"></div>
+
+                    {/* Calendar Events */}
+                    <div className="flex items-center justify-between p-2">
+                        <div>
+                            <p className="text-gray-500 text-sm mb-1">Calendar Reminders</p>
+                            <p className="text-xl font-bold text-gray-900">{stats?.calendarEventsCount ?? 0}</p>
+                        </div>
+                        <button
+                            onClick={() => navigate('/service-dashboard/calendar')}
+                            className="text-[#7BD747] text-sm font-medium hover:underline"
+                        >
+                            View
+                        </button>
+                    </div>
                 </div>
 
                 {/* Business Profile Card */}
@@ -190,7 +222,7 @@ const ServiceDashboard: React.FC = () => {
                             onClick={() => navigate('/service-dashboard/settings/business-profile')}
                             className="text-[#7BD747] text-sm font-medium hover:underline"
                         >
-                            Activate
+                            {stats?.businessProfileActive ? 'Edit' : 'Activate'}
                         </button>
                     </div>
 

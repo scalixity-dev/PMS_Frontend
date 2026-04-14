@@ -1,20 +1,20 @@
 import { useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { Download } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
 import { PiHandCoinsLight } from 'react-icons/pi';
 import ServiceBreadCrumb from '../../../components/ServiceBreadCrumb';
 import ServiceFilters from '../../../components/ServiceFilters';
-
-import { mockTransactions } from './mockData';
+import { useServiceProviderAccounting } from '../../../../../hooks/useServiceProviderAssignments';
 
 interface DashboardContext {
     sidebarCollapsed: boolean;
 }
 
 const ServiceAccounting = () => {
-    // Mock Data
-    const [transactions] = useState(mockTransactions);
+    const { data: accountingData, isLoading, error } = useServiceProviderAccounting();
+    const transactions = accountingData?.transactions ?? [];
+    const summary = accountingData?.summary ?? { total: 0, paid: 0, outstanding: 0, overdue: 0 };
     const { sidebarCollapsed } = useOutletContext<DashboardContext>() || { sidebarCollapsed: false };
 
     const navigate = useNavigate();
@@ -72,10 +72,10 @@ const ServiceAccounting = () => {
     });
 
 
-    const outstanding = transactions
-        .filter(t => t.status === 'Unpaid' || t.status === 'Overdue')
-        .reduce((acc, t) => acc + (t.amount || 0), 0)
-        .toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const outstanding = summary.outstanding.toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
 
     return (
         <div className={`mx-auto min-h-screen pb-20 transition-all duration-300 ${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'}`}>
@@ -123,7 +123,16 @@ const ServiceAccounting = () => {
                 categoryOptions={['All', 'One-time', 'Recurring']}
             />
 
-            {filteredTransactions.length > 0 ? (
+            {isLoading ? (
+                <div className="flex items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-gray-200 shadow-sm mt-8">
+                    <Loader2 className="w-8 h-8 animate-spin text-[#7BE156]" />
+                    <span className="ml-3 text-gray-600">Loading accounting...</span>
+                </div>
+            ) : error ? (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mt-8">
+                    <p className="text-red-800">Failed to load accounting data. Please try again.</p>
+                </div>
+            ) : filteredTransactions.length > 0 ? (
                 <>
                     {/* Mobile Card View */}
                     <div className="md:hidden space-y-4">
@@ -157,13 +166,9 @@ const ServiceAccounting = () => {
 
                                 <div className="flex items-center justify-between pt-3 border-t border-gray-50">
                                     <div className="flex items-center gap-2">
-                                        {transaction.payer?.avatar ? (
-                                            <img src={transaction.payer.avatar} alt={transaction.contact} className="w-8 h-8 rounded-full object-cover" />
-                                        ) : (
-                                            <div className="w-8 h-8 rounded-full bg-coral-100 flex items-center justify-center text-xs font-bold text-gray-700">
-                                                {transaction.contact.split(' ').map((n: string) => n[0]).join('')}
-                                            </div>
-                                        )}
+                                        <div className="w-8 h-8 rounded-full bg-coral-100 flex items-center justify-center text-xs font-bold text-gray-700">
+                                            {(transaction.contact || transaction.property || '?').split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
+                                        </div>
                                         <span className="text-sm font-medium text-gray-700">{transaction.contact}</span>
                                     </div>
                                     <button
@@ -215,14 +220,10 @@ const ServiceAccounting = () => {
                                         <td className="px-6 py-4 text-sm text-gray-900">{transaction.category}</td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
-                                                {transaction.payer?.avatar ? (
-                                                    <img src={transaction.payer.avatar} alt={transaction.contact} className="w-8 h-8 rounded-full object-cover" />
-                                                ) : (
-                                                    <div className="w-8 h-8 rounded-full bg-coral-100 flex items-center justify-center text-[10px] font-bold text-gray-700">
-                                                        {transaction.contact.split(' ').map((n: string) => n[0]).join('')}
-                                                    </div>
-                                                )}
-                                                <span className="text-sm font-medium text-gray-900">{transaction.contact}</span>
+                                                <div className="w-8 h-8 rounded-full bg-coral-100 flex items-center justify-center text-[10px] font-bold text-gray-700">
+                                                    {(transaction.contact || transaction.property || '?').split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
+                                                </div>
+                                                <span className="text-sm font-medium text-gray-900">{transaction.contact || transaction.property}</span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">

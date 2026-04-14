@@ -16,6 +16,7 @@ import { Country, State, City } from 'country-state-city';
 import type { ICountry, IState, ICity } from 'country-state-city';
 import { useGetCurrentUser } from '../../../../../../hooks/useAuthQueries';
 import { serviceProviderService, type BackendServiceProvider, type CreateServiceProviderDto } from '../../../../../../services/service-provider.service';
+import { authService } from '../../../../../../services/auth.service';
 
 // Define service categories and their options
 const SERVICE_CATEGORIES = [
@@ -52,6 +53,9 @@ const ServiceBusinessProfile = () => {
 
     // State for categories
     const [selectedCategory, setSelectedCategory] = useState<string>("Cleaning");
+
+    // Tabs
+    const [bpTab, setBpTab] = useState<'business_profile' | 'job_preference'>('business_profile');
 
     // Edit mode states
     const [isEditingPersonal, setIsEditingPersonal] = useState(false);
@@ -125,8 +129,37 @@ const ServiceBusinessProfile = () => {
         confirmPassword: ''
     });
 
+    // Email change
+    const [isChangingEmail, setIsChangingEmail] = useState(false);
+    const [emailForm, setEmailForm] = useState({ newEmail: '', currentPassword: '' });
+    const [emailChangeError, setEmailChangeError] = useState<string | null>(null);
+    const [isSavingEmail, setIsSavingEmail] = useState(false);
+
     const handlePasswordChange = (field: string, value: string) => {
         setPasswordForm(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleSaveEmail = async () => {
+        setEmailChangeError(null);
+        if (!emailForm.newEmail.trim() || !emailForm.currentPassword.trim()) {
+            setEmailChangeError('Both fields are required');
+            return;
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailForm.newEmail.trim())) {
+            setEmailChangeError('Please enter a valid email');
+            return;
+        }
+        try {
+            setIsSavingEmail(true);
+            await authService.changeEmail(emailForm.newEmail.trim(), emailForm.currentPassword);
+            queryClient.invalidateQueries({ queryKey: ['current-user'] });
+            setIsChangingEmail(false);
+            setEmailForm({ newEmail: '', currentPassword: '' });
+        } catch (err: any) {
+            setEmailChangeError(err?.message || 'Failed to update email');
+        } finally {
+            setIsSavingEmail(false);
+        }
     };
 
     const handleSavePassword = () => {
@@ -414,17 +447,22 @@ const ServiceBusinessProfile = () => {
                                 { label: 'Business Profile', value: 'business_profile' },
                                 { label: 'Job Preference', value: 'job_preference' }
                             ]}
-                            activeTab="business_profile"
-                            onTabChange={(val) => {
-                                if (val === 'job_preference') {
-                                    navigate('/service-dashboard/settings/job-preference'); // Adjust route if needed, assuming standard pattern
-                                }
-                            }}
+                            activeTab={bpTab}
+                            onTabChange={(val) => setBpTab(val as 'business_profile' | 'job_preference')}
                             className="border-none"
                         />
                     </div>
 
                     <div className="p-8">
+                        {bpTab === 'job_preference' ? (
+                            <div className="py-16 text-center">
+                                <h2 className="text-lg font-bold text-gray-900 mb-2">Job Preferences</h2>
+                                <p className="text-sm text-gray-500 max-w-md mx-auto">
+                                    Set preferred job categories, service radius, and availability. This section is coming soon — we'll notify you when it's live.
+                                </p>
+                            </div>
+                        ) : (
+                        <>
                         {/* Loading State */}
                         {(isLoadingUser || isLoadingProfile) && (
                             <div className="flex items-center justify-center py-12">
@@ -583,13 +621,63 @@ const ServiceBusinessProfile = () => {
                                 <div className="flex justify-between items-center py-2 border-b border-gray-50 border-dashed">
                                     <div className="flex items-center gap-2">
                                         <span className="text-sm font-semibold text-gray-800">Email Address</span>
-                                        <span className="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full border border-green-200 flex items-center gap-1">
-                                            Verified
-                                            <CheckCircle2 className="w-3 h-3" />
-                                        </span>
+                                        {currentUser?.isEmailVerified && (
+                                            <span className="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full border border-green-200 flex items-center gap-1">
+                                                Verified
+                                                <CheckCircle2 className="w-3 h-3" />
+                                            </span>
+                                        )}
                                     </div>
+                                    <button
+                                        onClick={() => {
+                                            setIsChangingEmail(!isChangingEmail);
+                                            if (!isChangingEmail) {
+                                                setEmailForm({ newEmail: '', currentPassword: '' });
+                                                setEmailChangeError(null);
+                                            }
+                                        }}
+                                        className="text-xs font-semibold text-[#5F6D7E] hover:text-[#2c5251]"
+                                    >
+                                        {isChangingEmail ? 'Cancel' : 'Change'}
+                                    </button>
                                 </div>
                                 <div className="text-xs text-gray-400 mt-1 ml-1">Your email is {formData.email || currentUser?.email || ''}</div>
+
+                                {isChangingEmail && (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-gray-700 mb-1 ml-1">New Email</label>
+                                            <input
+                                                type="email"
+                                                value={emailForm.newEmail}
+                                                onChange={(e) => setEmailForm({ ...emailForm, newEmail: e.target.value })}
+                                                className="w-full p-3 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none"
+                                                placeholder="new@email.com"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-gray-700 mb-1 ml-1">Current Password</label>
+                                            <input
+                                                type="password"
+                                                value={emailForm.currentPassword}
+                                                onChange={(e) => setEmailForm({ ...emailForm, currentPassword: e.target.value })}
+                                                className="w-full p-3 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none"
+                                            />
+                                        </div>
+                                        {emailChangeError && (
+                                            <div className="md:col-span-2 text-xs text-red-600">{emailChangeError}</div>
+                                        )}
+                                        <div className="md:col-span-2 flex justify-end">
+                                            <button
+                                                onClick={handleSaveEmail}
+                                                disabled={isSavingEmail}
+                                                className="px-4 py-2 bg-[#7BD747] text-white text-xs font-bold rounded-lg hover:bg-[#6bc13d] disabled:opacity-50"
+                                            >
+                                                {isSavingEmail ? 'Saving...' : 'Update Email'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
 
 
                                 <div className="flex justify-between items-center py-2 border-b border-gray-50 border-dashed mt-4">
@@ -857,6 +945,8 @@ const ServiceBusinessProfile = () => {
                                 Delete Account
                             </button>
                         </div>
+                        </>
+                        )}
                     </div>
                 </div>
             </div>

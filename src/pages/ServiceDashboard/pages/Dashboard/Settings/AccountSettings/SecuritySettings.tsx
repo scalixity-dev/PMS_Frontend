@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ServiceBreadCrumb from '../../../../components/ServiceBreadCrumb';
 import ServiceTabs from '../../../../components/ServiceTabs';
 import DashboardButton from '../../../../components/DashboardButton';
+import TwoFactorModal from '../../../../../../components/common/TwoFactorModal';
+import { twoFactorService } from '../../../../../../services/two-factor.service';
 
 interface LoginSession {
     location: string;
@@ -37,6 +39,19 @@ const SecuritySettings = () => {
 
     // -- State --
     const [activeTab, setActiveTab] = useState('security');
+    const [twoFaEnabled, setTwoFaEnabled] = useState(false);
+    const [isTwoFaModalOpen, setIsTwoFaModalOpen] = useState(false);
+
+    useEffect(() => {
+        twoFactorService.status().then((s) => setTwoFaEnabled(s.enabled)).catch(() => { /* noop */ });
+    }, []);
+
+    const refreshTwoFaStatus = async () => {
+        try {
+            const s = await twoFactorService.status();
+            setTwoFaEnabled(s.enabled);
+        } catch { /* noop */ }
+    };
 
     // -- Handlers --
     const handleTabChange = (val: string) => {
@@ -136,17 +151,17 @@ const SecuritySettings = () => {
                                 <div className="flex-1 space-y-2">
                                     <h2 className="text-lg font-bold text-gray-900">Two Steps Authentication</h2>
                                     <p className="text-xs text-gray-600">
-                                        Enable two-step authentication (2FA) to add an extra layer of security using SMS or an authenticator app.
+                                        Enable two-step authentication (2FA) to add an extra layer of security using an authenticator app (Google Authenticator, Authy, etc).
                                     </p>
-                                    <a href="#" className="text-xs font-medium text-[#1E88E5] hover:underline inline-block">
-                                        Learn more
-                                    </a>
+                                    <p className="text-xs font-medium text-[#486370]">
+                                        Status: {twoFaEnabled ? 'Enabled' : 'Disabled'}
+                                    </p>
                                 </div>
                                 <DashboardButton
-                                    onClick={() => { }}
+                                    onClick={() => setIsTwoFaModalOpen(true)}
                                     className="h-10 text-xs font-bold px-6"
                                 >
-                                    Enable
+                                    {twoFaEnabled ? 'Disable' : 'Enable'}
                                 </DashboardButton>
                             </div>
                         </section>
@@ -210,6 +225,12 @@ const SecuritySettings = () => {
                     </div>
                 </div>
             </div>
+            <TwoFactorModal
+                isOpen={isTwoFaModalOpen}
+                onClose={() => setIsTwoFaModalOpen(false)}
+                onStatusChange={refreshTwoFaStatus}
+                currentlyEnabled={twoFaEnabled}
+            />
         </div>
     );
 };

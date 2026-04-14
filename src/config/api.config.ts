@@ -22,6 +22,7 @@ export const API_ENDPOINTS = {
     FORGOT_PASSWORD: `${API_BASE_URL}/auth/forgot-password`,
     RESET_PASSWORD: `${API_BASE_URL}/auth/reset-password`,
     CHANGE_PASSWORD: `${API_BASE_URL}/auth/change-password`,
+    CHANGE_EMAIL: `${API_BASE_URL}/auth/change-email`,
     UPDATE_PROFILE: `${API_BASE_URL}/auth/profile`,
     VERIFY_MOBILE_TOKEN: `${API_BASE_URL}/auth/verify-mobile-token`,
     GOOGLE: `${API_BASE_URL}/auth/google`,
@@ -173,6 +174,7 @@ export const API_ENDPOINTS = {
     GET_MY_PROFILE: `${API_BASE_URL}/service-provider/me/profile`,
     CREATE_OR_UPDATE_MY_PROFILE: `${API_BASE_URL}/service-provider/me/profile`,
     GET_MY_DASHBOARD_STATS: `${API_BASE_URL}/service-provider/me/dashboard-stats`,
+    GET_MY_ACCOUNTING: `${API_BASE_URL}/service-provider/me/accounting`,
     UPDATE_ASSIGNMENT_STATUS: (id: string, assignmentId: string) => `${API_BASE_URL}/service-provider/${id}/assignments/${assignmentId}/status`,
     GET_BY_CATEGORY: (category: string) => `${API_BASE_URL}/service-provider/category/${category}`,
     ASSIGN_TO_REQUEST: (id: string, requestId: string) => `${API_BASE_URL}/service-provider/${id}/assignments/${requestId}`,
@@ -346,5 +348,22 @@ export const API_ENDPOINTS = {
   AI_CHAT: {
     STREAM: `${import.meta.env.VITE_AI_CHAT_API_URL || 'http://localhost:8000'}/chat/stream`,
     CHAT: `${import.meta.env.VITE_AI_CHAT_API_URL || 'http://localhost:8000'}/chat`,
+  },
+  PAYMENTS: {
+    CREATE_SETUP_INTENT: `${API_BASE_URL}/payments/setup-intent`,
+    SAVE_CARD: `${API_BASE_URL}/payments/cards`,
+    LIST_CARDS: `${API_BASE_URL}/payments/cards`,
+    SET_DEFAULT: (id: string) => `${API_BASE_URL}/payments/cards/${id}/default`,
+    DELETE_CARD: (id: string) => `${API_BASE_URL}/payments/cards/${id}`,
+  },
+  TWO_FACTOR: {
+    STATUS: `${API_BASE_URL}/2fa/status`,
+    SEND_CODE: `${API_BASE_URL}/2fa/send-code`,
+    VERIFY: `${API_BASE_URL}/2fa/verify`,
+  },
+  EQUIPMENT_ATTACHMENTS: {
+    LIST: (equipmentId: string) => `${API_BASE_URL}/equipment/${equipmentId}/attachments`,
+    ADD: (equipmentId: string) => `${API_BASE_URL}/equipment/${equipmentId}/attachments`,
+    DELETE: (attachmentId: string) => `${API_BASE_URL}/equipment/attachments/${attachmentId}`,
   },
 };

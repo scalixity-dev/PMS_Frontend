@@ -436,6 +436,10 @@ class ServiceProviderService {
     totalEarnings: number;
     earningsThisMonth: number;
     pendingAssignments: number;
+    outstandingBalance: number;
+    calendarEventsCount: number;
+    businessProfileActive: boolean;
+    approvalStatus?: string | null;
     upcomingJobs: Array<{
       id: string;
       requestId: string;
@@ -464,6 +468,42 @@ class ServiceProviderService {
       throw new Error(message);
     }
 
+    return response.json();
+  }
+
+  /**
+   * Accounting data for service provider — transactions + summary.
+   */
+  async getMyAccounting(): Promise<{
+    transactions: Array<{
+      id: string;
+      requestId: string;
+      description: string;
+      category: string;
+      property: string;
+      contact: string;
+      amount: number;
+      total: string;
+      status: 'Paid' | 'Unpaid' | 'Pending' | 'Overdue';
+      type: string;
+      dueDate: string | null;
+      createdAt: string;
+    }>;
+    summary: { total: number; paid: number; outstanding: number; overdue: number };
+  }> {
+    const response = await fetch(API_ENDPOINTS.SERVICE_PROVIDER.GET_MY_ACCOUNTING, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Failed to fetch accounting';
+      throw new Error(message);
+    }
     return response.json();
   }
 

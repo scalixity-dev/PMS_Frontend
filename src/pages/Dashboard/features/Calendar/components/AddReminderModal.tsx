@@ -165,18 +165,25 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
         }
 
         try {
-            // Transform form data to API format
+            // Send date as YYYY-MM-DD (local day). Backend pins to UTC-noon to avoid TZ drift.
+            const toDateOnly = (d: Date) => {
+                const yyyy = d.getFullYear();
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const dd = String(d.getDate()).padStart(2, '0');
+                return `${yyyy}-${mm}-${dd}`;
+            };
+
             const reminderDto = {
                 title: formData.title,
                 description: formData.details || undefined,
-                date: formData.date ? formData.date.toISOString() : '',
+                date: formData.date ? toDateOnly(formData.date) : '',
                 time: formData.time,
                 type: formData.type,
                 assignee: formData.assignee || undefined,
                 propertyId: formData.property || undefined,
                 recurring: formData.isRecurring,
                 frequency: formData.frequency ? (formData.frequency.toUpperCase() as 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY' | 'ONCE') : undefined,
-                endDate: formData.endDate ? formData.endDate.toISOString() : undefined,
+                endDate: formData.endDate ? toDateOnly(formData.endDate) : undefined,
                 color: formData.color || undefined,
             };
 
@@ -266,12 +273,7 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
 
                     {/* Details */}
                     <div>
-                        <div className="flex items-center justify-between mb-1">
-                            <label className="block text-xs font-bold text-gray-700">Details</label>
-                            <span className={`text-xs ${formData.details && formData.details.length > MAX_DETAILS_LENGTH ? 'text-red-500 font-semibold' : 'text-gray-500'}`}>
-                                {formData.details?.length || 0}/{MAX_DETAILS_LENGTH}
-                            </span>
-                        </div>
+                        <label className="block text-xs font-bold text-gray-700 mb-1">Details</label>
                         <textarea
                             value={formData.details}
                             onChange={(e) => {
@@ -285,6 +287,11 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
                             disabled={isLoading}
                             className={`w-full bg-white text-gray-800 placeholder-gray-400 px-3 py-2.5 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all resize-none shadow-sm text-sm ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                         />
+                        <div className="flex items-center justify-end mt-1">
+                            <span className={`text-xs ${formData.details && formData.details.length > MAX_DETAILS_LENGTH ? 'text-red-500 font-semibold' : 'text-gray-500'}`}>
+                                {formData.details?.length || 0}/{MAX_DETAILS_LENGTH}
+                            </span>
+                        </div>
                         {formErrors.details && (
                             <p className="text-red-500 text-xs mt-1">
                                 Details cannot exceed {MAX_DETAILS_LENGTH} characters

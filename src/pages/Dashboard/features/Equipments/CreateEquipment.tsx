@@ -40,6 +40,14 @@ const CreateEquipment = () => {
     const [isUploading, setIsUploading] = useState(false);
     const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
     const [attachmentErrors, setAttachmentErrors] = useState<string[]>([]);
+    interface ExistingAttachment {
+        id: string;
+        fileName: string;
+        fileUrl: string;
+        fileType?: string | null;
+        fileSize?: number | null;
+    }
+    const [existingAttachments, setExistingAttachments] = useState<ExistingAttachment[]>([]);
 
     const [formData, setFormData] = useState({
         categoryId: '',
@@ -108,6 +116,10 @@ const CreateEquipment = () => {
                 setUploadedImageUrl(eq.photoUrl);
                 setImage(eq.photoUrl);
             }
+            // Surface any per-equipment attachments returned by the include.
+            if (Array.isArray(eq.attachments)) {
+                setExistingAttachments(eq.attachments);
+            }
             // Reset dirty state after a short delay to allow for state updates
             setTimeout(() => {
                 setIsDirty(false);
@@ -117,6 +129,32 @@ const CreateEquipment = () => {
             isInitializingRef.current = false;
         }
     }, [isEditMode, existingEquipment]);
+
+    // If attachments aren't included in the equipment payload, fetch them separately on edit.
+    useEffect(() => {
+        if (!isEditMode || !id) return;
+        if (existingAttachments.length > 0) return;
+        fetch(API_ENDPOINTS.EQUIPMENT_ATTACHMENTS.LIST(id), { credentials: 'include' })
+            .then((r) => (r.ok ? r.json() : []))
+            .then((data) => {
+                if (Array.isArray(data)) setExistingAttachments(data);
+            })
+            .catch(() => { /* noop — attachments are non-critical */ });
+    }, [isEditMode, id]);
+
+    const handleDeleteExistingAttachment = async (attachmentId: string) => {
+        if (!window.confirm('Delete this document?')) return;
+        try {
+            const res = await fetch(API_ENDPOINTS.EQUIPMENT_ATTACHMENTS.DELETE(attachmentId), {
+                method: 'DELETE',
+                credentials: 'include',
+            });
+            if (!res.ok) throw new Error('Failed to delete');
+            setExistingAttachments((prev) => prev.filter((a) => a.id !== attachmentId));
+        } catch (err: any) {
+            alert(err?.message || 'Failed to delete document');
+        }
+    };
 
 
 
@@ -279,6 +317,22 @@ const CreateEquipment = () => {
         return data.url;
     };
 
+    // Persist an attachment record on the equipment after the file is uploaded.
+    const attachToEquipment = async (equipmentId: string, file: File, fileUrl: string) => {
+        const res = await fetch(API_ENDPOINTS.EQUIPMENT_ATTACHMENTS.ADD(equipmentId), {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                fileName: file.name,
+                fileUrl,
+                fileType: file.type || undefined,
+                fileSize: file.size,
+            }),
+        });
+        if (!res.ok) throw new Error('Failed to attach document to equipment');
+    };
+
     const handleSubmit = async () => {
         if (!formData.categoryId || !formData.brand || !formData.model || !formData.price || !formData.propertyId || !formData.serial || !formData.installationDate) {
             alert('Please fill in all required fields');
@@ -328,24 +382,38 @@ const CreateEquipment = () => {
             };
 
             if (isEditMode && id) {
-                // Update existing equipment
+                // Update existing equipment + attach any newly-staged documents.
                 await updateEquipmentMutation.mutateAsync({
                     equipmentId: id,
                     updateData: equipmentData,
                 });
-            } else {
-                // Create new equipment
-                await createEquipmentMutation.mutateAsync(equipmentData);
-
-                // Then, if there are any uploaded files, attach them to the property
-                if (uploadedFiles.length > 0 && formData.propertyId) {
+                if (uploadedFiles.length > 0) {
                     try {
                         await Promise.all(
-                            uploadedFiles.map(file => uploadAttachmentFile(file, formData.propertyId)),
+                            uploadedFiles.map(async (file) => {
+                                const url = await uploadAttachmentFile(file, formData.propertyId);
+                                await attachToEquipment(id, file, url);
+                            }),
                         );
                     } catch (uploadError) {
                         console.error('Some attachments failed to upload:', uploadError);
-                        // Equipment created, but warn user about attachment failure
+                        alert('Equipment updated, but some attachments failed to upload.');
+                    }
+                }
+            } else {
+                // Create new equipment, then attach files using the returned id.
+                const created = await createEquipmentMutation.mutateAsync(equipmentData);
+                const newEquipmentId = (created as any)?.id;
+                if (uploadedFiles.length > 0 && newEquipmentId) {
+                    try {
+                        await Promise.all(
+                            uploadedFiles.map(async (file) => {
+                                const url = await uploadAttachmentFile(file, formData.propertyId);
+                                await attachToEquipment(newEquipmentId, file, url);
+                            }),
+                        );
+                    } catch (uploadError) {
+                        console.error('Some attachments failed to upload:', uploadError);
                         alert('Equipment created, but some attachments failed to upload. Please try adding them again.');
                         navigate('/dashboard/equipments');
                         return;
@@ -776,6 +844,40 @@ const CreateEquipment = () => {
                             <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-lg text-xs text-red-700 space-y-1">
                                 {attachmentErrors.map((err, idx) => (
                                     <p key={idx}>{err}</p>
+                                ))}
+                            </div>
+                        )}
+                        {existingAttachments.length > 0 && (
+                            <div className="mb-4 space-y-2">
+                                {existingAttachments.map((att) => (
+                                    <div key={att.id} className="flex items-center justify-between bg-white rounded-lg p-3 border border-gray-200">
+                                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                                            <div className="w-8 h-8 bg-[#3A6D6C] rounded flex items-center justify-center shrink-0">
+                                                <Upload className="w-4 h-4 text-white" />
+                                            </div>
+                                            <div className="flex flex-col min-w-0">
+                                                <a
+                                                    href={att.fileUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-sm text-[#3A6D6C] hover:underline truncate"
+                                                >
+                                                    {att.fileName}
+                                                </a>
+                                                {typeof att.fileSize === 'number' && (
+                                                    <span className="text-xs text-gray-400">{(att.fileSize / 1024).toFixed(1)} KB</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleDeleteExistingAttachment(att.id)}
+                                            className="ml-2 p-1 hover:bg-red-50 rounded transition-colors shrink-0"
+                                            aria-label="Delete attachment"
+                                        >
+                                            <X className="w-4 h-4 text-red-500" />
+                                        </button>
+                                    </div>
                                 ))}
                             </div>
                         )}

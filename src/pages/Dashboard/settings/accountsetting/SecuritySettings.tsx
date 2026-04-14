@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import Button from "../../../../components/common/Button";
 import { AccountSettingsLayout } from "../../../../components/common/AccountSettingsLayout";
 import { useGetSecuritySessions, useGetSettingsSection, useUpdateSettingsSection } from "../../../../hooks/useSettingsQueries";
+import TwoFactorModal from "../../../../components/common/TwoFactorModal";
+import { twoFactorService } from "../../../../services/two-factor.service";
 
 interface LoginSession {
   id: string;
@@ -40,13 +42,29 @@ export default function SecuritySettings() {
 
   const sessions: LoginSession[] = sessionsData?.sessions ?? [];
 
+  // Real TOTP 2FA status (source of truth is /2fa/status, not the settings blob).
+  const [twoFaEnabled, setTwoFaEnabled] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    twoFactorService.status().then((s) => setTwoFaEnabled(s.enabled)).catch(() => { /* ignore initial status failures */ });
+  }, []);
+
+  const refreshStatus = async () => {
+    try {
+      const s = await twoFactorService.status();
+      setTwoFaEnabled(s.enabled);
+      // Keep legacy settings blob in sync for existing consumers.
+      const nextValues = { ...localValues, twoStepAuthenticationEnabled: s.enabled };
+      setLocalValues(nextValues);
+      updateSecurity.mutate(nextValues);
+    } catch {
+      /* noop */
+    }
+  };
+
   const handleEnable2FA = () => {
-    const nextValues = {
-      ...localValues,
-      twoStepAuthenticationEnabled: !localValues.twoStepAuthenticationEnabled,
-    };
-    setLocalValues(nextValues);
-    updateSecurity.mutate(nextValues);
+    setIsModalOpen(true);
   };
 
   const handleExportData = () => {
@@ -116,7 +134,7 @@ export default function SecuritySettings() {
             <h2 className="text-lg font-semibold text-gray-900">Two Steps Authentication</h2>
             <p className="text-xs text-gray-600">Enable or disable 2-step authentication for your account.</p>
             <p className="text-xs font-medium text-[#486370]">
-              Status: {localValues.twoStepAuthenticationEnabled ? "Enabled" : "Disabled"}
+              Status: {twoFaEnabled ? "Enabled" : "Disabled"}
             </p>
           </div>
           <Button
@@ -124,9 +142,8 @@ export default function SecuritySettings() {
             variant="primary"
             className="w-full sm:w-auto whitespace-nowrap bg-[#3D7475] border-none"
             onClick={handleEnable2FA}
-            disabled={isBusy}
           >
-            {localValues.twoStepAuthenticationEnabled ? "Disable" : "Enable"}
+            {twoFaEnabled ? "Disable" : "Enable"}
           </Button>
         </div>
       </section>
@@ -166,6 +183,12 @@ export default function SecuritySettings() {
           </div>
         )}
       </section>
+      <TwoFactorModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onStatusChange={refreshStatus}
+        currentlyEnabled={twoFaEnabled}
+      />
     </AccountSettingsLayout>
   );
 }

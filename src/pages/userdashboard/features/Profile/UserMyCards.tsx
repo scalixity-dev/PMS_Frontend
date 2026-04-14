@@ -1,162 +1,219 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import UserAccountSettingsLayout from "../../components/layout/UserAccountSettingsLayout";
 import Button from "../../../../components/common/Button";
-import { CreditCard, Trash2, Plus } from "lucide-react";
+import { CreditCard, Trash2, Plus, Loader2 } from "lucide-react";
+import { loadStripe, type Stripe } from "@stripe/stripe-js";
+import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import { paymentsService, type SavedCard } from "../../../../services/payments.service";
 
-const MyCards: React.FC = () => {
-    const [savedCards, setSavedCards] = useState([
-        {
-            id: 1,
-            last4: "4242",
-            brand: "Visa",
-            expiryMonth: 12,
-            expiryYear: 2025,
-            isDefault: true,
+/**
+ * My Cards — Stripe-powered. Uses SetupIntent + Stripe Elements to tokenize
+ * card details client-side. Raw PAN/CVV never touches our servers.
+ */
+
+const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined;
+const stripePromise: Promise<Stripe | null> | null = STRIPE_PUBLISHABLE_KEY
+    ? loadStripe(STRIPE_PUBLISHABLE_KEY)
+    : null;
+
+const CARD_ELEMENT_OPTIONS = {
+    style: {
+        base: {
+            fontSize: "15px",
+            color: "#1f2937",
+            fontFamily: "system-ui, sans-serif",
+            "::placeholder": { color: "#9ca3af" },
         },
-    ]);
+        invalid: { color: "#ef4444" },
+    },
+};
 
-    const [showAddCard, setShowAddCard] = useState(false);
+const cardBrandLabel = (brand?: string | null) => {
+    if (!brand) return "Card";
+    return brand.charAt(0).toUpperCase() + brand.slice(1);
+};
+
+const AddCardForm: React.FC<{ onSaved: () => void; onCancel: () => void; hasExistingCards: boolean }> = ({
+    onSaved,
+    onCancel,
+    hasExistingCards,
+}) => {
+    const stripe = useStripe();
+    const elements = useElements();
+    const [cardholderName, setCardholderName] = useState("");
+    const [setAsDefault, setSetAsDefault] = useState(!hasExistingCards);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [cardNumber, setCardNumber] = useState("");
-    const [cardName, setCardName] = useState("");
-    const [expiryMonth, setExpiryMonth] = useState("");
-    const [expiryYear, setExpiryYear] = useState("");
-    const [cvv, setCvv] = useState("");
     const [errorMsg, setErrorMsg] = useState("");
 
-    const validateLuhn = (number: string) => {
-        let sum = 0;
-        let shouldDouble = false;
-        for (let i = number.length - 1; i >= 0; i--) {
-            let digit = parseInt(number.charAt(i));
-            if (shouldDouble) {
-                digit *= 2;
-                if (digit > 9) digit -= 9;
-            }
-            sum += digit;
-            shouldDouble = !shouldDouble;
-        }
-        return sum % 10 === 0;
-    };
-
-    const getCardBrand = (number: string) => {
-        if (number.startsWith("4")) return "Visa";
-        if (/^5[1-5]/.test(number) || /^2[2-7]/.test(number)) return "Mastercard";
-        if (/^3[47]/.test(number)) return "Amex";
-        if (/^6(?:011|5)/.test(number)) return "Discover";
-        return "Unknown";
-    };
-
-    const handleDeleteCard = (cardId: number) => {
-        const cardToDelete = savedCards.find((card) => card.id === cardId);
-        const remainingCards = savedCards.filter((card) => card.id !== cardId);
-
-        // If deleting the default card and there are remaining cards, set the first one as default
-        if (cardToDelete?.isDefault && remainingCards.length > 0) {
-            setSavedCards(
-                remainingCards.map((card, index) => ({
-                    ...card,
-                    isDefault: index === 0,
-                }))
-            );
-        } else {
-            setSavedCards(remainingCards);
-        }
-    };
-
-    const handleSetDefault = (cardId: number) => {
-        setSavedCards(
-            savedCards.map((card) => ({
-                ...card,
-                isDefault: card.id === cardId,
-            }))
-        );
-    };
-
-    const handleAddCard = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setErrorMsg("");
-
-        // Basic Validation
-        if (!cardNumber || !cardName || !expiryMonth || !expiryYear || !cvv) {
-            setErrorMsg("Please fill in all fields.");
+        if (!stripe || !elements) {
+            setErrorMsg("Stripe has not loaded yet. Please try again.");
             return;
         }
-
-        const rawCardNumber = cardNumber.replace(/\s/g, "");
-        const brand = getCardBrand(rawCardNumber);
-
-        // Card Number Length & Luhn
-        if (rawCardNumber.length < 13 || rawCardNumber.length > 19 || !validateLuhn(rawCardNumber)) {
-            setErrorMsg("Invalid card number.");
-            return;
-        }
-
-        // CVV Validation
-        const expectedCvvLength = brand === "Amex" ? 4 : 3;
-        if (cvv.length !== expectedCvvLength) {
-            setErrorMsg(`Invalid CVV for ${brand}.`);
-            return;
-        }
-
-        // Expiry Date Validation
-        const month = parseInt(expiryMonth);
-        const year = parseInt(expiryYear);
-        const now = new Date();
-        const currentMonth = now.getMonth() + 1;
-        const currentYear = now.getFullYear();
-
-        if (isNaN(month) || isNaN(year) || year < currentYear || (year === currentYear && month < currentMonth)) {
-            setErrorMsg("Card has expired.");
+        if (!cardholderName.trim()) {
+            setErrorMsg("Cardholder name is required");
             return;
         }
 
         setIsSubmitting(true);
-
         try {
-            /** 
-             * SIMULATED TOKENIZATION CALL
-             * In a real scenario, this is where we send raw data to a payment gateway (e.g., Stripe)
-             * to receive a secure token. This ensures our app never stores raw PAN/CVV.
-             * The backend dev will replace this mock with the actual API integration.
-             */
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            const { clientSecret } = await paymentsService.createSetupIntent();
+            const cardElement = elements.getElement(CardElement);
+            if (!cardElement) throw new Error("Card element not ready");
 
-            const newCard = {
-                id: Date.now(),
-                last4: cardNumber.slice(-4),
-                brand: brand === "Unknown" ? "Credit Card" : brand,
-                expiryMonth: month,
-                expiryYear: year,
-                isDefault: savedCards.length === 0,
-                // token: "tok_mock_123...", // This would be returned from the payment provider
-            };
+            const { error, setupIntent } = await stripe.confirmCardSetup(clientSecret, {
+                payment_method: {
+                    card: cardElement,
+                    billing_details: { name: cardholderName.trim() },
+                },
+            });
+            if (error) throw new Error(error.message || "Card setup failed");
+            if (!setupIntent?.payment_method) throw new Error("Setup incomplete");
 
-            setSavedCards([...savedCards, newCard]);
-            setShowAddCard(false);
+            const pmId = typeof setupIntent.payment_method === "string"
+                ? setupIntent.payment_method
+                : setupIntent.payment_method.id;
 
-            // Reset form and clear raw data from memory immediately
-            setCardNumber("");
-            setCardName("");
-            setExpiryMonth("");
-            setExpiryYear("");
-            setCvv("");
-            setErrorMsg("");
-        } catch (error) {
-            setErrorMsg("Failed to securely process card. Please try again.");
+            await paymentsService.saveCard(pmId, setAsDefault);
+
+            cardElement.clear();
+            setCardholderName("");
+            onSaved();
+        } catch (err: any) {
+            setErrorMsg(err?.message || "Failed to save card");
         } finally {
             setIsSubmitting(false);
         }
     };
 
     return (
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+            {errorMsg && (
+                <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg">
+                    {errorMsg}
+                </div>
+            )}
+            <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                    Cardholder Name
+                </label>
+                <input
+                    type="text"
+                    value={cardholderName}
+                    onChange={(e) => setCardholderName(e.target.value)}
+                    className="w-full px-3 sm:px-4 py-2 sm:py-2.5 border border-[#E8E8E8] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7CD947] text-sm sm:text-base"
+                    placeholder="John Doe"
+                    required
+                />
+            </div>
+            <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                    Card Details
+                </label>
+                <div className="w-full px-3 sm:px-4 py-3 border border-[#E8E8E8] rounded-lg bg-white focus-within:ring-2 focus-within:ring-[#7CD947]">
+                    <CardElement options={CARD_ELEMENT_OPTIONS} />
+                </div>
+            </div>
+            {hasExistingCards && (
+                <label className="flex items-center gap-2 text-sm text-gray-700">
+                    <input
+                        type="checkbox"
+                        checked={setAsDefault}
+                        onChange={(e) => setSetAsDefault(e.target.checked)}
+                        className="rounded text-[#7CD947] focus:ring-[#7CD947]"
+                    />
+                    Set as default payment method
+                </label>
+            )}
+            <div className="pt-2 flex flex-col sm:flex-row gap-3">
+                <Button
+                    type="submit"
+                    disabled={isSubmitting || !stripe}
+                    className="bg-[#486370] hover:bg-[#3a505b] text-white px-6 sm:px-8 py-2 sm:py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 text-sm sm:text-base"
+                >
+                    {isSubmitting ? (
+                        <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Saving...
+                        </>
+                    ) : (
+                        "Add Card"
+                    )}
+                </Button>
+                <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={onCancel}
+                    disabled={isSubmitting}
+                    className="text-gray-700 border border-gray-200 hover:bg-gray-50 px-6 sm:px-8 py-2 sm:py-2.5 rounded-lg font-medium text-sm sm:text-base"
+                >
+                    Cancel
+                </Button>
+            </div>
+        </form>
+    );
+};
+
+const MyCards: React.FC = () => {
+    const [savedCards, setSavedCards] = useState<SavedCard[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
+    const [showAddCard, setShowAddCard] = useState(false);
+    const [busyCardId, setBusyCardId] = useState<string | null>(null);
+
+    const loadCards = async () => {
+        setIsLoading(true);
+        setLoadError(null);
+        try {
+            const cards = await paymentsService.listCards();
+            setSavedCards(cards);
+        } catch (err: any) {
+            setLoadError(err?.message || "Failed to load cards");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadCards();
+    }, []);
+
+    const handleDeleteCard = async (cardId: string) => {
+        if (!window.confirm("Remove this card?")) return;
+        setBusyCardId(cardId);
+        try {
+            await paymentsService.deleteCard(cardId);
+            await loadCards();
+        } catch (err: any) {
+            alert(err?.message || "Failed to remove card");
+        } finally {
+            setBusyCardId(null);
+        }
+    };
+
+    const handleSetDefault = async (cardId: string) => {
+        setBusyCardId(cardId);
+        try {
+            await paymentsService.setDefaultCard(cardId);
+            await loadCards();
+        } catch (err: any) {
+            alert(err?.message || "Failed to set default");
+        } finally {
+            setBusyCardId(null);
+        }
+    };
+
+    const stripeMissing = useMemo(() => !stripePromise, []);
+
+    return (
         <UserAccountSettingsLayout activeTab="My Cards">
             <div className="px-3 sm:px-4 md:px-8 pb-6 sm:pb-8 md:pb-10">
-                {/* Saved Cards Section */}
                 <section className="border border-[#E8E8E8] rounded-2xl bg-[#FBFBFB] px-3 sm:px-4 md:px-6 py-4 md:py-5 space-y-4">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                         <h2 className="text-base sm:text-lg font-semibold text-gray-900">Saved Cards</h2>
-                        {!showAddCard && (
+                        {!showAddCard && !stripeMissing && (
                             <Button
                                 className="bg-[#486370] hover:bg-[#3a505b] text-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-medium flex items-center gap-2 w-full sm:w-auto justify-center"
                                 onClick={() => setShowAddCard(true)}
@@ -167,8 +224,24 @@ const MyCards: React.FC = () => {
                         )}
                     </div>
 
-                    {/* Cards List */}
-                    {savedCards.length > 0 ? (
+                    {stripeMissing && (
+                        <div className="p-3 bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm rounded-lg">
+                            Stripe is not configured. Set <code>VITE_STRIPE_PUBLISHABLE_KEY</code> in the frontend
+                            and <code>STRIPE_SECRET_KEY</code> on the backend to enable card management.
+                        </div>
+                    )}
+
+                    {loadError && (
+                        <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg">
+                            {loadError}
+                        </div>
+                    )}
+
+                    {isLoading ? (
+                        <div className="flex items-center justify-center py-8">
+                            <Loader2 className="w-6 h-6 animate-spin text-[#7CD947]" />
+                        </div>
+                    ) : savedCards.length > 0 ? (
                         <div className="space-y-3">
                             {savedCards.map((card) => (
                                 <div
@@ -182,7 +255,7 @@ const MyCards: React.FC = () => {
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
                                                 <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900">
-                                                    {card.brand} •••• {card.last4}
+                                                    {cardBrandLabel(card.brand)} •••• {card.last4}
                                                 </h3>
                                                 {card.isDefault && (
                                                     <span className="px-2 py-1 bg-[#7CD947] text-white text-xs font-semibold rounded">
@@ -191,7 +264,7 @@ const MyCards: React.FC = () => {
                                                 )}
                                             </div>
                                             <p className="text-xs sm:text-sm text-gray-600 mt-1">
-                                                Expires {card.expiryMonth.toString().padStart(2, "0")}/{card.expiryYear}
+                                                Expires {String(card.expMonth ?? 0).padStart(2, "0")}/{card.expYear ?? ""}
                                             </p>
                                         </div>
                                     </div>
@@ -199,7 +272,8 @@ const MyCards: React.FC = () => {
                                         {!card.isDefault && (
                                             <Button
                                                 variant="ghost"
-                                                className="text-[#486370] hover:bg-gray-100 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm"
+                                                disabled={busyCardId === card.id}
+                                                className="text-[#486370] hover:bg-gray-100 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm disabled:opacity-50"
                                                 onClick={() => handleSetDefault(card.id)}
                                             >
                                                 <span className="hidden sm:inline">Set as Default</span>
@@ -208,7 +282,8 @@ const MyCards: React.FC = () => {
                                         )}
                                         <button
                                             onClick={() => handleDeleteCard(card.id)}
-                                            className="p-1.5 sm:p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                            disabled={busyCardId === card.id}
+                                            className="p-1.5 sm:p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
                                         >
                                             <Trash2 size={16} className="sm:w-[18px] sm:h-[18px]" />
                                         </button>
@@ -224,149 +299,28 @@ const MyCards: React.FC = () => {
                     )}
                 </section>
 
-                {/* Add New Card Form */}
-                {showAddCard && (
+                {showAddCard && stripePromise && (
                     <section className="border border-[#E8E8E8] rounded-2xl bg-[#FBFBFB] px-3 sm:px-4 md:px-6 py-4 md:py-5 space-y-4 mt-6 sm:mt-8">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                             <div>
                                 <h2 className="text-base sm:text-lg font-semibold text-gray-900">Add New Card</h2>
                                 <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
                                     <span className="w-1.5 h-1.5 rounded-full bg-[#7CD947]"></span>
-                                    Your payment information is encrypted and secure
+                                    Payment details are tokenized by Stripe — your card never touches our servers.
                                 </p>
                             </div>
-                            <button
-                                onClick={() => {
-                                    setShowAddCard(false);
-                                    setErrorMsg("");
-                                }}
-                                disabled={isSubmitting}
-                                className="text-gray-500 hover:text-gray-700 text-xs sm:text-sm disabled:opacity-50 self-end sm:self-auto"
-                            >
-                                Cancel
-                            </button>
                         </div>
 
-                        {errorMsg && (
-                            <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg">
-                                {errorMsg}
-                            </div>
-                        )}
-
-                        <form onSubmit={handleAddCard} className="space-y-3 sm:space-y-4">
-                            <div>
-                                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
-                                    Cardholder Name
-                                </label>
-                                <input
-                                    type="text"
-                                    value={cardName}
-                                    onChange={(e) => setCardName(e.target.value)}
-                                    className="w-full px-3 sm:px-4 py-2 sm:py-2.5 border border-[#E8E8E8] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7CD947] text-sm sm:text-base"
-                                    placeholder="John Doe"
-                                    required
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
-                                    Card Number
-                                </label>
-                                <input
-                                    type="text"
-                                    value={cardNumber}
-                                    onChange={(e) => {
-                                        const value = e.target.value.replace(/\D/g, "");
-                                        const formattedValue = value.replace(/(\d{4})(?=\d)/g, "$1 ").slice(0, 19);
-                                        setCardNumber(formattedValue);
-                                    }}
-                                    className="w-full px-3 sm:px-4 py-2 sm:py-2.5 border border-[#E8E8E8] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7CD947] text-sm sm:text-base"
-                                    placeholder="1234 5678 9012 3456"
-                                    maxLength={19}
-                                    required
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-                                <div className="col-span-1">
-                                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
-                                        Month
-                                    </label>
-                                    <select
-                                        value={expiryMonth}
-                                        onChange={(e) => setExpiryMonth(e.target.value)}
-                                        className="w-full px-2 sm:px-4 py-2 sm:py-2.5 border border-[#E8E8E8] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7CD947] text-sm sm:text-base"
-                                        required
-                                    >
-                                        <option value="">MM</option>
-                                        {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
-                                            <option key={month} value={month.toString().padStart(2, "0")}>
-                                                {month.toString().padStart(2, "0")}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="col-span-1">
-                                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
-                                        Year
-                                    </label>
-                                    <select
-                                        value={expiryYear}
-                                        onChange={(e) => setExpiryYear(e.target.value)}
-                                        className="w-full px-2 sm:px-4 py-2 sm:py-2.5 border border-[#E8E8E8] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7CD947] text-sm sm:text-base"
-                                        required
-                                    >
-                                        <option value="">YYYY</option>
-                                        {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map((year) => (
-                                            <option key={year} value={year}>
-                                                {year}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="col-span-2 sm:col-span-1">
-                                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
-                                        CVV
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={cvv}
-                                        onChange={(e) => setCvv(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                                        className="w-full px-3 sm:px-4 py-2 sm:py-2.5 border border-[#E8E8E8] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7CD947] text-sm sm:text-base"
-                                        placeholder="123"
-                                        maxLength={4}
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="pt-2 flex flex-col gap-3">
-                                <Button
-                                    type="submit"
-                                    disabled={isSubmitting}
-                                    className="bg-[#486370] hover:bg-[#3a505b] text-white px-6 sm:px-8 py-2 sm:py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 text-sm sm:text-base w-full sm:w-auto"
-                                >
-                                    {isSubmitting ? (
-                                        <>
-                                            <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                                            Processing...
-                                        </>
-                                    ) : (
-                                        "Add Card"
-                                    )}
-                                </Button>
-                                <div className="flex items-center gap-3 sm:gap-4 transition-all duration-300 justify-center sm:justify-start">
-                                    {/* Text badges — safer than hot-linked external images */}
-                                    <span className="px-2.5 py-1 text-[10px] font-bold tracking-wide bg-[#1A1F71] text-white rounded">VISA</span>
-                                    <span className="px-2.5 py-1 text-[10px] font-bold tracking-wide bg-white border border-gray-200 rounded flex items-center gap-0.5">
-                                        <span className="w-3 h-3 rounded-full bg-[#EB001B] inline-block"></span>
-                                        <span className="w-3 h-3 rounded-full bg-[#F79E1B] inline-block -ml-1.5 mix-blend-multiply"></span>
-                                    </span>
-                                    <span className="px-2.5 py-1 text-[10px] font-bold tracking-wide bg-[#003087] text-white rounded">PayPal</span>
-                                    <span className="px-2.5 py-1 text-[10px] font-bold tracking-wide bg-[#006FCF] text-white rounded">AMEX</span>
-                                </div>
-                            </div>
-                        </form>
+                        <Elements stripe={stripePromise}>
+                            <AddCardForm
+                                hasExistingCards={savedCards.length > 0}
+                                onSaved={async () => {
+                                    setShowAddCard(false);
+                                    await loadCards();
+                                }}
+                                onCancel={() => setShowAddCard(false)}
+                            />
+                        </Elements>
                     </section>
                 )}
             </div>
