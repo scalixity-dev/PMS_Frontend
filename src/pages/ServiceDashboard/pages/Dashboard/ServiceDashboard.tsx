@@ -4,7 +4,7 @@ import RequestCard from './components/RequestCard';
 import DashboardButton from '../../components/DashboardButton';
 import ServiceTabs from '../../components/ServiceTabs';
 import { PiEnvelopeSimpleLight, PiToolboxLight } from 'react-icons/pi';
-import { useServiceProviderAssignments } from '../../../../hooks/useServiceProviderAssignments';
+import { useServiceProviderAssignments, useServiceProviderDashboardStats } from '../../../../hooks/useServiceProviderAssignments';
 import { useGetCurrentUser } from '../../../../hooks/useAuthQueries';
 
 interface RequestItem {
@@ -68,6 +68,7 @@ const ServiceDashboard: React.FC = () => {
 
     const { data: currentUser } = useGetCurrentUser();
     const { data: assignments = [], isLoading: assignmentsLoading } = useServiceProviderAssignments();
+    const { data: stats } = useServiceProviderDashboardStats();
     const requests: RequestItem[] = useMemo(() => {
         if (!Array.isArray(assignments)) return [];
         return (assignments as AssignmentApi[]).map(mapAssignmentToRequestItem);
@@ -102,11 +103,26 @@ const ServiceDashboard: React.FC = () => {
 
                 {/* Stats Cards Container */}
                 <div className="bg-white rounded-3xl shadow-sm p-4 border border-gray-100 flex flex-col gap-4">
-                    {/* Outstanding */}
+                    {/* Active Jobs */}
                     <div className="flex items-center justify-between p-2">
                         <div>
-                            <p className="text-gray-500 text-sm mb-1">Outstanding</p>
-                            <p className="text-xl font-bold text-gray-900">2.00 INR</p>
+                            <p className="text-gray-500 text-sm mb-1">Active Jobs</p>
+                            <p className="text-xl font-bold text-gray-900">{stats?.activeJobs ?? 0}</p>
+                        </div>
+                        <button
+                            onClick={() => navigate('/service-dashboard')}
+                            className="text-[#7BD747] text-sm font-medium hover:underline"
+                        >
+                            View
+                        </button>
+                    </div>
+                    <div className="border-t border-gray-100"></div>
+
+                    {/* Completed This Month */}
+                    <div className="flex items-center justify-between p-2">
+                        <div>
+                            <p className="text-gray-500 text-sm mb-1">Completed This Month</p>
+                            <p className="text-xl font-bold text-gray-900">{stats?.completedThisMonth ?? 0}</p>
                         </div>
                         <button
                             onClick={() => navigate('/service-dashboard/accounting')}
@@ -117,14 +133,16 @@ const ServiceDashboard: React.FC = () => {
                     </div>
                     <div className="border-t border-gray-100"></div>
 
-                    {/* Calendar Reminder */}
+                    {/* Earnings This Month */}
                     <div className="flex items-center justify-between p-2">
                         <div>
-                            <p className="text-gray-500 text-sm mb-1">Calendar Reminder</p>
-                            <p className="text-xl font-bold text-gray-900">0</p>
+                            <p className="text-gray-500 text-sm mb-1">Earnings This Month</p>
+                            <p className="text-xl font-bold text-gray-900">
+                                ${(stats?.earningsThisMonth ?? 0).toFixed(2)}
+                            </p>
                         </div>
                         <button
-                            onClick={() => navigate('/service-dashboard/calendar')}
+                            onClick={() => navigate('/service-dashboard/accounting')}
                             className="text-[#7BD747] text-sm font-medium hover:underline"
                         >
                             View
@@ -132,11 +150,28 @@ const ServiceDashboard: React.FC = () => {
                     </div>
                     <div className="border-t border-gray-100"></div>
 
-                    {/* Job Leads */}
+                    {/* Total Earnings */}
                     <div className="flex items-center justify-between p-2">
                         <div>
-                            <p className="text-gray-500 text-sm mb-1">Job Leads</p>
-                            <p className="text-xl font-bold text-gray-900">0</p>
+                            <p className="text-gray-500 text-sm mb-1">Total Earnings</p>
+                            <p className="text-xl font-bold text-gray-900">
+                                ${(stats?.totalEarnings ?? 0).toFixed(2)}
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => navigate('/service-dashboard/accounting')}
+                            className="text-[#7BD747] text-sm font-medium hover:underline"
+                        >
+                            View
+                        </button>
+                    </div>
+                    <div className="border-t border-gray-100"></div>
+
+                    {/* Pending Assignments */}
+                    <div className="flex items-center justify-between p-2">
+                        <div>
+                            <p className="text-gray-500 text-sm mb-1">Pending Assignments</p>
+                            <p className="text-xl font-bold text-gray-900">{stats?.pendingAssignments ?? 0}</p>
                         </div>
                         <button
                             onClick={() => navigate('/service-dashboard/find-job')}

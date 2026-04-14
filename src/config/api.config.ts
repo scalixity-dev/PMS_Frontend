@@ -172,6 +172,7 @@ export const API_ENDPOINTS = {
     APPLY_TO_JOB: (requestId: string) => `${API_BASE_URL}/service-provider/me/available-jobs/${requestId}/apply`,
     GET_MY_PROFILE: `${API_BASE_URL}/service-provider/me/profile`,
     CREATE_OR_UPDATE_MY_PROFILE: `${API_BASE_URL}/service-provider/me/profile`,
+    GET_MY_DASHBOARD_STATS: `${API_BASE_URL}/service-provider/me/dashboard-stats`,
     UPDATE_ASSIGNMENT_STATUS: (id: string, assignmentId: string) => `${API_BASE_URL}/service-provider/${id}/assignments/${assignmentId}/status`,
     GET_BY_CATEGORY: (category: string) => `${API_BASE_URL}/service-provider/category/${category}`,
     ASSIGN_TO_REQUEST: (id: string, requestId: string) => `${API_BASE_URL}/service-provider/${id}/assignments/${requestId}`,

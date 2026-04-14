@@ -426,6 +426,48 @@ class ServiceProviderService {
   }
 
   /**
+   * Dashboard stats for service provider home page.
+   */
+  async getMyDashboardStats(): Promise<{
+    activeJobs: number;
+    completedJobs: number;
+    completedThisMonth: number;
+    cancelledJobs: number;
+    totalEarnings: number;
+    earningsThisMonth: number;
+    pendingAssignments: number;
+    upcomingJobs: Array<{
+      id: string;
+      requestId: string;
+      title: string;
+      priority: string | null;
+      category: string | null;
+      scheduledDate: string | null;
+      dueDate: string | null;
+      status: string;
+      quotedAmount: string | null;
+      currency: string;
+    }>;
+  }> {
+    const response = await fetch(API_ENDPOINTS.SERVICE_PROVIDER.GET_MY_DASHBOARD_STATS, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Failed to fetch dashboard stats';
+      throw new Error(message);
+    }
+
+    return response.json();
+  }
+
+  /**
    * Create or update current service provider's profile
    */
   async createOrUpdateMyProfile(data: CreateServiceProviderDto): Promise<BackendServiceProvider> {

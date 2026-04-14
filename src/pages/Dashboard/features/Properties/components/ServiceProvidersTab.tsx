@@ -97,14 +97,30 @@ const ServiceProvidersTab: React.FC<ServiceProvidersTabProps> = ({ propertyId, u
         return 'OTHER';
     };
 
-    const handleAddUtilityProvider = async (data: { providerType: string; servicePro: string; estimatedCost: string; currency: string }) => {
+    const handleAddUtilityProvider = async (data: {
+        providerType: string;
+        servicePro: string;
+        estimatedCost: string;
+        currency: string;
+        contactName: string;
+        contactPhone: string;
+        accountNumber: string;
+    }) => {
         const currencySymbol = currencyOptions.find(c => c.code === data.currency)?.symbol || data.currency || '$';
+        // Pack extra fields into notes for round-trip display (providerType, cost)
+        const notesParts: string[] = [];
+        if (data.providerType) notesParts.push(`Provider Type: ${data.providerType}`);
+        if (data.estimatedCost) notesParts.push(`Estimated monthly cost: ${currencySymbol}${data.estimatedCost}`);
+
         await createUtilityProviderMutation.mutateAsync({
             propertyId,
             providerData: {
                 providerName: data.servicePro,
                 serviceType: mapProviderTypeToServiceType(data.providerType),
-                notes: data.estimatedCost ? `Estimated monthly cost: ${currencySymbol}${data.estimatedCost}` : undefined,
+                accountNumber: data.accountNumber || undefined,
+                contactName: data.contactName || undefined,
+                contactPhone: data.contactPhone || undefined,
+                notes: notesParts.length > 0 ? notesParts.join(', ') : undefined,
             },
         });
     };
@@ -177,16 +193,19 @@ const ServiceProvidersTab: React.FC<ServiceProvidersTabProps> = ({ propertyId, u
                 />
                 <div>
                     {realUtilityProviders.map((provider: any) => {
-                        // Parse cost from notes if present (legacy)
-                        const costMatch = typeof provider.notes === 'string' ? provider.notes.match(/Estimated monthly cost:\s*([^,]+)/) : null;
-                        const estimatedCost = costMatch ? costMatch[1].trim() : (provider.estimatedMonthlyCost || '-');
+                        // Parse packed notes field: "Provider Type: X, Estimated monthly cost: $Y"
+                        const notesStr = typeof provider.notes === 'string' ? provider.notes : '';
+                        const providerTypeMatch = notesStr.match(/Provider Type:\s*([^,]+)/);
+                        const costMatch = notesStr.match(/Estimated monthly cost:\s*([^,]+)/);
+                        const providerType = providerTypeMatch ? providerTypeMatch[1].trim() : (provider.serviceType || '-');
+                        const estimatedCost = costMatch ? costMatch[1].trim() : '-';
 
                         const record: ServiceProviderRecord = {
                             id: provider.id,
                             avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=256&q=80',
                             serviceType: provider.serviceType || 'OTHER',
                             details: [
-                                { label: 'Provider Type', value: provider.providerType || provider.serviceType || '-' },
+                                { label: 'Provider Type', value: providerType },
                                 { label: 'Service Pro', value: provider.providerName || '-' },
                                 { label: 'Est. Cost', value: estimatedCost },
                                 { label: 'Contact', value: provider.contactName || '-' },

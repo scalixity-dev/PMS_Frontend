@@ -13,6 +13,9 @@ interface AddUtilityProviderModalProps {
         servicePro: string;
         estimatedCost: string;
         currency: string;
+        contactName: string;
+        contactPhone: string;
+        accountNumber: string;
     }) => void;
 }
 
@@ -50,6 +53,9 @@ const AddUtilityProviderModal: React.FC<AddUtilityProviderModalProps> = ({ isOpe
     const [servicePro, setServicePro] = useState('');
     const [estimatedCost, setEstimatedCost] = useState('');
     const [currency, setCurrency] = useState('USD');
+    const [contactName, setContactName] = useState('');
+    const [contactPhone, setContactPhone] = useState('');
+    const [accountNumber, setAccountNumber] = useState('');
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
     const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
@@ -68,13 +74,19 @@ const AddUtilityProviderModal: React.FC<AddUtilityProviderModalProps> = ({ isOpe
             providerType,
             servicePro,
             estimatedCost,
-            currency
+            currency,
+            contactName,
+            contactPhone,
+            accountNumber,
         });
 
         // Reset
         setProviderType('');
         setServicePro('');
         setEstimatedCost('');
+        setContactName('');
+        setContactPhone('');
+        setAccountNumber('');
         setErrors({});
         setOpenDropdown(null);
         onClose();
@@ -169,6 +181,42 @@ const AddUtilityProviderModal: React.FC<AddUtilityProviderModalProps> = ({ isOpe
                                     placeholder="0.00"
                                 />
                             </div>
+                        </div>
+
+                        {/* Contact Name */}
+                        <div>
+                            <label className="block text-xs text-gray-900 font-medium mb-1 ml-1">Contact name</label>
+                            <input
+                                type="text"
+                                value={contactName}
+                                onChange={(e) => setContactName(e.target.value)}
+                                className="w-full p-3 rounded-lg border border-gray-200 outline-none text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#3A6D6C]/20"
+                                placeholder="e.g. John Doe"
+                            />
+                        </div>
+
+                        {/* Contact Phone */}
+                        <div>
+                            <label className="block text-xs text-gray-900 font-medium mb-1 ml-1">Contact phone</label>
+                            <input
+                                type="tel"
+                                value={contactPhone}
+                                onChange={(e) => setContactPhone(e.target.value)}
+                                className="w-full p-3 rounded-lg border border-gray-200 outline-none text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#3A6D6C]/20"
+                                placeholder="e.g. +1 555-123-4567"
+                            />
+                        </div>
+
+                        {/* Account Number */}
+                        <div>
+                            <label className="block text-xs text-gray-900 font-medium mb-1 ml-1">Account number</label>
+                            <input
+                                type="text"
+                                value={accountNumber}
+                                onChange={(e) => setAccountNumber(e.target.value)}
+                                className="w-full p-3 rounded-lg border border-gray-200 outline-none text-sm text-gray-700 bg-white focus:ring-2 focus:ring-[#3A6D6C]/20"
+                                placeholder="Account #"
+                            />
                         </div>
                     </div>
 
