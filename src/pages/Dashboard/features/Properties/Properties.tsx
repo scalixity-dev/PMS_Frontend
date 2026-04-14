@@ -440,6 +440,18 @@ const Properties: React.FC = () => {
                     filterLabels={filterLabels}
                     onSearchChange={setSearchQuery}
                     onFiltersChange={(newFilters) => setFilters(newFilters as any)}
+                    onSaveFilter={(name, filtersToSave) => {
+                        try {
+                            const key = 'properties_saved_filters';
+                            const existing = JSON.parse(localStorage.getItem(key) || '[]');
+                            const filtered = existing.filter((f: any) => f.name !== name);
+                            filtered.push({ name, filters: filtersToSave, savedAt: new Date().toISOString() });
+                            localStorage.setItem(key, JSON.stringify(filtered));
+                            alert(`Filter "${name}" saved successfully`);
+                        } catch (e) {
+                            alert('Failed to save filter');
+                        }
+                    }}
                     searchPlaceholder="Search properties..."
                 />
 

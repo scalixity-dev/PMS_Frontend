@@ -70,6 +70,7 @@ const EditProperty: React.FC = () => {
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [existingCoverPhotoUrl, setExistingCoverPhotoUrl] = useState<string | null>(null);
   const [existingGalleryPhotoUrls, setExistingGalleryPhotoUrls] = useState<string[]>([]);
+  const [existingAttachments, setExistingAttachments] = useState<Array<{ id: string; fileUrl: string; fileName?: string | null; fileType?: string | null }>>([]);
 
   // Dirty state tracking for unsaved changes
   const [isDirty, setIsDirty] = useState(false);
@@ -153,6 +154,11 @@ const EditProperty: React.FC = () => {
 
       if (property.photos) {
         setExistingGalleryPhotoUrls(property.photos.filter(p => !p.isPrimary).map(p => p.photoUrl));
+      }
+
+      // Load existing attachments
+      if ((property as any).attachments && Array.isArray((property as any).attachments)) {
+        setExistingAttachments((property as any).attachments);
       }
 
       // Reset initialization flag after a short delay to allow state/city loading
@@ -1791,6 +1797,40 @@ const EditProperty: React.FC = () => {
               multiple
               className="hidden"
             />
+
+            {/* Existing attachments from backend */}
+            {existingAttachments.length > 0 && (
+              <div className="flex flex-col gap-2 mb-4">
+                {existingAttachments.map((att) => (
+                  <div key={att.id} className="flex items-center justify-between bg-[#F0F0F6] p-3 rounded-lg border border-gray-200">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-white p-2 rounded">
+                        <FileText size={20} className="text-gray-600" />
+                      </div>
+                      <div className="flex flex-col">
+                        <a
+                          href={att.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm font-medium text-[#3A6D6C] hover:underline"
+                        >
+                          {att.fileName || att.fileUrl.split('/').pop() || 'Attachment'}
+                        </a>
+                        <span className="text-xs text-gray-500">Uploaded</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setExistingAttachments(prev => prev.filter(a => a.id !== att.id))}
+                      className="text-gray-400 hover:text-red-500 p-1"
+                      title="Remove from list (delete on server requires backend call)"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {formData.attachments.length > 0 && (
               <div className="flex flex-col gap-2 mb-4">

@@ -281,10 +281,22 @@ const AddProperty: React.FC = () => {
   };
 
   // File Handlers
+  // Size limits
+  const MAX_IMAGE_SIZE_MB = 10; // 10 MB per photo
+  const MAX_ATTACHMENT_SIZE_MB = 25; // 25 MB per document
+  const MAX_IMAGE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024;
+  const MAX_ATTACHMENT_BYTES = MAX_ATTACHMENT_SIZE_MB * 1024 * 1024;
+
   const handleCoverPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      if (file.size > MAX_IMAGE_BYTES) {
+        alert(`Cover photo must be under ${MAX_IMAGE_SIZE_MB} MB. Selected: ${(file.size / 1024 / 1024).toFixed(1)} MB`);
+        e.target.value = '';
+        return;
+      }
       setIsDirty(true);
-      setFormData(prev => ({ ...prev, coverPhoto: e.target.files![0] }));
+      setFormData(prev => ({ ...prev, coverPhoto: file }));
     }
   };
 
@@ -292,7 +304,13 @@ const AddProperty: React.FC = () => {
     if (e.target.files) {
       setIsDirty(true);
       const newPhotos = Array.from(e.target.files);
-      setFormData(prev => ({ ...prev, galleryPhotos: [...prev.galleryPhotos, ...newPhotos] }));
+      const tooBig = newPhotos.filter(f => f.size > MAX_IMAGE_BYTES);
+      const valid = newPhotos.filter(f => f.size <= MAX_IMAGE_BYTES);
+      if (tooBig.length > 0) {
+        alert(`${tooBig.length} photo(s) exceed ${MAX_IMAGE_SIZE_MB} MB limit and were skipped: ${tooBig.map(f => f.name).join(', ')}`);
+      }
+      setFormData(prev => ({ ...prev, galleryPhotos: [...prev.galleryPhotos, ...valid] }));
+      e.target.value = '';
     }
   };
 
@@ -301,14 +319,21 @@ const AddProperty: React.FC = () => {
       const files = Array.from(e.target.files);
       const validFiles: File[] = [];
       const invalidFiles: { id: number; name: string }[] = [];
+      const oversizeFiles: string[] = [];
 
       files.forEach(file => {
-        if (allowedDocumentTypes.includes(file.type)) {
+        if (file.size > MAX_ATTACHMENT_BYTES) {
+          oversizeFiles.push(file.name);
+        } else if (allowedDocumentTypes.includes(file.type)) {
           validFiles.push(file);
         } else {
           invalidFiles.push({ id: Date.now() + Math.random(), name: file.name });
         }
       });
+
+      if (oversizeFiles.length > 0) {
+        alert(`${oversizeFiles.length} file(s) exceed ${MAX_ATTACHMENT_SIZE_MB} MB limit: ${oversizeFiles.join(', ')}`);
+      }
 
       if (invalidFiles.length > 0) {
         // Store invalid filenames as objects with id and name

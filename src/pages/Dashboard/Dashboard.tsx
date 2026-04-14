@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 
 import profilePic from "../../assets/images/profilepic.png";
@@ -20,6 +20,10 @@ export default function Dashboard() {
   const { data: maintenanceData = [] } = useGetAllMaintenanceRequests(true);
   const { data: propertiesData = [] } = useGetAllProperties(true, false);
   const { data: leasesData = [] } = useGetAllLeases(undefined, undefined, true);
+
+  // Accounting chart filter: Weekly / Monthly / Quarterly / Yearly
+  const [accountingRange, setAccountingRange] = useState<'Weekly' | 'Monthly' | 'Quarterly' | 'Yearly'>('Monthly');
+  const [accountingDropdownOpen, setAccountingDropdownOpen] = useState(false);
 
   const applicationsData = useMemo(() => {
     if (Array.isArray(applicationsResponse)) return applicationsResponse;
@@ -327,15 +331,33 @@ export default function Dashboard() {
         <div className="bg-white rounded-lg p-6 shadow-sm">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold text-gray-900">Accounting</h2>
-            <button className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              Weekly
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setAccountingDropdownOpen(!accountingDropdownOpen)}
+                className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                {accountingRange}
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {accountingDropdownOpen && (
+                <div className="absolute right-0 mt-1 w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                  {(['Weekly', 'Monthly', 'Quarterly', 'Yearly'] as const).map((opt) => (
+                    <button
+                      key={opt}
+                      onClick={() => { setAccountingRange(opt); setAccountingDropdownOpen(false); }}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${accountingRange === opt ? 'bg-gray-100 font-medium' : ''}`}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           <div className="mb-4">
             <div className="flex items-baseline gap-2">
@@ -665,7 +687,10 @@ export default function Dashboard() {
                 </div>
                 <h2 className="text-lg font-semibold text-gray-900">Expiring leases</h2>
               </div>
-              <button onClick={() => navigate('/dashboard/leasing/leases')} className="text-sm text-[var(--color-primary)] hover:opacity-90 font-semibold">
+              <button
+                onClick={() => navigate('/dashboard/leasing/leases', { state: { filter: 'expiring' } })}
+                className="text-sm text-[var(--color-primary)] hover:opacity-90 font-semibold"
+              >
                 View All
               </button>
             </div>
@@ -673,7 +698,11 @@ export default function Dashboard() {
               {leases.length === 0 ? (
                 <p className="text-sm text-gray-500">No expiring leases found.</p>
               ) : leases.map((lease, idx) => (
-                <div key={lease.id} className="flex items-center justify-between">
+                <div
+                  key={lease.id}
+                  onClick={() => navigate(`/dashboard/leasing/leases/${lease.id}`)}
+                  className="flex items-center justify-between cursor-pointer hover:bg-gray-50 rounded-lg p-2 -m-2 transition-colors"
+                >
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full bg-gray-900 flex-shrink-0" />
