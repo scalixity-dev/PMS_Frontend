@@ -252,7 +252,7 @@ const Rent: React.FC = () => {
               <Link to="/userdashboard" className="text-[var(--dashboard-accent)] font-medium hover:opacity-80 transition-opacity">Dashboard</Link>
             </li>
             <li aria-hidden="true" className="text-[#1A1A1A] font-semibold">/</li>
-            <li className="text-[#1A1A1A]  font-medium" aria-current="page">Accounting</li>
+            <li className="text-[#1A1A1A]  font-medium" aria-current="page">Rent</li>
           </ol>
         </nav>
 
@@ -260,7 +260,7 @@ const Rent: React.FC = () => {
         <div className="bg-[#F4F4F4] border border-[#E5E7EB] rounded-lg shadow-[0px_3.68px_3.68px_0px_rgba(0,0,0,0.2)] overflow-hidden">
           <div className="px-6 py-3 border-b border-[#E5E7EB]">
             <div className="flex items-center gap-5">
-              <h1 className="text-2xl font-semibold text-gray-900">Accounting</h1>
+              <h1 className="text-2xl font-semibold text-gray-900">Rent</h1>
               <span className="text-[#4B5563] text-sm ">Total {transactions.length}</span>
             </div>
           </div>

@@ -41,9 +41,9 @@ const SectionHeader = ({ title, onRemove, onAdd, showAdd }: { title: string, onR
     </div>
 );
 
-const InputField = ({ label, placeholder, value, onChange, name, type = "text", className = "flex-1", error }: any) => (
+const InputField = ({ label, placeholder, value, onChange, name, type = "text", className = "flex-1", error, required = false }: any) => (
     <div className={className}>
-        <label className="block text-xs font-bold text-gray-600 mb-2 ml-1">{label}*</label>
+        <label className="block text-xs font-bold text-gray-600 mb-2 ml-1">{label}{required && <span className="text-red-500">*</span>}</label>
         <input
             type={type}
             name={name}
@@ -257,19 +257,16 @@ const AddEditTenant = () => {
         }
     }, [formData.forwardingAddress.country, updateForwardingAddress]);
 
-    // Load cities when state changes
+    // Load cities when state changes (do NOT include city in deps — would clear on every selection)
     useEffect(() => {
         if (formData.forwardingAddress.country && formData.forwardingAddress.stateRegion) {
             const stateCities = City.getCitiesOfState(formData.forwardingAddress.country, formData.forwardingAddress.stateRegion);
             setCities(stateCities);
-            // Reset city when state changes
-            if (formData.forwardingAddress.city) {
-                updateForwardingAddress('city', '');
-            }
         } else {
             setCities([]);
         }
-    }, [formData.forwardingAddress.country, formData.forwardingAddress.stateRegion, formData.forwardingAddress.city, updateForwardingAddress]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [formData.forwardingAddress.country, formData.forwardingAddress.stateRegion]);
 
     // Convert countries to dropdown options
     const countryOptions = useMemo(() => {
@@ -402,13 +399,28 @@ const AddEditTenant = () => {
             const forwardingAddress = forwardingAddressParts.length > 0 ? forwardingAddressParts.join(', ') : undefined;
 
             // Transform form data to API DTO format
+            // Parse phone: "+91 9876543210" → countryCode="+91", number="9876543210"
+            // If no space, treat whole string as number (no country code)
+            const rawPhone = formData.personalInfo.phone || '';
+            const phoneTrimmed = rawPhone.trim();
+            let phoneCountryCode: string | undefined;
+            let phoneNumber: string | undefined;
+            if (phoneTrimmed.startsWith('+') && phoneTrimmed.includes(' ')) {
+                const idx = phoneTrimmed.indexOf(' ');
+                phoneCountryCode = phoneTrimmed.slice(0, idx).trim();
+                phoneNumber = phoneTrimmed.slice(idx + 1).trim() || undefined;
+            } else {
+                phoneCountryCode = undefined;
+                phoneNumber = phoneTrimmed || undefined;
+            }
+
             const tenantData = {
                 email: formData.personalInfo.email, // Required - used to find or invite user
                 firstName: formData.personalInfo.firstName,
                 middleName: formData.personalInfo.middleName || undefined,
                 lastName: formData.personalInfo.lastName,
-                phoneCountryCode: formData.personalInfo.phone?.split(' ')[0] || undefined,
-                phoneNumber: formData.personalInfo.phone || undefined,
+                phoneCountryCode,
+                phoneNumber,
                 forwardingAddress,
                 emergencyContacts: formData.emergencyContacts
                     .filter(contact => contact.name && contact.phone)
@@ -597,12 +609,12 @@ const AddEditTenant = () => {
                 <div className="mb-8">
                     <h2 className="text-lg font-bold text-gray-800 mb-4">Personal Information</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                        <InputField label="First Name" name="firstName" value={formData.personalInfo.firstName} onChange={handlePersonalInfoChange} placeholder="First Name" error={errors.firstName} />
-                        <InputField label="Middle Name" name="middleName" value={formData.personalInfo.middleName} onChange={handlePersonalInfoChange} placeholder="Middle Name" />
-                        <InputField label="Last Name" name="lastName" value={formData.personalInfo.lastName} onChange={handlePersonalInfoChange} placeholder="Last Name" error={errors.lastName} />
+                        <InputField label="First Name" name="firstName" value={formData.personalInfo.firstName} onChange={handlePersonalInfoChange} placeholder="First Name" error={errors.firstName} required />
+                        <InputField label="Middle Name" name="middleName" value={formData.personalInfo.middleName} onChange={handlePersonalInfoChange} placeholder="Middle Name (optional)" />
+                        <InputField label="Last Name" name="lastName" value={formData.personalInfo.lastName} onChange={handlePersonalInfoChange} placeholder="Last Name" error={errors.lastName} required />
 
                         <div className="flex-1">
-                            <label className="block text-xs font-bold text-gray-600 mb-2 ml-1">Date of birth</label>
+                            <label className="block text-xs font-bold text-gray-600 mb-2 ml-1">Date of birth <span className="text-red-500">*</span></label>
                             <DatePicker
                                 value={(() => {
                                     if (!formData.personalInfo.dateOfBirth) return undefined;
@@ -624,8 +636,8 @@ const AddEditTenant = () => {
                                 className="w-full bg-white border border-gray-200 text-gray-800 px-6 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[#3A6D6C]/20 transition-all font-medium"
                             />
                         </div>
-                        <InputField label="Email" name="email" value={formData.personalInfo.email} onChange={handlePersonalInfoChange} placeholder="Email Address" type="email" error={errors.email} />
-                        <InputField label="Phone Number" name="phone" value={formData.personalInfo.phone} onChange={handlePersonalInfoChange} placeholder="Phone Number" error={errors.phone} />
+                        <InputField label="Email" name="email" value={formData.personalInfo.email} onChange={handlePersonalInfoChange} placeholder="Email Address" type="email" error={errors.email} required />
+                        <InputField label="Phone Number" name="phone" value={formData.personalInfo.phone} onChange={handlePersonalInfoChange} placeholder="Phone Number" error={errors.phone} required />
                         <div className="flex-1">
                             <label className="block text-xs font-bold text-gray-600 mb-2 ml-1">Age</label>
                             <input

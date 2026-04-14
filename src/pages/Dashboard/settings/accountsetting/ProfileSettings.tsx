@@ -90,13 +90,13 @@ interface ChangeEmailModalProps {
   isOpen: boolean;
   currentEmail: string;
   onClose: () => void;
-  onSave: (newEmail: string) => void;
+  onSave: (newEmail: string, currentPassword: string) => Promise<void> | void;
 }
 
 interface ChangePasswordModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (currentPassword: string, newPassword: string, confirmPassword: string) => void;
+  onSave: (currentPassword: string, newPassword: string, confirmPassword: string) => Promise<void> | void;
 }
 
 function EditPersonalInfoModal(props: EditPersonalInfoModalProps) {
@@ -448,13 +448,16 @@ function EditAddressModal(props: EditAddressModalProps) {
 function ChangeEmailModal(props: ChangeEmailModalProps) {
   const { isOpen, onClose, onSave, currentEmail } = props;
   const [newEmail, setNewEmail] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
   const [error, setError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
   const firstInputRef = useRef<HTMLInputElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen) {
       setNewEmail("");
+      setCurrentPassword("");
       setError("");
       // Focus the first input when modal opens
       const timer = setTimeout(() => {
@@ -520,10 +523,20 @@ function ChangeEmailModal(props: ChangeEmailModalProps) {
     return true;
   };
 
-  const handleSaveClick = () => {
-    if (validateEmail(newEmail)) {
-      onSave(newEmail);
+  const handleSaveClick = async () => {
+    if (!validateEmail(newEmail)) return;
+    if (!currentPassword) {
+      setError('Current password is required');
+      return;
+    }
+    try {
+      setIsSaving(true);
+      await onSave(newEmail, currentPassword);
       onClose();
+    } catch (err: any) {
+      setError(err?.message || 'Failed to update email');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -581,6 +594,21 @@ function ChangeEmailModal(props: ChangeEmailModalProps) {
               className="w-full bg-[#84CC16] text-white placeholder-white/70 px-6 py-3 rounded-full outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all"
               placeholder="Enter new email address"
             />
+          </div>
+
+          <div>
+            <label htmlFor="currentPassword" className="block text-xs font-bold text-gray-800 mb-2 ml-1">Current password</label>
+            <input
+              id="currentPassword"
+              type="password"
+              value={currentPassword}
+              onChange={(e) => {
+                setCurrentPassword(e.target.value);
+                setError("");
+              }}
+              className="w-full bg-white text-gray-800 px-6 py-3 rounded-full outline-none border border-gray-200 focus:ring-2 focus:ring-[#3D7475]/20 transition-all"
+              placeholder="Enter current password"
+            />
             {error && <p className="text-xs text-red-500 mt-1 ml-1">{error}</p>}
           </div>
         </div>
@@ -597,10 +625,11 @@ function ChangeEmailModal(props: ChangeEmailModalProps) {
           <Button
             type="button"
             onClick={handleSaveClick}
+            disabled={isSaving}
             variant="primary"
-            className="flex-1 rounded-xl shadow-lg hover:bg-[#2c5556]"
+            className="flex-1 rounded-xl shadow-lg hover:bg-[#2c5556] disabled:opacity-50"
           >
-            Save changes
+            {isSaving ? 'Saving...' : 'Save changes'}
           </Button>
         </div>
       </div>
@@ -697,10 +726,18 @@ function ChangePasswordModal(props: ChangePasswordModalProps) {
     return true;
   };
 
-  const handleSaveClick = () => {
-    if (validatePassword()) {
-      onSave(currentPassword, newPassword, confirmPassword);
+  const [isSavingPwd, setIsSavingPwd] = useState(false);
+
+  const handleSaveClick = async () => {
+    if (!validatePassword()) return;
+    try {
+      setIsSavingPwd(true);
+      await onSave(currentPassword, newPassword, confirmPassword);
       onClose();
+    } catch (err: any) {
+      setError(err?.message || 'Failed to update password');
+    } finally {
+      setIsSavingPwd(false);
     }
   };
 
@@ -823,10 +860,11 @@ function ChangePasswordModal(props: ChangePasswordModalProps) {
           <Button
             type="button"
             onClick={handleSaveClick}
+            disabled={isSavingPwd}
             variant="primary"
-            className="flex-1 rounded-xl shadow-lg hover:bg-[#2c5556]"
+            className="flex-1 rounded-xl shadow-lg hover:bg-[#2c5556] disabled:opacity-50"
           >
-            Save changes
+            {isSavingPwd ? 'Saving...' : 'Save changes'}
           </Button>
         </div>
       </div>
@@ -951,22 +989,37 @@ export default function ProfileSettings() {
     });
   };
 
-  const handleSaveEmail = (newEmail: string) => {
-    // TODO: Implement API call to update email
-    // For now, update local state
-    setUser((previous) => ({
-      ...previous,
-      email: newEmail,
-    }));
-    console.log("Email change requested:", newEmail);
+  const handleSaveEmail = async (newEmail: string, currentPassword?: string) => {
+    if (!currentPassword) {
+      alert('Current password is required to change email');
+      return;
+    }
+    try {
+      const result = await authService.changeEmail(newEmail, currentPassword);
+      setUser((previous) => ({ ...previous, email: result.email }));
+      alert('Email updated. Please verify your new email address.');
+    } catch (err: any) {
+      alert(err?.message || 'Failed to update email');
+      throw err;
+    }
   };
 
-  const handleSavePassword = (currentPassword: string, newPassword: string, confirmPassword: string) => {
-    // TODO: Implement API call to update password
-    console.log("Password change requested");
-    console.log("Current password:", currentPassword);
-    console.log("New password:", newPassword);
-    console.log("Confirm password:", confirmPassword);
+  const handleSavePassword = async (currentPassword: string, newPassword: string, confirmPassword: string) => {
+    if (newPassword !== confirmPassword) {
+      alert('New passwords do not match');
+      return;
+    }
+    if (newPassword.length < 8) {
+      alert('Password must be at least 8 characters');
+      return;
+    }
+    try {
+      await authService.changePassword(currentPassword, newPassword);
+      alert('Password updated successfully');
+    } catch (err: any) {
+      alert(err?.message || 'Failed to update password');
+      throw err;
+    }
   };
 
   return (

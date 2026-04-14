@@ -29,6 +29,20 @@ export function useServiceProviderDashboardStats(enabled: boolean = true) {
   });
 }
 
+/**
+ * Hook to get service provider accounting data (transactions + summary).
+ */
+export function useServiceProviderAccounting(enabled: boolean = true) {
+  return useQuery({
+    queryKey: ['service-provider-accounting'] as const,
+    queryFn: () => serviceProviderService.getMyAccounting(),
+    enabled,
+    staleTime: 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+}
+
 export function useUpdateAssignmentStatus() {
   const queryClient = useQueryClient();
 

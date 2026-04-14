@@ -108,9 +108,9 @@ const EditTemplate: React.FC = () => {
                 {/* Header Inputs Section */}
                 <div className="bg-[#3A6D6C] p-4 md:p-6 rounded-2xl md:rounded-[2.5rem] mb-6 md:mb-10">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                        {/* Documents Title */}
+                        {/* Document Title */}
                         <div className="bg-white/40 rounded-xl md:rounded-[1.5rem] p-4">
-                            <label className="block text-gray-800 text-xs font-bold mb-2">Documents Title*</label>
+                            <label className="block text-gray-800 text-xs font-bold mb-2">Document Title*</label>
                             <input
                                 type="text"
                                 value={documentTitle}
@@ -120,9 +120,9 @@ const EditTemplate: React.FC = () => {
                             />
                         </div>
 
-                        {/* Documents Type */}
+                        {/* Document Type */}
                         <div className="bg-white/40 rounded-xl md:rounded-[1.5rem] p-4">
-                            <label className="block text-gray-800 text-xs font-bold mb-2">Documents Type*</label>
+                            <label className="block text-gray-800 text-xs font-bold mb-2">Document Type*</label>
                             <input
                                 type="text"
                                 value={documentType}

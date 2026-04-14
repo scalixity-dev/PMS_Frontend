@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '../../../../../lib/utils';
 import CustomDropdown from '../../../components/CustomDropdown';
 import CurrencySelector from '../../../../../components/ui/CurrencySelector';
+import { useQuery } from '@tanstack/react-query';
+import { serviceProviderService } from '../../../../../services/service-provider.service';
 
 interface AddUtilityProviderModalProps {
     isOpen: boolean;
@@ -49,6 +51,23 @@ const SERVICE_PRO_OPTIONS = [
 ];
 
 const AddUtilityProviderModal: React.FC<AddUtilityProviderModalProps> = ({ isOpen, onClose, onAdd }) => {
+    // Fetch real service providers
+    const { data: serviceProviders = [] } = useQuery({
+        queryKey: ['service-providers', 'list', true],
+        queryFn: () => serviceProviderService.getAll(true),
+        enabled: isOpen,
+        staleTime: 2 * 60 * 1000,
+    });
+
+    const dynamicServiceProOptions = useMemo(() => {
+        const arr = Array.isArray(serviceProviders) ? serviceProviders : [];
+        if (arr.length === 0) return SERVICE_PRO_OPTIONS;
+        return arr.map((sp: any) => {
+            const name = sp.companyName || `${sp.firstName || ''} ${sp.lastName || ''}`.trim() || sp.email || 'Service Pro';
+            return { label: name, value: name };
+        });
+    }, [serviceProviders]);
+
     const [providerType, setProviderType] = useState('');
     const [servicePro, setServicePro] = useState('');
     const [estimatedCost, setEstimatedCost] = useState('');
@@ -96,7 +115,7 @@ const AddUtilityProviderModal: React.FC<AddUtilityProviderModalProps> = ({ isOpe
 
     return createPortal(
         <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-[#dfe5e3] rounded-[1.5rem] w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="bg-[#dfe5e3] rounded-[1.5rem] w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
                 {/* Header */}
                 <div className="bg-[#3A6D6C] px-6 py-4 flex items-center justify-between shrink-0">
                     <h2 className="text-white text-lg font-medium">Add utility provider</h2>
@@ -147,7 +166,7 @@ const AddUtilityProviderModal: React.FC<AddUtilityProviderModalProps> = ({ isOpe
                                     setServicePro(val);
                                     if (errors.servicePro) setErrors({ ...errors, servicePro: '' });
                                 }}
-                                options={SERVICE_PRO_OPTIONS}
+                                options={dynamicServiceProOptions}
                                 placeholder="Select Service Pro"
                                 className="w-full"
                                 isOpen={openDropdown === 'servicePro'}

@@ -1,10 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Printer } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../../components/DashboardFilter';
 import { handleDocumentPrint } from '../utils/printPreviewUtils';
 import Breadcrumb from '../../../../../components/ui/Breadcrumb';
+import { useGetAllProperties } from '../../../../../hooks/usePropertyQueries';
 
 // Mock data for forms
 const MOCK_FORMS = [
@@ -98,14 +99,21 @@ const LandlordForms: React.FC = () => {
         property: []
     });
 
-    const filterOptions: Record<string, FilterOption[]> = {
-        property: MOCK_PROPERTIES.map(p => ({ value: p, label: p }))
-    };
+    // Fetch real properties from API
+    const { data: propertiesData = [] } = useGetAllProperties(true, false);
 
+    const filterOptions: Record<string, FilterOption[]> = useMemo(() => {
+        const propertyList = Array.isArray(propertiesData) && propertiesData.length > 0
+            ? propertiesData.map((p: any) => ({ value: p.propertyName, label: p.propertyName }))
+            : MOCK_PROPERTIES.map(p => ({ value: p, label: p }));
+        return { property: propertyList };
+    }, [propertiesData]);
+
+    // Templates are universal — property filter applies only when generating a document
+    // from a template, not to the template list itself. Only filter by search here.
     const filteredForms = MOCK_FORMS.filter(form => {
         const matchesSearch = form.template.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesProperty = filters.property.length === 0 || filters.property.includes(form.property || '');
-        return matchesSearch && matchesProperty;
+        return matchesSearch;
     });
 
     const handleView = (id: number) => {
@@ -161,9 +169,9 @@ const LandlordForms: React.FC = () => {
                     </p>
                 </div>
 
-                {/* Related request section */}
+                {/* Document templates section */}
                 <div className="mb-6">
-                    <h2 className="text-xl font-semibold text-gray-800">Related request</h2>
+                    <h2 className="text-xl font-semibold text-gray-800">Document templates</h2>
                 </div>
 
                 {/* Forms Table */}

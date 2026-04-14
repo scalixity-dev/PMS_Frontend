@@ -6,11 +6,14 @@ interface AssignKeyModalProps {
     isOpen: boolean;
     onClose: () => void;
     onAssign: (issuedTo: string) => void;
+    tenants?: string[];
+    /** @deprecated use `tenants` — kept for backward compatibility */
     properties?: string[];
 }
 
-const AssignKeyModal: React.FC<AssignKeyModalProps> = ({ isOpen, onClose, onAssign, properties = [] }) => {
+const AssignKeyModal: React.FC<AssignKeyModalProps> = ({ isOpen, onClose, onAssign, tenants, properties = [] }) => {
     const [selectedProperty, setSelectedProperty] = useState('');
+    const options = tenants && tenants.length > 0 ? tenants : properties;
 
     useEffect(() => {
         // Capture the current overflow value before making any changes
@@ -30,7 +33,7 @@ const AssignKeyModal: React.FC<AssignKeyModalProps> = ({ isOpen, onClose, onAssi
 
     if (!isOpen) return null;
 
-    const hasProperties = properties.length > 0;
+    const hasOptions = options.length > 0;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
@@ -55,11 +58,11 @@ const AssignKeyModal: React.FC<AssignKeyModalProps> = ({ isOpen, onClose, onAssi
                             {/* The SearchableDropdown handles the label and search functionality internally or we wrap it */}
                             {/* Looking at the component definition: SearchableDropdown accepts label, value, options, onChange, placeholder */}
                             <SearchableDropdown
-                                label="Assign To *"
+                                label="Assign to tenant *"
                                 value={selectedProperty}
-                                options={hasProperties ? properties : []}
+                                options={hasOptions ? options : []}
                                 onChange={setSelectedProperty}
-                                placeholder={hasProperties ? 'Select or enter name' : 'No properties available'}
+                                placeholder={hasOptions ? 'Select or enter tenant name' : 'No tenants available'}
                                 className="w-full"
                             />
                         </div>
@@ -69,13 +72,12 @@ const AssignKeyModal: React.FC<AssignKeyModalProps> = ({ isOpen, onClose, onAssi
                     <div>
                         <button
                             onClick={() => {
-                                // Guard: only assign when there are real properties and a valid selection
-                                if (!hasProperties || !selectedProperty) {
+                                if (!hasOptions || !selectedProperty) {
                                     return;
                                 }
                                 onAssign(selectedProperty);
                             }}
-                            disabled={!hasProperties || !selectedProperty}
+                            disabled={!hasOptions || !selectedProperty}
                             className="bg-[#3A6D6C] text-white px-8 py-2.5 rounded-lg font-medium shadow-sm hover:bg-[#2c5251] transition-colors"
                         >
                             Assign

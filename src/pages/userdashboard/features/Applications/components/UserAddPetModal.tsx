@@ -82,7 +82,19 @@ const UserAddPetModal: React.FC<UserAddPetModalProps> = ({ isOpen, onClose, onSa
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            handleChange('photo', e.target.files[0]);
+            const file = e.target.files[0];
+            const MAX_PET_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file (JPG, PNG, etc.)');
+                e.target.value = '';
+                return;
+            }
+            if (file.size > MAX_PET_IMAGE_BYTES) {
+                alert(`Pet photo must be under 5 MB. Selected: ${(file.size / 1024 / 1024).toFixed(1)} MB`);
+                e.target.value = '';
+                return;
+            }
+            handleChange('photo', file);
         }
     };
 

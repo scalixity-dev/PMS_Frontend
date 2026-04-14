@@ -1,73 +1,131 @@
 import { useState } from 'react';
-import { Plus, Trash2, Building2 } from 'lucide-react';
+import { Plus, Trash2, Building2, Pencil } from 'lucide-react';
 import DatePicker from '../../../../../../components/ui/DatePicker';
 import DeleteConfirmationModal from '../../../../../../components/common/modals/DeleteConfirmationModal';
 
+type TaxIdType = 'PAN' | 'GST' | 'CIN' | 'TAN' | 'EIN';
+const TAX_ID_TYPES: TaxIdType[] = ['PAN', 'GST', 'CIN', 'TAN', 'EIN'];
+
+// Common legal entity types (India + US variants).
+const ENTITY_TYPE_OPTIONS = [
+    'Sole Proprietorship',
+    'Partnership',
+    'LLP (Limited Liability Partnership)',
+    'Private Limited Company',
+    'Public Limited Company',
+    'One Person Company (OPC)',
+    'LLC',
+    'Corporation',
+    'Other',
+];
+
+// Format validators per tax ID type.
+const TAX_ID_REGEX: Record<TaxIdType, RegExp> = {
+    PAN: /^[A-Z]{5}[0-9]{4}[A-Z]$/,              // ABCDE1234F
+    GST: /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/,
+    CIN: /^[LUu][0-9]{5}[A-Z]{2}[0-9]{4}[A-Z]{3}[0-9]{6}$/,
+    TAN: /^[A-Z]{4}[0-9]{5}[A-Z]$/,
+    EIN: /^\d{2}-\d{7}$/,                         // XX-XXXXXXX
+};
+
+const TAX_ID_PLACEHOLDER: Record<TaxIdType, string> = {
+    PAN: 'ABCDE1234F',
+    GST: '22ABCDE1234F1Z5',
+    CIN: 'U12345MH2020PTC123456',
+    TAN: 'ABCD12345E',
+    EIN: 'XX-XXXXXXX',
+};
+
 interface Entity {
     id: string;
-    widthName: string; // The name of the entity
+    widthName: string;
     status: 'Active' | 'Inactive';
     entityType: string;
-    ein: string;
+    taxIdType: TaxIdType;
+    taxId: string;
     registrationDate: string;
 }
 
-const initialEntities: Entity[] = [
-    {
-        id: '1',
-        widthName: 'Bagga Properties LLC',
-        status: 'Active',
-        entityType: 'LLC',
-        ein: '12-3456789',
-        registrationDate: '1/15/2023',
-    },
-    {
-        id: '2',
-        widthName: 'Maintenance Solutions Inc',
-        status: 'Active',
-        entityType: 'Corporation',
-        ein: '98-7654321',
-        registrationDate: '6/20/2022',
-    },
-];
+const initialEntities: Entity[] = [];
 
 const Entities = () => {
-    // Data State
     const [entities, setEntities] = useState<Entity[]>(initialEntities);
-
-    // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
 
     // Form State
     const [entityName, setEntityName] = useState('');
     const [entityType, setEntityType] = useState('');
-    const [ein, setEin] = useState('');
+    const [taxIdType, setTaxIdType] = useState<TaxIdType>('PAN');
+    const [taxId, setTaxId] = useState('');
     const [registrationDate, setRegistrationDate] = useState<Date | undefined>(undefined);
+    const [formError, setFormError] = useState<string | null>(null);
+
+    const resetForm = () => {
+        setEntityName('');
+        setEntityType('');
+        setTaxIdType('PAN');
+        setTaxId('');
+        setRegistrationDate(undefined);
+        setFormError(null);
+        setEditingId(null);
+    };
+
+    const openAdd = () => {
+        resetForm();
+        setIsModalOpen(true);
+    };
+
+    const openEdit = (e: Entity) => {
+        setEditingId(e.id);
+        setEntityName(e.widthName);
+        setEntityType(e.entityType);
+        setTaxIdType(e.taxIdType);
+        setTaxId(e.taxId);
+        const parts = e.registrationDate.split('/');
+        if (parts.length === 3) {
+            setRegistrationDate(new Date(Number(parts[2]), Number(parts[0]) - 1, Number(parts[1])));
+        }
+        setFormError(null);
+        setIsModalOpen(true);
+    };
 
     const handleAddEntity = () => {
-        // Basic Validation
-        if (!entityName || !entityType || !ein || !registrationDate) {
-            alert("Please fill in all fields");
+        if (!entityName || !entityType || !taxId || !registrationDate) {
+            setFormError('Please fill in all fields');
+            return;
+        }
+        const normalizedTaxId = taxIdType === 'EIN' ? taxId : taxId.toUpperCase();
+        if (!TAX_ID_REGEX[taxIdType].test(normalizedTaxId)) {
+            setFormError(`Invalid ${taxIdType} format. Example: ${TAX_ID_PLACEHOLDER[taxIdType]}`);
             return;
         }
 
-        const newEntity: Entity = {
-            id: Date.now().toString(),
-            widthName: entityName,
-            status: 'Active',
-            entityType: entityType,
-            ein: ein,
-            // Format date to simple string (M/D/YYYY) for display
-            registrationDate: registrationDate.toLocaleDateString('en-US'),
-        };
+        const formattedDate = registrationDate.toLocaleDateString('en-US');
 
-        setEntities([...entities, newEntity]);
+        if (editingId) {
+            setEntities(entities.map((e) => e.id === editingId ? {
+                ...e,
+                widthName: entityName,
+                entityType,
+                taxIdType,
+                taxId: normalizedTaxId,
+                registrationDate: formattedDate,
+            } : e));
+        } else {
+            const newEntity: Entity = {
+                id: Date.now().toString(),
+                widthName: entityName,
+                status: 'Active',
+                entityType,
+                taxIdType,
+                taxId: normalizedTaxId,
+                registrationDate: formattedDate,
+            };
+            setEntities([...entities, newEntity]);
+        }
 
-        // Reset Form
-        setEntityName('');
-        setEntityType('');
-        setEin('');
-        setRegistrationDate(undefined);
+        resetForm();
         setIsModalOpen(false);
     };
 
@@ -112,7 +170,7 @@ const Entities = () => {
                     </div>
 
                     <button
-                        onClick={() => setIsModalOpen(true)}
+                        onClick={openAdd}
                         className="flex items-center gap-2 bg-[#7CD947] text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-[#6bc13d] transition-colors shadow-sm self-start sm:self-center"
                     >
                         <Plus size={18} strokeWidth={2.5} />
@@ -137,12 +195,22 @@ const Entities = () => {
                                             {entity.status}
                                         </span>
                                     </div>
-                                    <button
-                                        onClick={() => handleDeleteClick(entity.id)}
-                                        className="text-red-400 hover:text-red-600 transition-colors p-1 rounded-md hover:bg-red-50"
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
+                                    <div className="flex items-center gap-1">
+                                        <button
+                                            onClick={() => openEdit(entity)}
+                                            aria-label="Edit entity"
+                                            className="text-gray-500 hover:text-[#7CD947] transition-colors p-1 rounded-md hover:bg-gray-50"
+                                        >
+                                            <Pencil size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteClick(entity.id)}
+                                            aria-label="Delete entity"
+                                            className="text-red-400 hover:text-red-600 transition-colors p-1 rounded-md hover:bg-red-50"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
                                 </div>
 
                                 {/* Details Grid */}
@@ -152,8 +220,8 @@ const Entities = () => {
                                         <p className="text-xs text-gray-600 font-medium">{entity.entityType}</p>
                                     </div>
                                     <div>
-                                        <p className="text-[11px] font-semibold text-gray-900 mb-1">EIN</p>
-                                        <p className="text-xs text-gray-600 font-medium">{entity.ein}</p>
+                                        <p className="text-[11px] font-semibold text-gray-900 mb-1">{entity.taxIdType}</p>
+                                        <p className="text-xs text-gray-600 font-medium">{entity.taxId}</p>
                                     </div>
                                     <div>
                                         <p className="text-[11px] font-semibold text-gray-900 mb-1">Registration Date</p>
@@ -173,14 +241,11 @@ const Entities = () => {
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
                         <div className="bg-white rounded-2xl w-full max-w-2xl shadow-xl transform transition-all">
                             <div className="p-6">
-                                <h2 className="text-lg font-bold text-gray-900 mb-6">Add New Entity</h2>
+                                <h2 className="text-lg font-bold text-gray-900 mb-6">{editingId ? 'Edit Entity' : 'Add New Entity'}</h2>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                                    {/* Entity Name */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                     <div className="space-y-1.5">
-                                        <label className="block text-sm font-semibold text-gray-800">
-                                            Entity Name
-                                        </label>
+                                        <label className="block text-sm font-semibold text-gray-800">Entity Name *</label>
                                         <input
                                             type="text"
                                             value={entityName}
@@ -190,59 +255,69 @@ const Entities = () => {
                                         />
                                     </div>
 
-                                    {/* Entity Type */}
                                     <div className="space-y-1.5">
-                                        <label className="block text-sm font-semibold text-gray-800">
-                                            Entity Type
-                                        </label>
-                                        <input
-                                            type="text"
+                                        <label className="block text-sm font-semibold text-gray-800">Entity Type *</label>
+                                        <select
                                             value={entityType}
                                             onChange={(e) => setEntityType(e.target.value)}
-                                            className="w-full px-3 py-2.5 bg-white border-2 border-blue-400 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all shadow-[0_0_0_4px_rgba(59,130,246,0.1)]"
-                                            autoFocus
-                                        />
+                                            className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#7CD947]/20 focus:border-[#7CD947] transition-all"
+                                        >
+                                            <option value="">Select entity type</option>
+                                            {ENTITY_TYPE_OPTIONS.map((t) => (
+                                                <option key={t} value={t}>{t}</option>
+                                            ))}
+                                        </select>
                                     </div>
 
-                                    {/* EIN */}
                                     <div className="space-y-1.5">
-                                        <label className="block text-sm font-semibold text-gray-800">
-                                            EIN (Tax ID)
-                                        </label>
+                                        <label className="block text-sm font-semibold text-gray-800">Tax ID Type *</label>
+                                        <select
+                                            value={taxIdType}
+                                            onChange={(e) => { setTaxIdType(e.target.value as TaxIdType); setTaxId(''); }}
+                                            className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#7CD947]/20 focus:border-[#7CD947] transition-all"
+                                        >
+                                            {TAX_ID_TYPES.map((t) => (
+                                                <option key={t} value={t}>{t}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="block text-sm font-semibold text-gray-800">{taxIdType} Number *</label>
                                         <input
                                             type="text"
-                                            value={ein}
-                                            onChange={(e) => setEin(e.target.value)}
-                                            placeholder="XX-XXXXXXX"
+                                            value={taxId}
+                                            onChange={(e) => setTaxId(taxIdType === 'EIN' ? e.target.value : e.target.value.toUpperCase())}
+                                            placeholder={TAX_ID_PLACEHOLDER[taxIdType]}
                                             className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#7CD947]/20 focus:border-[#7CD947] transition-all placeholder:text-gray-400"
                                         />
                                     </div>
 
-                                    {/* Registration Date */}
                                     <div className="space-y-1.5">
-                                        <label className="block text-sm font-semibold text-gray-800">
-                                            Registration Date
-                                        </label>
+                                        <label className="block text-sm font-semibold text-gray-800">Registration Date *</label>
                                         <DatePicker
                                             className="w-full border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#7CD947]/20 focus:border-[#7CD947] transition-all text-gray-600"
-                                            onChange={(date) => {
-                                                setRegistrationDate(date);
-                                            }}
+                                            onChange={setRegistrationDate}
                                             value={registrationDate}
                                         />
                                     </div>
                                 </div>
 
-                                {/* Buttons */}
+                                {formError && (
+                                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                                        {formError}
+                                    </div>
+                                )}
+
                                 <div className="flex gap-4">
                                     <button
                                         onClick={handleAddEntity}
                                         className="flex-1 bg-[#7CD947] hover:bg-[#6AC13D] text-white font-semibold py-3 rounded-lg transition-colors shadow-sm"
                                     >
-                                        Add Entity
+                                        {editingId ? 'Save Changes' : 'Add Entity'}
                                     </button>
                                     <button
-                                        onClick={() => setIsModalOpen(false)}
+                                        onClick={() => { resetForm(); setIsModalOpen(false); }}
                                         className="flex-1 bg-[#D0D5DD] hover:bg-[#C0C5CD] text-[#344054] font-semibold py-3 rounded-lg transition-colors shadow-sm"
                                     >
                                         Cancel

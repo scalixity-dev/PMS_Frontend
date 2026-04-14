@@ -1,6 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, X, ChevronDown } from 'lucide-react';
+import { useGetAllProperties } from '../../../../../../hooks/usePropertyQueries';
+import { useGetAllLeases } from '../../../../../../hooks/useLeaseQueries';
+import { useGetAllTenants } from '../../../../../../hooks/useTenantQueries';
 
 interface UseTemplateModalProps {
     isOpen: boolean;
@@ -23,10 +26,32 @@ const UseTemplateModal: React.FC<UseTemplateModalProps> = ({ isOpen, onClose, te
     const leaseDropdownRef = useRef<HTMLDivElement>(null);
     const tenantsDropdownRef = useRef<HTMLDivElement>(null);
 
-    // Mock constants
-    const MOCK_PROPERTIES = ['Luxury Property', 'Downtown Apartment', 'Beach House', 'Mountain Villa'];
-    const MOCK_TENANTS = ['Luxury Property', 'John Doe', 'Jane Smith', 'Bob Johnson'];
-    const MOCK_LEASES = ['Lease 1', 'Lease 2', 'Lease 3', 'Lease 4'];
+    // Real data from API
+    const { data: propertiesData = [] } = useGetAllProperties(true, isOpen);
+    const { data: leasesData = [] } = useGetAllLeases(undefined, undefined, isOpen);
+    const { data: tenantsData = [] } = useGetAllTenants(undefined, isOpen);
+
+    const MOCK_PROPERTIES = useMemo(() => {
+        const arr = Array.isArray(propertiesData) ? propertiesData : [];
+        return arr.map((p: any) => p.propertyName).filter(Boolean);
+    }, [propertiesData]);
+
+    const MOCK_LEASES = useMemo(() => {
+        const arr = Array.isArray(leasesData) ? leasesData : [];
+        return arr.map((l: any) => {
+            const propertyName = l.property?.propertyName || 'Property';
+            const tenantName = l.tenant?.fullName || 'Tenant';
+            return `${propertyName} - ${tenantName}`;
+        }).filter(Boolean);
+    }, [leasesData]);
+
+    const MOCK_TENANTS = useMemo(() => {
+        const arr = Array.isArray(tenantsData) ? tenantsData : [];
+        return arr.map((t: any) => {
+            const name = [t.firstName, t.lastName].filter(Boolean).join(' ').trim() || t.user?.fullName || t.user?.email || 'Tenant';
+            return name;
+        }).filter(Boolean);
+    }, [tenantsData]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -77,7 +102,7 @@ const UseTemplateModal: React.FC<UseTemplateModalProps> = ({ isOpen, onClose, te
                             <ChevronLeft size={24} />
                         </button>
                         <span className="text-sm md:text-base font-medium line-clamp-1">
-                            Add Select a property and lease
+                            Select a property and lease
                         </span>
                     </div>
                     <button

@@ -1,17 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, UploadCloud } from 'lucide-react'; // Assuming UploadCloud exists or similar
+import { X, UploadCloud, FileText } from 'lucide-react';
 
 interface AddFloorModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onAdd: (data: { flooringType: string; description: string }) => void;
+    onAdd: (data: { flooringType: string; description: string; file?: File | null }) => void;
 }
 
 const AddFloorModal: React.FC<AddFloorModalProps> = ({ isOpen, onClose, onAdd }) => {
     const [flooringType, setFlooringType] = useState('');
     const [description, setDescription] = useState('');
     const [error, setError] = useState('');
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
+        if (file.size > MAX_BYTES) {
+            alert(`File too large (max 10 MB). Selected: ${(file.size / 1024 / 1024).toFixed(1)} MB`);
+            e.target.value = '';
+            return;
+        }
+        setSelectedFile(file);
+    };
 
     const handleAdd = () => {
         if (!flooringType.trim()) {
@@ -21,12 +35,14 @@ const AddFloorModal: React.FC<AddFloorModalProps> = ({ isOpen, onClose, onAdd })
 
         onAdd({
             flooringType: flooringType.trim(),
-            description: description.trim()
+            description: description.trim(),
+            file: selectedFile,
         });
 
         // Reset and close
         setFlooringType('');
         setDescription('');
+        setSelectedFile(null);
         setError('');
         onClose();
     };
@@ -93,10 +109,34 @@ const AddFloorModal: React.FC<AddFloorModalProps> = ({ isOpen, onClose, onAdd })
 
                         {/* Upload Button */}
                         <div>
-                            <button className="flex items-center gap-2 text-[#42a246] hover:text-[#3b903f] font-medium transition-colors">
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*,.pdf"
+                                className="hidden"
+                                onChange={handleFileChange}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                className="flex items-center gap-2 text-[#42a246] hover:text-[#3b903f] font-medium transition-colors"
+                            >
                                 <UploadCloud size={24} />
                                 <span>Upload</span>
                             </button>
+                            {selectedFile && (
+                                <div className="mt-2 flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-gray-200">
+                                    <FileText size={16} className="text-gray-600" />
+                                    <span className="text-xs text-gray-700 truncate flex-1">{selectedFile.name}</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => { setSelectedFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
+                                        className="text-gray-400 hover:text-red-500"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
 

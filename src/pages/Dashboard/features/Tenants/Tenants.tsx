@@ -29,8 +29,12 @@ const Tenants = () => {
     }, [location.state]);
     const itemsPerPage = 9;
 
-    // Fetch tenants using React Query
-    const { data: backendTenants = [], isLoading, error, refetch } = useGetAllTenants();
+    // Server-side filtering: pass search + status to API
+    const statusFilter = (filters.tenantType || []).filter((v: string) => v !== '__no_items__')[0];
+    const { data: backendTenants = [], isLoading, error, refetch } = useGetAllTenants({
+        search: searchQuery || undefined,
+        status: statusFilter || undefined,
+    });
     const { sidebarCollapsed = false } = useOutletContext<{ sidebarCollapsed: boolean }>() ?? {};
 
     // Transform backend tenants to frontend format
@@ -48,17 +52,38 @@ const Tenants = () => {
         setCurrentPage(1); // Reset to first page on filter change
     };
 
-    const filterOptions: Record<string, FilterOption[]> = {
-        tenantType: [
-            { value: '__no_items__', label: 'No tenant types available' }
-        ],
-        propertyUnits: [
-            { value: '__no_items__', label: 'No properties available' }
-        ],
-        lease: [
-            { value: '__no_items__', label: 'No lease data available' }
-        ]
-    };
+    // Build filter options dynamically from tenant data
+    const filterOptions: Record<string, FilterOption[]> = useMemo(() => {
+        const propertySet = new Set<string>();
+        const tenantTypeSet = new Set<string>();
+        const leaseStatusSet = new Set<string>();
+
+        tenants.forEach((t: any) => {
+            // Property names
+            if (Array.isArray(t.leases)) {
+                t.leases.forEach((l: any) => {
+                    if (l?.property?.propertyName) propertySet.add(l.property.propertyName);
+                    if (l?.status) leaseStatusSet.add(l.status);
+                });
+            }
+            if (t.propertyName) propertySet.add(t.propertyName);
+            // Tenant type from contact book status or user role
+            if (t.tenantType) tenantTypeSet.add(t.tenantType);
+            else if (t.status) tenantTypeSet.add(t.status);
+        });
+
+        return {
+            tenantType: tenantTypeSet.size > 0
+                ? Array.from(tenantTypeSet).map(v => ({ value: v, label: v }))
+                : [{ value: 'CURRENT', label: 'Current' }, { value: 'PAST', label: 'Past' }, { value: 'PENDING', label: 'Pending' }],
+            propertyUnits: propertySet.size > 0
+                ? Array.from(propertySet).map(v => ({ value: v, label: v }))
+                : [{ value: '__no_items__', label: 'No properties available' }],
+            lease: leaseStatusSet.size > 0
+                ? Array.from(leaseStatusSet).map(v => ({ value: v, label: v }))
+                : [{ value: 'ACTIVE', label: 'Active' }, { value: 'EXPIRED', label: 'Expired' }, { value: 'TERMINATED', label: 'Terminated' }],
+        };
+    }, [tenants]);
 
     const filterLabels: Record<string, string> = {
         tenantType: 'Tenant Type',
@@ -81,17 +106,22 @@ const Tenants = () => {
                 tenant.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 tenant.phone.toLowerCase().includes(searchQuery.toLowerCase());
 
-            // Tenant type filter (ignore placeholder value)
-            const matchesTenantType = !filters.tenantType?.length ||
-                filters.tenantType.filter(v => v !== '__no_items__').length === 0;
+            // Tenant type filter
+            const tenantTypeFilters = (filters.tenantType || []).filter(v => v !== '__no_items__');
+            const matchesTenantType = tenantTypeFilters.length === 0 ||
+                tenantTypeFilters.includes((tenant as any).tenantType) ||
+                tenantTypeFilters.includes((tenant as any).status);
 
-            // Property/Units filter (ignore placeholder value)
-            const matchesPropertyUnits = !filters.propertyUnits?.length ||
-                filters.propertyUnits.filter(v => v !== '__no_items__').length === 0;
+            // Property/Units filter
+            const propertyFilters = (filters.propertyUnits || []).filter(v => v !== '__no_items__');
+            const matchesPropertyUnits = propertyFilters.length === 0 ||
+                ((tenant as any).leases || []).some((l: any) => propertyFilters.includes(l?.property?.propertyName)) ||
+                propertyFilters.includes((tenant as any).propertyName);
 
-            // Lease filter (ignore placeholder value)
-            const matchesLease = !filters.lease?.length ||
-                filters.lease.filter(v => v !== '__no_items__').length === 0;
+            // Lease status filter
+            const leaseFilters = (filters.lease || []).filter(v => v !== '__no_items__');
+            const matchesLease = leaseFilters.length === 0 ||
+                ((tenant as any).leases || []).some((l: any) => leaseFilters.includes(l?.status));
 
             return matchesSearch && matchesTenantType && matchesPropertyUnits && matchesLease;
         });

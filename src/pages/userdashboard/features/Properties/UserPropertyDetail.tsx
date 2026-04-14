@@ -533,7 +533,7 @@ const PropertyDetailUser: React.FC = () => {
                         </div>
                         <div className="text-right">
                             <p className="text-lg sm:text-xl md:text-2xl font-medium text-[var(--dashboard-text-main)]">
-                                {propertyData.currencyCode ? formatMoney(propertyData.rent, propertyData.currencyCode) : `${propertyData.currency}${propertyData.rent}`} <span className="text-gray-500 text-base sm:text-lg md:text-xl font-normal">month</span>
+                                {propertyData.currencyCode ? formatMoney(propertyData.rent, propertyData.currencyCode) : `${propertyData.currency}${propertyData.rent}`}<span className="text-gray-500 text-base sm:text-lg md:text-xl font-normal">/month</span>
                             </p>
                             <p className="text-sm sm:text-base text-[#4B5563] font-normal">Rent</p>
                         </div>
@@ -660,18 +660,22 @@ const PropertyDetailUser: React.FC = () => {
                         <h3 className="text-xl sm:text-2xl lg:text-xl xl:text-2xl font-semibold text-[var(--dashboard-text-main)] mb-3">{propertyData.agent.name}</h3>
 
                         <div className="space-y-2 sm:space-y-3 mb-4">
-                            <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[var(--dashboard-accent)] flex items-center justify-center text-white shadow-[var(--shadow-sm)] flex-shrink-0">
-                                    <Phone size={14} className="sm:w-4 sm:h-4" />
+                            {propertyData.agent.phone && propertyData.agent.phone !== 'N/A' && (
+                                <div className="flex items-center gap-2">
+                                    <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[var(--dashboard-accent)] flex items-center justify-center text-white shadow-[var(--shadow-sm)] flex-shrink-0">
+                                        <Phone size={14} className="sm:w-4 sm:h-4" />
+                                    </div>
+                                    <span className="text-gray-600 text-xs sm:text-sm font-medium break-all">{propertyData.agent.phone}</span>
                                 </div>
-                                <span className="text-gray-600 text-xs sm:text-sm font-medium break-all">{propertyData.agent.phone}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[var(--dashboard-accent)] flex items-center justify-center text-white shadow-[var(--shadow-sm)] flex-shrink-0">
-                                    <Mail size={14} className="sm:w-4 sm:h-4" />
+                            )}
+                            {propertyData.agent.email && propertyData.agent.email !== 'N/A' && (
+                                <div className="flex items-center gap-2">
+                                    <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[var(--dashboard-accent)] flex items-center justify-center text-white shadow-[var(--shadow-sm)] flex-shrink-0">
+                                        <Mail size={14} className="sm:w-4 sm:h-4" />
+                                    </div>
+                                    <span className="text-gray-600 text-xs sm:text-sm font-medium break-all">{propertyData.agent.email}</span>
                                 </div>
-                                <span className="text-gray-600 text-xs sm:text-sm font-medium break-all">{propertyData.agent.email}</span>
-                            </div>
+                            )}
                         </div>
 
                         <div className="flex flex-col gap-2 sm:gap-3">

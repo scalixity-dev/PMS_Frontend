@@ -84,6 +84,7 @@ export interface UpdateProfileRequest {
   state?: string;
   pincode?: string;
   address?: string;
+  profilePhotoUrl?: string;
 }
 
 class AuthService {
@@ -724,6 +725,31 @@ class AuthService {
       }
       throw new Error(errorMessage);
     }
+  }
+
+  /**
+   * Change email for logged-in user (requires current password).
+   */
+  async changeEmail(newEmail: string, currentPassword: string): Promise<{ email: string }> {
+    const response = await fetch(API_ENDPOINTS.AUTH.CHANGE_EMAIL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ newEmail, currentPassword }),
+    });
+    if (!response.ok) {
+      let errorMessage = 'Email change failed';
+      try {
+        const errorData = await response.json();
+        if (Array.isArray(errorData.message)) errorMessage = errorData.message.join('. ');
+        else if (errorData.message) errorMessage = errorData.message;
+        else if (errorData.error) errorMessage = errorData.error;
+      } catch {
+        errorMessage = `Email change failed: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+    return response.json();
   }
 
   /**

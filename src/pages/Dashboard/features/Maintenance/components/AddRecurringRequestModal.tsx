@@ -119,10 +119,10 @@ const AddRecurringRequestModal: React.FC<AddRecurringRequestModalProps> = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-[#D9E0E0] rounded-2xl shadow-xl w-full max-w-2xl mx-4 overflow-hidden">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div className="bg-[#D9E0E0] rounded-2xl shadow-xl w-full max-w-2xl mx-4 my-auto">
                 {/* Modal Header */}
-                <div className="flex items-center justify-between px-6 py-4 bg-[#3D7475]">
+                <div className="flex items-center justify-between px-6 py-4 bg-[#3D7475] rounded-t-2xl">
                     <div className="flex items-center gap-3">
                         <button
                             onClick={handleClose}

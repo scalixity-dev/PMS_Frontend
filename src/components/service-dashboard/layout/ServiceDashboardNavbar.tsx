@@ -143,7 +143,7 @@ export default function ServiceDashboardNavbar({ setSidebarOpen }: NavbarProps) 
                         {/* Desktop Logo */}
                         <div className="flex items-center gap-2 text-white">
                             <img src={logo} alt="SmartTenantAI" className="w-7 h-7" style={{ filter: "invert(1) brightness(2)" }} />
-                            <span className="text-lg font-bold hidden sm:inline-block tracking-tight">PMS</span>
+                            <span className="text-lg font-bold hidden sm:inline-block tracking-tight">SmartTenantAi</span>
                         </div>
                     </div>
 

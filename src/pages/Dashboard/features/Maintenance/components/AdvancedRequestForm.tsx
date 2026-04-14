@@ -20,7 +20,7 @@ export interface AdvancedRequestFormData extends AdvancedRequestFormFields {
 interface AdvancedRequestFormProps {
     onNext: (data: AdvancedRequestFormData) => void;
     onDiscard: () => void;
-    initialData?: Partial<AdvancedRequestFormFields>;
+    initialData?: Partial<AdvancedRequestFormFields> & { files?: File[] };
     aiPrefillData?: Partial<AdvancedRequestFormFields>;
 }
 
@@ -41,7 +41,17 @@ const AdvancedRequestForm: React.FC<AdvancedRequestFormProps> = ({ onNext, onDis
         amount: initialData?.amount || '',
     });
 
-    const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
+    // Initialize mediaFiles from store-persisted files (so they survive step navigation)
+    const [mediaFiles, setMediaFiles] = useState<MediaFile[]>(() => {
+        if (initialData?.files && Array.isArray((initialData as any).files)) {
+            return ((initialData as any).files as File[]).map((file, idx) => ({
+                id: `restored-${idx}-${Date.now()}`,
+                file,
+                previewUrl: URL.createObjectURL(file),
+            }));
+        }
+        return [];
+    });
     // const [showAIChat, setShowAIChat] = useState(false); // Removed local state
 
     const setAdvanced = useMaintenanceRequestFormStore((state) => state.setAdvanced);

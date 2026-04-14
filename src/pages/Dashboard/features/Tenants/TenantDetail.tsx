@@ -15,9 +15,15 @@ import type { BackendTenantProfile } from '../../../../services/tenant.service';
 // Transform backend tenant profile to detail page format
 const transformTenantForDetail = (backendTenant: BackendTenantProfile) => {
     const email = backendTenant.user?.email || backendTenant.contactBookEntry?.email || 'N/A';
+    // Phone format: "+91 9876543210" — space separator
     const phone = backendTenant.phoneNumber
-        ? `${backendTenant.phoneCountryCode || ''}${backendTenant.phoneNumber}`.trim()
+        ? `${backendTenant.phoneCountryCode ? backendTenant.phoneCountryCode + ' ' : ''}${backendTenant.phoneNumber}`.trim()
         : 'N/A';
+    // Date of birth from user record (was "Not in backend model" — now wired)
+    const dobRaw = (backendTenant.user as any)?.dateOfBirth;
+    const dateOfBirth = dobRaw
+        ? new Date(dobRaw).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+        : '-';
     const name = [backendTenant.firstName, backendTenant.middleName, backendTenant.lastName]
         .filter(Boolean)
         .join(' ');
@@ -40,7 +46,7 @@ const transformTenantForDetail = (backendTenant: BackendTenantProfile) => {
             phone: phone,
             additionalPhone: '-', // Not in backend model
             companyName: '-', // Not in backend model
-            dateOfBirth: '-', // Not in backend model
+            dateOfBirth,
             companyName2: '-'
         },
         forwardingAddress: backendTenant.forwardingAddress || '-',

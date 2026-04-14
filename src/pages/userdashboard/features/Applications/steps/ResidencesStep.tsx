@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, Home, AlertCircle } from 'lucide-react';
+import { Plus, Trash2, Home, AlertCircle, Pencil } from 'lucide-react';
 import { useUserApplicationStore } from '../store/userApplicationStore';
 import PrimaryActionButton from '@/components/common/buttons/PrimaryActionButton';
 import UserAddResidenceModal, { type ResidenceFormData } from '../components/UserAddResidenceModal';
 
-const ResidenceItem: React.FC<{ residence: ResidenceFormData & { id: string }; onDelete: () => void }> = ({ residence, onDelete }) => {
+const ResidenceItem: React.FC<{ residence: ResidenceFormData & { id: string }; onDelete: () => void; onEdit: () => void }> = ({ residence, onDelete, onEdit }) => {
     const formatDate = (dateVal: any) => {
         if (!dateVal) return '-';
         if (typeof dateVal === 'string' && dateVal.includes('-')) {
@@ -24,17 +24,34 @@ const ResidenceItem: React.FC<{ residence: ResidenceFormData & { id: string }; o
                 <div className="flex flex-col">
                     <p className="font-semibold text-[#1A1A1A] text-sm">{residence.address}</p>
                     <p className="text-[11px] text-[#ADADAD]">{residence.city}, {residence.state} • {residence.residencyType} • Moved in {formatDate(residence.moveInDate)}</p>
-                    <p className="text-[11px] font-bold text-[#7ED957] sm:hidden mt-0.5">₹{residence.rentAmount}/mo</p>
+                    {/* Only show rent if residency is Rent AND an amount exists */}
+                    {residence.residencyType?.toLowerCase() === 'rent' && residence.rentAmount && (
+                        <p className="text-[11px] font-bold text-[#7ED957] sm:hidden mt-0.5">₹{residence.rentAmount}/mo</p>
+                    )}
                 </div>
             </div>
             <div className="flex items-center gap-4">
-                <div className="hidden sm:flex flex-col items-end text-right mr-2">
-                    <p className="text-[11px] font-bold text-[#1A1A1A]">₹{residence.rentAmount}/mo</p>
-                    <p className="text-[9px] text-[#ADADAD]">Rent</p>
-                </div>
+                {residence.residencyType?.toLowerCase() === 'rent' && residence.rentAmount ? (
+                    <div className="hidden sm:flex flex-col items-end text-right mr-2">
+                        <p className="text-[11px] font-bold text-[#1A1A1A]">₹{residence.rentAmount}/mo</p>
+                        <p className="text-[9px] text-[#ADADAD]">Rent</p>
+                    </div>
+                ) : (
+                    <div className="hidden sm:flex flex-col items-end text-right mr-2">
+                        <p className="text-[11px] font-bold text-[#1A1A1A]">Owned</p>
+                    </div>
+                )}
+                <button
+                    onClick={onEdit}
+                    className="text-gray-400 hover:text-[#3A6D6C] transition-colors p-2"
+                    aria-label="Edit residence"
+                >
+                    <Pencil size={14} />
+                </button>
                 <button
                     onClick={onDelete}
                     className="text-gray-300 hover:text-red-500 transition-colors p-2"
+                    aria-label="Delete residence"
                 >
                     <Trash2 size={16} />
                 </button>
@@ -50,20 +67,33 @@ interface ResidencesStepProps {
 const ResidencesStep: React.FC<ResidencesStepProps> = ({ onNext }) => {
     const { formData, updateFormData } = useUserApplicationStore();
     const [isAdding, setIsAdding] = useState(false);
+    const [editingResidence, setEditingResidence] = useState<(ResidenceFormData & { id: string }) | null>(null);
 
     const residences = formData.residences || [];
 
     const handleSaveResidence = (data: ResidenceFormData) => {
-        const newResidence = {
-            id: Math.random().toString(36).substr(2, 9),
-            ...data
-        };
-        updateFormData('residences', [...residences, newResidence]);
+        if (editingResidence) {
+            // Update existing
+            updateFormData('residences', residences.map((r: any) => r.id === editingResidence.id ? { ...data, id: editingResidence.id } : r));
+            setEditingResidence(null);
+        } else {
+            // Add new
+            const newResidence = {
+                id: Math.random().toString(36).substr(2, 9),
+                ...data
+            };
+            updateFormData('residences', [...residences, newResidence]);
+        }
         setIsAdding(false);
     };
 
     const handleDeleteResidence = (id: string) => {
         updateFormData('residences', residences.filter((r) => r.id !== id));
+    };
+
+    const handleEditResidence = (res: ResidenceFormData & { id: string }) => {
+        setEditingResidence(res);
+        setIsAdding(true);
     };
 
     return (
@@ -83,7 +113,12 @@ const ResidencesStep: React.FC<ResidencesStepProps> = ({ onNext }) => {
 
                 <div className="w-full grid grid-cols-1 gap-4 mb-8">
                     {residences.map((res: any) => (
-                        <ResidenceItem key={res.id} residence={res} onDelete={() => handleDeleteResidence(res.id)} />
+                        <ResidenceItem
+                            key={res.id}
+                            residence={res}
+                            onDelete={() => handleDeleteResidence(res.id)}
+                            onEdit={() => handleEditResidence(res)}
+                        />
                     ))}
 
                     {residences.length === 0 && (
@@ -117,8 +152,9 @@ const ResidencesStep: React.FC<ResidencesStepProps> = ({ onNext }) => {
 
             <UserAddResidenceModal
                 isOpen={isAdding}
-                onClose={() => setIsAdding(false)}
+                onClose={() => { setIsAdding(false); setEditingResidence(null); }}
                 onSave={handleSaveResidence}
+                initialData={editingResidence || undefined}
             />
         </div>
     );

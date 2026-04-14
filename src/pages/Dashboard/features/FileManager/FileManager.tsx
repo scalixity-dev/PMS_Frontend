@@ -260,14 +260,44 @@ const FileManager: React.FC = () => {
 
     const propertyNames = Object.keys(groupedFiles);
 
-    // Stats calculations (mocked for visual matching)
-    // In a real app these would be calculated or fetched
-    const stats = [
-        { label: 'All files', usage: '26.57 MB/1 GB Used', color: '#82D64D', percent: 25 },
-        { label: 'Images', usage: '26.57 MB/1 GB Used', color: '#82D64D', percent: 15 },
-        { label: 'Documents', usage: '26.57 MB/1 GB Used', color: '#82D64D', percent: 10 },
-        { label: 'Videos', usage: '26.57 MB/1 GB Used', color: '#82D64D', percent: 25 },
-    ];
+    // Stats calculated from real files data
+    const stats = useMemo(() => {
+        const STORAGE_QUOTA_BYTES = 1024 * 1024 * 1024; // 1 GB
+        const formatSize = (bytes: number): string => {
+            if (bytes < 1024) return `${bytes} B`;
+            if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
+            if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+            return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`;
+        };
+        const parseSizeToBytes = (sizeStr: string | number | undefined): number => {
+            if (typeof sizeStr === 'number') return sizeStr;
+            if (!sizeStr) return 0;
+            const m = String(sizeStr).match(/^([\d.]+)\s*(B|KB|MB|GB)?$/i);
+            if (!m) return 0;
+            const num = parseFloat(m[1]);
+            const unit = (m[2] || 'B').toUpperCase();
+            const mult: Record<string, number> = { B: 1, KB: 1024, MB: 1024 * 1024, GB: 1024 * 1024 * 1024 };
+            return num * (mult[unit] || 1);
+        };
+
+        const allBytes = files.reduce((sum, f: any) => sum + parseSizeToBytes(f.size), 0);
+        const isImage = (f: any) => /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(f.name || '') || /image/i.test(f.type || '');
+        const isVideo = (f: any) => /\.(mp4|mov|avi|webm|mkv)$/i.test(f.name || '') || /video/i.test(f.type || '');
+        const isDoc = (f: any) => /\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt)$/i.test(f.name || '') || /document|pdf/i.test(f.type || '');
+
+        const imagesBytes = files.filter(isImage).reduce((s, f: any) => s + parseSizeToBytes(f.size), 0);
+        const videosBytes = files.filter(isVideo).reduce((s, f: any) => s + parseSizeToBytes(f.size), 0);
+        const docsBytes = files.filter(isDoc).reduce((s, f: any) => s + parseSizeToBytes(f.size), 0);
+
+        const pct = (bytes: number) => Math.min(100, Math.round((bytes / STORAGE_QUOTA_BYTES) * 100));
+
+        return [
+            { label: `All files (${files.length})`, usage: `${formatSize(allBytes)}/1 GB Used`, color: '#82D64D', percent: pct(allBytes) },
+            { label: `Images (${files.filter(isImage).length})`, usage: `${formatSize(imagesBytes)}/1 GB Used`, color: '#82D64D', percent: pct(imagesBytes) },
+            { label: `Documents (${files.filter(isDoc).length})`, usage: `${formatSize(docsBytes)}/1 GB Used`, color: '#82D64D', percent: pct(docsBytes) },
+            { label: `Videos (${files.filter(isVideo).length})`, usage: `${formatSize(videosBytes)}/1 GB Used`, color: '#82D64D', percent: pct(videosBytes) },
+        ];
+    }, [files]);
 
     const toggleSelection = (id: number) => {
         setSelectedFiles(prev =>

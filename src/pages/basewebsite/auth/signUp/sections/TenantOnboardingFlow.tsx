@@ -488,7 +488,7 @@ export const TenantOnboardingFlow: React.FC = () => {
                   onClick={handleStep1Continue}
                   className={
                     !country || !stateRegion || !city
-                      ? 'bg-gray-100! text-gray-400! cursor-not-allowed uppercase shadow-none'
+                      ? 'bg-gray-100! text-gray-400! cursor-not-allowed shadow-none'
                       : 'bg-[#3D7475] hover:bg-[#2F5C5D] shadow-lg shadow-[#3D7475]/40'
                   }
                   text="Continue"
@@ -529,7 +529,7 @@ export const TenantOnboardingFlow: React.FC = () => {
                   onClick={handleStep2Continue}
                   className={
                     selectedTypes.length === 0
-                      ? 'bg-gray-100! text-gray-400! cursor-not-allowed uppercase shadow-none'
+                      ? 'bg-gray-100! text-gray-400! cursor-not-allowed shadow-none'
                       : 'bg-[#3D7475] hover:bg-[#2F5C5D] shadow-lg shadow-[#3D7475]/40'
                   }
                   text="Continue"
@@ -545,7 +545,7 @@ export const TenantOnboardingFlow: React.FC = () => {
                 Specify the rental criteria
               </h1>
               <p className="text-gray-400 text-base font-normal mb-8">
-                Enter the city to let us find you the perfect place
+                Set your rental preferences to help us find the perfect place for you.
               </p>
 
               <div className="max-w-xl mx-auto space-y-4">
@@ -568,34 +568,41 @@ export const TenantOnboardingFlow: React.FC = () => {
                   />
                 </div>
 
-                {/* Price Range */}
+                {/* Price Range (USD) */}
                 <div>
+                  <p className="text-left text-xs font-medium text-gray-500 mb-2">Price range (USD)</p>
                   <div className="flex gap-4 items-center mb-4">
                     <div>
                       <label className="block text-left text-sm font-medium text-gray-700 mb-2">
                         Min:
                       </label>
-                      <input
-                        type="number"
-                        value={minPrice}
-                        onChange={(e) => handleMinPriceChange(e.target.value)}
-                        onFocus={(e) => e.target.select()}
-                        onBlur={handleInputBlur}
-                        className="w-32 px-4 py-2 bg-white border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7BD747] focus:border-transparent text-[#7BD747] text-xl font-semibold transition-all"
-                      />
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium">$</span>
+                        <input
+                          type="number"
+                          value={minPrice}
+                          onChange={(e) => handleMinPriceChange(e.target.value)}
+                          onFocus={(e) => e.target.select()}
+                          onBlur={handleInputBlur}
+                          className="w-32 pl-7 pr-4 py-2 bg-white border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7BD747] focus:border-transparent text-[#7BD747] text-xl font-semibold transition-all"
+                        />
+                      </div>
                     </div>
                     <div>
                       <label className="block text-left text-sm font-medium text-gray-700 mb-2">
                         Max:
                       </label>
-                      <input
-                        type="number"
-                        value={maxPrice}
-                        onChange={(e) => handleMaxPriceChange(e.target.value)}
-                        onFocus={(e) => e.target.select()}
-                        onBlur={handleInputBlur}
-                        className="w-32 px-4 py-2 bg-white border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7BD747] focus:border-transparent text-[#7BD747] text-xl font-semibold transition-all"
-                      />
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium">$</span>
+                        <input
+                          type="number"
+                          value={maxPrice}
+                          onChange={(e) => handleMaxPriceChange(e.target.value)}
+                          onFocus={(e) => e.target.select()}
+                          onBlur={handleInputBlur}
+                          className="w-32 pl-7 pr-4 py-2 bg-white border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7BD747] focus:border-transparent text-[#7BD747] text-xl font-semibold transition-all"
+                        />
+                      </div>
                     </div>
                   </div>
 

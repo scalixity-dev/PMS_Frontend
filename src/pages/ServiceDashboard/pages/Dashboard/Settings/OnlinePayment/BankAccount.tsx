@@ -1,61 +1,111 @@
 import { useState } from 'react';
 import { Edit, CreditCard, Wifi, HelpCircle, Plus, Building2, Trash2, X, Check } from 'lucide-react';
+import SearchableDropdown from '../../../../../../components/ui/SearchableDropdown';
+
+// India-supported banks for dropdown (extend as needed).
+const INDIAN_BANKS = [
+    'State Bank of India',
+    'HDFC Bank',
+    'ICICI Bank',
+    'Axis Bank',
+    'Punjab National Bank',
+    'Bank of Baroda',
+    'Canara Bank',
+    'Union Bank of India',
+    'Kotak Mahindra Bank',
+    'IndusInd Bank',
+    'Yes Bank',
+    'IDFC First Bank',
+    'RBL Bank',
+    'Federal Bank',
+    'Bank of India',
+    'Central Bank of India',
+    'Indian Bank',
+    'IDBI Bank',
+    'South Indian Bank',
+    'Karnataka Bank',
+    'Bandhan Bank',
+    'Other',
+];
+
+// IFSC: 4 letters + 0 + 6 alphanumeric. Example: HDFC0001234.
+const IFSC_REGEX = /^[A-Z]{4}0[A-Z0-9]{6}$/;
 
 const BankAccount = () => {
-    // State to toggle between views. 
-    // For demo purposes, defaulting to null to show the "No Account" state as requested.
-    // Change initial state to populate with data to see the "Has Account" view.
     const [bankDetails, setBankDetails] = useState<any | null>(null);
     const [isEditing, setIsEditing] = useState(false);
 
-    // Form State
+    // Form State — IFSC replaces routing number for Indian banks.
     const [formData, setFormData] = useState({
         holderName: '',
         bankName: '',
         accountNumber: '',
-        routingNumber: '',
-        accountType: 'Checking',
-        swiftCode: ''
+        confirmAccountNumber: '',
+        ifscCode: '',
+        accountType: 'Savings',
+        swiftCode: '',
     });
+    const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+    const emptyForm = {
+        holderName: '',
+        bankName: '',
+        accountNumber: '',
+        confirmAccountNumber: '',
+        ifscCode: '',
+        accountType: 'Savings',
+        swiftCode: '',
+    };
 
     const handleEdit = () => {
         if (bankDetails) {
-            setFormData(bankDetails);
+            setFormData({
+                holderName: bankDetails.holderName || '',
+                bankName: bankDetails.bankName || '',
+                accountNumber: bankDetails.accountNumber || '',
+                confirmAccountNumber: bankDetails.accountNumber || '',
+                ifscCode: bankDetails.ifscCode || '',
+                accountType: bankDetails.accountType || 'Savings',
+                swiftCode: bankDetails.swiftCode || '',
+            });
         }
+        setFormErrors({});
         setIsEditing(true);
     };
 
+    const validate = () => {
+        const errs: Record<string, string> = {};
+        if (!formData.holderName.trim()) errs.holderName = 'Required';
+        if (!formData.bankName.trim()) errs.bankName = 'Required';
+        if (!formData.accountNumber.trim()) errs.accountNumber = 'Required';
+        else if (!/^\d{9,18}$/.test(formData.accountNumber)) errs.accountNumber = 'Must be 9–18 digits';
+        if (formData.accountNumber !== formData.confirmAccountNumber) errs.confirmAccountNumber = 'Does not match';
+        if (!formData.ifscCode.trim()) errs.ifscCode = 'Required';
+        else if (!IFSC_REGEX.test(formData.ifscCode.toUpperCase())) errs.ifscCode = 'Invalid IFSC format (e.g., HDFC0001234)';
+        return errs;
+    };
+
     const handleSave = () => {
-        setBankDetails(formData);
+        const errs = validate();
+        if (Object.keys(errs).length > 0) {
+            setFormErrors(errs);
+            return;
+        }
+        setBankDetails({ ...formData, ifscCode: formData.ifscCode.toUpperCase() });
         setIsEditing(false);
+        setFormErrors({});
     };
 
     const handleCancel = () => {
         setIsEditing(false);
-        // If we were adding a new account (no details existed), go back to null
-        if (!bankDetails) {
-            setFormData({
-                holderName: '',
-                bankName: '',
-                accountNumber: '',
-                routingNumber: '',
-                accountType: 'Checking',
-                swiftCode: ''
-            });
-        }
+        setFormErrors({});
+        if (!bankDetails) setFormData(emptyForm);
     };
 
     const handleDelete = () => {
-        if (window.confirm("Are you sure you want to remove this bank account?")) {
+        if (window.confirm('Are you sure you want to remove this bank account?')) {
             setBankDetails(null);
-            setFormData({
-                holderName: '',
-                bankName: '',
-                accountNumber: '',
-                routingNumber: '',
-                accountType: 'Checking',
-                swiftCode: ''
-            });
+            setFormData(emptyForm);
         }
     };
 
@@ -108,54 +158,76 @@ const BankAccount = () => {
                     <div className="p-4 md:p-8">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">Account Holder Name</label>
+                                <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">Account Holder Name *</label>
                                 <input
                                     type="text"
                                     value={formData.holderName}
                                     onChange={(e) => setFormData({ ...formData, holderName: e.target.value })}
-                                    placeholder="e.g. John Doe"
-                                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-[#7CD947] focus:ring-2 focus:ring-green-100 outline-none transition-all text-sm font-medium"
+                                    placeholder="As per bank records"
+                                    className={`w-full px-4 py-3 rounded-lg border ${formErrors.holderName ? 'border-red-400' : 'border-gray-200'} focus:border-[#7CD947] focus:ring-2 focus:ring-green-100 outline-none transition-all text-sm font-medium`}
                                 />
+                                {formErrors.holderName && <p className="text-xs text-red-500">{formErrors.holderName}</p>}
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">Bank Name</label>
-                                <input
-                                    type="text"
+                                <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">Bank Name *</label>
+                                <SearchableDropdown
+                                    options={INDIAN_BANKS}
                                     value={formData.bankName}
-                                    onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
-                                    placeholder="e.g. Chase Bank"
-                                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-[#7CD947] focus:ring-2 focus:ring-green-100 outline-none transition-all text-sm font-medium"
+                                    onChange={(v: string) => setFormData({ ...formData, bankName: v })}
+                                    placeholder="Select your bank"
+                                    allowCustomValue
                                 />
+                                {formErrors.bankName && <p className="text-xs text-red-500">{formErrors.bankName}</p>}
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">Account Number</label>
+                                <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">Account Number *</label>
                                 <input
-                                    type="text"
+                                    type="password"
+                                    inputMode="numeric"
+                                    autoComplete="off"
                                     value={formData.accountNumber}
-                                    onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
+                                    onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value.replace(/\D/g, '') })}
                                     placeholder="Enter account number"
-                                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-[#7CD947] focus:ring-2 focus:ring-green-100 outline-none transition-all text-sm font-medium"
+                                    className={`w-full px-4 py-3 rounded-lg border ${formErrors.accountNumber ? 'border-red-400' : 'border-gray-200'} focus:border-[#7CD947] focus:ring-2 focus:ring-green-100 outline-none transition-all text-sm font-medium`}
                                 />
+                                {formErrors.accountNumber && <p className="text-xs text-red-500">{formErrors.accountNumber}</p>}
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">Routing Number</label>
+                                <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">Confirm Account Number *</label>
                                 <input
                                     type="text"
-                                    value={formData.routingNumber}
-                                    onChange={(e) => setFormData({ ...formData, routingNumber: e.target.value })}
-                                    placeholder="Enter 9-digit routing number"
-                                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-[#7CD947] focus:ring-2 focus:ring-green-100 outline-none transition-all text-sm font-medium"
+                                    inputMode="numeric"
+                                    autoComplete="off"
+                                    onPaste={(e) => e.preventDefault()}
+                                    value={formData.confirmAccountNumber}
+                                    onChange={(e) => setFormData({ ...formData, confirmAccountNumber: e.target.value.replace(/\D/g, '') })}
+                                    placeholder="Re-enter account number"
+                                    className={`w-full px-4 py-3 rounded-lg border ${formErrors.confirmAccountNumber ? 'border-red-400' : 'border-gray-200'} focus:border-[#7CD947] focus:ring-2 focus:ring-green-100 outline-none transition-all text-sm font-medium`}
                                 />
+                                {formErrors.confirmAccountNumber && <p className="text-xs text-red-500">{formErrors.confirmAccountNumber}</p>}
                             </div>
                             <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">Account Type</label>
+                                <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">IFSC Code *</label>
+                                <input
+                                    type="text"
+                                    value={formData.ifscCode}
+                                    onChange={(e) => setFormData({ ...formData, ifscCode: e.target.value.toUpperCase() })}
+                                    placeholder="e.g. HDFC0001234"
+                                    maxLength={11}
+                                    className={`w-full px-4 py-3 rounded-lg border ${formErrors.ifscCode ? 'border-red-400' : 'border-gray-200'} focus:border-[#7CD947] focus:ring-2 focus:ring-green-100 outline-none transition-all text-sm font-medium uppercase`}
+                                />
+                                {formErrors.ifscCode && <p className="text-xs text-red-500">{formErrors.ifscCode}</p>}
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">Account Type *</label>
                                 <select
                                     value={formData.accountType}
                                     onChange={(e) => setFormData({ ...formData, accountType: e.target.value })}
                                     className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-[#7CD947] focus:ring-2 focus:ring-green-100 outline-none transition-all text-sm font-medium bg-white"
                                 >
-                                    <option value="Checking">Checking</option>
                                     <option value="Savings">Savings</option>
+                                    <option value="Current">Current</option>
+                                    <option value="Salary">Salary</option>
                                     <option value="Business">Business</option>
                                 </select>
                             </div>
@@ -164,9 +236,9 @@ const BankAccount = () => {
                                 <input
                                     type="text"
                                     value={formData.swiftCode}
-                                    onChange={(e) => setFormData({ ...formData, swiftCode: e.target.value })}
-                                    placeholder="Enter SWIFT / BIC code"
-                                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-[#7CD947] focus:ring-2 focus:ring-green-100 outline-none transition-all text-sm font-medium"
+                                    onChange={(e) => setFormData({ ...formData, swiftCode: e.target.value.toUpperCase() })}
+                                    placeholder="Required only for international transfers"
+                                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-[#7CD947] focus:ring-2 focus:ring-green-100 outline-none transition-all text-sm font-medium uppercase"
                                 />
                             </div>
                         </div>
@@ -248,8 +320,8 @@ const BankAccount = () => {
                         <p className="text-sm text-gray-600 font-medium">****{bankDetails.accountNumber.slice(-4)}</p>
                     </div>
                     <div>
-                        <p className="text-xs font-semibold text-gray-900 mb-1.5">Routing Number</p>
-                        <p className="text-sm text-gray-600 font-medium">{bankDetails.routingNumber}</p>
+                        <p className="text-xs font-semibold text-gray-900 mb-1.5">IFSC Code</p>
+                        <p className="text-sm text-gray-600 font-medium">{bankDetails.ifscCode}</p>
                     </div>
 
                     {/* Row 4 */}

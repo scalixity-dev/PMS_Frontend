@@ -15,7 +15,7 @@ import EditPaymentModal from './components/EditPaymentModal';
 import RefundPaymentModal from './components/RefundPaymentModal';
 import DeletePaymentModal from '../Transactions/components/DeletePaymentModal';
 import { utils, writeFile } from 'xlsx';
-import { useGetPayments, useDeletePayment } from '../../../../hooks/useTransactionQueries';
+import { useGetPayments, useDeletePayment, useRefundPayment } from '../../../../hooks/useTransactionQueries';
 import type { Payment } from '../../../../services/transaction.service';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 
@@ -35,6 +35,7 @@ const Payments: React.FC = () => {
 
     // Delete payment mutation
     const deletePaymentMutation = useDeletePayment();
+    const refundPaymentMutation = useRefundPayment();
 
     // Use transaction store for delete modal state
     const { setDeleteModalOpen, selectedPayment } = useTransactionStore();
@@ -280,10 +281,28 @@ const Payments: React.FC = () => {
                 }}
             />
             <RefundPaymentModal
-                onConfirm={(data) => {
-                    console.log('Refund Payment data:', data);
-                    // TODO: Implement API call
-                    setRefundModalOpen(false);
+                onConfirm={async (data) => {
+                    if (!selectedPayment?.transactionId || !selectedPayment?.paymentId) {
+                        alert('Cannot refund: payment information missing');
+                        setRefundModalOpen(false);
+                        return;
+                    }
+                    try {
+                        await refundPaymentMutation.mutateAsync({
+                            transactionId: selectedPayment.transactionId,
+                            paymentId: selectedPayment.paymentId,
+                            refundData: {
+                                method: data.method,
+                                notes: data.details,
+                                details: data.details,
+                            },
+                        });
+                        alert('Payment refunded successfully');
+                        setRefundModalOpen(false);
+                        setSelectedPayment(null);
+                    } catch (err: any) {
+                        alert(`Failed to refund: ${err?.message || 'Unknown error'}`);
+                    }
                 }}
             />
 

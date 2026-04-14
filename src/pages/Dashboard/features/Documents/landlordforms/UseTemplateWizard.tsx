@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ChevronDown, ChevronLeft, Plus, X } from 'lucide-react';
 import PrimaryActionButton from '../../../../../components/common/buttons/PrimaryActionButton';
@@ -8,11 +8,14 @@ import { Dialog, Transition } from '@headlessui/react';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 // Correct relative path from Documents/landlordforms to features/ListUnit
 import successAnimationUrl from '../../ListUnit/Success.lottie?url';
+import { useGetAllLeases } from '../../../../../hooks/useLeaseQueries';
+import { useGetAllTenants } from '../../../../../hooks/useTenantQueries';
 
 // --- Constants & Types ---
 
-const MOCK_TENANTS = ['Luxury Property', 'John Doe', 'Jane Smith', 'Bob Johnson'];
-const MOCK_LEASES = ['Lease Agreement 001', 'Lease Agreement 002', 'Lease Agreement 003'];
+// Fallback static lists (used if API returns nothing)
+const FALLBACK_TENANTS: string[] = [];
+const FALLBACK_LEASES: string[] = [];
 
 const MOCK_NOTICE_TEMPLATES = [
     { id: '1', name: 'Notice to Vacate', type: 'Notice', states: 'All States' },
@@ -269,6 +272,29 @@ const UseTemplateWizard: React.FC = () => {
 
     const [currentStep, setCurrentStep] = useState<StepNumber>(1);
     const [selectedLease, setSelectedLease] = useState(state?.selectedLease || (id ? `Lease ${id}` : ''));
+
+    // Fetch real leases + tenants from API
+    const { data: leasesData = [] } = useGetAllLeases(undefined, undefined, true);
+    const { data: tenantsData = [] } = useGetAllTenants(undefined, true);
+
+    const MOCK_LEASES = useMemo(() => {
+        const arr = Array.isArray(leasesData) ? leasesData : [];
+        const mapped = arr.map((l: any) => {
+            const propertyName = l.property?.propertyName || 'Property';
+            const tenantName = l.tenant?.fullName || 'Tenant';
+            return `${propertyName} - ${tenantName}`;
+        }).filter(Boolean);
+        return mapped.length > 0 ? mapped : FALLBACK_LEASES;
+    }, [leasesData]);
+
+    const MOCK_TENANTS = useMemo(() => {
+        const arr = Array.isArray(tenantsData) ? tenantsData : [];
+        const mapped = arr.map((t: any) => {
+            const name = [t.firstName, t.lastName].filter(Boolean).join(' ').trim() || t.user?.fullName || t.user?.email || '';
+            return name;
+        }).filter(Boolean);
+        return mapped.length > 0 ? mapped : FALLBACK_TENANTS;
+    }, [tenantsData]);
 
     const [selectedTenants, setSelectedTenants] = useState<string[]>(
         state?.selectedTenants

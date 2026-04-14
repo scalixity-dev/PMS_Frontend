@@ -699,3 +699,26 @@ export const useGetMyFinanceSummary = (enabled: boolean = true) => {
     retry: 1,
   });
 };
+
+/**
+ * Hook to refund a payment
+ */
+export const useRefundPayment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      transactionId,
+      paymentId,
+      refundData,
+    }: {
+      transactionId: string;
+      paymentId: string;
+      refundData: { method?: string; notes?: string; details?: string };
+    }) => transactionService.refundPayment(transactionId, paymentId, refundData),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: transactionQueryKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: [...transactionQueryKeys.all, 'payments'] });
+      queryClient.invalidateQueries({ queryKey: transactionQueryKeys.detail(variables.transactionId) });
+    },
+  });
+};

@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, } from 'react-router-dom';
+import { usePageTracking } from './hooks/usePageTracking';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools as TanStackDevtools } from '@tanstack/react-query-devtools';
 import { ChatToast } from './components/chat/ChatToast';
@@ -210,11 +211,18 @@ const queryClient = new QueryClient({
   },
 });
 
+// Inner component so usePageTracking can sit inside <BrowserRouter>.
+const RoutedApp: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  usePageTracking();
+  return <>{children}</>;
+};
+
 const App: React.FC = () => {
   return (
     <>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
+          <RoutedApp>
           <AutoLoginProvider>
           <AIChatButton />
           <Routes>
@@ -241,12 +249,12 @@ const App: React.FC = () => {
               <Route path="/service-dashboard/requests-board" element={<ServiceProtectedRoute><ServiceRequestsBoard /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/accounting" element={<ServiceProtectedRoute><ServiceAccounting /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/accounting/transaction/:id" element={<ServiceProtectedRoute><ServiceTransactionDetail /></ServiceProtectedRoute>} />
-              <Route path="/service-dashboard/settings" element={<ProtectedRoute><ServiceDashboardSettings /></ProtectedRoute>} />
+              <Route path="/service-dashboard/settings" element={<ServiceProtectedRoute><ServiceDashboardSettings /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/settings/profile" element={<ServiceProtectedRoute><ServiceDashboardProfileSettings /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/settings/security" element={<ServiceProtectedRoute><ServiceDashboardSecuritySettings /></ServiceProtectedRoute>} />
-              <Route path="/service-dashboard/settings/integrations" element={<ProtectedRoute><ServiceDashboardIntegrationSettings /></ProtectedRoute>} />
+              <Route path="/service-dashboard/settings/integrations" element={<ServiceProtectedRoute><ServiceDashboardIntegrationSettings /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/settings/notifications" element={<ServiceProtectedRoute><ServiceDashboardNotificationSettings /></ServiceProtectedRoute>} />
-              <Route path="/service-dashboard/settings/business-profile" element={<ProtectedRoute><ServiceBusinessProfile /></ProtectedRoute>} />
+              <Route path="/service-dashboard/settings/business-profile" element={<ServiceProtectedRoute><ServiceBusinessProfile /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/settings/online-payment" element={<ServiceProtectedRoute><ServiceOnlinePayment /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/settings/bank-account" element={<ServiceProtectedRoute><ServiceOnlinePayment /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/settings/entities" element={<ServiceProtectedRoute><ServiceOnlinePayment /></ServiceProtectedRoute>} />
@@ -254,7 +262,7 @@ const App: React.FC = () => {
               <Route path="/service-dashboard/contacts" element={<ServiceProtectedRoute><ServiceContacts /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/calendar" element={<ServiceProtectedRoute><ServiceDashboardCalendar /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/file-manager" element={<ServiceProtectedRoute><ServiceFileManager /></ServiceProtectedRoute>} />
-              <Route path="/service-dashboard/messages" element={<ProtectedRoute><ServiceMessages /></ProtectedRoute>} />
+              <Route path="/service-dashboard/messages" element={<ServiceProtectedRoute><ServiceMessages /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/find-job" element={<ServiceProtectedRoute><FindJob /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/find-job/:id" element={<ServiceProtectedRoute><JobDetail /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/notifications" element={<ServiceProtectedRoute><ServiceNotification /></ServiceProtectedRoute>} />
@@ -867,6 +875,7 @@ const App: React.FC = () => {
             <Route path="*" element={<HomePage />} />
           </Routes>
           </AutoLoginProvider>
+          </RoutedApp>
         </BrowserRouter>
         <ChatToast />
         <TanStackDevtools />

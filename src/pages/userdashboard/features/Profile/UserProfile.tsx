@@ -8,16 +8,40 @@ import UserAccountSettingsLayout from "../../components/layout/UserAccountSettin
 import { useAuthStore } from "./store/authStore";
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import type { UserInfo } from "../../utils/types";
-import { useUpdateProfile, useChangePassword } from "../../../../hooks/useAuthQueries";
+import { useUpdateProfile, useChangePassword, useGetCurrentUser } from "../../../../hooks/useAuthQueries";
 
 
 
 const Profile: React.FC = () => {
   const { userInfo, setUserInfo } = useAuthStore();
 
+  // Refetch current user from API on mount so data survives page refresh
+  const { data: apiUser } = useGetCurrentUser();
+
   // Modal State
   const [editMode, setEditMode] = useState<'personal' | 'address' | 'email' | 'password' | null>(null);
   const [tempInfo, setTempInfo] = useState<UserInfo | null>(userInfo);
+
+  // Sync zustand store with API data on mount/refresh
+  useEffect(() => {
+    if (apiUser) {
+      const nameParts = (apiUser.fullName || '').trim().split(/\s+/);
+      const hydrated: UserInfo = {
+        firstName: nameParts[0] || '',
+        lastName: nameParts.slice(1).join(' ') || '',
+        email: apiUser.email || '',
+        phone: (apiUser as any).phoneNumber || '',
+        country: (apiUser as any).country || '',
+        city: (apiUser as any).city || '',
+        pincode: (apiUser as any).pincode || '',
+        dob: (apiUser as any).dateOfBirth || '',
+        role: apiUser.role || '',
+        address: (apiUser as any).address || '',
+      } as any;
+      setUserInfo(hydrated);
+      setTempInfo(hydrated);
+    }
+  }, [apiUser, setUserInfo]);
 
   useEffect(() => {
     if (userInfo && !tempInfo) {
@@ -165,12 +189,62 @@ const Profile: React.FC = () => {
       )}
       {/* User Profile Overview */}
       <div className="flex flex-col md:flex-row px-4 md:px-8 items-center gap-4 md:gap-6 mb-6 md:mb-10">
-        <div className="relative">
+        <div className="relative group">
           <div className="w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 rounded-full bg-gradient-to-br from-[#7CD947] to-[#5BB030] flex items-center justify-center overflow-hidden transition-all duration-500">
-            <span className="text-white font-bold text-2xl md:text-3xl lg:text-4xl">
-              {userInfo.firstName[0]?.toUpperCase()}{userInfo.lastName[0]?.toUpperCase()}
-            </span>
+            {(userInfo as any).profilePhotoUrl ? (
+              <img src={(userInfo as any).profilePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-white font-bold text-2xl md:text-3xl lg:text-4xl">
+                {userInfo.firstName[0]?.toUpperCase()}{userInfo.lastName[0]?.toUpperCase()}
+              </span>
+            )}
           </div>
+          {/* Camera/upload overlay */}
+          <label className="absolute bottom-0 right-0 bg-[#3A6D6C] hover:bg-[#2c5251] text-white rounded-full w-8 h-8 flex items-center justify-center cursor-pointer shadow-md transition-colors" title="Change photo">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                if (!file.type.startsWith('image/')) {
+                  alert('Please select an image file');
+                  return;
+                }
+                if (file.size > 5 * 1024 * 1024) {
+                  alert(`Profile photo must be under 5 MB. Selected: ${(file.size / 1024 / 1024).toFixed(1)} MB`);
+                  return;
+                }
+                try {
+                  // Step 1: upload image → get URL
+                  const fd = new FormData();
+                  fd.append('file', file);
+                  const uploadRes = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/upload/image`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    body: fd,
+                  });
+                  if (!uploadRes.ok) {
+                    const err = await uploadRes.json().catch(() => ({}));
+                    throw new Error(err.message || 'Image upload failed');
+                  }
+                  const uploadData = await uploadRes.json();
+                  const url = uploadData.url;
+                  // Step 2: PATCH /auth/profile with new URL
+                  await updateProfileMutation.mutateAsync({ profilePhotoUrl: url } as any);
+                  setUserInfo({ ...(userInfo as any), profilePhotoUrl: url });
+                  setSaveSuccess('Profile photo updated');
+                } catch (err: any) {
+                  setSaveError(err?.message || 'Failed to upload profile photo');
+                }
+              }}
+            />
+          </label>
         </div>
 
         <div className="space-y-0.5 md:space-y-1 text-center md:text-left">
