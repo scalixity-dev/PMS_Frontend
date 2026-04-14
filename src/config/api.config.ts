@@ -276,6 +276,7 @@ export const API_ENDPOINTS = {
     CREATE_CREDIT: `${API_BASE_URL}/transactions/credit`,
     GET_TAGS: `${API_BASE_URL}/transactions/tags`,
     GET_PAYMENTS: `${API_BASE_URL}/transactions/payments`,
+    GET_MY_FINANCE_SUMMARY: `${API_BASE_URL}/transactions/me/finance-summary`,
     GET_ALL: `${API_BASE_URL}/transactions`,
     GET_ONE: (id: string) => `${API_BASE_URL}/transactions/${id}`,
     GET_RECURRING: `${API_BASE_URL}/transactions/recurring`,

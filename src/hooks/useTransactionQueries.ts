@@ -684,3 +684,18 @@ export const useDeletePayment = () => {
     },
   });
 };
+
+
+/**
+ * Hook for tenant finance summary (outstanding/deposits/credits)
+ */
+export const useGetMyFinanceSummary = (enabled: boolean = true) => {
+  return useQuery({
+    queryKey: [...transactionQueryKeys.all, "me", "finance-summary"] as const,
+    queryFn: () => transactionService.getMyFinanceSummary(),
+    enabled,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+};
