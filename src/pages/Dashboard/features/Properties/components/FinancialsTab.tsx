@@ -284,19 +284,28 @@ const FinancialsTab: React.FC<FinancialsTabProps> = ({ propertyId, unitId }) => 
                     setEditingInsurance(null);
                 }}
                 onAdd={handleAddInsurance}
-                initialData={editingInsurance ? {
-                    companyName: editingInsurance.provider || '',
-                    companyWebsite: '',
-                    agentName: '',
-                    agentEmail: '',
-                    agentPhone: '',
-                    policyNumber: editingInsurance.policyNumber || '',
-                    price: editingInsurance.premium?.toString() || '',
-                    effectiveDate: editingInsurance.startDate || '',
-                    expirationDate: editingInsurance.endDate || '',
-                    details: editingInsurance.coverageType || '',
-                    emailNotification: false,
-                } : undefined}
+                initialData={editingInsurance ? (() => {
+                    // Parse packed notes (saved by handleAddInsurance):
+                    //   "Details: X, Agent: Y, Email: a@b, Phone: 555, Website: example.com"
+                    const notes = String(editingInsurance.notes || '');
+                    const get = (key: string) => {
+                        const m = notes.match(new RegExp(`${key}:\\s*([^,]+)`, 'i'));
+                        return m ? m[1].trim().replace(/^-$/, '') : '';
+                    };
+                    return {
+                        companyName: editingInsurance.provider || '',
+                        companyWebsite: get('Website'),
+                        agentName: get('Agent'),
+                        agentEmail: get('Email'),
+                        agentPhone: get('Phone'),
+                        policyNumber: editingInsurance.policyNumber || '',
+                        price: editingInsurance.premium?.toString() || '',
+                        effectiveDate: editingInsurance.startDate ? String(editingInsurance.startDate).split('T')[0] : '',
+                        expirationDate: editingInsurance.endDate ? String(editingInsurance.endDate).split('T')[0] : '',
+                        details: get('Details') || editingInsurance.coverageType || '',
+                        emailNotification: false,
+                    };
+                })() : undefined}
             />
             <AddLoanModal
                 isOpen={isAddLoanModalOpen}
@@ -305,20 +314,29 @@ const FinancialsTab: React.FC<FinancialsTabProps> = ({ propertyId, unitId }) => 
                     setEditingLoan(null);
                 }}
                 onAdd={handleAddLoan}
-                initialData={editingLoan ? {
-                    title: editingLoan.lenderName || '',
-                    loanAmount: editingLoan.principalAmount?.toString() || '',
-                    annualInterestRate: editingLoan.interestRate?.toString() || '',
-                    loanStartDate: editingLoan.startDate || '',
-                    loanPeriod: '',
-                    loanType: editingLoan.loanType || '',
-                    paymentsDue: '',
-                    currentLoanBalance: editingLoan.currentBalance?.toString() || '',
-                    bankName: editingLoan.lenderName || '',
-                    contactPerson: '',
-                    email: '',
-                    phone: '',
-                } : undefined}
+                initialData={editingLoan ? (() => {
+                    // Parse packed notes (saved by handleAddLoan):
+                    //   "Title: X, Type: Y, Period: Z, Payments Due: A, Contact: B, Email: c@d, Phone: 555"
+                    const notes = String(editingLoan.notes || '');
+                    const get = (key: string) => {
+                        const m = notes.match(new RegExp(`${key}:\\s*([^,]+)`, 'i'));
+                        return m ? m[1].trim().replace(/^-$/, '') : '';
+                    };
+                    return {
+                        title: get('Title') || editingLoan.lenderName || '',
+                        loanAmount: editingLoan.principalAmount?.toString() || '',
+                        annualInterestRate: editingLoan.interestRate?.toString() || '',
+                        loanStartDate: editingLoan.startDate ? String(editingLoan.startDate).split('T')[0] : '',
+                        loanPeriod: get('Period'),
+                        loanType: get('Type') || editingLoan.loanType || '',
+                        paymentsDue: get('Payments Due'),
+                        currentLoanBalance: editingLoan.currentBalance?.toString() || '',
+                        bankName: editingLoan.lenderName || '',
+                        contactPerson: get('Contact'),
+                        email: get('Email'),
+                        phone: get('Phone'),
+                    };
+                })() : undefined}
             />
         </div>
     );

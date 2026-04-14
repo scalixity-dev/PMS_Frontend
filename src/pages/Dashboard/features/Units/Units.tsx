@@ -154,20 +154,24 @@ const Units: React.FC = () => {
                             // Having leasing data doesn't mean occupied - it just means leasing terms are set
                             let unitStatus: 'Occupied' | 'Vacant' = 'Vacant';
 
-                            // Check if unit has an active listing with OCCUPIED status
-                            // First check the fetched listings map (most reliable)
-                            const activeListing = listingsMap.activeUnitListingsMap.get(unit.id);
-                            if (activeListing && (activeListing.occupancyStatus === 'OCCUPIED' || activeListing.occupancyStatus === 'PARTIALLY_OCCUPIED')) {
+                            // Primary source: propertyLeasing.occupancyStatus (set by lease CRUD)
+                            const propLeasingStatus = property.leasing?.occupancyStatus;
+                            if (propLeasingStatus === 'OCCUPIED' || propLeasingStatus === 'PARTIALLY_OCCUPIED') {
                                 unitStatus = 'Occupied';
-                            } else if (unit.listings && Array.isArray(unit.listings) && unit.listings.length > 0) {
-                                // Fallback to unit's listings array if available
-                                const unitListing = unit.listings.find((l: any) =>
-                                    l.listingStatus === 'ACTIVE' &&
-                                    l.isActive &&
-                                    (l.occupancyStatus === 'OCCUPIED' || l.occupancyStatus === 'PARTIALLY_OCCUPIED')
-                                );
-                                if (unitListing) {
+                            } else {
+                                // Fallback: check unit listings
+                                const activeListing = listingsMap.activeUnitListingsMap.get(unit.id);
+                                if (activeListing && (activeListing.occupancyStatus === 'OCCUPIED' || activeListing.occupancyStatus === 'PARTIALLY_OCCUPIED')) {
                                     unitStatus = 'Occupied';
+                                } else if (unit.listings && Array.isArray(unit.listings) && unit.listings.length > 0) {
+                                    const unitListing = unit.listings.find((l: any) =>
+                                        l.listingStatus === 'ACTIVE' &&
+                                        l.isActive &&
+                                        (l.occupancyStatus === 'OCCUPIED' || l.occupancyStatus === 'PARTIALLY_OCCUPIED')
+                                    );
+                                    if (unitListing) {
+                                        unitStatus = 'Occupied';
+                                    }
                                 }
                             }
 
@@ -218,20 +222,24 @@ const Units: React.FC = () => {
                     // Determine status for single unit - only Occupied if there's an active lease/tenant
                     let unitStatus: 'Occupied' | 'Vacant' = 'Vacant';
 
-                    // Check if property has an active listing with OCCUPIED status
-                    // First check the fetched listings map (most reliable)
-                    const activeListing = listingsMap.activePropertyListingsMap.get(property.id);
-                    if (activeListing && (activeListing.occupancyStatus === 'OCCUPIED' || activeListing.occupancyStatus === 'PARTIALLY_OCCUPIED')) {
+                    // Primary source: propertyLeasing.occupancyStatus (set by lease CRUD)
+                    const singleLeasingStatus = property.leasing?.occupancyStatus;
+                    if (singleLeasingStatus === 'OCCUPIED' || singleLeasingStatus === 'PARTIALLY_OCCUPIED') {
                         unitStatus = 'Occupied';
-                    } else if (property.listings && Array.isArray(property.listings) && property.listings.length > 0) {
-                        // Fallback to property's listings array if available
-                        const propertyListing = property.listings.find((l: any) =>
-                            l.listingStatus === 'ACTIVE' &&
-                            l.isActive &&
-                            (l.occupancyStatus === 'OCCUPIED' || l.occupancyStatus === 'PARTIALLY_OCCUPIED')
-                        );
-                        if (propertyListing) {
+                    } else {
+                        // Fallback: check listings
+                        const activeListing = listingsMap.activePropertyListingsMap.get(property.id);
+                        if (activeListing && (activeListing.occupancyStatus === 'OCCUPIED' || activeListing.occupancyStatus === 'PARTIALLY_OCCUPIED')) {
                             unitStatus = 'Occupied';
+                        } else if (property.listings && Array.isArray(property.listings) && property.listings.length > 0) {
+                            const propertyListing = property.listings.find((l: any) =>
+                                l.listingStatus === 'ACTIVE' &&
+                                l.isActive &&
+                                (l.occupancyStatus === 'OCCUPIED' || l.occupancyStatus === 'PARTIALLY_OCCUPIED')
+                            );
+                            if (propertyListing) {
+                                unitStatus = 'Occupied';
+                            }
                         }
                     }
 

@@ -242,7 +242,9 @@ export const useNewRequestForm = () => {
                     attachmentDtos.push({ fileUrl, fileType: 'OTHER' });
                 }
 
-                const chargeToApi: ChargeTo = chargeTo === 'TENANT' ? 'TENANT' : chargeTo === 'PENDING' ? 'PENDING' : 'LANDLORD';
+                // Tenant-side: chargeTo defaults to PENDING (manager decides who pays).
+                // amount + materials are manager-only fields — omitted from tenant payload.
+                const chargeToApi: ChargeTo = chargeTo === 'TENANT' ? 'TENANT' : 'PENDING';
 
                 const apiPayload: CreateMaintenanceRequestInput = {
                     propertyId,
@@ -269,12 +271,6 @@ export const useNewRequestForm = () => {
                                 timeSlots: a.timeSlots || [],
                             })),
                     },
-                    materials: materials
-                        ?.filter((m: { name?: string }) => m.name)
-                        .map((m: { name: string; quantity?: number }) => ({
-                            materialName: m.name,
-                            quantity: m.quantity ?? 1,
-                        })),
                     chargeTo: chargeToApi,
                     attachments: attachmentDtos.length > 0 ? attachmentDtos : undefined,
                 };

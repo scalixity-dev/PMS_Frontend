@@ -84,8 +84,9 @@ const CreateEquipment = () => {
             isInitializingRef.current = true; // Start initialization
             const eq = existingEquipment as any;
             setFormData({
-                categoryId: typeof eq.category === 'object' ? eq.category?.id || '' : '',
-                subcategoryId: typeof eq.subcategory === 'object' ? eq.subcategory?.id || '' : '',
+                // Backend returns categoryId/subcategoryId as direct columns (no nested object include)
+                categoryId: eq.categoryId || (typeof eq.category === 'object' ? eq.category?.id : '') || '',
+                subcategoryId: eq.subcategoryId || (typeof eq.subcategory === 'object' ? eq.subcategory?.id : '') || '',
                 brand: eq.brand || '',
                 model: eq.model || '',
                 price: typeof eq.price === 'string' ? eq.price.replace(/[^0-9.]/g, '') : String(eq.price || ''),

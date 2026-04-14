@@ -8,6 +8,7 @@ import DeleteConfirmationModal from '../../../../components/common/modals/Delete
 import ConfirmationModal from './ConfirmationModal';
 import { useGetKey, useUpdateKey, useDeleteKey } from '../../../../hooks/useKeysQueries';
 import { useGetAllProperties } from '../../../../hooks/usePropertyQueries';
+import { useGetAllTenants } from '../../../../hooks/useTenantQueries';
 
 // Map backend key type to display format
 const mapKeyType = (keyType: string): string => {
@@ -68,6 +69,7 @@ const KeyDetail = () => {
     // Fetch key data from backend
     const { data: keyData, isLoading, error } = useGetKey(id || null, !!id);
     const { data: properties = [] } = useGetAllProperties();
+    const { data: tenantsData = [] } = useGetAllTenants();
     const updateKeyMutation = useUpdateKey();
     const deleteKeyMutation = useDeleteKey();
 
@@ -419,7 +421,10 @@ const KeyDetail = () => {
                 isOpen={isAssignModalOpen}
                 onClose={() => setIsAssignModalOpen(false)}
                 onAssign={handleAssignKey}
-                properties={properties.map(p => p.propertyName)}
+                tenants={(Array.isArray(tenantsData) ? tenantsData : []).map((t: any) => {
+                    const name = [t.firstName, t.lastName].filter(Boolean).join(' ').trim() || t.user?.fullName || t.user?.email || 'Tenant';
+                    return name;
+                })}
             />
 
             <DeleteConfirmationModal

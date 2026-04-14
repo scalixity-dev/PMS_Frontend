@@ -105,24 +105,42 @@ const Leads = () => {
         type: []
     });
 
-    // Transform listings to filter options (only active/relevant listings)
+    // Transform listings to filter options (deduped, only active/relevant)
     const listingFilterOptions: FilterOption[] = useMemo(() => {
-        // Filter out archived, removed, and inactive listings
         const activeListings = listings.filter((listing) => {
             return listing.listingStatus !== 'ARCHIVED' &&
                 listing.listingStatus !== 'REMOVED' &&
                 listing.isActive === true;
         });
 
-        return activeListings.map((listing) => {
-            // Use title if available, otherwise use property name, or fallback to listing ID
-            const label = listing.title ||
+        // Build label, ensure uniqueness by appending unit name or short id when duplicate
+        const labelCounts = new Map<string, number>();
+        const baseLabels = activeListings.map((listing) => {
+            const base = listing.title ||
                 listing.property?.propertyName ||
                 (listing.id ? `Listing ${listing.id.substring(0, 8)}` : 'Unknown Listing');
-            return {
-                value: listing.id,
-                label: label
-            };
+            return base;
+        });
+        baseLabels.forEach((b) => labelCounts.set(b, (labelCounts.get(b) || 0) + 1));
+
+        const seenInstances = new Map<string, number>();
+        return activeListings.map((listing, idx) => {
+            const base = baseLabels[idx];
+            let label = base;
+            if ((labelCounts.get(base) || 0) > 1) {
+                // Disambiguate: append unit name or short ID
+                const suffix = (listing as any).unit?.unitName
+                    ? ` (${(listing as any).unit.unitName})`
+                    : ` #${listing.id.substring(0, 6)}`;
+                label = `${base}${suffix}`;
+                // Track instance count for further ties
+                const k = `${base}${suffix}`;
+                seenInstances.set(k, (seenInstances.get(k) || 0) + 1);
+                if ((seenInstances.get(k) || 0) > 1) {
+                    label = `${base}${suffix} (${seenInstances.get(k)})`;
+                }
+            }
+            return { value: listing.id, label };
         });
     }, [listings]);
 
