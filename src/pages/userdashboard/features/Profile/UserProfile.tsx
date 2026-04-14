@@ -8,16 +8,40 @@ import UserAccountSettingsLayout from "../../components/layout/UserAccountSettin
 import { useAuthStore } from "./store/authStore";
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import type { UserInfo } from "../../utils/types";
-import { useUpdateProfile, useChangePassword } from "../../../../hooks/useAuthQueries";
+import { useUpdateProfile, useChangePassword, useGetCurrentUser } from "../../../../hooks/useAuthQueries";
 
 
 
 const Profile: React.FC = () => {
   const { userInfo, setUserInfo } = useAuthStore();
 
+  // Refetch current user from API on mount so data survives page refresh
+  const { data: apiUser } = useGetCurrentUser();
+
   // Modal State
   const [editMode, setEditMode] = useState<'personal' | 'address' | 'email' | 'password' | null>(null);
   const [tempInfo, setTempInfo] = useState<UserInfo | null>(userInfo);
+
+  // Sync zustand store with API data on mount/refresh
+  useEffect(() => {
+    if (apiUser) {
+      const nameParts = (apiUser.fullName || '').trim().split(/\s+/);
+      const hydrated: UserInfo = {
+        firstName: nameParts[0] || '',
+        lastName: nameParts.slice(1).join(' ') || '',
+        email: apiUser.email || '',
+        phone: (apiUser as any).phoneNumber || '',
+        country: (apiUser as any).country || '',
+        city: (apiUser as any).city || '',
+        pincode: (apiUser as any).pincode || '',
+        dob: (apiUser as any).dateOfBirth || '',
+        role: apiUser.role || '',
+        address: (apiUser as any).address || '',
+      } as any;
+      setUserInfo(hydrated);
+      setTempInfo(hydrated);
+    }
+  }, [apiUser, setUserInfo]);
 
   useEffect(() => {
     if (userInfo && !tempInfo) {

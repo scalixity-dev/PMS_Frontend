@@ -98,11 +98,11 @@ const Notifications: React.FC = () => {
                 </div>
             )}
             <div className="px-3 sm:px-4 md:px-8 pb-6 sm:pb-8 md:pb-10 divide-y divide-[#E5E7EB]">
-                {/* All Notification Section */}
+                {/* All Notification Section (master toggle) */}
                 <div className="py-4 sm:py-5 md:py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
                     <div className="flex-1">
-                        <h2 className={sectionTitleStyle}>All Notification</h2>
-                        <p className={sectionDescStyle}>Get notification what's happening right now, you can turn off at any time</p>
+                        <h2 className={sectionTitleStyle}>All Notifications (master)</h2>
+                        <p className={sectionDescStyle}>Master switch. When off, all other notification settings below are disabled regardless of their individual values.</p>
                     </div>
                     <Toggle checked={allNotification} onChange={(v) => { setAllNotification(v); persist({ notificationChannel: v }); }} />
                 </div>
@@ -111,8 +111,8 @@ const Notifications: React.FC = () => {
                 <div className="py-5 sm:py-6 md:py-8 space-y-4 sm:space-y-6">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
                         <div className="flex-1">
-                            <h2 className={sectionTitleStyle}>Email Notification</h2>
-                            <p className={sectionDescStyle}>Get notification what's happening right now, you can turn off at any time</p>
+                            <h2 className={sectionTitleStyle}>Email Notifications</h2>
+                            <p className={sectionDescStyle}>Receive notifications via email. Requires the master switch above to be ON.</p>
                         </div>
                         <Toggle checked={emailNotification} onChange={(v) => { setEmailNotification(v); persist({ emailNotification: v }); }} />
                     </div>
@@ -122,13 +122,13 @@ const Notifications: React.FC = () => {
                             checked={newsUpdate}
                             onChange={() => { const v = !newsUpdate; setNewsUpdate(v); persist({ newsAndUpdates: v }); }}
                             label="News and update settings"
-                            description="Get notification what's happening right now, you can turn off at any time"
+                            description="Product announcements, new features, and platform updates."
                         />
                         <CustomCheckbox
                             checked={feedback}
                             onChange={() => { const v = !feedback; setFeedback(v); persist({ feedbackNotification: v }); }}
                             label="Feedback notifications"
-                            description="Get notification what's happening right now, you can turn off at any time"
+                            description="Alerts when your property manager replies to your feedback or surveys."
                         />
                     </div>
                 </div>
@@ -155,7 +155,7 @@ const Notifications: React.FC = () => {
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
                         <div className="flex-1">
                             <h2 className={sectionTitleStyle}>More Activity</h2>
-                            <p className={sectionDescStyle}>Get notification what's happening right now, you can turn off at any time</p>
+                            <p className={sectionDescStyle}>Weekly summaries, maintenance updates, lease reminders, and other activity-related notifications.</p>
                         </div>
                         <Toggle checked={moreActivity} onChange={(v) => { setMoreActivity(v); persist({ moreActivity: v }); }} />
                     </div>
@@ -164,7 +164,7 @@ const Notifications: React.FC = () => {
                         checked={integrationAlert}
                         onChange={() => { const v = !integrationAlert; setIntegrationAlert(v); persist({ integrationAlert: v }); }}
                         label="Integration Alert"
-                        description="Get notification what's happening right now, you can turn off at any time"
+                        description="Alerts when a connected integration (e.g. Google Calendar, payment provider) requires attention."
                     />
                 </div>
             </div>

@@ -355,11 +355,15 @@ const MyCards: React.FC = () => {
                                         "Add Card"
                                     )}
                                 </Button>
-                                <div className="flex items-center gap-3 sm:gap-4 opacity-50 grayscale hover:grayscale-0 transition-all duration-300 justify-center sm:justify-start">
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/100px-Visa_Inc._logo.svg.png" alt="Visa" className="h-3 sm:h-4" />
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/100px-Mastercard-logo.svg.png" alt="Mastercard" className="h-5 sm:h-6" />
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/PayPal.svg/100px-PayPal.svg.png" alt="PayPal" className="h-3 sm:h-4" />
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/American_Express_logo.svg/100px-American_Express_logo.svg.png" alt="Amex" className="h-5 sm:h-6" />
+                                <div className="flex items-center gap-3 sm:gap-4 transition-all duration-300 justify-center sm:justify-start">
+                                    {/* Text badges — safer than hot-linked external images */}
+                                    <span className="px-2.5 py-1 text-[10px] font-bold tracking-wide bg-[#1A1F71] text-white rounded">VISA</span>
+                                    <span className="px-2.5 py-1 text-[10px] font-bold tracking-wide bg-white border border-gray-200 rounded flex items-center gap-0.5">
+                                        <span className="w-3 h-3 rounded-full bg-[#EB001B] inline-block"></span>
+                                        <span className="w-3 h-3 rounded-full bg-[#F79E1B] inline-block -ml-1.5 mix-blend-multiply"></span>
+                                    </span>
+                                    <span className="px-2.5 py-1 text-[10px] font-bold tracking-wide bg-[#003087] text-white rounded">PayPal</span>
+                                    <span className="px-2.5 py-1 text-[10px] font-bold tracking-wide bg-[#006FCF] text-white rounded">AMEX</span>
                                 </div>
                             </div>
                         </form>
