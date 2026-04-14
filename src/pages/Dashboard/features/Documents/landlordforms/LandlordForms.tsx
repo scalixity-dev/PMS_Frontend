@@ -109,10 +109,11 @@ const LandlordForms: React.FC = () => {
         return { property: propertyList };
     }, [propertiesData]);
 
+    // Templates are universal — property filter applies only when generating a document
+    // from a template, not to the template list itself. Only filter by search here.
     const filteredForms = MOCK_FORMS.filter(form => {
         const matchesSearch = form.template.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesProperty = filters.property.length === 0 || filters.property.includes(form.property || '');
-        return matchesSearch && matchesProperty;
+        return matchesSearch;
     });
 
     const handleView = (id: number) => {

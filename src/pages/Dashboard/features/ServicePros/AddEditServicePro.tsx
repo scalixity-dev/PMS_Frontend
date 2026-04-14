@@ -59,6 +59,7 @@ const AddEditServicePro = () => {
     const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
     const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
     const [documents, setDocuments] = useState<File[]>([]);
+    const [existingDocuments, setExistingDocuments] = useState<Array<{ id: string; fileUrl: string; fileName?: string | null; documentType?: string | null }>>([]);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -124,6 +125,9 @@ const AddEditServicePro = () => {
         setCountries(Country.getAllCountries());
     }, []);
 
+    // Track if we're still loading from server to skip reset logic
+    const isInitialLoadRef = useRef(true);
+
     // Update states when country changes
     useEffect(() => {
         if (formData.address.country) {
@@ -131,7 +135,8 @@ const AddEditServicePro = () => {
         } else {
             setStates([]);
         }
-        if (formData.address.country) {
+        // Only reset state/city on manual user changes, not on initial edit-mode load
+        if (formData.address.country && !isInitialLoadRef.current) {
             setFormData(prev => ({
                 ...prev,
                 address: { ...prev.address, state: '', city: '' }
@@ -147,7 +152,7 @@ const AddEditServicePro = () => {
         } else {
             setCities([]);
         }
-        if (formData.address.state) {
+        if (formData.address.state && !isInitialLoadRef.current) {
             setFormData(prev => ({
                 ...prev,
                 address: { ...prev.address, city: '' }
@@ -293,12 +298,27 @@ const AddEditServicePro = () => {
                     if (data.photoUrl) {
                         setProfilePhoto(data.photoUrl);
                     }
+
+                    // Load existing documents from backend
+                    if (Array.isArray((data as any).documents)) {
+                        setExistingDocuments((data as any).documents);
+                    }
+
+                    // Release initial-load guard AFTER state + city have chance to load
+                    // (state depends on country; city depends on state — both are set via setFormData above
+                    // but the dependent useEffects fire next tick, during which isInitialLoadRef must still be true)
+                    setTimeout(() => {
+                        isInitialLoadRef.current = false;
+                    }, 100);
                 } catch (err) {
                     setSubmitError(err instanceof Error ? err.message : 'Failed to load service provider data');
                     console.error('Error fetching service provider:', err);
                 } finally {
                     setIsLoading(false);
                 }
+            } else {
+                // Add mode — allow reset logic immediately
+                isInitialLoadRef.current = false;
             }
         };
 
@@ -1166,7 +1186,38 @@ const AddEditServicePro = () => {
                         </div>
                     </div>
 
-                    {/* Uploaded Documents List */}
+                    {/* Existing documents from server */}
+                    {existingDocuments.length > 0 && (
+                        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                            {existingDocuments.map((doc) => (
+                                <div key={doc.id} className="bg-[#F0F0F6] p-3 rounded-xl border border-gray-200 flex items-center justify-between shadow-sm">
+                                    <div className="flex items-center gap-2 overflow-hidden">
+                                        <div className="bg-white p-2 rounded-lg text-gray-600">
+                                            <FileText size={16} />
+                                        </div>
+                                        <a
+                                            href={doc.fileUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-sm font-medium text-[#3A6D6C] hover:underline truncate"
+                                        >
+                                            {doc.fileName || doc.documentType || 'Document'}
+                                        </a>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setExistingDocuments((prev) => prev.filter((d) => d.id !== doc.id))}
+                                        className="text-gray-400 hover:text-red-500 p-1 hover:bg-red-50 rounded-full transition-colors"
+                                        title="Remove from list"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* New Uploaded Documents List */}
                     {documents.length > 0 && (
                         <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                             {documents.map((doc, idx) => (
