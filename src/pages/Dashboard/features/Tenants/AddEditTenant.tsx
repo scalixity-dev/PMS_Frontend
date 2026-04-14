@@ -257,19 +257,16 @@ const AddEditTenant = () => {
         }
     }, [formData.forwardingAddress.country, updateForwardingAddress]);
 
-    // Load cities when state changes
+    // Load cities when state changes (do NOT include city in deps — would clear on every selection)
     useEffect(() => {
         if (formData.forwardingAddress.country && formData.forwardingAddress.stateRegion) {
             const stateCities = City.getCitiesOfState(formData.forwardingAddress.country, formData.forwardingAddress.stateRegion);
             setCities(stateCities);
-            // Reset city when state changes
-            if (formData.forwardingAddress.city) {
-                updateForwardingAddress('city', '');
-            }
         } else {
             setCities([]);
         }
-    }, [formData.forwardingAddress.country, formData.forwardingAddress.stateRegion, formData.forwardingAddress.city, updateForwardingAddress]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [formData.forwardingAddress.country, formData.forwardingAddress.stateRegion]);
 
     // Convert countries to dropdown options
     const countryOptions = useMemo(() => {

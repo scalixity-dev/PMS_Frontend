@@ -1,10 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Printer } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../../components/DashboardFilter';
 import { handleDocumentPrint } from '../utils/printPreviewUtils';
 import Breadcrumb from '../../../../../components/ui/Breadcrumb';
+import { useGetAllProperties } from '../../../../../hooks/usePropertyQueries';
 
 // Mock data for forms
 const MOCK_FORMS = [
@@ -98,9 +99,15 @@ const LandlordForms: React.FC = () => {
         property: []
     });
 
-    const filterOptions: Record<string, FilterOption[]> = {
-        property: MOCK_PROPERTIES.map(p => ({ value: p, label: p }))
-    };
+    // Fetch real properties from API
+    const { data: propertiesData = [] } = useGetAllProperties(true, false);
+
+    const filterOptions: Record<string, FilterOption[]> = useMemo(() => {
+        const propertyList = Array.isArray(propertiesData) && propertiesData.length > 0
+            ? propertiesData.map((p: any) => ({ value: p.propertyName, label: p.propertyName }))
+            : MOCK_PROPERTIES.map(p => ({ value: p, label: p }));
+        return { property: propertyList };
+    }, [propertiesData]);
 
     const filteredForms = MOCK_FORMS.filter(form => {
         const matchesSearch = form.template.toLowerCase().includes(searchQuery.toLowerCase());
