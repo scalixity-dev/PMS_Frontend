@@ -8,7 +8,7 @@ import AssigneeModal from './components/AssigneeModal';
 import MakeRecurringModal from './components/MakeRecurringModal';
 import ApplicantsSection from './components/ApplicantsSection';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
-import { maintenanceRequestQueryKeys, useDeleteMaintenanceRequest, useGetMaintenanceRequest, useGetMaintenanceTransactions } from '../../../../hooks/useMaintenanceRequestQueries';
+import { maintenanceRequestQueryKeys, useDeleteMaintenanceRequest, useGetMaintenanceRequest, useGetMaintenanceTransactions, useUpdateMaintenanceRequest } from '../../../../hooks/useMaintenanceRequestQueries';
 import { maintenanceRequestService } from '../../../../services/maintenance-request.service';
 import { serviceProviderService } from '../../../../services/service-provider.service';
 import { useGetEquipment } from '../../../../hooks/useEquipmentQueries';
@@ -146,10 +146,37 @@ const MaintenanceRequestsDetail: React.FC = () => {
         setStatus(label);
     }, [request]);
 
-    const handleStatusChange = (newStatus: string) => {
-        setStatus(newStatus);
-        setIsStatusModalOpen(false);
-        // Backend update for status can be wired here if needed
+    const updateMaintenanceMutation = useUpdateMaintenanceRequest();
+
+    const handleStatusChange = async (newStatus: string) => {
+        if (!id) {
+            setIsStatusModalOpen(false);
+            return;
+        }
+
+        // Map UI label → backend MaintenanceStatus enum
+        const labelToBackend: Record<string, string> = {
+            'New': 'NEW',
+            'In Process': 'IN_PROGRESS',
+            'In Progress': 'IN_PROGRESS',
+            'Completed': 'COMPLETED',
+            'Cancelled': 'CANCELLED',
+            'Pending': 'NEW',
+        };
+        const backendStatus = labelToBackend[newStatus] || newStatus.toUpperCase().replace(/ /g, '_');
+
+        try {
+            await updateMaintenanceMutation.mutateAsync({
+                id,
+                input: { status: backendStatus } as any,
+            });
+            setStatus(newStatus);
+            setIsStatusModalOpen(false);
+            queryClient.invalidateQueries({ queryKey: maintenanceRequestQueryKeys.detail(id) });
+            queryClient.invalidateQueries({ queryKey: maintenanceRequestQueryKeys.all });
+        } catch (err: any) {
+            alert(`Failed to update status: ${err?.message || 'Unknown error'}`);
+        }
     };
 
     const handleAssigneeSuccess = () => {

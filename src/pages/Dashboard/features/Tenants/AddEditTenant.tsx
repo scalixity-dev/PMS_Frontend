@@ -402,13 +402,28 @@ const AddEditTenant = () => {
             const forwardingAddress = forwardingAddressParts.length > 0 ? forwardingAddressParts.join(', ') : undefined;
 
             // Transform form data to API DTO format
+            // Parse phone: "+91 9876543210" → countryCode="+91", number="9876543210"
+            // If no space, treat whole string as number (no country code)
+            const rawPhone = formData.personalInfo.phone || '';
+            const phoneTrimmed = rawPhone.trim();
+            let phoneCountryCode: string | undefined;
+            let phoneNumber: string | undefined;
+            if (phoneTrimmed.startsWith('+') && phoneTrimmed.includes(' ')) {
+                const idx = phoneTrimmed.indexOf(' ');
+                phoneCountryCode = phoneTrimmed.slice(0, idx).trim();
+                phoneNumber = phoneTrimmed.slice(idx + 1).trim() || undefined;
+            } else {
+                phoneCountryCode = undefined;
+                phoneNumber = phoneTrimmed || undefined;
+            }
+
             const tenantData = {
                 email: formData.personalInfo.email, // Required - used to find or invite user
                 firstName: formData.personalInfo.firstName,
                 middleName: formData.personalInfo.middleName || undefined,
                 lastName: formData.personalInfo.lastName,
-                phoneCountryCode: formData.personalInfo.phone?.split(' ')[0] || undefined,
-                phoneNumber: formData.personalInfo.phone || undefined,
+                phoneCountryCode,
+                phoneNumber,
                 forwardingAddress,
                 emergencyContacts: formData.emergencyContacts
                     .filter(contact => contact.name && contact.phone)

@@ -884,6 +884,28 @@ class TransactionService {
   }
 
   /**
+   * Refund a payment.
+   */
+  async refundPayment(
+    transactionId: string,
+    paymentId: string,
+    refundData: { method?: string; notes?: string; details?: string },
+  ): Promise<{ message: string; transactionId: string; paymentId: string; status: string }> {
+    const response = await fetch(API_ENDPOINTS.TRANSACTION.REFUND_PAYMENT(transactionId, paymentId), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(refundData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Failed to refund payment');
+    }
+    return response.json();
+  }
+
+  /**
    * Delete a transaction
    */
   async deleteTransaction(transactionId: string): Promise<void> {

@@ -295,6 +295,7 @@ export const API_ENDPOINTS = {
     VOID: (id: string) => `${API_BASE_URL}/transactions/${id}/void`,
     UPDATE_PAYMENT: (id: string, paymentId: string) => `${API_BASE_URL}/transactions/${id}/payment/${paymentId}`,
     DELETE_PAYMENT: (id: string, paymentId: string) => `${API_BASE_URL}/transactions/${id}/payment/${paymentId}`,
+    REFUND_PAYMENT: (id: string, paymentId: string) => `${API_BASE_URL}/transactions/${id}/payment/${paymentId}/refund`,
     DELETE: (id: string) => `${API_BASE_URL}/transactions/${id}`,
   },
   CHAT: {
