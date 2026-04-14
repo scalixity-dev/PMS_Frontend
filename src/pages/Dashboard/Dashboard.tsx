@@ -49,7 +49,7 @@ export default function Dashboard() {
       ];
     }
     const vacant = propertiesData.filter((property: any) =>
-      Array.isArray(property.listings) && property.listings.some((listing: any) => listing?.occupancyStatus === 'VACANT')
+      property.leasing?.occupancyStatus === 'VACANT' || !property.leasing?.occupancyStatus
     ).length;
     const occupied = Math.max(total - vacant, 0);
     return [
@@ -123,15 +123,19 @@ export default function Dashboard() {
           property.address.stateRegion,
         ].filter(Boolean).join(', ')
         : property.propertyName || '-';
-      const isVacant = Array.isArray(property.listings)
-        ? property.listings.some((listing: any) => listing?.occupancyStatus === 'VACANT')
-        : false;
+      // Occupancy comes from propertyLeasing table, not listings
+      const occupancyStatus = property.leasing?.occupancyStatus;
+      let status: 'Vacant' | 'Occupied' | 'Partial' = 'Vacant';
+      if (occupancyStatus === 'OCCUPIED') status = 'Occupied';
+      else if (occupancyStatus === 'PARTIALLY_OCCUPIED') status = 'Partial';
+      else status = 'Vacant';
+
       return {
         id: property.id,
         image: property.coverPhotoUrl || property.photos?.[0]?.photoUrl || propertyPic,
         address,
         unit: property.propertyName || 'Property',
-        status: isVacant ? 'Vacant' : 'Occupied',
+        status,
       };
     });
   }, [propertiesData]);

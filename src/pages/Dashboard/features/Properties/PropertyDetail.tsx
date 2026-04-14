@@ -623,6 +623,12 @@ const PropertyDetail: React.FC = () => {
         }
 
         // Get deposit (only if not already set from unit)
+        // Priority: property.depositAmount > leasing.securityDeposit
+        if (deposit === 0 && (backendProperty as any).depositAmount) {
+            deposit = typeof (backendProperty as any).depositAmount === 'string'
+                ? parseFloat((backendProperty as any).depositAmount) || 0
+                : Number((backendProperty as any).depositAmount) || 0;
+        }
         if (deposit === 0 && backendProperty.leasing?.securityDeposit) {
             deposit = typeof backendProperty.leasing.securityDeposit === 'string'
                 ? parseFloat(backendProperty.leasing.securityDeposit) || 0
