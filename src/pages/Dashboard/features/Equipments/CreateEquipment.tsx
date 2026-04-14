@@ -53,6 +53,9 @@ const CreateEquipment = () => {
         hasWarranty: false,
         warrantyExpirationDate: '',
         isLifetimeWarranty: false,
+        warrantyReminderDays: '' as string | number,
+        warrantyAutoRenew: false,
+        warrantyNotes: '',
         description: '',
         currency: 'USD'
     });
@@ -94,6 +97,9 @@ const CreateEquipment = () => {
                     ? String(eq.warrantyExpirationDate).split('T')[0]
                     : '',
                 isLifetimeWarranty: !!eq.isLifetimeWarranty,
+                warrantyReminderDays: (eq as any).warrantyReminderDays ?? '',
+                warrantyAutoRenew: !!(eq as any).warrantyAutoRenew,
+                warrantyNotes: (eq as any).warrantyNotes || '',
                 description: eq.equipmentDetails || '',
                 currency: 'USD'
             });
@@ -310,6 +316,11 @@ const CreateEquipment = () => {
                     ? undefined
                     : (formData.warrantyExpirationDate || undefined),
                 isLifetimeWarranty: formData.isLifetimeWarranty,
+                warrantyReminderDays: formData.warrantyReminderDays !== '' && formData.warrantyReminderDays !== null
+                    ? Number(formData.warrantyReminderDays)
+                    : undefined,
+                warrantyAutoRenew: formData.warrantyAutoRenew,
+                warrantyNotes: formData.warrantyNotes || undefined,
                 equipmentDetails: formData.description || undefined,
                 photoUrl: uploadedImageUrl || undefined,
                 ...(isEditMode ? {} : { status: 'ACTIVE' as const }),
@@ -692,6 +703,50 @@ const CreateEquipment = () => {
                                     >
                                         {formData.isLifetimeWarranty && <Check className="w-3.5 h-3.5 text-white" />}
                                     </div>
+                                </div>
+
+                                {/* Remind me when warranty expires */}
+                                {!formData.isLifetimeWarranty && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-600 mb-2">Remind me before warranty expires</label>
+                                        <select
+                                            value={formData.warrantyReminderDays === '' ? '' : String(formData.warrantyReminderDays)}
+                                            onChange={(e) => handleInputChange('warrantyReminderDays', e.target.value)}
+                                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#3A6D6C]/20"
+                                        >
+                                            <option value="">No reminder</option>
+                                            <option value="7">7 days before</option>
+                                            <option value="15">15 days before</option>
+                                            <option value="30">30 days before</option>
+                                            <option value="60">60 days before</option>
+                                            <option value="90">90 days before</option>
+                                        </select>
+                                    </div>
+                                )}
+
+                                {/* Auto-renew warranty */}
+                                <div
+                                    className="flex items-center gap-2 cursor-pointer"
+                                    onClick={() => handleInputChange('warrantyAutoRenew', !formData.warrantyAutoRenew)}
+                                >
+                                    <label className="text-sm font-bold text-gray-800 cursor-pointer">Auto-renew warranty on expiry</label>
+                                    <div
+                                        className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${formData.warrantyAutoRenew ? 'bg-[#7BD747]' : 'bg-white border border-gray-300'}`}
+                                    >
+                                        {formData.warrantyAutoRenew && <Check className="w-3.5 h-3.5 text-white" />}
+                                    </div>
+                                </div>
+
+                                {/* Warranty notes */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-600 mb-2">Warranty notes (optional)</label>
+                                    <textarea
+                                        value={formData.warrantyNotes}
+                                        onChange={(e) => handleInputChange('warrantyNotes', e.target.value)}
+                                        placeholder="e.g. Extended warranty purchased 2025, call 1-800-XXX-XXXX to renew"
+                                        rows={2}
+                                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#3A6D6C]/20 resize-none"
+                                    />
                                 </div>
                             </div>
                         )}

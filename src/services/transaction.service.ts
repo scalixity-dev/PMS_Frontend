@@ -1130,6 +1130,35 @@ class TransactionService {
 
     return await response.json();
   }
+
+  /**
+   * Tenant finance summary (outstanding / deposits / credits)
+   */
+  async getMyFinanceSummary(): Promise<{
+    outstanding: number;
+    deposits: number;
+    credits: number;
+    currency: string;
+  }> {
+    const response = await fetch(API_ENDPOINTS.TRANSACTION.GET_MY_FINANCE_SUMMARY, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to fetch finance summary';
+      try {
+        const errorData = await response.json();
+        if (errorData.message) errorMessage = errorData.message;
+      } catch {
+        errorMessage = `Failed to fetch finance summary: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+
+    return await response.json();
+  }
 }
 
 export const transactionService = new TransactionService();

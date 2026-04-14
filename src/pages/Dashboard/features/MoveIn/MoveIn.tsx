@@ -64,9 +64,21 @@ const MoveIn: React.FC = () => {
                 setPropertyName(state.existingLease.property.propertyName);
             }
         } else if (state?.preSelectedPropertyId) {
+            // Reset form first to avoid retaining previous applicant's data
+            resetForm();
             setPropertyId(state.preSelectedPropertyId);
+        } else {
+            // Fresh navigation to MoveIn without state → reset previous form data
+            resetForm();
         }
-    }, [location.state, setPropertyId, loadExistingLease]);
+    }, [location.state, setPropertyId, loadExistingLease, resetForm]);
+
+    // Reset form on unmount so next open starts clean
+    useEffect(() => {
+        return () => {
+            resetForm();
+        };
+    }, [resetForm]);
 
     const handleBack = () => {
         if (currentStep > 1) {

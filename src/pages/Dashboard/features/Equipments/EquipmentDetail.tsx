@@ -287,6 +287,36 @@ const EquipmentDetail = () => {
                                         valueClassName="text-gray-700 text-sm"
                                     />
                                 </div>
+                                {(equipmentTyped as any).warrantyReminderDays != null && (
+                                    <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
+                                        <label className="w-auto md:w-48 text-sm font-medium text-gray-600">Reminder before expiry</label>
+                                        <CustomTextBox
+                                            value={`${(equipmentTyped as any).warrantyReminderDays} days before`}
+                                            readOnly={true}
+                                            className="bg-[#E0E8E7] rounded-full h-10 flex-1"
+                                            valueClassName="text-gray-700 text-sm"
+                                        />
+                                    </div>
+                                )}
+                                {(equipmentTyped as any).warrantyAutoRenew && (
+                                    <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
+                                        <label className="w-auto md:w-48 text-sm font-medium text-gray-600">Auto-renew warranty</label>
+                                        <CustomTextBox
+                                            value={'Yes'}
+                                            readOnly={true}
+                                            className="bg-[#E0E8E7] rounded-full h-10 flex-1"
+                                            valueClassName="text-gray-700 text-sm"
+                                        />
+                                    </div>
+                                )}
+                                {(equipmentTyped as any).warrantyNotes && (
+                                    <div className="flex flex-col md:flex-row md:items-start gap-2 md:gap-4">
+                                        <label className="w-auto md:w-48 text-sm font-medium text-gray-600">Warranty notes</label>
+                                        <div className="bg-[#E0E8E7] rounded-2xl p-3 flex-1 text-gray-700 text-sm">
+                                            {(equipmentTyped as any).warrantyNotes}
+                                        </div>
+                                    </div>
+                                )}
                                 <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
                                     <label className="w-auto md:w-24 text-sm font-medium text-gray-600">Serial</label>
                                     <CustomTextBox

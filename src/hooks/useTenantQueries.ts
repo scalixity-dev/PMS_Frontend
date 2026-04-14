@@ -212,3 +212,38 @@ export const useDeleteTenantDocument = () => {
   });
 };
 
+/**
+ * Hook to get tenant preferences (public renter profile)
+ */
+export const useGetTenantPreferences = (enabled: boolean = true) => {
+  return useQuery({
+    queryKey: ['tenants', 'preferences'] as const,
+    queryFn: () => tenantService.getPreferences(),
+    enabled,
+    staleTime: 2 * 60 * 1000,
+  });
+};
+
+/**
+ * Hook to save tenant preferences
+ */
+export const useSaveTenantPreferences = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: {
+      location: { country: string; state: string; city: string };
+      rentalTypes: string[];
+      criteria: {
+        beds?: string | null;
+        baths?: string | null;
+        minPrice?: number;
+        maxPrice?: number;
+        petsAllowed?: boolean;
+      };
+    }) => tenantService.savePreferences(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tenants', 'preferences'] });
+    },
+  });
+};
+

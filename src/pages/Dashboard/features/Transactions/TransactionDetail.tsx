@@ -13,7 +13,7 @@ import VoidTransactionModal from './components/VoidTransactionModal';
 import { useTransactionStore } from './store/transactionStore';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
-import { useGetTransaction, useUpdateTransaction, useDeleteTransaction, useVoidTransaction, useUpdateDiscount, useDeletePayment, useMarkAsPaid } from '../../../../hooks/useTransactionQueries';
+import { useGetTransaction, useUpdateTransaction, useDeleteTransaction, useVoidTransaction, useUpdateDiscount, useDeletePayment, useMarkAsPaid, useUpdatePayment } from '../../../../hooks/useTransactionQueries';
 import { formatMoney } from '../../../../utils/currency.utils';
 // Using console for now - replace with your toast library if available
 const toast = {
@@ -60,6 +60,7 @@ const TransactionDetail: React.FC = () => {
     const updateDiscountMutation = useUpdateDiscount();
     const deletePaymentMutation = useDeletePayment();
     const markAsPaidMutation = useMarkAsPaid();
+    const updatePaymentMutation = useUpdatePayment();
 
     const transaction = transactionData;
 
@@ -325,9 +326,29 @@ const TransactionDetail: React.FC = () => {
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit">
             <EditPaymentModal
-                onConfirm={() => {
-                    // EditPaymentModal will handle the API call internally
-                    setEditPaymentModalOpen(false);
+                onConfirm={async (data) => {
+                    if (!id || !selectedPayment?.paymentId) {
+                        console.error('Missing transaction/payment ID');
+                        setEditPaymentModalOpen(false);
+                        return;
+                    }
+                    try {
+                        await updatePaymentMutation.mutateAsync({
+                            transactionId: id,
+                            paymentId: selectedPayment.paymentId,
+                            updateData: {
+                                amount: data.amountPaid ? parseFloat(String(data.amountPaid).replace(/[₹$,]/g, '')) : undefined,
+                                paymentDate: data.datePaid ? (data.datePaid instanceof Date ? data.datePaid.toISOString() : data.datePaid) : undefined,
+                                method: data.method || undefined,
+                                paymentDetails: data.details || undefined,
+                                notes: data.details || undefined,
+                            },
+                            file: data.file || undefined,
+                        });
+                        setEditPaymentModalOpen(false);
+                    } catch (error) {
+                        console.error('Error updating payment:', error);
+                    }
                 }}
             />
             <RefundRentModal

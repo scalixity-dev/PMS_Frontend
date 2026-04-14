@@ -109,9 +109,21 @@ const ApplicantForm: React.FC<ApplicantFormProps> = ({
         }
     }, [data.photo]);
 
+    const MAX_PROFILE_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file (JPG, PNG, etc.)');
+                e.target.value = '';
+                return;
+            }
+            if (file.size > MAX_PROFILE_IMAGE_BYTES) {
+                alert(`Profile image must be under 5 MB. Selected: ${(file.size / 1024 / 1024).toFixed(1)} MB`);
+                e.target.value = '';
+                return;
+            }
             const reader = new FileReader();
             reader.onload = (event) => {
                 const imageUrl = event.target?.result as string;

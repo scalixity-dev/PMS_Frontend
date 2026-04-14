@@ -7,7 +7,7 @@ import { calculateOutstandingAmount } from "../../utils/financeUtils";
 import { useDashboardStore } from "../../store/dashboardStore";
 import { TransactionRow } from "../Transactions/components/TransactionRow";
 import { TransactionCard } from "../Transactions/components/TransactionCard";
-import { useGetTransactions } from "../../../../hooks/useTransactionQueries";
+import { useGetTransactions, useGetMyFinanceSummary } from "../../../../hooks/useTransactionQueries";
 import type { Transaction } from "../../utils/types";
 
 const ROWS_PER_PAGE = 10;
@@ -15,7 +15,20 @@ const ROWS_PER_PAGE = 10;
 const Rent: React.FC = () => {
   const navigate = useNavigate();
   const { rentFilters, setRentFilters, resetRentFilters } = useRentStore();
-  const { finances } = useDashboardStore();
+  const { finances, setFinances } = useDashboardStore();
+
+  // Fetch real finance summary from backend (outstanding/deposits/credits)
+  const { data: financeSummary } = useGetMyFinanceSummary();
+
+  useEffect(() => {
+    if (financeSummary) {
+      setFinances({
+        outstanding: financeSummary.outstanding.toFixed(2),
+        deposits: financeSummary.deposits.toFixed(2),
+        credits: financeSummary.credits.toFixed(2),
+      });
+    }
+  }, [financeSummary, setFinances]);
   const { search: searchQuery, status: statusFilter, date: dateFilter, schedule: scheduleFilter } = rentFilters;
   const [currentPage, setCurrentPage] = useState(1);
 

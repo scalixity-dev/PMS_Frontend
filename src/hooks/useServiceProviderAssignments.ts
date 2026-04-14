@@ -15,6 +15,20 @@ export function useServiceProviderAssignments(status?: string) {
   });
 }
 
+/**
+ * Hook to get service provider dashboard stats
+ */
+export function useServiceProviderDashboardStats(enabled: boolean = true) {
+  return useQuery({
+    queryKey: ['service-provider-dashboard-stats'] as const,
+    queryFn: () => serviceProviderService.getMyDashboardStats(),
+    enabled,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+}
+
 export function useUpdateAssignmentStatus() {
   const queryClient = useQueryClient();
 

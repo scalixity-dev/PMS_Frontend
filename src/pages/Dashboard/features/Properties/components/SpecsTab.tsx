@@ -142,15 +142,18 @@ const SpecsTab: React.FC<SpecsTabProps> = ({ propertyId, unitId }) => {
     };
 
     const handleAddDoor = async (data: { doorType: string; lockType: string; insideDoorColor: string; exteriorDoorColor: string; screenDoorAttached: boolean }) => {
+        // Use structured fields so all details persist + display individually
         await createSpecMutation.mutateAsync({
             propertyId,
             specData: {
                 unitId,
                 type: 'DOOR',
                 name: `Door ${doors.length + 1}`,
-                description: `Lock type: ${data.lockType}. Inside color: ${data.insideDoorColor}. Exterior color: ${data.exteriorDoorColor}. Screen door: ${data.screenDoorAttached ? 'Yes' : 'No'}`,
-                notes: data.lockType,
                 brand: data.doorType,
+                notes: data.lockType,
+                color: data.insideDoorColor,
+                location: data.exteriorDoorColor,
+                description: data.screenDoorAttached ? 'Screen door attached' : 'No screen door',
             },
         });
     };
@@ -254,10 +257,12 @@ const SpecsTab: React.FC<SpecsTabProps> = ({ propertyId, unitId }) => {
                             title={item.name}
                             badges={[
                                 { label: 'Door type', value: item.brand || '-' },
-                                { label: 'Lock type', value: item.notes || '-' }
+                                { label: 'Lock type', value: item.notes || '-' },
+                                { label: 'Inside color', value: item.color || '-' },
+                                { label: 'Exterior color', value: item.location || '-' },
+                                { label: 'Screen', value: item.description || '-' },
                             ]}
                             onEdit={() => console.log('Edit door:', item.id)}
-
                             onDelete={() => handleDeleteClick(item.id, 'door')}
                         />
                     ))}

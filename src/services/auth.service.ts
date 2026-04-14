@@ -700,6 +700,32 @@ class AuthService {
       throw new Error(errorMessage);
     }
   }
+
+  /**
+   * Change password for logged-in user (requires current password).
+   */
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    const response = await fetch(API_ENDPOINTS.AUTH.CHANGE_PASSWORD, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Password change failed';
+      try {
+        const errorData = await response.json();
+        if (Array.isArray(errorData.message)) errorMessage = errorData.message.join('. ');
+        else if (errorData.message) errorMessage = errorData.message;
+        else if (errorData.error) errorMessage = errorData.error;
+      } catch {
+        errorMessage = `Password change failed: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+  }
+
   /**
    * Verify a mobile redirect token for auto-login.
    * Called when the frontend detects ?token= in the URL.

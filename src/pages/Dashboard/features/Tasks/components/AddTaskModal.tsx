@@ -137,18 +137,22 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
 
         try {
             // Transform form data to API format
-            const taskDto = {
+            // isAllDay not in backend DTO — omit. time must be non-empty for create (backend IsNotEmpty).
+            const timeValue = formData.isAllDay ? '00:00' : (formData.time || '00:00');
+            const taskDto: any = {
                 title: formData.title,
                 description: formData.description || undefined,
-                date: formData.date ? formData.date.toISOString() : '',
-                time: formData.isAllDay ? '' : formData.time,
+                date: formData.date ? formData.date.toISOString() : undefined,
+                time: timeValue,
                 assignee: formData.assignee || undefined,
                 propertyId: formData.property || undefined,
                 isRecurring: formData.isRecurring,
                 frequency: formData.frequency ? (formData.frequency.toUpperCase() as 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY' | 'ONCE') : undefined,
                 endDate: formData.endDate ? formData.endDate.toISOString() : undefined,
-                isAllDay: formData.isAllDay,
             };
+
+            // Strip undefined keys to avoid sending them (belt-and-suspenders for validators)
+            Object.keys(taskDto).forEach((k) => taskDto[k] === undefined && delete taskDto[k]);
 
             if (taskToEdit) {
                 // Update existing task

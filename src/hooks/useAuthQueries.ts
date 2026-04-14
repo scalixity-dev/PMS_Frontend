@@ -69,3 +69,14 @@ export const useUpdateProfile = () => {
   });
 };
 
+/**
+ * Hook to change password for logged-in user
+ */
+export const useChangePassword = () => {
+  return useMutation({
+    mutationFn: ({ currentPassword, newPassword }: { currentPassword: string; newPassword: string }) => {
+      return authService.changePassword(currentPassword, newPassword);
+    },
+  });
+};
+

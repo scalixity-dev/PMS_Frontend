@@ -364,6 +364,7 @@ const PropertyDetail: React.FC = () => {
     const [isActionDropdownOpen, setIsActionDropdownOpen] = useState(false);
     const [isGalleryOpen, setIsGalleryOpen] = useState(false);
     const [galleryStartIndex, setGalleryStartIndex] = useState(0);
+    const [previewAttachment, setPreviewAttachment] = useState<{ url: string; name: string } | null>(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isAssignTeamModalOpen, setIsAssignTeamModalOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -623,6 +624,12 @@ const PropertyDetail: React.FC = () => {
         }
 
         // Get deposit (only if not already set from unit)
+        // Priority: property.depositAmount > leasing.securityDeposit
+        if (deposit === 0 && (backendProperty as any).depositAmount) {
+            deposit = typeof (backendProperty as any).depositAmount === 'string'
+                ? parseFloat((backendProperty as any).depositAmount) || 0
+                : Number((backendProperty as any).depositAmount) || 0;
+        }
         if (deposit === 0 && backendProperty.leasing?.securityDeposit) {
             deposit = typeof backendProperty.leasing.securityDeposit === 'string'
                 ? parseFloat(backendProperty.leasing.securityDeposit) || 0
@@ -1271,21 +1278,54 @@ const PropertyDetail: React.FC = () => {
                                     {property?.attachments && property.attachments.length > 0 ? (
                                         <div className="flex flex-wrap gap-4">
                                             {property.attachments.map((attachment: any, index: number) => (
-                                                <a
+                                                <button
                                                     key={index}
-                                                    href={attachment.fileUrl}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
+                                                    onClick={() => setPreviewAttachment({ url: attachment.fileUrl, name: attachment.description || attachment.fileType || 'Attachment' })}
                                                     className="bg-white px-4 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                                                 >
                                                     {attachment.description || attachment.fileType || 'Attachment'}
-                                                </a>
+                                                </button>
                                             ))}
                                         </div>
                                     ) : (
                                         <p className="text-gray-500 text-sm">No attachments added</p>
                                     )}
                                 </div>
+
+                                {/* Inline attachment preview modal */}
+                                {previewAttachment && (
+                                    <div
+                                        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+                                        onClick={() => setPreviewAttachment(null)}
+                                    >
+                                        <div
+                                            className="bg-white rounded-xl w-full max-w-5xl h-[85vh] flex flex-col shadow-2xl overflow-hidden"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+                                                <h4 className="font-semibold text-gray-800 truncate">{previewAttachment.name}</h4>
+                                                <div className="flex gap-2">
+                                                    <a
+                                                        href={previewAttachment.url}
+                                                        download
+                                                        className="text-sm text-[#3A6D6C] hover:underline px-3 py-1"
+                                                    >Download</a>
+                                                    <button
+                                                        onClick={() => setPreviewAttachment(null)}
+                                                        className="text-gray-500 hover:text-gray-700 px-3 py-1 text-xl leading-none"
+                                                    >×</button>
+                                                </div>
+                                            </div>
+                                            <div className="flex-1 bg-gray-100">
+                                                <iframe
+                                                    src={previewAttachment.url}
+                                                    title={previewAttachment.name}
+                                                    className="w-full h-full"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </>
                     )

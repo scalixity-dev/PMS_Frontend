@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Check, Eye, EyeOff } from "lucide-react";
+import { Check, Eye, EyeOff, Loader2 } from "lucide-react";
 import BaseModal from "../../../../components/common/modals/BaseModal";
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
 import UserAccountSettingsLayout from "../../components/layout/UserAccountSettingsLayout";
@@ -8,6 +8,7 @@ import UserAccountSettingsLayout from "../../components/layout/UserAccountSettin
 import { useAuthStore } from "./store/authStore";
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import type { UserInfo } from "../../utils/types";
+import { useUpdateProfile, useChangePassword } from "../../../../hooks/useAuthQueries";
 
 
 
@@ -34,6 +35,11 @@ const Profile: React.FC = () => {
     confirm: false
   });
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
+
+  const updateProfileMutation = useUpdateProfile();
+  const changePasswordMutation = useChangePassword();
 
 
 
@@ -72,17 +78,58 @@ const Profile: React.FC = () => {
     );
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    setSaveError(null);
+    setSaveSuccess(null);
+
     if (editMode === 'password') {
-      // Mock password save validation could go here
-      console.log("Password changed", passwordData);
-      setEditMode(null);
+      if (!passwordData.currentPassword || !passwordData.newPassword) {
+        setSaveError('Please fill all password fields');
+        return;
+      }
+      if (passwordData.newPassword !== passwordData.confirmPassword) {
+        setSaveError('New passwords do not match');
+        return;
+      }
+      if (passwordData.newPassword.length < 8) {
+        setSaveError('Password must be at least 8 characters');
+        return;
+      }
+      try {
+        await changePasswordMutation.mutateAsync({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword,
+        });
+        setSaveSuccess('Password changed successfully');
+        setEditMode(null);
+      } catch (err: any) {
+        setSaveError(err?.message || 'Failed to change password');
+      }
       return;
     }
-    if (tempInfo) {
+
+    if (!tempInfo) return;
+
+    try {
+      if (editMode === 'personal') {
+        await updateProfileMutation.mutateAsync({
+          fullName: `${tempInfo.firstName || ''} ${tempInfo.lastName || ''}`.trim(),
+          phoneNumber: tempInfo.phone,
+        });
+      } else if (editMode === 'address') {
+        await updateProfileMutation.mutateAsync({
+          country: tempInfo.country,
+          state: (tempInfo as any).state,
+          pincode: tempInfo.pincode,
+          address: (tempInfo as any).address,
+        });
+      }
       setUserInfo(tempInfo);
+      setSaveSuccess('Profile updated successfully');
+      setEditMode(null);
+    } catch (err: any) {
+      setSaveError(err?.message || 'Failed to update profile');
     }
-    setEditMode(null);
   };
 
   const handleDeleteAccount = () => {
@@ -110,6 +157,12 @@ const Profile: React.FC = () => {
 
   return (
     <UserAccountSettingsLayout activeTab="Profile">
+      {saveSuccess && (
+        <div className="mx-4 md:mx-8 mb-4 bg-green-50 border border-green-200 rounded-md p-3 text-sm text-green-700 flex items-center justify-between">
+          <span>{saveSuccess}</span>
+          <button onClick={() => setSaveSuccess(null)} className="text-green-700 hover:text-green-900 text-xs font-bold">×</button>
+        </div>
+      )}
       {/* User Profile Overview */}
       <div className="flex flex-col md:flex-row px-4 md:px-8 items-center gap-4 md:gap-6 mb-6 md:mb-10">
         <div className="relative">
@@ -349,6 +402,16 @@ const Profile: React.FC = () => {
         padding="px-6 py-6"
         titleSize="text-lg"
       >
+        {saveError && (
+          <div className="mb-3 bg-red-50 border border-red-200 rounded-md p-2 text-xs text-red-700">
+            {saveError}
+          </div>
+        )}
+        {(updateProfileMutation.isPending || changePasswordMutation.isPending) && (
+          <div className="mb-3 bg-blue-50 border border-blue-200 rounded-md p-2 text-xs text-blue-700 flex items-center gap-2">
+            <Loader2 className="w-3 h-3 animate-spin" /> Saving...
+          </div>
+        )}
         {editMode === 'personal' && tempInfo && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>

@@ -643,6 +643,61 @@ class TenantService {
 
     return response.json();
   }
+
+  /**
+   * Save tenant preferences (public renter profile)
+   */
+  async savePreferences(data: {
+    location: { country: string; state: string; city: string };
+    rentalTypes: string[];
+    criteria: {
+      beds?: string | null;
+      baths?: string | null;
+      minPrice?: number;
+      maxPrice?: number;
+      petsAllowed?: boolean;
+    };
+  }): Promise<any> {
+    const response = await fetch(API_ENDPOINTS.TENANT.SAVE_PREFERENCES, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to save preferences';
+      try {
+        const errorData = await response.json();
+        if (Array.isArray(errorData.message)) errorMessage = errorData.message.join('. ');
+        else if (errorData.message) errorMessage = errorData.message;
+        else if (errorData.error) errorMessage = errorData.error;
+      } catch {
+        errorMessage = `Failed to save preferences: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get tenant preferences (public renter profile)
+   */
+  async getPreferences(): Promise<any> {
+    const response = await fetch(API_ENDPOINTS.TENANT.GET_PREFERENCES, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) return null;
+      throw new Error(`Failed to fetch preferences: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
 }
 
 export const tenantService = new TenantService();

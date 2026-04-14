@@ -141,6 +141,7 @@ import UserTransactionDetails from './pages/userdashboard/features/Transactions/
 import UserRequestDetails from './pages/userdashboard/features/Requests/UserRequestDetails';
 import UserMessages from './pages/userdashboard/features/Messages/UserMessages';
 import UserNewApplication from './pages/userdashboard/features/Applications/UserNewApplication';
+import UserNotificationFeed from './pages/userdashboard/features/Notification/UserNotificationFeed';
 
 
 
@@ -859,6 +860,7 @@ const App: React.FC = () => {
               <Route path="/userdashboard/settings/public-renter-profile" element={<UserPublicRenterProfile />} />
               <Route path="/userdashboard/leases/:id" element={<UserLeaseDetails />} />
               <Route path="/userdashboard/transactions/:id" element={<UserTransactionDetails />} />
+              <Route path="/userdashboard/notifications" element={<UserNotificationFeed />} />
             </Route>
 
             {/* Catch-all route */}
