@@ -29,6 +29,9 @@ export interface BackendEquipment {
   hasWarranty?: boolean;
   warrantyExpirationDate?: string | null;
   isLifetimeWarranty?: boolean;
+  warrantyReminderDays?: number | null;
+  warrantyAutoRenew?: boolean;
+  warrantyNotes?: string | null;
   equipmentDetails?: string | null;
   photoUrl?: string | null;
   status: EquipmentStatus;
@@ -75,6 +78,9 @@ export interface CreateEquipmentDto {
   hasWarranty?: boolean;
   warrantyExpirationDate?: string;
   isLifetimeWarranty?: boolean;
+  warrantyReminderDays?: number;
+  warrantyAutoRenew?: boolean;
+  warrantyNotes?: string;
   equipmentDetails?: string;
   photoUrl?: string;
   status?: EquipmentStatus;
@@ -94,6 +100,9 @@ export interface UpdateEquipmentDto {
   hasWarranty?: boolean;
   warrantyExpirationDate?: string | null;
   isLifetimeWarranty?: boolean;
+  warrantyReminderDays?: number | null;
+  warrantyAutoRenew?: boolean;
+  warrantyNotes?: string | null;
   equipmentDetails?: string;
   photoUrl?: string;
   status?: EquipmentStatus;
