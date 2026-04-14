@@ -84,6 +84,7 @@ export interface UpdateProfileRequest {
   state?: string;
   pincode?: string;
   address?: string;
+  profilePhotoUrl?: string;
 }
 
 class AuthService {
