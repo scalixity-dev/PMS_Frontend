@@ -168,9 +168,9 @@ const LandlordForms: React.FC = () => {
                     </p>
                 </div>
 
-                {/* Related request section */}
+                {/* Document templates section */}
                 <div className="mb-6">
-                    <h2 className="text-xl font-semibold text-gray-800">Related request</h2>
+                    <h2 className="text-xl font-semibold text-gray-800">Document templates</h2>
                 </div>
 
                 {/* Forms Table */}

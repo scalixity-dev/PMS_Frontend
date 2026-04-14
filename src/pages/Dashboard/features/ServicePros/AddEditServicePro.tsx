@@ -497,6 +497,7 @@ const AddEditServicePro = () => {
         if (!formData.address.address) newErrors.address = 'Address is required';
         if (!formData.address.country) newErrors.country = 'Country is required';
         if (!formData.address.state) newErrors.state = 'State is required';
+        if (!formData.address.city) newErrors.city = 'City is required';
         if (!formData.address.zip) newErrors.zip = 'Zip Code is required';
 
         if (Object.keys(newErrors).length > 0) {
@@ -1121,7 +1122,7 @@ const AddEditServicePro = () => {
 
                         {/* City */}
                         <div>
-                            <label className="block text-xs font-bold text-gray-600 mb-2 ml-1">City</label>
+                            <label className="block text-xs font-bold text-gray-600 mb-2 ml-1">City <span className="text-red-500">*</span></label>
                             <select
                                 name="city"
                                 value={formData.address.city}

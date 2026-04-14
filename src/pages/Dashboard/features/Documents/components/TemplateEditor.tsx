@@ -192,7 +192,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                                 className="bg-[#88D94C] p-4 rounded-2xl text-white shadow-[0px_4px_4px_0px_#00000040] cursor-grab active:cursor-grabbing hover:opacity-95 transition-all"
                             >
                                 <h3 className="font-extrabold text-lg mb-1 ">Signature</h3>
-                                <p className="text-[11px] opacity-90 leading-tight font-medium">Basic Residential Lease Agreement</p>
+                                <p className="text-[11px] opacity-90 leading-tight font-medium">Add a signature field for tenant/landlord signing.</p>
                             </div>
                             {/* Initials */}
                             <div
@@ -283,7 +283,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                                 />
                                 <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-6 after:transition-all peer-checked:bg-[#88D94C]"></div>
                             </label>
-                            <span className="text-sm font-normal text-gray-900">Default Signatures</span>
+                            <span className="text-sm font-normal text-gray-900">Auto-add tenant signature block</span>
                         </div>
                     </div>
                 )

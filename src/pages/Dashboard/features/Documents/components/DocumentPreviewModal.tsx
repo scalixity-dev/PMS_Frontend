@@ -49,7 +49,13 @@ const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
             <div className="bg-white rounded-2xl w-full max-w-3xl h-[85vh] shadow-2xl mx-4 flex flex-col animate-in zoom-in-95 duration-200 overflow-hidden">
                 {/* Preview Header */}
                 <div className="bg-[#3A6D6C] px-6 py-4 flex items-center justify-between rounded-t-2xl flex-shrink-0">
-                    <h2 className="text-white text-lg font-semibold">Document Preview - {title}</h2>
+                    <h2 className="text-white text-lg font-semibold">
+                        {(() => {
+                            // Avoid "Document Preview - Document Preview" duplication
+                            const cleanTitle = (title || '').replace(/^document preview\s*[-:]\s*/i, '').trim();
+                            return cleanTitle ? `Document Preview - ${cleanTitle}` : 'Document Preview';
+                        })()}
+                    </h2>
                     <button
                         onClick={onClose}
                         className="hover:bg-white/10 p-2 rounded-full transition-colors"
@@ -61,6 +67,20 @@ const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                 {/* Preview Content - Scrollable */}
                 <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
                     <div className="max-w-none mx-auto bg-white p-10 rounded-lg shadow-sm font-outfit">
+                        {/* Inject same auto-fill-pill style as editor for consistency */}
+                        <style>{`
+                            .auto-fill-pill {
+                                background-color: #88D94C;
+                                border: 1px solid #77C342;
+                                border-radius: 9999px;
+                                padding: 4px 14px;
+                                margin: 0 4px;
+                                font-weight: 700;
+                                color: white;
+                                display: inline-flex;
+                                vertical-align: middle;
+                            }
+                        `}</style>
                         {getPreviewContent()}
                     </div>
                 </div>

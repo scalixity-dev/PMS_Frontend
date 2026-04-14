@@ -87,7 +87,7 @@ const MyTemplates: React.FC = () => {
         <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-10">
             {/* Breadcrumb */}
             <div className="flex w-full overflow-x-auto pb-2 md:pb-0 mb-6 scrollbar-hide">
-                <Breadcrumb items={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'My Template' }]} />
+                <Breadcrumb items={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'My Templates' }]} />
             </div>
 
             <div className="p-4 md:p-6 bg-[#E0E8E7] min-h-screen rounded-2xl md:rounded-[2rem]">
@@ -97,7 +97,7 @@ const MyTemplates: React.FC = () => {
                         <button onClick={() => navigate(-1)} className="p-2 hover:text-gray-600 transition-colors bg-white/50 rounded-full md:bg-transparent md:rounded-none">
                             <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-gray-800" />
                         </button>
-                        <h1 className="text-xl md:text-2xl font-bold text-gray-800">My Template</h1>
+                        <h1 className="text-xl md:text-2xl font-bold text-gray-800">My Templates</h1>
                     </div>
 
                     <button
@@ -169,9 +169,9 @@ const MyTemplates: React.FC = () => {
                                         </div>
                                     )}
                                 </div>
-                                <div className="flex flex-col items-center justify-center h-32 gap-1 p-4 text-center">
-                                    <h3 className="text-[#3D7475] text-lg font-bold mb-1 line-clamp-1">{template.title}</h3>
-                                    <p className="text-gray-900 text-[11px] font-semibold line-clamp-1">{template.subtitle}</p>
+                                <div className="flex flex-col items-center justify-center h-32 gap-1 p-4 text-center min-w-0 w-full overflow-hidden">
+                                    <h3 className="text-[#3D7475] text-lg font-bold mb-1 line-clamp-2 break-words w-full" title={template.title}>{template.title}</h3>
+                                    <p className="text-gray-900 text-[11px] font-semibold line-clamp-2 break-words w-full" title={template.subtitle}>{template.subtitle}</p>
                                 </div>
                             </div>
                         ))}

@@ -41,9 +41,9 @@ const SectionHeader = ({ title, onRemove, onAdd, showAdd }: { title: string, onR
     </div>
 );
 
-const InputField = ({ label, placeholder, value, onChange, name, type = "text", className = "flex-1", error }: any) => (
+const InputField = ({ label, placeholder, value, onChange, name, type = "text", className = "flex-1", error, required = false }: any) => (
     <div className={className}>
-        <label className="block text-xs font-bold text-gray-600 mb-2 ml-1">{label}*</label>
+        <label className="block text-xs font-bold text-gray-600 mb-2 ml-1">{label}{required && <span className="text-red-500">*</span>}</label>
         <input
             type={type}
             name={name}
@@ -609,12 +609,12 @@ const AddEditTenant = () => {
                 <div className="mb-8">
                     <h2 className="text-lg font-bold text-gray-800 mb-4">Personal Information</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                        <InputField label="First Name" name="firstName" value={formData.personalInfo.firstName} onChange={handlePersonalInfoChange} placeholder="First Name" error={errors.firstName} />
-                        <InputField label="Middle Name" name="middleName" value={formData.personalInfo.middleName} onChange={handlePersonalInfoChange} placeholder="Middle Name" />
-                        <InputField label="Last Name" name="lastName" value={formData.personalInfo.lastName} onChange={handlePersonalInfoChange} placeholder="Last Name" error={errors.lastName} />
+                        <InputField label="First Name" name="firstName" value={formData.personalInfo.firstName} onChange={handlePersonalInfoChange} placeholder="First Name" error={errors.firstName} required />
+                        <InputField label="Middle Name" name="middleName" value={formData.personalInfo.middleName} onChange={handlePersonalInfoChange} placeholder="Middle Name (optional)" />
+                        <InputField label="Last Name" name="lastName" value={formData.personalInfo.lastName} onChange={handlePersonalInfoChange} placeholder="Last Name" error={errors.lastName} required />
 
                         <div className="flex-1">
-                            <label className="block text-xs font-bold text-gray-600 mb-2 ml-1">Date of birth</label>
+                            <label className="block text-xs font-bold text-gray-600 mb-2 ml-1">Date of birth <span className="text-red-500">*</span></label>
                             <DatePicker
                                 value={(() => {
                                     if (!formData.personalInfo.dateOfBirth) return undefined;
@@ -636,8 +636,8 @@ const AddEditTenant = () => {
                                 className="w-full bg-white border border-gray-200 text-gray-800 px-6 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[#3A6D6C]/20 transition-all font-medium"
                             />
                         </div>
-                        <InputField label="Email" name="email" value={formData.personalInfo.email} onChange={handlePersonalInfoChange} placeholder="Email Address" type="email" error={errors.email} />
-                        <InputField label="Phone Number" name="phone" value={formData.personalInfo.phone} onChange={handlePersonalInfoChange} placeholder="Phone Number" error={errors.phone} />
+                        <InputField label="Email" name="email" value={formData.personalInfo.email} onChange={handlePersonalInfoChange} placeholder="Email Address" type="email" error={errors.email} required />
+                        <InputField label="Phone Number" name="phone" value={formData.personalInfo.phone} onChange={handlePersonalInfoChange} placeholder="Phone Number" error={errors.phone} required />
                         <div className="flex-1">
                             <label className="block text-xs font-bold text-gray-600 mb-2 ml-1">Age</label>
                             <input

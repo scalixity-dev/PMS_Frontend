@@ -102,7 +102,7 @@ const UseTemplateModal: React.FC<UseTemplateModalProps> = ({ isOpen, onClose, te
                             <ChevronLeft size={24} />
                         </button>
                         <span className="text-sm md:text-base font-medium line-clamp-1">
-                            Add Select a property and lease
+                            Select a property and lease
                         </span>
                     </div>
                     <button
