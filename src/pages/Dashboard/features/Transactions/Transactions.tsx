@@ -12,7 +12,7 @@ import AddDiscountModal from './components/AddDiscountModal';
 import MarkAsPaidModal from './components/MarkAsPaidModal';
 import VoidTransactionModal from './components/VoidTransactionModal';
 import { utils, writeFile } from 'xlsx';
-import { useGetTransactions, useMarkAsPaid, useDeleteTransaction } from '../../../../hooks/useTransactionQueries';
+import { useGetTransactions, useMarkAsPaid, useDeleteTransaction, useUpdateTransaction } from '../../../../hooks/useTransactionQueries';
 import type { Transaction } from '../../../../services/transaction.service';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 
@@ -29,6 +29,7 @@ const Transactions: React.FC = () => {
     const { data: transactions = [], isLoading, error } = useGetTransactions();
     const markAsPaidMutation = useMarkAsPaid();
     const deleteTransactionMutation = useDeleteTransaction();
+    const updateTransactionMutation = useUpdateTransaction();
 
     const {
         setEditInvoiceOpen,
@@ -305,9 +306,36 @@ const Transactions: React.FC = () => {
         <div className={`${sidebarCollapsed ? 'max-w-full' : 'max-w-7xl'} mx-auto min-h-screen font-outfit transition-all duration-300`}>
             {/* Modals */}
             <EditInvoiceModal
-                onConfirm={(data) => {
-                    console.log('Edit Invoice data:', data);
-                    setEditInvoiceOpen(false);
+                onConfirm={async (data) => {
+                    const transactionId = selectedTransactionId;
+                    if (!transactionId) {
+                        console.error('No transaction selected');
+                        setEditInvoiceOpen(false);
+                        return;
+                    }
+
+                    try {
+                        const tagsArr = typeof data.tags === 'string'
+                            ? data.tags.split(',').map(t => t.trim()).filter(Boolean)
+                            : (Array.isArray(data.tags) ? data.tags : []);
+
+                        await updateTransactionMutation.mutateAsync({
+                            transactionId: transactionId.toString(),
+                            updateData: {
+                                category: data.category || undefined,
+                                amount: data.amount ? parseFloat(String(data.amount).replace(/[₹$,]/g, '')) : undefined,
+                                dueDate: data.dueOn ? data.dueOn.toISOString().split('T')[0] : undefined,
+                                details: data.details || undefined,
+                                notes: data.details || undefined,
+                                tags: tagsArr.length > 0 ? tagsArr : undefined,
+                            },
+                            file: data.selectedFile || undefined,
+                        });
+                        setEditInvoiceOpen(false);
+                        setSelectedTransactionId(null);
+                    } catch (error) {
+                        console.error('Error updating invoice:', error);
+                    }
                 }}
             />
             <DeleteTransactionModal
