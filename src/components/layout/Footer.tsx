@@ -1,7 +1,7 @@
 import React from "react";
 import { Mail, Send, Facebook, Linkedin, Twitter, Youtube } from "lucide-react";
 import logo from '../../assets/images/logo.png';
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 
 const Footer: React.FC = () => {
   const location = useLocation();
@@ -188,9 +188,20 @@ const Footer: React.FC = () => {
       {/* Bottom Section */}
       <div className="bg-[var(--color-navbar-bg)] w-full text-white py-4">
         <div className="max-w-7xl mx-auto px-12 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="text-xs text-center md:text-left space-x-2">
+          <div className="text-xs text-center md:text-left flex flex-wrap items-center gap-x-3 gap-y-1 justify-center md:justify-start">
             <span>@2025 SmartTenantAI. All Rights Reserved.</span>
-            <span>Terms & Conditions</span>
+            <span className="opacity-50">·</span>
+            <Link to="/terms-of-service" className="hover:text-[#84CC16] transition-colors underline-offset-2 hover:underline">
+              Terms of Service
+            </Link>
+            <span className="opacity-50">·</span>
+            <Link to="/privacy-policy" className="hover:text-[#84CC16] transition-colors underline-offset-2 hover:underline">
+              Privacy Policy
+            </Link>
+            <span className="opacity-50">·</span>
+            <Link to="/cookie-policy" className="hover:text-[#84CC16] transition-colors underline-offset-2 hover:underline">
+              Cookie Policy
+            </Link>
           </div>
 
           <div className="flex space-x-4">
