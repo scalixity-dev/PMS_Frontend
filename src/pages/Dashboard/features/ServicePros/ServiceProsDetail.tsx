@@ -94,21 +94,16 @@ const ServiceProsDetail = () => {
     // Fetch transactions for financial stats
     const { data: allTransactions } = useGetTransactions();
 
-    // Compute stats from transactions where payeeId matches the service pro's userId
+    // Aggregate outstanding from expense transactions with this service pro as the contact.
+    // Deeper aggregates (deposits/credits) need a by-payee endpoint — omit until exposed.
     const computedStats = useMemo(() => {
-        if (!allTransactions || !servicePro?.userId) return null;
-        const payeeId = servicePro.userId;
+        if (!allTransactions || !servicePro) return null;
+        const contactName = (servicePro as any).name ?? '';
         const outstanding = allTransactions
-            .filter(t => t.type === 'INVOICE' && t.status === 'PENDING' && t.payeeId === payeeId)
-            .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
-        const deposits = allTransactions
-            .filter(t => t.type === 'DEPOSIT' && t.payeeId === payeeId)
-            .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
-        const credits = allTransactions
-            .filter(t => t.type === 'CREDIT' && t.payeeId === payeeId)
-            .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
-        return { outstanding, deposits, credits };
-    }, [allTransactions, servicePro?.userId]);
+            .filter((t) => t.type === 'expense' && t.status === 'Pending' && t.contact === contactName)
+            .reduce((sum, t) => sum + (Number(t.total) || 0), 0);
+        return { outstanding };
+    }, [allTransactions, servicePro]);
 
     const displayServicePro = useMemo(() => {
         if (!servicePro) return null;
