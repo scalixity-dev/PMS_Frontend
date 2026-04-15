@@ -10,7 +10,7 @@ import TenantInsuranceSection from './components/TenantInsuranceSection';
 import TenantApplicationsSection from './components/TenantApplicationsSection';
 import TenantRequestsSection from './components/TenantRequestsSection';
 import { useGetTenant, useDeleteTenant } from '../../../../hooks/useTenantQueries';
-import { useGetTransactions } from '../../../../hooks/useTransactionQueries';
+import { useGetTenantAggregates } from '../../../../hooks/useTransactionQueries';
 import type { BackendTenantProfile } from '../../../../services/tenant.service';
 
 // Transform backend tenant profile to detail page format
@@ -85,8 +85,8 @@ const TenantDetail = () => {
     // Fetch tenant data using API
     const { data: backendTenant, isLoading, error } = useGetTenant(id || null);
 
-    // Fetch transactions to compute financial stats
-    const { data: allTransactions } = useGetTransactions();
+    // Fetch DB-level aggregates for this tenant
+    const { data: tenantAggregates } = useGetTenantAggregates(backendTenant?.userId ?? null);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -130,18 +130,16 @@ const TenantDetail = () => {
         },
     ];
 
-    // Transform backend tenant. Stat aggregates (outstanding/deposits/credits) rely on a
-    // per-party /transactions/by-tenant endpoint that isn't exposed yet — base defaults stand.
     const tenant = useMemo(() => {
         if (!backendTenant) return null;
         const base = transformTenantForDetail(backendTenant);
-        if (!allTransactions) return base;
-        const contactName = `${backendTenant.firstName ?? ''} ${backendTenant.lastName ?? ''}`.trim();
-        const outstanding = allTransactions
-            .filter((t) => t.type === 'income' && t.status === 'Pending' && t.contact === contactName)
-            .reduce((sum, t) => sum + (Number(t.total) || 0), 0);
-        return { ...base, outstanding };
-    }, [backendTenant, allTransactions]);
+        return {
+            ...base,
+            outstanding: tenantAggregates?.outstanding ?? 0,
+            deposits: tenantAggregates?.deposits ?? 0,
+            credits: tenantAggregates?.credits ?? 0,
+        };
+    }, [backendTenant, tenantAggregates]);
 
     const tabs = [
         { id: 'profile', label: 'Profile' },
