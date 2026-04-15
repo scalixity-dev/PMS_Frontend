@@ -23,6 +23,7 @@ import OnlineApplicationModal from './components/OnlineApplicationModal';
 import InviteToApplyModal from './components/InviteToApplyModal';
 import DetailTabs from '../../components/DetailTabs';
 import { useGetListing, useUpdateListing, useGetListingStatistics } from '../../../../hooks/useListingQueries';
+import { useUpdateProperty } from '../../../../hooks/usePropertyQueries';
 import { getCurrencySymbol } from '../../../../utils/currency.utils';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
@@ -67,6 +68,7 @@ const ListingDetail: React.FC = () => {
     // Fetch listing data from backend
     const { data: backendListing, isLoading, error } = useGetListing(id || null, !!id);
     const updateListing = useUpdateListing();
+    const updateProperty = useUpdateProperty();
     const { data: stats, isLoading: isLoadingStats } = useGetListingStatistics(id || null, activeTab === 'statistics');
 
     const handleToggleListing = () => {
@@ -107,6 +109,24 @@ const ListingDetail: React.FC = () => {
             }
         }
 
+        // Map UI lease duration to backend enum
+        // monthToMonth=Yes => both min/max = MONTHLY
+        // leaseDuration 'Monthly' => MONTHLY, 'Annually' => TWELVE_MONTHS
+        let minLeaseDuration: string | undefined;
+        let maxLeaseDuration: string | undefined;
+        if (leaseTerms.monthToMonth === 'Yes') {
+            minLeaseDuration = 'MONTHLY';
+            maxLeaseDuration = 'MONTHLY';
+        } else if (leaseTerms.leaseDuration) {
+            const durationMap: Record<string, string> = {
+                'Monthly': 'ONE_MONTH',
+                'Annually': 'TWELVE_MONTHS',
+            };
+            const mapped = durationMap[leaseTerms.leaseDuration] || leaseTerms.leaseDuration;
+            minLeaseDuration = mapped;
+            maxLeaseDuration = mapped;
+        }
+
         updateListing.mutate({
             id: backendListing.id,
             data: {
@@ -114,6 +134,8 @@ const ListingDetail: React.FC = () => {
                 securityDeposit: leaseTerms.securityDeposit,
                 amountRefundable: leaseTerms.amountRefundable,
                 availableFrom: availableFromISO,
+                ...(minLeaseDuration && { minLeaseDuration }),
+                ...(maxLeaseDuration && { maxLeaseDuration }),
             },
         });
     };
@@ -126,6 +148,80 @@ const ListingDetail: React.FC = () => {
             data: {
                 title: promotionRibbon || listing?.name,
                 description: promotionDescription,
+            },
+        });
+    };
+
+    const handleSaveFeatures = (selected: string[]) => {
+        setFeatures(selected);
+        setActiveModal(null);
+        const propertyId = backendListing?.property?.id;
+        if (!propertyId) return;
+        const existingAmenities = backendListing?.property?.amenities;
+        updateProperty.mutate({
+            propertyId,
+            updateData: {
+                amenities: {
+                    parking: existingAmenities?.parking || 'NONE',
+                    laundry: existingAmenities?.laundry || 'NONE',
+                    airConditioning: existingAmenities?.airConditioning || 'NONE',
+                    propertyFeatures: selected,
+                    propertyAmenities: amenities,
+                },
+            },
+        });
+    };
+
+    const handleSaveAmenities = (selected: string[]) => {
+        setAmenities(selected);
+        setActiveModal(null);
+        const propertyId = backendListing?.property?.id;
+        if (!propertyId) return;
+        const existingAmenities = backendListing?.property?.amenities;
+        updateProperty.mutate({
+            propertyId,
+            updateData: {
+                amenities: {
+                    parking: existingAmenities?.parking || 'NONE',
+                    laundry: existingAmenities?.laundry || 'NONE',
+                    airConditioning: existingAmenities?.airConditioning || 'NONE',
+                    propertyFeatures: features,
+                    propertyAmenities: selected,
+                },
+            },
+        });
+    };
+
+    const handleSaveContact = () => {
+        setIsContactEditing(false);
+        const propertyId = backendListing?.property?.id;
+        if (!propertyId || !contactDetails) return;
+        // contactDetails.phone may include country code prefix — split on first space
+        const phoneParts = (contactDetails.phone || '').trim().split(' ');
+        const phoneCountryCode = phoneParts.length > 1 ? phoneParts[0] : '';
+        const phoneNumber = phoneParts.length > 1 ? phoneParts.slice(1).join(' ') : phoneParts[0];
+        updateProperty.mutate({
+            propertyId,
+            updateData: {
+                listingContactName: contactDetails.name || '',
+                listingPhoneCountryCode: phoneCountryCode,
+                listingPhoneNumber: phoneNumber,
+                listingEmail: contactDetails.email || '',
+            },
+        });
+    };
+
+    const handleSaveGallery = () => {
+        setIsGalleryEditing(false);
+        const propertyId = backendListing?.property?.id;
+        if (!propertyId) return;
+        // Persist gallery images as non-primary photos; filter out blob URLs (pending uploads)
+        const serverUrls = galleryImages.filter(u => !u.startsWith('blob:'));
+        if (serverUrls.length === 0 && galleryImages.length === 0) return;
+        updateProperty.mutate({
+            propertyId,
+            updateData: {
+                photos: serverUrls.map(url => ({ photoUrl: url, isPrimary: false })),
             },
         });
     };
@@ -879,10 +975,17 @@ const ListingDetail: React.FC = () => {
                                 <div className="flex gap-4 mb-4">
                                     <span className="bg-[#82D64D] text-white px-6 py-1.5 rounded-full text-xs font-bold">Gallery</span>
                                     <button
-                                        onClick={() => setIsGalleryEditing(!isGalleryEditing)}
-                                        className={`${isGalleryEditing ? 'bg-[#3A6D6C]' : 'bg-[#888888]'} text-white px-6 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-colors`}
+                                        onClick={() => {
+                                            if (isGalleryEditing) {
+                                                handleSaveGallery();
+                                            } else {
+                                                setIsGalleryEditing(true);
+                                            }
+                                        }}
+                                        disabled={updateProperty.isPending}
+                                        className={`${isGalleryEditing ? 'bg-[#3A6D6C]' : 'bg-[#888888]'} text-white px-6 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-colors disabled:opacity-50`}
                                     >
-                                        {isGalleryEditing ? 'Done' : 'Edit'} <SquarePen className="w-3 h-3" />
+                                        {isGalleryEditing ? (updateProperty.isPending ? 'Saving...' : 'Done') : 'Edit'} <SquarePen className="w-3 h-3" />
                                     </button>
                                 </div>
                                 <div className={`${isGalleryEditing ? 'flex overflow-x-auto gap-4 pb-2' : 'grid grid-cols-4 gap-4'}`}>
@@ -1084,12 +1187,7 @@ const ListingDetail: React.FC = () => {
                         <SelectionModal
                             isOpen={activeModal === 'features'}
                             onClose={() => setActiveModal(null)}
-                            onSave={(selected) => {
-                                setFeatures(selected);
-                                // Note: propertyFeatures are part of amenities table, not listing table
-                                // Would require separate property amenity update endpoint
-                                setActiveModal(null);
-                            }}
+                            onSave={handleSaveFeatures}
                             title="Property features"
                             subtitle="Select the property features below."
                             options={availableFeatures}
@@ -1099,12 +1197,7 @@ const ListingDetail: React.FC = () => {
                         <SelectionModal
                             isOpen={activeModal === 'amenities'}
                             onClose={() => setActiveModal(null)}
-                            onSave={(selected) => {
-                                setAmenities(selected);
-                                // Note: propertyAmenities are part of amenities table, not listing table
-                                // Would require separate property amenity update endpoint
-                                setActiveModal(null);
-                            }}
+                            onSave={handleSaveAmenities}
                             title="Amenities"
                             subtitle="Select the amenities below."
                             options={availableAmenities}
@@ -1168,11 +1261,18 @@ const ListingDetail: React.FC = () => {
                                         </div>
                                     </div>
                                     <button
-                                        onClick={() => setIsContactEditing(!isContactEditing)}
-                                        className={`${isContactEditing ? 'bg-[#3A6D6C] text-white px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2' : 'text-gray-500 hover:text-gray-700'}`}
+                                        onClick={() => {
+                                            if (isContactEditing) {
+                                                handleSaveContact();
+                                            } else {
+                                                setIsContactEditing(true);
+                                            }
+                                        }}
+                                        disabled={updateProperty.isPending}
+                                        className={`${isContactEditing ? 'bg-[#3A6D6C] text-white px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 disabled:opacity-50' : 'text-gray-500 hover:text-gray-700'}`}
                                     >
                                         {isContactEditing ? (
-                                            <>Done <Check className="w-4 h-4" /></>
+                                            <>{updateProperty.isPending ? 'Saving...' : 'Done'} <Check className="w-4 h-4" /></>
                                         ) : (
                                             <SquarePen className="w-5 h-5" />
                                         )}

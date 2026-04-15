@@ -526,6 +526,10 @@ class PropertyService {
       photoUrl: string;
       isPrimary?: boolean;
     }>;
+    listingContactName?: string;
+    listingPhoneCountryCode?: string;
+    listingPhoneNumber?: string;
+    listingEmail?: string;
   }): Promise<BackendProperty> {
     const response = await fetch(API_ENDPOINTS.PROPERTY.UPDATE(propertyId), {
       method: 'PATCH',
