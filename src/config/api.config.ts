@@ -296,6 +296,8 @@ export const API_ENDPOINTS = {
     RETURN_DEPOSIT: `${API_BASE_URL}/transactions/return-deposit`,
     GET_APPLICABLE_INVOICES: `${API_BASE_URL}/transactions/applicable-invoices`,
     GET_AVAILABLE_DEPOSITS_CREDITS: `${API_BASE_URL}/transactions/available-deposits-credits`,
+    GET_TENANT_AGGREGATES: (tenantUserId: string) => `${API_BASE_URL}/transactions/aggregates/tenant/${tenantUserId}`,
+    GET_SERVICE_PRO_AGGREGATES: (serviceProUserId: string) => `${API_BASE_URL}/transactions/aggregates/service-pro/${serviceProUserId}`,
     APPLY_DEPOSIT_CREDIT: `${API_BASE_URL}/transactions/apply-deposit-credit`,
     MARK_AS_PAID: (id: string) => `${API_BASE_URL}/transactions/${id}/mark-as-paid`,
     UPDATE: (id: string) => `${API_BASE_URL}/transactions/${id}`,
