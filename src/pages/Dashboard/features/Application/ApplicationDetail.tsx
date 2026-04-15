@@ -387,19 +387,15 @@ const ApplicationDetail = () => {
     const handleUpdateProperty = async (propertyId: string, unitId: string) => {
         if (!application) return;
 
-        // Assuming the backend expects leasing object update or similar
-        // Based on the structure, we might need to send leasing: { propertyId, unitId } or similar.
-        // However, looking at the data structure, application has leasing object.
-        // I'll assume we update the leasing object or property/unit directly if the API supports it.
-        // Let's try updating known fields. If backend is strict, this might fail, but standard matching suggests:
+        // UpdateApplicationDto extends CreateApplicationDto which expects leasingId (UUID), not a nested leasing object.
+        // Send leasingId from the existing leasing record on this application.
+        const leasingId = (application.leasing as any)?.id;
+        if (!leasingId) return;
+
         await updateApplication.mutateAsync({
             id: application.id,
             updateData: {
-                leasing: {
-                    ...application.leasing,
-                    propertyId, // Adjust if property is an object in update payload, but usually IDs for relations
-                    unitId
-                }
+                leasingId,
             }
         });
     };

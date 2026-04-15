@@ -199,6 +199,9 @@ const MoveIn: React.FC = () => {
                         status: 'ACTIVE' as const,
                         startDate: leaseData.recurringRent?.startOn || undefined,
                         endDate: leaseData.recurringRent?.endOn || undefined,
+                        deposit: leaseData.deposit,
+                        recurringRent: leaseData.recurringRent,
+                        lateFees: leaseData.lateFees,
                     },
                 });
                 setCreatedLeaseId(existingLeaseId);

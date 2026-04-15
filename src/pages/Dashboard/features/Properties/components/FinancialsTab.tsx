@@ -57,13 +57,12 @@ const FinancialsTab: React.FC<FinancialsTabProps> = ({ propertyId, unitId }) => 
             premium: data.price ? Number(data.price) : undefined,
             startDate: data.effectiveDate ? new Date(data.effectiveDate).toISOString() : undefined,
             endDate: data.expirationDate ? new Date(data.expirationDate).toISOString() : undefined,
-            notes: [
-                data.details ? `Details: ${data.details}` : null,
-                `Agent: ${data.agentName || '-'}`,
-                `Email: ${data.agentEmail || '-'}`,
-                `Phone: ${data.agentPhone || '-'}`,
-                data.companyWebsite ? `Website: ${data.companyWebsite}` : null,
-            ].filter(Boolean).join(', '),
+            notes: data.details || undefined,
+            companyName: data.companyName || undefined,
+            companyWebsite: data.companyWebsite || undefined,
+            agentName: data.agentName || undefined,
+            agentEmail: data.agentEmail || undefined,
+            agentPhone: data.agentPhone || undefined,
         };
 
         if (editingInsurance?.id) {
@@ -115,15 +114,14 @@ const FinancialsTab: React.FC<FinancialsTabProps> = ({ propertyId, unitId }) => 
             monthlyPayment: undefined,
             startDate: data.loanStartDate ? new Date(data.loanStartDate).toISOString() : undefined,
             maturityDate: undefined,
-            notes: [
-                data.title ? `Title: ${data.title}` : null,
-                data.loanType ? `Type: ${data.loanType}` : null,
-                data.loanPeriod ? `Period: ${data.loanPeriod}` : null,
-                data.paymentsDue ? `Payments Due: ${data.paymentsDue}` : null,
-                `Contact: ${data.contactPerson || '-'}`,
-                `Email: ${data.email || '-'}`,
-                `Phone: ${data.phone || '-'}`,
-            ].filter(Boolean).join(', '),
+            notes: undefined,
+            title: data.title || undefined,
+            loanPeriodInYears: data.loanPeriod ? Number(data.loanPeriod) : undefined,
+            paymentsDue: data.paymentsDue || undefined,
+            bankName: data.bankName || undefined,
+            contactPerson: data.contactPerson || undefined,
+            contactEmail: data.email || undefined,
+            contactPhone: data.phone || undefined,
         };
 
         if (editingLoan?.id) {
@@ -284,28 +282,19 @@ const FinancialsTab: React.FC<FinancialsTabProps> = ({ propertyId, unitId }) => 
                     setEditingInsurance(null);
                 }}
                 onAdd={handleAddInsurance}
-                initialData={editingInsurance ? (() => {
-                    // Parse packed notes (saved by handleAddInsurance):
-                    //   "Details: X, Agent: Y, Email: a@b, Phone: 555, Website: example.com"
-                    const notes = String(editingInsurance.notes || '');
-                    const get = (key: string) => {
-                        const m = notes.match(new RegExp(`${key}:\\s*([^,]+)`, 'i'));
-                        return m ? m[1].trim().replace(/^-$/, '') : '';
-                    };
-                    return {
-                        companyName: editingInsurance.provider || '',
-                        companyWebsite: get('Website'),
-                        agentName: get('Agent'),
-                        agentEmail: get('Email'),
-                        agentPhone: get('Phone'),
-                        policyNumber: editingInsurance.policyNumber || '',
-                        price: editingInsurance.premium?.toString() || '',
-                        effectiveDate: editingInsurance.startDate ? String(editingInsurance.startDate).split('T')[0] : '',
-                        expirationDate: editingInsurance.endDate ? String(editingInsurance.endDate).split('T')[0] : '',
-                        details: get('Details') || editingInsurance.coverageType || '',
-                        emailNotification: false,
-                    };
-                })() : undefined}
+                initialData={editingInsurance ? {
+                    companyName: editingInsurance.companyName || editingInsurance.provider || '',
+                    companyWebsite: editingInsurance.companyWebsite || '',
+                    agentName: editingInsurance.agentName || '',
+                    agentEmail: editingInsurance.agentEmail || '',
+                    agentPhone: editingInsurance.agentPhone || '',
+                    policyNumber: editingInsurance.policyNumber || '',
+                    price: editingInsurance.premium?.toString() || '',
+                    effectiveDate: editingInsurance.startDate ? String(editingInsurance.startDate).split('T')[0] : '',
+                    expirationDate: editingInsurance.endDate ? String(editingInsurance.endDate).split('T')[0] : '',
+                    details: editingInsurance.notes || '',
+                    emailNotification: false,
+                } : undefined}
             />
             <AddLoanModal
                 isOpen={isAddLoanModalOpen}
@@ -314,29 +303,20 @@ const FinancialsTab: React.FC<FinancialsTabProps> = ({ propertyId, unitId }) => 
                     setEditingLoan(null);
                 }}
                 onAdd={handleAddLoan}
-                initialData={editingLoan ? (() => {
-                    // Parse packed notes (saved by handleAddLoan):
-                    //   "Title: X, Type: Y, Period: Z, Payments Due: A, Contact: B, Email: c@d, Phone: 555"
-                    const notes = String(editingLoan.notes || '');
-                    const get = (key: string) => {
-                        const m = notes.match(new RegExp(`${key}:\\s*([^,]+)`, 'i'));
-                        return m ? m[1].trim().replace(/^-$/, '') : '';
-                    };
-                    return {
-                        title: get('Title') || editingLoan.lenderName || '',
-                        loanAmount: editingLoan.principalAmount?.toString() || '',
-                        annualInterestRate: editingLoan.interestRate?.toString() || '',
-                        loanStartDate: editingLoan.startDate ? String(editingLoan.startDate).split('T')[0] : '',
-                        loanPeriod: get('Period'),
-                        loanType: get('Type') || editingLoan.loanType || '',
-                        paymentsDue: get('Payments Due'),
-                        currentLoanBalance: editingLoan.currentBalance?.toString() || '',
-                        bankName: editingLoan.lenderName || '',
-                        contactPerson: get('Contact'),
-                        email: get('Email'),
-                        phone: get('Phone'),
-                    };
-                })() : undefined}
+                initialData={editingLoan ? {
+                    title: editingLoan.title || editingLoan.lenderName || '',
+                    loanAmount: editingLoan.principalAmount?.toString() || '',
+                    annualInterestRate: editingLoan.interestRate?.toString() || '',
+                    loanStartDate: editingLoan.startDate ? String(editingLoan.startDate).split('T')[0] : '',
+                    loanPeriod: editingLoan.loanPeriodInYears?.toString() || '',
+                    loanType: editingLoan.loanType || '',
+                    paymentsDue: editingLoan.paymentsDue || '',
+                    currentLoanBalance: editingLoan.currentBalance?.toString() || '',
+                    bankName: editingLoan.bankName || editingLoan.lenderName || '',
+                    contactPerson: editingLoan.contactPerson || '',
+                    email: editingLoan.contactEmail || '',
+                    phone: editingLoan.contactPhone || '',
+                } : undefined}
             />
         </div>
     );

@@ -397,11 +397,23 @@ const LeadDetail = () => {
         if (!id) return;
 
         try {
-            // TODO: Handle file upload if _file is provided
-            // For now, we'll just create the note without attachment
+            let attachmentUrl: string | undefined;
+            if (_file) {
+                const formData = new FormData();
+                formData.append('file', _file);
+                const uploadRes = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/upload/file`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    body: formData,
+                });
+                if (uploadRes.ok) {
+                    const uploadData = await uploadRes.json();
+                    attachmentUrl = uploadData.url || uploadData.fileUrl || uploadData.path;
+                }
+            }
             const noteData = {
                 content: noteText,
-                attachmentUrl: _file ? undefined : undefined, // Will be set after file upload
+                attachmentUrl,
             };
 
             if (editingItem && editingItem.item.originalData?.type === 'note') {

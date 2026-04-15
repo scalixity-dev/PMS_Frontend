@@ -8,11 +8,13 @@ import UserAccountSettingsLayout from "../../components/layout/UserAccountSettin
 import { useAuthStore } from "./store/authStore";
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import type { UserInfo } from "../../utils/types";
-import { useUpdateProfile, useChangePassword, useGetCurrentUser } from "../../../../hooks/useAuthQueries";
+import { useUpdateProfile, useChangePassword, useGetCurrentUser, useDeleteAccount } from "../../../../hooks/useAuthQueries";
+import { useNavigate } from "react-router-dom";
 
 
 
 const Profile: React.FC = () => {
+  const navigate = useNavigate();
   const { userInfo, setUserInfo } = useAuthStore();
 
   // Refetch current user from API on mount so data survives page refresh
@@ -64,6 +66,7 @@ const Profile: React.FC = () => {
 
   const updateProfileMutation = useUpdateProfile();
   const changePasswordMutation = useChangePassword();
+  const deleteAccountMutation = useDeleteAccount();
 
 
 
@@ -156,10 +159,16 @@ const Profile: React.FC = () => {
     }
   };
 
-  const handleDeleteAccount = () => {
-    // Implement delete account logic here
-    console.log("Account deleted");
-    setIsDeleteModalOpen(false);
+  const handleDeleteAccount = async () => {
+    try {
+      await deleteAccountMutation.mutateAsync();
+      setIsDeleteModalOpen(false);
+      setSaveSuccess('Account deleted successfully');
+      navigate('/login');
+    } catch (err: any) {
+      setIsDeleteModalOpen(false);
+      setSaveError(err?.message || 'Failed to delete account');
+    }
   };
 
 

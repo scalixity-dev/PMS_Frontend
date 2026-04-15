@@ -4,46 +4,13 @@ import { ChevronLeft, Plus, Check, Trash2 } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import MakeRecurringModal from './components/MakeRecurringModal';
+import {
+    useGetAllMaintenanceRecurring,
+    useCreateMaintenanceRecurring,
+    useDeleteMaintenanceRecurring,
+    type RecurringMaintenance,
+} from '../../../../hooks/useMaintenanceRecurringQueries';
 
-// Mock Data for recurring maintenance requests
-const MOCK_RECURRING_REQUESTS = [
-    {
-        id: '1',
-        index: 1,
-        status: 'New',
-        category: 'Luxury',
-        subCategory: 'Lights/Beaping',
-        startDate: '10 Nov 2025',
-        endDate: '12 Nov 2025',
-    },
-    {
-        id: '2',
-        index: 2,
-        status: 'Active',
-        category: 'Exterior',
-        subCategory: 'Roof & Gutters',
-        startDate: '15 Nov 2025',
-        endDate: '20 Nov 2025',
-    },
-    {
-        id: '3',
-        index: 3,
-        status: 'Paused',
-        category: 'Interior',
-        subCategory: 'Plumbing',
-        startDate: '01 Dec 2025',
-        endDate: '05 Dec 2025',
-    },
-    {
-        id: '4',
-        index: 4,
-        status: 'New',
-        category: 'HVAC',
-        subCategory: 'Filter Replacement',
-        startDate: '10 Dec 2025',
-        endDate: '10 Dec 2025',
-    },
-];
 
 const MaintenanceRecurring: React.FC = () => {
     const navigate = useNavigate();
@@ -54,7 +21,10 @@ const MaintenanceRecurring: React.FC = () => {
     const [requestToDelete, setRequestToDelete] = useState<string | null>(null);
     const [showAddModal, setShowAddModal] = useState(false);
 
-    const [recurringRequests, setRecurringRequests] = useState(MOCK_RECURRING_REQUESTS);
+    const { data: recurringRequests = [] } = useGetAllMaintenanceRecurring();
+    const createMutation = useCreateMaintenanceRecurring();
+    const deleteMutation = useDeleteMaintenanceRecurring();
+
     const [filters, setFilters] = useState<{
         display: string[];
         category: string[];
@@ -74,45 +44,21 @@ const MaintenanceRecurring: React.FC = () => {
 
     const confirmDelete = async () => {
         if (!requestToDelete) return;
-
-        // Optimistically remove from UI
-        const previousRequests = recurringRequests;
-        setRecurringRequests(prev => prev.filter(req => req.id !== requestToDelete));
-
         try {
-            // TODO: Replace with actual API call when backend is ready
-            // await deleteRecurringRequest(requestToDelete);
-
-            // Simulate API call
-            await new Promise((resolve) => {
-                setTimeout(() => {
-                    // Simulate success (you can test error by calling reject())
-                    resolve(true);
-                }, 500);
-            });
-
-            console.log('Successfully deleted recurring request:', requestToDelete);
-
-            // Also remove from selected items if it was selected
+            await deleteMutation.mutateAsync(requestToDelete);
             setSelectedItems(prev => prev.filter(id => id !== requestToDelete));
-        } catch (error) {
-            // Revert optimistic update on error
-            console.error('Failed to delete recurring request:', error);
-            setRecurringRequests(previousRequests);
-
-            // TODO: Show error toast/notification to user
+        } catch {
             alert('Failed to delete recurring request. Please try again.');
         } finally {
-
             setIsDeleteModalOpen(false);
             setRequestToDelete(null);
         }
     };
 
     const handleCreateRecurring = (data: any) => {
-        console.log('Creating recurring request:', data);
-        // TODO: Add API call to create recurring request
-        setShowAddModal(false);
+        createMutation.mutate(data, {
+            onSuccess: () => setShowAddModal(false),
+        });
     };
 
     const filterOptions: Record<string, FilterOption[]> = {
@@ -146,16 +92,21 @@ const MaintenanceRecurring: React.FC = () => {
 
     // Filter Logic
     const filteredRequests = useMemo(() => {
-        return recurringRequests.filter(item => {
+        return recurringRequests.filter((item: RecurringMaintenance) => {
             const matchesSearch = searchQuery === '' ||
-                item.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                item.subCategory.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                item.status.toLowerCase().includes(searchQuery.toLowerCase());
+                (item.title ?? '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (item.category ?? '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                item.frequency.toLowerCase().includes(searchQuery.toLowerCase());
 
             const matchesCategory = filters.category.length === 0 ||
-                filters.category.some(c => item.category.toLowerCase() === c.toLowerCase());
+                filters.category.some(c => (item.category ?? '').toLowerCase() === c.toLowerCase());
 
-            return matchesSearch && matchesCategory;
+            const matchesDisplay = filters.display.length === 0 ||
+                filters.display.includes('all') ||
+                (filters.display.includes('active') && item.isActive) ||
+                (filters.display.includes('paused') && !item.isActive);
+
+            return matchesSearch && matchesCategory && matchesDisplay;
         });
     }, [searchQuery, filters, recurringRequests]);
 
@@ -249,16 +200,16 @@ const MaintenanceRecurring: React.FC = () => {
                     <div className="flex flex-col gap-3 bg-[#F0F0F6] p-4 rounded-[2rem] md:rounded-b-[2rem] md:rounded-t-none min-h-[100px]">
                         {filteredRequests.length === 0 ? (
                             <div className="text-center py-12 text-gray-500">
-                                No recurring maintenance requests found.
+                                No recurring maintenance schedules found.
                             </div>
                         ) : (
-                            filteredRequests.map((item) => (
+                            filteredRequests.map((item: RecurringMaintenance) => (
                                 <div
                                     key={item.id}
                                     onClick={() => navigate(`/dashboard/maintenance/recurring/${item.id}`)}
                                     className="bg-white rounded-2xl p-4 md:px-6 md:py-4 grid grid-cols-1 md:grid-cols-[60px_1.5fr_2fr_2fr_60px] gap-4 items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer relative"
                                 >
-                                    {/* Mobile: Top Row with Selection, Index, and Delete */}
+                                    {/* Mobile: Top Row with Selection and Delete */}
                                     <div className="flex md:hidden items-center justify-between mb-2">
                                         <div className="flex items-center gap-3">
                                             <button
@@ -272,7 +223,6 @@ const MaintenanceRecurring: React.FC = () => {
                                                     {selectedItems.includes(item.id) && <Check className="w-3.5 h-3.5 text-white" />}
                                                 </div>
                                             </button>
-                                            <span className="font-bold text-gray-800 text-sm">#{item.index}</span>
                                         </div>
                                         <button
                                             onClick={(e) => {
@@ -285,7 +235,7 @@ const MaintenanceRecurring: React.FC = () => {
                                         </button>
                                     </div>
 
-                                    {/* Desktop: Checkbox & Index */}
+                                    {/* Desktop: Checkbox */}
                                     <div className="hidden md:flex items-center gap-3">
                                         <button
                                             onClick={(e) => {
@@ -298,25 +248,24 @@ const MaintenanceRecurring: React.FC = () => {
                                                 {selectedItems.includes(item.id) && <Check className="w-3.5 h-3.5 text-white" />}
                                             </div>
                                         </button>
-                                        <span className="font-bold text-gray-800 text-sm">{item.index}</span>
                                     </div>
 
                                     {/* Status */}
                                     <div className="flex justify-between md:justify-start">
                                         <span className="md:hidden text-gray-500 text-sm">Status:</span>
-                                        <div className="text-[#3A6D6C] text-sm font-semibold">{item.status}</div>
+                                        <div className="text-[#3A6D6C] text-sm font-semibold">{item.isActive ? 'Active' : 'Paused'}</div>
                                     </div>
 
                                     {/* Category & Property */}
                                     <div className="text-sm font-semibold text-[#3A6D6C] break-words">
                                         <span className="md:hidden text-gray-800 block mb-1">Category Details:</span>
-                                        {item.category} <span className="text-gray-400">/</span> {item.subCategory}
+                                        {item.title} {item.category && <><span className="text-gray-400">/</span> {item.category}</>}
                                     </div>
 
                                     {/* Duration */}
                                     <div className="text-[#3A6D6C] text-sm font-semibold">
                                         <span className="md:hidden text-gray-500 block mb-1">Duration:</span>
-                                        {item.startDate} - {item.endDate}
+                                        {item.startDate ? new Date(item.startDate).toLocaleDateString() : ''}{item.endDate ? ` - ${new Date(item.endDate).toLocaleDateString()}` : ''}
                                     </div>
 
                                     {/* Desktop: Delete Action */}

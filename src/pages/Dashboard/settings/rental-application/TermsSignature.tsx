@@ -12,6 +12,8 @@ interface SectionConfig {
     actionType?: "button" | "toggle";
     buttonText?: string;
     buttonAction?: () => void;
+    buttonDisabled?: boolean;
+    buttonTooltip?: string;
 }
 
 interface SettingSectionProps {
@@ -28,7 +30,9 @@ const SettingSection = ({ config, isFirst = false, toggleState, onToggleChange }
                 <div className="mt-4">
                     <button
                         onClick={config.buttonAction}
-                        className="bg-[#327B6E] text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-[#2a6a5f] transition-colors border border-white shadow-md"
+                        disabled={config.buttonDisabled}
+                        title={config.buttonTooltip}
+                        className="bg-[#327B6E] text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-[#2a6a5f] transition-colors border border-white shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {config.buttonText}
                     </button>
@@ -95,17 +99,15 @@ export default function TermsSignature() {
             linkText: "Learn more",
             actionType: "button",
             buttonText: "Upload",
-            buttonAction: () => {
-                // TODO: Implement upload action
-            }
+            buttonAction: undefined,
+            buttonDisabled: true,
+            buttonTooltip: "PDF upload not yet available"
         },
         {
             title: "Terms",
             description: "Choose the mode of your account either \"Landlord\" or \"Property Manager\". You can switch between account modes at any time.",
             linkText: "See the Terms",
-            linkAction: () => {
-                // TODO: Implement terms view action
-            }
+            linkAction: undefined
         },
         {
             title: "E-sign Application",

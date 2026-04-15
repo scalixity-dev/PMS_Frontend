@@ -4,19 +4,8 @@ import { Download, LayoutTemplate, X, Check, ChevronUp, ChevronLeft } from 'luci
 import DashboardFilter from '../../components/DashboardFilter';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import type { FilterOption } from '../../components/DashboardFilter';
-
-interface RentersInsuranceItem {
-    id: string;
-    tenant: string;
-    property: string;
-    propertyType: string;
-    propertyAddress: string;
-    unit: string;
-    insuranceStatus: string;
-    effectiveDate: string;
-    expirationDate: string;
-    policy: string;
-}
+import { useRentersInsuranceReport } from '../../../../hooks/useReportsQueries';
+import type { RentersInsuranceItem } from '../../../../services/reports.service';
 
 const ALL_COLUMNS = [
     { id: 'tenant', label: 'Tenant', width: '1.5fr', hasSort: true },
@@ -29,112 +18,14 @@ const ALL_COLUMNS = [
 
 type ColumnId = typeof ALL_COLUMNS[number]['id'];
 
-// Mock Data grouped by property
-const MOCK_INSURANCE_DATA: RentersInsuranceItem[] = [
-    {
-        id: '1',
-        tenant: 'Atul rawat',
-        property: 'abc',
-        propertyType: 'Single-family',
-        propertyAddress: '78 Scheme No 78 - II, Indore, MP, 452010, IN',
-        unit: '—',
-        insuranceStatus: '—',
-        effectiveDate: '—',
-        expirationDate: '—',
-        policy: '—'
-    },
-    {
-        id: '2',
-        tenant: 'jay rai',
-        property: 'abc',
-        propertyType: 'Single-family',
-        propertyAddress: '78 Scheme No 78 - II, Indore, MP, 452010, IN',
-        unit: '—',
-        insuranceStatus: '—',
-        effectiveDate: '—',
-        expirationDate: '—',
-        policy: '—'
-    },
-    {
-        id: '3',
-        tenant: 'jay rai',
-        property: 'abc',
-        propertyType: 'Single-family',
-        propertyAddress: '78 Scheme No 78 - II, Indore, MP, 452010, IN',
-        unit: '—',
-        insuranceStatus: '—',
-        effectiveDate: '—',
-        expirationDate: '—',
-        policy: '—'
-    },
-    {
-        id: '4',
-        tenant: 'jay rai',
-        property: 'abc',
-        propertyType: 'Single-family',
-        propertyAddress: '78 Scheme No 78 - II, Indore, MP, 452010, IN',
-        unit: '—',
-        insuranceStatus: '—',
-        effectiveDate: '—',
-        expirationDate: '—',
-        policy: '—'
-    },
-    {
-        id: '5',
-        tenant: 'Atul rawat',
-        property: 'abc',
-        propertyType: 'Single-family',
-        propertyAddress: '78 Scheme No 78 - II, Indore, MP, 452010, IN',
-        unit: '—',
-        insuranceStatus: '—',
-        effectiveDate: '—',
-        expirationDate: '—',
-        policy: '—'
-    },
-    {
-        id: '6',
-        tenant: 'Atul rawat',
-        property: 'abc',
-        propertyType: 'Single-family',
-        propertyAddress: '78 Scheme No 78 - II, Indore, MP, 452010, IN',
-        unit: '—',
-        insuranceStatus: '—',
-        effectiveDate: '—',
-        expirationDate: '—',
-        policy: '—'
-    },
-    {
-        id: '7',
-        tenant: 'Atul rawat',
-        property: 'abc',
-        propertyType: 'Single-family',
-        propertyAddress: '78 Scheme No 78 - II, Indore, MP, 452010, IN',
-        unit: '—',
-        insuranceStatus: '—',
-        effectiveDate: '—',
-        expirationDate: '—',
-        policy: '—'
-    },
-    {
-        id: '8',
-        tenant: 'Atul rawat',
-        property: 'abc',
-        propertyType: '2 Units',
-        propertyAddress: 'Delhi Safdarjung Railway Station Rd, New Delhi, DL, 455654, IN',
-        unit: '1',
-        insuranceStatus: '—',
-        effectiveDate: '—',
-        expirationDate: '—',
-        policy: '—'
-    }
-];
-
 const RentersInsurance: React.FC = () => {
     const navigate = useNavigate();
     const [visibleColumns, setVisibleColumns] = useState<ColumnId[]>(ALL_COLUMNS.map(c => c.id));
     const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
 
-    // Filter State for DashboardFilter
+    const { data: apiData, isLoading, error } = useRentersInsuranceReport();
+    const insuranceData: RentersInsuranceItem[] = apiData ?? [];
+
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedFilters, setSelectedFilters] = useState<Record<string, string[]>>({
         propertyUnits: [],
@@ -144,15 +35,14 @@ const RentersInsurance: React.FC = () => {
         insuranceExpiration: []
     });
 
-    // Filter Options for DashboardFilter
     const filterOptions: Record<string, FilterOption[]> = {
-        propertyUnits: Array.from(new Set(MOCK_INSURANCE_DATA.map(r => r.property))).map(prop => ({ value: prop, label: prop })),
+        propertyUnits: Array.from(new Set(insuranceData.map(r => r.property))).map(prop => ({ value: prop, label: prop })),
         leaseStatus: [
             { value: 'Active', label: 'Active' },
             { value: 'Pending', label: 'Pending' },
             { value: 'Expired', label: 'Expired' }
         ],
-        tenant: Array.from(new Set(MOCK_INSURANCE_DATA.map(r => r.tenant))).map(t => ({ value: t, label: t })),
+        tenant: Array.from(new Set(insuranceData.map(r => r.tenant))).map(t => ({ value: t, label: t })),
         insuranceStatus: [
             { value: 'Valid', label: 'Valid' },
             { value: 'Expired', label: 'Expired' },
@@ -185,10 +75,8 @@ const RentersInsurance: React.FC = () => {
         });
     };
 
-    // Filter Logic
     const filteredItems = useMemo(() => {
-        return MOCK_INSURANCE_DATA.filter(item => {
-            // Search filter
+        return insuranceData.filter(item => {
             if (searchQuery) {
                 const query = searchQuery.toLowerCase();
                 const matchesSearch =
@@ -197,29 +85,17 @@ const RentersInsurance: React.FC = () => {
                     item.policy.toLowerCase().includes(query);
                 if (!matchesSearch) return false;
             }
-
-            // Property filter
-            if (selectedFilters.propertyUnits.length > 0 && !selectedFilters.propertyUnits.includes(item.property)) {
-                return false;
-            }
-
-            // Tenant filter
-            if (selectedFilters.tenant.length > 0 && !selectedFilters.tenant.includes(item.tenant)) {
-                return false;
-            }
-
+            if (selectedFilters.propertyUnits.length > 0 && !selectedFilters.propertyUnits.includes(item.property)) return false;
+            if (selectedFilters.tenant.length > 0 && !selectedFilters.tenant.includes(item.tenant)) return false;
             return true;
         });
-    }, [searchQuery, selectedFilters]);
+    }, [searchQuery, selectedFilters, insuranceData]);
 
-    // Group items by property
     const groupedItems = useMemo(() => {
         const groups: Record<string, RentersInsuranceItem[]> = {};
         filteredItems.forEach(item => {
             const key = `${item.property}|${item.propertyType}|${item.propertyAddress}`;
-            if (!groups[key]) {
-                groups[key] = [];
-            }
+            if (!groups[key]) groups[key] = [];
             groups[key].push(item);
         });
         return groups;
@@ -230,47 +106,32 @@ const RentersInsurance: React.FC = () => {
 
     const renderCellContent = (item: RentersInsuranceItem, columnId: ColumnId) => {
         switch (columnId) {
-            case 'tenant':
-                return <span className="text-[#4ad1a6] font-medium">{item.tenant}</span>;
-            case 'unit':
-                return <span className="text-gray-800">{item.unit}</span>;
-            case 'insuranceStatus':
-                return <span className="text-gray-700">{item.insuranceStatus}</span>;
-            case 'effectiveDate':
-                return <span className="text-gray-600">{item.effectiveDate}</span>;
-            case 'expirationDate':
-                return <span className="text-gray-600">{item.expirationDate}</span>;
-            case 'policy':
-                return <span className="text-gray-700">{item.policy}</span>;
-            default:
-                return item[columnId as keyof RentersInsuranceItem];
+            case 'tenant': return <span className="text-[#4ad1a6] font-medium">{item.tenant}</span>;
+            case 'unit': return <span className="text-gray-800">{item.unit}</span>;
+            case 'insuranceStatus': return <span className="text-gray-700">{item.insuranceStatus}</span>;
+            case 'effectiveDate': return <span className="text-gray-600">{item.effectiveDate}</span>;
+            case 'expirationDate': return <span className="text-gray-600">{item.expirationDate}</span>;
+            case 'policy': return <span className="text-gray-700">{item.policy}</span>;
+            default: return String(item[columnId as keyof RentersInsuranceItem] ?? '');
         }
     };
 
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-20">
-            {/* Breadcrumb */}
             <div className="flex w-full overflow-x-auto pb-2 md:pb-0 mb-6 scrollbar-hide">
                 <Breadcrumb items={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Reports', path: '/dashboard/reports' }, { label: 'Renters Insurance' }]} />
             </div>
 
             <div className="bg-[#E0E8E7] rounded-[2rem] p-8 min-h-[calc(100vh-100px)] relative">
-                {/* Header */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
                     <div className="flex items-center gap-4">
-                        <button
-                            onClick={() => navigate('/dashboard/reports')}
-                            className="p-2 hover:bg-black/5 rounded-full transition-colors"
-                        >
+                        <button onClick={() => navigate('/dashboard/reports')} className="p-2 hover:bg-black/5 rounded-full transition-colors">
                             <ChevronLeft className="w-6 h-6 text-black" />
                         </button>
                         <h1 className="text-2xl font-bold text-gray-900">Renters Insurance</h1>
                     </div>
                     <div className="flex flex-wrap gap-3">
-                        <button
-                            onClick={() => setIsColumnModalOpen(true)}
-                            className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-lg shadow-[#3A6D6C]/20 flex items-center gap-2"
-                        >
+                        <button onClick={() => setIsColumnModalOpen(true)} className="bg-[#3A6D6C] text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-lg shadow-[#3A6D6C]/20 flex items-center gap-2">
                             <LayoutTemplate size={16} />
                             Columns
                         </button>
@@ -281,12 +142,10 @@ const RentersInsurance: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Description */}
                 <p className="text-gray-600 text-sm mb-8 max-w-5xl leading-relaxed">
                     The report displays renters insurance information provided by tenants in their lease, as well as policies manually added by the landlord in the tenant's profile. It includes tenant contact details, insurance status, effective and expiration dates, and whether proof of insurance was submitted after being required by the landlord. <span className="text-gray-900 font-semibold cursor-pointer">Learn more</span>
                 </p>
 
-                {/* Dashboard Style Filter Bar */}
                 <DashboardFilter
                     filterOptions={filterOptions}
                     filterLabels={filterLabels}
@@ -297,87 +156,78 @@ const RentersInsurance: React.FC = () => {
                     initialFilters={selectedFilters}
                 />
 
-                {/* Grouped Tables */}
-                {Object.entries(groupedItems).map(([key, items]) => {
-                    const [property, propertyType, address] = key.split('|');
-                    return (
-                        <div key={key} className="mb-8">
-                            {/* Property Group Header */}
-                            <div className="mb-4 flex items-center">
-                                <div className="bg-[#3A6D6C] rounded-full px-4 py-2 flex items-center gap-2 shadow-sm">
-                                    <span className="text-white font-semibold">{property}</span>
-                                    <span className="text-white/70 text-sm">( {propertyType} | {address} )</span>
-                                </div>
-                            </div>
+                {isLoading && (
+                    <div className="text-center py-12 bg-white rounded-2xl">
+                        <p className="text-gray-500 text-lg">Loading...</p>
+                    </div>
+                )}
 
-                            {/* Table Header */}
-                            <div className="hidden md:block bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm">
-                                <div
-                                    className="text-white px-6 py-4 grid gap-4 items-center text-sm font-medium"
-                                    style={{ gridTemplateColumns }}
-                                >
-                                    {activeColumns.map(col => (
-                                        <div key={col.id} className={col.hasSort ? "flex items-center gap-1 cursor-pointer" : ""}>
-                                            {col.label}
-                                            {col.hasSort && <ChevronUp className="w-3 h-3" />}
+                {error && (
+                    <div className="text-center py-12 bg-white rounded-2xl">
+                        <p className="text-red-500 text-lg">Failed to load renters insurance data. Please try again.</p>
+                    </div>
+                )}
+
+                {!isLoading && !error && (
+                    <>
+                        {Object.entries(groupedItems).map(([key, items]) => {
+                            const [property, propertyType, address] = key.split('|');
+                            return (
+                                <div key={key} className="mb-8">
+                                    <div className="mb-4 flex items-center">
+                                        <div className="bg-[#3A6D6C] rounded-full px-4 py-2 flex items-center gap-2 shadow-sm">
+                                            <span className="text-white font-semibold">{property}</span>
+                                            <span className="text-white/70 text-sm">( {propertyType} | {address} )</span>
                                         </div>
-                                    ))}
-                                </div>
-                            </div>
+                                    </div>
 
-                            {/* Table Body */}
-                            <div className="flex flex-col gap-3 bg-[#F0F0F6] p-4 rounded-[2rem] rounded-t-none">
-                                {items.map(item => (
-                                    <div
-                                        key={item.id}
-                                        className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                                    >
-                                        {/* Desktop View */}
-                                        <div
-                                            className="hidden md:grid px-6 py-4 gap-4 items-center"
-                                            style={{ gridTemplateColumns }}
-                                        >
+                                    <div className="hidden md:block bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm">
+                                        <div className="text-white px-6 py-4 grid gap-4 items-center text-sm font-medium" style={{ gridTemplateColumns }}>
                                             {activeColumns.map(col => (
-                                                <div key={col.id} className="text-sm">
-                                                    {renderCellContent(item, col.id)}
-                                                </div>
-                                            ))}
-                                        </div>
-
-                                        {/* Mobile View */}
-                                        <div className="md:hidden p-4 space-y-3">
-                                            {activeColumns.map(col => (
-                                                <div key={col.id} className="flex justify-between items-start gap-4">
-                                                    <span className="text-gray-500 text-xs font-medium uppercase mt-1">{col.label}</span>
-                                                    <div className="text-sm text-right flex-1">
-                                                        {renderCellContent(item, col.id)}
-                                                    </div>
+                                                <div key={col.id} className={col.hasSort ? "flex items-center gap-1 cursor-pointer" : ""}>
+                                                    {col.label}
+                                                    {col.hasSort && <ChevronUp className="w-3 h-3" />}
                                                 </div>
                                             ))}
                                         </div>
                                     </div>
-                                ))}
-                            </div>
-                        </div>
-                    );
-                })}
 
-                {Object.keys(groupedItems).length === 0 && (
-                    <div className="text-center py-12 bg-white rounded-2xl">
-                        <p className="text-gray-500 text-lg">No renters insurance data found matching your filters</p>
-                    </div>
+                                    <div className="flex flex-col gap-3 bg-[#F0F0F6] p-4 rounded-[2rem] rounded-t-none">
+                                        {items.map(item => (
+                                            <div key={item.id} className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+                                                <div className="hidden md:grid px-6 py-4 gap-4 items-center" style={{ gridTemplateColumns }}>
+                                                    {activeColumns.map(col => <div key={col.id} className="text-sm">{renderCellContent(item, col.id)}</div>)}
+                                                </div>
+                                                <div className="md:hidden p-4 space-y-3">
+                                                    {activeColumns.map(col => (
+                                                        <div key={col.id} className="flex justify-between items-start gap-4">
+                                                            <span className="text-gray-500 text-xs font-medium uppercase mt-1">{col.label}</span>
+                                                            <div className="text-sm text-right flex-1">{renderCellContent(item, col.id)}</div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })}
+
+                        {Object.keys(groupedItems).length === 0 && (
+                            <div className="text-center py-12 bg-white rounded-2xl">
+                                <p className="text-gray-500 text-lg">No data</p>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
 
-            {/* Column Selection Modal */}
             {isColumnModalOpen && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg shadow-xl w-72 overflow-hidden">
                         <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-[#3A6D6C]">
                             <h3 className="font-semibold text-white">Show Columns</h3>
-                            <button onClick={() => setIsColumnModalOpen(false)} className="text-white hover:text-white/50">
-                                <X className="w-5 h-5" />
-                            </button>
+                            <button onClick={() => setIsColumnModalOpen(false)} className="text-white hover:text-white/50"><X className="w-5 h-5" /></button>
                         </div>
                         <div className="p-2 max-h-[60vh] overflow-y-auto">
                             <h4 className="text-sm font-semibold text-gray-700 mb-2 p-2">Select the columns you want to be displayed on your report.</h4>
@@ -386,12 +236,7 @@ const RentersInsurance: React.FC = () => {
                                     <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${visibleColumns.includes(col.id) ? 'bg-[#3A6D6C] border-[#3A6D6C]' : 'border-gray-300'}`}>
                                         {visibleColumns.includes(col.id) && <Check className="w-3.5 h-3.5 text-white" />}
                                     </div>
-                                    <input
-                                        type="checkbox"
-                                        className="hidden"
-                                        checked={visibleColumns.includes(col.id)}
-                                        onChange={() => toggleColumn(col.id)}
-                                    />
+                                    <input type="checkbox" className="hidden" checked={visibleColumns.includes(col.id)} onChange={() => toggleColumn(col.id)} />
                                     <span className="text-sm text-gray-700">{col.label}</span>
                                 </label>
                             ))}

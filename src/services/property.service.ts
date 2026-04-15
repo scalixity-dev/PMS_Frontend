@@ -870,6 +870,37 @@ class PropertyService {
   }
 
   /**
+   * Get property responsibilities (Bug 4 fix)
+   */
+  async getResponsibilities(propertyId: string): Promise<any[]> {
+    const response = await fetch(API_ENDPOINTS.PROPERTY.GET_RESPONSIBILITIES(propertyId), {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch responsibilities: ${response.statusText}`);
+    }
+    return response.json();
+  }
+
+  /**
+   * Upsert (bulk replace) property responsibilities (Bug 4 fix)
+   */
+  async upsertResponsibilities(propertyId: string, items: { utility: string; payer: string }[]): Promise<any[]> {
+    const response = await fetch(API_ENDPOINTS.PROPERTY.UPSERT_RESPONSIBILITIES(propertyId), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ items }),
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to upsert responsibilities: ${response.statusText}`);
+    }
+    return response.json();
+  }
+
+  /**
    * Get property financials (summary, transactions, insurance, loans)
    */
   async getFinancials(propertyId: string, unitId?: string): Promise<any> {

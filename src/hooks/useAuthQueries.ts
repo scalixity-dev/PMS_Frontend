@@ -80,3 +80,12 @@ export const useChangePassword = () => {
   });
 };
 
+/**
+ * Hook to delete the authenticated user's account permanently
+ */
+export const useDeleteAccount = () => {
+  return useMutation({
+    mutationFn: () => authService.deleteAccount(),
+  });
+};
+

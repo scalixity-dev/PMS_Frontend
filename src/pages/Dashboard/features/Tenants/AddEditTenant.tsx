@@ -1,10 +1,8 @@
 import React, { useRef, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Plus, Trash2, Upload, FileText, X } from 'lucide-react';
-import { format, parse, differenceInYears, isValid } from 'date-fns';
 import { Country, State, City } from 'country-state-city';
 import type { ICountry, IState, ICity } from 'country-state-city';
-import DatePicker from '../../../../components/ui/DatePicker';
 import CustomDropdown from '../../components/CustomDropdown';
 import ImageCropModal from './components/ImageCropModal';
 import { useTenantFormStore } from './store/tenantFormStore';
@@ -125,11 +123,8 @@ const AddEditTenant = () => {
                     firstName: tenantData.firstName,
                     middleName: tenantData.middleName || '',
                     lastName: tenantData.lastName,
-                    companyName: '', // Not in backend schema
-                    dateOfBirth: '', // Not in backend schema
                     email: tenantData.user?.email || tenantData.contactBookEntry?.email || '',
                     phone: tenantData.phoneNumber || '',
-                    age: '', // Not in backend schema
                 },
                 forwardingAddress: (() => {
                     // Try to parse forwarding address if it exists
@@ -612,42 +607,8 @@ const AddEditTenant = () => {
                         <InputField label="First Name" name="firstName" value={formData.personalInfo.firstName} onChange={handlePersonalInfoChange} placeholder="First Name" error={errors.firstName} required />
                         <InputField label="Middle Name" name="middleName" value={formData.personalInfo.middleName} onChange={handlePersonalInfoChange} placeholder="Middle Name (optional)" />
                         <InputField label="Last Name" name="lastName" value={formData.personalInfo.lastName} onChange={handlePersonalInfoChange} placeholder="Last Name" error={errors.lastName} required />
-
-                        <div className="flex-1">
-                            <label className="block text-xs font-bold text-gray-600 mb-2 ml-1">Date of birth <span className="text-red-500">*</span></label>
-                            <DatePicker
-                                value={(() => {
-                                    if (!formData.personalInfo.dateOfBirth) return undefined;
-                                    const parsedDate = parse(formData.personalInfo.dateOfBirth, 'dd/MM/yyyy', new Date());
-                                    return isValid(parsedDate) ? parsedDate : undefined;
-                                })()}
-                                onChange={(date) => {
-                                    if (date && isValid(date)) {
-                                        const dateString = format(date, 'dd/MM/yyyy');
-                                        const age = differenceInYears(new Date(), date).toString();
-                                        updatePersonalInfo('dateOfBirth', dateString);
-                                        updatePersonalInfo('age', age);
-                                    } else {
-                                        updatePersonalInfo('dateOfBirth', '');
-                                        updatePersonalInfo('age', '');
-                                    }
-                                }}
-                                placeholder="Select Date"
-                                className="w-full bg-white border border-gray-200 text-gray-800 px-6 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[#3A6D6C]/20 transition-all font-medium"
-                            />
-                        </div>
                         <InputField label="Email" name="email" value={formData.personalInfo.email} onChange={handlePersonalInfoChange} placeholder="Email Address" type="email" error={errors.email} required />
                         <InputField label="Phone Number" name="phone" value={formData.personalInfo.phone} onChange={handlePersonalInfoChange} placeholder="Phone Number" error={errors.phone} required />
-                        <div className="flex-1">
-                            <label className="block text-xs font-bold text-gray-600 mb-2 ml-1">Age</label>
-                            <input
-                                type="text"
-                                value={formData.personalInfo.age}
-                                readOnly
-                                className="w-full bg-gray-50 border border-gray-200 text-gray-500 px-6 py-3 rounded-lg outline-none font-medium cursor-not-allowed"
-                                placeholder="Age (Calculated)"
-                            />
-                        </div>
                     </div>
                 </div>
 

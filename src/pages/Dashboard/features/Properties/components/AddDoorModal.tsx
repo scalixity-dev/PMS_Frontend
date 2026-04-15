@@ -13,9 +13,17 @@ interface AddDoorModalProps {
         exteriorDoorColor: string;
         screenDoorAttached: boolean;
     }) => void;
+    initialData?: {
+        name: string;
+        doorType: string;
+        lockType: string;
+        insideDoorColor: string;
+        exteriorDoorColor: string;
+        screenDoorAttached: boolean;
+    };
 }
 
-const AddDoorModal: React.FC<AddDoorModalProps> = ({ isOpen, onClose, onAdd }) => {
+const AddDoorModal: React.FC<AddDoorModalProps> = ({ isOpen, onClose, onAdd, initialData }) => {
     const [name, setName] = useState('');
     const [doorType, setDoorType] = useState('');
     const [lockType, setLockType] = useState('');
@@ -24,6 +32,18 @@ const AddDoorModal: React.FC<AddDoorModalProps> = ({ isOpen, onClose, onAdd }) =
     const [screenDoorAttached, setScreenDoorAttached] = useState(false);
 
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+    React.useEffect(() => {
+        if (isOpen) {
+            setName(initialData?.name ?? '');
+            setDoorType(initialData?.doorType ?? '');
+            setLockType(initialData?.lockType ?? '');
+            setInsideDoorColor(initialData?.insideDoorColor ?? '');
+            setExteriorDoorColor(initialData?.exteriorDoorColor ?? '');
+            setScreenDoorAttached(initialData?.screenDoorAttached ?? false);
+            setErrors({});
+        }
+    }, [isOpen, initialData]);
 
     const handleAdd = () => {
         const newErrors: { [key: string]: string } = {};
@@ -208,7 +228,7 @@ const AddDoorModal: React.FC<AddDoorModalProps> = ({ isOpen, onClose, onAdd }) =
                             onClick={handleAdd}
                             className="w-full sm:flex-1 bg-[#3A6D6C] text-white py-3 rounded-lg text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm"
                         >
-                            Create
+                            {initialData ? 'Save' : 'Create'}
                         </button>
                     </div>
                 </div>

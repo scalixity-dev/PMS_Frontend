@@ -6,14 +6,25 @@ interface AddPaintModalProps {
     isOpen: boolean;
     onClose: () => void;
     onAdd: (data: { name: string; color: string; description: string }) => void;
+    initialData?: { name: string; color: string; description: string };
 }
 
-const AddPaintModal: React.FC<AddPaintModalProps> = ({ isOpen, onClose, onAdd }) => {
+const AddPaintModal: React.FC<AddPaintModalProps> = ({ isOpen, onClose, onAdd, initialData }) => {
     const [name, setName] = useState('');
     const [color, setColor] = useState('');
     const [description, setDescription] = useState('');
     const [nameError, setNameError] = useState('');
     const [colorError, setColorError] = useState('');
+
+    React.useEffect(() => {
+        if (isOpen) {
+            setName(initialData?.name ?? '');
+            setColor(initialData?.color ?? '');
+            setDescription(initialData?.description ?? '');
+            setNameError('');
+            setColorError('');
+        }
+    }, [isOpen, initialData]);
 
     const handleAdd = () => {
         let hasError = false;
@@ -143,7 +154,7 @@ const AddPaintModal: React.FC<AddPaintModalProps> = ({ isOpen, onClose, onAdd })
                             onClick={handleAdd}
                             className="w-full sm:flex-1 bg-[#3A6D6C] text-white py-3 rounded-lg text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm"
                         >
-                            Create
+                            {initialData ? 'Save' : 'Create'}
                         </button>
                     </div>
                 </div>

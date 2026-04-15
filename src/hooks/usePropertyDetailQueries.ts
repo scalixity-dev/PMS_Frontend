@@ -7,6 +7,7 @@ export const propertyDetailQueryKeys = {
   specs: (propertyId: string) => [...propertyDetailQueryKeys.all, 'specs', propertyId] as const,
   financials: (propertyId: string) => [...propertyDetailQueryKeys.all, 'financials', propertyId] as const,
   serviceProviders: (propertyId: string) => [...propertyDetailQueryKeys.all, 'serviceProviders', propertyId] as const,
+  responsibilities: (propertyId: string) => [...propertyDetailQueryKeys.all, 'responsibilities', propertyId] as const,
 };
 
 /**
@@ -224,6 +225,34 @@ export const useDeleteUtilityProvider = () => {
       propertyService.deleteUtilityProvider(propertyId, providerId),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: propertyDetailQueryKeys.serviceProviders(variables.propertyId) });
+    },
+  });
+};
+
+/**
+ * Hook to get property responsibilities (Bug 4 fix)
+ */
+export const useGetPropertyResponsibilities = (propertyId: string, enabled: boolean = true) => {
+  return useQuery({
+    queryKey: propertyDetailQueryKeys.responsibilities(propertyId),
+    queryFn: () => propertyService.getResponsibilities(propertyId),
+    enabled: enabled && !!propertyId,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
+};
+
+/**
+ * Hook to upsert property responsibilities (Bug 4 fix)
+ */
+export const useUpsertPropertyResponsibilities = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ propertyId, items }: { propertyId: string; items: { utility: string; payer: string }[] }) =>
+      propertyService.upsertResponsibilities(propertyId, items),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: propertyDetailQueryKeys.responsibilities(variables.propertyId) });
     },
   });
 };

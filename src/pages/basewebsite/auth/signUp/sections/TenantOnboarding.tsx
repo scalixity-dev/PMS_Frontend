@@ -2,12 +2,15 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { authService } from '../../../../../services/auth.service';
+import { API_BASE_URL } from '../../../../../config/api.config';
 
 export const TenantOnboarding: React.FC = () => {
   const [selectedOption, setSelectedOption] = useState<'yes' | 'no' | null>(null);
   const [showLandlordConnect, setShowLandlordConnect] = useState(false);
   const [landlordEmail, setLandlordEmail] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [inviteStatus, setInviteStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [inviteError, setInviteError] = useState('');
   const navigate = useNavigate();
 
   // Check authentication on mount
@@ -47,14 +50,37 @@ export const TenantOnboarding: React.FC = () => {
     }, 300);
   };
 
-  const handleLandlordNext = () => {
+  const handleLandlordNext = async () => {
     if (landlordEmail.trim()) {
-      // Save landlord email
       localStorage.setItem('tenant_landlord_email', landlordEmail);
-      // TODO: Call API to send invite email to landlord
+      setInviteStatus('sending');
+      setInviteError('');
+      try {
+        const response = await fetch(`${API_BASE_URL}/auth/invite-landlord`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ landlordEmail: landlordEmail.trim() }),
+        });
+        if (!response.ok) {
+          let msg = 'Failed to send invite';
+          try {
+            const data = await response.json();
+            msg = data.message || msg;
+          } catch { /* ignore parse error */ }
+          setInviteStatus('error');
+          setInviteError(msg);
+          return;
+        }
+        setInviteStatus('success');
+        setTimeout(() => navigate('/userdashboard'), 1200);
+      } catch (err: any) {
+        setInviteStatus('error');
+        setInviteError(err?.message || 'Network error sending invite');
+      }
+    } else {
+      navigate('/userdashboard');
     }
-    // Navigate to user dashboard
-    navigate('/userdashboard');
   };
 
   const handleSkip = () => {
@@ -228,18 +254,30 @@ export const TenantOnboarding: React.FC = () => {
               I will do it later
             </button>
 
+            {/* Invite status feedback */}
+            {inviteStatus === 'success' && (
+              <div className="mb-4 text-center text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-2">
+                Invite sent! Redirecting...
+              </div>
+            )}
+            {inviteStatus === 'error' && (
+              <div className="mb-4 text-center text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2">
+                {inviteError || 'Failed to send invite. Please try again.'}
+              </div>
+            )}
+
             {/* Next Button */}
             <div className="flex justify-center">
               <button
                 onClick={handleLandlordNext}
-                disabled={!landlordEmail.trim()}
+                disabled={!landlordEmail.trim() || inviteStatus === 'sending'}
                 className={`px-12 py-3 rounded-lg font-semibold text-white transition-all ${
-                  landlordEmail.trim()
+                  landlordEmail.trim() && inviteStatus !== 'sending'
                     ? 'bg-[#3D7475] hover:bg-[#2F5C5D] shadow-lg shadow-[#3D7475]/30'
                     : 'bg-gray-300 cursor-not-allowed'
                 }`}
               >
-                Next
+                {inviteStatus === 'sending' ? 'Sending...' : 'Next'}
               </button>
             </div>
           </div>

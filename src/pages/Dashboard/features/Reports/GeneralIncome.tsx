@@ -4,6 +4,7 @@ import { Download, LayoutTemplate, X, Check, ChevronLeft } from 'lucide-react';
 import DashboardFilter from '../../components/DashboardFilter';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import type { FilterOption } from '../../components/DashboardFilter';
+import { useGeneralIncomeReport } from '../../../../hooks/useReportsQueries';
 
 interface GeneralIncomeItem {
     id: string;
@@ -32,62 +33,32 @@ const ALL_COLUMNS = [
 
 type ColumnId = typeof ALL_COLUMNS[number]['id'];
 
-// Mock Data
-const MOCK_INCOME: GeneralIncomeItem[] = [
-    {
-        id: '1',
-        subCategory: 'Referral Bonus',
-        dateDue: '15 Dec, 2025',
-        datePaid: '15 Dec, 2025',
-        payerPayee: 'John Doe',
-        amountDue: 5000.00,
-        amountPaid: 5000.00,
-        discount: 0,
-        paymentMethod: 'Bank Transfer',
-        details: 'Referral commission for new tenant'
-    },
-    {
-        id: '2',
-        subCategory: 'Commission',
-        dateDue: '10 Dec, 2025',
-        datePaid: '12 Dec, 2025',
-        payerPayee: 'ABC Corp',
-        amountDue: 10000.00,
-        amountPaid: 9500.00,
-        discount: 500,
-        paymentMethod: 'Check',
-        details: 'Sales commission Q4'
-    },
-    {
-        id: '3',
-        subCategory: 'Fees',
-        dateDue: '01 Dec, 2025',
-        datePaid: '---',
-        payerPayee: 'XYZ Ltd',
-        amountDue: 2500.00,
-        amountPaid: 0,
-        discount: 0,
-        paymentMethod: '---',
-        details: 'Consulting fees'
-    },
-    {
-        id: '4',
-        subCategory: 'Interest',
-        dateDue: '20 Nov, 2025',
-        datePaid: '20 Nov, 2025',
-        payerPayee: 'Bank of India',
-        amountDue: 1500.00,
-        amountPaid: 1500.00,
-        discount: 0,
-        paymentMethod: 'Direct Deposit',
-        details: 'Monthly interest income'
-    }
-];
-
 const GeneralIncome: React.FC = () => {
     const navigate = useNavigate();
     const [visibleColumns, setVisibleColumns] = useState<ColumnId[]>(ALL_COLUMNS.map(c => c.id));
     const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
+
+    const [startDate, setStartDate] = useState<string | undefined>(undefined);
+    const [endDate, setEndDate] = useState<string | undefined>(undefined);
+
+    const { data: apiData, isLoading, error } = useGeneralIncomeReport({ startDate, endDate });
+
+    // Adapt API rows to local display shape
+    const incomeItems: GeneralIncomeItem[] = useMemo(() => {
+        if (!apiData?.rows) return [];
+        return apiData.rows.map((row, idx) => ({
+            id: String(idx),
+            subCategory: row.category,
+            dateDue: '---',
+            datePaid: '---',
+            payerPayee: '---',
+            amountDue: row.total,
+            amountPaid: row.total,
+            discount: 0,
+            paymentMethod: '---',
+            details: `Count: ${row.count}`,
+        }));
+    }, [apiData]);
 
     // Filter State for DashboardFilter
     const [searchQuery, setSearchQuery] = useState('');
@@ -110,7 +81,7 @@ const GeneralIncome: React.FC = () => {
             { value: 'accrual', label: 'Accrual' },
             { value: 'cash', label: 'Cash' }
         ],
-        subCategory: Array.from(new Set(MOCK_INCOME.map(r => r.subCategory))).map(cat => ({ value: cat, label: cat })),
+        subCategory: Array.from(new Set(incomeItems.map(r => r.subCategory))).map(cat => ({ value: cat, label: cat })),
         group: [
             { value: 'by_category', label: 'By Category' },
             { value: 'by_payer', label: 'By Payer' },
@@ -138,8 +109,7 @@ const GeneralIncome: React.FC = () => {
 
     // Filter Logic
     const filteredItems = useMemo(() => {
-        return MOCK_INCOME.filter(item => {
-            // Search filter
+        return incomeItems.filter(item => {
             if (searchQuery) {
                 const query = searchQuery.toLowerCase();
                 const matchesSearch =
@@ -148,15 +118,12 @@ const GeneralIncome: React.FC = () => {
                     item.details.toLowerCase().includes(query);
                 if (!matchesSearch) return false;
             }
-
-            // Sub-Category filter
             if (selectedFilters.subCategory.length > 0 && !selectedFilters.subCategory.includes(item.subCategory)) {
                 return false;
             }
-
             return true;
         });
-    }, [searchQuery, selectedFilters]);
+    }, [searchQuery, selectedFilters, incomeItems]);
 
     const totals = useMemo(() => {
         return filteredItems.reduce((acc, item) => ({
@@ -195,7 +162,7 @@ const GeneralIncome: React.FC = () => {
             case 'details':
                 return <span className="text-gray-600 break-words">{item.details}</span>;
             default:
-                return item[columnId as keyof GeneralIncomeItem];
+                return String(item[columnId as keyof GeneralIncomeItem] ?? '');
         }
     };
 
@@ -234,9 +201,31 @@ const GeneralIncome: React.FC = () => {
                 </div>
 
                 {/* Description */}
-                <p className="text-gray-600 text-sm mb-8 max-w-5xl leading-relaxed">
+                <p className="text-gray-600 text-sm mb-4 max-w-5xl leading-relaxed">
                     The report tracks all non-property-related income, making it ideal for tracking additional earnings like fees, commissions, and referral income. It's a valuable tool for keeping your business finances organized and ensuring all costs are accounted for. <span className="text-gray-900 font-semibold cursor-pointer">Learn more</span>
                 </p>
+
+                {/* Date range filters */}
+                <div className="flex flex-wrap gap-4 mb-4">
+                    <label className="flex items-center gap-2 text-sm text-gray-700">
+                        Start date:
+                        <input
+                            type="date"
+                            value={startDate ?? ''}
+                            onChange={e => setStartDate(e.target.value || undefined)}
+                            className="border border-gray-300 rounded px-2 py-1 text-sm"
+                        />
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-gray-700">
+                        End date:
+                        <input
+                            type="date"
+                            value={endDate ?? ''}
+                            onChange={e => setEndDate(e.target.value || undefined)}
+                            className="border border-gray-300 rounded px-2 py-1 text-sm"
+                        />
+                    </label>
+                </div>
 
                 {/* Dashboard Style Filter Bar */}
                 <DashboardFilter
@@ -249,105 +238,116 @@ const GeneralIncome: React.FC = () => {
                     initialFilters={selectedFilters}
                 />
 
-                {/* Table Container */}
-                <div>
-                    {/* Table Header */}
-                    <div className="hidden md:block bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm">
-                        <div
-                            className="text-white px-6 py-4 grid gap-4 items-center text-sm font-medium"
-                            style={{ gridTemplateColumns }}
-                        >
-                            {activeColumns.map(col => (
-                                <div key={col.id}>
-                                    {col.label}
-                                </div>
-                            ))}
-                        </div>
+                {isLoading && (
+                    <div className="text-center py-12 bg-white rounded-2xl">
+                        <p className="text-gray-500 text-lg">Loading...</p>
                     </div>
+                )}
 
-                    {/* Table Body */}
-                    <div className="bg-white rounded-b-[1.5rem] overflow-hidden">
-                        {filteredItems.map(item => (
+                {error && (
+                    <div className="text-center py-12 bg-white rounded-2xl">
+                        <p className="text-red-500 text-lg">Failed to load income data. Please try again.</p>
+                    </div>
+                )}
+
+                {!isLoading && !error && (
+                    <div>
+                        {/* Table Header */}
+                        <div className="hidden md:block bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm">
                             <div
-                                key={item.id}
-                                className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                                className="text-white px-6 py-4 grid gap-4 items-center text-sm font-medium"
+                                style={{ gridTemplateColumns }}
                             >
-                                {/* Desktop View */}
-                                <div
-                                    className="hidden md:grid px-6 py-4 gap-4 items-center"
-                                    style={{ gridTemplateColumns }}
-                                >
-                                    {activeColumns.map(col => (
-                                        <div key={col.id} className="text-sm">
-                                            {renderCellContent(item, col.id)}
-                                        </div>
-                                    ))}
-                                </div>
+                                {activeColumns.map(col => (
+                                    <div key={col.id}>
+                                        {col.label}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
 
-                                {/* Mobile View */}
-                                <div className="md:hidden p-4 space-y-3">
-                                    {activeColumns.map(col => (
-                                        <div key={col.id} className="flex justify-between items-start gap-4">
-                                            <span className="text-gray-500 text-xs font-medium uppercase mt-1">{col.label}</span>
-                                            <div className="text-sm text-right flex-1">
+                        {/* Table Body */}
+                        <div className="bg-white rounded-b-[1.5rem] overflow-hidden">
+                            {filteredItems.map(item => (
+                                <div
+                                    key={item.id}
+                                    className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                                >
+                                    {/* Desktop View */}
+                                    <div
+                                        className="hidden md:grid px-6 py-4 gap-4 items-center"
+                                        style={{ gridTemplateColumns }}
+                                    >
+                                        {activeColumns.map(col => (
+                                            <div key={col.id} className="text-sm">
                                                 {renderCellContent(item, col.id)}
                                             </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Mobile View */}
+                                    <div className="md:hidden p-4 space-y-3">
+                                        {activeColumns.map(col => (
+                                            <div key={col.id} className="flex justify-between items-start gap-4">
+                                                <span className="text-gray-500 text-xs font-medium uppercase mt-1">{col.label}</span>
+                                                <div className="text-sm text-right flex-1">
+                                                    {renderCellContent(item, col.id)}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+
+                            {/* Total Row */}
+                            {filteredItems.length > 0 && (
+                                <div className="bg-gray-50 border-t border-gray-200">
+                                    {/* Desktop View */}
+                                    <div
+                                        className="hidden md:grid px-6 py-4 gap-4 items-center"
+                                        style={{ gridTemplateColumns }}
+                                    >
+                                        {activeColumns.map((col, index) => (
+                                            <div key={col.id} className="text-sm">
+                                                {index === 0 ? (
+                                                    <span className="text-gray-800 font-bold">Total</span>
+                                                ) : col.id === 'amountDue' ? (
+                                                    <span className="text-gray-800 font-bold">{formatCurrency(totals.amountDue)}</span>
+                                                ) : col.id === 'amountPaid' ? (
+                                                    <span className="text-gray-800 font-bold">{formatCurrency(totals.amountPaid)}</span>
+                                                ) : col.id === 'discount' ? (
+                                                    <span className="text-gray-600">{formatCurrency(totals.discount)}</span>
+                                                ) : null}
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Mobile View */}
+                                    <div className="md:hidden p-4 space-y-2">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-gray-800 font-bold">Total Amount Due</span>
+                                            <span className="text-gray-800 font-bold">{formatCurrency(totals.amountDue)}</span>
                                         </div>
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
-
-                        {/* Total Row */}
-                        {filteredItems.length > 0 && (
-                            <div
-                                className="bg-gray-50 border-t border-gray-200"
-                            >
-                                {/* Desktop View */}
-                                <div
-                                    className="hidden md:grid px-6 py-4 gap-4 items-center"
-                                    style={{ gridTemplateColumns }}
-                                >
-                                    {activeColumns.map((col, index) => (
-                                        <div key={col.id} className="text-sm">
-                                            {index === 0 ? (
-                                                <span className="text-gray-800 font-bold">Total</span>
-                                            ) : col.id === 'amountDue' ? (
-                                                <span className="text-gray-800 font-bold">{formatCurrency(totals.amountDue)}</span>
-                                            ) : col.id === 'amountPaid' ? (
-                                                <span className="text-gray-800 font-bold">{formatCurrency(totals.amountPaid)}</span>
-                                            ) : col.id === 'discount' ? (
-                                                <span className="text-gray-600">{formatCurrency(totals.discount)}</span>
-                                            ) : null}
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-gray-800 font-bold">Total Amount Paid</span>
+                                            <span className="text-gray-800 font-bold">{formatCurrency(totals.amountPaid)}</span>
                                         </div>
-                                    ))}
-                                </div>
-
-                                {/* Mobile View */}
-                                <div className="md:hidden p-4 space-y-2">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-gray-800 font-bold">Total Amount Due</span>
-                                        <span className="text-gray-800 font-bold">{formatCurrency(totals.amountDue)}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-gray-800 font-bold">Total Amount Paid</span>
-                                        <span className="text-gray-800 font-bold">{formatCurrency(totals.amountPaid)}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-gray-800 font-bold">Total Discount</span>
-                                        <span className="text-gray-600 font-bold">{formatCurrency(totals.discount)}</span>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-gray-800 font-bold">Total Discount</span>
+                                            <span className="text-gray-600 font-bold">{formatCurrency(totals.discount)}</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
 
-                        {filteredItems.length === 0 && (
-                            <div className="text-center py-12">
-                                <p className="text-gray-500 text-lg">No income found matching your filters</p>
-                            </div>
-                        )}
+                            {filteredItems.length === 0 && (
+                                <div className="text-center py-12">
+                                    <p className="text-gray-500 text-lg">No data</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
 
             {/* Column Selection Modal */}

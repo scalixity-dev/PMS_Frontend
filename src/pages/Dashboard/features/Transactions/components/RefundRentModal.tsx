@@ -4,6 +4,7 @@ import CustomDropdown from '../../../components/CustomDropdown';
 import { validateFile } from '@/utils/fileValidation';
 
 import { useTransactionStore } from '../store/transactionStore';
+import { useGetAllTenants } from '@/hooks/useTenantQueries';
 
 interface RefundRentModalProps {
     onConfirm?: (data: RefundFormData) => void;
@@ -22,6 +23,14 @@ const RefundRentModal: React.FC<RefundRentModalProps> = ({ onConfirm }) => {
     const { isRefundModalOpen, setRefundModalOpen } = useTransactionStore();
     const isOpen = isRefundModalOpen;
     const onClose = () => setRefundModalOpen(false);
+
+    // Fetch real tenants from API
+    const { data: tenants = [] } = useGetAllTenants(undefined, isOpen);
+    const tenantOptions = tenants.map((t) => ({
+        value: t.id,
+        label: `${t.firstName} ${t.lastName}`.trim(),
+    }));
+
     // Form State
     const [receiver, setReceiver] = useState('');
     const [amount, setAmount] = useState('');
@@ -107,12 +116,7 @@ const RefundRentModal: React.FC<RefundRentModalProps> = ({ onConfirm }) => {
                                 value={receiver}
                                 onChange={setReceiver}
                                 placeholder="Select tenant"
-                                options={[
-                                    { value: 'tenant1', label: 'John Doe - Unit 101' },
-                                    { value: 'tenant2', label: 'Jane Smith - Unit 102' },
-                                    { value: 'tenant3', label: 'Bob Johnson - Unit 201' },
-                                    // TODO: Replace with actual tenant data from API
-                                ]}
+                                options={tenantOptions}
                                 buttonClassName={inputClasses}
                                 dropdownClassName="z-50"
                             />

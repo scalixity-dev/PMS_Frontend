@@ -12,7 +12,7 @@ import PropertyAttachmentsModal from './components/PropertyAttachmentsModal';
 import FinancialCard, { type FinancialRecord } from './components/FinancialCard';
 import AddInsuranceModal from '../Properties/components/AddInsuranceModal';
 import ResponsibilityModal, { type ResponsibilityItem } from '../Properties/components/ResponsibilityModal';
-import { useGetLease, useDeleteLease, useUpdateLease, useUpdateLeaseUtilities, useUpdateLeaseInsurances } from '../../../../hooks/useLeaseQueries';
+import { useGetLease, useDeleteLease, useUpdateLease, useUpdateLeaseUtilities, useUpdateLeaseInsurances, useRenewLease } from '../../../../hooks/useLeaseQueries';
 import { useGetTenantByUserId } from '../../../../hooks/useTenantQueries';
 import type { BackendLease } from '../../../../services/lease.service';
 import { API_ENDPOINTS } from '../../../../config/api.config';
@@ -83,6 +83,13 @@ const LeaseDetail: React.FC = () => {
     const [isResponsibilityModalOpen, setIsResponsibilityModalOpen] = useState(false);
     const [responsibilities, setResponsibilities] = useState<ResponsibilityItem[]>([]);
 
+    // Modal state for lease renewal
+    const [isRenewModalOpen, setIsRenewModalOpen] = useState(false);
+    const [renewEndDate, setRenewEndDate] = useState('');
+    const [renewMonthlyRent, setRenewMonthlyRent] = useState('');
+    const [renewNotes, setRenewNotes] = useState('');
+    const [renewError, setRenewError] = useState('');
+
     // Fetch lease data
     const { data: backendLease, isLoading, error } = useGetLease(id);
 
@@ -96,6 +103,7 @@ const LeaseDetail: React.FC = () => {
     const updateLeaseMutation = useUpdateLease();
     const updateUtilitiesMutation = useUpdateLeaseUtilities();
     const updateInsurancesMutation = useUpdateLeaseInsurances();
+    const renewLeaseMutation = useRenewLease();
 
     // Helper function to generate initials from name
     const getInitials = (name: string): string => {
@@ -604,8 +612,11 @@ const LeaseDetail: React.FC = () => {
                         {canRenew && !isMoveInIncomplete && (
                             <button
                                 onClick={() => {
-                                    // TODO: Implement renew lease functionality
-                                    alert('Renew lease functionality coming soon');
+                                    setRenewEndDate('');
+                                    setRenewMonthlyRent('');
+                                    setRenewNotes('');
+                                    setRenewError('');
+                                    setIsRenewModalOpen(true);
                                 }}
                                 className="flex items-center gap-2 px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm"
                             >
@@ -641,8 +652,11 @@ const LeaseDetail: React.FC = () => {
                                         <button
                                             onClick={() => {
                                                 setIsActionDropdownOpen(false);
-                                                // TODO: Implement renew lease functionality
-                                                alert('Renew lease functionality coming soon');
+                                                setRenewEndDate('');
+                                                setRenewMonthlyRent('');
+                                                setRenewNotes('');
+                                                setRenewError('');
+                                                setIsRenewModalOpen(true);
                                             }}
                                             className="flex items-center gap-3 w-full px-4 py-3 text-sm text-[#3A6D6C] hover:bg-[#E0E8E7] transition-colors border-b border-gray-50 font-medium"
                                         >
@@ -1493,6 +1507,87 @@ const LeaseDetail: React.FC = () => {
                 onSave={handleSaveExtraFees}
                 initialData={lease.extraFees}
             />
+
+            {/* Renew Lease Modal */}
+            {isRenewModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
+                        <h2 className="text-lg font-bold text-gray-800 mb-4">Renew Lease</h2>
+                        {renewError && (
+                            <div className="mb-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                                {renewError}
+                            </div>
+                        )}
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">New End Date <span className="text-red-500">*</span></label>
+                                <input
+                                    type="date"
+                                    value={renewEndDate}
+                                    onChange={(e) => setRenewEndDate(e.target.value)}
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3A6D6C]"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">New Monthly Rent (optional)</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    placeholder="Leave blank to keep current"
+                                    value={renewMonthlyRent}
+                                    onChange={(e) => setRenewMonthlyRent(e.target.value)}
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3A6D6C]"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
+                                <textarea
+                                    rows={3}
+                                    placeholder="Add renewal notes..."
+                                    value={renewNotes}
+                                    onChange={(e) => setRenewNotes(e.target.value)}
+                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#3A6D6C] resize-none"
+                                />
+                            </div>
+                        </div>
+                        <div className="flex justify-end gap-3 mt-6">
+                            <button
+                                onClick={() => setIsRenewModalOpen(false)}
+                                className="px-5 py-2 rounded-full text-sm font-medium text-gray-600 border border-gray-300 hover:bg-gray-50 transition-colors"
+                                disabled={renewLeaseMutation.isPending}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (!renewEndDate) {
+                                        setRenewError('New end date is required.');
+                                        return;
+                                    }
+                                    setRenewError('');
+                                    const payload: { endDate: string; monthlyRent?: number; notes?: string } = {
+                                        endDate: new Date(renewEndDate).toISOString(),
+                                    };
+                                    if (renewMonthlyRent) payload.monthlyRent = parseFloat(renewMonthlyRent);
+                                    if (renewNotes) payload.notes = renewNotes;
+                                    renewLeaseMutation.mutate(
+                                        { id: id!, data: payload },
+                                        {
+                                            onSuccess: () => setIsRenewModalOpen(false),
+                                            onError: (err: any) => setRenewError(err?.message || 'Failed to renew lease.'),
+                                        },
+                                    );
+                                }}
+                                className="px-5 py-2 rounded-full text-sm font-medium bg-[#3A6D6C] text-white hover:bg-[#2c5251] transition-colors flex items-center gap-2"
+                                disabled={renewLeaseMutation.isPending}
+                            >
+                                {renewLeaseMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                                Renew Lease
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

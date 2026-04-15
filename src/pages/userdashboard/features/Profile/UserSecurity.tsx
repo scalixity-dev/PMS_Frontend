@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import UserAccountSettingsLayout from "../../components/layout/UserAccountSettingsLayout";
 import PrimaryActionButton from "../../../../components/common/buttons/PrimaryActionButton";
+import { useGet2FAStatus, useSend2FACode, useVerify2FACode } from "../../../../hooks/useTwoFactorQueries";
+import BaseModal from "../../../../components/common/modals/BaseModal";
 
 const Security: React.FC = () => {
 
@@ -21,6 +23,64 @@ const Security: React.FC = () => {
         }
     ];
 
+    const { data: statusData } = useGet2FAStatus();
+    const is2FAEnabled: boolean = statusData?.enabled ?? false;
+
+    const [showModal, setShowModal] = useState(false);
+    const [intent, setIntent] = useState<'enable' | 'disable'>('enable');
+    const [code, setCode] = useState('');
+    const [modalError, setModalError] = useState('');
+    const [codeSent, setCodeSent] = useState(false);
+
+    const sendCode = useSend2FACode();
+    const verifyCode = useVerify2FACode();
+
+    const handleToggle = async () => {
+        // Guard: prevent intent mismatch
+        const newIntent: 'enable' | 'disable' = is2FAEnabled ? 'disable' : 'enable';
+        if (newIntent === 'enable' && is2FAEnabled) {
+            setModalError('Two-factor authentication is already enabled.');
+            setShowModal(true);
+            return;
+        }
+        if (newIntent === 'disable' && !is2FAEnabled) {
+            setModalError('Two-factor authentication is already disabled.');
+            setShowModal(true);
+            return;
+        }
+        setIntent(newIntent);
+        setCode('');
+        setModalError('');
+        setCodeSent(false);
+        setShowModal(true);
+        try {
+            await sendCode.mutateAsync();
+            setCodeSent(true);
+        } catch (e: any) {
+            setModalError(e.message || 'Failed to send code');
+        }
+    };
+
+    const handleVerify = async () => {
+        if (!code.trim()) {
+            setModalError('Please enter the code');
+            return;
+        }
+        // Validate intent still matches current state before submitting
+        const expectedIntent: 'enable' | 'disable' = is2FAEnabled ? 'disable' : 'enable';
+        if (intent !== expectedIntent) {
+            setModalError('Action is no longer valid. Please close and try again.');
+            return;
+        }
+        try {
+            await verifyCode.mutateAsync({ code: code.trim(), intent });
+            setShowModal(false);
+            setCode('');
+        } catch (e: any) {
+            setModalError(e.message || 'Invalid code');
+        }
+    };
+
     return (
         <UserAccountSettingsLayout activeTab="Security">
             <div className="px-3 sm:px-4 md:px-8 py-4 sm:py-5 md:py-6">
@@ -36,12 +96,10 @@ const Security: React.FC = () => {
                         <a href="/privacy-policy" className="text-[#3D7475] text-xs sm:text-sm font-medium hover:underline">Learn more</a>
                     </div>
                     <PrimaryActionButton
-                        text="Coming soon"
-                        onClick={() => {
-                            alert('Two-step authentication will be available in the next release. For now, please use a strong unique password and enable 2FA on your email account.');
-                        }}
-                        disabled
-                        className="bg-gray-400 cursor-not-allowed !rounded-lg font-medium text-xs sm:text-sm !px-8 sm:!px-10 py-2 shadow-sm text-white w-full lg:w-auto opacity-70"
+                        text={is2FAEnabled ? "Disable 2FA" : "Enable 2FA"}
+                        onClick={handleToggle}
+                        disabled={sendCode.isPending || verifyCode.isPending}
+                        className={`${is2FAEnabled ? 'bg-red-500 hover:bg-red-600' : 'bg-[#3D7475] hover:bg-[#2c5251]'} cursor-pointer !rounded-lg font-medium text-xs sm:text-sm !px-8 sm:!px-10 py-2 shadow-sm text-white w-full lg:w-auto`}
                     />
                 </div>
 
@@ -105,6 +163,46 @@ const Security: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {/* 2FA verification modal */}
+            <BaseModal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                title={intent === 'enable' ? 'Enable Two-Factor Authentication' : 'Disable Two-Factor Authentication'}
+                footerButtons={[
+                    { label: 'Cancel', onClick: () => setShowModal(false), variant: 'ghost' as const },
+                    {
+                        label: verifyCode.isPending ? 'Verifying...' : 'Confirm',
+                        onClick: handleVerify,
+                        variant: 'primary' as const,
+                        className: 'border border-white shadow-md !bg-[#7CD947]',
+                    },
+                ]}
+                maxWidth="max-w-sm"
+                padding="px-6 py-6"
+                titleSize="text-lg"
+            >
+                {sendCode.isPending && (
+                    <p className="text-sm text-gray-500 mb-3">Sending code to your email...</p>
+                )}
+                {codeSent && (
+                    <p className="text-sm text-gray-600 mb-3">A verification code has been sent to your email.</p>
+                )}
+                {modalError && (
+                    <div className="mb-3 bg-red-50 border border-red-200 rounded-md p-2 text-xs text-red-700">{modalError}</div>
+                )}
+                <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1">Verification Code</label>
+                    <input
+                        type="text"
+                        value={code}
+                        onChange={(e) => setCode(e.target.value)}
+                        placeholder="Enter 6-digit code"
+                        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm focus:outline-none focus:border-[#7CD947] focus:ring-1 focus:ring-[#7CD947]"
+                        maxLength={6}
+                    />
+                </div>
+            </BaseModal>
         </UserAccountSettingsLayout>
     );
 };

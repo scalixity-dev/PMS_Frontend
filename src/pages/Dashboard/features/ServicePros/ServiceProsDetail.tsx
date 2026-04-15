@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Plus, Edit, Link2Off, Archive, Trash2, Send, X, AlertTriangle, Loader2 } from 'lucide-react';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
@@ -6,6 +6,7 @@ import DetailTabs from '../../components/DetailTabs';
 import ServiceProProfileSection from './components/ServiceProProfileSection';
 import ServiceProTransactionsSection from './components/ServiceProTransactionsSection';
 import { serviceProviderService, type BackendServiceProvider } from '../../../../services/service-provider.service';
+import { useGetTransactions } from '../../../../hooks/useTransactionQueries';
 
 // Helper function to generate initials from name
 const getInitials = (firstName: string, lastName: string): string => {
@@ -50,18 +51,19 @@ const transformServiceProvider = (data: BackendServiceProvider) => {
         name: fullName,
         phone: formatPhoneNumber(data.phoneNumber, data.phoneCountryCode),
         email: data.email,
-        outstanding: 0, // TODO: Calculate from transactions
-        deposits: 0, // TODO: Calculate from transactions
-        credits: 0, // TODO: Calculate from transactions
+        outstanding: 0,
+        deposits: 0,
+        credits: 0,
+        userId: data.userId || null,
         image: data.photoUrl || undefined,
         personalInfo: {
             firstName: data.firstName,
             middleName: data.middleName || '-',
             lastName: data.lastName,
             email: data.email,
-            additionalEmail: '-', // TODO: Add support for additional emails
+            additionalEmail: data.email,
             phone: formatPhoneNumber(data.phoneNumber, data.phoneCountryCode),
-            additionalPhone: '-', // TODO: Add support for additional phones
+            additionalPhone: formatPhoneNumber(data.phoneNumber, data.phoneCountryCode),
             companyName: data.companyName || '-',
             companyWebsite: data.companyWebsite || '-',
             fax: data.faxNumber || '-',
@@ -88,6 +90,31 @@ const ServiceProsDetail = () => {
     const [documents, setDocuments] = useState<any[]>([]);
     const [isLoadingDocuments, setIsLoadingDocuments] = useState(false);
     const actionMenuRef = useRef<HTMLDivElement>(null);
+
+    // Fetch transactions for financial stats
+    const { data: allTransactions } = useGetTransactions();
+
+    // Compute stats from transactions where payeeId matches the service pro's userId
+    const computedStats = useMemo(() => {
+        if (!allTransactions || !servicePro?.userId) return null;
+        const payeeId = servicePro.userId;
+        const outstanding = allTransactions
+            .filter(t => t.type === 'INVOICE' && t.status === 'PENDING' && t.payeeId === payeeId)
+            .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+        const deposits = allTransactions
+            .filter(t => t.type === 'DEPOSIT' && t.payeeId === payeeId)
+            .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+        const credits = allTransactions
+            .filter(t => t.type === 'CREDIT' && t.payeeId === payeeId)
+            .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+        return { outstanding, deposits, credits };
+    }, [allTransactions, servicePro?.userId]);
+
+    const displayServicePro = useMemo(() => {
+        if (!servicePro) return null;
+        if (!computedStats) return servicePro;
+        return { ...servicePro, ...computedStats };
+    }, [servicePro, computedStats]);
 
     // Fetch service provider data
     useEffect(() => {
@@ -197,7 +224,7 @@ const ServiceProsDetail = () => {
         );
     }
 
-    if (error || !servicePro) {
+    if (error || !servicePro || !displayServicePro) {
         return (
             <div className="max-w-6xl mx-auto min-h-screen font-outfit pb-10 flex items-center justify-center">
                 <div className="flex flex-col items-center gap-4">
@@ -221,7 +248,7 @@ const ServiceProsDetail = () => {
                 items={[
                     { label: 'Dashboard', path: '/dashboard' },
                     { label: 'Service Pros', path: '/dashboard/contacts/service-pros' },
-                    { label: servicePro.name }
+                    { label: displayServicePro.name }
                 ]}
                 className="mb-6"
             />
@@ -240,8 +267,8 @@ const ServiceProsDetail = () => {
                             onClick={() => navigate('/dashboard/accounting/transactions/expense/add', {
                                 state: {
                                     prefilledPayer: {
-                                        id: servicePro.id,
-                                        label: servicePro.name,
+                                        id: displayServicePro.id,
+                                        label: displayServicePro.name,
                                         type: 'service_pro'
                                     }
                                 }
@@ -307,11 +334,11 @@ const ServiceProsDetail = () => {
                         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-center lg:items-start">
                             {/* Left: Image */}
                             <div className="flex-shrink-0 flex justify-center lg:justify-start w-full lg:w-auto">
-                                {servicePro.image ? (
-                                    <img src={servicePro.image} alt={servicePro.name} className="w-[200px] h-[200px] sm:w-[250px] sm:h-[250px] rounded-[2rem] object-cover" />
+                                {displayServicePro.image ? (
+                                    <img src={displayServicePro.image} alt={displayServicePro.name} className="w-[200px] h-[200px] sm:w-[250px] sm:h-[250px] rounded-[2rem] object-cover" />
                                 ) : (
                                     <div className="w-[200px] h-[200px] sm:w-[250px] sm:h-[250px] bg-[#4ad1a6] rounded-[2rem] flex items-center justify-center">
-                                        <span className="text-white text-5xl font-medium">{servicePro.initials}</span>
+                                        <span className="text-white text-5xl font-medium">{displayServicePro.initials}</span>
                                     </div>
                                 )}
                             </div>
@@ -320,10 +347,10 @@ const ServiceProsDetail = () => {
                             <div className="flex flex-col gap-2 min-w-full sm:min-w-[280px]">
                                 {/* Info Card */}
                                 <div className="bg-[#3A6D6C] text-white p-4 rounded-[2rem] text-center shadow-md">
-                                    <h2 className="font-bold text-xl mb-1 capitalize">{servicePro.name}</h2>
-                                    <p className="text-sm opacity-90 mb-0.5">{servicePro.phone}</p>
-                                    <p className="text-sm opacity-90 break-words">{servicePro.email}</p>
-                                    <div className="mt-2 text-xs bg-white/20 inline-block px-3 py-1 rounded-full">{servicePro.personalInfo.category}</div>
+                                    <h2 className="font-bold text-xl mb-1 capitalize">{displayServicePro.name}</h2>
+                                    <p className="text-sm opacity-90 mb-0.5">{displayServicePro.phone}</p>
+                                    <p className="text-sm opacity-90 break-words">{displayServicePro.email}</p>
+                                    <div className="mt-2 text-xs bg-white/20 inline-block px-3 py-1 rounded-full">{displayServicePro.personalInfo.category}</div>
                                 </div>
 
                                 {/* View Profile Button */}
@@ -335,7 +362,7 @@ const ServiceProsDetail = () => {
                                 <div className="bg-[#7BD747] rounded-[2rem] px-6 py-3 flex flex-col items-center justify-center gap-2 shadow-md">
                                     <span className="text-sm font-bold text-white">Outstanding</span>
                                     <div className="bg-[#E8F5E9] px-6 py-2 rounded-full text-sm font-bold text-gray-700 shadow-inner w-full text-center">
-                                        ₹{servicePro.outstanding.toLocaleString()}.00
+                                        ₹{displayServicePro.outstanding.toLocaleString()}.00
                                     </div>
                                 </div>
                             </div>
@@ -375,12 +402,12 @@ const ServiceProsDetail = () => {
                 {/* Tab Content */}
                 {
                     activeTab === 'profile' && (
-                        <ServiceProProfileSection servicePro={servicePro} documents={documents} isLoadingDocuments={isLoadingDocuments} />
+                        <ServiceProProfileSection servicePro={displayServicePro} documents={documents} isLoadingDocuments={isLoadingDocuments} />
                     )
                 }
                 {
                     activeTab === 'transactions' && (
-                        <ServiceProTransactionsSection servicePro={servicePro} />
+                        <ServiceProTransactionsSection servicePro={displayServicePro} />
                     )
                 }
             </div >

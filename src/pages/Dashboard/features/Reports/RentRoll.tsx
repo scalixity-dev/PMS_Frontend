@@ -4,23 +4,8 @@ import { Download, LayoutTemplate, X, Check, ChevronUp, ChevronLeft } from 'luci
 import DashboardFilter from '../../components/DashboardFilter';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import type { FilterOption } from '../../components/DashboardFilter';
-
-interface RentRollItem {
-    id: string;
-    tenant: string;
-    unit: number;
-    leaseNumber: number;
-    leaseDuration: string;
-    marketRent: number;
-    depositsHeld: number;
-    rentalCharge: number;
-    balance: number;
-    property: string;
-    propertyType: string;
-    propertyAddress: string;
-    occupancy: string;
-    recurringTransaction: string;
-}
+import { useRentRollReport } from '../../../../hooks/useReportsQueries';
+import type { RentRollItem } from '../../../../services/reports.service';
 
 const ALL_COLUMNS = [
     { id: 'tenant', label: 'Tenant', width: '1fr', hasSort: true },
@@ -35,78 +20,13 @@ const ALL_COLUMNS = [
 
 type ColumnId = typeof ALL_COLUMNS[number]['id'];
 
-// Mock Data grouped by property
-const MOCK_RENT_ROLL: RentRollItem[] = [
-    {
-        id: '1',
-        tenant: 'Atul rawat',
-        unit: 1,
-        leaseNumber: 3,
-        leaseDuration: '04 Nov, 2025 - 04 Nov, 2026',
-        marketRent: 12000.00,
-        depositsHeld: 0.00,
-        rentalCharge: 0.00,
-        balance: 15000.00,
-        property: 'abc',
-        propertyType: 'Single-family',
-        propertyAddress: '78 Scheme No 78 - II, Indore, MP, 452010, IN',
-        occupancy: 'Occupied',
-        recurringTransaction: 'Active'
-    },
-    {
-        id: '2',
-        tenant: 'John Doe',
-        unit: 2,
-        leaseNumber: 4,
-        leaseDuration: '01 Dec, 2025 - 01 Dec, 2026',
-        marketRent: 15000.00,
-        depositsHeld: 5000.00,
-        rentalCharge: 1000.00,
-        balance: 10000.00,
-        property: 'abc',
-        propertyType: 'Single-family',
-        propertyAddress: '78 Scheme No 78 - II, Indore, MP, 452010, IN',
-        occupancy: 'Occupied',
-        recurringTransaction: 'Active'
-    },
-    {
-        id: '3',
-        tenant: 'Sam',
-        unit: 1,
-        leaseNumber: 3,
-        leaseDuration: '04 Nov, 2025 - 04 Nov, 2026',
-        marketRent: 12000.00,
-        depositsHeld: 0.00,
-        rentalCharge: 0.00,
-        balance: 15000.00,
-        property: 'Grove Street',
-        propertyType: 'Single-family',
-        propertyAddress: '11 Grove Street, Boston, MA, 12114, US',
-        occupancy: 'Occupied',
-        recurringTransaction: 'Active'
-    },
-    {
-        id: '4',
-        tenant: 'Jane Smith',
-        unit: 3,
-        leaseNumber: 5,
-        leaseDuration: '15 Jan, 2025 - 15 Jan, 2026',
-        marketRent: 18000.00,
-        depositsHeld: 6000.00,
-        rentalCharge: 500.00,
-        balance: 12000.00,
-        property: 'Grove Street',
-        propertyType: 'Single-family',
-        propertyAddress: '11 Grove Street, Boston, MA, 12114, US',
-        occupancy: 'Vacant',
-        recurringTransaction: 'Inactive'
-    }
-];
-
 const RentRoll: React.FC = () => {
     const navigate = useNavigate();
     const [visibleColumns, setVisibleColumns] = useState<ColumnId[]>(ALL_COLUMNS.map(c => c.id));
     const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
+
+    const { data: apiData, isLoading, error } = useRentRollReport();
+    const rentRollData: RentRollItem[] = apiData ?? [];
 
     // Filter State for DashboardFilter
     const [searchQuery, setSearchQuery] = useState('');
@@ -119,7 +39,7 @@ const RentRoll: React.FC = () => {
 
     // Filter Options for DashboardFilter
     const filterOptions: Record<string, FilterOption[]> = {
-        propertyUnits: Array.from(new Set(MOCK_RENT_ROLL.map(r => r.property))).map(prop => ({ value: prop, label: prop })),
+        propertyUnits: Array.from(new Set(rentRollData.map(r => r.property))).map(prop => ({ value: prop, label: prop })),
         occupancy: [
             { value: 'Occupied', label: 'Occupied' },
             { value: 'Vacant', label: 'Vacant' }
@@ -155,7 +75,7 @@ const RentRoll: React.FC = () => {
 
     // Filter Logic
     const filteredItems = useMemo(() => {
-        return MOCK_RENT_ROLL.filter(item => {
+        return rentRollData.filter(item => {
             // Search filter
             if (searchQuery) {
                 const query = searchQuery.toLowerCase();
@@ -191,7 +111,7 @@ const RentRoll: React.FC = () => {
 
             return true;
         });
-    }, [searchQuery, selectedFilters]);
+    }, [searchQuery, selectedFilters, rentRollData]);
 
     // Group items by property
     const groupedItems = useMemo(() => {
@@ -232,7 +152,7 @@ const RentRoll: React.FC = () => {
             case 'balance':
                 return <span className={`font-medium ${item.balance > 0 ? 'text-green-600' : item.balance < 0 ? 'text-red-600' : 'text-gray-600'}`}>{formatCurrency(item.balance)}</span>;
             default:
-                return item[columnId as keyof RentRollItem];
+                return String(item[columnId as keyof RentRollItem] ?? '');
         }
     };
 
@@ -286,75 +206,91 @@ const RentRoll: React.FC = () => {
                     initialFilters={selectedFilters}
                 />
 
-                {/* Grouped Tables */}
-                {Object.entries(groupedItems).map(([key, items]) => {
-                    const [property, propertyType, address] = key.split('|');
-                    return (
-                        <div key={key} className="mb-8">
-                            {/* Property Group Header */}
-                            <div className="mb-4 flex items-center">
-                                <div className="bg-[#3A6D6C] rounded-full px-4 py-2 flex items-center gap-2 shadow-sm">
-                                    <span className="text-white font-semibold">{property}</span>
-                                    <span className="text-white/70 text-sm">( {propertyType} | {address} )</span>
-                                </div>
-                            </div>
+                {isLoading && (
+                    <div className="text-center py-12 bg-white rounded-2xl">
+                        <p className="text-gray-500 text-lg">Loading...</p>
+                    </div>
+                )}
 
-                            {/* Table Header */}
-                            <div className="hidden md:block bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm">
-                                <div
-                                    className="text-white px-6 py-4 grid gap-4 items-center text-sm font-medium"
-                                    style={{ gridTemplateColumns }}
-                                >
-                                    {activeColumns.map(col => (
-                                        <div key={col.id} className={col.hasSort ? "flex items-center gap-1 cursor-pointer text-center" : "text-center"}>
-                                            {col.label}
-                                            {col.hasSort && <ChevronUp className="w-3 h-3" />}
+                {error && (
+                    <div className="text-center py-12 bg-white rounded-2xl">
+                        <p className="text-red-500 text-lg">Failed to load rent roll data. Please try again.</p>
+                    </div>
+                )}
+
+                {!isLoading && !error && (
+                    <>
+                        {/* Grouped Tables */}
+                        {Object.entries(groupedItems).map(([key, items]) => {
+                            const [property, propertyType, address] = key.split('|');
+                            return (
+                                <div key={key} className="mb-8">
+                                    {/* Property Group Header */}
+                                    <div className="mb-4 flex items-center">
+                                        <div className="bg-[#3A6D6C] rounded-full px-4 py-2 flex items-center gap-2 shadow-sm">
+                                            <span className="text-white font-semibold">{property}</span>
+                                            <span className="text-white/70 text-sm">( {propertyType} | {address} )</span>
                                         </div>
-                                    ))}
-                                </div>
-                            </div>
+                                    </div>
 
-                            {/* Table Body */}
-                            <div className="flex flex-col gap-3 bg-[#F0F0F6] p-4 rounded-[2rem] rounded-t-none">
-                                {items.map(item => (
-                                    <div
-                                        key={item.id}
-                                        className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                                    >
-                                        {/* Desktop View */}
+                                    {/* Table Header */}
+                                    <div className="hidden md:block bg-[#3A6D6C] rounded-t-[1.5rem] overflow-hidden shadow-sm">
                                         <div
-                                            className="hidden md:grid px-6 py-4 gap-4 items-center"
+                                            className="text-white px-6 py-4 grid gap-4 items-center text-sm font-medium"
                                             style={{ gridTemplateColumns }}
                                         >
                                             {activeColumns.map(col => (
-                                                <div key={col.id} className="text-sm text-center">
-                                                    {renderCellContent(item, col.id)}
-                                                </div>
-                                            ))}
-                                        </div>
-
-                                        {/* Mobile View */}
-                                        <div className="md:hidden p-4 space-y-3">
-                                            {activeColumns.map(col => (
-                                                <div key={col.id} className="flex justify-between items-start gap-4">
-                                                    <span className="text-gray-500 text-xs font-medium uppercase mt-1">{col.label}</span>
-                                                    <div className="text-sm text-right flex-1">
-                                                        {renderCellContent(item, col.id)}
-                                                    </div>
+                                                <div key={col.id} className={col.hasSort ? "flex items-center gap-1 cursor-pointer text-center" : "text-center"}>
+                                                    {col.label}
+                                                    {col.hasSort && <ChevronUp className="w-3 h-3" />}
                                                 </div>
                                             ))}
                                         </div>
                                     </div>
-                                ))}
-                            </div>
-                        </div>
-                    );
-                })}
 
-                {Object.keys(groupedItems).length === 0 && (
-                    <div className="text-center py-12 bg-white rounded-2xl">
-                        <p className="text-gray-500 text-lg">No rent roll data found matching your filters</p>
-                    </div>
+                                    {/* Table Body */}
+                                    <div className="flex flex-col gap-3 bg-[#F0F0F6] p-4 rounded-[2rem] rounded-t-none">
+                                        {items.map(item => (
+                                            <div
+                                                key={item.id}
+                                                className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                                            >
+                                                {/* Desktop View */}
+                                                <div
+                                                    className="hidden md:grid px-6 py-4 gap-4 items-center"
+                                                    style={{ gridTemplateColumns }}
+                                                >
+                                                    {activeColumns.map(col => (
+                                                        <div key={col.id} className="text-sm text-center">
+                                                            {renderCellContent(item, col.id)}
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                {/* Mobile View */}
+                                                <div className="md:hidden p-4 space-y-3">
+                                                    {activeColumns.map(col => (
+                                                        <div key={col.id} className="flex justify-between items-start gap-4">
+                                                            <span className="text-gray-500 text-xs font-medium uppercase mt-1">{col.label}</span>
+                                                            <div className="text-sm text-right flex-1">
+                                                                {renderCellContent(item, col.id)}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })}
+
+                        {Object.keys(groupedItems).length === 0 && (
+                            <div className="text-center py-12 bg-white rounded-2xl">
+                                <p className="text-gray-500 text-lg">No data</p>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
 

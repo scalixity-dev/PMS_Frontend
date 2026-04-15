@@ -246,8 +246,8 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
         "More than one year",
     ];
 
-    // Use availableAmenities from props if provided, otherwise use hardcoded list
-    const hardcodedAmenities = [
+    // Curated UI list — not mock data. No backend endpoint exists for amenities yet.
+    const AMENITIES_OPTIONS = [
         "Air Conditioning",
         "Heating",
         "Dishwasher",
@@ -265,7 +265,7 @@ const PropertyFilters: React.FC<PropertyFiltersProps> = ({
         "WiFi/Internet",
         "Cable TV"
     ];
-    const allAmenities = availableAmenities.length > 0 ? availableAmenities : hardcodedAmenities;
+    const allAmenities = availableAmenities.length > 0 ? availableAmenities : AMENITIES_OPTIONS;
     const commonAmenities = allAmenities.slice(0, 6);
 
     return (

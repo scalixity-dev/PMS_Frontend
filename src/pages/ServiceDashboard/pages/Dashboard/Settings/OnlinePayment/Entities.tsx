@@ -166,12 +166,14 @@ const Entities = () => {
                         <div>
                             <h2 className="text-lg font-bold text-gray-900">Business Entities</h2>
                             <p className="text-xs text-gray-500 mt-0.5">Manage your business entities and legal structures</p>
+                            <p className="text-xs text-amber-600 mt-1 font-medium">Coming soon — requires Stripe Connect business entity onboarding</p>
                         </div>
                     </div>
 
                     <button
-                        onClick={openAdd}
-                        className="flex items-center gap-2 bg-[#7CD947] text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-[#6bc13d] transition-colors shadow-sm self-start sm:self-center"
+                        disabled
+                        className="flex items-center gap-2 bg-gray-300 text-gray-500 px-5 py-2.5 rounded-lg text-sm font-semibold cursor-not-allowed shadow-sm self-start sm:self-center"
+                        title="Coming soon — requires Stripe Connect business entity onboarding"
                     >
                         <Plus size={18} strokeWidth={2.5} />
                         Add Entity

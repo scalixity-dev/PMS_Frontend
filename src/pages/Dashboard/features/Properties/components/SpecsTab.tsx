@@ -15,10 +15,9 @@ import AssignKeyModal from './AssignKeyModal';
 import AddPaintModal from './AddPaintModal';
 import AddDoorModal from './AddDoorModal';
 import AddFloorModal from './AddFloorModal';
-import { useCreatePropertySpec, useGetPropertySpecs, useDeletePropertySpec } from '../../../../../hooks/usePropertyDetailQueries';
+import { useCreatePropertySpec, useUpdatePropertySpec, useGetPropertySpecs, useDeletePropertySpec, propertyDetailQueryKeys } from '../../../../../hooks/usePropertyDetailQueries';
 import { useDeleteKey } from '../../../../../hooks/useKeysQueries';
 import { useQueryClient } from '@tanstack/react-query';
-import { propertyDetailQueryKeys } from '../../../../../hooks/usePropertyDetailQueries';
 
 interface SpecItemProps {
     icon: React.ReactNode;
@@ -77,6 +76,7 @@ const SpecsTab: React.FC<SpecsTabProps> = ({ propertyId, unitId }) => {
     // Fetch specs from API
     const { data: specsData = { paints: [], doors: [], flooring: [], keys: [] }, isLoading, error } = useGetPropertySpecs(propertyId, unitId);
     const createSpecMutation = useCreatePropertySpec();
+    const updateSpecMutation = useUpdatePropertySpec();
     const deleteSpecMutation = useDeletePropertySpec();
     const deleteKeyMutation = useDeleteKey();
     const queryClient = useQueryClient();
@@ -93,14 +93,17 @@ const SpecsTab: React.FC<SpecsTabProps> = ({ propertyId, unitId }) => {
     // Assign Key Modal State
     const [isAssignKeyModalOpen, setIsAssignKeyModalOpen] = useState(false);
 
-    // Add Paint Modal State
+    // Add/Edit Paint Modal State (Bug 2 fix)
     const [isAddPaintModalOpen, setIsAddPaintModalOpen] = useState(false);
+    const [editingPaint, setEditingPaint] = useState<any | null>(null);
 
-    // Add Door Modal State
+    // Add/Edit Door Modal State (Bug 2 fix)
     const [isAddDoorModalOpen, setIsAddDoorModalOpen] = useState(false);
+    const [editingDoor, setEditingDoor] = useState<any | null>(null);
 
-    // Add Floor Modal State
+    // Add/Edit Floor Modal State (Bug 2 fix)
     const [isAddFloorModalOpen, setIsAddFloorModalOpen] = useState(false);
+    const [editingFlooring, setEditingFlooring] = useState<any | null>(null);
 
     const handleDeleteClick = (id: number | string, type: 'key' | 'paint' | 'door' | 'flooring') => {
         setItemToDelete({ id, type });
@@ -129,45 +132,71 @@ const SpecsTab: React.FC<SpecsTabProps> = ({ propertyId, unitId }) => {
     };
 
     const handleAddPaint = async (data: { name: string; color: string; description: string }) => {
-        await createSpecMutation.mutateAsync({
-            propertyId,
-            specData: {
-                unitId,
-                type: 'PAINT',
-                name: data.name,
-                color: data.color,
-                description: data.description,
-            },
-        });
+        if (editingPaint) {
+            await updateSpecMutation.mutateAsync({
+                propertyId,
+                specId: editingPaint.id,
+                specData: { type: 'PAINT', name: data.name, color: data.color, description: data.description },
+            });
+            setEditingPaint(null);
+        } else {
+            await createSpecMutation.mutateAsync({
+                propertyId,
+                specData: { unitId, type: 'PAINT', name: data.name, color: data.color, description: data.description },
+            });
+        }
     };
 
+    // Bug 1 fix: send door fields to proper columns
     const handleAddDoor = async (data: { name: string; doorType: string; lockType: string; insideDoorColor: string; exteriorDoorColor: string; screenDoorAttached: boolean }) => {
-        await createSpecMutation.mutateAsync({
-            propertyId,
-            specData: {
-                unitId,
-                type: 'DOOR',
-                name: data.name,
-                brand: data.doorType,
-                notes: data.lockType,
-                color: data.insideDoorColor,
-                location: data.exteriorDoorColor,
-                description: data.screenDoorAttached ? 'Screen door attached' : 'No screen door',
-            },
-        });
+        if (editingDoor) {
+            await updateSpecMutation.mutateAsync({
+                propertyId,
+                specId: editingDoor.id,
+                specData: {
+                    type: 'DOOR',
+                    name: data.name,
+                    doorType: data.doorType,
+                    lockType: data.lockType,
+                    color: data.insideDoorColor,
+                    exteriorColor: data.exteriorDoorColor,
+                    screenDoor: data.screenDoorAttached,
+                    description: undefined,
+                },
+            });
+            setEditingDoor(null);
+        } else {
+            await createSpecMutation.mutateAsync({
+                propertyId,
+                specData: {
+                    unitId,
+                    type: 'DOOR',
+                    name: data.name,
+                    doorType: data.doorType,
+                    lockType: data.lockType,
+                    color: data.insideDoorColor,
+                    exteriorColor: data.exteriorDoorColor,
+                    screenDoor: data.screenDoorAttached,
+                    description: undefined,
+                },
+            });
+        }
     };
 
     const handleAddFlooring = async (data: { name: string; flooringType: string; description: string }) => {
-        await createSpecMutation.mutateAsync({
-            propertyId,
-            specData: {
-                unitId,
-                type: 'FLOORING',
-                name: data.name,
-                brand: data.flooringType,
-                description: data.description || 'No description',
-            },
-        });
+        if (editingFlooring) {
+            await updateSpecMutation.mutateAsync({
+                propertyId,
+                specId: editingFlooring.id,
+                specData: { type: 'FLOORING', name: data.name, brand: data.flooringType, description: data.description },
+            });
+            setEditingFlooring(null);
+        } else {
+            await createSpecMutation.mutateAsync({
+                propertyId,
+                specData: { unitId, type: 'FLOORING', name: data.name, brand: data.flooringType, description: data.description || 'No description' },
+            });
+        }
     };
 
     if (isLoading) {
@@ -232,8 +261,7 @@ const SpecsTab: React.FC<SpecsTabProps> = ({ propertyId, unitId }) => {
                                 { label: 'Paint color', value: item.color },
                                 { label: 'Description', value: item.description }
                             ]}
-                            onEdit={() => console.log('Edit paint:', item.id)}
-
+                            onEdit={() => { setEditingPaint(item); setIsAddPaintModalOpen(true); }}
                             onDelete={() => handleDeleteClick(item.id, 'paint')}
                         />
                     ))}
@@ -255,13 +283,14 @@ const SpecsTab: React.FC<SpecsTabProps> = ({ propertyId, unitId }) => {
                             icon={<DoorOpen className="w-6 h-6 text-orange-400" />}
                             title={item.name}
                             badges={[
-                                { label: 'Door type', value: item.brand || '-' },
-                                { label: 'Lock type', value: item.notes || '-' },
+                                // Bug 1 fix: read from proper columns; fall back to legacy columns for old rows
+                                { label: 'Door type', value: item.doorType || item.brand || '-' },
+                                { label: 'Lock type', value: item.lockType || item.notes || '-' },
                                 { label: 'Inside color', value: item.color || '-' },
-                                { label: 'Exterior color', value: item.location || '-' },
-                                { label: 'Screen', value: item.description || '-' },
+                                { label: 'Exterior color', value: item.exteriorColor || item.location || '-' },
+                                { label: 'Screen', value: item.screenDoor != null ? (item.screenDoor ? 'Yes' : 'No') : (item.description || '-') },
                             ]}
-                            onEdit={() => console.log('Edit door:', item.id)}
+                            onEdit={() => { setEditingDoor(item); setIsAddDoorModalOpen(true); }}
                             onDelete={() => handleDeleteClick(item.id, 'door')}
                         />
                     ))}
@@ -286,8 +315,7 @@ const SpecsTab: React.FC<SpecsTabProps> = ({ propertyId, unitId }) => {
                                 { label: 'Flooring type', value: item.brand || '-' },
                                 { label: 'Description', value: item.description }
                             ]}
-                            onEdit={() => console.log('Edit flooring:', item.id)}
-
+                            onEdit={() => { setEditingFlooring(item); setIsAddFloorModalOpen(true); }}
                             onDelete={() => handleDeleteClick(item.id, 'flooring')}
                         />
                     ))}
@@ -315,20 +343,30 @@ const SpecsTab: React.FC<SpecsTabProps> = ({ propertyId, unitId }) => {
 
             <AddPaintModal
                 isOpen={isAddPaintModalOpen}
-                onClose={() => setIsAddPaintModalOpen(false)}
+                onClose={() => { setIsAddPaintModalOpen(false); setEditingPaint(null); }}
                 onAdd={handleAddPaint}
+                initialData={editingPaint ? { name: editingPaint.name, color: editingPaint.color, description: editingPaint.description || '' } : undefined}
             />
 
             <AddDoorModal
                 isOpen={isAddDoorModalOpen}
-                onClose={() => setIsAddDoorModalOpen(false)}
+                onClose={() => { setIsAddDoorModalOpen(false); setEditingDoor(null); }}
                 onAdd={handleAddDoor}
+                initialData={editingDoor ? {
+                    name: editingDoor.name,
+                    doorType: editingDoor.doorType || editingDoor.brand || '',
+                    lockType: editingDoor.lockType || editingDoor.notes || '',
+                    insideDoorColor: editingDoor.color || '',
+                    exteriorDoorColor: editingDoor.exteriorColor || editingDoor.location || '',
+                    screenDoorAttached: editingDoor.screenDoor ?? false,
+                } : undefined}
             />
 
             <AddFloorModal
                 isOpen={isAddFloorModalOpen}
-                onClose={() => setIsAddFloorModalOpen(false)}
+                onClose={() => { setIsAddFloorModalOpen(false); setEditingFlooring(null); }}
                 onAdd={handleAddFlooring}
+                initialData={editingFlooring ? { name: editingFlooring.name, flooringType: editingFlooring.brand || '', description: editingFlooring.description || '' } : undefined}
             />
         </div>
     );

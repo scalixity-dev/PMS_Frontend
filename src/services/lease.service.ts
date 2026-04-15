@@ -413,6 +413,37 @@ class LeaseService {
   }
 
   /**
+   * Renew a lease
+   */
+  async renew(id: string, data: { endDate: string; monthlyRent?: number; notes?: string }): Promise<BackendLease> {
+    const response = await fetch(API_ENDPOINTS.LEASE.RENEW(id), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to renew lease';
+      try {
+        const errorData = await response.json();
+        if (Array.isArray(errorData.message)) {
+          errorMessage = errorData.message.join('. ');
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+      } catch {
+        errorMessage = `Failed to renew lease: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  }
+
+  /**
    * Delete a lease
    */
   async delete(id: string): Promise<void> {

@@ -4,7 +4,7 @@ import { useDashboardStore } from "./store/dashboardStore";
 import { Sidebar } from "./components/layout/Sidebar";
 import { TransactionTable } from "./features/Transactions/components/TransactionTable";
 import { LeaseList } from "./features/Leases/components/LeaseList";
-import { tabs } from "./utils/mockData";
+const tabs = ["Outstanding", "Leases", "Service providers"];
 import { calculateOutstandingAmount } from "./utils/financeUtils";
 import type { TabType, Transaction, Lease as FrontendLease } from "./utils/types";
 import PrimaryActionButton from "../../components/common/buttons/PrimaryActionButton";

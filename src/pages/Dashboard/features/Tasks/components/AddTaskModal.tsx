@@ -8,6 +8,7 @@ import type { Task } from '../Tasks';
 import { useTaskStore } from '../store/taskStore';
 import { useCreateTask, useUpdateTask } from '../../../../../hooks/useTaskQueries';
 import { useGetAllProperties } from '../../../../../hooks/usePropertyQueries';
+import { useGetTeamMembers } from '../../../../../hooks/useTeamQueries';
 
 interface AddTaskModalProps {
     isOpen: boolean;
@@ -23,6 +24,9 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
 
     // Fetch properties for dropdown
     const { data: properties = [], isLoading: isLoadingProperties } = useGetAllProperties();
+
+    // Fetch team members for assignee dropdown
+    const { data: teamMembers = [] } = useGetTeamMembers();
 
     const [showExitConfirmation, setShowExitConfirmation] = React.useState(false);
     const [formErrors, setFormErrors] = React.useState({ title: false, date: false, time: false, description: false });
@@ -106,6 +110,14 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
             label: p.propertyName
         }));
     }, [properties]);
+
+    // Team member options for assignee dropdown
+    const teamMemberOptions = useMemo(() => {
+        return teamMembers.map(m => ({
+            value: m.name || m.email,
+            label: m.name || m.email,
+        }));
+    }, [teamMembers]);
 
     const frequencyOptions = [
         { value: 'DAILY', label: 'Daily' },
@@ -316,13 +328,13 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSave, ta
                     {/* Assignee */}
                     <div>
                         <label className="block text-xs font-bold text-gray-700 mb-1">Assignee</label>
-                        <input
-                            type="text"
+                        <CustomDropdown
                             value={formData.assignee}
-                            onChange={(e) => updateFormData('assignee', e.target.value)}
-                            placeholder="Enter assignee name or ID"
+                            onChange={(value) => updateFormData('assignee', value)}
+                            options={teamMemberOptions}
+                            placeholder="Select assignee"
                             disabled={isLoading}
-                            className={`w-full bg-white text-gray-800 placeholder-gray-400 px-3 py-2 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all shadow-sm text-sm ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            buttonClassName={`w-full bg-white text-gray-800 px-3 py-2.5 rounded-md outline-none focus:ring-2 focus:ring-[#3D7475]/20 transition-all shadow-sm text-sm border-none ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                         />
                     </div>
 

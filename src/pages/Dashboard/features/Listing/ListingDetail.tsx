@@ -438,25 +438,58 @@ const ListingDetail: React.FC = () => {
         setVideoItems(prev => prev.filter((_, i) => i !== index));
     };
 
-    const handleGalleryUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleGalleryUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
-        if (file) {
-            // Use object URL instead of data URL to avoid memory issues
-            const objectURL = URL.createObjectURL(file);
-            objectURLsRef.current.add(objectURL);
-            setGalleryImages(prev => [objectURL, ...prev]);
-            // TODO: Upload file to server and replace objectURL with server URL
+        if (!file) return;
+        // Optimistic preview while uploading
+        const objectURL = URL.createObjectURL(file);
+        objectURLsRef.current.add(objectURL);
+        setGalleryImages(prev => [objectURL, ...prev]);
+        try {
+            const fd = new FormData();
+            fd.append('file', file);
+            const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/upload/image`, {
+                method: 'POST',
+                credentials: 'include',
+                body: fd,
+            });
+            if (!res.ok) throw new Error('Upload failed');
+            const { url } = await res.json();
+            // Replace optimistic objectURL with server URL
+            URL.revokeObjectURL(objectURL);
+            objectURLsRef.current.delete(objectURL);
+            setGalleryImages(prev => prev.map(u => u === objectURL ? url : u));
+        } catch {
+            // Revert on failure
+            URL.revokeObjectURL(objectURL);
+            objectURLsRef.current.delete(objectURL);
+            setGalleryImages(prev => prev.filter(u => u !== objectURL));
         }
     };
 
-    const handleVideoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleVideoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
-        if (file) {
-            // Use object URL instead of data URL to avoid memory issues with large videos
-            const objectURL = URL.createObjectURL(file);
-            objectURLsRef.current.add(objectURL);
-            setVideoItems(prev => [objectURL, ...prev]);
-            // TODO: Upload file to server and replace objectURL with server URL
+        if (!file) return;
+        const objectURL = URL.createObjectURL(file);
+        objectURLsRef.current.add(objectURL);
+        setVideoItems(prev => [objectURL, ...prev]);
+        try {
+            const fd = new FormData();
+            fd.append('file', file);
+            const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/upload/file`, {
+                method: 'POST',
+                credentials: 'include',
+                body: fd,
+            });
+            if (!res.ok) throw new Error('Upload failed');
+            const { url } = await res.json();
+            URL.revokeObjectURL(objectURL);
+            objectURLsRef.current.delete(objectURL);
+            setVideoItems(prev => prev.map(u => u === objectURL ? url : u));
+        } catch {
+            URL.revokeObjectURL(objectURL);
+            objectURLsRef.current.delete(objectURL);
+            setVideoItems(prev => prev.filter(u => u !== objectURL));
         }
     };
 

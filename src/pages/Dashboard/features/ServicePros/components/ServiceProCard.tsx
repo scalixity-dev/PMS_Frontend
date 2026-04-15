@@ -70,8 +70,7 @@ const ServiceProCard: React.FC<ServiceProCardProps> = ({
     ];
 
     const handleMessage = () => {
-        // TODO: Implement message functionality
-        console.log('Message clicked for:', id);
+        navigate('/dashboard/messages');
     };
 
     return (
