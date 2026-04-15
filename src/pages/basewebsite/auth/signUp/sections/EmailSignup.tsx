@@ -172,9 +172,9 @@ export const EmailSignup: React.FC<EmailSignupProps> = ({ onNext }) => {
       </div>
 
       <p className="mt-5 sm:mt-6 md:mt-7 text-xs sm:text-sm text-center text-gray-500 leading-relaxed">
-        By creating an account you are agreeing to our  
-        <a href="#" className="font-semibold text-teal-600 hover:text-teal-700 transition-colors"> Terms and Conditions</a> & 
-        <a href="#" className="font-semibold text-teal-600 hover:text-teal-700 transition-colors"> Privacy Policy</a>.
+        By creating an account you are agreeing to our{' '}
+        <Link to="/terms-of-service" className="font-semibold text-teal-600 hover:text-teal-700 transition-colors">Terms of Service</Link> &amp;{' '}
+        <Link to="/privacy-policy" className="font-semibold text-teal-600 hover:text-teal-700 transition-colors">Privacy Policy</Link>.
       </p>
       </div>
     </div>

@@ -17,6 +17,7 @@ import PricingPage from './pages/basewebsite/pricing';
 import TermsOfService from './pages/basewebsite/legal/TermsOfService';
 import PrivacyPolicy from './pages/basewebsite/legal/PrivacyPolicy';
 import CookiePolicy from './pages/basewebsite/legal/CookiePolicy';
+import { ToastProvider } from './components/common/Toast';
 import AIChatButton from './components/common/AIChatButton';
 import LoginPage from './pages/basewebsite/auth/login';
 import SignUpPage from './pages/basewebsite/auth/signUp';
@@ -224,6 +225,7 @@ const App: React.FC = () => {
   return (
     <>
       <QueryClientProvider client={queryClient}>
+        <ToastProvider>
         <BrowserRouter>
           <RoutedApp>
           <AutoLoginProvider>
@@ -885,6 +887,7 @@ const App: React.FC = () => {
         </BrowserRouter>
         <ChatToast />
         <TanStackDevtools />
+        </ToastProvider>
       </QueryClientProvider>
     </>
   );

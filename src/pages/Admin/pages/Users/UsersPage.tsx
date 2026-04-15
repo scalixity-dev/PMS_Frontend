@@ -14,8 +14,9 @@ import ServiceFilters from '../../../ServiceDashboard/components/ServiceFilters'
 import type { DateRange } from 'react-day-picker';
 import { isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 
-// --- Mock Data ---
-
+// TODO: Replace with real API once Admin portal auth is wired on frontend.
+// Backend endpoint ready: GET /admin/users (guarded by AdminAuthGuard, separate admin JWT).
+// Needs: admin login service, AdminAuthContext, useGetAdminUsers hook.
 interface User {
     id: string;
     name: string;

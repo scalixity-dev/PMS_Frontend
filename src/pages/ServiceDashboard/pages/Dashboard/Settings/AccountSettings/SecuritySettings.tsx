@@ -111,12 +111,14 @@ const SecuritySettings = () => {
                                         Identity verification is required to prevent fraud and increase security. TenantCloud works with Stripe
                                         to conduct identity verification online.
                                     </p>
-                                    <a href="#" className="text-xs font-medium text-[#1E88E5] hover:underline inline-block">
+                                    <a href="/privacy-policy" className="text-xs font-medium text-[#1E88E5] hover:underline inline-block">
                                         Learn more
                                     </a>
                                 </div>
                                 <DashboardButton
-                                    onClick={() => { }}
+                                    onClick={() => {
+                                        alert('ID verification flow will be available soon. Please contact support@smarttenantai.com for manual verification.');
+                                    }}
                                     className="h-10 text-xs font-bold px-6"
                                 >
                                     Continue
@@ -132,12 +134,17 @@ const SecuritySettings = () => {
                                     <p className="text-xs text-gray-600">
                                         Export your account data (listings, transactions, and documents) in machine-readable formats (CSV/JSON).
                                     </p>
-                                    <a href="#" className="text-xs font-medium text-[#1E88E5] hover:underline inline-block">
+                                    <a href="/privacy-policy" className="text-xs font-medium text-[#1E88E5] hover:underline inline-block">
                                         Learn more
                                     </a>
                                 </div>
                                 <DashboardButton
-                                    onClick={() => { }}
+                                    onClick={() => {
+                                        // Request data export via email to privacy team
+                                        const subject = encodeURIComponent('Data Export Request');
+                                        const body = encodeURIComponent('I would like to export all my account data (listings, transactions, documents). Please send it in CSV/JSON format within 30 days per GDPR/CCPA/DPDP requirements.');
+                                        window.location.href = `mailto:privacy@smarttenantai.com?subject=${subject}&body=${body}`;
+                                    }}
                                     className="h-10 text-xs font-bold px-6"
                                 >
                                     Export

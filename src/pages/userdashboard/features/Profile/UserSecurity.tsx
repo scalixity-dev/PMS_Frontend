@@ -33,12 +33,15 @@ const Security: React.FC = () => {
                             <br className="hidden sm:block" />
                             <span className="sm:inline block mt-1 sm:mt-0">TenantCloud works with Stripe to conduct identity verification online.</span>
                         </p>
-                        <a href="#" className="text-[#3D7475] text-xs sm:text-sm font-medium hover:underline">Learn more</a>
+                        <a href="/privacy-policy" className="text-[#3D7475] text-xs sm:text-sm font-medium hover:underline">Learn more</a>
                     </div>
                     <PrimaryActionButton
-                        text="Enable"
-                        onClick={() => { }}
-                        className="bg-[#407B88] hover:bg-[#32616B] !rounded-lg font-medium text-xs sm:text-sm !px-8 sm:!px-10 py-2 shadow-sm text-white w-full lg:w-auto"
+                        text="Coming soon"
+                        onClick={() => {
+                            alert('Two-step authentication will be available in the next release. For now, please use a strong unique password and enable 2FA on your email account.');
+                        }}
+                        disabled
+                        className="bg-gray-400 cursor-not-allowed !rounded-lg font-medium text-xs sm:text-sm !px-8 sm:!px-10 py-2 shadow-sm text-white w-full lg:w-auto opacity-70"
                     />
                 </div>
 

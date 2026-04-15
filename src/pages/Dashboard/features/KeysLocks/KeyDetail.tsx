@@ -7,7 +7,6 @@ import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import ConfirmationModal from './ConfirmationModal';
 import { useGetKey, useUpdateKey, useDeleteKey } from '../../../../hooks/useKeysQueries';
-import { useGetAllProperties } from '../../../../hooks/usePropertyQueries';
 import { useGetAllTenants } from '../../../../hooks/useTenantQueries';
 
 // Map backend key type to display format
@@ -68,7 +67,6 @@ const KeyDetail = () => {
 
     // Fetch key data from backend
     const { data: keyData, isLoading, error } = useGetKey(id || null, !!id);
-    const { data: properties = [] } = useGetAllProperties();
     const { data: tenantsData = [] } = useGetAllTenants();
     const updateKeyMutation = useUpdateKey();
     const deleteKeyMutation = useDeleteKey();
