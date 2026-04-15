@@ -1182,9 +1182,58 @@ class TransactionService {
 
     return await response.json();
   }
+
+  async getTenantAggregates(tenantUserId: string): Promise<TransactionAggregates> {
+    const response = await fetch(API_ENDPOINTS.TRANSACTION.GET_TENANT_AGGREGATES(tenantUserId), {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to fetch tenant aggregates';
+      try {
+        const errorData = await response.json();
+        if (errorData.message) errorMessage = errorData.message;
+      } catch {
+        errorMessage = `Failed to fetch tenant aggregates: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+
+    return await response.json();
+  }
+
+  async getServiceProAggregates(serviceProUserId: string): Promise<TransactionAggregates> {
+    const response = await fetch(API_ENDPOINTS.TRANSACTION.GET_SERVICE_PRO_AGGREGATES(serviceProUserId), {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to fetch service pro aggregates';
+      try {
+        const errorData = await response.json();
+        if (errorData.message) errorMessage = errorData.message;
+      } catch {
+        errorMessage = `Failed to fetch service pro aggregates: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+
+    return await response.json();
+  }
 }
 
 export const transactionService = new TransactionService();
+
+export interface TransactionAggregates {
+  outstanding: number;
+  deposits: number;
+  credits: number;
+  totalPaid: number;
+}
 
 export interface Transaction {
   id: string;

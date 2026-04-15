@@ -9,6 +9,7 @@ import {
   type CreateCreditDto,
   type ReturnDepositDto,
   type ApplyDepositCreditDto,
+  type TransactionAggregates,
 } from '../services/transaction.service';
 
 // Query keys for React Query
@@ -720,5 +721,23 @@ export const useRefundPayment = () => {
       queryClient.invalidateQueries({ queryKey: [...transactionQueryKeys.all, 'payments'] });
       queryClient.invalidateQueries({ queryKey: transactionQueryKeys.detail(variables.transactionId) });
     },
+  });
+};
+
+export const useGetTenantAggregates = (tenantUserId?: string | null) => {
+  return useQuery<TransactionAggregates>({
+    queryKey: [...transactionQueryKeys.all, 'aggregates', 'tenant', tenantUserId],
+    queryFn: () => transactionService.getTenantAggregates(tenantUserId!),
+    enabled: !!tenantUserId,
+    staleTime: 60 * 1000,
+  });
+};
+
+export const useGetServiceProAggregates = (serviceProUserId?: string | null) => {
+  return useQuery<TransactionAggregates>({
+    queryKey: [...transactionQueryKeys.all, 'aggregates', 'service-pro', serviceProUserId],
+    queryFn: () => transactionService.getServiceProAggregates(serviceProUserId!),
+    enabled: !!serviceProUserId,
+    staleTime: 60 * 1000,
   });
 };

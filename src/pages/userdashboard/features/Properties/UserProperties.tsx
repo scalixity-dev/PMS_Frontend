@@ -7,11 +7,24 @@ import { API_ENDPOINTS } from "../../../../config/api.config";
 import { authService } from "../../../../services/auth.service";
 import { formatMoney } from "../../../../utils/currency.utils";
 import { formatAmenityLabel } from "../../../../utils/string.utils";
+import { useToggleFavorite, useIsFavorited } from "../../../../hooks/useListingQueries";
 
 
 // --- Internal Components ---
 
 const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
+  const listingId = property.listingId || null;
+  const { data: favStatus } = useIsFavorited(listingId, !!listingId);
+  const toggleFavorite = useToggleFavorite();
+  const isFavorited = favStatus?.favorited ?? false;
+
+  const handleToggleFavorite = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!listingId) return;
+    toggleFavorite.mutate(listingId);
+  };
+
   return (
     <Link
       to={`/userdashboard/properties/${property.id}`}
@@ -47,13 +60,16 @@ const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
               </p>
             </div>
             <button
-              className="text-gray-600 hover:text-red-500 transition-colors mt-0.5"
-              onClick={(e) => {
-                e.preventDefault();
-                // handle favorite 
-              }}
+              className={`transition-colors mt-0.5 disabled:opacity-50 ${isFavorited ? 'text-red-500' : 'text-gray-600 hover:text-red-500'}`}
+              onClick={handleToggleFavorite}
+              disabled={!listingId || toggleFavorite.isPending}
+              title={!listingId ? 'No listing available' : isFavorited ? 'Remove from favorites' : 'Add to favorites'}
             >
-              <Heart size={16} className="sm:w-[18px] sm:h-[18px]" />
+              <Heart
+                size={16}
+                className="sm:w-[18px] sm:h-[18px]"
+                fill={isFavorited ? 'currentColor' : 'none'}
+              />
             </button>
           </div>
           <div className="mt-2 flex items-baseline gap-1">
@@ -336,6 +352,7 @@ const Properties: React.FC = () => {
 
           return {
             id: item.id, // Use actual property ID for navigation
+            listingId: item.listing?.id || null, // Listing ID for favorites
             uniqueId: uniqueId, // Use composite ID for React keys
             title: title,
             address: addressString,

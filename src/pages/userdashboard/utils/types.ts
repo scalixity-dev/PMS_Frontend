@@ -66,6 +66,7 @@ export interface PropertyFeature {
 
 export interface Property {
     id: string | number; // Support both for now to avoid breaking existing code
+    listingId?: string | null; // Listing ID for favorite toggle API
     uniqueId?: string; // Composite ID for React keys
     title: string;
     address: string;

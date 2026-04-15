@@ -6,7 +6,7 @@ import DetailTabs from '../../components/DetailTabs';
 import ServiceProProfileSection from './components/ServiceProProfileSection';
 import ServiceProTransactionsSection from './components/ServiceProTransactionsSection';
 import { serviceProviderService, type BackendServiceProvider } from '../../../../services/service-provider.service';
-import { useGetTransactions } from '../../../../hooks/useTransactionQueries';
+import { useGetServiceProAggregates } from '../../../../hooks/useTransactionQueries';
 
 // Helper function to generate initials from name
 const getInitials = (firstName: string, lastName: string): string => {
@@ -91,25 +91,17 @@ const ServiceProsDetail = () => {
     const [isLoadingDocuments, setIsLoadingDocuments] = useState(false);
     const actionMenuRef = useRef<HTMLDivElement>(null);
 
-    // Fetch transactions for financial stats
-    const { data: allTransactions } = useGetTransactions();
-
-    // Aggregate outstanding from expense transactions with this service pro as the contact.
-    // Deeper aggregates (deposits/credits) need a by-payee endpoint — omit until exposed.
-    const computedStats = useMemo(() => {
-        if (!allTransactions || !servicePro) return null;
-        const contactName = (servicePro as any).name ?? '';
-        const outstanding = allTransactions
-            .filter((t) => t.type === 'expense' && t.status === 'Pending' && t.contact === contactName)
-            .reduce((sum, t) => sum + (Number(t.total) || 0), 0);
-        return { outstanding };
-    }, [allTransactions, servicePro]);
+    // Fetch DB-level aggregates for this service pro
+    const { data: serviceProAggregates } = useGetServiceProAggregates(servicePro?.userId ?? null);
 
     const displayServicePro = useMemo(() => {
         if (!servicePro) return null;
-        if (!computedStats) return servicePro;
-        return { ...servicePro, ...computedStats };
-    }, [servicePro, computedStats]);
+        return {
+            ...servicePro,
+            outstanding: serviceProAggregates?.outstanding ?? 0,
+            totalPaid: serviceProAggregates?.totalPaid ?? 0,
+        };
+    }, [servicePro, serviceProAggregates]);
 
     // Fetch service provider data
     useEffect(() => {
