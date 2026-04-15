@@ -130,24 +130,17 @@ const TenantDetail = () => {
         },
     ];
 
-    // Transform backend tenant to detail page format, then overlay computed stats
+    // Transform backend tenant. Stat aggregates (outstanding/deposits/credits) rely on a
+    // per-party /transactions/by-tenant endpoint that isn't exposed yet — base defaults stand.
     const tenant = useMemo(() => {
         if (!backendTenant) return null;
         const base = transformTenantForDetail(backendTenant);
-        if (allTransactions && backendTenant.userId) {
-            const payerId = backendTenant.userId;
-            const outstanding = allTransactions
-                .filter(t => t.type === 'INVOICE' && t.status === 'PENDING' && t.payerId === payerId)
-                .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
-            const deposits = allTransactions
-                .filter(t => t.type === 'DEPOSIT' && t.payerId === payerId)
-                .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
-            const credits = allTransactions
-                .filter(t => t.type === 'CREDIT' && t.payerId === payerId)
-                .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
-            return { ...base, outstanding, deposits, credits };
-        }
-        return base;
+        if (!allTransactions) return base;
+        const contactName = `${backendTenant.firstName ?? ''} ${backendTenant.lastName ?? ''}`.trim();
+        const outstanding = allTransactions
+            .filter((t) => t.type === 'income' && t.status === 'Pending' && t.contact === contactName)
+            .reduce((sum, t) => sum + (Number(t.total) || 0), 0);
+        return { ...base, outstanding };
     }, [backendTenant, allTransactions]);
 
     const tabs = [

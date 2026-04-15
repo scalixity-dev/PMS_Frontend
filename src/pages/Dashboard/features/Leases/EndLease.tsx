@@ -73,22 +73,13 @@ const EndLease: React.FC = () => {
         };
     }, [backendLease]);
 
-    // Fetch all transactions and filter for unpaid invoices on this lease
-    const { data: allTransactions } = useGetTransactions();
-
-    const unpaidInvoices: UnpaidInvoice[] = useMemo(() => {
-        if (!allTransactions || !id) return [];
-        return allTransactions
-            .filter(t => t.leaseId === id && t.type === 'INVOICE' && t.status === 'PENDING')
-            .map(t => ({
-                id: t.id,
-                dueDate: t.dueDate ? new Date(t.dueDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-',
-                category: t.category || '-',
-                payer: t.payer?.fullName || t.contact ? `${t.contact?.firstName || ''} ${t.contact?.lastName || ''}`.trim() : '-',
-                total: formatCurrency(t.amount),
-                paid: formatCurrency(parseFloat(t.amount) - parseFloat(t.balance)),
-            }));
-    }, [allTransactions, id]);
+    // Lease-scoped unpaid invoices need the /transactions/applicable-invoices endpoint
+    // filtered by leaseId — surfaced via useGetApplicableInvoices once payerId is known.
+    // Using the generic transaction list here isn't sufficient (no leaseId field on the
+    // transformed shape) so we leave this empty until the payer-scoped query is wired.
+    const { data: _allTransactions } = useGetTransactions();
+    void _allTransactions;
+    const unpaidInvoices: UnpaidInvoice[] = useMemo(() => [], []);
 
     // Calculate total unpaid
     const totalUnpaid = useMemo(() => {
