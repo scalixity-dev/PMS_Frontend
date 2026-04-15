@@ -1,394 +1,198 @@
-import { useState } from 'react';
-import { Edit, CreditCard, Wifi, HelpCircle, Plus, Building2, Trash2, X, Check } from 'lucide-react';
-import SearchableDropdown from '../../../../../../components/ui/SearchableDropdown';
+import { Building2, CheckCircle2, AlertCircle, ExternalLink, Loader2, HelpCircle, RefreshCw, Trash2 } from 'lucide-react';
+import {
+    useConnectStatus,
+    useCreateConnectOnboarding,
+    useDisconnectConnect,
+} from '../../../../../../hooks/usePaymentsQueries';
 
-// India-supported banks for dropdown (extend as needed).
-const INDIAN_BANKS = [
-    'State Bank of India',
-    'HDFC Bank',
-    'ICICI Bank',
-    'Axis Bank',
-    'Punjab National Bank',
-    'Bank of Baroda',
-    'Canara Bank',
-    'Union Bank of India',
-    'Kotak Mahindra Bank',
-    'IndusInd Bank',
-    'Yes Bank',
-    'IDFC First Bank',
-    'RBL Bank',
-    'Federal Bank',
-    'Bank of India',
-    'Central Bank of India',
-    'Indian Bank',
-    'IDBI Bank',
-    'South Indian Bank',
-    'Karnataka Bank',
-    'Bandhan Bank',
-    'Other',
-];
-
-// IFSC: 4 letters + 0 + 6 alphanumeric. Example: HDFC0001234.
-const IFSC_REGEX = /^[A-Z]{4}0[A-Z0-9]{6}$/;
-
+/**
+ * Stripe Connect (Express) — service pro receives payouts directly to bank.
+ * No bank/IFSC/account info stored locally — Stripe collects + secures it.
+ */
 const BankAccount = () => {
-    const [bankDetails, setBankDetails] = useState<any | null>(null);
-    const [isEditing, setIsEditing] = useState(false);
+    const { data: status, isLoading, refetch, isFetching } = useConnectStatus();
+    const onboardingMut = useCreateConnectOnboarding();
+    const disconnectMut = useDisconnectConnect();
 
-    // Form State — IFSC replaces routing number for Indian banks.
-    const [formData, setFormData] = useState({
-        holderName: '',
-        bankName: '',
-        accountNumber: '',
-        confirmAccountNumber: '',
-        ifscCode: '',
-        accountType: 'Savings',
-        swiftCode: '',
-    });
-    const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+    const handleConnect = async () => {
+        const returnUrl = `${window.location.origin}/service-dashboard/settings/bank-account?stripe=success`;
+        const refreshUrl = `${window.location.origin}/service-dashboard/settings/bank-account?stripe=refresh`;
 
-    const emptyForm = {
-        holderName: '',
-        bankName: '',
-        accountNumber: '',
-        confirmAccountNumber: '',
-        ifscCode: '',
-        accountType: 'Savings',
-        swiftCode: '',
-    };
-
-    const handleEdit = () => {
-        if (bankDetails) {
-            setFormData({
-                holderName: bankDetails.holderName || '',
-                bankName: bankDetails.bankName || '',
-                accountNumber: bankDetails.accountNumber || '',
-                confirmAccountNumber: bankDetails.accountNumber || '',
-                ifscCode: bankDetails.ifscCode || '',
-                accountType: bankDetails.accountType || 'Savings',
-                swiftCode: bankDetails.swiftCode || '',
-            });
-        }
-        setFormErrors({});
-        setIsEditing(true);
-    };
-
-    const validate = () => {
-        const errs: Record<string, string> = {};
-        if (!formData.holderName.trim()) errs.holderName = 'Required';
-        if (!formData.bankName.trim()) errs.bankName = 'Required';
-        if (!formData.accountNumber.trim()) errs.accountNumber = 'Required';
-        else if (!/^\d{9,18}$/.test(formData.accountNumber)) errs.accountNumber = 'Must be 9–18 digits';
-        if (formData.accountNumber !== formData.confirmAccountNumber) errs.confirmAccountNumber = 'Does not match';
-        if (!formData.ifscCode.trim()) errs.ifscCode = 'Required';
-        else if (!IFSC_REGEX.test(formData.ifscCode.toUpperCase())) errs.ifscCode = 'Invalid IFSC format (e.g., HDFC0001234)';
-        return errs;
-    };
-
-    const handleSave = () => {
-        const errs = validate();
-        if (Object.keys(errs).length > 0) {
-            setFormErrors(errs);
-            return;
-        }
-        setBankDetails({ ...formData, ifscCode: formData.ifscCode.toUpperCase() });
-        setIsEditing(false);
-        setFormErrors({});
-    };
-
-    const handleCancel = () => {
-        setIsEditing(false);
-        setFormErrors({});
-        if (!bankDetails) setFormData(emptyForm);
-    };
-
-    const handleDelete = () => {
-        if (window.confirm('Are you sure you want to remove this bank account?')) {
-            setBankDetails(null);
-            setFormData(emptyForm);
+        try {
+            const res = await onboardingMut.mutateAsync({ returnUrl, refreshUrl });
+            // Redirect to Stripe-hosted onboarding
+            window.location.href = res.onboardingUrl;
+        } catch (err: any) {
+            alert(err?.message || 'Failed to start onboarding');
         }
     };
 
-    // --- RENDER HELPERS ---
+    const handleDisconnect = async () => {
+        if (!window.confirm('Disconnect Stripe? You will not receive payouts until reconnected.')) return;
+        try {
+            await disconnectMut.mutateAsync();
+            await refetch();
+        } catch (err: any) {
+            alert(err?.message || 'Failed to disconnect');
+        }
+    };
 
-    // 1. EMPTY STATE (No Account)
-    if (!bankDetails && !isEditing) {
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center py-20">
+                <Loader2 className="w-8 h-8 animate-spin text-[#7CD947]" />
+                <span className="ml-3 text-gray-600">Loading Stripe status...</span>
+            </div>
+        );
+    }
+
+    // ===== NOT CONNECTED =====
+    if (!status?.connected) {
         return (
             <div className="space-y-8">
                 <div className="flex flex-col items-center justify-center py-8 md:py-16 bg-white rounded-xl border border-gray-100 shadow-sm text-center">
                     <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mb-6">
                         <Building2 className="text-[#7CD947]" size={40} />
                     </div>
-                    <h2 className="text-xl font-bold text-gray-900 mb-2">No Bank Account Linked</h2>
-                    <p className="text-gray-500 max-w-md mb-8">
-                        Link your bank account to receive payouts directly. It's secure, fast, and easy to set up.
+                    <h2 className="text-xl font-bold text-gray-900 mb-2">Connect Bank to Receive Payouts</h2>
+                    <p className="text-gray-500 max-w-md mb-2">
+                        We use <strong className="text-[#635BFF]">Stripe</strong> to securely process your payouts.
+                        Stripe holds the bank details — we never see them.
                     </p>
+                    <p className="text-xs text-gray-400 mb-8">Powered by Stripe Connect. PCI-DSS Level 1 certified.</p>
                     <button
-                        onClick={() => setIsEditing(true)}
-                        className="flex items-center gap-2 bg-[#7CD947] text-white px-8 py-3 rounded-xl font-bold hover:bg-[#6bc13d] transition-all transform hover:scale-105 shadow-md shadow-green-200"
+                        onClick={handleConnect}
+                        disabled={onboardingMut.isPending}
+                        className="flex items-center gap-2 bg-[#635BFF] text-white px-8 py-3 rounded-xl font-bold hover:bg-[#5048d4] transition-all transform hover:scale-105 shadow-md disabled:opacity-50"
                     >
-                        <Plus size={20} strokeWidth={2.5} />
-                        Add Bank Account
+                        {onboardingMut.isPending ? (
+                            <>
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                                Redirecting to Stripe...
+                            </>
+                        ) : (
+                            <>
+                                <ExternalLink size={20} strokeWidth={2.5} />
+                                Connect with Stripe
+                            </>
+                        )}
                     </button>
                 </div>
 
-                {/* Help Section (preserved) */}
                 <HelpSection />
             </div>
         );
     }
 
-    // 2. FORM STATE (Add / Edit)
-    if (isEditing) {
-        return (
-            <div className="space-y-8">
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="px-4 py-4 md:px-8 md:py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                        <div>
-                            <h2 className="text-lg font-bold text-gray-900">
-                                {bankDetails ? 'Edit Bank Account' : 'Add Bank Account'}
-                            </h2>
-                            <p className="text-xs text-gray-500 mt-1">Enter your banking details carefully</p>
-                        </div>
-                        <button onClick={handleCancel} className="text-gray-400 hover:text-gray-600">
-                            <X size={24} />
-                        </button>
-                    </div>
+    // ===== CONNECTED =====
+    const allReady = status.chargesEnabled && status.payoutsEnabled && status.detailsSubmitted;
 
-                    <div className="p-4 md:p-8">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">Account Holder Name *</label>
-                                <input
-                                    type="text"
-                                    value={formData.holderName}
-                                    onChange={(e) => setFormData({ ...formData, holderName: e.target.value })}
-                                    placeholder="As per bank records"
-                                    className={`w-full px-4 py-3 rounded-lg border ${formErrors.holderName ? 'border-red-400' : 'border-gray-200'} focus:border-[#7CD947] focus:ring-2 focus:ring-green-100 outline-none transition-all text-sm font-medium`}
-                                />
-                                {formErrors.holderName && <p className="text-xs text-red-500">{formErrors.holderName}</p>}
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">Bank Name *</label>
-                                <SearchableDropdown
-                                    options={INDIAN_BANKS}
-                                    value={formData.bankName}
-                                    onChange={(v: string) => setFormData({ ...formData, bankName: v })}
-                                    placeholder="Select your bank"
-                                    allowCustomValue
-                                />
-                                {formErrors.bankName && <p className="text-xs text-red-500">{formErrors.bankName}</p>}
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">Account Number *</label>
-                                <input
-                                    type="password"
-                                    inputMode="numeric"
-                                    autoComplete="off"
-                                    value={formData.accountNumber}
-                                    onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value.replace(/\D/g, '') })}
-                                    placeholder="Enter account number"
-                                    className={`w-full px-4 py-3 rounded-lg border ${formErrors.accountNumber ? 'border-red-400' : 'border-gray-200'} focus:border-[#7CD947] focus:ring-2 focus:ring-green-100 outline-none transition-all text-sm font-medium`}
-                                />
-                                {formErrors.accountNumber && <p className="text-xs text-red-500">{formErrors.accountNumber}</p>}
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">Confirm Account Number *</label>
-                                <input
-                                    type="text"
-                                    inputMode="numeric"
-                                    autoComplete="off"
-                                    onPaste={(e) => e.preventDefault()}
-                                    value={formData.confirmAccountNumber}
-                                    onChange={(e) => setFormData({ ...formData, confirmAccountNumber: e.target.value.replace(/\D/g, '') })}
-                                    placeholder="Re-enter account number"
-                                    className={`w-full px-4 py-3 rounded-lg border ${formErrors.confirmAccountNumber ? 'border-red-400' : 'border-gray-200'} focus:border-[#7CD947] focus:ring-2 focus:ring-green-100 outline-none transition-all text-sm font-medium`}
-                                />
-                                {formErrors.confirmAccountNumber && <p className="text-xs text-red-500">{formErrors.confirmAccountNumber}</p>}
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">IFSC Code *</label>
-                                <input
-                                    type="text"
-                                    value={formData.ifscCode}
-                                    onChange={(e) => setFormData({ ...formData, ifscCode: e.target.value.toUpperCase() })}
-                                    placeholder="e.g. HDFC0001234"
-                                    maxLength={11}
-                                    className={`w-full px-4 py-3 rounded-lg border ${formErrors.ifscCode ? 'border-red-400' : 'border-gray-200'} focus:border-[#7CD947] focus:ring-2 focus:ring-green-100 outline-none transition-all text-sm font-medium uppercase`}
-                                />
-                                {formErrors.ifscCode && <p className="text-xs text-red-500">{formErrors.ifscCode}</p>}
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">Account Type *</label>
-                                <select
-                                    value={formData.accountType}
-                                    onChange={(e) => setFormData({ ...formData, accountType: e.target.value })}
-                                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-[#7CD947] focus:ring-2 focus:ring-green-100 outline-none transition-all text-sm font-medium bg-white"
-                                >
-                                    <option value="Savings">Savings</option>
-                                    <option value="Current">Current</option>
-                                    <option value="Salary">Salary</option>
-                                    <option value="Business">Business</option>
-                                </select>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">SWIFT Code (Optional)</label>
-                                <input
-                                    type="text"
-                                    value={formData.swiftCode}
-                                    onChange={(e) => setFormData({ ...formData, swiftCode: e.target.value.toUpperCase() })}
-                                    placeholder="Required only for international transfers"
-                                    className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-[#7CD947] focus:ring-2 focus:ring-green-100 outline-none transition-all text-sm font-medium uppercase"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 border-t border-gray-100 pt-6">
-                            <button
-                                onClick={handleSave}
-                                className="flex items-center justify-center gap-2 bg-[#7CD947] text-white px-6 py-2.5 rounded-lg text-sm font-bold hover:bg-[#6bc13d] transition-colors shadow-sm"
-                            >
-                                <Check size={18} strokeWidth={2.5} />
-                                Save Detail
-                            </button>
-                            <button
-                                onClick={handleCancel}
-                                className="px-6 py-2.5 rounded-lg text-sm font-bold text-gray-600 hover:bg-gray-100 transition-colors text-center"
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    // 3. VIEW STATE (Has Account)
     return (
         <div className="space-y-8">
-            {/* Header Section */}
+            {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                 <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm shrink-0">
-                        <CreditCard className="text-gray-900" size={24} />
+                        <Building2 className="text-gray-900" size={24} />
                     </div>
                     <div>
-                        <h2 className="text-lg font-bold text-gray-900">Bank Account</h2>
-                        <p className="text-xs text-gray-500 mt-0.5">Manage your bank account information for payments</p>
+                        <h2 className="text-lg font-bold text-gray-900">Stripe Account</h2>
+                        <p className="text-xs text-gray-500 mt-0.5">Connected to Stripe — manage payouts directly</p>
                     </div>
                 </div>
 
                 <div className="flex gap-3 self-start sm:self-center">
                     <button
-                        onClick={handleDelete}
-                        className="flex items-center gap-2 bg-white border border-red-100 text-red-500 px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-red-50 transition-colors"
+                        onClick={() => refetch()}
+                        disabled={isFetching}
+                        className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50"
                     >
-                        <Trash2 size={18} strokeWidth={2} />
-                        <span className="hidden sm:inline">Delete</span>
+                        <RefreshCw size={16} className={isFetching ? 'animate-spin' : ''} />
+                        <span className="hidden sm:inline">Refresh</span>
                     </button>
                     <button
-                        onClick={handleEdit}
-                        className="flex items-center gap-2 bg-[#7CD947] text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-[#6bc13d] transition-colors shadow-sm"
+                        onClick={handleDisconnect}
+                        disabled={disconnectMut.isPending}
+                        className="flex items-center gap-2 bg-white border border-red-100 text-red-500 px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-red-50 transition-colors disabled:opacity-50"
                     >
-                        <Edit size={18} strokeWidth={2} />
-                        Edit
+                        <Trash2 size={18} strokeWidth={2} />
+                        <span className="hidden sm:inline">Disconnect</span>
                     </button>
                 </div>
             </div>
 
-            {/* Bank Account Details Card */}
-            <div className="bg-white rounded-xl p-4 md:p-8 shadow-sm border border-gray-100">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 md:gap-y-8 gap-x-12">
-                    {/* Row 1 */}
-                    <div>
-                        <p className="text-xs font-semibold text-gray-900 mb-1.5">Account Holder Name</p>
-                        <p className="text-sm text-gray-600 font-medium">{bankDetails.holderName}</p>
-                    </div>
-                    <div></div>
-
-                    {/* Row 2 */}
-                    <div>
-                        <p className="text-xs font-semibold text-gray-900 mb-1.5">Bank Name</p>
-                        <p className="text-sm text-gray-600 font-medium">{bankDetails.bankName}</p>
-                    </div>
-                    <div></div>
-
-                    {/* Row 3 */}
-                    <div>
-                        <p className="text-xs font-semibold text-gray-900 mb-1.5">Account Number</p>
-                        <p className="text-sm text-gray-600 font-medium">****{bankDetails.accountNumber.slice(-4)}</p>
-                    </div>
-                    <div>
-                        <p className="text-xs font-semibold text-gray-900 mb-1.5">IFSC Code</p>
-                        <p className="text-sm text-gray-600 font-medium">{bankDetails.ifscCode}</p>
-                    </div>
-
-                    {/* Row 4 */}
-                    <div>
-                        <p className="text-xs font-semibold text-gray-900 mb-1.5">Account Type</p>
-                        <p className="text-sm text-gray-600 font-medium">{bankDetails.accountType}</p>
-                    </div>
-                    <div>
-                        <p className="text-xs font-semibold text-gray-900 mb-1.5">SWIFT Code (Optional)</p>
-                        <p className="text-sm text-gray-600 font-medium">{bankDetails.swiftCode || '-'}</p>
-                    </div>
+            {/* Status Card */}
+            <div className="bg-white rounded-xl p-4 md:p-8 shadow-sm border border-gray-100 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12">
+                    <StatusRow label="Account ID" value={status.accountId || ''} />
+                    <StatusItem label="Onboarding Complete" enabled={status.detailsSubmitted} />
+                    <StatusItem label="Charges Enabled" enabled={status.chargesEnabled} />
+                    <StatusItem label="Payouts Enabled" enabled={status.payoutsEnabled} />
                 </div>
-            </div>
 
-            {/* Credit Card Visual (Optional: Dynamic based on bank name if desired, keeping static for now but using real last 4 digits) */}
-            <div className="w-full max-w-[420px]">
-                <div className="relative aspect-[1.586/1] bg-gradient-to-br from-[#2a2a2a] via-[#1a1a1a] to-black rounded-2xl p-6 sm:p-8 text-white shadow-2xl overflow-hidden group hover:scale-[1.02] transition-transform duration-300 flex flex-col justify-between border border-white/10">
-
-                    {/* Header: Bank & Card Type */}
-                    <div className="flex justify-between items-start">
-                        <div className="flex items-center gap-2">
-                            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 sm:w-6 sm:h-6 opacity-90">
-                                <path d="M12 2L2 22h20L12 2zm0 3l7.5 15h-15L12 5z" />
-                            </svg>
-                            <span className="font-medium tracking-wider text-xs sm:text-sm uppercase opacity-90">{bankDetails.bankName || 'BANK NAME'}</span>
-                        </div>
-                        <span className="text-xs sm:text-sm tracking-wider opacity-70 font-light">Debit/Credit</span>
-                    </div>
-
-                    {/* Middle: Chip & Wifi */}
-                    <div className="flex justify-between items-center">
-                        <div className="w-10 h-7 sm:w-12 sm:h-9 bg-gradient-to-tr from-yellow-200 to-yellow-500 rounded sm:rounded-md border border-yellow-600 opacity-90 relative shadow-sm">
-                            <div className="absolute top-1/2 left-0 w-full h-[1px] bg-yellow-700/50"></div>
-                            <div className="absolute top-0 left-1/2 h-full w-[1px] bg-yellow-700/50"></div>
-                        </div>
-                        <Wifi className="rotate-90 opacity-80" size={24} />
-                    </div>
-
-                    {/* Footer: Numbers & Name */}
-                    <div className="space-y-4">
-                        <div className="flex gap-2 sm:gap-4 text-lg sm:text-2xl font-mono tracking-widest opacity-95">
-                            <span>****</span>
-                            <span>****</span>
-                            <span>****</span>
-                            <span>{bankDetails.accountNumber.slice(-4) || '0000'}</span>
-                        </div>
-
-                        <div className="flex justify-between items-end">
-                            <div className="font-mono uppercase tracking-widest text-xs sm:text-sm opacity-80 max-w-[200px] truncate">
-                                {bankDetails.holderName || 'CARDHOLDER NAME'}
-                            </div>
-                            <div className="text-[10px] flex flex-col items-center leading-none opacity-80">
-                                <span className="text-[5px] sm:text-[6px] mb-0.5">VALID THRU</span>
-                                <span className="font-mono text-xs sm:text-sm">12/30</span>
-                            </div>
+                {!allReady && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-start gap-3">
+                        <AlertCircle className="text-yellow-600 shrink-0" size={20} />
+                        <div className="flex-1">
+                            <p className="text-sm font-bold text-yellow-900 mb-1">Onboarding incomplete</p>
+                            <p className="text-xs text-yellow-700 mb-3">
+                                Stripe needs more info before payouts can be enabled. Click below to continue onboarding.
+                            </p>
+                            <button
+                                onClick={handleConnect}
+                                disabled={onboardingMut.isPending}
+                                className="flex items-center gap-2 bg-[#635BFF] text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-[#5048d4] transition-colors disabled:opacity-50"
+                            >
+                                {onboardingMut.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <ExternalLink size={14} />}
+                                Continue Onboarding
+                            </button>
                         </div>
                     </div>
+                )}
 
-                    {/* Glass Shine Effect */}
-                    <div className="absolute -top-[100%] -left-[100%] w-[300%] h-[300%] bg-white/5 rotate-45 pointer-events-none group-hover:top-[-50%] group-hover:left-[-50%] transition-all duration-700 ease-out" />
-                </div>
+                {allReady && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start gap-3">
+                        <CheckCircle2 className="text-green-600 shrink-0" size={20} />
+                        <div className="flex-1">
+                            <p className="text-sm font-bold text-green-900 mb-1">All set</p>
+                            <p className="text-xs text-green-700">
+                                Your account is fully verified. Payouts will arrive in your bank in 2–3 business days after each completed job.
+                            </p>
+                        </div>
+                    </div>
+                )}
             </div>
 
             <HelpSection />
         </div>
     );
 };
+
+const StatusRow = ({ label, value }: { label: string; value: string }) => (
+    <div>
+        <p className="text-xs font-semibold text-gray-900 mb-1.5">{label}</p>
+        <p className="text-sm text-gray-600 font-mono truncate">{value || '-'}</p>
+    </div>
+);
+
+const StatusItem = ({ label, enabled }: { label: string; enabled: boolean }) => (
+    <div>
+        <p className="text-xs font-semibold text-gray-900 mb-1.5">{label}</p>
+        <p className={`text-sm font-medium flex items-center gap-1.5 ${enabled ? 'text-green-600' : 'text-orange-600'}`}>
+            {enabled ? (
+                <>
+                    <CheckCircle2 size={16} />
+                    Enabled
+                </>
+            ) : (
+                <>
+                    <AlertCircle size={16} />
+                    Not yet
+                </>
+            )}
+        </p>
+    </div>
+);
 
 const HelpSection = () => (
     <div className="bg-white rounded-xl p-5 md:p-6 border border-gray-100 shadow-sm flex flex-col md:flex-row gap-5 items-start mt-8">
@@ -398,15 +202,20 @@ const HelpSection = () => (
         <div className="flex-1">
             <h3 className="font-bold text-gray-900 mb-1 text-sm">Questions About Getting Paid?</h3>
             <p className="text-xs text-gray-500 mb-4 leading-relaxed max-w-3xl">
-                Our payment setup is secure and straightforward. Payments are deposited directly to your bank account within 3-5 business days after job completion.
-                Need help with tax forms or entity registration? We're here to assist.
+                Stripe handles all bank verification and KYC. Payouts arrive in 2–3 business days after each completed job.
+                Bank details are stored on Stripe's PCI-DSS Level 1 servers — we never see them.
             </p>
             <div className="flex gap-3">
-                <button className="bg-[#7CD947] text-white px-5 py-2 rounded-lg text-xs font-bold hover:bg-[#6bc13d] transition-colors shadow-sm">
-                    Contact Support
-                </button>
+                <a
+                    href="https://stripe.com/connect/express"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-[#635BFF] text-white px-5 py-2 rounded-lg text-xs font-bold hover:bg-[#5048d4] transition-colors shadow-sm"
+                >
+                    Learn about Stripe Connect
+                </a>
                 <button className="bg-white border border-gray-200 text-gray-700 px-5 py-2 rounded-lg text-xs font-bold hover:bg-gray-50 transition-colors shadow-sm">
-                    View FAQs
+                    Contact Support
                 </button>
             </div>
         </div>

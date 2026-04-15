@@ -58,6 +58,8 @@ const AddExpenseInvoice: React.FC = () => {
     const [contactId, setContactId] = useState<string>('');
     const [selectedPayeeType, setSelectedPayeeType] = useState<'tenant' | 'Service Pro' | 'other'>('Service Pro');
     const [leaseId, setLeaseId] = useState<string>('');
+    const [selectedLeasePropertyId, setSelectedLeasePropertyId] = useState<string>('');
+    const [selectedLeaseUnitId, setSelectedLeaseUnitId] = useState<string>('');
     const [isAddServiceProModalOpen, setIsAddServiceProModalOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [uploadError, setUploadError] = useState<string>('');
@@ -246,6 +248,8 @@ const AddExpenseInvoice: React.FC = () => {
                 isPaid,
                 payeeId: payeeId || undefined,
                 contactId: contactId || undefined,
+                propertyId: selectedLeasePropertyId || undefined,
+                unitId: selectedLeaseUnitId || undefined,
                 leaseId: leaseId || undefined,
                 details: details || undefined,
                 tags: tags.length > 0 ? tags : undefined,
@@ -372,6 +376,9 @@ const AddExpenseInvoice: React.FC = () => {
                                     value={leaseId}
                                     onChange={(value) => {
                                         setLeaseId(value);
+                                        const selectedLease = leases.find((l: any) => l.id === value);
+                                        setSelectedLeasePropertyId(selectedLease?.propertyId || selectedLease?.property?.id || '');
+                                        setSelectedLeaseUnitId(selectedLease?.unitId || selectedLease?.unit?.id || '');
                                     }}
                                     options={leaseOptions}
                                     placeholder={isLoadingLeases ? 'Loading leases...' : 'Select Lease'}

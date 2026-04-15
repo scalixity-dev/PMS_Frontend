@@ -171,12 +171,10 @@ const Requests: React.FC = () => {
     };
 
     const handleEdit = (id: string) => {
-        console.log('Edit clicked for:', id);
         navigate('/dashboard/maintenance/request', { state: { editMode: true, id } });
     };
 
     const handleMakeRecurring = (id: string) => {
-        console.log('Make Recurring clicked for:', id);
         const request = mappedRequests.find(r => r.id === id);
         if (request) {
             setSelectedRequestForRecurring(request);
@@ -185,14 +183,12 @@ const Requests: React.FC = () => {
     };
 
     const handlePrint = (_id: string) => {
-        console.log('Print clicked for:', _id);
         window.print();
     };
 
-    const handleRecurringCreate = (data: any) => {
-        console.log('Creating recurring request:', data);
+    const handleRecurringCreate = (_data: any) => {
+        // Recurring maintenance API not yet implemented — modal closes after confirm
         setIsRecurringModalOpen(false);
-        // TODO: Implement API call
     };
 
     const confirmDelete = async () => {

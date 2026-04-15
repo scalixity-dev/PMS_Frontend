@@ -86,7 +86,7 @@ const TenantCard: React.FC<TenantCardProps> = ({
     ];
 
     const handleMessage = () => {
-        // TODO: Implement message functionality
+        navigate('/dashboard/messages');
     };
 
     return (

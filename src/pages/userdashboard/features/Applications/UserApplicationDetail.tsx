@@ -52,6 +52,7 @@ import {
     type BackendEmergencyContact,
     type BackendReferenceContact
 } from '../../../../services/application.service';
+import { applicationService } from '../../../../services/application.service';
 
 
 const handleConfirmDeleteGeneric = async (
@@ -1343,11 +1344,19 @@ const ApplicationDetail: React.FC = () => {
         );
     };
 
-    const handleSaveFile = () => {
-        // TODO: Implement file upload to backend if file storage is available
-        // For now, just close the modal
-        console.warn('File upload not yet implemented - files need to be uploaded to backend storage');
-        setIsAddFileModalOpen(false);
+    const handleSaveFile = async (data: { file: File | null; name: string; type: string }) => {
+        if (!data.file || !id) {
+            setIsAddFileModalOpen(false);
+            return;
+        }
+        try {
+            await applicationService.addAttachment(id, data.file);
+            setIsAddFileModalOpen(false);
+            refetch();
+        } catch (error: any) {
+            console.error('Failed to upload attachment:', error);
+            alert(error.message || 'Failed to upload file');
+        }
     };
 
     return (

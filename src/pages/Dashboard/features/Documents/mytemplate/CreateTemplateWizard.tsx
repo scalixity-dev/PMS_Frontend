@@ -3,13 +3,41 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, FileText, FileWarning, Lightbulb, Check } from 'lucide-react';
 import PrimaryActionButton from '../../../../../components/common/buttons/PrimaryActionButton';
 import TemplateEditor from '../components/TemplateEditor';
+import { useCreateTemplate } from '../../../../../hooks/useDocumentsQueries';
+import { useToast } from '../../../../../components/common/Toast';
+
+/** Extract unique {{placeholder}} tokens from template content. */
+function extractVariables(content: string) {
+    const regex = /\{\{(\w+)\}\}/g;
+    const seen = new Set<string>();
+    const vars: { key: string; label: string; required: boolean; type: string }[] = [];
+    let match: RegExpExecArray | null;
+    while ((match = regex.exec(content)) !== null) {
+        const key = match[1];
+        if (!seen.has(key)) {
+            seen.add(key);
+            const label = key
+                .replace(/_/g, ' ')
+                .replace(/([A-Z])/g, ' $1')
+                .replace(/^./, (c) => c.toUpperCase())
+                .trim();
+            vars.push({ key, label, required: true, type: 'text' });
+        }
+    }
+    return vars;
+}
 
 const CreateTemplateWizard: React.FC = () => {
     const navigate = useNavigate();
+    const toast = useToast();
+    const createTemplate = useCreateTemplate();
+
     const [currentStep, setCurrentStep] = useState(1);
     const [title, setTitle] = useState('');
     const [templateType, setTemplateType] = useState('');
     const [editorContent, setEditorContent] = useState('');
+
+    const detectedVars = extractVariables(editorContent);
 
     const handleBack = () => {
         if (currentStep > 1) {
@@ -19,25 +47,20 @@ const CreateTemplateWizard: React.FC = () => {
         }
     };
 
-    const handleFinish = () => {
-        // Create new template object
-        const newTemplate = {
-            id: Date.now(),
-            title: title,
-            subtitle: templateType === 'agreement' ? 'Tenants Agreements' : 'Tenants Notice',
-            content: editorContent
-        };
-
-        // Get existing templates
-        const saved = localStorage.getItem('myTemplates');
-        const templates = saved ? JSON.parse(saved) : [];
-
-        // Add new template and save
-        const updatedTemplates = [...templates, newTemplate];
-        localStorage.setItem('myTemplates', JSON.stringify(updatedTemplates));
-
-        // Navigate back to list
-        navigate('/dashboard/documents/my-templates');
+    const handleFinish = async () => {
+        const variables = extractVariables(editorContent);
+        try {
+            await createTemplate.mutateAsync({
+                title,
+                category: 'CUSTOM',
+                content: editorContent,
+                variables,
+            } as any);
+            toast.success('Template created successfully');
+            navigate('/dashboard/documents/my-templates');
+        } catch (err: any) {
+            toast.error(err?.message || 'Failed to create template');
+        }
     };
 
     return (
@@ -228,11 +251,23 @@ const CreateTemplateWizard: React.FC = () => {
                                     <TemplateEditor onEditorContentChange={setEditorContent} />
                                 </div>
 
+                                {detectedVars.length > 0 && (
+                                    <div className="w-full max-w-2xl mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                                        <p className="text-xs font-semibold text-blue-700 mb-2">Detected placeholders ({detectedVars.length}):</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {detectedVars.map((v) => (
+                                                <span key={v.key} className="px-2 py-1 bg-blue-100 text-blue-800 rounded-md text-xs font-mono">{`{{${v.key}}}`}</span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className="flex justify-center w-full">
                                     <PrimaryActionButton
                                         onClick={handleFinish}
-                                        text="Finish"
-                                        className="!bg-[#3D7475] min-w-[200px]"
+                                        disabled={createTemplate.isPending}
+                                        text={createTemplate.isPending ? 'Saving...' : 'Finish'}
+                                        className="!bg-[#3D7475] min-w-[200px] disabled:opacity-50 disabled:cursor-not-allowed"
                                     />
                                 </div>
                             </div>

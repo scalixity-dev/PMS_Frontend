@@ -651,15 +651,25 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({ isOAuthSignu
             >
               {(registerMutation.isPending || updateProfileMutation.isPending)
                 ? (isOAuthSignup ? 'Updating profile...' : 'Creating account...')
-                : (isOAuthSignup 
-                    ? 'Complete registration' 
-                    : formData.accountType === 'manage' 
-                      ? 'Start my free trial' 
+                : (isOAuthSignup
+                    ? 'Complete registration'
+                    : formData.accountType === 'manage'
+                      ? 'Start my free trial'
                       : 'Create account')
               }
             </button>
           </div>
-          <div className="mb-8 text-center text-sm sm:text-base text-gray-600 pt-2">
+          <div className="text-center text-xs text-gray-500 px-4 pt-3">
+            By creating an account, you agree to our{' '}
+            <Link to="/terms-of-service" className="text-teal-600 hover:underline font-medium">
+              Terms of Service
+            </Link>{' '}
+            and{' '}
+            <Link to="/privacy-policy" className="text-teal-600 hover:underline font-medium">
+              Privacy Policy
+            </Link>.
+          </div>
+          <div className="mb-8 text-center text-sm sm:text-base text-gray-600 pt-4">
             Already have an account?{' '}
             <Link to="/login" className="font-semibold text-teal-600 hover:text-teal-700 hover:underline transition-colors">
               Sign In

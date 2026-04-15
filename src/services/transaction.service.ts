@@ -179,6 +179,7 @@ export interface CreateRecurringIncomeDto {
   leaseId?: string;
   details?: string;
   notes?: string;
+  tags?: string[];
 }
 
 class TransactionService {

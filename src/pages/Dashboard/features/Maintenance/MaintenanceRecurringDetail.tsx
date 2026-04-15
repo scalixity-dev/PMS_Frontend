@@ -1,76 +1,29 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
-import { ChevronLeft, ChevronDown, Trash2 } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
+import { ChevronLeft, ChevronDown } from 'lucide-react';
 import CustomTextBox from '../../components/CustomTextBox';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
+import {
+    useGetMaintenanceRecurring,
+    useDeleteMaintenanceRecurring,
+} from '../../../../hooks/useMaintenanceRecurringQueries';
 
-// Mock Data
-const MOCK_RELATED_REQUESTS = [
-    {
-        id: 1,
-        status: 'New',
-        statusColor: '#7BD747',
-        requestId: '8965231',
-        title: 'Household / Trim / Need Painting',
-        dateInitiated: '25 Dec, 2025',
-        assignee: 'UnAssigned',
-        assigneeType: 'unassigned' as const
-    },
-    {
-        id: 2,
-        status: 'In Progress',
-        statusColor: '#FFA500',
-        requestId: '8965232',
-        title: 'Electrical / Lights / Smoke Detectors / Beeping',
-        dateInitiated: '26 Dec, 2025',
-        assignee: 'John Doe',
-        assigneeType: 'assigned' as const
-    },
-    {
-        id: 3,
-        status: 'Completed',
-        statusColor: '#3A6D6C',
-        requestId: '8965233',
-        title: 'Plumbing / Faucet / Leaking',
-        dateInitiated: '24 Dec, 2025',
-        assignee: 'Jane Smith',
-        assigneeType: 'assigned' as const
-    },
-    {
-        id: 4,
-        status: 'New',
-        statusColor: '#7BD747',
-        requestId: '8965234',
-        title: 'HVAC / Air Conditioning / Not Cooling',
-        dateInitiated: '27 Dec, 2025',
-        assignee: 'UnAssigned',
-        assigneeType: 'unassigned' as const
-    },
-];
 
 const MaintenanceRecurringDetail: React.FC = () => {
     const navigate = useNavigate();
+    const { id } = useParams<{ id: string }>();
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
     const [isGeneralInfoCollapsed, setIsGeneralInfoCollapsed] = useState(false);
     const [isRelatedRequestCollapsed, setIsRelatedRequestCollapsed] = useState(false);
-    const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const actionMenuRef = useRef<HTMLDivElement>(null);
 
-    // Close dropdown when clicking outside
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (actionMenuRef.current && !actionMenuRef.current.contains(event.target as Node)) {
-                setIsActionMenuOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+    const { data: record } = useGetMaintenanceRecurring(id);
+    const deleteMutation = useDeleteMaintenanceRecurring();
 
-    const handleDelete = () => {
-        // TODO: Implement actual delete API call here
-        console.log('Deleting recurring request');
+    const handleDelete = async () => {
+        if (!id) return;
+        await deleteMutation.mutateAsync(id);
         setIsDeleteModalOpen(false);
         navigate('/dashboard/maintenance/recurring');
     };
@@ -97,26 +50,12 @@ const MaintenanceRecurringDetail: React.FC = () => {
                     </div>
                     <div className="relative" ref={actionMenuRef}>
                         <button
-                            onClick={() => setIsActionMenuOpen(!isActionMenuOpen)}
-                            className="px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm flex items-center gap-2"
+                            onClick={() => setIsDeleteModalOpen(true)}
+                            className="px-6 py-2 bg-red-500 text-white rounded-full text-sm font-medium hover:bg-red-600 transition-colors shadow-sm flex items-center gap-2"
                         >
-                            Action
+                            Delete
                             <ChevronDown className="w-4 h-4" />
                         </button>
-                        {isActionMenuOpen && (
-                            <div className="absolute right-0 mt-2 w-28 bg-white rounded-lg shadow-xl border border-gray-100 z-50 overflow-hidden">
-                                <button
-                                    onClick={() => {
-                                        setIsActionMenuOpen(false);
-                                        setIsDeleteModalOpen(true);
-                                    }}
-                                    className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors font-medium flex items-center gap-2"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                    Delete
-                                </button>
-                            </div>
-                        )}
                     </div>
                 </div>
 
@@ -125,15 +64,15 @@ const MaintenanceRecurringDetail: React.FC = () => {
                 {/* ID & Property Section */}
                 <div className="bg-[#f0f0f6] rounded-[2rem] md:rounded-[3rem] p-4 flex flex-col md:flex-row flex-wrap gap-4 items-stretch md:items-center mb-6 shadow-sm">
                     <div className="bg-[#7BD747] text-white px-4 py-3 md:px-6 rounded-[2rem] flex flex-col sm:flex-row items-center justify-between gap-2 md:gap-4 md:min-w-[300px]">
-                        <span className="font-bold text-sm">ID- 1331896</span>
+                        <span className="font-bold text-sm">ID- {record?.id?.slice(0, 8) ?? '...'}</span>
                         <div className="bg-white/90 text-[#3A6D6C] text-xs px-2 py-0.5 rounded-full font-bold text-center">
-                            Electrical / Lights / Smoke Detectors / Beeping
+                            {record?.title ?? ''}
                         </div>
                     </div>
                     <div className="bg-[#7BD747] text-white px-4 py-3 md:px-6 rounded-[2rem] flex items-center justify-between gap-4 md:min-w-[200px]">
                         <span className="font-bold text-sm">Property</span>
                         <div className="bg-white/90 text-[#3A6D6C] text-xs px-3 py-0.5 rounded-full font-bold">
-                            Luxury
+                            {record?.property?.propertyName ?? '—'}
                         </div>
                     </div>
                 </div>
@@ -142,7 +81,7 @@ const MaintenanceRecurringDetail: React.FC = () => {
                 <div className="mb-6">
                     <h2 className="text-lg font-bold text-gray-800 mb-2">Description</h2>
                     <div className="bg-[#F0F0F6] rounded-[1.5rem] p-6 min-h-[120px] shadow-sm">
-                        <p className="text-gray-600">lorem smdjsdn sdjdfsd fsd v</p>
+                        <p className="text-gray-600">{record?.description ?? '—'}</p>
                     </div>
                 </div>
 
@@ -163,21 +102,21 @@ const MaintenanceRecurringDetail: React.FC = () => {
                                 <div className="space-y-4">
                                     <CustomTextBox
                                         label="Start date"
-                                        value="25 Dec, 2025"
+                                        value={record?.startDate ? new Date(record.startDate).toLocaleDateString() : '—'}
                                         className="w-full"
                                         labelClassName="text-gray-700"
                                         valueClassName="text-gray-600 text-center flex-1"
                                     />
                                     <CustomTextBox
                                         label="Next date"
-                                        value="08 Jan, 2026"
+                                        value={record?.nextOccurrence ? new Date(record.nextOccurrence).toLocaleDateString() : '—'}
                                         className="w-full"
                                         labelClassName="text-gray-700"
                                         valueClassName="text-gray-600 text-center flex-1"
                                     />
                                     <CustomTextBox
                                         label="End date"
-                                        value="28 Jan, 2026"
+                                        value={record?.endDate ? new Date(record.endDate).toLocaleDateString() : '—'}
                                         className="w-full"
                                         labelClassName="text-gray-700"
                                         valueClassName="text-gray-600 text-center flex-1"
@@ -187,15 +126,15 @@ const MaintenanceRecurringDetail: React.FC = () => {
                                 {/* Right Column */}
                                 <div className="space-y-4">
                                     <CustomTextBox
-                                        label="Type"
-                                        value="Recurring / Every two weeks"
+                                        label="Frequency"
+                                        value={record?.frequency ?? '—'}
                                         className="w-full"
                                         labelClassName="text-gray-700"
                                         valueClassName="text-gray-600 text-center flex-1"
                                     />
                                     <CustomTextBox
-                                        label="Post in advance"
-                                        value="10 days"
+                                        label="Priority"
+                                        value={record?.priority ?? '—'}
                                         className="w-full"
                                         labelClassName="text-gray-700"
                                         valueClassName="text-gray-600 text-center flex-1"
@@ -230,45 +169,9 @@ const MaintenanceRecurringDetail: React.FC = () => {
 
                             {/* Table Body */}
                             <div className="bg-[#F0F0F6] rounded-[2rem] md:rounded-b-[2rem] md:rounded-t-none p-4 flex flex-col gap-3 min-h-[100px] mt-4 md:mt-0">
-                                {MOCK_RELATED_REQUESTS.map((request) => (
-                                    <div
-                                        key={request.id}
-                                        className="bg-white rounded-2xl p-4 md:px-6 md:py-4 grid grid-cols-1 md:grid-cols-[1fr_1fr_2fr_1.5fr_1fr] gap-2 md:gap-4 items-start md:items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                                    >
-                                        <div className="flex items-center justify-between md:justify-start gap-2">
-                                            <div className="flex items-center gap-2">
-                                                <div
-                                                    className="w-2.5 h-2.5 rounded-full"
-                                                    style={{ backgroundColor: request.statusColor }}
-                                                ></div>
-                                                <span className="font-medium text-gray-800 text-sm">{request.status}</span>
-                                            </div>
-                                            {/* Mobile: Request ID shown here */}
-                                            <div className="md:hidden font-bold text-gray-800 text-sm">#{request.requestId}</div>
-                                        </div>
-
-                                        <div className="hidden md:block font-bold text-gray-800 text-sm">{request.requestId}</div>
-
-                                        <div className="font-medium text-gray-800 text-sm">
-                                            <span className="md:hidden text-gray-500 block text-xs mb-1">Title & Property:</span>
-                                            {request.title}
-                                        </div>
-
-                                        <div className="text-[#3A6D6C] font-medium text-sm">
-                                            <span className="md:hidden text-gray-500 block text-xs mb-1">Date:</span>
-                                            {request.dateInitiated}
-                                        </div>
-
-                                        <div className="flex md:block justify-start mt-2 md:mt-0">
-                                            <span className={`px-4 py-1 rounded-full text-xs font-medium ${request.assigneeType === 'unassigned'
-                                                ? 'bg-[#caecca] text-gray-700'
-                                                : 'bg-[#3A6D6C] text-white'
-                                                }`}>
-                                                {request.assignee}
-                                            </span>
-                                        </div>
-                                    </div>
-                                ))}
+                                <div className="text-center py-12 text-gray-500">
+                                    No related requests found.
+                                </div>
                             </div>
                         </div>
                     )}

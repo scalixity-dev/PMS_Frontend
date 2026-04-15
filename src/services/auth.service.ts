@@ -753,6 +753,28 @@ class AuthService {
   }
 
   /**
+   * Delete the authenticated user's account permanently.
+   */
+  async deleteAccount(): Promise<void> {
+    const response = await fetch(API_ENDPOINTS.AUTH.DELETE_ACCOUNT, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      let errorMessage = 'Failed to delete account';
+      try {
+        const errorData = await response.json();
+        if (Array.isArray(errorData.message)) errorMessage = errorData.message.join('. ');
+        else if (errorData.message) errorMessage = errorData.message;
+        else if (errorData.error) errorMessage = errorData.error;
+      } catch {
+        errorMessage = `Failed to delete account: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+  }
+
+  /**
    * Verify a mobile redirect token for auto-login.
    * Called when the frontend detects ?token= in the URL.
    * The backend sets the auth cookie on success.

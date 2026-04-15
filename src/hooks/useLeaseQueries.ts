@@ -207,6 +207,30 @@ export const useUpdateLeaseUtilities = () => {
 };
 
 /**
+ * Hook to renew a lease
+ */
+export const useRenewLease = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { endDate: string; monthlyRent?: number; notes?: string } }): Promise<BackendLease> => {
+      return leaseService.renew(id, data);
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: leaseQueryKeys.lists() });
+      if (data.propertyId) {
+        queryClient.invalidateQueries({ queryKey: leaseQueryKeys.byProperty(data.propertyId) });
+      }
+      if (data.tenantId) {
+        queryClient.invalidateQueries({ queryKey: leaseQueryKeys.byTenant(data.tenantId) });
+      }
+      queryClient.setQueryData(leaseQueryKeys.detail(data.id), data);
+      queryClient.invalidateQueries({ queryKey: ['properties'] });
+    },
+  });
+};
+
+/**
  * Hook to delete a lease
  */
 export const useDeleteLease = () => {

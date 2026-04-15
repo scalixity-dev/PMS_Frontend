@@ -14,6 +14,11 @@ import FinancePage from './pages/basewebsite/features/finance/index';
 import LeadsPage from './pages/basewebsite/features/leads/index';
 import { RentalApplicationSettingsLayout } from './components/common/RentalApplicationSettingsLayout';
 import PricingPage from './pages/basewebsite/pricing';
+import TermsOfService from './pages/basewebsite/legal/TermsOfService';
+import PrivacyPolicy from './pages/basewebsite/legal/PrivacyPolicy';
+import CookiePolicy from './pages/basewebsite/legal/CookiePolicy';
+import AcceptInvitation from './pages/basewebsite/team/AcceptInvitation';
+import { ToastProvider } from './components/common/Toast';
 import AIChatButton from './components/common/AIChatButton';
 import LoginPage from './pages/basewebsite/auth/login';
 import SignUpPage from './pages/basewebsite/auth/signUp';
@@ -221,6 +226,7 @@ const App: React.FC = () => {
   return (
     <>
       <QueryClientProvider client={queryClient}>
+        <ToastProvider>
         <BrowserRouter>
           <RoutedApp>
           <AutoLoginProvider>
@@ -293,6 +299,10 @@ const App: React.FC = () => {
               <Route path="/features/team" element={<TeamPage />} />
               <Route path="/resources" element={<ResourcePage />} />
               <Route path="/pricing" element={<PricingPage />} />
+              <Route path="/terms-of-service" element={<TermsOfService />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/cookie-policy" element={<CookiePolicy />} />
+              <Route path="/team/accept-invitation" element={<AcceptInvitation />} />
             </Route>
             <Route element={<DashboardLayout />}>
               <Route
@@ -879,6 +889,7 @@ const App: React.FC = () => {
         </BrowserRouter>
         <ChatToast />
         <TanStackDevtools />
+        </ToastProvider>
       </QueryClientProvider>
     </>
   );

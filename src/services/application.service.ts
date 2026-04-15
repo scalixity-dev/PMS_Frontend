@@ -884,6 +884,21 @@ class ApplicationService {
       throw new Error(errorMessage);
     }
   }
+  async addAttachment(applicationId: string, file: File): Promise<ApplicationAttachment> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await fetch(API_ENDPOINTS.APPLICATION.GET_ATTACHMENTS(applicationId), {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Failed to upload attachment');
+    }
+    return response.json();
+  }
+
   async getAttachments(applicationId: string): Promise<ApplicationAttachment[]> {
     const response = await fetch(API_ENDPOINTS.APPLICATION.GET_ATTACHMENTS(applicationId), {
       method: 'GET',

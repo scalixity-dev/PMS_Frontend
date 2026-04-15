@@ -3,99 +3,74 @@ import { useNavigate, useParams } from 'react-router-dom';
 import PrimaryActionButton from '../../../../../components/common/buttons/PrimaryActionButton';
 import TemplateEditor from '../components/TemplateEditor';
 import Breadcrumb from '../../../../../components/ui/Breadcrumb';
+import { useGetTemplate, useUpdateTemplate } from '../../../../../hooks/useDocumentsQueries';
+import { useToast } from '../../../../../components/common/Toast';
 
 const EditTemplate: React.FC = () => {
     const navigate = useNavigate();
+    const toast = useToast();
     const { id } = useParams<{ id: string }>();
+
+    const { data: template, isLoading, isError } = useGetTemplate(id ?? '');
+    const updateTemplate = useUpdateTemplate();
+
     const [editorContent, setEditorContent] = useState('');
     const [documentTitle, setDocumentTitle] = useState('');
     const [documentType, setDocumentType] = useState('');
 
-    const templateName = documentTitle || "Basic Residential Lease Agreement";
-
+    // Prefill when data arrives
     useEffect(() => {
-        if (!id) {
-            setDocumentTitle("Basic Residential Lease Agreement");
-            setDocumentType("Tenants Agreement");
-            return;
+        if (template) {
+            setDocumentTitle(template.title);
+            setDocumentType(template.category ?? '');
+            setEditorContent(template.content ?? '');
         }
+    }, [template]);
 
-        const saved = localStorage.getItem('myTemplates');
-        if (!saved) {
-            setDocumentTitle("Basic Residential Lease Agreement");
-            setDocumentType("Tenants Agreement");
-            return;
-        }
+    const templateName = documentTitle || 'Template';
 
+    const handleUpdate = async () => {
+        if (!id) return;
         try {
-            const templates = JSON.parse(saved) as Array<{
-                id: number;
-                title: string;
-                subtitle: string;
-                content?: string;
-            }>;
-
-            const numericId = Number(id);
-            const existing = templates.find((template) => template.id === numericId);
-
-            if (existing) {
-                setDocumentTitle(existing.title);
-                setDocumentType(existing.subtitle);
-                setEditorContent(existing.content ?? '');
-            } else {
-                setDocumentTitle("Basic Residential Lease Agreement");
-                setDocumentType("Tenants Agreement");
-            }
-        } catch {
-            setDocumentTitle("Basic Residential Lease Agreement");
-            setDocumentType("Tenants Agreement");
-        }
-    }, [id]);
-
-    const handleUpdate = () => {
-        const numericId = id ? Number(id) : Date.now();
-        const saved = localStorage.getItem('myTemplates');
-
-        let templates: Array<{
-            id: number;
-            title: string;
-            subtitle: string;
-            content?: string;
-        }> = [];
-
-        if (saved) {
-            try {
-                templates = JSON.parse(saved);
-            } catch {
-                templates = [];
-            }
-        }
-
-        const existingIndex = templates.findIndex((template) => template.id === numericId);
-
-        if (existingIndex !== -1) {
-            templates[existingIndex] = {
-                ...templates[existingIndex],
-                title: documentTitle || templates[existingIndex].title,
-                subtitle: documentType || templates[existingIndex].subtitle,
-                content: editorContent,
-            };
-        } else {
-            templates.push({
-                id: numericId,
-                title: documentTitle || "Basic Residential Lease Agreement",
-                subtitle: documentType || "Tenants Agreements",
-                content: editorContent,
+            await updateTemplate.mutateAsync({
+                id,
+                dto: {
+                    title: documentTitle || undefined,
+                    content: editorContent,
+                },
             });
+            toast.success('Template updated');
+            navigate(`/dashboard/documents/my-templates/${id}`);
+        } catch (err: any) {
+            toast.error(err?.message || 'Failed to update template');
         }
-
-        localStorage.setItem('myTemplates', JSON.stringify(templates));
-        navigate(`/dashboard/documents/my-templates/${numericId}`);
     };
+
+    if (isLoading) {
+        return (
+            <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-10 flex items-center justify-center">
+                <p className="text-gray-600">Loading template...</p>
+            </div>
+        );
+    }
+
+    if (isError || !template) {
+        return (
+            <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-10 flex items-center justify-center">
+                <div className="text-center">
+                    <p className="text-red-600 font-semibold mb-4">Template not found.</p>
+                    <PrimaryActionButton
+                        onClick={() => navigate('/dashboard/documents/my-templates')}
+                        text="Back to Templates"
+                        className="!bg-[#3D7475]"
+                    />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-7xl mx-auto min-h-screen font-outfit pb-10">
-            {/* Breadcrumb */}
             {/* Breadcrumb */}
             <div className="flex w-full overflow-x-auto pb-2 md:pb-0 mb-8 scrollbar-hide">
                 <Breadcrumb items={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Documents Template', path: '/dashboard/documents/my-templates' }, { label: templateName, path: `/dashboard/documents/my-templates/${id}` }, { label: 'Edit template' }]} />
@@ -150,8 +125,9 @@ const EditTemplate: React.FC = () => {
                     />
                     <PrimaryActionButton
                         onClick={handleUpdate}
-                        text="Update"
-                        className="w-full md:w-auto px-10 md:px-14 py-3.5 rounded-2xl font-bold text-lg shadow-[0_4px_15px_rgba(58,109,108,0.4)] min-w-[180px]"
+                        disabled={updateTemplate.isPending}
+                        text={updateTemplate.isPending ? 'Saving...' : 'Update'}
+                        className="w-full md:w-auto px-10 md:px-14 py-3.5 rounded-2xl font-bold text-lg shadow-[0_4px_15px_rgba(58,109,108,0.4)] min-w-[180px] disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                 </div>
             </div>

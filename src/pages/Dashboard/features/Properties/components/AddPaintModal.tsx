@@ -5,28 +5,50 @@ import { X } from 'lucide-react';
 interface AddPaintModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onAdd: (data: { color: string; description: string }) => void;
+    onAdd: (data: { name: string; color: string; description: string }) => void;
+    initialData?: { name: string; color: string; description: string };
 }
 
-const AddPaintModal: React.FC<AddPaintModalProps> = ({ isOpen, onClose, onAdd }) => {
+const AddPaintModal: React.FC<AddPaintModalProps> = ({ isOpen, onClose, onAdd, initialData }) => {
+    const [name, setName] = useState('');
     const [color, setColor] = useState('');
     const [description, setDescription] = useState('');
+    const [nameError, setNameError] = useState('');
     const [colorError, setColorError] = useState('');
 
+    React.useEffect(() => {
+        if (isOpen) {
+            setName(initialData?.name ?? '');
+            setColor(initialData?.color ?? '');
+            setDescription(initialData?.description ?? '');
+            setNameError('');
+            setColorError('');
+        }
+    }, [isOpen, initialData]);
+
     const handleAdd = () => {
+        let hasError = false;
+        if (!name.trim()) {
+            setNameError('Name is required');
+            hasError = true;
+        }
         if (!color.trim()) {
             setColorError('Color is required');
-            return;
+            hasError = true;
         }
+        if (hasError) return;
 
         onAdd({
+            name: name.trim(),
             color: color.trim(),
             description: description.trim()
         });
 
         // Reset and close
+        setName('');
         setColor('');
         setDescription('');
+        setNameError('');
         setColorError('');
         onClose();
     };
@@ -58,6 +80,28 @@ const AddPaintModal: React.FC<AddPaintModalProps> = ({ isOpen, onClose, onAdd })
                     <div className="space-y-4">
                         {/* Paint Header - Mocking the "Paint 3" look if needed, or just fields */}
                         <div className="font-bold text-[#2c3e50]">New Paint</div>
+
+                        {/* Name Field */}
+                        <div>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    value={name}
+                                    onChange={(e) => {
+                                        setName(e.target.value);
+                                        if (nameError) setNameError('');
+                                    }}
+                                    className={`${inputClasses} ${nameError ? 'border-red-500 focus:ring-red-500/20' : ''}`}
+                                    placeholder=" "
+                                />
+                                <div className="absolute left-3 top-3 pointer-events-none">
+                                    {!name && <span className="text-gray-500">Name <span className="text-red-500">*</span></span>}
+                                </div>
+                            </div>
+                            {nameError && (
+                                <p className="text-red-600 text-xs mt-1 ml-1">{nameError}</p>
+                            )}
+                        </div>
 
                         {/* Color Field */}
                         <div>
@@ -110,7 +154,7 @@ const AddPaintModal: React.FC<AddPaintModalProps> = ({ isOpen, onClose, onAdd })
                             onClick={handleAdd}
                             className="w-full sm:flex-1 bg-[#3A6D6C] text-white py-3 rounded-lg text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm"
                         >
-                            Create
+                            {initialData ? 'Save' : 'Create'}
                         </button>
                     </div>
                 </div>

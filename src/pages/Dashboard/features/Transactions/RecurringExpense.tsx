@@ -10,11 +10,13 @@ import CustomDropdown from '../../components/CustomDropdown';
 import { TRANSACTION_CATEGORIES } from '../../../../utils/transactionCategories';
 import { useTransactionStore } from './store/transactionStore';
 import { validateFile } from '../../../../utils/fileValidation';
+import { useCreateRecurringIncome } from '../../../../hooks/useTransactionQueries';
 
 
 
 const RecurringExpense: React.FC = () => {
     const navigate = useNavigate();
+    const createRecurring = useCreateRecurringIncome();
     const [expenseType, setExpenseType] = useState<'property' | 'general'>('property');
     const [startDate, setStartDate] = useState<Date | undefined>(undefined);
     const [endDate, setEndDate] = useState<Date | undefined>(undefined);
@@ -24,9 +26,12 @@ const RecurringExpense: React.FC = () => {
     const [details, setDetails] = useState<string>('');
     const [frequency, setFrequency] = useState<string>('');
     const [currency, setCurrency] = useState<string>('');
+    const [payerId, setPayerId] = useState<string>('');
+    const [tags, setTags] = useState<string[]>([]);
     const [isAddTenantModalOpen, setIsAddTenantModalOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [uploadError, setUploadError] = useState<string>('');
+    const [submitError, setSubmitError] = useState<string>('');
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     const handleFileClick = () => {
@@ -48,20 +53,53 @@ const RecurringExpense: React.FC = () => {
         setUploadError('');
     };
 
-    const handleCreate = () => {
-        console.log({
-            expenseType,
-            startDate,
-            endDate,
-            payerPayee,
-            category,
-            frequency,
-            currency,
-            amount,
-            details,
-            file: selectedFile
-        });
-        // TODO: Implement API call
+    const handleCreate = async () => {
+        setSubmitError('');
+        if (!startDate || !frequency || !amount) {
+            setSubmitError('Start date, frequency and amount are required.');
+            return;
+        }
+        const parsedAmount = parseFloat(amount);
+        if (isNaN(parsedAmount) || parsedAmount <= 0) {
+            setSubmitError('Amount must be a positive number.');
+            return;
+        }
+
+        // Map form frequency values to backend enum values
+        const freqMap: Record<string, string> = {
+            daily: 'DAILY',
+            weekly: 'WEEKLY',
+            every_two_weeks: 'EVERY_TWO_WEEKS',
+            every_four_weeks: 'EVERY_FOUR_WEEKS',
+            monthly: 'MONTHLY',
+            every_two_months: 'EVERY_TWO_MONTHS',
+            quarterly: 'QUARTERLY',
+            every_six_months: 'EVERY_SIX_MONTHS',
+            yearly: 'YEARLY',
+        };
+
+        const dto: any = {
+            scope: expenseType === 'property' ? 'PROPERTY' : 'GENERAL',
+            category: category || undefined,
+            startDate: startDate.toISOString(),
+            endDate: endDate ? endDate.toISOString() : undefined,
+            frequency: freqMap[frequency] || frequency.toUpperCase(),
+            amount: parsedAmount,
+            currency: currency || undefined,
+            payerId: payerId || undefined,
+            tags: tags.length > 0 ? tags : undefined,
+            details: details || undefined,
+        };
+
+        // Strip undefined keys
+        Object.keys(dto).forEach(k => dto[k] === undefined && delete dto[k]);
+
+        try {
+            await createRecurring.mutateAsync(dto);
+            navigate(-1);
+        } catch (err: any) {
+            setSubmitError(err?.message || 'Failed to create recurring expense');
+        }
     };
 
     const { clonedTransactionData } = useTransactionStore();
@@ -164,7 +202,10 @@ const RecurringExpense: React.FC = () => {
                         <div className="relative">
                             <PayerPayeeDropdown
                                 value={payerPayee}
-                                onChange={setPayerPayee}
+                                onChange={(value) => {
+                                    setPayerPayee(value);
+                                    setPayerId(value);
+                                }}
                                 options={[
                                     { id: '1', label: 'Service Pro', type: 'Service Pro' },
                                     { id: '2', label: 'Tenant', type: 'tenant' },
@@ -217,8 +258,12 @@ const RecurringExpense: React.FC = () => {
                     <div className="col-span-1 md:col-span-2">
                         <label className="block text-xs font-bold text-gray-700 mb-2 ml-1">Tags *</label>
                         <div className="relative">
-                            <select className="w-full rounded-md bg-white px-4 py-3 text-sm text-gray-400 outline-none appearance-none shadow-sm focus:ring-2 focus:ring-[#7BD747]/20 cursor-pointer">
-                                <option value="" disabled selected>Tags</option>
+                            <select
+                                className="w-full rounded-md bg-white px-4 py-3 text-sm text-gray-400 outline-none appearance-none shadow-sm focus:ring-2 focus:ring-[#7BD747]/20 cursor-pointer"
+                                value={tags[0] || ''}
+                                onChange={(e) => setTags(e.target.value ? [e.target.value] : [])}
+                            >
+                                <option value="" disabled>Tags</option>
                                 <option value="tag1">Tag 1</option>
                                 <option value="tag2">Tag 2</option>
                             </select>
@@ -267,6 +312,13 @@ const RecurringExpense: React.FC = () => {
                     </div>
                 </div>
 
+                {/* Submit error */}
+                {submitError && (
+                    <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-lg text-red-700 text-sm">
+                        {submitError}
+                    </div>
+                )}
+
                 {/* File Upload Error/Success Message */}
                 {uploadError && (
                     <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-lg text-red-700 text-sm">
@@ -296,9 +348,10 @@ const RecurringExpense: React.FC = () => {
                     </button>
                     <button
                         onClick={handleCreate}
-                        className="bg-[#3A6D6C] text-white px-10 py-3 rounded-lg font-semibold shadow-md hover:bg-[#2c5251] hover:shadow-lg transition-all duration-200"
+                        disabled={createRecurring.isPending}
+                        className={`bg-[#3A6D6C] text-white px-10 py-3 rounded-lg font-semibold shadow-md hover:bg-[#2c5251] hover:shadow-lg transition-all duration-200 ${createRecurring.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
-                        Create
+                        {createRecurring.isPending ? 'Creating...' : 'Create'}
                     </button>
                 </div>
 

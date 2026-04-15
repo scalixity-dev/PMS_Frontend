@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
 import { Plus } from 'lucide-react';
-import { useGetBackgroundQuestions, useCreateBackgroundQuestion, useUpdateBackgroundQuestion, useDeleteBackgroundQuestion } from '../../../../hooks/useBackgroundQuestionQueries';
+import { useGetBackgroundQuestions, useCreateBackgroundQuestion, useUpdateBackgroundQuestion, useDeleteBackgroundQuestion, useReorderBackgroundQuestions } from '../../../../hooks/useBackgroundQuestionQueries';
 
 export default function BackgroundQuestions() {
     const { data: questions = [], isLoading } = useGetBackgroundQuestions();
     const createQuestion = useCreateBackgroundQuestion();
     const updateQuestion = useUpdateBackgroundQuestion();
     const deleteQuestion = useDeleteBackgroundQuestion();
+    const reorderQuestions = useReorderBackgroundQuestions();
     const [newQuestionText, setNewQuestionText] = useState('');
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editingText, setEditingText] = useState('');
@@ -26,9 +27,15 @@ export default function BackgroundQuestions() {
     };
 
     const handleDeleteQuestion = (id: string) => {
-        if (questions.length > 0) {
-            deleteQuestion.mutate(id);
-        }
+        if (questions.length <= 1) return;
+        deleteQuestion.mutate(id, {
+            onSuccess: () => {
+                const remaining = (questions as any[])
+                    .filter((q: any) => q.id !== id)
+                    .map((q: any) => q.id);
+                reorderQuestions.mutate(remaining);
+            },
+        });
     };
 
     const handleUpdateQuestion = (id: string, text: string) => {

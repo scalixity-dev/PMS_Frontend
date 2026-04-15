@@ -4,7 +4,7 @@ import SectionHeader from './SectionHeader';
 import ResponsibilityModal, { type ResponsibilityItem } from './ResponsibilityModal';
 import AddUtilityProviderModal from './AddUtilityProviderModal';
 import { currencyOptions } from '../../../../../components/ui/CurrencySelector';
-import { useCreateUtilityProvider, useDeleteUtilityProvider, useGetPropertyServiceProviders } from '../../../../../hooks/usePropertyDetailQueries';
+import { useCreateUtilityProvider, useDeleteUtilityProvider, useGetPropertyServiceProviders, useGetPropertyResponsibilities, useUpsertPropertyResponsibilities } from '../../../../../hooks/usePropertyDetailQueries';
 
 // --- Types ---
 interface DetailField {
@@ -72,8 +72,16 @@ interface ServiceProvidersTabProps {
 
 const ServiceProvidersTab: React.FC<ServiceProvidersTabProps> = ({ propertyId, unitId }) => {
     const [isResponsibilityModalOpen, setIsResponsibilityModalOpen] = React.useState(false);
-    const [responsibilities, setResponsibilities] = React.useState<ResponsibilityItem[]>([]);
     const [isAddUtilityModalOpen, setIsAddUtilityModalOpen] = React.useState(false);
+
+    // Bug 4 fix: load/persist responsibilities via API
+    const { data: responsibilitiesData = [] } = useGetPropertyResponsibilities(propertyId);
+    const upsertResponsibilitiesMutation = useUpsertPropertyResponsibilities();
+    const responsibilities: ResponsibilityItem[] = responsibilitiesData.map((r: any) => ({
+        id: r.id,
+        utility: r.utility,
+        payer: r.payer as 'Landlord' | 'Tenant',
+    }));
 
     // Fetch real service providers data
     const { data: providersData = {}, isLoading, error } = useGetPropertyServiceProviders(propertyId, unitId);
@@ -106,21 +114,18 @@ const ServiceProvidersTab: React.FC<ServiceProvidersTabProps> = ({ propertyId, u
         contactPhone: string;
         accountNumber: string;
     }) => {
-        const currencySymbol = currencyOptions.find(c => c.code === data.currency)?.symbol || data.currency || '$';
-        // Pack extra fields into notes for round-trip display (providerType, cost)
-        const notesParts: string[] = [];
-        if (data.providerType) notesParts.push(`Provider Type: ${data.providerType}`);
-        if (data.estimatedCost) notesParts.push(`Estimated monthly cost: ${currencySymbol}${data.estimatedCost}`);
-
         await createUtilityProviderMutation.mutateAsync({
             propertyId,
             providerData: {
                 providerName: data.servicePro,
                 serviceType: mapProviderTypeToServiceType(data.providerType),
+                providerType: data.providerType || undefined,
+                estimatedCost: data.estimatedCost ? Number(data.estimatedCost) : undefined,
+                currency: data.currency || undefined,
                 accountNumber: data.accountNumber || undefined,
                 contactName: data.contactName || undefined,
                 contactPhone: data.contactPhone || undefined,
-                notes: notesParts.length > 0 ? notesParts.join(', ') : undefined,
+                notes: undefined,
             },
         });
     };
@@ -193,12 +198,23 @@ const ServiceProvidersTab: React.FC<ServiceProvidersTabProps> = ({ propertyId, u
                 />
                 <div>
                     {realUtilityProviders.map((provider: any) => {
-                        // Parse packed notes field: "Provider Type: X, Estimated monthly cost: $Y"
-                        const notesStr = typeof provider.notes === 'string' ? provider.notes : '';
-                        const providerTypeMatch = notesStr.match(/Provider Type:\s*([^,]+)/);
-                        const costMatch = notesStr.match(/Estimated monthly cost:\s*([^,]+)/);
-                        const providerType = providerTypeMatch ? providerTypeMatch[1].trim() : (provider.serviceType || '-');
-                        const estimatedCost = costMatch ? costMatch[1].trim() : '-';
+                        // Read direct columns; fall back to parsing legacy notes for old rows
+                        let providerType = provider.providerType || null;
+                        let estimatedCost: string = '-';
+                        if (provider.estimatedCost != null) {
+                            const currencySymbol = currencyOptions.find((c: any) => c.code === provider.currency)?.symbol || '$';
+                            estimatedCost = `${currencySymbol}${provider.estimatedCost}`;
+                        } else {
+                            // Legacy fallback: parse old notes format
+                            const notesStr = typeof provider.notes === 'string' ? provider.notes : '';
+                            const costMatch = notesStr.match(/Estimated monthly cost:\s*([^,]+)/);
+                            if (costMatch) estimatedCost = costMatch[1].trim();
+                            if (!providerType) {
+                                const typeMatch = notesStr.match(/Provider Type:\s*([^,]+)/);
+                                providerType = typeMatch ? typeMatch[1].trim() : null;
+                            }
+                        }
+                        if (!providerType) providerType = provider.serviceType || '-';
 
                         const record: ServiceProviderRecord = {
                             id: provider.id,
@@ -228,7 +244,12 @@ const ServiceProvidersTab: React.FC<ServiceProvidersTabProps> = ({ propertyId, u
                 isOpen={isResponsibilityModalOpen}
                 onClose={() => setIsResponsibilityModalOpen(false)}
                 initialData={responsibilities}
-                onSave={setResponsibilities}
+                onSave={(items) => {
+                    upsertResponsibilitiesMutation.mutate({
+                        propertyId,
+                        items: items.map((i) => ({ utility: i.utility, payer: i.payer })),
+                    });
+                }}
             />
 
             <AddUtilityProviderModal

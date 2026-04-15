@@ -220,6 +220,27 @@ class PropertyService {
   }
 
   /**
+   * Lightweight - returns only { propertyId, propertyName } for each property.
+   * Use this for dropdowns/selectors to save bandwidth.
+   */
+  async getAllIdName(): Promise<Array<{ propertyId: string; propertyName: string }>> {
+    const response = await fetch(API_ENDPOINTS.PROPERTY.GET_ALL_ID_NAME, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch property list: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    if (Array.isArray(data)) return data;
+    if (data && typeof data === 'object' && Array.isArray(data.data)) return data.data;
+    return [];
+  }
+
+  /**
    * Transform backend property to frontend property format
    */
   transformProperty(backendProperty: BackendProperty): Property {
@@ -849,6 +870,37 @@ class PropertyService {
   }
 
   /**
+   * Get property responsibilities (Bug 4 fix)
+   */
+  async getResponsibilities(propertyId: string): Promise<any[]> {
+    const response = await fetch(API_ENDPOINTS.PROPERTY.GET_RESPONSIBILITIES(propertyId), {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch responsibilities: ${response.statusText}`);
+    }
+    return response.json();
+  }
+
+  /**
+   * Upsert (bulk replace) property responsibilities (Bug 4 fix)
+   */
+  async upsertResponsibilities(propertyId: string, items: { utility: string; payer: string }[]): Promise<any[]> {
+    const response = await fetch(API_ENDPOINTS.PROPERTY.UPSERT_RESPONSIBILITIES(propertyId), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ items }),
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to upsert responsibilities: ${response.statusText}`);
+    }
+    return response.json();
+  }
+
+  /**
    * Get property financials (summary, transactions, insurance, loans)
    */
   async getFinancials(propertyId: string, unitId?: string): Promise<any> {
@@ -1066,6 +1118,24 @@ class PropertyService {
 
     if (!response.ok) {
       throw new Error(`Failed to delete utility provider: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Fetch public property detail (tenant-facing, unauthenticated access OK)
+   */
+  async getPublicPropertyDetail(propertyId: string): Promise<any> {
+    const response = await fetch(API_ENDPOINTS.PROPERTY.GET_PUBLIC_DETAIL(propertyId), {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) throw new Error('Property not found');
+      throw new Error(`Failed to fetch property detail: ${response.statusText}`);
     }
 
     return response.json();

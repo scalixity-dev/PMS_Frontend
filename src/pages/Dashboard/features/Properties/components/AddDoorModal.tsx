@@ -6,15 +6,25 @@ interface AddDoorModalProps {
     isOpen: boolean;
     onClose: () => void;
     onAdd: (data: {
+        name: string;
         doorType: string;
         lockType: string;
         insideDoorColor: string;
         exteriorDoorColor: string;
         screenDoorAttached: boolean;
     }) => void;
+    initialData?: {
+        name: string;
+        doorType: string;
+        lockType: string;
+        insideDoorColor: string;
+        exteriorDoorColor: string;
+        screenDoorAttached: boolean;
+    };
 }
 
-const AddDoorModal: React.FC<AddDoorModalProps> = ({ isOpen, onClose, onAdd }) => {
+const AddDoorModal: React.FC<AddDoorModalProps> = ({ isOpen, onClose, onAdd, initialData }) => {
+    const [name, setName] = useState('');
     const [doorType, setDoorType] = useState('');
     const [lockType, setLockType] = useState('');
     const [insideDoorColor, setInsideDoorColor] = useState('');
@@ -23,9 +33,22 @@ const AddDoorModal: React.FC<AddDoorModalProps> = ({ isOpen, onClose, onAdd }) =
 
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
+    React.useEffect(() => {
+        if (isOpen) {
+            setName(initialData?.name ?? '');
+            setDoorType(initialData?.doorType ?? '');
+            setLockType(initialData?.lockType ?? '');
+            setInsideDoorColor(initialData?.insideDoorColor ?? '');
+            setExteriorDoorColor(initialData?.exteriorDoorColor ?? '');
+            setScreenDoorAttached(initialData?.screenDoorAttached ?? false);
+            setErrors({});
+        }
+    }, [isOpen, initialData]);
+
     const handleAdd = () => {
         const newErrors: { [key: string]: string } = {};
 
+        if (!name.trim()) newErrors.name = 'Name is required';
         if (!doorType.trim()) newErrors.doorType = 'Door type is required';
         if (!lockType.trim()) newErrors.lockType = 'Lock type is required';
         if (!insideDoorColor.trim()) newErrors.insideDoorColor = 'Inside door color is required';
@@ -37,6 +60,7 @@ const AddDoorModal: React.FC<AddDoorModalProps> = ({ isOpen, onClose, onAdd }) =
         }
 
         onAdd({
+            name: name.trim(),
             doorType: doorType.trim(),
             lockType: lockType.trim(),
             insideDoorColor: insideDoorColor.trim(),
@@ -45,6 +69,7 @@ const AddDoorModal: React.FC<AddDoorModalProps> = ({ isOpen, onClose, onAdd }) =
         });
 
         // Reset and close
+        setName('');
         setDoorType('');
         setLockType('');
         setInsideDoorColor('');
@@ -79,6 +104,23 @@ const AddDoorModal: React.FC<AddDoorModalProps> = ({ isOpen, onClose, onAdd }) =
 
                     <div className="space-y-4">
                         <div className="font-bold text-[#2c3e50]">New Door</div>
+
+                        {/* Name Field (full width) */}
+                        <div>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    value={name}
+                                    onChange={(e) => {
+                                        setName(e.target.value);
+                                        if (errors.name) setErrors({ ...errors, name: '' });
+                                    }}
+                                    className={`${inputClasses} ${errors.name ? 'border-red-500 focus:ring-red-500/20' : ''}`}
+                                    placeholder="Name *"
+                                />
+                            </div>
+                            {errors.name && <p className="text-red-600 text-xs mt-1 ml-1">{errors.name}</p>}
+                        </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {/* Door Type */}
@@ -186,7 +228,7 @@ const AddDoorModal: React.FC<AddDoorModalProps> = ({ isOpen, onClose, onAdd }) =
                             onClick={handleAdd}
                             className="w-full sm:flex-1 bg-[#3A6D6C] text-white py-3 rounded-lg text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm"
                         >
-                            Create
+                            {initialData ? 'Save' : 'Create'}
                         </button>
                     </div>
                 </div>

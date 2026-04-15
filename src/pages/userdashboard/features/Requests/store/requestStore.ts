@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { RequestFilters, ServiceRequest } from '../../../utils/types';
-import { mockRequests } from "../../../utils/mockData";
+
 
 interface RequestState {
     requests: ServiceRequest[];
@@ -66,8 +66,8 @@ const loadRequests = (): ServiceRequest[] => {
     } catch (error) {
         console.error('Error loading requests from localStorage:', error);
     }
-    // Return mockRequests as fallback
-    return mockRequests as ServiceRequest[];
+    // No localStorage data — return empty; real data comes from the API
+    return [];
 };
 
 // Extended type for serialized requests (with data URLs instead of Files)

@@ -13,28 +13,30 @@ interface AssignKeyModalProps {
     unitId?: string;
 }
 
+// Match backend KeyType enum exactly
 const KEY_TYPE_OPTIONS = [
-    { value: 'MAIN_DOOR', label: 'Main Door' },
-    { value: 'UNIT_DOOR', label: 'Unit Door' },
-    { value: 'BACK_DOOR', label: 'Back Door' },
+    { value: 'DOOR', label: 'Door' },
     { value: 'GARAGE', label: 'Garage' },
+    { value: 'GATE', label: 'Gate' },
     { value: 'MAILBOX', label: 'Mailbox' },
     { value: 'STORAGE', label: 'Storage' },
     { value: 'OTHER', label: 'Other' },
 ];
 
+// Match backend KeyStatus enum exactly
 const KEY_STATUS_OPTIONS = [
     { value: 'AVAILABLE', label: 'Available' },
-    { value: 'ASSIGNED', label: 'Assigned' },
+    { value: 'ISSUED', label: 'Issued' },
     { value: 'LOST', label: 'Lost' },
-    { value: 'RETURNED', label: 'Returned' },
+    { value: 'DAMAGED', label: 'Damaged' },
+    { value: 'INACTIVE', label: 'Inactive' },
 ];
 
 const AssignKeyModal: React.FC<AssignKeyModalProps> = ({ isOpen, onClose, onAssign, propertyId, unitId }) => {
     const [mode, setMode] = useState<'select' | 'create'>('select');
     const [selectedKeyId, setSelectedKeyId] = useState('');
     const [keyName, setKeyName] = useState('');
-    const [keyType, setKeyType] = useState('MAIN_DOOR');
+    const [keyType, setKeyType] = useState('DOOR');
     const [keyStatus, setKeyStatus] = useState('AVAILABLE');
     const [description, setDescription] = useState('');
     const [issuedTo, setIssuedTo] = useState('');
@@ -59,7 +61,7 @@ const AssignKeyModal: React.FC<AssignKeyModalProps> = ({ isOpen, onClose, onAssi
         setMode('select');
         setSelectedKeyId('');
         setKeyName('');
-        setKeyType('MAIN_DOOR');
+        setKeyType('DOOR');
         setKeyStatus('AVAILABLE');
         setDescription('');
         setIssuedTo('');

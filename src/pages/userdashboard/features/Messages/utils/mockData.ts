@@ -1,3 +1,4 @@
+// Fallback-only: used when chat backend is unreachable
 import type { Chat } from '../types';
 import type { Publication } from '../../../utils/types';
 

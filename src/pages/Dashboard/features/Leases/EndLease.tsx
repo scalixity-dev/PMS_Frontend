@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { MoreHorizontal, Plus, Loader2 } from 'lucide-react';
+import { MoreHorizontal, Plus, Loader2, AlertTriangle } from 'lucide-react';
 import { useGetLease, useUpdateLease } from '../../../../hooks/useLeaseQueries';
+import { useGetTransactions } from '../../../../hooks/useTransactionQueries';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import DatePicker from '../../../../components/ui/DatePicker';
 import CustomTextBox from '../../components/CustomTextBox';
@@ -72,9 +73,22 @@ const EndLease: React.FC = () => {
         };
     }, [backendLease]);
 
-    // TODO: Fetch unpaid invoices from accounting/invoice service
-    // For now, using empty array - this should be replaced with actual invoice data
-    const unpaidInvoices: UnpaidInvoice[] = [];
+    // Fetch all transactions and filter for unpaid invoices on this lease
+    const { data: allTransactions } = useGetTransactions();
+
+    const unpaidInvoices: UnpaidInvoice[] = useMemo(() => {
+        if (!allTransactions || !id) return [];
+        return allTransactions
+            .filter(t => t.leaseId === id && t.type === 'INVOICE' && t.status === 'PENDING')
+            .map(t => ({
+                id: t.id,
+                dueDate: t.dueDate ? new Date(t.dueDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-',
+                category: t.category || '-',
+                payer: t.payer?.fullName || t.contact ? `${t.contact?.firstName || ''} ${t.contact?.lastName || ''}`.trim() : '-',
+                total: formatCurrency(t.amount),
+                paid: formatCurrency(parseFloat(t.amount) - parseFloat(t.balance)),
+            }));
+    }, [allTransactions, id]);
 
     // Calculate total unpaid
     const totalUnpaid = useMemo(() => {
@@ -347,6 +361,14 @@ const EndLease: React.FC = () => {
             </div>
 
             <hr className="border-dashed border-gray-200 mb-8" />
+
+            {/* Unpaid warning */}
+            {unpaidInvoices.length > 0 && (
+                <div className="flex items-center gap-3 mb-4 p-4 bg-amber-50 border border-amber-300 rounded-xl text-amber-800 text-sm font-medium">
+                    <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+                    <span>There {unpaidInvoices.length === 1 ? 'is' : 'are'} {unpaidInvoices.length} unpaid invoice{unpaidInvoices.length === 1 ? '' : 's'} totalling {formatCurrency(totalUnpaid)}. Please resolve before ending the lease.</span>
+                </div>
+            )}
 
             {/* Footer Actions */}
             <div className="flex flex-col-reverse md:flex-row justify-between items-end md:items-center gap-6">

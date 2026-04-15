@@ -6,21 +6,24 @@ import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import Pagination from '../../components/Pagination';
 import EditNameModal from './components/EditNameModal';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
+import { useGetFiles, useRenameFile, useDeleteFile } from '../../../../hooks/useFilesQueries';
 
-// Mock Data structure based on the screenshot
+// File data structure
 interface FileData {
-    id: number;
+    id: string;
     name: string;
     type: string;
     preview: string;
     date: string;
     property: string;
+    sizeBytes?: number | null;
 }
 
 // Allowed hosts whitelist for external URLs
 const ALLOWED_HOSTS = [
     'images.unsplash.com',
     'pdfobject.com',
+    'amazonaws.com',
     'localhost',
     '127.0.0.1',
 ];
@@ -132,41 +135,6 @@ const FilePreviewModal = ({ isOpen, file, onClose }: { isOpen: boolean; file: Fi
 
 
 
-const MOCK_FILES: FileData[] = [
-    {
-        id: 1,
-        name: 'aae8b9dd888f955418f7',
-        type: 'jpg',
-        preview: 'https://images.unsplash.com/photo-1600596542815-e32904fc4969?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80',
-        date: '04 Nov, 2026',
-        property: 'Luxury Property'
-    },
-    {
-        id: 2,
-        name: 'floor_plan_v2',
-        type: 'pdf',
-        preview: 'https://pdfobject.com/pdf/sample.pdf',
-        date: '10 Dec, 2026',
-        property: 'Luxury Property'
-    },
-    {
-        id: 3,
-        name: 'lease_agreement_signed',
-        type: 'docx',
-        preview: '', // No preview for docs usually, handle logic later
-        date: '15 Jan, 2027',
-        property: 'Ax Apartment'
-    },
-    {
-        id: 4,
-        name: 'kitchen_renovation_final',
-        type: 'png',
-        preview: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?ixlib=rb-1.2.1',
-        date: '02 Feb, 2027',
-        property: 'Ax Apartment'
-    }
-];
-
 const ITEMS_PER_PAGE = 10;
 
 // Custom error class for distinguishing terminal errors from network/CORS errors
@@ -188,13 +156,34 @@ const FileManager: React.FC = () => {
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const [selectedFiles, setSelectedFiles] = useState<number[]>([]);
+    const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
     const [previewFile, setPreviewFile] = useState<FileData | null>(null);
     const [editingFile, setEditingFile] = useState<FileData | null>(null);
     const [deletingFile, setDeletingFile] = useState<FileData | null>(null);
-    const [activeActionMenu, setActiveActionMenu] = useState<number | null>(null);
-    const [files, setFiles] = useState<FileData[]>(MOCK_FILES);
+    const [activeActionMenu, setActiveActionMenu] = useState<string | null>(null);
     const [downloadError, setDownloadError] = useState<string | null>(null);
+
+    // Backend data
+    const { data: rawFiles = [] } = useGetFiles();
+    const renameFileMutation = useRenameFile();
+    const deleteFileMutation = useDeleteFile();
+
+    // Map backend records to local FileData shape
+    const files: FileData[] = rawFiles.map((f) => {
+        const ext = f.originalName.split('.').pop()?.toLowerCase() ?? f.mimeType?.split('/').pop() ?? '';
+        const d = new Date(f.createdAt);
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const date = `${String(d.getDate()).padStart(2,'0')} ${months[d.getMonth()]}, ${d.getFullYear()}`;
+        return {
+            id: f.id,
+            name: f.name,
+            type: ext,
+            preview: f.url,
+            date,
+            property: f.propertyId ?? 'General',
+            sizeBytes: f.sizeBytes,
+        };
+    });
 
     // Close menu when clicking outside
     React.useEffect(() => {
@@ -280,14 +269,14 @@ const FileManager: React.FC = () => {
             return num * (mult[unit] || 1);
         };
 
-        const allBytes = files.reduce((sum, f: any) => sum + parseSizeToBytes(f.size), 0);
+        const allBytes = files.reduce((sum, f: any) => sum + parseSizeToBytes(f.sizeBytes), 0);
         const isImage = (f: any) => /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(f.name || '') || /image/i.test(f.type || '');
         const isVideo = (f: any) => /\.(mp4|mov|avi|webm|mkv)$/i.test(f.name || '') || /video/i.test(f.type || '');
         const isDoc = (f: any) => /\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt)$/i.test(f.name || '') || /document|pdf/i.test(f.type || '');
 
-        const imagesBytes = files.filter(isImage).reduce((s, f: any) => s + parseSizeToBytes(f.size), 0);
-        const videosBytes = files.filter(isVideo).reduce((s, f: any) => s + parseSizeToBytes(f.size), 0);
-        const docsBytes = files.filter(isDoc).reduce((s, f: any) => s + parseSizeToBytes(f.size), 0);
+        const imagesBytes = files.filter(isImage).reduce((s, f: any) => s + parseSizeToBytes(f.sizeBytes), 0);
+        const videosBytes = files.filter(isVideo).reduce((s, f: any) => s + parseSizeToBytes(f.sizeBytes), 0);
+        const docsBytes = files.filter(isDoc).reduce((s, f: any) => s + parseSizeToBytes(f.sizeBytes), 0);
 
         const pct = (bytes: number) => Math.min(100, Math.round((bytes / STORAGE_QUOTA_BYTES) * 100));
 
@@ -299,7 +288,7 @@ const FileManager: React.FC = () => {
         ];
     }, [files]);
 
-    const toggleSelection = (id: number) => {
+    const toggleSelection = (id: string) => {
         setSelectedFiles(prev =>
             prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
         );
@@ -730,15 +719,8 @@ const FileManager: React.FC = () => {
                 currentName={editingFile?.name || ''}
                 onClose={() => setEditingFile(null)}
                 onSave={(newName) => {
-                    // TODO: Replace with actual API call when backend is ready
-                    // Example: await fileService.renameFile(editingFile?.id, newName);
                     if (editingFile) {
-                        // Optimistic UI update
-                        setFiles(prevFiles =>
-                            prevFiles.map(f =>
-                                f.id === editingFile.id ? { ...f, name: newName } : f
-                            )
-                        );
+                        renameFileMutation.mutate({ id: editingFile.id, name: newName });
                     }
                     setEditingFile(null);
                 }}
@@ -748,19 +730,10 @@ const FileManager: React.FC = () => {
                 isOpen={!!deletingFile}
                 itemName={deletingFile?.name}
                 onClose={() => setDeletingFile(null)}
-
                 onConfirm={() => {
-                    // TODO: Replace with actual API call when backend is ready
-                    // Example: await fileService.deleteFile(deletingFile?.id);
                     if (deletingFile) {
-                        // Optimistic UI update
-                        setFiles(prevFiles =>
-                            prevFiles.filter(f => f.id !== deletingFile.id)
-                        );
-                        // Also remove from selection if selected
-                        setSelectedFiles(prev =>
-                            prev.filter(id => id !== deletingFile.id)
-                        );
+                        deleteFileMutation.mutate(deletingFile.id);
+                        setSelectedFiles(prev => prev.filter(id => id !== deletingFile.id));
                     }
                     setDeletingFile(null);
                 }}

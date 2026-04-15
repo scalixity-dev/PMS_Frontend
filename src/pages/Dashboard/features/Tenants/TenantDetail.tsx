@@ -10,6 +10,7 @@ import TenantInsuranceSection from './components/TenantInsuranceSection';
 import TenantApplicationsSection from './components/TenantApplicationsSection';
 import TenantRequestsSection from './components/TenantRequestsSection';
 import { useGetTenant, useDeleteTenant } from '../../../../hooks/useTenantQueries';
+import { useGetTransactions } from '../../../../hooks/useTransactionQueries';
 import type { BackendTenantProfile } from '../../../../services/tenant.service';
 
 // Transform backend tenant profile to detail page format
@@ -34,9 +35,9 @@ const transformTenantForDetail = (backendTenant: BackendTenantProfile) => {
         phone,
         email,
         image: backendTenant.profilePhotoUrl || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200&h=200',
-        outstanding: 0, // TODO: Calculate from transactions
-        deposits: 0, // TODO: Calculate from deposits
-        credits: 0, // TODO: Calculate from credits
+        outstanding: 0,
+        deposits: 0,
+        credits: 0,
         personalInfo: {
             firstName: backendTenant.firstName,
             middleName: backendTenant.middleName || '',
@@ -84,6 +85,9 @@ const TenantDetail = () => {
     // Fetch tenant data using API
     const { data: backendTenant, isLoading, error } = useGetTenant(id || null);
 
+    // Fetch transactions to compute financial stats
+    const { data: allTransactions } = useGetTransactions();
+
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (actionMenuRef.current && !actionMenuRef.current.contains(event.target as Node)) {
@@ -126,11 +130,25 @@ const TenantDetail = () => {
         },
     ];
 
-    // Transform backend tenant to detail page format
+    // Transform backend tenant to detail page format, then overlay computed stats
     const tenant = useMemo(() => {
         if (!backendTenant) return null;
-        return transformTenantForDetail(backendTenant);
-    }, [backendTenant]);
+        const base = transformTenantForDetail(backendTenant);
+        if (allTransactions && backendTenant.userId) {
+            const payerId = backendTenant.userId;
+            const outstanding = allTransactions
+                .filter(t => t.type === 'INVOICE' && t.status === 'PENDING' && t.payerId === payerId)
+                .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+            const deposits = allTransactions
+                .filter(t => t.type === 'DEPOSIT' && t.payerId === payerId)
+                .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+            const credits = allTransactions
+                .filter(t => t.type === 'CREDIT' && t.payerId === payerId)
+                .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+            return { ...base, outstanding, deposits, credits };
+        }
+        return base;
+    }, [backendTenant, allTransactions]);
 
     const tabs = [
         { id: 'profile', label: 'Profile' },

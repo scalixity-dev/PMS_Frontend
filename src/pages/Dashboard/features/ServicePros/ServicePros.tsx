@@ -21,7 +21,8 @@ const ServicePros = () => {
     const navigate = useNavigate();
     const context = useOutletContext<{ sidebarCollapsed?: boolean }>();
     const sidebarCollapsed = context?.sidebarCollapsed ?? false;
-    const [, setFilters] = useState<Record<string, string[]>>({});
+    const [filters, setFilters] = useState<Record<string, string[]>>({});
+    const [searchQuery, setSearchQuery] = useState('');
     const [servicePros, setServicePros] = useState<ServiceProCardData[]>([]);
     const [pendingProviders, setPendingProviders] = useState<BackendServiceProvider[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -113,13 +114,14 @@ const ServicePros = () => {
         }
     };
 
-    const handleSearchChange = (_search: string) => {
-        // TODO: Implement search functionality
+    const handleSearchChange = (search: string) => {
+        setSearchQuery(search);
+        setCurrentPage(1);
     };
 
     const handleFiltersChange = (newFilters: Record<string, string[]>) => {
         setFilters(newFilters);
-        // TODO: Implement filter functionality
+        setCurrentPage(1);
     };
 
     const filterOptions = useMemo(() => ({
@@ -154,7 +156,31 @@ const ServicePros = () => {
         setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
     };
 
-    const sortedServicePros = [...servicePros].sort((a, b) => {
+    const filteredServicePros = useMemo(() => {
+        let result = [...servicePros];
+
+        // Text search: name, phone, category
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase();
+            result = result.filter(p =>
+                p.name.toLowerCase().includes(q) ||
+                p.phone.toLowerCase().includes(q) ||
+                p.category.toLowerCase().includes(q)
+            );
+        }
+
+        // Category filter
+        const categoryFilter = filters.category;
+        if (categoryFilter && categoryFilter.length > 0) {
+            result = result.filter(p =>
+                categoryFilter.some(c => p.category.toLowerCase().includes(c.toLowerCase()))
+            );
+        }
+
+        return result;
+    }, [servicePros, searchQuery, filters]);
+
+    const sortedServicePros = [...filteredServicePros].sort((a, b) => {
         return sortOrder === 'asc'
             ? a.name.localeCompare(b.name)
             : b.name.localeCompare(a.name);
@@ -271,7 +297,7 @@ const ServicePros = () => {
 
                     </button>
                     <div className="bg-[#3A6D6C] text-white px-4 py-1 rounded-full text-sm">
-                        {isLoading ? 'Loading...' : `${servicePros.length} service pros`}
+                        {isLoading ? 'Loading...' : `${filteredServicePros.length} service pros`}
                     </div>
                 </div>
 

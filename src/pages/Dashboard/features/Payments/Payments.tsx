@@ -293,7 +293,6 @@ const Payments: React.FC = () => {
                             paymentId: selectedPayment.paymentId,
                             refundData: {
                                 method: data.method,
-                                notes: data.details,
                                 details: data.details,
                             },
                         });

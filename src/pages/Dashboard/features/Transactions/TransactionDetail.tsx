@@ -15,14 +15,11 @@ import DeleteConfirmationModal from '../../../../components/common/modals/Delete
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import { useGetTransaction, useUpdateTransaction, useDeleteTransaction, useVoidTransaction, useUpdateDiscount, useDeletePayment, useMarkAsPaid, useUpdatePayment } from '../../../../hooks/useTransactionQueries';
 import { formatMoney } from '../../../../utils/currency.utils';
-// Using console for now - replace with your toast library if available
-const toast = {
-    success: (message: string) => console.log('Success:', message),
-    error: (message: string) => console.error('Error:', message),
-};
+import { useToast } from '../../../../components/common/Toast';
 
 const TransactionDetail: React.FC = () => {
     const navigate = useNavigate();
+    const toast = useToast();
     const { id } = useParams<{ id: string }>();
     const [isSummaryCollapsed, setIsSummaryCollapsed] = useState(false);
     const [isPaymentsCollapsed, setIsPaymentsCollapsed] = useState(false);
