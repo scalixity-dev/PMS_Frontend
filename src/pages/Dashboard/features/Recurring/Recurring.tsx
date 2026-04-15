@@ -1,5 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useEndRecurringTransaction } from '../../../../hooks/useTransactionQueries';
+import { useToast } from '../../../../components/common/Toast';
 import { ChevronLeft, Check, MoreHorizontal, Settings } from 'lucide-react';
 import MoneyInMoneyOutButtons from '../../components/MoneyInMoneyOutButtons';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
@@ -90,6 +92,8 @@ const Recurring: React.FC = () => {
 
     // Fetch recurring transactions from backend
     const { data: recurringTransactions = [], isLoading } = useGetRecurringTransactions();
+    const endRecurringMutation = useEndRecurringTransaction();
+    const toast = useToast();
 
     const dropdownContainerRef = useRef<HTMLDivElement>(null);
     const [moreMenuOpenId, setMoreMenuOpenId] = useState<string | null>(null);
@@ -316,7 +320,6 @@ const Recurring: React.FC = () => {
                     setSelectedRecurringId(null);
                 }}
                 onConfirm={() => {
-                    console.log('Confirmed post next invoice for:', selectedRecurringId);
                     setIsPostInvoiceModalOpen(false);
                     setSelectedRecurringId(null);
                 }}
@@ -529,9 +532,15 @@ const Recurring: React.FC = () => {
                                         Post next invoice
                                     </button>
                                     <button
-                                        onClick={() => {
-                                            console.log('End', item.id);
+                                        onClick={async () => {
                                             setMoreMenuOpenId(null);
+                                            if (!window.confirm('End this recurring transaction? No future invoices will be generated.')) return;
+                                            try {
+                                                await endRecurringMutation.mutateAsync(item.id);
+                                                toast.success('Recurring transaction ended');
+                                            } catch (err: any) {
+                                                toast.error(err?.message || 'Failed to end recurring transaction');
+                                            }
                                         }}
                                         className="w-full text-left px-4 py-2 text-sm text-[#3A6D6C] hover:bg-gray-50 border-b border-gray-100"
                                     >
@@ -539,8 +548,8 @@ const Recurring: React.FC = () => {
                                     </button>
                                     <button
                                         onClick={() => {
-                                            console.log('Clone', item.id);
                                             setMoreMenuOpenId(null);
+                                            navigate(`/dashboard/transactions/recurring/clone/${item.id}`);
                                         }}
                                         className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100"
                                     >

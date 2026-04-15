@@ -8,6 +8,7 @@ import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import { useGetRecurringTransaction, usePostNextInvoice, useEndRecurringTransaction, useDeleteRecurringTransaction } from '../../../../hooks/useTransactionQueries';
 import { formatMoney } from '../../../../utils/currency.utils';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
+import { useToast } from '../../../../components/common/Toast';
 
 // Utility function to calculate next date based on frequency
 const calculateNextDate = (startDate: Date, frequency: string, endDate?: Date | null): Date | null => {
@@ -101,11 +102,7 @@ const RecurringDetail: React.FC = () => {
     const endRecurringMutation = useEndRecurringTransaction();
     const deleteRecurringMutation = useDeleteRecurringTransaction();
 
-    // Using console for now - replace with your toast library if available
-    const toast = {
-        success: (message: string) => console.log('Success:', message),
-        error: (message: string) => console.error('Error:', message),
-    };
+    const toast = useToast();
 
     // Close dropdown when clicking outside
     useEffect(() => {

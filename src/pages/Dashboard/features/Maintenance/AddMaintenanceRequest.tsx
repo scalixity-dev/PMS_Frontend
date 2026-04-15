@@ -402,8 +402,7 @@ const AddMaintenanceRequest: React.FC = () => {
                         onClose={() => setShowSuccessModal(false)}
                         onBackToList={() => navigate('/dashboard/maintenance/requests')}
                         onAssignPro={() => {
-                            console.log('Assign Service Pro clicked');
-                            navigate('/dashboard'); // Or navigate to assign pro page
+                            navigate('/dashboard/contacts/service-pros');
                         }}
                         requestId={createdRequestId}
                         propertyName={property.propertyId || 'Property'}
