@@ -220,6 +220,27 @@ class PropertyService {
   }
 
   /**
+   * Lightweight - returns only { propertyId, propertyName } for each property.
+   * Use this for dropdowns/selectors to save bandwidth.
+   */
+  async getAllIdName(): Promise<Array<{ propertyId: string; propertyName: string }>> {
+    const response = await fetch(API_ENDPOINTS.PROPERTY.GET_ALL_ID_NAME, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch property list: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    if (Array.isArray(data)) return data;
+    if (data && typeof data === 'object' && Array.isArray(data.data)) return data.data;
+    return [];
+  }
+
+  /**
    * Transform backend property to frontend property format
    */
   transformProperty(backendProperty: BackendProperty): Property {

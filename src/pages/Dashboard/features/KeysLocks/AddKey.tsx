@@ -4,7 +4,7 @@ import { ChevronLeft, Upload, Edit, Trash2, Loader2 } from 'lucide-react';
 import CustomDropdown from '../../components/CustomDropdown';
 import UnsavedChangesModal from '../../components/UnsavedChangesModal';
 import { useGetKey, useCreateKey, useUpdateKey } from '../../../../hooks/useKeysQueries';
-import { useGetAllProperties } from '../../../../hooks/usePropertyQueries';
+import { useGetAllPropertiesIdName } from '../../../../hooks/usePropertyQueries';
 import { API_ENDPOINTS } from '../../../../config/api.config';
 import type { KeyType } from '../../../../services/keys.service';
 
@@ -42,7 +42,7 @@ const AddKey = () => {
 
     // Fetch key data if in edit mode
     const { data: keyData, isLoading: isLoadingKey } = useGetKey(id || null, isEditMode);
-    const { data: properties = [], isLoading: isLoadingProperties } = useGetAllProperties();
+    const { data: properties = [], isLoading: isLoadingProperties } = useGetAllPropertiesIdName();
     const createKeyMutation = useCreateKey();
     const updateKeyMutation = useUpdateKey();
 
@@ -167,8 +167,8 @@ const AddKey = () => {
         { value: 'Other', label: 'Other' },
     ];
 
-    const propertyOptions = properties.map(prop => ({
-        value: prop.id,
+    const propertyOptions = properties.map((prop: any) => ({
+        value: prop.propertyId || prop.id,
         label: prop.propertyName,
     }));
 

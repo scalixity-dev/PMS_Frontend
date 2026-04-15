@@ -42,6 +42,21 @@ export const useGetAllProperties = (enabled: boolean = true, includeListings: bo
 };
 
 /**
+ * Lightweight - returns only { id, propertyName } for dropdowns.
+ * Saves bandwidth vs full properties endpoint. Uses Redis cache on backend.
+ */
+export const useGetAllPropertiesIdName = (enabled: boolean = true) => {
+  return useQuery({
+    queryKey: [...propertyQueryKeys.lists(), 'idname'] as const,
+    queryFn: () => propertyService.getAllIdName(),
+    enabled,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    retry: 1,
+  });
+};
+
+/**
  * Hook to get all properties (transformed for frontend)
  */
 export const useGetAllPropertiesTransformed = (enabled: boolean = true) => {

@@ -31,6 +31,7 @@ export const API_ENDPOINTS = {
   },
   PROPERTY: {
     GET_ALL: `${API_BASE_URL}/property`,
+    GET_ALL_ID_NAME: `${API_BASE_URL}/property?ispropertyidname=true`,
     GET_ONE: (id: string) => `${API_BASE_URL}/property/${id}`,
     CREATE: `${API_BASE_URL}/property`,
     UPDATE: (id: string) => `${API_BASE_URL}/property/${id}`,
