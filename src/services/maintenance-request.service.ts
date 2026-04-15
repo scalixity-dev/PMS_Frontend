@@ -53,6 +53,7 @@ export interface CreateMaintenanceRequestInput {
   materials?: CreateMaintenanceMaterialInput[];
   chargeTo?: ChargeTo;
   attachments?: CreateMaintenanceAttachmentInput[];
+  status?: 'NEW' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 }
 
 export interface MaintenanceRequestResponse {

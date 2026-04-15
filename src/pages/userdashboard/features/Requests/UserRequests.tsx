@@ -8,7 +8,11 @@ import RequestSuccessModal from "./components/RequestSuccessModal";
 import DeleteConfirmationModal from "../../../../components/common/modals/DeleteConfirmationModal";
 import { useRequestStore } from "./store/requestStore";
 import type { ServiceRequest, AvailabilityOption } from "../../utils/types";
-import { useGetAllMaintenanceRequests } from "../../../../hooks/useMaintenanceRequestQueries";
+import {
+  useGetAllMaintenanceRequests,
+  useUpdateMaintenanceRequest,
+  useDeleteMaintenanceRequest,
+} from "../../../../hooks/useMaintenanceRequestQueries";
 import { mapApiToServiceRequest } from "./utils/mapApiToServiceRequest";
 
 // Constants
@@ -475,6 +479,8 @@ const Requests: React.FC = () => {
   const location = useLocation();
   const { requestFilters, setRequestFilters, resetRequestFilters, requests: storeRequests, updateRequestStatus, deleteRequest } = useRequestStore();
   const { data: apiRequests = [], isSuccess: apiSuccess } = useGetAllMaintenanceRequests(true);
+  const { mutateAsync: updateRequestApi, isPending: isCancelling } = useUpdateMaintenanceRequest();
+  const { mutateAsync: deleteRequestApi, isPending: isDeleting } = useDeleteMaintenanceRequest();
   const requests: ServiceRequest[] = useMemo(() => {
     if (apiSuccess && Array.isArray(apiRequests) && apiRequests.length >= 0) {
       return (apiRequests as unknown[]).map((r) => mapApiToServiceRequest(r as Parameters<typeof mapApiToServiceRequest>[0]));
@@ -526,13 +532,21 @@ const Requests: React.FC = () => {
     setActiveMenuId(null);
   }, []);
 
-  const confirmCancel = useCallback(() => {
-    if (requestToCancel) {
+  const confirmCancel = useCallback(async () => {
+    if (!requestToCancel) return;
+    try {
+      await updateRequestApi({
+        id: String(requestToCancel.id),
+        input: { status: "CANCELLED" },
+      });
       updateRequestStatus(requestToCancel.id, "Cancelled");
+    } catch (err) {
+      console.error("Failed to cancel request:", err);
+    } finally {
       setIsCancelModalOpen(false);
       setRequestToCancel(null);
     }
-  }, [updateRequestStatus, requestToCancel]);
+  }, [updateRequestApi, updateRequestStatus, requestToCancel]);
 
   const handleDelete = useCallback((request: ServiceRequest) => {
     setRequestToDelete(request);
@@ -540,13 +554,18 @@ const Requests: React.FC = () => {
     setActiveMenuId(null);
   }, []);
 
-  const confirmDelete = useCallback(() => {
-    if (requestToDelete) {
+  const confirmDelete = useCallback(async () => {
+    if (!requestToDelete) return;
+    try {
+      await deleteRequestApi(String(requestToDelete.id));
       deleteRequest(requestToDelete.id);
+    } catch (err) {
+      console.error("Failed to delete request:", err);
+    } finally {
       setIsDeleteModalOpen(false);
       setRequestToDelete(null);
     }
-  }, [deleteRequest, requestToDelete]);
+  }, [deleteRequestApi, deleteRequest, requestToDelete]);
 
   const handleDownloadAttachments = useCallback((e: React.MouseEvent, request: ServiceRequest) => {
     e.stopPropagation();
