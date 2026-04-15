@@ -128,27 +128,26 @@ const SpecsTab: React.FC<SpecsTabProps> = ({ propertyId, unitId }) => {
         setItemToDelete(null);
     };
 
-    const handleAddPaint = async (data: { color: string; description: string }) => {
+    const handleAddPaint = async (data: { name: string; color: string; description: string }) => {
         await createSpecMutation.mutateAsync({
             propertyId,
             specData: {
                 unitId,
                 type: 'PAINT',
-                name: `Paint ${paints.length + 1}`,
+                name: data.name,
                 color: data.color,
                 description: data.description,
             },
         });
     };
 
-    const handleAddDoor = async (data: { doorType: string; lockType: string; insideDoorColor: string; exteriorDoorColor: string; screenDoorAttached: boolean }) => {
-        // Use structured fields so all details persist + display individually
+    const handleAddDoor = async (data: { name: string; doorType: string; lockType: string; insideDoorColor: string; exteriorDoorColor: string; screenDoorAttached: boolean }) => {
         await createSpecMutation.mutateAsync({
             propertyId,
             specData: {
                 unitId,
                 type: 'DOOR',
-                name: `Door ${doors.length + 1}`,
+                name: data.name,
                 brand: data.doorType,
                 notes: data.lockType,
                 color: data.insideDoorColor,
@@ -158,13 +157,13 @@ const SpecsTab: React.FC<SpecsTabProps> = ({ propertyId, unitId }) => {
         });
     };
 
-    const handleAddFlooring = async (data: { flooringType: string; description: string }) => {
+    const handleAddFlooring = async (data: { name: string; flooringType: string; description: string }) => {
         await createSpecMutation.mutateAsync({
             propertyId,
             specData: {
                 unitId,
                 type: 'FLOORING',
-                name: `Flooring ${flooring.length + 1}`,
+                name: data.name,
                 brand: data.flooringType,
                 description: data.description || 'No description',
             },

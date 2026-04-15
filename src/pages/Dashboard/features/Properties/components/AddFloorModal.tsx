@@ -5,13 +5,15 @@ import { X, UploadCloud, FileText } from 'lucide-react';
 interface AddFloorModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onAdd: (data: { flooringType: string; description: string; file?: File | null }) => void;
+    onAdd: (data: { name: string; flooringType: string; description: string; file?: File | null }) => void;
 }
 
 const AddFloorModal: React.FC<AddFloorModalProps> = ({ isOpen, onClose, onAdd }) => {
+    const [name, setName] = useState('');
     const [flooringType, setFlooringType] = useState('');
     const [description, setDescription] = useState('');
     const [error, setError] = useState('');
+    const [nameError, setNameError] = useState('');
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -28,22 +30,31 @@ const AddFloorModal: React.FC<AddFloorModalProps> = ({ isOpen, onClose, onAdd })
     };
 
     const handleAdd = () => {
+        let hasError = false;
+        if (!name.trim()) {
+            setNameError('Name is required');
+            hasError = true;
+        }
         if (!flooringType.trim()) {
             setError('Flooring type is required');
-            return;
+            hasError = true;
         }
+        if (hasError) return;
 
         onAdd({
+            name: name.trim(),
             flooringType: flooringType.trim(),
             description: description.trim(),
             file: selectedFile,
         });
 
         // Reset and close
+        setName('');
         setFlooringType('');
         setDescription('');
         setSelectedFile(null);
         setError('');
+        setNameError('');
         onClose();
     };
 
@@ -72,6 +83,23 @@ const AddFloorModal: React.FC<AddFloorModalProps> = ({ isOpen, onClose, onAdd })
 
                     <div className="space-y-4">
                         <div className="font-bold text-[#2c3e50]">Flooring</div>
+
+                        {/* Name Field */}
+                        <div>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    value={name}
+                                    onChange={(e) => {
+                                        setName(e.target.value);
+                                        if (nameError) setNameError('');
+                                    }}
+                                    className={`${inputClasses} ${nameError ? 'border-red-500 focus:ring-red-500/20' : ''}`}
+                                    placeholder="Name *"
+                                />
+                            </div>
+                            {nameError && <p className="text-red-600 text-xs mt-1 ml-1">{nameError}</p>}
+                        </div>
 
                         {/* Flooring Type */}
                         <div>
