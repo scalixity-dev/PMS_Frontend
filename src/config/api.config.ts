@@ -332,6 +332,17 @@ export const API_ENDPOINTS = {
   DASHBOARD: {
     GET_STATS: `${API_BASE_URL}/dashboard`,
   },
+  TEAM: {
+    GET_ALL: `${API_BASE_URL}/team`,
+    GET_ONE: (id: string) => `${API_BASE_URL}/team/${id}`,
+    INVITE: `${API_BASE_URL}/team`,
+    UPDATE: (id: string) => `${API_BASE_URL}/team/${id}`,
+    REVOKE: (id: string) => `${API_BASE_URL}/team/${id}/revoke`,
+    RESEND: (id: string) => `${API_BASE_URL}/team/${id}/resend-invitation`,
+    DELETE: (id: string) => `${API_BASE_URL}/team/${id}`,
+    ACCEPT_INVITATION: `${API_BASE_URL}/team/accept-invitation`,
+    MY_TEAMS: `${API_BASE_URL}/team/my-teams`,
+  },
   NOTIFICATION: {
     GET_ALL: `${API_BASE_URL}/notifications`,
     GET_SETTINGS: `${API_BASE_URL}/notifications/settings`,
@@ -356,6 +367,10 @@ export const API_ENDPOINTS = {
     LIST_CARDS: `${API_BASE_URL}/payments/cards`,
     SET_DEFAULT: (id: string) => `${API_BASE_URL}/payments/cards/${id}/default`,
     DELETE_CARD: (id: string) => `${API_BASE_URL}/payments/cards/${id}`,
+    CREATE_PAYMENT_INTENT: `${API_BASE_URL}/payments/payment-intent`,
+    CONNECT_ONBOARDING_LINK: `${API_BASE_URL}/payments/connect/onboarding-link`,
+    CONNECT_STATUS: `${API_BASE_URL}/payments/connect/status`,
+    CONNECT_DISCONNECT: `${API_BASE_URL}/payments/connect/disconnect`,
   },
   TWO_FACTOR: {
     STATUS: `${API_BASE_URL}/2fa/status`,

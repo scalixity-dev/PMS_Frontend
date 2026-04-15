@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
     BedDouble,
     Bath,
@@ -23,6 +23,7 @@ import type { PropertyFeature } from "../../utils/types";
 import { API_ENDPOINTS } from "../../../../config/api.config";
 import { formatMoney } from "../../../../utils/currency.utils";
 import { formatAmenityLabel } from "../../../../utils/string.utils";
+import { useGetPublicPropertyDetail } from "../../../../hooks/usePropertyQueries";
 
 
 // --- Types ---
@@ -258,42 +259,19 @@ const PropertyDetailUser: React.FC = () => {
     const navigate = useNavigate();
     const [activeBottomTab, setActiveBottomTab] = useState("Description");
     const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [propertyData, setPropertyData] = useState<PropertyData | null>(null);
 
-    useEffect(() => {
-        const fetchPropertyDetail = async () => {
-            if (!id) {
-                setError("Property ID is required");
-                setLoading(false);
-                return;
-            }
+    // Normalize ID — composite IDs like "propertyId-listingId" sliced to plain UUID
+    const normalizedPropertyId = id ? (id.length > 36 ? id.substring(0, 36) : id) : null;
 
-            try {
-                setLoading(true);
-                setError(null);
+    // Fetch via TanStack Query
+    const { data: rawData, isLoading: loading, error: queryError } = useGetPublicPropertyDetail(normalizedPropertyId);
+    const error = queryError ? (queryError instanceof Error ? queryError.message : 'Failed to load property details') : (id ? null : 'Property ID is required');
 
-
-                let propertyId = id;
-                if (id.length > 36) {
-
-                    propertyId = id.substring(0, 36);
-                }
-
-                const response = await fetch(API_ENDPOINTS.PROPERTY.GET_PUBLIC_DETAIL(propertyId), {
-                    method: 'GET',
-                    credentials: 'include',
-                });
-
-                if (!response.ok) {
-                    if (response.status === 404) {
-                        throw new Error('Property not found');
-                    }
-                    throw new Error('Failed to fetch property details');
-                }
-
-                const data = await response.json();
+    // Derive mapped propertyData via useMemo (no useState/useEffect)
+    const propertyData = useMemo<PropertyData | null>(() => {
+        if (!rawData) return null;
+        const data = rawData;
+        try {
 
                 // Map backend data to PropertyData format
                 const address = data.address;
@@ -440,7 +418,7 @@ const PropertyDetailUser: React.FC = () => {
                     currency: currencyInfo.symbol,
                     currencyCode: currencyInfo.code,
                     images: images.length > 0 ? images : ["https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=800"],
-                    discount: "", // Can be added from listing if available
+                    discount: "",
                     description: data.description || data.listing?.description || "No description available.",
                     features: features,
                     detailedFeatures: detailedFeatures,
@@ -455,17 +433,12 @@ const PropertyDetailUser: React.FC = () => {
                     }
                 };
 
-                setPropertyData(mappedData);
-            } catch (err) {
-                console.error('Error fetching property detail:', err);
-                setError(err instanceof Error ? err.message : 'Failed to load property details');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchPropertyDetail();
-    }, [id]);
+                return mappedData;
+        } catch (err) {
+            console.error('Error mapping property detail:', err);
+            return null;
+        }
+    }, [rawData]);
 
     if (loading) {
         return (
