@@ -42,6 +42,52 @@ export const useGetAllProperties = (enabled: boolean = true, includeListings: bo
 };
 
 /**
+ * Public property detail (tenant-facing).
+ * Auto-refetches when propertyId changes.
+ */
+export const useGetPublicPropertyDetail = (propertyId: string | null | undefined, enabled: boolean = true) => {
+  return useQuery({
+    queryKey: ['public-property', propertyId] as const,
+    queryFn: () => propertyService.getPublicPropertyDetail(propertyId!),
+    enabled: enabled && !!propertyId,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+};
+
+/**
+ * Public listings query (tenant property browsing).
+ * Filters-aware — query refetches when filters change.
+ */
+export const useGetPublicListings = (
+  filters?: {
+    search?: string;
+    country?: string;
+    state?: string;
+    city?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    beds?: number;
+    baths?: number;
+    propertyType?: string;
+    petsAllowed?: boolean;
+    page?: number;
+    limit?: number;
+  },
+  enabled: boolean = true,
+) => {
+  return useQuery({
+    queryKey: ['public-listings', filters] as const,
+    queryFn: () => propertyService.getPublicListings(filters),
+    enabled,
+    staleTime: 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+};
+
+/**
  * Lightweight - returns only { id, propertyName } for dropdowns.
  * Saves bandwidth vs full properties endpoint. Uses Redis cache on backend.
  */

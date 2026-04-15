@@ -1093,6 +1093,24 @@ class PropertyService {
   }
 
   /**
+   * Fetch public property detail (tenant-facing, unauthenticated access OK)
+   */
+  async getPublicPropertyDetail(propertyId: string): Promise<any> {
+    const response = await fetch(API_ENDPOINTS.PROPERTY.GET_PUBLIC_DETAIL(propertyId), {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) throw new Error('Property not found');
+      throw new Error(`Failed to fetch property detail: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
    * Fetch public listings with pagination and filtering (tenant-facing)
    */
   async getPublicListings(filters?: {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Bell, X, ChevronLeft, ChevronRight } from "lucide-react";
 import ApplicationSubmittedModal from "./components/ApplicationSubmittedModal";
@@ -6,6 +6,8 @@ import PrimaryActionButton from "../../../../components/common/buttons/PrimaryAc
 import DeleteConfirmationModal from "../../../../components/common/modals/DeleteConfirmationModal";
 import { UserApplicationCard, UserApplicationCardSkeleton, type ApplicationItem } from "./components/UserApplicationCard";
 import { API_ENDPOINTS } from "../../../../config/api.config";
+import { useGetAllApplications, applicationQueryKeys } from "../../../../hooks/useApplicationQueries";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface InvitationItem {
   id: string;
@@ -129,94 +131,56 @@ const Applications: React.FC = () => {
     return () => controller.abort();
   }, []);
 
-  const [applications, setApplications] = useState<ApplicationItem[]>([]);
+  const queryClient = useQueryClient();
 
-  // Fetch applications from API
-  useEffect(() => {
-    const controller = new AbortController();
+  // Fetch applications via TanStack Query (consistent pattern across platform)
+  const { data: apiResponse, isLoading: applicationsLoading } = useGetAllApplications();
 
-    const fetchApplications = async () => {
-      setIsLoadingApplications(true);
-      try {
-        const response = await fetch(API_ENDPOINTS.APPLICATION.GET_ALL, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          signal: controller.signal,
-        });
+  // Derive mapped applications via useMemo (no useState + useEffect pattern)
+  const applications = useMemo<ApplicationItem[]>(() => {
+    if (!apiResponse) return [];
 
-        if (response.ok) {
-          const responseData = await response.json();
+    const rawList = Array.isArray(apiResponse)
+      ? apiResponse
+      : ((apiResponse as any)?.data || []);
 
-          // Handle both array and pagination responses
-          const data = Array.isArray(responseData)
-            ? responseData
-            : (responseData?.data || []);
-
-          // Normalization helper for status
-          const normalizeStatus = (status: string): "Approved" | "Rejected" | "Submitted" | "Draft" => {
-            const normalized = status?.charAt(0).toUpperCase() + status?.slice(1).toLowerCase();
-            if (['Approved', 'Rejected', 'Submitted', 'Draft'].includes(normalized)) {
-              return normalized as "Approved" | "Rejected" | "Submitted" | "Draft";
-            }
-            return "Submitted"; // Default fallback
-          };
-
-          // Map API data to ApplicationItem structure - only backend applications
-          const apiApps: ApplicationItem[] = data.map((app: any) => {
-            // Get primary applicant (first one or the one marked as primary)
-            const primaryApplicant = app.applicants?.find((a: any) => a.isPrimary) || app.applicants?.[0];
-            const applicantName = primaryApplicant
-              ? `${primaryApplicant.firstName || ''} ${primaryApplicant.middleName || ''} ${primaryApplicant.lastName || ''}`.trim() || "Unknown Applicant"
-              : "Unknown Applicant";
-            const applicantPhone = primaryApplicant?.phoneNumber || "N/A";
-
-            // Get property address from leasing property
-            const propertyAddress = app.leasing?.property?.address
-              ? `${app.leasing.property.address.streetAddress || ''}, ${app.leasing.property.address.city || ''}, ${app.leasing.property.address.stateRegion || ''}`
-                .replace(/^, |, $/g, '').replace(/, ,/g, ',')
-              : "Address not available";
-
-            return {
-              id: String(app.id),
-              name: applicantName,
-              phone: applicantPhone,
-              status: normalizeStatus(app.status), // Normalized status
-              appliedDate: app.createdAt ? app.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
-              address: propertyAddress,
-              propertyId: app.leasing?.property?.id,
-              imageUrl: app.imageUrl || null
-            };
-          });
-
-          // Set only backend applications, no local storage merging
-          setApplications(apiApps);
-        } else if (response.status === 401) {
-          // User not authenticated - no applications
-          setApplications([]);
-        } else {
-          // Log non-401 errors for debugging
-          console.error(`Failed to fetch applications: ${response.status} ${response.statusText}`);
-          const errorData = await response.json().catch(() => ({}));
-          console.error("Error details:", errorData);
-          setApplications([]);
-        }
-      } catch (error) {
-        if (error instanceof Error && error.name === 'AbortError') {
-          return;
-        }
-        console.error("Failed to fetch applications:", error);
-        setApplications([]);
+    const normalizeStatus = (status: string): 'Approved' | 'Rejected' | 'Submitted' | 'Draft' => {
+      const normalized = status?.charAt(0).toUpperCase() + status?.slice(1).toLowerCase();
+      if (['Approved', 'Rejected', 'Submitted', 'Draft'].includes(normalized)) {
+        return normalized as 'Approved' | 'Rejected' | 'Submitted' | 'Draft';
       }
-      setIsLoadingApplications(false);
+      return 'Submitted';
     };
 
-    fetchApplications();
+    return rawList.map((app: any) => {
+      const primaryApplicant = app.applicants?.find((a: any) => a.isPrimary) || app.applicants?.[0];
+      const applicantName = primaryApplicant
+        ? `${primaryApplicant.firstName || ''} ${primaryApplicant.middleName || ''} ${primaryApplicant.lastName || ''}`.trim() || 'Unknown Applicant'
+        : 'Unknown Applicant';
+      const applicantPhone = primaryApplicant?.phoneNumber || 'N/A';
 
-    return () => controller.abort();
-  }, []);
+      const propertyAddress = app.leasing?.property?.address
+        ? `${app.leasing.property.address.streetAddress || ''}, ${app.leasing.property.address.city || ''}, ${app.leasing.property.address.stateRegion || ''}`
+          .replace(/^, |, $/g, '').replace(/, ,/g, ',')
+        : 'Address not available';
+
+      return {
+        id: String(app.id),
+        name: applicantName,
+        phone: applicantPhone,
+        status: normalizeStatus(app.status),
+        appliedDate: app.createdAt ? app.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
+        address: propertyAddress,
+        propertyId: app.leasing?.property?.id,
+        imageUrl: app.imageUrl || null,
+      };
+    });
+  }, [apiResponse]);
+
+  // Sync loading state with external isLoadingApplications for compatibility with existing refs
+  useEffect(() => {
+    setIsLoadingApplications(applicationsLoading);
+  }, [applicationsLoading]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const totalPages = Math.ceil(applications.length / ITEMS_PER_PAGE);
@@ -391,8 +355,8 @@ const Applications: React.FC = () => {
                   });
 
                   if (deleteResponse.ok) {
-                    // Remove from state only after successful API deletion
-                    setApplications(prev => prev.filter(app => String(app.id) !== String(appId)));
+                    // Invalidate TanStack Query cache so list refetches
+                    queryClient.invalidateQueries({ queryKey: applicationQueryKeys.lists() });
                   } else {
                     const errorData = await deleteResponse.json().catch(() => ({ message: 'Failed to delete application' }));
                     setErrorToast(errorData.message || 'Failed to delete application. Please try again.');
