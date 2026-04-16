@@ -33,6 +33,15 @@ export interface BackendServiceProviderDocument {
   uploadedAt: string;
 }
 
+export interface ServiceProviderContact {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  status?: string;
+  notes?: string | null;
+}
+
 export interface BackendServiceProvider {
   id: string;
   userId?: string | null;
@@ -801,6 +810,160 @@ class ServiceProviderService {
 
     return response.json();
   }
+
+  async getMyDocuments(documentType?: string): Promise<BackendServiceProviderDocument[]> {
+    const url = documentType
+      ? `${API_ENDPOINTS.SERVICE_PROVIDER.GET_MY_DOCUMENTS}?type=${encodeURIComponent(documentType)}`
+      : API_ENDPOINTS.SERVICE_PROVIDER.GET_MY_DOCUMENTS;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      throw new Error(
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Failed to fetch my documents',
+      );
+    }
+    return response.json();
+  }
+
+  async addMyDocument(payload: {
+    documentType: string;
+    fileUrl: string;
+    description?: string | null;
+  }): Promise<BackendServiceProviderDocument> {
+    const response = await fetch(API_ENDPOINTS.SERVICE_PROVIDER.ADD_MY_DOCUMENT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      throw new Error(
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Failed to add my document',
+      );
+    }
+    return response.json();
+  }
+
+  async updateMyDocument(
+    documentId: string,
+    payload: { documentType?: string; fileUrl?: string; description?: string | null },
+  ): Promise<BackendServiceProviderDocument> {
+    const response = await fetch(API_ENDPOINTS.SERVICE_PROVIDER.UPDATE_MY_DOCUMENT(documentId), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      throw new Error(
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Failed to update my document',
+      );
+    }
+    return response.json();
+  }
+
+  async deleteMyDocument(documentId: string): Promise<{ id: string; message: string }> {
+    const response = await fetch(API_ENDPOINTS.SERVICE_PROVIDER.DELETE_MY_DOCUMENT(documentId), {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      throw new Error(
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Failed to delete my document',
+      );
+    }
+    return response.json();
+  }
+
+  async getMyContacts(): Promise<ServiceProviderContact[]> {
+    const response = await fetch(API_ENDPOINTS.SERVICE_PROVIDER.GET_MY_CONTACTS, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      throw new Error(
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Failed to fetch my contacts',
+      );
+    }
+    return response.json();
+  }
+
+  async addMyContact(payload: { name: string; phone?: string; email?: string }): Promise<ServiceProviderContact> {
+    const response = await fetch(API_ENDPOINTS.SERVICE_PROVIDER.ADD_MY_CONTACT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      throw new Error(
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Failed to add contact',
+      );
+    }
+    return response.json();
+  }
+
+  async updateMyContact(
+    contactId: string,
+    payload: { name?: string; phone?: string; email?: string },
+  ): Promise<ServiceProviderContact> {
+    const response = await fetch(API_ENDPOINTS.SERVICE_PROVIDER.UPDATE_MY_CONTACT(contactId), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      throw new Error(
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Failed to update contact',
+      );
+    }
+    return response.json();
+  }
+
+  async deleteMyContact(contactId: string): Promise<{ id: string; message: string }> {
+    const response = await fetch(API_ENDPOINTS.SERVICE_PROVIDER.DELETE_MY_CONTACT(contactId), {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      throw new Error(
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message?: unknown }).message)
+          : 'Failed to delete contact',
+      );
+    }
+    return response.json();
+  }
   /**
    * Validate Excel file without importing
    */
@@ -938,4 +1101,3 @@ class ServiceProviderService {
 }
 
 export const serviceProviderService = new ServiceProviderService();
-

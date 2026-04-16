@@ -482,11 +482,13 @@ const Requests: React.FC = () => {
   const { mutateAsync: updateRequestApi, isPending: isCancelling } = useUpdateMaintenanceRequest();
   const { mutateAsync: deleteRequestApi, isPending: isDeleting } = useDeleteMaintenanceRequest();
   const requests: ServiceRequest[] = useMemo(() => {
-    if (apiSuccess && Array.isArray(apiRequests) && apiRequests.length >= 0) {
+    if (apiSuccess && Array.isArray(apiRequests)) {
       return (apiRequests as unknown[]).map((r) => mapApiToServiceRequest(r as Parameters<typeof mapApiToServiceRequest>[0]));
     }
-    return storeRequests;
-  }, [apiSuccess, apiRequests, storeRequests]);
+    // Before API resolves: show empty list instead of stale localStorage data
+    // (storeRequests was causing a flash of old data on refresh).
+    return [];
+  }, [apiSuccess, apiRequests]);
   const [activeMenuId, setActiveMenuId] = useState<string | number | null>(null);
   const [menuPosition, setMenuPosition] = useState<MenuPosition | null>(null);
   const [printingRequest, setPrintingRequest] = useState<ServiceRequest | null>(null);

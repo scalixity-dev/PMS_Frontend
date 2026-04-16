@@ -5,6 +5,7 @@ import CalendarHeader from './CalendarHeader';
 import MonthGrid from './MonthGrid';
 import AddReminderModal from './components/AddReminderModal';
 import { useGetCalendarEvents } from '../../../../../hooks/useCalendarQueries';
+import { useServiceProviderAssignments } from '../../../../../hooks/useServiceProviderAssignments';
 import { Loader2 } from 'lucide-react';
 
 // Debounce helper
@@ -127,42 +128,27 @@ const Calendar: React.FC = () => {
     };
 
 
-    // Mock Service Requests Data
-    const mockServiceRequests = useMemo(() => [
-        {
-            id: 'sr-123',
-            status: 'New',
-            category: 'Appliances',
-            property: 'Sunset Apartments',
-            priority: 'Critical',
-            client: 'Alice Johnson',
-            date: new Date(new Date().getFullYear(), new Date().getMonth(), 15), // Mid-month
-            time: '10:00 AM',
-            description: 'Fix broken dishwasher in unit 4B'
-        },
-        {
-            id: 'sr-124',
-            status: 'New',
-            category: 'Plumbing',
-            property: 'Downtown Lofts',
-            priority: 'Normal',
-            client: 'Bob Smith',
-            date: new Date(new Date().getFullYear(), new Date().getMonth(), 18),
-            time: '02:00 PM',
-            description: 'Leaking faucet in master bathroom'
-        },
-        {
-            id: 'sr-125',
-            status: 'In Progress',
-            category: 'Electrical',
-            property: 'Sunset Apartments',
-            priority: 'High',
-            client: 'Charlie Davis',
-            date: new Date(new Date().getFullYear(), new Date().getMonth(), 22),
-            time: '09:00 AM',
-            description: 'Switchboard sparking replacement'
-        }
-    ], []);
+    // Real service provider assignments — shown as calendar items
+    const { data: assignments = [] } = useServiceProviderAssignments();
+    const scheduledAssignments = useMemo(() => {
+        return (assignments as any[])
+            .filter((a) => a?.scheduledDate || a?.request?.dueDate)
+            .map((a) => {
+                const dateStr = a.scheduledDate || a.request?.dueDate;
+                const d = dateStr ? new Date(dateStr) : new Date();
+                return {
+                    id: a.id,
+                    status: a.status,
+                    category: a.request?.category || 'Maintenance',
+                    property: a.request?.property?.propertyName || 'Property',
+                    priority: a.request?.priority || 'MEDIUM',
+                    client: a.request?.managerName || '',
+                    date: d,
+                    time: d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+                    description: a.request?.title || a.request?.problemDetails || 'Service request',
+                };
+            });
+    }, [assignments]);
 
     const reminders = useMemo<Reminder[]>(() => {
         // Valid reminder types
@@ -275,7 +261,7 @@ const Calendar: React.FC = () => {
             };
         });
 
-        const serviceRequestReminders: Reminder[] = mockServiceRequests.map(req => ({
+        const serviceRequestReminders: Reminder[] = scheduledAssignments.map(req => ({
             id: req.id,
             title: `${req.category} Request`,
             date: req.date,
@@ -288,7 +274,7 @@ const Calendar: React.FC = () => {
         }));
 
         return [...existingEvents, ...serviceRequestReminders];
-    }, [calendarEvents, mockServiceRequests]);
+    }, [calendarEvents, scheduledAssignments]);
 
     const handleAddReminder = () => {
         // Modal handles API calls internally, just close it

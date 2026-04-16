@@ -78,15 +78,15 @@ const SETTING_CARDS: SettingCardData[] = [
       { label: "Terms & Signature", path: "/dashboard/settings/rental-application/terms-signature" },
     ],
   },
-  {
-    title: "Team Management",
-    description: "Lets you control and update account information and enable other products.",
-    icon: Users,
-    links: [
-      { label: "Roles & Permissions", path: "/dashboard/settings/team-management/roles-permissions" },
-      { label: "Property Permissions", path: "/dashboard/settings/team-management/property-permissions" },
-    ],
-  },
+  // {
+  //   title: "Team Management",
+  //   description: "Lets you control and update account information and enable other products.",
+  //   icon: Users,
+  //   links: [
+  //     { label: "Roles & Permissions", path: "/dashboard/settings/team-management/roles-permissions" },
+  //     { label: "Property Permissions", path: "/dashboard/settings/team-management/property-permissions" },
+  //   ],
+  // },
   {
     title: "Request Settings",
     description: "Lets you control and update account information and enable other products.",

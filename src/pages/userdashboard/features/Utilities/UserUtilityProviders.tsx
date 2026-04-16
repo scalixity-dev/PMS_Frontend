@@ -7,6 +7,8 @@ interface UtilityProviderItem {
   id: string;
   name: string;
   payer: string;
+  contactName?: string;
+  contactPhone?: string;
 }
 
 const getPayerLabel = (payer: string): string => {
@@ -47,9 +49,34 @@ const UtilityProviders: React.FC = () => {
 
   const utilities = useMemo<UtilityProviderItem[]>(() => {
     const list: UtilityProviderItem[] = [];
+    const seen = new Set<string>();
     for (const lease of leases) {
+      const propertyProviders = lease.property?.utilityProviders ?? [];
       const leaseUtilities = lease.utilities ?? [];
+
+      if (propertyProviders.length > 0) {
+        for (const provider of propertyProviders) {
+          const matchingLeaseUtility = leaseUtilities.find(
+            (u) => u.utility.toLowerCase() === provider.serviceType.toLowerCase(),
+          );
+          const key = `${lease.id}:${provider.id}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          list.push({
+            id: provider.id,
+            name: provider.providerName,
+            payer: matchingLeaseUtility?.payer ?? "Shared",
+            contactName: provider.contactName ?? undefined,
+            contactPhone: provider.contactPhone ?? undefined,
+          });
+        }
+        continue;
+      }
+
       for (const u of leaseUtilities) {
+        const key = `${lease.id}:${u.id}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
         list.push({
           id: u.id,
           name: u.utility,
@@ -120,6 +147,11 @@ const UtilityProviders: React.FC = () => {
                         <p className="text-xs text-gray-500">
                           {getPayerLabel(item.payer)}
                         </p>
+                        {(item.contactName || item.contactPhone) && (
+                          <p className="text-xs text-gray-400">
+                            {[item.contactName, item.contactPhone].filter(Boolean).join(" • ")}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <span
@@ -169,5 +201,4 @@ const UtilityProviders: React.FC = () => {
 };
 
 export default UtilityProviders;
-
 

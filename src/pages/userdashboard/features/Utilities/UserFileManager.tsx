@@ -3,13 +3,16 @@ import { Search, FileText, Image, File, Video, MoreVertical, Download, Edit2, Tr
 import { Link } from "react-router-dom";
 import { createPortal } from "react-dom";
 import FilterDropdown from "../../../../components/ui/FilterDropdown";
+import { useGetFiles, useRenameFile, useDeleteFile } from "../../../../hooks/useFilesQueries";
+import type { FileRecord } from "../../../../services/files.service";
 
 interface FileItem {
-  id: number;
+  id: string;
   name: string;
   type: "PDF" | "Image" | "Document" | "Video";
   size: string;
   date: string;
+  url: string;
 }
 
 interface MenuPosition {
@@ -31,10 +34,10 @@ interface FileMobileCardProps {
   onDownload: () => void;
   onEdit: () => void;
   onDelete: () => void;
-  handleMenuClick: (e: React.MouseEvent, id: number) => void;
-  activeMenuId: number | null;
+  handleMenuClick: (e: React.MouseEvent, id: string) => void;
+  activeMenuId: string | null;
   menuPosition: MenuPosition | null;
-  setActiveMenuId: (id: number | null) => void;
+  setActiveMenuId: (id: string | null) => void;
   getFileIcon: (type: string) => React.ReactNode;
 }
 
@@ -167,20 +170,43 @@ const ROWS_PER_PAGE = 10;
 const FileManager: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [fileTypeFilter, setFileTypeFilter] = useState<string | null>(null);
-  const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [menuPosition, setMenuPosition] = useState<MenuPosition | null>(null);
-  const [editingFileId, setEditingFileId] = useState<number | null>(null);
+  const [editingFileId, setEditingFileId] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const [files, setFiles] = useState<FileItem[]>([
-    { id: 1, name: "Lease Agreement.pdf", type: "PDF", size: "2.4 MB", date: "2024-01-15" },
-    { id: 2, name: "Property Photos.jpg", type: "Image", size: "5.8 MB", date: "2024-01-20" },
-    { id: 3, name: "Maintenance Report.docx", type: "Document", size: "1.2 MB", date: "2024-02-01" },
-    { id: 4, name: "Inspection Video.mp4", type: "Video", size: "45.6 MB", date: "2024-02-05" },
-    { id: 5, name: "Tenant Agreement.pdf", type: "PDF", size: "3.1 MB", date: "2024-01-10" },
-    { id: 6, name: "Floor Plan.png", type: "Image", size: "4.2 MB", date: "2024-01-25" },
-  ]);
+  const { data: rawFiles = [] } = useGetFiles();
+  const renameFileMutation = useRenameFile();
+  const deleteFileMutation = useDeleteFile();
+
+  const files = useMemo<FileItem[]>(() => {
+    const inferType = (f: FileRecord): FileItem["type"] => {
+      const mime = (f.mimeType || "").toLowerCase();
+      const name = f.name.toLowerCase();
+      if (mime.includes("pdf") || name.endsWith(".pdf")) return "PDF";
+      if (mime.startsWith("image/")) return "Image";
+      if (mime.startsWith("video/")) return "Video";
+      return "Document";
+    };
+
+    const formatSize = (bytes: number | null): string => {
+      if (!bytes || bytes <= 0) return "-";
+      if (bytes < 1024) return `${bytes} B`;
+      const kb = bytes / 1024;
+      if (kb < 1024) return `${kb.toFixed(1)} KB`;
+      return `${(kb / 1024).toFixed(1)} MB`;
+    };
+
+    return (rawFiles as FileRecord[]).map((f) => ({
+      id: f.id,
+      name: f.name,
+      type: inferType(f),
+      size: formatSize(f.sizeBytes),
+      date: f.createdAt,
+      url: f.url,
+    }));
+  }, [rawFiles]);
 
   // Close menu on scroll
   useEffect(() => {
@@ -189,7 +215,7 @@ const FileManager: React.FC = () => {
     return () => window.removeEventListener("scroll", handleScroll, true);
   }, []);
 
-  const handleMenuClick = useCallback((e: React.MouseEvent, id: number) => {
+  const handleMenuClick = useCallback((e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     const rect = e.currentTarget.getBoundingClientRect();
     setMenuPosition({
@@ -200,20 +226,18 @@ const FileManager: React.FC = () => {
   }, [activeMenuId]);
 
   const handleDownload = (file: FileItem) => {
-    const dummyContent = `Mock content for ${file.name}`;
-    const blob = new Blob([dummyContent], { type: "text/plain" });
-    const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.href = url;
+    link.href = file.url;
     link.setAttribute("download", file.name);
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
   };
 
-  const handleDelete = (id: number) => {
-    setFiles(prev => prev.filter(f => f.id !== id));
+  const handleDelete = (id: string) => {
+    deleteFileMutation.mutate(id);
   };
 
   const handleEditInit = (file: FileItem) => {
@@ -223,9 +247,7 @@ const FileManager: React.FC = () => {
 
   const handleSaveName = () => {
     if (editingFileId && newName.trim()) {
-      setFiles(prev => prev.map(f =>
-        f.id === editingFileId ? { ...f, name: newName.trim() } : f
-      ));
+      renameFileMutation.mutate({ id: editingFileId, name: newName.trim() });
       setEditingFileId(null);
     }
   };
@@ -270,12 +292,12 @@ const FileManager: React.FC = () => {
   };
 
   const totalSize = useMemo(() => {
-    const totalMB = files.reduce((acc, file) => {
-      const sizeVal = parseFloat(file.size.split(' ')[0]);
-      return isNaN(sizeVal) ? acc : acc + sizeVal;
-    }, 0);
-    return `${totalMB.toFixed(1)} MB`;
-  }, [files]);
+    const totalBytes = (rawFiles as FileRecord[]).reduce((acc, file) => acc + (file.sizeBytes || 0), 0);
+    if (totalBytes < 1024) return `${totalBytes} B`;
+    const kb = totalBytes / 1024;
+    if (kb < 1024) return `${kb.toFixed(1)} KB`;
+    return `${(kb / 1024).toFixed(1)} MB`;
+  }, [rawFiles]);
 
   const stats = [
     { label: "All Files", value: files.length },
@@ -548,6 +570,5 @@ const FileManager: React.FC = () => {
 };
 
 export default FileManager;
-
 
 

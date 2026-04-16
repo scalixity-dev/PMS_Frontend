@@ -13,6 +13,49 @@ interface SavedCard {
   isDefault: boolean;
 }
 
+const CardBrandBadge: React.FC<{ brand: string }> = ({ brand }) => {
+  const normalizedBrand = brand.toLowerCase();
+
+  if (normalizedBrand.includes("visa")) {
+    return (
+      <div className="w-12 h-12 shrink-0 rounded-lg bg-[#1434CB] flex items-center justify-center">
+        <span className="text-white text-[10px] font-bold tracking-wide">VISA</span>
+      </div>
+    );
+  }
+
+  if (normalizedBrand.includes("master")) {
+    return (
+      <div className="w-12 h-12 shrink-0 rounded-lg bg-[#1F2937] flex items-center justify-center relative">
+        <span className="w-4 h-4 rounded-full bg-[#EB001B] opacity-90 absolute left-3" />
+        <span className="w-4 h-4 rounded-full bg-[#F79E1B] opacity-90 absolute right-3" />
+      </div>
+    );
+  }
+
+  if (normalizedBrand.includes("paypal")) {
+    return (
+      <div className="w-12 h-12 shrink-0 rounded-lg bg-[#003087] flex items-center justify-center">
+        <span className="text-white text-[9px] font-bold tracking-wide">PayPal</span>
+      </div>
+    );
+  }
+
+  if (normalizedBrand.includes("amex") || normalizedBrand.includes("american express")) {
+    return (
+      <div className="w-12 h-12 shrink-0 rounded-lg bg-[#2E77BC] flex items-center justify-center">
+        <span className="text-white text-[8px] font-bold tracking-wide text-center leading-tight">AMEX</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-12 h-12 shrink-0 rounded-lg bg-gradient-to-br from-[#7CD947] to-[#6bc238] flex items-center justify-center">
+      <CreditCard className="text-white" size={24} />
+    </div>
+  );
+};
+
 const MyCardSettings: React.FC = () => {
   const { data } = useGetSettingsSection<{ savedCards: SavedCard[] }>("subscription_my_card");
   const updateSettings = useUpdateSettingsSection<{ savedCards: SavedCard[] }>("subscription_my_card");
@@ -171,9 +214,7 @@ const MyCardSettings: React.FC = () => {
                 className="border border-[#E8E8E8] rounded-xl bg-white p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 shrink-0 rounded-lg bg-gradient-to-br from-[#7CD947] to-[#6bc238] flex items-center justify-center">
-                    <CreditCard className="text-white" size={24} />
-                  </div>
+                  <CardBrandBadge brand={card.brand} />
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="text-lg font-semibold text-gray-900">

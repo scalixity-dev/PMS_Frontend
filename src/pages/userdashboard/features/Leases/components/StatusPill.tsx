@@ -12,6 +12,7 @@ export const StatusPill = ({ status }: { status: StatusType }) => {
         Pending: "bg-[var(--status-pending-bg)]/40 text-[var(--status-pending-text)]",
         Paid: "bg-[var(--status-active-bg)]/40 text-[var(--status-active-text)]",
         Partial: "bg-yellow-100 text-yellow-700",
+        Void: "bg-gray-200 text-gray-700",
     };
 
 

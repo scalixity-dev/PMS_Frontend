@@ -7,6 +7,7 @@ import CustomDropdown from '../../../../../Dashboard/components/CustomDropdown';
 import { useReminderStore } from '../store/reminderStore';
 import { useCreateReminder, useUpdateReminder } from '../../../../../../hooks/useReminderQueries';
 import { useGetAllProperties } from '../../../../../../hooks/usePropertyQueries';
+import { useServiceProviderAssignments } from '../../../../../../hooks/useServiceProviderAssignments';
 import { type Reminder } from '../Calendar';
 
 // Valid form types for ReminderFormData
@@ -58,8 +59,23 @@ const AddReminderModal: React.FC<AddReminderModalProps> = ({ isOpen, onClose, on
     const updateReminderMutation = useUpdateReminder();
     const isEditMode = mode === 'edit' && editReminder !== null && editReminder !== undefined;
 
-    // Fetch properties for dropdown
-    const { data: properties = [], isLoading: isLoadingProperties } = useGetAllProperties();
+    // Fetch properties for dropdown — service pros don't own properties, so also
+    // derive unique properties from their maintenance assignments.
+    const { data: ownProperties = [], isLoading: isLoadingProperties } = useGetAllProperties();
+    const { data: assignments = [] } = useServiceProviderAssignments();
+    const properties = useMemo(() => {
+        const merged = new Map<string, { id: string; propertyName: string }>();
+        for (const p of ownProperties as any[]) {
+            if (p?.id) merged.set(p.id, { id: p.id, propertyName: p.propertyName || 'Property' });
+        }
+        for (const a of assignments as any[]) {
+            const prop = a?.request?.property;
+            if (prop?.id && !merged.has(prop.id)) {
+                merged.set(prop.id, { id: prop.id, propertyName: prop.propertyName || 'Property' });
+            }
+        }
+        return Array.from(merged.values());
+    }, [ownProperties, assignments]);
 
     const [showExitConfirmation, setShowExitConfirmation] = React.useState(false);
     const [formErrors, setFormErrors] = React.useState({ title: false, date: false, time: false, details: false });

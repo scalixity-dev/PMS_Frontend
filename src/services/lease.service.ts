@@ -40,6 +40,18 @@ export interface BackendLease {
       photoUrl: string;
       isPrimary: boolean;
     }>;
+    utilityProviders?: Array<{
+      id: string;
+      providerName: string;
+      serviceType: string;
+      accountNumber?: string | null;
+      contactName?: string | null;
+      contactPhone?: string | null;
+      notes?: string | null;
+      providerType?: string | null;
+      estimatedCost?: string | null;
+      currency?: string | null;
+    }>;
   };
   unit?: {
     id: string;

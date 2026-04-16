@@ -18,6 +18,7 @@ import {
 import logo from "../../assets/images/logo.png";
 import { authService } from "../../services/auth.service";
 import { propertyQueryKeys } from "../../hooks/usePropertyQueries";
+import AccountSwitcherModal from "../common/AccountSwitcherModal";
 
 interface NavbarProps {
   setSidebarOpen: (open: boolean) => void;
@@ -101,9 +102,34 @@ export default function DashboardNavbar({ setSidebarOpen }: NavbarProps) {
     }
   };
 
+  // Account switcher: list remembered accounts; switching signs current user
+  // out and redirects to /login with email prefilled.
+  const [isAccountSwitcherOpen, setIsAccountSwitcherOpen] = useState(false);
+
   const handleAddAnotherAccount = () => {
     setIsProfileDropdownOpen(false);
-    navigate("/dashboard/settings/profile");
+    setIsAccountSwitcherOpen(true);
+  };
+
+  const switchToAccount = async (email: string) => {
+    setIsAccountSwitcherOpen(false);
+    try {
+      await authService.logout();
+    } catch { /* continue */ }
+    queryClient.clear();
+    sessionStorage.removeItem('service_pro_authenticated');
+    const encoded = encodeURIComponent(email);
+    navigate(`/login?add_account=1&email=${encoded}`, { replace: true });
+  };
+
+  const openFreshLogin = async () => {
+    setIsAccountSwitcherOpen(false);
+    try {
+      await authService.logout();
+    } catch { /* ignore */ }
+    queryClient.clear();
+    sessionStorage.removeItem('service_pro_authenticated');
+    navigate('/login?add_account=1', { replace: true });
   };
 
   const handleManageProfile = () => {
@@ -359,6 +385,13 @@ export default function DashboardNavbar({ setSidebarOpen }: NavbarProps) {
           </div>
         </>
       )}
+
+      <AccountSwitcherModal
+        isOpen={isAccountSwitcherOpen}
+        onClose={() => setIsAccountSwitcherOpen(false)}
+        onSwitch={switchToAccount}
+        onAddNew={openFreshLogin}
+      />
     </header>
   );
 }

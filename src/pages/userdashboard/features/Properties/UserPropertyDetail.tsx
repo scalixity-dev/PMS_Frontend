@@ -45,6 +45,7 @@ interface PropertyData {
     policies: { label: string; value: string }[];
     policyDescription: string;
     agent: {
+        id?: string;
         name: string;
         phone: string;
         email: string;
@@ -427,6 +428,7 @@ const PropertyDetailUser: React.FC = () => {
                     policies: policies,
                     policyDescription: data.listing?.petDescription || "",
                     agent: {
+                        id: data.manager?.id,
                         name: data.manager?.fullName || data.listingContactName || "Property Manager",
                         phone: data.listingPhoneNumber ? `(${data.listingPhoneCountryCode || ''}) ${data.listingPhoneNumber}` : "N/A",
                         email: data.manager?.email || data.listingEmail || "N/A"
@@ -676,10 +678,11 @@ const PropertyDetailUser: React.FC = () => {
                 onClose={() => setIsMessageModalOpen(false)}
                 propertyTitle={propertyData.title}
                 landlordName={propertyData.agent.name}
+                landlordId={propertyData.agent.id}
+                landlordEmail={propertyData.agent.email}
             />
         </div>
     );
 };
 
 export default PropertyDetailUser;
-

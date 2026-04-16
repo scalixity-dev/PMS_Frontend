@@ -33,7 +33,7 @@ import ServiceDashboardSecuritySettings from './pages/ServiceDashboard/pages/Das
 import ServiceDashboardIntegrationSettings from './pages/ServiceDashboard/pages/Dashboard/Settings/AccountSettings/IntegrationSettings';
 import ServiceDashboardNotificationSettings from './pages/ServiceDashboard/pages/Dashboard/Settings/AccountSettings/NotificationSettings';
 import OtpPage from './pages/basewebsite/auth/otp';
-import OAuthCallbackPage from './pages/basewebsite/auth/otp'; // Note: This might have been a mistake in the original or I misread, checking...
+import OAuthCallbackPage from './pages/basewebsite/auth/oauth-callback';
 import OAuthCompletePage from './pages/basewebsite/auth/signUp/oauth-complete';
 import MobileAutoLogin from './pages/basewebsite/auth/mobile-auto-login/MobileAutoLogin';
 import AutoLoginProvider from './components/AutoLoginProvider';
@@ -241,14 +241,6 @@ const App: React.FC = () => {
 
             {/* Service Dashboard Routes */}
             <Route element={<ServiceDashboardLayout />}>
-              <Route path="/service-dashboard" element={<ServiceProtectedRoute><ServiceDashboard /></ServiceProtectedRoute>} />
-              <Route path="/service-dashboard/requests" element={<ServiceProtectedRoute><ServiceRequests /></ServiceProtectedRoute>} />
-              <Route path="/service-dashboard/requests-board" element={<ServiceProtectedRoute><ServiceRequestsBoard /></ServiceProtectedRoute>} />
-              <Route path="/service-dashboard/accounting" element={<ServiceProtectedRoute><ServiceAccounting /></ServiceProtectedRoute>} />
-              <Route path="/service-dashboard/accounting/transaction/:id" element={<ServiceProtectedRoute><ServiceTransactionDetail /></ServiceProtectedRoute>} />
-              <Route path="/service-dashboard/settings" element={<ServiceProtectedRoute><ServiceDashboardSettings /></ServiceProtectedRoute>} />
-              <Route path="/service-dashboard/settings/profile" element={<ServiceProtectedRoute><ServiceDashboardProfileSettings /></ServiceProtectedRoute>} />
-              <Route path="/service-dashboard/settings/business-profile" element={<ServiceProtectedRoute><ServiceBusinessProfile /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard" element={<ServiceProtectedRoute><ServiceDashboard /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/requests" element={<ServiceProtectedRoute><ServiceRequests /></ServiceProtectedRoute>} />
               <Route path="/service-dashboard/requests/:id" element={<ServiceProtectedRoute><ServiceRequestDetail /></ServiceProtectedRoute>} />

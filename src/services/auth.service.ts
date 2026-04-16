@@ -563,7 +563,22 @@ class AuthService {
       requiresDeviceVerification: data.requiresDeviceVerification,
       message: data.message
     });
-    
+
+    // Remember account for Account Switcher (metadata only, no tokens/passwords)
+    if (data?.user?.id && data?.user?.email && !data.requiresDeviceVerification) {
+      try {
+        // Lazy import to avoid circular deps
+        const { rememberedAccountsStore } = await import('../stores/rememberedAccountsStore');
+        rememberedAccountsStore.upsert({
+          userId: String(data.user.id),
+          email: data.user.email,
+          fullName: data.user.fullName || '',
+          role: data.user.role || '',
+          avatarUrl: data.user.photoUrl || data.user.avatarUrl,
+        });
+      } catch { /* non-critical */ }
+    }
+
     return data;
   }
 

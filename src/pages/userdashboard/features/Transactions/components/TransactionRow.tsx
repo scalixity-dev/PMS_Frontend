@@ -15,7 +15,7 @@ export const TransactionRow = ({ transaction, isLast, onClick }: TransactionRowP
     const totalAmount = Math.abs(amount);
 
     let paidAmount = 0;
-    if (status === 'Paid') {
+    if (status === 'Paid' || status === 'Void') {
         paidAmount = totalAmount;
     } else if (status === 'Partial') {
         // Enforce using provided paidAmount only for Partial status

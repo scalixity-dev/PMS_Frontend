@@ -989,15 +989,113 @@ const LeadDetail = () => {
                         </div>
 
                         {/* Leases Section */}
-                        {lead?.listingId && (
-                            <div className="bg-[#F0F0F6] p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2.5rem] border border-[#E0E0E0] shadow-sm mb-6">
-                                <h3 className="text-lg font-bold text-gray-800 mb-4">Associated Listing</h3>
-                                <div className="bg-white rounded-[1.5rem] p-4 sm:p-6 border border-[#E0E0E0]">
-                                    <p className="text-sm text-gray-600 mb-2"><strong>Listing ID:</strong> {lead.listingId}</p>
-                                    <p className="text-xs text-gray-500 italic mt-4">Lease details will display here once leasing data is available.</p>
+                        {lead?.listingId && (() => {
+                            const listingData: any = (lead as any)?.listing;
+                            const propertyData: any = listingData?.property;
+                            const addressData: any = propertyData?.address;
+                            const leasingData: any = propertyData?.leasing;
+                            const unitData: any = listingData?.unit;
+
+                            const fmtMoney = (v: any) => {
+                                if (v === null || v === undefined || v === '') return '—';
+                                const n = typeof v === 'string' ? parseFloat(v) : Number(v);
+                                return Number.isFinite(n) ? `$${n.toLocaleString()}` : '—';
+                            };
+                            const fmtDate = (v: any) => {
+                                if (!v) return '—';
+                                try {
+                                    return new Date(v).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' });
+                                } catch { return '—'; }
+                            };
+                            const fmtDuration = (v: any) => (v ? String(v).replace(/_/g, ' ') : '—');
+
+                            const fullAddr = addressData
+                                ? [addressData.streetAddress, addressData.city, addressData.stateRegion, addressData.zipCode, addressData.country].filter(Boolean).join(', ')
+                                : '';
+
+                            const monthlyRent = listingData?.monthlyRent ?? unitData?.rent ?? leasingData?.monthlyRent;
+                            const deposit = listingData?.securityDeposit ?? unitData?.deposit ?? leasingData?.securityDeposit;
+                            const dateAvailable = listingData?.availableFrom ?? leasingData?.dateAvailable;
+                            const minDur = listingData?.minLeaseDuration ?? leasingData?.minLeaseDuration;
+                            const maxDur = listingData?.maxLeaseDuration ?? leasingData?.maxLeaseDuration;
+
+                            return (
+                                <div className="bg-[#F0F0F6] p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2.5rem] border border-[#E0E0E0] shadow-sm mb-6">
+                                    <h3 className="text-lg font-bold text-gray-800 mb-4">Lease Details</h3>
+                                    <div className="bg-white rounded-[1.5rem] p-4 sm:p-6 border border-[#E0E0E0] space-y-4">
+                                        {(propertyData?.propertyName || listingData?.title) && (
+                                            <div>
+                                                <p className="text-base font-bold text-gray-900">
+                                                    {listingData?.title || propertyData?.propertyName}
+                                                </p>
+                                                {fullAddr && <p className="text-xs text-gray-500 mt-0.5">{fullAddr}</p>}
+                                                {unitData?.unitName && (
+                                                    <p className="text-xs text-gray-600 mt-1">Unit: <span className="font-semibold">{unitData.unitName}</span></p>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        <div className="grid grid-cols-2 gap-4 pt-2 border-t border-gray-100">
+                                            <div>
+                                                <p className="text-[11px] uppercase tracking-wide text-gray-500">Monthly Rent</p>
+                                                <p className="text-sm font-bold text-gray-900 mt-0.5">{fmtMoney(monthlyRent)}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[11px] uppercase tracking-wide text-gray-500">Security Deposit</p>
+                                                <p className="text-sm font-bold text-gray-900 mt-0.5">{fmtMoney(deposit)}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[11px] uppercase tracking-wide text-gray-500">Available From</p>
+                                                <p className="text-sm font-bold text-gray-900 mt-0.5">{fmtDate(dateAvailable)}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[11px] uppercase tracking-wide text-gray-500">Lease Duration</p>
+                                                <p className="text-sm font-bold text-gray-900 mt-0.5">
+                                                    {minDur || maxDur ? `${fmtDuration(minDur)} – ${fmtDuration(maxDur)}` : '—'}
+                                                </p>
+                                            </div>
+                                            {leasingData?.amountRefundable !== undefined && leasingData?.amountRefundable !== null && (
+                                                <div>
+                                                    <p className="text-[11px] uppercase tracking-wide text-gray-500">Amount Refundable</p>
+                                                    <p className="text-sm font-bold text-gray-900 mt-0.5">{fmtMoney(leasingData.amountRefundable)}</p>
+                                                </div>
+                                            )}
+                                            {leasingData?.applicationFee !== undefined && leasingData?.applicationFee !== null && (
+                                                <div>
+                                                    <p className="text-[11px] uppercase tracking-wide text-gray-500">Application Fee</p>
+                                                    <p className="text-sm font-bold text-gray-900 mt-0.5">{fmtMoney(leasingData.applicationFee)}</p>
+                                                </div>
+                                            )}
+                                            {leasingData?.occupancyStatus && (
+                                                <div>
+                                                    <p className="text-[11px] uppercase tracking-wide text-gray-500">Occupancy</p>
+                                                    <p className="text-sm font-bold text-gray-900 mt-0.5">{fmtDuration(leasingData.occupancyStatus)}</p>
+                                                </div>
+                                            )}
+                                            {(leasingData?.petsAllowed ?? listingData?.petsAllowed) !== undefined && (
+                                                <div>
+                                                    <p className="text-[11px] uppercase tracking-wide text-gray-500">Pets Allowed</p>
+                                                    <p className="text-sm font-bold text-gray-900 mt-0.5">{(leasingData?.petsAllowed ?? listingData?.petsAllowed) ? 'Yes' : 'No'}</p>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {(listingData?.description || leasingData?.description) && (
+                                            <div className="pt-3 border-t border-gray-100">
+                                                <p className="text-[11px] uppercase tracking-wide text-gray-500 mb-1">Description</p>
+                                                <p className="text-sm text-gray-700 whitespace-pre-line">
+                                                    {listingData?.description || leasingData?.description}
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        {!monthlyRent && !deposit && !dateAvailable && !propertyData && (
+                                            <p className="text-xs text-gray-500 italic">No leasing data available for this listing yet.</p>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            );
+                        })()}
 
                         {/* Timeline Section */}
                         <div className="bg-[#F0F0F650] p-4 sm:p-8 rounded-[1.5rem] sm:rounded-[2.5rem] border border-white shadow-sm">

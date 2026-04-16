@@ -20,6 +20,7 @@ import logo from "../../../assets/images/logo.png";
 
 import { authService } from "../../../services/auth.service";
 import { useGetCurrentUser } from "../../../hooks/useAuthQueries";
+import AccountSwitcherModal from "../../common/AccountSwitcherModal";
 
 interface NavbarProps {
     setSidebarOpen: (open: boolean) => void;
@@ -79,19 +80,51 @@ export default function ServiceDashboardNavbar({ setSidebarOpen }: NavbarProps) 
         try {
             await authService.logout();
             queryClient.clear();
+            sessionStorage.removeItem('service_pro_authenticated');
             navigate("/login", { replace: true });
         } catch (error) {
             console.error("Logout error:", error);
             queryClient.clear();
+            sessionStorage.removeItem('service_pro_authenticated');
             navigate("/login", { replace: true });
         } finally {
             setIsProfileDropdownOpen(false);
         }
     };
 
+    // Account switcher: show remembered-accounts modal first. Switching logs the
+    // current user out and redirects to /login with the chosen email prefilled
+    // (user must re-enter password since we never store credentials).
+    const [isAccountSwitcherOpen, setIsAccountSwitcherOpen] = useState(false);
+
     const handleAddAnotherAccount = () => {
         setIsProfileDropdownOpen(false);
-        navigate("/service-dashboard/settings/profile"); // Verify path
+        setIsAccountSwitcherOpen(true);
+    };
+
+    const switchToAccount = async (email: string) => {
+        setIsAccountSwitcherOpen(false);
+        try {
+            await authService.logout();
+        } catch {
+            /* continue — cookie will be overwritten on new login */
+        }
+        queryClient.clear();
+        sessionStorage.removeItem('service_pro_authenticated');
+        const encoded = encodeURIComponent(email);
+        navigate(`/login?add_account=1&email=${encoded}`, { replace: true });
+    };
+
+    const openFreshLogin = async () => {
+        setIsAccountSwitcherOpen(false);
+        try {
+            await authService.logout();
+        } catch {
+            /* ignore */
+        }
+        queryClient.clear();
+        sessionStorage.removeItem('service_pro_authenticated');
+        navigate('/login?add_account=1', { replace: true });
     };
 
     const handleManageProfile = () => {
@@ -294,6 +327,14 @@ export default function ServiceDashboardNavbar({ setSidebarOpen }: NavbarProps) 
                     </div>
                 </>
             )}
+
+            <AccountSwitcherModal
+                isOpen={isAccountSwitcherOpen}
+                onClose={() => setIsAccountSwitcherOpen(false)}
+                onSwitch={switchToAccount}
+                onAddNew={openFreshLogin}
+                currentUserId={currentUser?.userId}
+            />
         </header>
     );
 }

@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Plus, Trash2, Building2, Pencil } from 'lucide-react';
 import DatePicker from '../../../../../../components/ui/DatePicker';
 import DeleteConfirmationModal from '../../../../../../components/common/modals/DeleteConfirmationModal';
+import { serviceProviderService } from '../../../../../../services/service-provider.service';
 
 type TaxIdType = 'PAN' | 'GST' | 'CIN' | 'TAN' | 'EIN';
 const TAX_ID_TYPES: TaxIdType[] = ['PAN', 'GST', 'CIN', 'TAN', 'EIN'];
@@ -38,7 +39,7 @@ const TAX_ID_PLACEHOLDER: Record<TaxIdType, string> = {
 
 interface Entity {
     id: string;
-    widthName: string;
+    entityName: string;
     status: 'Active' | 'Inactive';
     entityType: string;
     taxIdType: TaxIdType;
@@ -46,10 +47,9 @@ interface Entity {
     registrationDate: string;
 }
 
-const initialEntities: Entity[] = [];
-
 const Entities = () => {
-    const [entities, setEntities] = useState<Entity[]>(initialEntities);
+    const [entities, setEntities] = useState<Entity[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -60,6 +60,41 @@ const Entities = () => {
     const [taxId, setTaxId] = useState('');
     const [registrationDate, setRegistrationDate] = useState<Date | undefined>(undefined);
     const [formError, setFormError] = useState<string | null>(null);
+
+    const mapDocToEntity = (doc: any): Entity => {
+        let meta: any = {};
+        try {
+            meta = doc?.description ? JSON.parse(doc.description) : {};
+        } catch {
+            meta = {};
+        }
+        return {
+            id: doc.id,
+            entityName: meta.entityName || 'Entity',
+            status: meta.status === 'Inactive' ? 'Inactive' : 'Active',
+            entityType: meta.entityType || 'Other',
+            taxIdType: (meta.taxIdType as TaxIdType) || 'PAN',
+            taxId: meta.taxId || '',
+            registrationDate: meta.registrationDate || new Date(doc.uploadedAt).toLocaleDateString('en-US'),
+        };
+    };
+
+    const fetchEntities = async () => {
+        try {
+            setIsLoading(true);
+            const docs = await serviceProviderService.getMyDocuments('ENTITY');
+            setEntities(docs.map(mapDocToEntity));
+        } catch (err) {
+            alert(err instanceof Error ? err.message : 'Failed to load entities');
+            setEntities([]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchEntities();
+    }, []);
 
     const resetForm = () => {
         setEntityName('');
@@ -78,7 +113,7 @@ const Entities = () => {
 
     const openEdit = (e: Entity) => {
         setEditingId(e.id);
-        setEntityName(e.widthName);
+        setEntityName(e.entityName);
         setEntityType(e.entityType);
         setTaxIdType(e.taxIdType);
         setTaxId(e.taxId);
@@ -90,7 +125,7 @@ const Entities = () => {
         setIsModalOpen(true);
     };
 
-    const handleAddEntity = () => {
+    const handleAddEntity = async () => {
         if (!entityName || !entityType || !taxId || !registrationDate) {
             setFormError('Please fill in all fields');
             return;
@@ -101,32 +136,33 @@ const Entities = () => {
             return;
         }
 
-        const formattedDate = registrationDate.toLocaleDateString('en-US');
+        const payload = {
+            entityName,
+            status: 'Active' as const,
+            entityType,
+            taxIdType,
+            taxId: normalizedTaxId,
+            registrationDate: registrationDate.toLocaleDateString('en-US'),
+        };
 
-        if (editingId) {
-            setEntities(entities.map((e) => e.id === editingId ? {
-                ...e,
-                widthName: entityName,
-                entityType,
-                taxIdType,
-                taxId: normalizedTaxId,
-                registrationDate: formattedDate,
-            } : e));
-        } else {
-            const newEntity: Entity = {
-                id: Date.now().toString(),
-                widthName: entityName,
-                status: 'Active',
-                entityType,
-                taxIdType,
-                taxId: normalizedTaxId,
-                registrationDate: formattedDate,
-            };
-            setEntities([...entities, newEntity]);
+        try {
+            if (editingId) {
+                await serviceProviderService.updateMyDocument(editingId, {
+                    description: JSON.stringify(payload),
+                });
+            } else {
+                await serviceProviderService.addMyDocument({
+                    documentType: 'ENTITY',
+                    fileUrl: 'about:blank',
+                    description: JSON.stringify(payload),
+                });
+            }
+            await fetchEntities();
+            resetForm();
+            setIsModalOpen(false);
+        } catch (err) {
+            setFormError(err instanceof Error ? err.message : 'Failed to save entity');
         }
-
-        resetForm();
-        setIsModalOpen(false);
     };
 
     // Delete Modal State
@@ -138,11 +174,17 @@ const Entities = () => {
         setDeleteModalOpen(true);
     };
 
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
         if (entityToDelete) {
-            setEntities(entities.filter(e => e.id !== entityToDelete));
-            setDeleteModalOpen(false);
-            setEntityToDelete(null);
+            try {
+                await serviceProviderService.deleteMyDocument(entityToDelete);
+                await fetchEntities();
+            } catch (err) {
+                alert(err instanceof Error ? err.message : 'Failed to delete entity');
+            } finally {
+                setDeleteModalOpen(false);
+                setEntityToDelete(null);
+            }
         }
     };
 
@@ -166,14 +208,12 @@ const Entities = () => {
                         <div>
                             <h2 className="text-lg font-bold text-gray-900">Business Entities</h2>
                             <p className="text-xs text-gray-500 mt-0.5">Manage your business entities and legal structures</p>
-                            <p className="text-xs text-amber-600 mt-1 font-medium">Coming soon — requires Stripe Connect business entity onboarding</p>
                         </div>
                     </div>
 
                     <button
-                        disabled
-                        className="flex items-center gap-2 bg-gray-300 text-gray-500 px-5 py-2.5 rounded-lg text-sm font-semibold cursor-not-allowed shadow-sm self-start sm:self-center"
-                        title="Coming soon — requires Stripe Connect business entity onboarding"
+                        onClick={openAdd}
+                        className="flex items-center gap-2 bg-[#7CD947] text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-[#6bc13d] shadow-sm self-start sm:self-center"
                     >
                         <Plus size={18} strokeWidth={2.5} />
                         Add Entity
@@ -182,7 +222,9 @@ const Entities = () => {
 
                 {/* List Section */}
                 <div className="divide-y divide-gray-100">
-                    {entities.length === 0 ? (
+                    {isLoading ? (
+                        <div className="p-4 md:p-8 text-center text-gray-500 text-sm">Loading entities...</div>
+                    ) : entities.length === 0 ? (
                         <div className="p-4 md:p-8 text-center text-gray-500 text-sm">
                             No entities found. Click "Add Entity" to create one.
                         </div>
@@ -192,7 +234,7 @@ const Entities = () => {
                                 {/* Top Row: Name, Badge, Trash Icon */}
                                 <div className="flex justify-between items-start mb-6">
                                     <div className="flex items-center gap-3">
-                                        <h3 className="text-base font-bold text-gray-900">{entity.widthName}</h3>
+                                        <h3 className="text-base font-bold text-gray-900">{entity.entityName}</h3>
                                         <span className="bg-[#E7F6E7] text-[#44A445] text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wide">
                                             {entity.status}
                                         </span>

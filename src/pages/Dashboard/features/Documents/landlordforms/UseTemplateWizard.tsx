@@ -202,7 +202,7 @@ const UseTemplateWizard: React.FC = () => {
 
     const renderMutation = useRenderTemplate();
 
-    const MOCK_LEASES = useMemo(() => {
+    const leaseOptions = useMemo(() => {
         const arr = Array.isArray(leasesData) ? leasesData : [];
         const mapped = arr.map((l: any) => {
             const propertyName = l.property?.propertyName || 'Property';
@@ -212,7 +212,7 @@ const UseTemplateWizard: React.FC = () => {
         return mapped.length > 0 ? mapped : FALLBACK_LEASES;
     }, [leasesData]);
 
-    const MOCK_TENANTS = useMemo(() => {
+    const tenantOptions = useMemo(() => {
         const arr = Array.isArray(tenantsData) ? tenantsData : [];
         const mapped = arr.map((t: any) => {
             const name = [t.firstName, t.lastName].filter(Boolean).join(' ').trim() || t.user?.fullName || t.user?.email || '';
@@ -348,7 +348,7 @@ const UseTemplateWizard: React.FC = () => {
                         <WizardDropdown
                             label="Lease"
                             placeholder="Search a Lease"
-                            options={MOCK_LEASES}
+                            options={leaseOptions}
                             selectedValue={selectedLease}
                             onSelect={setSelectedLease}
                             isOpen={isLeaseDropdownOpen}
@@ -366,7 +366,7 @@ const UseTemplateWizard: React.FC = () => {
                         <WizardDropdown
                             label="Tenants"
                             placeholder="Search Tenants"
-                            options={MOCK_TENANTS}
+                            options={tenantOptions}
                             selectedValues={selectedTenants}
                             onSelect={(tenant) => {
                                 setSelectedTenants(prev =>

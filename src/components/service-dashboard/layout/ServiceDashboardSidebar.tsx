@@ -128,9 +128,15 @@ const DownloadPopup: React.FC<DownloadPopupProps> = ({ isOpen, onClose, position
     };
 
     return createPortal(
+        <>
+        {/* Backdrop — dim + click-to-close so popup is clearly temporary */}
+        <div
+            className="fixed inset-0 z-[9998] bg-black/20 backdrop-blur-[1px] animate-in fade-in duration-200"
+            onClick={onClose}
+        />
         <div
             ref={popupRef}
-            className="fixed z-[9999] bg-white rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-gray-100 w-[calc(100vw-32px)] sm:w-[450px] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+            className="fixed z-[9999] bg-white rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-gray-100 w-[calc(100vw-32px)] sm:w-[380px] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
             style={popupStyle}
         >
             <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/30">
@@ -187,7 +193,8 @@ const DownloadPopup: React.FC<DownloadPopupProps> = ({ isOpen, onClose, position
                     Done
                 </button>
             </div>
-        </div>,
+        </div>
+        </>,
         document.body
     );
 };

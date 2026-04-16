@@ -9,7 +9,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import ServiceBreadCrumb from '../../../../components/ServiceBreadCrumb';
 import ServiceTabs from '../../../../components/ServiceTabs';
 import DashboardButton from '../../../../components/DashboardButton';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import SearchableDropdown from '../../../../../../components/ui/SearchableDropdown';
 import DeleteConfirmationModal from '../../../../../../components/common/modals/DeleteConfirmationModal';
 import { Country, State, City } from 'country-state-city';
@@ -54,8 +54,19 @@ const ServiceBusinessProfile = () => {
     // State for categories
     const [selectedCategory, setSelectedCategory] = useState<string>("Cleaning");
 
-    // Tabs
-    const [bpTab, setBpTab] = useState<'business_profile' | 'job_preference'>('business_profile');
+    // Tabs — initialise from ?tab= query param so Settings > Job Preference link opens correct tab
+    const [searchParams] = useSearchParams();
+    const initialTab: 'business_profile' | 'job_preference' =
+        searchParams.get('tab') === 'job_preference' ? 'job_preference' : 'business_profile';
+    const [bpTab, setBpTab] = useState<'business_profile' | 'job_preference'>(initialTab);
+
+    // Sync tab if URL changes while already mounted
+    useEffect(() => {
+        const t = searchParams.get('tab');
+        if (t === 'job_preference' || t === 'business_profile') {
+            setBpTab(t);
+        }
+    }, [searchParams]);
 
     // Edit mode states
     const [isEditingPersonal, setIsEditingPersonal] = useState(false);
@@ -128,6 +139,7 @@ const ServiceBusinessProfile = () => {
         newPassword: '',
         confirmPassword: ''
     });
+    const [isSavingPassword, setIsSavingPassword] = useState(false);
 
     // Email change
     const [isChangingEmail, setIsChangingEmail] = useState(false);
@@ -162,7 +174,7 @@ const ServiceBusinessProfile = () => {
         }
     };
 
-    const handleSavePassword = () => {
+    const handleSavePassword = async () => {
         if (!passwordForm.oldPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
             alert("All password fields are required.");
             return;
@@ -171,10 +183,17 @@ const ServiceBusinessProfile = () => {
             alert("New passwords do not match.");
             return;
         }
-        console.log("Saving password:", passwordForm);
-        alert("Password updated successfully.");
-        setIsChangingPassword(false);
-        setPasswordForm({ oldPassword: '', newPassword: '', confirmPassword: '' });
+        try {
+            setIsSavingPassword(true);
+            await authService.changePassword(passwordForm.oldPassword, passwordForm.newPassword);
+            alert("Password updated successfully.");
+            setIsChangingPassword(false);
+            setPasswordForm({ oldPassword: '', newPassword: '', confirmPassword: '' });
+        } catch (err) {
+            alert(err instanceof Error ? err.message : 'Failed to update password');
+        } finally {
+            setIsSavingPassword(false);
+        }
     };
 
     // Initialize form data from API
@@ -294,6 +313,9 @@ const ServiceBusinessProfile = () => {
             const phoneCountryCode = phoneParts.length > 1 ? phoneParts[0] : formData.phoneCountryCode || '';
             const phoneNumber = phoneParts.length > 1 ? phoneParts.slice(1).join(' ') : formData.phone;
 
+            // Fall back to existing profile values for address fields so saving personal
+            // info does not require address to be filled in.
+            const p = profile as any | null | undefined;
             const saveData: CreateServiceProviderDto = {
                 firstName: formData.firstName.trim(),
                 lastName: formData.lastName.trim(),
@@ -303,11 +325,11 @@ const ServiceBusinessProfile = () => {
                 companyName: formData.companyName.trim(),
                 category: formData.category,
                 subcategory: formData.subcategory || formData.services[0] || undefined,
-                address: formData.address.trim(),
-                city: formData.city || undefined,
-                state: formData.state.trim(),
-                zipCode: formData.pincode.trim(),
-                country: formData.country.trim(),
+                address: formData.address.trim() || p?.address || 'N/A',
+                city: formData.city || p?.city || undefined,
+                state: formData.state.trim() || p?.state || 'N/A',
+                zipCode: formData.pincode.trim() || p?.zipCode || '000000',
+                country: formData.country.trim() || p?.country || 'India',
                 photoUrl: formData.coverPhoto || undefined,
             };
 
@@ -686,9 +708,10 @@ const ServiceBusinessProfile = () => {
                                         {isChangingPassword && (
                                             <button
                                                 onClick={handleSavePassword}
+                                                disabled={isSavingPassword}
                                                 className="text-xs font-semibold text-green-600 hover:text-green-700"
                                             >
-                                                Save
+                                                {isSavingPassword ? 'Saving...' : 'Save'}
                                             </button>
                                         )}
                                         <button

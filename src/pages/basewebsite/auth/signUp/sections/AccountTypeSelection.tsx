@@ -7,7 +7,7 @@ export const AccountTypeSelection: React.FC<AccountTypeSelectionProps> = ({ onNe
   const { formData, updateFormData, nextStep } = useSignUpStore();
   const accountTypes: AccountType[] = [
     { id: 'renting', title: "I'm renting", subtitle: 'Tenant', type: 'Free account' },
-    { id: 'manage', title: 'I manage rentals', subtitle: 'Property Manager', type: 'Start 14-days trial' },
+    { id: 'manage', title: 'I manage rentals', subtitle: 'Property Manager', type: 'Start 14-day trial' },
     { id: 'fix', title: 'I fix rentals', subtitle: 'Service Pro', type: 'Free account' }
   ];
 

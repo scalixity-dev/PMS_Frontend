@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import CustomDropdown from '../../../../Dashboard/components/CustomDropdown';
 import DatePicker from '../../../../../components/ui/DatePicker';
 import Toggle from '../../../../../components/Toggle';
 import { Plus, Trash2, X, AlertTriangle, ChevronLeft } from 'lucide-react';
+import { useGetEquipmentByProperty } from '../../../../../hooks/useEquipmentQueries';
+import type { BackendEquipment } from '../../../../../services/equipment.service';
 
 interface DateOption {
     id: string;
@@ -88,12 +90,18 @@ const UserStep2PropertyTenants: React.FC<UserStep2PropertyTenantsProps> = ({ onN
         serial: ''
     });
 
-    // Equipment list state
-    const [equipmentList, setEquipmentList] = useState<Equipment[]>(initialData?.equipmentList || [
-        { id: '1', name: 'Air Conditioner Unit', category: 'HVAC' },
-        { id: '2', name: 'Water Heater', category: 'Plumbing' },
-        { id: '3', name: 'Refrigerator', category: 'Appliances' }
-    ]);
+    const {
+        data: equipmentData = [],
+    } = useGetEquipmentByProperty(selectedProperty || null, !!selectedProperty);
+
+    const equipmentList = useMemo<Equipment[]>(() => {
+        return (equipmentData as BackendEquipment[]).map((eq) => ({
+            id: eq.id,
+            name: `${eq.brand} ${eq.model}`,
+            category: typeof eq.category === 'string' ? eq.category : eq.category?.name || 'Equipment',
+            serial: eq.serialNumber || undefined,
+        }));
+    }, [equipmentData]);
 
     const filteredEquipment = equipmentList.filter(eq =>
         eq.name.toLowerCase().includes(equipmentSearchQuery.toLowerCase())
@@ -140,24 +148,12 @@ const UserStep2PropertyTenants: React.FC<UserStep2PropertyTenantsProps> = ({ onN
     };
 
     const handleCreateEquipment = () => {
-        if (!newEquipment.category || !newEquipment.brand || !newEquipment.model) return;
-
-        const createdEquipment: Equipment = {
-            id: Math.random().toString(36).substr(2, 9),
-            name: `${newEquipment.brand} ${newEquipment.model}`,
-            category: newEquipment.category.toUpperCase(),
-            serial: newEquipment.serial
-        };
-
-        setEquipmentList(prev => [...prev, createdEquipment]);
-        setSelectedEquipment(createdEquipment.id);
+        if (!selectedProperty) {
+            setValidationError('Please select a property before creating equipment.');
+            return;
+        }
+        setValidationError('Please ask your property manager to add equipment for this property.');
         setShowCreateEquipmentModal(false);
-        setNewEquipment({
-            category: '',
-            brand: '',
-            model: '',
-            serial: ''
-        });
     };
 
     const handleSelectEquipment = (equipmentId: string) => {

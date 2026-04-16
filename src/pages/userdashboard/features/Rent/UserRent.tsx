@@ -41,18 +41,18 @@ const Rent: React.FC = () => {
     
     return backendTransactions.map((tx: any) => {
       // Map backend status to frontend status
-      const statusMap: Record<string, 'Open' | 'Overdue' | 'Paid' | 'Partial'> = {
+      const statusMap: Record<string, 'Open' | 'Overdue' | 'Paid' | 'Partial' | 'Void'> = {
         'Pending': 'Open',
         'Paid': 'Paid',
-        'Void': 'Open',
+        'Void': 'Void',
         'PARTIALLY_PAID': 'Partial',
         'PENDING': 'Open',
         'PAID': 'Paid',
-        'VOID': 'Open',
+        'VOID': 'Void',
         'REFUNDED': 'Paid'
       };
 
-      let status: 'Open' | 'Overdue' | 'Paid' | 'Partial' = statusMap[tx.status] || 'Open';
+      let status: 'Open' | 'Overdue' | 'Paid' | 'Partial' | 'Void' = statusMap[tx.status] || 'Open';
       
       // Check if overdue
       if (status === 'Open' && tx.dueDateRaw) {
@@ -317,6 +317,7 @@ const Rent: React.FC = () => {
               { label: "Partial", value: "Partial" },
               { label: "Open", value: "Open" },
               { label: "Overdue", value: "Overdue" },
+              { label: "Void", value: "Void" },
             ]}
           />
 
@@ -475,6 +476,5 @@ const Rent: React.FC = () => {
 };
 
 export default Rent;
-
 
 

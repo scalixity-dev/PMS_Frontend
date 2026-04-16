@@ -17,12 +17,19 @@ const LoginForm: React.FC = () => {
     const [passwordError, setPasswordError] = useState<string>('');
     const navigate = useNavigate();
 
-    // Pre-fill email if redirected from signup
+    // Pre-fill email if redirected from signup, or from Account Switcher
+    // (`/login?add_account=1&email=foo@bar.com`).
     useEffect(() => {
         if (location.state && typeof location.state === 'object' && 'email' in location.state) {
             setEmail(location.state.email as string);
+            return;
         }
-    }, [location.state]);
+        try {
+            const params = new URLSearchParams(location.search);
+            const q = params.get('email');
+            if (q) setEmail(q);
+        } catch { /* ignore */ }
+    }, [location.state, location.search]);
 
     const validateEmail = (email: string): boolean => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

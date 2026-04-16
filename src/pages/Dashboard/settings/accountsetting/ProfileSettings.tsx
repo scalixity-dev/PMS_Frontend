@@ -1,14 +1,16 @@
 import { useEffect, useState, useRef } from "react";
-import { User, X, Eye, EyeOff } from "lucide-react";
+import { User, X, Eye, EyeOff, Camera } from "lucide-react";
 import Button from "../../../../components/common/Button";
 import { authService } from "../../../../services/auth.service";
 import { useUpdateProfile } from "../../../../hooks/useAuthQueries";
 import { AccountSettingsLayout } from "../../../../components/common/AccountSettingsLayout";
+import { API_ENDPOINTS } from "../../../../config/api.config";
 
 interface ProfileUser {
   fullName: string;
   email: string;
   role: string;
+  profilePhotoUrl?: string;
 }
 
 interface ProfileDetails {
@@ -58,6 +60,16 @@ const normalizeDateForApi = (raw: string): string | undefined => {
   return undefined;
 };
 
+const isValidPhoneNumber = (raw: string): boolean => {
+  const digits = (raw || "").replace(/\D/g, "");
+  return !digits || (digits.length >= 4 && digits.length <= 15);
+};
+
+const isValidPostalCode = (raw: string): boolean => {
+  const trimmed = (raw || "").trim();
+  return !trimmed || /^\d{4,10}$/.test(trimmed);
+};
+
 interface EditPersonalInfoModalProps {
   isOpen: boolean;
   initialValues: {
@@ -72,7 +84,7 @@ interface EditPersonalInfoModalProps {
     lastName: string;
     dateOfBirth: string;
     phoneNumber: string;
-  }) => void;
+  }) => Promise<boolean> | boolean;
 }
 
 interface EditAddressModalProps {
@@ -83,7 +95,7 @@ interface EditAddressModalProps {
     postalCode: string;
   };
   onClose: () => void;
-  onSave: (values: { country: string; city: string; postalCode: string }) => void;
+  onSave: (values: { country: string; city: string; postalCode: string }) => Promise<boolean> | boolean;
 }
 
 interface ChangeEmailModalProps {
@@ -172,9 +184,9 @@ function EditPersonalInfoModal(props: EditPersonalInfoModalProps) {
     }));
   };
 
-  const handleSaveClick = () => {
-    onSave(formValues);
-    onClose();
+  const handleSaveClick = async () => {
+    const didSave = await onSave(formValues);
+    if (didSave) onClose();
   };
 
   return (
@@ -350,9 +362,9 @@ function EditAddressModal(props: EditAddressModalProps) {
     }));
   };
 
-  const handleSaveClick = () => {
-    onSave(formValues);
-    onClose();
+  const handleSaveClick = async () => {
+    const didSave = await onSave(formValues);
+    if (didSave) onClose();
   };
 
   return (
@@ -893,6 +905,8 @@ export default function ProfileSettings() {
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const profileFileRef = useRef<HTMLInputElement>(null);
 
   const updateProfile = useUpdateProfile();
 
@@ -923,6 +937,7 @@ export default function ProfileSettings() {
           fullName,
           email: currentUser.email || "",
           role: currentUser.role || "",
+          profilePhotoUrl: (currentUser as any).profilePhotoUrl || "",
         });
 
         setProfileDetails((previous) => ({
@@ -945,12 +960,21 @@ export default function ProfileSettings() {
     fetchUser();
   }, []);
 
-  const handleSavePersonalInfo = (values: {
+  const handleSavePersonalInfo = async (values: {
     firstName: string;
     lastName: string;
     dateOfBirth: string;
     phoneNumber: string;
-  }) => {
+  }): Promise<boolean> => {
+    if (!isValidPhoneNumber(values.phoneNumber)) {
+      alert("Phone number must be between 4 and 15 digits.");
+      return false;
+    }
+    if (values.dateOfBirth && !normalizeDateForApi(values.dateOfBirth)) {
+      alert("Enter a valid date of birth in DD-MM-YYYY or YYYY-MM-DD format.");
+      return false;
+    }
+
     setProfileDetails((previous) => ({
       ...previous,
       firstName: values.firstName,
@@ -965,15 +989,25 @@ export default function ProfileSettings() {
       fullName: fullName,
     }));
 
-    // Call API to persist changes
-    updateProfile.mutate({
-      fullName: fullName,
-      dateOfBirth: normalizeDateForApi(values.dateOfBirth),
-      phoneNumber: values.phoneNumber,
-    });
+    try {
+      await updateProfile.mutateAsync({
+        fullName: fullName,
+        dateOfBirth: normalizeDateForApi(values.dateOfBirth),
+        phoneNumber: values.phoneNumber,
+      });
+      return true;
+    } catch (err: any) {
+      alert(err?.message || "Failed to update personal information");
+      return false;
+    }
   };
 
-  const handleSaveAddress = (values: { country: string; city: string; postalCode: string }) => {
+  const handleSaveAddress = async (values: { country: string; city: string; postalCode: string }): Promise<boolean> => {
+    if (!isValidPostalCode(values.postalCode)) {
+      alert("Pincode must contain 4 to 10 digits.");
+      return false;
+    }
+
     setProfileDetails((previous) => ({
       ...previous,
       country: values.country,
@@ -981,12 +1015,17 @@ export default function ProfileSettings() {
       postalCode: values.postalCode,
     }));
 
-    // Call API to persist changes
-    updateProfile.mutate({
-      country: values.country,
-      state: values.city, // Note: API uses 'state' field, not 'city'
-      pincode: values.postalCode,
-    });
+    try {
+      await updateProfile.mutateAsync({
+        country: values.country,
+        state: values.city, // Note: API uses 'state' field, not 'city'
+        pincode: values.postalCode,
+      });
+      return true;
+    } catch (err: any) {
+      alert(err?.message || "Failed to update address");
+      return false;
+    }
   };
 
   const handleSaveEmail = async (newEmail: string, currentPassword?: string) => {
@@ -1022,17 +1061,78 @@ export default function ProfileSettings() {
     }
   };
 
+  const handleProfilePhotoUpload = async (file?: File) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      alert("Only image files are allowed.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Profile photo must be 5 MB or smaller.");
+      return;
+    }
+
+    try {
+      setIsUploadingPhoto(true);
+      const formData = new FormData();
+      formData.append("file", file);
+      const uploadRes = await fetch(API_ENDPOINTS.UPLOAD.IMAGE, {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+      const uploadJson = await uploadRes.json().catch(() => ({}));
+      const url = uploadJson?.data?.url || uploadJson?.url;
+      if (!uploadRes.ok || !url) {
+        throw new Error(uploadJson?.message || "Failed to upload profile photo");
+      }
+      await updateProfile.mutateAsync({ profilePhotoUrl: url } as any);
+      setUser((previous) => ({ ...previous, profilePhotoUrl: url }));
+    } catch (err: any) {
+      alert(err?.message || "Failed to upload profile photo");
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
   return (
     <AccountSettingsLayout activeTab="profile">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-20 h-20 rounded-full bg-[#F4F4F4] border border-[#E4E4E4] flex items-center justify-center text-gray-600">
-            <User size={40} />
+          <div className="relative">
+            <div className="w-20 h-20 rounded-full bg-[#F4F4F4] border border-[#E4E4E4] flex items-center justify-center text-gray-600 overflow-hidden">
+              {user.profilePhotoUrl ? (
+                <img src={user.profilePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <User size={40} />
+              )}
+            </div>
+            <input
+              ref={profileFileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                void handleProfilePhotoUpload(file);
+                e.currentTarget.value = "";
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => profileFileRef.current?.click()}
+              disabled={isUploadingPhoto}
+              className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#6BC53B] text-white flex items-center justify-center shadow-sm hover:bg-[#5ab030] disabled:opacity-60"
+              title="Upload profile photo"
+            >
+              <Camera size={13} />
+            </button>
           </div>
           <div>
             <p className="text-xl font-semibold text-gray-900">{user.fullName}</p>
             <p className="text-sm text-gray-500">{user.role}</p>
             <p className="text-sm text-gray-600">{user.email}</p>
+            {isUploadingPhoto && <p className="text-xs text-gray-500 mt-1">Uploading photo...</p>}
           </div>
         </div>
         <Button
@@ -1229,4 +1329,3 @@ export default function ProfileSettings() {
     </AccountSettingsLayout>
   );
 }
-
