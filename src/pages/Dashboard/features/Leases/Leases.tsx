@@ -107,6 +107,9 @@ const Leases: React.FC = () => {
             endDate: lease.endDate || undefined,
             rentAmount: lease.recurringRent?.amount ? parseFloat(lease.recurringRent.amount) : undefined,
             tenantId: lease.tenantId,
+            // Filter fields (source of truth for occupancy/type filters)
+            propertyType: (lease as any).property?.propertyType ?? null,
+            occupancyStatus: (lease as any).property?.leasing?.occupancyStatus ?? null,
         };
     };
 
@@ -135,21 +138,32 @@ const Leases: React.FC = () => {
         return { activeLeases, expiringSoon, scheduled };
     }, [transformedLeases]);
 
-    const filterOptions: Record<string, FilterOption[]> = {
-        status: [
-            { value: 'Active', label: 'Active' },
-            { value: 'Draft', label: 'Draft' },
-            { value: 'Expired', label: 'Expired' },
-            { value: 'Terminated', label: 'Terminated' },
-            { value: 'Cancelled', label: 'Cancelled' },
-        ],
-        occupancy: [
-            { value: '__no_items__', label: 'No occupancy data available' }
-        ],
-        propertyType: [
-            { value: '__no_items__', label: 'No property types available' }
-        ]
-    };
+    // Build occupancy + propertyType options dynamically from actual lease data
+    const filterOptions: Record<string, FilterOption[]> = useMemo(() => {
+        const occupancySet = new Set<string>();
+        const typeSet = new Set<string>();
+        transformedLeases.forEach((l: any) => {
+            if (l.occupancyStatus) occupancySet.add(l.occupancyStatus);
+            if (l.propertyType) typeSet.add(l.propertyType);
+        });
+        const prettify = (s: string) =>
+            s.toLowerCase().split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        return {
+            status: [
+                { value: 'Active', label: 'Active' },
+                { value: 'Draft', label: 'Draft' },
+                { value: 'Expired', label: 'Expired' },
+                { value: 'Terminated', label: 'Terminated' },
+                { value: 'Cancelled', label: 'Cancelled' },
+            ],
+            occupancy: occupancySet.size > 0
+                ? Array.from(occupancySet).map(v => ({ value: v, label: prettify(v) }))
+                : [{ value: '__no_items__', label: 'No occupancy data available' }],
+            propertyType: typeSet.size > 0
+                ? Array.from(typeSet).map(v => ({ value: v, label: prettify(v) }))
+                : [{ value: '__no_items__', label: 'No property types available' }],
+        };
+    }, [transformedLeases]);
 
     const filterLabels: Record<string, string> = {
         status: 'Status',
@@ -182,13 +196,16 @@ const Leases: React.FC = () => {
             const matchesStatus = !filters.status?.length ||
                 filters.status.includes(leaseStatus);
 
-            // Occupancy filter (ignore placeholder value)
-            const matchesOccupancy = !filters.occupancy?.length ||
-                filters.occupancy.filter(v => v !== '__no_items__').length === 0;
+            // Occupancy filter — match against lease's property occupancy status.
+            // Placeholder value __no_items__ passes through (matches everything).
+            const selectedOccupancy = (filters.occupancy ?? []).filter(v => v !== '__no_items__');
+            const matchesOccupancy = selectedOccupancy.length === 0 ||
+                ((lease as any).occupancyStatus && selectedOccupancy.includes((lease as any).occupancyStatus));
 
-            // Property type filter (ignore placeholder value)
-            const matchesPropertyType = !filters.propertyType?.length ||
-                filters.propertyType.filter(v => v !== '__no_items__').length === 0;
+            // Property type filter — match against lease's propertyType.
+            const selectedType = (filters.propertyType ?? []).filter(v => v !== '__no_items__');
+            const matchesPropertyType = selectedType.length === 0 ||
+                ((lease as any).propertyType && selectedType.includes((lease as any).propertyType));
 
             // Expiring-soon filter (active leases ending within next 60 days)
             let matchesExpiring = true;
