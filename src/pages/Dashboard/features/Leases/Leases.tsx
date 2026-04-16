@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useNavigate, useOutletContext, useLocation } from 'react-router-dom';
 import { Trash2, ChevronLeft, Eye, Edit, Loader2 } from 'lucide-react';
 import DashboardFilter, { type FilterOption } from '../../components/DashboardFilter';
 import Pagination from '../../components/Pagination';
@@ -22,8 +22,12 @@ const ITEMS_PER_PAGE = 9;
 
 const Leases: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { sidebarCollapsed } = useOutletContext<{ sidebarCollapsed: boolean }>() || { sidebarCollapsed: false };
     const [searchQuery, setSearchQuery] = useState('');
+    // Read filter from nav state (e.g. Dashboard "Expiring leases" View All)
+    const initialFilter = (location.state as any)?.filter as string | undefined;
+    const [expiringOnly, setExpiringOnly] = useState<boolean>(initialFilter === 'expiring');
 
     const [currentPage, setCurrentPage] = useState(1);
     const [filters, setFilters] = useState<Record<string, string[]>>({});
@@ -159,6 +163,9 @@ const Leases: React.FC = () => {
     }, [searchQuery, filters]);
 
     const filteredLeases = useMemo(() => {
+        const now = new Date();
+        const sixtyDaysFromNow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 60);
+
         return transformedLeases.filter(lease => {
             // Search filter
             // Normalize property to string for search
@@ -183,9 +190,20 @@ const Leases: React.FC = () => {
             const matchesPropertyType = !filters.propertyType?.length ||
                 filters.propertyType.filter(v => v !== '__no_items__').length === 0;
 
-            return matchesSearch && matchesStatus && matchesOccupancy && matchesPropertyType;
+            // Expiring-soon filter (active leases ending within next 60 days)
+            let matchesExpiring = true;
+            if (expiringOnly) {
+                if (!lease.endDate || leaseStatus !== 'Active') {
+                    matchesExpiring = false;
+                } else {
+                    const endDate = new Date(lease.endDate);
+                    matchesExpiring = endDate >= now && endDate <= sixtyDaysFromNow;
+                }
+            }
+
+            return matchesSearch && matchesStatus && matchesOccupancy && matchesPropertyType && matchesExpiring;
         });
-    }, [transformedLeases, searchQuery, filters]);
+    }, [transformedLeases, searchQuery, filters, expiringOnly]);
 
     const totalPages = Math.ceil(filteredLeases.length / ITEMS_PER_PAGE);
     const paginatedLeases = filteredLeases.slice(
@@ -271,6 +289,20 @@ const Leases: React.FC = () => {
             <div className="mb-6">
                 <Breadcrumb items={[{ label: 'Dashboard', path: '/dashboard' }, { label: 'Leases' }]} />
             </div>
+
+            {expiringOnly && (
+                <div className="mb-4 flex items-center justify-between bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+                    <span className="text-sm text-amber-800 font-medium">
+                        Showing leases expiring within the next 60 days
+                    </span>
+                    <button
+                        onClick={() => setExpiringOnly(false)}
+                        className="text-sm text-amber-700 hover:text-amber-900 font-semibold underline"
+                    >
+                        Clear filter
+                    </button>
+                </div>
+            )}
 
             <div className="p-4 sm:p-6 bg-[#E0E8E7] min-h-screen rounded-[2rem] overflow-visible">
                 {/* Header */}

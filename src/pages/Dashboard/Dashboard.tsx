@@ -45,28 +45,27 @@ export default function Dashboard() {
   ]), [dashboardStats]);
 
   const propertiesUnitsData = useMemo(() => {
-    const total = propertiesData.length;
-    if (!total) {
-      return [
-        { name: 'Occupied', value: 0, color: '#16a34a' },
-        { name: 'Vacant', value: 0, color: '#86efac' },
-      ];
-    }
-    const vacant = propertiesData.filter((property: any) =>
-      property.leasing?.occupancyStatus === 'VACANT' || !property.leasing?.occupancyStatus
-    ).length;
-    const occupied = Math.max(total - vacant, 0);
+    // Use real unit-level occupancy from backend
+    const occupied = Number(dashboardStats?.overview.unitsOccupied || 0);
+    const vacant = Number(dashboardStats?.overview.unitsVacant || 0);
     return [
       { name: 'Occupied', value: occupied, color: '#16a34a' },
       { name: 'Vacant', value: vacant, color: '#86efac' },
     ];
-  }, [propertiesData]);
+  }, [dashboardStats]);
 
-  const depositsData = useMemo(() => ([
-    { name: 'Income', value: Number(dashboardStats?.financial.thisMonthIncome || 0), color: '#f97316' },
-    { name: 'Expenses', value: Number(dashboardStats?.financial.thisMonthExpenses || 0), color: '#06b6d4' },
-    { name: 'Overdue', value: Number(dashboardStats?.financial.overdueInvoicesAmount || 0), color: '#fbbf24' },
-  ]), [dashboardStats]);
+  const depositsData = useMemo(() => {
+    // Show actual deposits held (single-slice) or empty state
+    const held = Number(dashboardStats?.financial.depositsHeld || 0);
+    if (held <= 0) {
+      return [
+        { name: 'No deposits held', value: 1, color: '#e5e7eb' },
+      ];
+    }
+    return [
+      { name: 'Deposits held', value: held, color: '#f97316' },
+    ];
+  }, [dashboardStats]);
 
   const tasks = useMemo(() => {
     return (tasksData as any[]).slice(0, 3).map((task) => ({
@@ -119,6 +118,13 @@ export default function Dashboard() {
   }, [maintenanceData]);
 
   const properties = useMemo(() => {
+    // Build a set of propertyIds that have at least one ACTIVE lease — trust leases data over potentially stale propertyLeasing.occupancyStatus
+    const propertiesWithActiveLease = new Set(
+      (leasesData as any[])
+        .filter((l: any) => l.status === 'ACTIVE' && l.propertyId)
+        .map((l: any) => l.propertyId)
+    );
+
     return (propertiesData as any[]).slice(0, 3).map((property: any) => {
       const address = property.address
         ? [
@@ -127,12 +133,16 @@ export default function Dashboard() {
           property.address.stateRegion,
         ].filter(Boolean).join(', ')
         : property.propertyName || '-';
-      // Occupancy comes from propertyLeasing table, not listings
-      const occupancyStatus = property.leasing?.occupancyStatus;
+
+      // Derive occupancy from active leases (accurate), fall back to propertyLeasing only if no lease data
       let status: 'Vacant' | 'Occupied' | 'Partial' = 'Vacant';
-      if (occupancyStatus === 'OCCUPIED') status = 'Occupied';
-      else if (occupancyStatus === 'PARTIALLY_OCCUPIED') status = 'Partial';
-      else status = 'Vacant';
+      if (propertiesWithActiveLease.has(property.id)) {
+        status = 'Occupied';
+      } else if (property.leasing?.occupancyStatus === 'PARTIALLY_OCCUPIED') {
+        status = 'Partial';
+      } else {
+        status = 'Vacant';
+      }
 
       return {
         id: property.id,
@@ -142,31 +152,19 @@ export default function Dashboard() {
         status,
       };
     });
-  }, [propertiesData]);
+  }, [propertiesData, leasesData]);
 
+  // Use backend-computed expiring-soon leases (next 60 days) instead of all leases
   const leases = useMemo(() => {
-    return (leasesData as any[])
-      .filter((lease: any) => !!lease.endDate)
-      .sort((a: any, b: any) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime())
-      .slice(0, 3)
-      .map((lease: any) => {
-        const property = lease.property;
-        const address = property?.address
-          ? [
-            property.address.streetAddress,
-            property.address.city,
-            property.address.stateRegion,
-          ].filter(Boolean).join(', ')
-          : '-';
-        return {
-          id: lease.id,
-          property: property?.propertyName || 'Lease',
-          address,
-          avatar: lease.tenant?.tenantProfile?.profilePhotoUrl || profilePic,
-          tenant: lease.tenant?.fullName || lease.tenant?.email || 'Tenant',
-        };
-      });
-  }, [leasesData]);
+    const expiringSoon = dashboardStats?.leases?.expiringSoon || [];
+    return expiringSoon.slice(0, 3).map((lease) => ({
+      id: lease.id,
+      property: lease.propertyName || 'Lease',
+      address: `Expires in ${lease.daysUntilExpiry} day${lease.daysUntilExpiry === 1 ? '' : 's'}`,
+      avatar: profilePic,
+      tenant: lease.tenantName || 'Tenant',
+    }));
+  }, [dashboardStats]);
 
   const leaseAverageWeeks = useMemo(() => {
     const now = Date.now();
@@ -193,26 +191,30 @@ export default function Dashboard() {
     [],
   );
 
+  const incomeGrowth = Number(dashboardStats?.financial.incomeGrowthPct ?? 0);
+  const expensesGrowth = Number(dashboardStats?.financial.expensesGrowthPct ?? 0);
+  const overdueCount = Number(dashboardStats?.financial.overdueInvoicesCount ?? 0);
+
   const metrics = [
     {
-      label: "Total Income",
-      value: `${dashboardStats?.financial.thisMonthIncome ? Math.round((dashboardStats.financial.thisMonthIncome / (dashboardStats.financial.thisMonthIncome + dashboardStats.financial.thisMonthExpenses) * 100)) || 0 : 0}%`,
+      label: "Income (vs last month)",
+      value: `${Math.abs(Math.min(100, Math.max(-100, incomeGrowth)))}%`,
       amount: `$${(dashboardStats?.financial.thisMonthIncome || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      change: "Live",
+      change: `${incomeGrowth >= 0 ? '+' : ''}${incomeGrowth}% vs last month`,
       color: "text-orange-500",
     },
     {
-      label: "Total Overdue",
-      value: `${dashboardStats?.financial.overdueInvoicesCount || 0} invoices`,
+      label: "Overdue Invoices",
+      value: `${overdueCount}`,
       amount: `$${(dashboardStats?.financial.overdueInvoicesAmount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      change: "Live",
+      change: overdueCount === 0 ? 'None' : `${overdueCount} invoice${overdueCount === 1 ? '' : 's'}`,
       color: "text-blue-600",
     },
     {
-      label: "Total Expenses",
-      value: `${dashboardStats?.financial.thisMonthExpenses ? Math.round((dashboardStats.financial.thisMonthExpenses / (dashboardStats.financial.thisMonthIncome + dashboardStats.financial.thisMonthExpenses) * 100)) || 0 : 0}%`,
+      label: "Expenses (vs last month)",
+      value: `${Math.abs(Math.min(100, Math.max(-100, expensesGrowth)))}%`,
       amount: `$${(dashboardStats?.financial.thisMonthExpenses || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      change: "Live",
+      change: `${expensesGrowth >= 0 ? '+' : ''}${expensesGrowth}% vs last month`,
       color: "text-orange-500",
     },
   ];
