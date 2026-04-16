@@ -1,18 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import SearchableDropdown from '../../../../../components/ui/SearchableDropdown';
-
-const MOCK_TEAM_MEMBERS = [
-    'John Doe',
-    'Jane Smith',
-    'Robert Johnson',
-    'Sarah Williams',
-    'Michael Brown',
-    'Emily Davis',
-    'David Miller',
-    'Jessica Wilson'
-];
+import { useGetTeamMembers } from '../../../../../hooks/useTeamQueries';
 
 interface AssignTeamModalProps {
     isOpen: boolean;
@@ -28,6 +18,15 @@ interface AssignTeamModalProps {
 const AssignTeamModal: React.FC<AssignTeamModalProps> = ({ isOpen, onClose, onUpdate, propertyDetails }) => {
     const [selectedMember, setSelectedMember] = useState('');
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+    // Fetch real team members only when modal is open
+    const { data: teamMembers = [] } = useGetTeamMembers(isOpen);
+    const memberOptions = useMemo(
+        () => teamMembers
+            .filter((m: any) => m.status === 'ACTIVE' || m.status === 'INVITED')
+            .map((m: any) => m.fullName || m.email || 'Unknown'),
+        [teamMembers],
+    );
 
     if (!isOpen) return null;
 
@@ -66,7 +65,7 @@ const AssignTeamModal: React.FC<AssignTeamModalProps> = ({ isOpen, onClose, onUp
                             value={selectedMember}
                             onChange={setSelectedMember}
                             onToggle={setIsDropdownOpen}
-                            options={MOCK_TEAM_MEMBERS}
+                            options={memberOptions}
                             placeholder="Type to search..."
                             className="w-full"
                             buttonClassName="w-full flex items-center justify-between bg-white border border-gray-200 px-4 py-3 rounded-xl shadow-sm hover:bg-gray-50 transition-colors text-left text-base sm:text-sm"

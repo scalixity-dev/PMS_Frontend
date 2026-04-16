@@ -425,22 +425,8 @@ const PropertyDetail: React.FC = () => {
         }
     };
 
-    // Check if we need to use mock data (when backend returns no data)
-    const mockData = useMemo(() => {
-        if (!id || backendProperty) return null;
-
-        // Try to find property by ID
-        const property = mockUnitsData.find(p => p.id === id);
-        if (property) return { property, unit: property.units[0] };
-
-        // Try to find unit by ID
-        for (const p of mockUnitsData) {
-            const unit = p.units.find(u => u.id === id);
-            if (unit) return { property: p, unit };
-        }
-
-        return null;
-    }, [id, backendProperty]);
+    // Mock fallback removed — rely on real backend data only
+    const mockData = null as null | { property: any; unit: any };
 
     // Transform backend property to component format
     const property = useMemo(() => {
