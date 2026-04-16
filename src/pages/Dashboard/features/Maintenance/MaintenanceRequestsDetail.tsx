@@ -156,13 +156,24 @@ const MaintenanceRequestsDetail: React.FC = () => {
         }
 
         // Map UI label → backend MaintenanceStatus enum
+        // (NEW | IN_REVIEW | ASSIGNED | IN_PROGRESS | COMPLETED | CANCELLED | ON_HOLD)
         const labelToBackend: Record<string, string> = {
             'New': 'NEW',
             'In Process': 'IN_PROGRESS',
             'In Progress': 'IN_PROGRESS',
+            'In progress': 'IN_PROGRESS',
+            'In Review': 'IN_REVIEW',
+            'In review': 'IN_REVIEW',
             'Completed': 'COMPLETED',
+            // Modal labels that don't match the enum one-to-one — map to the
+            // closest valid backend status so validation passes.
+            'Resolved': 'COMPLETED',
+            'Canceled': 'CANCELLED',
             'Cancelled': 'CANCELLED',
+            'Archived': 'ON_HOLD',
             'Pending': 'NEW',
+            'On Hold': 'ON_HOLD',
+            'Assigned': 'ASSIGNED',
         };
         const backendStatus = labelToBackend[newStatus] || newStatus.toUpperCase().replace(/ /g, '_');
 
