@@ -922,6 +922,7 @@ const PropertyDetail: React.FC = () => {
 
                         {/* Assigned Team & Bank */}
                         <div className="flex flex-col md:flex-row gap-8 md:gap-12 mt-5 w-full justify-center items-center">
+                            {/* Assigned Team — hidden until team management wired
                             <div className="relative w-full max-w-xs md:w-80">
                                 <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#3d7475] text-white px-10 py-3 rounded-full flex items-center gap-2 font-bold shadow-sm z-10 whitespace-nowrap">
                                     <Users className="w-5 h-5" strokeWidth={2.5} />
@@ -937,6 +938,7 @@ const PropertyDetail: React.FC = () => {
                                     </button>
                                 </div>
                             </div>
+                            */}
                             <div className="relative w-full max-w-xs md:w-80">
                                 <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#3d7475] text-white px-10 py-3 rounded-full flex items-center gap-2 font-bold shadow-sm z-10 whitespace-nowrap">
                                     <Landmark className="w-5 h-5" strokeWidth={2.5} />
