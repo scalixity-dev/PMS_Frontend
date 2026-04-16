@@ -14,7 +14,7 @@ export const TransactionCard = ({ transaction, onClick }: TransactionCardProps) 
     const totalAmount = Math.abs(amount);
 
     let paidAmount = 0;
-    if (status === 'Paid') {
+    if (status === 'Paid' || status === 'Void') {
         paidAmount = totalAmount;
     } else if (status === 'Partial') {
         paidAmount = transaction.paidAmount ?? 0;

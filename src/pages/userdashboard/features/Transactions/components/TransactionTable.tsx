@@ -21,6 +21,13 @@ const TIME_FILTER_OPTIONS = [
 const parseDate = (dateStr: string): Date | null => {
     try {
         const cleanDateStr = dateStr.trim();
+        if (!cleanDateStr || cleanDateStr.toLowerCase() === "n/a") return null;
+
+        const parsed = new Date(cleanDateStr);
+        if (!Number.isNaN(parsed.getTime())) {
+            return parsed;
+        }
+
         const parts = cleanDateStr.split(/[\s,]+/);
 
         if (parts.length >= 3) {
@@ -46,7 +53,7 @@ const parseDate = (dateStr: string): Date | null => {
 
 const matchesTimeFilter = (dateStr: string, filter: string): boolean => {
     const transactionDate = parseDate(dateStr);
-    if (!transactionDate) return true;
+    if (!transactionDate) return false;
 
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());

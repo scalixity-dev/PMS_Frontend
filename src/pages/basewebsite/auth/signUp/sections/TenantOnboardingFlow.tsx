@@ -161,6 +161,14 @@ export const TenantOnboardingFlow: React.FC = () => {
     })).sort((a, b) => a.label.localeCompare(b.label));
   }, [cities]);
 
+  const selectedCountry = useMemo(
+    () => countries.find((c) => c.isoCode === country),
+    [countries, country]
+  );
+  const usesINR = selectedCountry?.isoCode === 'IN';
+  const priceCurrencyLabel = usesINR ? 'INR' : 'USD';
+  const priceCurrencySymbol = usesINR ? '₹' : '$';
+
   const handleBack = () => {
     if (currentStep === 1) {
       navigate(-1);
@@ -568,16 +576,16 @@ export const TenantOnboardingFlow: React.FC = () => {
                   />
                 </div>
 
-                {/* Price Range (USD) */}
+                {/* Price Range */}
                 <div>
-                  <p className="text-left text-xs font-medium text-gray-500 mb-2">Price range (USD)</p>
+                  <p className="text-left text-xs font-medium text-gray-500 mb-2">Price range ({priceCurrencyLabel})</p>
                   <div className="flex gap-4 items-center mb-4">
                     <div>
                       <label className="block text-left text-sm font-medium text-gray-700 mb-2">
                         Min:
                       </label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium">$</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium">{priceCurrencySymbol}</span>
                         <input
                           type="number"
                           value={minPrice}
@@ -593,7 +601,7 @@ export const TenantOnboardingFlow: React.FC = () => {
                         Max:
                       </label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium">$</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium">{priceCurrencySymbol}</span>
                         <input
                           type="number"
                           value={maxPrice}
@@ -722,4 +730,3 @@ export const TenantOnboardingFlow: React.FC = () => {
     </div>
   );
 };
-

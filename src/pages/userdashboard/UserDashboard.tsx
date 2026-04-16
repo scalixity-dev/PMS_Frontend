@@ -174,14 +174,14 @@ const UserDashboard = () => {
             const contactName = tx.contact || 'N/A';
             const initials = contactName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase();
 
-            const statusMap: Record<string, 'Open' | 'Overdue' | 'Paid' | 'Partial'> = {
+            const statusMap: Record<string, 'Open' | 'Overdue' | 'Paid' | 'Partial' | 'Void'> = {
                 'Pending': 'Open',
                 'Paid': 'Paid',
-                'Void': 'Open',
+                'Void': 'Void',
                 'PARTIALLY_PAID': 'Partial',
                 'PENDING': 'Open',
                 'PAID': 'Paid',
-                'VOID': 'Open',
+                'VOID': 'Void',
                 'REFUNDED': 'Paid'
             };
 
@@ -190,7 +190,7 @@ const UserDashboard = () => {
             const paidAmount = amount - balance;
 
             // Determine status - backend may already set isOverdue
-            let status: 'Open' | 'Overdue' | 'Paid' | 'Partial' = statusMap[tx.status] || 'Open';
+            let status: 'Open' | 'Overdue' | 'Paid' | 'Partial' | 'Void' = statusMap[tx.status] || 'Open';
             if (tx.isOverdue && status === 'Open') {
                 status = 'Overdue';
             } else if (status === 'Open' && tx.dueDateRaw) {
@@ -584,4 +584,3 @@ const UserDashboard = () => {
 
 
 export default UserDashboard;
-

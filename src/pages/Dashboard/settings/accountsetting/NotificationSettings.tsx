@@ -113,7 +113,7 @@ export default function NotificationSettings() {
         <section className="mb-8 border-b-[0.5px] border-[#201F23] pb-6">
           <h2 className="text-xl font-semibold text-[#1F2933]">Notification</h2>
           <p className="text-sm text-gray-500 mt-1">
-            Get notification what&apos;s happening right now, you can turn off at any time
+            Control app and email alerts for account activity, leads, and integrations.
           </p>
         </section>
 
@@ -133,7 +133,7 @@ export default function NotificationSettings() {
             <div className="mb-3">
               <h3 className="text-[17px] font-semibold text-[#1F2933]">Email Notification</h3>
               <p className="text-[13px] text-gray-500 mt-1">
-                Get notification what&apos;s happening right now, you can turn off at any time
+                Master switch for all email-based notifications. Turning this off disables email delivery.
               </p>
             </div>
             <div className="flex items-center gap-3 mt-4">
@@ -155,7 +155,7 @@ export default function NotificationSettings() {
           <section className="space-y-8">
             <CheckboxRow
               label="News and update settings"
-              description="Get notification what's happening right now, you can turn off at any time"
+              description="Product updates, release notes, and feature announcements."
               checked={newsSettings}
               onToggle={() => {
                 const next = !newsSettings;
@@ -166,7 +166,7 @@ export default function NotificationSettings() {
 
             <CheckboxRow
               label="Notification Channel"
-              description="Get notification what's happening right now, you can turn off at any time"
+              description="In-app alerts in dashboard feeds and notification center."
               checked={notificationChannel}
               onToggle={() => {
                 const next = !notificationChannel;
@@ -177,7 +177,7 @@ export default function NotificationSettings() {
 
             <CheckboxRow
               label="Feedback notifications"
-              description="Get notification what's happening right now, you can turn off at any time"
+              description="Updates when feedback is received, reviewed, or actioned."
               checked={feedbackNotification}
               onToggle={() => {
                 const next = !feedbackNotification;
@@ -225,7 +225,7 @@ export default function NotificationSettings() {
             <div className="mb-3">
               <h3 className="text-[17px] font-semibold text-[#1F2933]">More Activity</h3>
               <p className="text-[13px] text-gray-500 mt-1">
-                Get notification what&apos;s happening right now, you can turn off at any time
+                Operational alerts for account security and unusual activity.
               </p>
             </div>
             <div className="flex items-center gap-3 mt-4">
@@ -247,7 +247,7 @@ export default function NotificationSettings() {
           <section className="pb-8">
             <CheckboxRow
               label="Integration Alert"
-              description="Get notification what's happening right now, you can turn off at any time"
+              description="Connection status changes, token expiry, and integration errors."
               checked={integrationAlert}
               onToggle={() => {
                 const next = !integrationAlert;
@@ -262,6 +262,5 @@ export default function NotificationSettings() {
     </AccountSettingsLayout>
   );
 }
-
 
 

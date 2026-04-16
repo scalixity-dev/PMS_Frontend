@@ -1,17 +1,17 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { List, Grid3X3, LogIn, Plus, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import ServiceBreadCrumb from '../../../components/ServiceBreadCrumb';
 import DashboardButton from '../../../components/DashboardButton';
 import ContactCard from './components/ContactCard';
+import { serviceProviderService } from '../../../../../services/service-provider.service';
 
 interface Contact {
     id: string;
     name: string;
     phone: string;
+    email?: string;
 }
-
-const initialContacts: Contact[] = [];
 
 interface DashboardContext {
     sidebarCollapsed: boolean;
@@ -23,43 +23,117 @@ const ServiceContacts: React.FC = () => {
     const { sidebarCollapsed } = useOutletContext<DashboardContext>() || { sidebarCollapsed: false };
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [currentPage, setCurrentPage] = useState(1);
-    const [contacts, setContacts] = useState<Contact[]>(() => {
-        try {
-            const saved = localStorage.getItem('service-pro-contacts');
-            return saved ? JSON.parse(saved) : initialContacts;
-        } catch {
-            return initialContacts;
-        }
-    });
+    const [contacts, setContacts] = useState<Contact[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingContact, setEditingContact] = useState<Contact | null>(null);
-    const [form, setForm] = useState({ name: '', phone: '' });
+    const [form, setForm] = useState({ name: '', phone: '', email: '' });
 
-    const persist = (next: Contact[]) => {
-        setContacts(next);
-        try { localStorage.setItem('service-pro-contacts', JSON.stringify(next)); } catch { /* ignore storage failures */ }
+    const fetchContacts = async () => {
+        try {
+            setIsLoading(true);
+            const rows = await serviceProviderService.getMyContacts();
+            setContacts(rows.map((r) => ({ id: r.id, name: r.name, phone: r.phone, email: r.email })));
+        } catch (err) {
+            alert(err instanceof Error ? err.message : 'Failed to load contacts');
+            setContacts([]);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const openAdd = () => { setEditingContact(null); setForm({ name: '', phone: '' }); setIsModalOpen(true); };
-    const openEdit = (c: Contact) => { setEditingContact(c); setForm({ name: c.name, phone: c.phone }); setIsModalOpen(true); };
+    useEffect(() => {
+        fetchContacts();
+    }, []);
+
+    const openAdd = () => { setEditingContact(null); setForm({ name: '', phone: '', email: '' }); setIsModalOpen(true); };
+    const openEdit = (c: Contact) => { setEditingContact(c); setForm({ name: c.name, phone: c.phone, email: c.email || '' }); setIsModalOpen(true); };
     const closeModal = () => { setIsModalOpen(false); setEditingContact(null); };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (!form.name.trim() || !form.phone.trim()) {
             alert('Name and phone required');
             return;
         }
-        if (editingContact) {
-            persist(contacts.map((c) => c.id === editingContact.id ? { ...c, name: form.name.trim(), phone: form.phone.trim() } : c));
-        } else {
-            persist([...contacts, { id: Date.now().toString(), name: form.name.trim(), phone: form.phone.trim() }]);
+        try {
+            if (editingContact) {
+                await serviceProviderService.updateMyContact(editingContact.id, {
+                    name: form.name.trim(),
+                    phone: form.phone.trim(),
+                    email: form.email.trim() || undefined,
+                });
+            } else {
+                await serviceProviderService.addMyContact({
+                    name: form.name.trim(),
+                    phone: form.phone.trim(),
+                    email: form.email.trim() || undefined,
+                });
+            }
+            await fetchContacts();
+            closeModal();
+        } catch (err) {
+            alert(err instanceof Error ? err.message : 'Failed to save contact');
         }
-        closeModal();
     };
 
-    const handleDelete = (id: string) => {
+    const handleDelete = async (id: string) => {
         if (!window.confirm('Delete this contact?')) return;
-        persist(contacts.filter((c) => c.id !== id));
+        try {
+            await serviceProviderService.deleteMyContact(id);
+            await fetchContacts();
+        } catch (err) {
+            alert(err instanceof Error ? err.message : 'Failed to delete contact');
+        }
+    };
+
+    // CSV import: accept file with header `name,phone` (or `Name,Phone`). Parses rows,
+    // skips invalid, merges into existing list, dedupes by phone.
+    const importInputRef = useRef<HTMLInputElement>(null);
+    const handleImportClick = () => importInputRef.current?.click();
+    const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+            const text = await file.text();
+            const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+            if (lines.length === 0) throw new Error('File is empty');
+
+            // Detect header
+            const first = lines[0].toLowerCase();
+            const hasHeader = first.includes('name') && first.includes('phone');
+            const rows = hasHeader ? lines.slice(1) : lines;
+
+            const imported: Array<{ name: string; phone: string }> = [];
+            const existingPhones = new Set(contacts.map((c) => (c.phone || '').replace(/\D/g, '')));
+
+            for (const line of rows) {
+                // Split on comma, tolerate quoted commas
+                const parts = line.match(/"([^"]*)"|[^,]+/g)?.map((p) => p.replace(/^"|"$/g, '').trim()) || [];
+                if (parts.length < 2) continue;
+                const name = parts[0];
+                const phone = parts[1];
+                if (!name || !phone) continue;
+                const normalised = phone.replace(/\D/g, '');
+                if (!normalised || existingPhones.has(normalised)) continue;
+                existingPhones.add(normalised);
+                imported.push({ name, phone });
+            }
+
+            if (imported.length === 0) {
+                alert('No new contacts imported. Ensure CSV has "name,phone" columns.');
+            } else {
+                for (const c of imported) {
+                    // Sequential to surface first backend validation error clearly.
+                    await serviceProviderService.addMyContact({ name: c.name, phone: c.phone });
+                }
+                await fetchContacts();
+                alert(`Imported ${imported.length} contact${imported.length === 1 ? '' : 's'}.`);
+            }
+        } catch (err) {
+            alert(err instanceof Error ? err.message : 'Failed to import CSV');
+        } finally {
+            if (importInputRef.current) importInputRef.current.value = '';
+        }
     };
 
     // Pagination
@@ -102,11 +176,19 @@ const ServiceContacts: React.FC = () => {
                     </button>
                     <DashboardButton
                         bgColor="white"
+                        onClick={handleImportClick}
                         className="text-gray-900 border border-gray-200 hover:bg-gray-50 flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base px-3 sm:px-4 py-2"
                     >
                         <LogIn className="w-3.5 h-3.5 sm:w-4 sm:h-4 rotate-180" />
                         <span>Import</span>
                     </DashboardButton>
+                    <input
+                        ref={importInputRef}
+                        type="file"
+                        accept=".csv,text/csv"
+                        onChange={handleImportFile}
+                        className="hidden"
+                    />
                     <DashboardButton
                         bgColor="#7CD947"
                         onClick={openAdd}
@@ -125,7 +207,7 @@ const ServiceContacts: React.FC = () => {
             }>
                 {currentContacts.length === 0 ? (
                     <div className="col-span-full text-center py-12 text-gray-500 text-sm">
-                        No contacts yet. Click "Add Contact" to create one.
+                        {isLoading ? 'Loading contacts...' : 'No contacts yet. Click "Add Contact" to create one.'}
                     </div>
                 ) : currentContacts.map((contact) => (
                     <ContactCard
@@ -205,6 +287,16 @@ const ServiceContacts: React.FC = () => {
                                     className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#7CD947]/20 focus:border-[#7CD947]"
                                 />
                             </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-700 mb-1">Email (optional)</label>
+                                <input
+                                    type="email"
+                                    value={form.email}
+                                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                                    placeholder="name@example.com"
+                                    className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#7CD947]/20 focus:border-[#7CD947]"
+                                />
+                            </div>
                         </div>
                         <div className="flex gap-3 px-6 pb-6">
                             <button onClick={closeModal} className="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-lg font-semibold hover:bg-gray-200">Cancel</button>
@@ -218,4 +310,3 @@ const ServiceContacts: React.FC = () => {
 };
 
 export default ServiceContacts;
-

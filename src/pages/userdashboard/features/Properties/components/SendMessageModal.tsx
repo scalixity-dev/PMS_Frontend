@@ -4,12 +4,15 @@ import { Send } from 'lucide-react';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import successAnimationUrl from '../../../../Dashboard/features/ListUnit/Success.lottie?url';
 import { useAuthStore } from '../../Profile/store/authStore';
+import { createConversation, sendMessage } from '../../../../../services/chat.service';
 
 interface SendMessageModalProps {
     isOpen: boolean;
     onClose: () => void;
     propertyTitle?: string;
     landlordName?: string;
+    landlordId?: string;
+    landlordEmail?: string;
 }
 
 interface MessageFormData {
@@ -20,9 +23,18 @@ interface MessageFormData {
     message: string;
 }
 
-const SendMessageModal: React.FC<SendMessageModalProps> = ({ isOpen, onClose, propertyTitle, landlordName }) => {
+const SendMessageModal: React.FC<SendMessageModalProps> = ({
+    isOpen,
+    onClose,
+    propertyTitle,
+    landlordName,
+    landlordId,
+    landlordEmail,
+}) => {
     const { userInfo } = useAuthStore();
     const [showSuccess, setShowSuccess] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState<string | null>(null);
     const [formData, setFormData] = useState<MessageFormData>({
         firstName: '',
         lastName: '',
@@ -37,6 +49,8 @@ const SendMessageModal: React.FC<SendMessageModalProps> = ({ isOpen, onClose, pr
     useEffect(() => {
         if (isOpen) {
             setShowSuccess(false);
+            setIsSubmitting(false);
+            setSubmitError(null);
             setFormData({
                 firstName: userInfo?.firstName || '',
                 lastName: userInfo?.lastName || '',
@@ -54,6 +68,8 @@ const SendMessageModal: React.FC<SendMessageModalProps> = ({ isOpen, onClose, pr
             });
             setErrors({});
             setTouched({});
+            setIsSubmitting(false);
+            setSubmitError(null);
         }
     }, [isOpen, userInfo]);
 
@@ -86,7 +102,7 @@ const SendMessageModal: React.FC<SendMessageModalProps> = ({ isOpen, onClose, pr
         return Object.keys(formData).every(k => check(k as keyof MessageFormData));
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         const newErrors: Record<string, string> = {};
         let isValid = true;
         (Object.keys(formData) as Array<keyof MessageFormData>).forEach(key => {
@@ -106,9 +122,28 @@ const SendMessageModal: React.FC<SendMessageModalProps> = ({ isOpen, onClose, pr
         });
 
         if (isValid) {
-            console.log('Sending message:', formData);
-            // In a real app, this would be an API call
-            setShowSuccess(true);
+            if (!landlordId) {
+                setSubmitError('Unable to send message: property manager is unavailable.');
+                return;
+            }
+
+            try {
+                setIsSubmitting(true);
+                setSubmitError(null);
+                const conversation = await createConversation(
+                    landlordId,
+                    landlordEmail,
+                    landlordName,
+                );
+                await sendMessage(conversation.id, formData.message.trim());
+                setShowSuccess(true);
+            } catch (error) {
+                setSubmitError(
+                    error instanceof Error ? error.message : 'Failed to send message. Please try again.',
+                );
+            } finally {
+                setIsSubmitting(false);
+            }
         }
     };
 
@@ -127,7 +162,7 @@ const SendMessageModal: React.FC<SendMessageModalProps> = ({ isOpen, onClose, pr
                 {
                     label: 'Send a message',
                     onClick: handleSubmit,
-                    disabled: !isFormValid(),
+                    disabled: !isFormValid() || isSubmitting,
                     variant: 'primary',
                     className: "bg-[#7ED957] hover:bg-[#6BC847] border-none text-white",
                     icon: <Send size={16} />
@@ -161,6 +196,11 @@ const SendMessageModal: React.FC<SendMessageModalProps> = ({ isOpen, onClose, pr
                         <p className="text-gray-600 text-sm">
                             Complete the required information and send the message.
                         </p>
+                        {submitError && (
+                            <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                                {submitError}
+                            </div>
+                        )}
 
                         {propertyTitle && (
                             <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
@@ -244,6 +284,9 @@ const SendMessageModal: React.FC<SendMessageModalProps> = ({ isOpen, onClose, pr
                                 <span className="text-xs text-gray-400">Character limit: {formData.message.length} / 1000</span>
                             </div>
                         </div>
+                        {isSubmitting && (
+                            <p className="text-xs text-gray-500">Sending message...</p>
+                        )}
                     </>
                 )}
             </div>

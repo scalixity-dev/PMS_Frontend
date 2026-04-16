@@ -90,6 +90,16 @@ export const ServiceProtectedRoute: React.FC<ProtectedRouteProps> = ({ children 
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Once authenticated in session storage, skip re-check for subsequent route
+    // mounts. This prevents transient network errors on in-app navigation
+    // (e.g. clicking Integrations/Chat) from kicking the user back to /login.
+    const cached = sessionStorage.getItem('service_pro_authenticated');
+    if (cached === 'true') {
+      setIsAuthenticated(true);
+      setIsLoading(false);
+      return;
+    }
+
     const checkAuth = async () => {
       try {
         console.log('ServiceProtectedRoute: Checking authentication...');
@@ -98,14 +108,26 @@ export const ServiceProtectedRoute: React.FC<ProtectedRouteProps> = ({ children 
 
         if (isServicePro && user.isActive && user.isEmailVerified) {
           console.log('ServiceProtectedRoute: Authentication successful');
+          sessionStorage.setItem('service_pro_authenticated', 'true');
           setIsAuthenticated(true);
         } else {
           console.warn('ServiceProtectedRoute: Authentication failed - user does not meet requirements');
+          sessionStorage.removeItem('service_pro_authenticated');
           setIsAuthenticated(false);
         }
       } catch (error) {
         console.error('ServiceProtectedRoute: Authentication check failed:', error);
-        setIsAuthenticated(false);
+        // Only flip to unauthenticated on a genuine auth failure (401), not
+        // on network hiccups. Treat thrown non-auth errors as "still logged in".
+        const msg = (error as Error)?.message || '';
+        if (/401|unauthor/i.test(msg)) {
+          sessionStorage.removeItem('service_pro_authenticated');
+          setIsAuthenticated(false);
+        } else {
+          // Transient error — keep session if we have one cached
+          const cachedRetry = sessionStorage.getItem('service_pro_authenticated');
+          setIsAuthenticated(cachedRetry === 'true');
+        }
       } finally {
         setIsLoading(false);
       }

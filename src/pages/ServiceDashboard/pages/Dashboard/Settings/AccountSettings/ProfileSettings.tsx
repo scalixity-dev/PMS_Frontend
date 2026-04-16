@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check } from 'lucide-react';
+import { Camera, Check } from 'lucide-react';
 import ServiceBreadCrumb from '../../../../components/ServiceBreadCrumb';
 import { useGetCurrentUser, useUpdateProfile } from '../../../../../../hooks/useAuthQueries';
 import ServiceTabs from '../../../../components/ServiceTabs';
@@ -9,6 +9,8 @@ import DeleteConfirmationModal from '../../../../../../components/common/modals/
 import SearchableDropdown from '../../../../../../components/ui/SearchableDropdown';
 import { Country, State } from 'country-state-city';
 import type { ICountry, IState } from 'country-state-city';
+import { authService } from '../../../../../../services/auth.service';
+import { API_ENDPOINTS } from '../../../../../../config/api.config';
 
 const ProfileSettings = () => {
     const navigate = useNavigate();
@@ -20,7 +22,11 @@ const ProfileSettings = () => {
     const [isEditingPersonal, setIsEditingPersonal] = useState(false);
     const [isEditingAddress, setIsEditingAddress] = useState(false);
     const [isChangingPassword, setIsChangingPassword] = useState(false);
+    const [isChangingEmail, setIsChangingEmail] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+    const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
+    const profileFileRef = useRef<HTMLInputElement>(null);
 
     // Location Data
     const [countries, setCountries] = useState<ICountry[]>([]);
@@ -56,6 +62,7 @@ const ProfileSettings = () => {
                 address: currentUser.address ?? '',
                 pincode: currentUser.pincode ?? '',
             });
+            setProfilePhotoUrl((currentUser as any).profilePhotoUrl ?? null);
         }
     }, [currentUser]);
 
@@ -88,6 +95,13 @@ const ProfileSettings = () => {
         newPassword: '',
         confirmPassword: ''
     });
+    const [isSavingPassword, setIsSavingPassword] = useState(false);
+    const [emailForm, setEmailForm] = useState({ newEmail: '', currentPassword: '' });
+    const [profileErrors, setProfileErrors] = useState<{
+        personal?: string;
+        address?: string;
+        email?: string;
+    }>({});
 
     const userProfile = {
         name: formData.fullName || currentUser?.fullName || 'Service Provider',
@@ -120,11 +134,19 @@ const ProfileSettings = () => {
         // Allow optional leading '+', rest must be digits.
         return trimmed.startsWith('+') ? `+${trimmed.slice(1).replace(/\D/g, '')}` : trimmed.replace(/\D/g, '');
     };
+    const isValidPincode = (value: string) => !value || /^\d{4,10}$/.test(value.trim());
+    const isValidPhone = (value: string) => !value || /^\d{4,15}$/.test(normalizePhone(value));
+    const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 
     const handleSavePersonal = () => {
         // Strip formatting chars before send — backend regex requires pure digits.
         const phoneNumber = normalizePhone(formData.phoneNumber);
         const phoneCountryCode = normalizeCountryCode(formData.phoneCountryCode);
+        if (!isValidPhone(phoneNumber)) {
+            setProfileErrors((prev) => ({ ...prev, personal: 'Phone number must be between 4 and 15 digits.' }));
+            return;
+        }
+        setProfileErrors((prev) => ({ ...prev, personal: undefined }));
         updateProfileMutation.mutate(
             {
                 phoneCountryCode: phoneCountryCode || undefined,
@@ -132,11 +154,18 @@ const ProfileSettings = () => {
             },
             {
                 onSuccess: () => setIsEditingPersonal(false),
+                onError: (error: any) =>
+                    setProfileErrors((prev) => ({ ...prev, personal: error?.message || 'Failed to save personal information.' })),
             }
         );
     };
 
     const handleSaveAddress = () => {
+        if (!isValidPincode(formData.pincode)) {
+            setProfileErrors((prev) => ({ ...prev, address: 'Pincode must contain 4 to 10 digits.' }));
+            return;
+        }
+        setProfileErrors((prev) => ({ ...prev, address: undefined }));
         updateProfileMutation.mutate(
             {
                 country: formData.country?.trim() || undefined,
@@ -146,6 +175,8 @@ const ProfileSettings = () => {
             },
             {
                 onSuccess: () => setIsEditingAddress(false),
+                onError: (error: any) =>
+                    setProfileErrors((prev) => ({ ...prev, address: error?.message || 'Failed to save address.' })),
             }
         );
     };
@@ -154,7 +185,7 @@ const ProfileSettings = () => {
         setPasswordForm(prev => ({ ...prev, [field]: value }));
     };
 
-    const handleSavePassword = () => {
+    const handleSavePassword = async () => {
         if (!passwordForm.oldPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
             alert("All password fields are required.");
             return;
@@ -167,18 +198,84 @@ const ProfileSettings = () => {
             alert("Password must be at least 6 characters.");
             return;
         }
-
-        console.log("Saving password:", passwordForm);
-        // Simulate API
-        alert("Password updated successfully.");
-        setIsChangingPassword(false);
-        setPasswordForm({ oldPassword: '', newPassword: '', confirmPassword: '' });
+        try {
+            setIsSavingPassword(true);
+            await authService.changePassword(passwordForm.oldPassword, passwordForm.newPassword);
+            alert("Password updated successfully.");
+            setIsChangingPassword(false);
+            setPasswordForm({ oldPassword: '', newPassword: '', confirmPassword: '' });
+        } catch (err) {
+            alert(err instanceof Error ? err.message : 'Failed to update password');
+        } finally {
+            setIsSavingPassword(false);
+        }
     };
 
     const handleDeleteAccount = () => {
         console.log("Deleting account...");
         setShowDeleteModal(false);
         navigate('/');
+    };
+
+    const handleSaveEmail = async () => {
+        const nextEmail = emailForm.newEmail.trim();
+        if (!nextEmail || !emailForm.currentPassword) {
+            setProfileErrors((prev) => ({ ...prev, email: 'New email and current password are required.' }));
+            return;
+        }
+        if (!isValidEmail(nextEmail)) {
+            setProfileErrors((prev) => ({ ...prev, email: 'Please enter a valid email address.' }));
+            return;
+        }
+        if (nextEmail.toLowerCase() === (formData.email || '').trim().toLowerCase()) {
+            setProfileErrors((prev) => ({ ...prev, email: 'New email must be different from current email.' }));
+            return;
+        }
+
+        try {
+            const result = await authService.changeEmail(nextEmail, emailForm.currentPassword);
+            setFormData((prev) => ({ ...prev, email: result.email }));
+            setEmailForm({ newEmail: '', currentPassword: '' });
+            setIsChangingEmail(false);
+            setProfileErrors((prev) => ({ ...prev, email: undefined }));
+        } catch (err: any) {
+            setProfileErrors((prev) => ({ ...prev, email: err?.message || 'Failed to update email.' }));
+        }
+    };
+
+    const handleProfilePhotoPick = async (file?: File) => {
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            setProfileErrors((prev) => ({ ...prev, personal: 'Only image files are allowed for profile photo.' }));
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            setProfileErrors((prev) => ({ ...prev, personal: 'Profile photo must be 5 MB or smaller.' }));
+            return;
+        }
+
+        try {
+            setIsUploadingPhoto(true);
+            const form = new FormData();
+            form.append('file', file);
+            const uploadRes = await fetch(API_ENDPOINTS.UPLOAD.IMAGE, {
+                method: 'POST',
+                body: form,
+                credentials: 'include',
+            });
+            const uploadData = await uploadRes.json().catch(() => ({}));
+            const url = uploadData?.data?.url || uploadData?.url;
+            if (!uploadRes.ok || !url) {
+                throw new Error(uploadData?.message || 'Failed to upload profile photo.');
+            }
+            await updateProfileMutation.mutateAsync({ profilePhotoUrl: url } as any);
+            setProfilePhotoUrl(url);
+            setProfileErrors((prev) => ({ ...prev, personal: undefined }));
+        } catch (err: any) {
+            setProfileErrors((prev) => ({ ...prev, personal: err?.message || 'Failed to upload profile photo.' }));
+        } finally {
+            setIsUploadingPhoto(false);
+        }
     };
 
     return (
@@ -233,14 +330,39 @@ const ProfileSettings = () => {
                         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-8 sm:mb-10">
                             <div className="relative">
                                 <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-4 border-white shadow-md bg-blue-100">
-                                    <div className="w-full h-full flex items-center justify-center text-3xl sm:text-4xl font-bold text-gray-700 bg-coral-100 uppercase">
-                                        {userProfile.initials}
-                                    </div>
+                                    {profilePhotoUrl ? (
+                                        <img src={profilePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-3xl sm:text-4xl font-bold text-gray-700 bg-coral-100 uppercase">
+                                            {userProfile.initials}
+                                        </div>
+                                    )}
                                 </div>
+                                <input
+                                    ref={profileFileRef}
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        void handleProfilePhotoPick(file);
+                                        e.currentTarget.value = '';
+                                    }}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => profileFileRef.current?.click()}
+                                    disabled={isUploadingPhoto}
+                                    className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-[#7CD947] text-white shadow-md hover:bg-[#6bc238] transition-colors flex items-center justify-center disabled:opacity-60"
+                                    title="Upload profile photo"
+                                >
+                                    <Camera size={14} />
+                                </button>
                             </div>
                             <div className="text-center sm:text-left">
                                 <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{userProfile.name}</h1>
                                 <p className="text-sm text-gray-500">{userProfile.email}</p>
+                                {isUploadingPhoto && <p className="text-xs text-gray-500 mt-1">Uploading photo...</p>}
                             </div>
                         </div>
 
@@ -311,6 +433,9 @@ const ProfileSettings = () => {
                                     </div>
                                 </div>
                             </div>
+                            {profileErrors.personal && (
+                                <p className="text-xs text-red-500 mt-3">{profileErrors.personal}</p>
+                            )}
                         </div>
 
                         {/* Separator */}
@@ -319,14 +444,72 @@ const ProfileSettings = () => {
                         {/* 3. Email & Password Section */}
                         <div className="space-y-6 mb-10">
                             <div className="flex justify-between items-center py-2 border-b border-gray-50 border-dashed mt-4">
+                                <span className="text-sm font-semibold text-gray-800">Email Address</span>
+                                <div className="flex items-center gap-2">
+                                    {isChangingEmail && (
+                                        <button
+                                            onClick={handleSaveEmail}
+                                            className="text-xs font-semibold text-green-600 hover:text-green-700"
+                                        >
+                                            Save
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => {
+                                            setIsChangingEmail(!isChangingEmail);
+                                            setProfileErrors((prev) => ({ ...prev, email: undefined }));
+                                            if (!isChangingEmail) {
+                                                setEmailForm({ newEmail: '', currentPassword: '' });
+                                            }
+                                        }}
+                                        className="text-xs font-semibold text-[#5F6D7E] hover:text-[#2c5251]"
+                                    >
+                                        {isChangingEmail ? 'Cancel' : 'Change'}
+                                    </button>
+                                </div>
+                            </div>
+                            {isChangingEmail ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mt-4">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-700 mb-2 ml-1">New Email</label>
+                                        <input
+                                            type="email"
+                                            value={emailForm.newEmail}
+                                            onChange={(e) => {
+                                                setEmailForm((prev) => ({ ...prev, newEmail: e.target.value }));
+                                                setProfileErrors((prev) => ({ ...prev, email: undefined }));
+                                            }}
+                                            className="w-full p-3 bg-white border border-gray-300 rounded-lg text-sm text-gray-800 shadow-sm focus:ring-2 focus:ring-green-500 outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-700 mb-2 ml-1">Current Password</label>
+                                        <input
+                                            type="password"
+                                            value={emailForm.currentPassword}
+                                            onChange={(e) => {
+                                                setEmailForm((prev) => ({ ...prev, currentPassword: e.target.value }));
+                                                setProfileErrors((prev) => ({ ...prev, email: undefined }));
+                                            }}
+                                            className="w-full p-3 bg-white border border-gray-300 rounded-lg text-sm text-gray-800 shadow-sm focus:ring-2 focus:ring-green-500 outline-none"
+                                        />
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="text-xs text-gray-400 -mt-2 ml-1">Current email: {formData.email || '-'}</div>
+                            )}
+                            {profileErrors.email && <p className="text-xs text-red-500 -mt-2">{profileErrors.email}</p>}
+
+                            <div className="flex justify-between items-center py-2 border-b border-gray-50 border-dashed mt-4">
                                 <span className="text-sm font-semibold text-gray-800">Password</span>
                                 <div className="flex items-center gap-2">
                                     {isChangingPassword && (
                                         <button
                                             onClick={handleSavePassword}
+                                            disabled={isSavingPassword}
                                             className="text-xs font-semibold text-green-600 hover:text-green-700"
                                         >
-                                            Save
+                                            {isSavingPassword ? 'Saving...' : 'Save'}
                                         </button>
                                     )}
                                     <button
@@ -465,6 +648,9 @@ const ProfileSettings = () => {
                                     )}
                                 </div>
                             </div>
+                            {profileErrors.address && (
+                                <p className="text-xs text-red-500 mt-3">{profileErrors.address}</p>
+                            )}
                         </div>
 
                         {/* 5. Delete Account */}

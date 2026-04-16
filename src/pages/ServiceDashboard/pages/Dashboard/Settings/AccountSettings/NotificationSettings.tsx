@@ -123,7 +123,7 @@ const NotificationSettings = () => {
                             <section className="mb-8 border-b-[0.5px] border-[#201F23] pb-6">
                                 <h2 className="text-xl font-bold text-[#1F2933]">Notification</h2>
                                 <p className="text-sm text-gray-500 mt-1">
-                                    Get notification what's happening right now, you can turn off at any time
+                                    Control app and email alerts for account activity, jobs, and integrations.
                                 </p>
                             </section>
 
@@ -133,7 +133,7 @@ const NotificationSettings = () => {
                                     <div className="mb-3">
                                         <h3 className="text-[17px] font-bold text-[#1F2933]">Email Notification</h3>
                                         <p className="text-[13px] text-gray-500 mt-1">
-                                            Get notification what's happening right now, you can turn off at any time
+                                            Master switch for all email-based notifications.
                                         </p>
                                     </div>
                                     <div className="flex items-center gap-3 mt-4">
@@ -151,21 +151,21 @@ const NotificationSettings = () => {
                                 <section className="space-y-8">
                                     <CheckboxRow
                                         label="News and update settings"
-                                        description="Get notification what's happening right now, you can turn off at any time"
+                                        description="Platform updates, feature releases, and policy notices."
                                         checked={newsSettings}
                                         onToggle={() => setNewsSettings(!newsSettings)}
                                     />
 
                                     <CheckboxRow
                                         label="Notification Channel"
-                                        description="Get notification what's happening right now, you can turn off at any time"
+                                        description="In-app notifications in dashboard activity feed."
                                         checked={notificationChannel}
                                         onToggle={() => setNotificationChannel(!notificationChannel)}
                                     />
 
                                     <CheckboxRow
                                         label="Feedback notifications"
-                                        description="Get notification what's happening right now, you can turn off at any time"
+                                        description="Updates when submitted feedback is reviewed or resolved."
                                         checked={feedbackNotification}
                                         onToggle={() => setFeedbackNotification(!feedbackNotification)}
                                     />
@@ -196,7 +196,7 @@ const NotificationSettings = () => {
                                     <div className="mb-3">
                                         <h3 className="text-[17px] font-bold text-[#1F2933]">More Activity</h3>
                                         <p className="text-[13px] text-gray-500 mt-1">
-                                            Get notification what's happening right now, you can turn off at any time
+                                            Security and account activity alerts.
                                         </p>
                                     </div>
                                     <div className="flex items-center gap-3 mt-4">
@@ -214,7 +214,7 @@ const NotificationSettings = () => {
                                 <section className="pb-8">
                                     <CheckboxRow
                                         label="Integration Alert"
-                                        description="Get notification what's happening right now, you can turn off at any time"
+                                        description="Connection failures, token expiry, and sync issues."
                                         checked={integrationAlert}
                                         onToggle={() => setIntegrationAlert(!integrationAlert)}
                                     />

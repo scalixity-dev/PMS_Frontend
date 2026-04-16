@@ -156,6 +156,24 @@ export async function markAsRead(conversationId: string, token?: string): Promis
   if (!res.ok) throw new Error('Failed to mark as read');
 }
 
+export async function sendMessage(
+  conversationId: string,
+  content: string,
+  token?: string
+): Promise<ChatMessage> {
+  const res = await chatFetch(API_ENDPOINTS.CHAT.MESSAGES(conversationId), {
+    method: 'POST',
+    body: JSON.stringify({
+      conversationId,
+      content,
+      type: 'text',
+    }),
+    token,
+  });
+  if (!res.ok) throw new Error('Failed to send message');
+  return res.json();
+}
+
 export async function getOnlineUsers(userIds: string[], token?: string): Promise<string[]> {
   if (userIds.length === 0) return [];
   const url = `${API_ENDPOINTS.CHAT.PRESENCE}?userIds=${userIds.join(',')}`;

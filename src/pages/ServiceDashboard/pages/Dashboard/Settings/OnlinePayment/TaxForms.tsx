@@ -1,6 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Upload, Trash2, FileText, Download } from 'lucide-react';
 import DeleteConfirmationModal from '../../../../../../components/common/modals/DeleteConfirmationModal';
+import { serviceProviderService } from '../../../../../../services/service-provider.service';
 
 
 interface TaxForm {
@@ -11,32 +12,23 @@ interface TaxForm {
     taxYear: string;
     uploadDate: string;
     fileSize: string;
+    fileUrl: string;
 }
 
-const initialTaxForms: TaxForm[] = [
-    {
-        id: '1',
-        fileName: 'W9_BaggaProperties_2024.pdf',
-        status: 'Verified',
-        formType: 'W-9',
-        taxYear: '2024',
-        uploadDate: '1/15/2024',
-        fileSize: '245 KB',
-    },
-    {
-        id: '2',
-        fileName: '1099_MaintenanceSolutions_2023.pdf',
-        status: 'Verified',
-        formType: '1099',
-        taxYear: '2023',
-        uploadDate: '1/20/2024',
-        fileSize: '180 KB',
-    },
-];
+interface TaxFormMeta {
+    status?: 'Verified' | 'Pending' | 'Rejected';
+    formType?: string;
+    taxYear?: string;
+    uploadDate?: string;
+    fileSize?: string;
+}
 
 const TaxForms = () => {
-    // Data State
-    const [taxForms, setTaxForms] = useState<TaxForm[]>(initialTaxForms);
+    const [taxForms, setTaxForms] = useState<TaxForm[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [loadError, setLoadError] = useState<string | null>(null);
+
+    const [isUploading, setIsUploading] = useState(false);
 
     // Modal State
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -49,6 +41,45 @@ const TaxForms = () => {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    const mapDocToTaxForm = (doc: any): TaxForm => {
+        let meta: TaxFormMeta = {};
+        try {
+            meta = doc?.description ? JSON.parse(doc.description) : {};
+        } catch {
+            meta = {};
+        }
+        const fileName = (doc.fileUrl || '').split('/').pop() || 'TaxForm.pdf';
+        const uploadDate = meta.uploadDate || new Date(doc.uploadedAt).toLocaleDateString('en-US');
+        return {
+            id: doc.id,
+            fileName,
+            status: meta.status || 'Pending',
+            formType: meta.formType || 'Other',
+            taxYear: meta.taxYear || new Date().getFullYear().toString(),
+            uploadDate,
+            fileSize: meta.fileSize || '-',
+            fileUrl: doc.fileUrl,
+        };
+    };
+
+    const fetchTaxForms = async () => {
+        try {
+            setIsLoading(true);
+            setLoadError(null);
+            const docs = await serviceProviderService.getMyDocuments('TAX_FORM');
+            setTaxForms(docs.map(mapDocToTaxForm));
+        } catch (err) {
+            setLoadError(err instanceof Error ? err.message : 'Failed to load tax forms');
+            setTaxForms([]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchTaxForms();
+    }, []);
+
     // Handlers
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -56,29 +87,55 @@ const TaxForms = () => {
         }
     };
 
-    const handleUpload = () => {
+    const handleUpload = async () => {
         if (!formType || !taxYear || !selectedFile) {
             alert("Please fill in all fields and select a file.");
             return;
         }
 
-        const newForm: TaxForm = {
-            id: Date.now().toString(),
-            fileName: selectedFile.name,
-            status: 'Pending',
-            formType: formType,
-            taxYear: taxYear,
-            uploadDate: new Date().toLocaleDateString('en-US'),
-            fileSize: `${(selectedFile.size / 1024).toFixed(0)} KB`,
-        };
+        setIsUploading(true);
+        try {
+            // Upload file to backend so URL is persistent (not just metadata)
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('category', 'DOCUMENT');
 
-        setTaxForms([...taxForms, newForm]);
+            const apiBase = (import.meta as { env: { VITE_API_BASE_URL?: string } }).env?.VITE_API_BASE_URL || 'http://localhost:3000';
+            const uploadRes = await fetch(`${apiBase}/upload/file`, {
+                method: 'POST',
+                credentials: 'include',
+                body: formData,
+            });
+            if (!uploadRes.ok) {
+                const err = await uploadRes.json().catch(() => ({}));
+                throw new Error(err?.message || `Upload failed: ${uploadRes.statusText}`);
+            }
+            const uploadData = await uploadRes.json();
+            const url = uploadData?.url || uploadData?.fileUrl;
 
-        // Reset
-        setFormType('');
-        setTaxYear('2026');
-        setSelectedFile(null);
-        setIsUploadModalOpen(false);
+            await serviceProviderService.addMyDocument({
+                documentType: 'TAX_FORM',
+                fileUrl: url,
+                description: JSON.stringify({
+                    status: 'Pending',
+                    formType,
+                    taxYear,
+                    uploadDate: new Date().toLocaleDateString('en-US'),
+                    fileSize: `${(selectedFile.size / 1024).toFixed(0)} KB`,
+                }),
+            });
+            await fetchTaxForms();
+
+            // Reset
+            setFormType('');
+            setTaxYear('2026');
+            setSelectedFile(null);
+            setIsUploadModalOpen(false);
+        } catch (err) {
+            alert(err instanceof Error ? err.message : 'Upload failed');
+        } finally {
+            setIsUploading(false);
+        }
     };
 
     const handleDeleteClick = (id: string) => {
@@ -88,24 +145,25 @@ const TaxForms = () => {
 
     const confirmDelete = () => {
         if (itemToDelete) {
-            setTaxForms(taxForms.filter(f => f.id !== itemToDelete));
-            setDeleteModalOpen(false);
-            setItemToDelete(null);
+            serviceProviderService
+                .deleteMyDocument(itemToDelete)
+                .then(() => fetchTaxForms())
+                .catch((err) => alert(err instanceof Error ? err.message : 'Delete failed'))
+                .finally(() => {
+                    setDeleteModalOpen(false);
+                    setItemToDelete(null);
+                });
         }
     };
 
-    const handleDownload = (fileName: string) => {
-        // For demo purposes, create a dummy file
-        const content = `Content for ${fileName}`;
-        const blob = new Blob([content], { type: 'text/plain' });
-        const url = window.URL.createObjectURL(blob);
+    const handleDownload = (fileName: string, fileUrl: string) => {
         const link = document.createElement('a');
-        link.href = url;
-        link.download = fileName; // This will use the mock filename
+        link.href = fileUrl;
+        link.download = fileName;
+        link.target = '_blank';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
     };
 
     return (
@@ -142,7 +200,11 @@ const TaxForms = () => {
 
                 {/* List Section */}
                 <div className="divide-y divide-gray-100">
-                    {taxForms.length === 0 ? (
+                    {isLoading ? (
+                        <div className="p-4 md:p-8 text-center text-gray-500 text-sm">Loading tax forms...</div>
+                    ) : loadError ? (
+                        <div className="p-4 md:p-8 text-center text-red-500 text-sm">{loadError}</div>
+                    ) : taxForms.length === 0 ? (
                         <div className="p-4 md:p-8 text-center text-gray-500 text-sm">
                             No tax forms found. Click "Upload Form" to add one.
                         </div>
@@ -167,7 +229,7 @@ const TaxForms = () => {
                                     </div>
                                     <div className="flex items-center gap-2 shrink-0">
                                         <button
-                                            onClick={() => handleDownload(form.fileName)}
+                                            onClick={() => handleDownload(form.fileName, form.fileUrl)}
                                             className="text-[#44A445] hover:text-[#388e39] transition-colors p-1 rounded-md hover:bg-[#E7F6E7]"
                                         >
                                             <Download size={18} />

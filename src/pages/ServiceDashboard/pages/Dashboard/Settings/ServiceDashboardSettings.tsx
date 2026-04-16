@@ -43,7 +43,7 @@ const SETTING_CARDS: SettingCardData[] = [
         icon: Users,
         links: [
             { label: "Business Profile", path: "/service-dashboard/settings/business-profile" },
-            { label: "Job Preference", path: "/service-dashboard/settings/job-preference" },
+            { label: "Job Preference", path: "/service-dashboard/settings/business-profile?tab=job_preference" },
         ],
     },
     {

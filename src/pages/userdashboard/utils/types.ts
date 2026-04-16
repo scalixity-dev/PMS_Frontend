@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 export interface Transaction {
     id: string;
-    status: 'Open' | 'Overdue' | 'Paid' | 'Partial';
+    status: 'Open' | 'Overdue' | 'Paid' | 'Partial' | 'Void';
     dueDate: string;
     category: string;
     contact: {
