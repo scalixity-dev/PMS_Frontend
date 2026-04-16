@@ -54,22 +54,19 @@ const MoveIn: React.FC = () => {
             existingLease?: any;
         } | null;
 
+        // Always reset first so reopening for a different applicant starts fresh.
+        // loadExistingLease below does a full replace, safe to call after reset.
+        resetForm();
+
         if (state?.existingLease) {
-            // Load existing lease data and determine starting step
             loadExistingLease(state.existingLease);
             const leaseId = state.leaseId || state.existingLease.id || null;
             setExistingLeaseId(leaseId);
-            // Set property name from existing lease
             if (state.existingLease.property?.propertyName) {
                 setPropertyName(state.existingLease.property.propertyName);
             }
         } else if (state?.preSelectedPropertyId) {
-            // Reset form first to avoid retaining previous applicant's data
-            resetForm();
             setPropertyId(state.preSelectedPropertyId);
-        } else {
-            // Fresh navigation to MoveIn without state → reset previous form data
-            resetForm();
         }
     }, [location.state, setPropertyId, loadExistingLease, resetForm]);
 
