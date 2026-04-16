@@ -15,7 +15,7 @@ import EditPaymentModal from './components/EditPaymentModal';
 import RefundPaymentModal from './components/RefundPaymentModal';
 import DeletePaymentModal from '../Transactions/components/DeletePaymentModal';
 import { utils, writeFile } from 'xlsx';
-import { useGetPayments, useDeletePayment, useRefundPayment } from '../../../../hooks/useTransactionQueries';
+import { useGetPayments, useDeletePayment, useRefundPayment, useDeleteTransaction, useUpdatePayment } from '../../../../hooks/useTransactionQueries';
 import type { Payment } from '../../../../services/transaction.service';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 
@@ -35,7 +35,9 @@ const Payments: React.FC = () => {
 
     // Delete payment mutation
     const deletePaymentMutation = useDeletePayment();
+    const deleteTransactionMutation = useDeleteTransaction();
     const refundPaymentMutation = useRefundPayment();
+    const updatePaymentMutation = useUpdatePayment();
 
     // Use transaction store for delete modal state
     const { setDeleteModalOpen, selectedPayment } = useTransactionStore();
@@ -78,6 +80,7 @@ const Payments: React.FC = () => {
     const {
         setDeleteTransactionOpen,
         setSelectedTransactionId,
+        selectedTransactionId,
         setEditPaymentModalOpen,
         setSelectedPayment,
         setRefundModalOpen,
@@ -218,31 +221,49 @@ const Payments: React.FC = () => {
                 }}
             />
             <DeleteTransactionModal
-                onConfirm={() => {
-                    setDeleteTransactionOpen(false);
-                    setSelectedTransactionId(null);
+                onConfirm={async () => {
+                    const transactionId = selectedTransactionId;
+                    if (!transactionId) {
+                        alert('No transaction selected');
+                        return;
+                    }
+                    try {
+                        await deleteTransactionMutation.mutateAsync(transactionId.toString());
+                        setDeleteTransactionOpen(false);
+                        setSelectedTransactionId(null);
+                    } catch (error) {
+                        alert(`Failed to delete: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                        console.error('Error deleting transaction:', error);
+                    }
                 }}
+                isLoading={deleteTransactionMutation.isPending}
             />
             <DeletePaymentModal
                 onConfirm={async () => {
-                    if (selectedPayment?.transactionId && selectedPayment?.paymentId) {
-                        try {
+                    if (!selectedPayment?.transactionId) {
+                        alert('Cannot delete: transaction reference is missing');
+                        return;
+                    }
+                    try {
+                        if (selectedPayment.paymentId) {
                             await deletePaymentMutation.mutateAsync({
                                 transactionId: selectedPayment.transactionId,
                                 paymentId: selectedPayment.paymentId,
                             });
-                            setDeleteModalOpen(false);
-                            setSelectedPayment(null);
-                            // Show success feedback
                             alert(`Payment of ${selectedPayment.amount} deleted successfully`);
-                        } catch (error) {
-                            console.error('Failed to delete payment:', error);
-                            // Show error feedback
-                            alert(`Failed to delete payment: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                        } else {
+                            // No standalone payment record on this row — delete the underlying transaction.
+                            await deleteTransactionMutation.mutateAsync(selectedPayment.transactionId);
+                            alert(`Transaction of ${selectedPayment.amount} deleted successfully`);
                         }
+                        setDeleteModalOpen(false);
+                        setSelectedPayment(null);
+                    } catch (error) {
+                        console.error('Failed to delete payment:', error);
+                        alert(`Failed to delete: ${error instanceof Error ? error.message : 'Unknown error'}`);
                     }
                 }}
-                isLoading={deletePaymentMutation.isPending}
+                isLoading={deletePaymentMutation.isPending || deleteTransactionMutation.isPending}
             />
             <ApplyDepositsModal
                 onConfirm={(data) => {
@@ -275,9 +296,30 @@ const Payments: React.FC = () => {
                 }}
             />
             <EditPaymentModal
-                onConfirm={(data) => {
-                    console.log('Edit Payment data:', data);
-                    setEditPaymentModalOpen(false);
+                onConfirm={async (data) => {
+                    if (!selectedPayment?.transactionId || !selectedPayment?.paymentId) {
+                        alert('Cannot edit: payment reference is missing on this row');
+                        return;
+                    }
+                    try {
+                        await updatePaymentMutation.mutateAsync({
+                            transactionId: selectedPayment.transactionId,
+                            paymentId: selectedPayment.paymentId,
+                            updateData: {
+                                amount: data.amount ? parseFloat(data.amount) : undefined,
+                                paymentDate: data.datePaid ? data.datePaid.toISOString() : undefined,
+                                method: data.method,
+                                paymentDetails: data.details,
+                            },
+                            file: data.selectedFile || undefined,
+                        });
+                        setEditPaymentModalOpen(false);
+                        setSelectedPayment(null);
+                        alert('Payment updated successfully');
+                    } catch (error) {
+                        alert(`Failed to update payment: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                        console.error('Failed to update payment:', error);
+                    }
                 }}
             />
             <RefundPaymentModal
@@ -519,17 +561,9 @@ const Payments: React.FC = () => {
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        const paymentId = item.payments?.[0]?.id;
-                                                        if (!paymentId) return;
-                                                        setSelectedPayment({
-                                                            id: item.id,
-                                                            transactionId: item.id,
-                                                            paymentId,
-                                                            amount: item.amount,
-                                                            status: item.status,
-                                                        });
-                                                        setDeleteModalOpen(true);
                                                         setMoreMenuOpenId(null);
+                                                        setSelectedTransactionId(item.id);
+                                                        setDeleteTransactionOpen(true);
                                                     }}
                                                     className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
                                                     role="menuitem"
@@ -624,17 +658,9 @@ const Payments: React.FC = () => {
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                const paymentId = item.payments?.[0]?.id;
-                                                if (!paymentId) return;
-                                                setSelectedPayment({
-                                                    id: item.id,
-                                                    transactionId: item.id,
-                                                    paymentId,
-                                                    amount: item.amount,
-                                                    status: item.status,
-                                                });
-                                                setDeleteModalOpen(true);
                                                 setMoreMenuOpenId(null);
+                                                setSelectedTransactionId(item.id);
+                                                setDeleteTransactionOpen(true);
                                             }}
                                             className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
                                             role="menuitem"

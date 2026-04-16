@@ -15,8 +15,15 @@ const DeletePaymentModal: React.FC<DeletePaymentModalProps> = ({
     const { isDeleteModalOpen, setDeleteModalOpen, selectedPayment } = useTransactionStore();
     const isOpen = isDeleteModalOpen;
     const onClose = () => setDeleteModalOpen(false);
-    const paymentDate = selectedPayment?.date || '';
-    const paymentAmount = selectedPayment?.amount || '';
+    const rawDate = (selectedPayment as any)?.datePaid || (selectedPayment as any)?.date || '';
+    const paymentDate = rawDate
+        ? (() => {
+            try {
+                return new Date(rawDate).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' });
+            } catch { return String(rawDate); }
+        })()
+        : '';
+    const paymentAmount = selectedPayment?.amount != null ? `₹ ${Number(selectedPayment.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '';
     if (!isOpen) return null;
 
     return (

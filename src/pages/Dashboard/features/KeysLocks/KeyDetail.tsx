@@ -6,7 +6,7 @@ import AssignKeyModal from './AssignKeyModal';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
 import DeleteConfirmationModal from '../../../../components/common/modals/DeleteConfirmationModal';
 import ConfirmationModal from './ConfirmationModal';
-import { useGetKey, useUpdateKey, useDeleteKey } from '../../../../hooks/useKeysQueries';
+import { useGetKey, useUpdateKey, useDeleteKey, useGetAllKeys } from '../../../../hooks/useKeysQueries';
 import { useGetAllTenants } from '../../../../hooks/useTenantQueries';
 
 // Map backend key type to display format
@@ -68,8 +68,22 @@ const KeyDetail = () => {
     // Fetch key data from backend
     const { data: keyData, isLoading, error } = useGetKey(id || null, !!id);
     const { data: tenantsData = [] } = useGetAllTenants();
+    const { data: allKeys = [] } = useGetAllKeys();
     const updateKeyMutation = useUpdateKey();
     const deleteKeyMutation = useDeleteKey();
+
+    // Names of people who already hold another active (ISSUED) key — used to warn the manager
+    // before assigning the same person another key.
+    const namesWithExistingKeys = React.useMemo(() => {
+        return Array.from(
+            new Set(
+                (allKeys as any[])
+                    .filter((k: any) => k && k.id !== id && k.status === 'ISSUED' && k.issuedTo)
+                    .map((k: any) => String(k.issuedTo).trim())
+                    .filter(Boolean),
+            ),
+        );
+    }, [allKeys, id]);
 
     const handleAssignKey = async (issuedTo: string) => {
         if (!id || !keyData) return;
@@ -208,14 +222,24 @@ const KeyDetail = () => {
                                     Assign
                                 </button>
                             ) : (
-                                <button
-                                    onClick={() => setIsUnassignModalOpen(true)}
-                                    disabled={updateKeyMutation.isPending}
-                                    className="flex-1 md:flex-none justify-center px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-red-600 transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
-                                >
-                                    {updateKeyMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-                                    Unassign
-                                </button>
+                                <>
+                                    <button
+                                        onClick={() => setIsAssignModalOpen(true)}
+                                        disabled={updateKeyMutation.isPending}
+                                        className="flex-1 md:flex-none justify-center px-6 py-2 bg-[#3A6D6C] text-white rounded-full text-sm font-medium hover:bg-[#2c5251] transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
+                                    >
+                                        {updateKeyMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                                        Re-assign
+                                    </button>
+                                    <button
+                                        onClick={() => setIsUnassignModalOpen(true)}
+                                        disabled={updateKeyMutation.isPending}
+                                        className="flex-1 md:flex-none justify-center px-6 py-2 bg-white text-[#3A6D6C] border border-[#3A6D6C] rounded-full text-sm font-medium hover:bg-red-50 hover:text-red-600 hover:border-red-500 transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
+                                    >
+                                        {updateKeyMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                                        Unassign
+                                    </button>
+                                </>
                             )}
                             <div className="relative flex-1 md:flex-none" ref={dropdownRef}>
                                 <button
@@ -419,6 +443,9 @@ const KeyDetail = () => {
                 isOpen={isAssignModalOpen}
                 onClose={() => setIsAssignModalOpen(false)}
                 onAssign={handleAssignKey}
+                mode={isAssigned ? 'reassign' : 'assign'}
+                currentAssignee={keyData.issuedTo}
+                namesWithExistingKeys={namesWithExistingKeys}
                 tenants={(Array.isArray(tenantsData) ? tenantsData : []).map((t: any) => {
                     const name = [t.firstName, t.lastName].filter(Boolean).join(' ').trim() || t.user?.fullName || t.user?.email || 'Tenant';
                     return name;

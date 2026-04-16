@@ -87,11 +87,27 @@ export const useUpdateApplication = () => {
   return useMutation({
     mutationFn: ({ id, updateData }: { id: string; updateData: Partial<any> }) =>
       applicationService.update(id, updateData),
-    onSuccess: (_data, variables) => {
-      // Invalidate the specific application detail
-      queryClient.invalidateQueries({ queryKey: applicationQueryKeys.detail(variables.id) });
-      // Also invalidate the list to ensure consistency
-      queryClient.invalidateQueries({ queryKey: applicationQueryKeys.lists() });
+    onSuccess: async (data, variables) => {
+      // Write the freshly returned application into the detail cache so screens
+      // reading from it update immediately (no flicker waiting for refetch).
+      if (data) {
+        queryClient.setQueryData(applicationQueryKeys.detail(variables.id), data);
+      }
+      // Force-refetch any active list/detail/byLeasing queries so card status flips right away.
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: applicationQueryKeys.detail(variables.id),
+          refetchType: 'active',
+        }),
+        queryClient.invalidateQueries({
+          queryKey: applicationQueryKeys.lists(),
+          refetchType: 'active',
+        }),
+        queryClient.invalidateQueries({
+          queryKey: [...applicationQueryKeys.all, 'leasing'],
+          refetchType: 'active',
+        }),
+      ]);
     },
   });
 };

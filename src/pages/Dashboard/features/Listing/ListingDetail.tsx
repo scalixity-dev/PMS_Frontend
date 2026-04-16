@@ -22,7 +22,8 @@ import DatePicker from '../../../../components/ui/DatePicker';
 import OnlineApplicationModal from './components/OnlineApplicationModal';
 import InviteToApplyModal from './components/InviteToApplyModal';
 import DetailTabs from '../../components/DetailTabs';
-import { useGetListing, useUpdateListing, useGetListingStatistics } from '../../../../hooks/useListingQueries';
+import { useGetListing, useUpdateListing, useGetListingStatistics, listingQueryKeys } from '../../../../hooks/useListingQueries';
+import { useQueryClient } from '@tanstack/react-query';
 import { useUpdateProperty } from '../../../../hooks/usePropertyQueries';
 import { getCurrencySymbol } from '../../../../utils/currency.utils';
 import Breadcrumb from '../../../../components/ui/Breadcrumb';
@@ -64,6 +65,8 @@ const ListingDetail: React.FC = () => {
 
     const availableFeatures = ['Renovated', 'Furnished', 'Hardwood Floor', 'Fire place', 'Internet', 'Carpet', 'Storage', 'Balcony', 'Garden'];
     const availableAmenities = ['Basketball court', 'Business Court', 'Swimming Pool', 'Gym', 'Tennis Court', 'Clubhouse', 'Playground'];
+
+    const queryClient = useQueryClient();
 
     // Fetch listing data from backend
     const { data: backendListing, isLoading, error } = useGetListing(id || null, !!id);
@@ -134,9 +137,22 @@ const ListingDetail: React.FC = () => {
                 securityDeposit: leaseTerms.securityDeposit,
                 amountRefundable: leaseTerms.amountRefundable,
                 availableFrom: availableFromISO,
+                description: leaseTerms.details ?? undefined,
                 ...(minLeaseDuration && { minLeaseDuration }),
                 ...(maxLeaseDuration && { maxLeaseDuration }),
             },
+        });
+    };
+
+    const handleSaveVideo = () => {
+        const propertyId = backendListing?.property?.id;
+        if (!propertyId) return;
+        // The backend stores a single video URL in property.youtubeUrl. We persist the first
+        // remaining item (or null when the user removed everything) so deletes also stick.
+        const url = videoItems.length > 0 ? videoItems[0] : '';
+        updateProperty.mutate({
+            propertyId,
+            updateData: { youtubeUrl: url },
         });
     };
 
@@ -153,43 +169,62 @@ const ListingDetail: React.FC = () => {
     };
 
     const handleSaveFeatures = (selected: string[]) => {
+        // Optimistic local state; modal stays open — user closes with "Done".
         setFeatures(selected);
-        setActiveModal(null);
         const propertyId = backendListing?.property?.id;
         if (!propertyId) return;
         const existingAmenities = backendListing?.property?.amenities;
-        updateProperty.mutate({
-            propertyId,
-            updateData: {
-                amenities: {
-                    parking: existingAmenities?.parking || 'NONE',
-                    laundry: existingAmenities?.laundry || 'NONE',
-                    airConditioning: existingAmenities?.airConditioning || 'NONE',
-                    propertyFeatures: selected,
-                    propertyAmenities: amenities,
+        updateProperty.mutate(
+            {
+                propertyId,
+                updateData: {
+                    amenities: {
+                        parking: existingAmenities?.parking || 'NONE',
+                        laundry: existingAmenities?.laundry || 'NONE',
+                        airConditioning: existingAmenities?.airConditioning || 'NONE',
+                        propertyFeatures: selected,
+                        propertyAmenities: amenities,
+                    },
                 },
             },
-        });
+            {
+                onSuccess: () => {
+                    // Listing detail query holds nested property.amenities — invalidate
+                    // it so the card under the modal refreshes with new chips.
+                    if (backendListing?.id) {
+                        queryClient.invalidateQueries({ queryKey: listingQueryKeys.detail(backendListing.id) });
+                    }
+                },
+            },
+        );
     };
 
     const handleSaveAmenities = (selected: string[]) => {
         setAmenities(selected);
-        setActiveModal(null);
         const propertyId = backendListing?.property?.id;
         if (!propertyId) return;
         const existingAmenities = backendListing?.property?.amenities;
-        updateProperty.mutate({
-            propertyId,
-            updateData: {
-                amenities: {
-                    parking: existingAmenities?.parking || 'NONE',
-                    laundry: existingAmenities?.laundry || 'NONE',
-                    airConditioning: existingAmenities?.airConditioning || 'NONE',
-                    propertyFeatures: features,
-                    propertyAmenities: selected,
+        updateProperty.mutate(
+            {
+                propertyId,
+                updateData: {
+                    amenities: {
+                        parking: existingAmenities?.parking || 'NONE',
+                        laundry: existingAmenities?.laundry || 'NONE',
+                        airConditioning: existingAmenities?.airConditioning || 'NONE',
+                        propertyFeatures: features,
+                        propertyAmenities: selected,
+                    },
                 },
             },
-        });
+            {
+                onSuccess: () => {
+                    if (backendListing?.id) {
+                        queryClient.invalidateQueries({ queryKey: listingQueryKeys.detail(backendListing.id) });
+                    }
+                },
+            },
+        );
     };
 
     const handleSaveContact = () => {
@@ -521,7 +556,20 @@ const ListingDetail: React.FC = () => {
             URL.revokeObjectURL(urlToRemove);
             objectURLsRef.current.delete(urlToRemove);
         }
-        setGalleryImages(prev => prev.filter((_, i) => i !== index));
+        const remaining = galleryImages.filter((_, i) => i !== index);
+        setGalleryImages(remaining);
+
+        // Persist immediately so deletes stick even if the user navigates away
+        // before clicking "Done". Skip if it was a blob URL (still uploading).
+        const propertyId = backendListing?.property?.id;
+        if (!propertyId || urlToRemove.startsWith('blob:')) return;
+        const serverUrls = remaining.filter((u) => !u.startsWith('blob:'));
+        updateProperty.mutate({
+            propertyId,
+            updateData: {
+                photos: serverUrls.map((url) => ({ photoUrl: url, isPrimary: false })),
+            },
+        });
     };
 
     const handleDeleteVideoItem = (index: number) => {
@@ -531,7 +579,17 @@ const ListingDetail: React.FC = () => {
             URL.revokeObjectURL(urlToRemove);
             objectURLsRef.current.delete(urlToRemove);
         }
-        setVideoItems(prev => prev.filter((_, i) => i !== index));
+        const remaining = videoItems.filter((_, i) => i !== index);
+        setVideoItems(remaining);
+
+        // Persist immediately. Backend stores a single video on property.youtubeUrl;
+        // when the user clears the last video we send '' which the backend coerces to null.
+        const propertyId = backendListing?.property?.id;
+        if (!propertyId || urlToRemove.startsWith('blob:')) return;
+        updateProperty.mutate({
+            propertyId,
+            updateData: { youtubeUrl: remaining.length > 0 ? remaining[0] : '' },
+        });
     };
 
     const handleGalleryUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -554,7 +612,26 @@ const ListingDetail: React.FC = () => {
             // Replace optimistic objectURL with server URL
             URL.revokeObjectURL(objectURL);
             objectURLsRef.current.delete(objectURL);
-            setGalleryImages(prev => prev.map(u => u === objectURL ? url : u));
+            const updatedList = (() => {
+                const next = galleryImages.map(u => u === objectURL ? url : u);
+                if (!next.includes(url)) {
+                    return [url, ...next.filter(u => u !== objectURL)];
+                }
+                return next;
+            })();
+            setGalleryImages(updatedList);
+
+            // Persist new photo immediately to property.photos
+            const propertyId = backendListing?.property?.id;
+            if (propertyId) {
+                const serverUrls = updatedList.filter((u) => !u.startsWith('blob:'));
+                updateProperty.mutate({
+                    propertyId,
+                    updateData: {
+                        photos: serverUrls.map((u) => ({ photoUrl: u, isPrimary: false })),
+                    },
+                });
+            }
         } catch {
             // Revert on failure
             URL.revokeObjectURL(objectURL);
@@ -582,6 +659,15 @@ const ListingDetail: React.FC = () => {
             URL.revokeObjectURL(objectURL);
             objectURLsRef.current.delete(objectURL);
             setVideoItems(prev => prev.map(u => u === objectURL ? url : u));
+
+            // Persist new video URL immediately to property.youtubeUrl
+            const propertyId = backendListing?.property?.id;
+            if (propertyId) {
+                updateProperty.mutate({
+                    propertyId,
+                    updateData: { youtubeUrl: url },
+                });
+            }
         } catch {
             URL.revokeObjectURL(objectURL);
             objectURLsRef.current.delete(objectURL);
@@ -1028,7 +1114,13 @@ const ListingDetail: React.FC = () => {
                                 <div className="flex gap-4 mb-4">
                                     <span className="bg-[#82D64D] text-white px-6 py-1.5 rounded-full text-xs font-bold">Video</span>
                                     <button
-                                        onClick={() => setIsVideoEditing(!isVideoEditing)}
+                                        onClick={() => {
+                                            // Persist on Done click (toggle-off). Same UX as Gallery.
+                                            if (isVideoEditing) {
+                                                handleSaveVideo();
+                                            }
+                                            setIsVideoEditing(!isVideoEditing);
+                                        }}
                                         className={`${isVideoEditing ? 'bg-[#3A6D6C]' : 'bg-[#888888]'} text-white px-6 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 transition-colors`}
                                     >
                                         {isVideoEditing ? 'Done' : 'Edit'} <SquarePen className="w-3 h-3" />
@@ -1362,31 +1454,98 @@ const ListingDetail: React.FC = () => {
                             )}
                         </div>
 
-                        {/* Listing views sources */}
+                        {/* Listing views sources — last 30 days, grouped per day */}
                         <div>
                             <div className="flex items-center gap-2 mb-4">
                                 <h3 className="text-lg font-bold text-gray-800">Listing views sources</h3>
                                 <ChevronDown className="w-5 h-5 text-gray-800" />
                             </div>
-                            <div className="bg-[#F0F0F6] rounded-[2rem] p-12 flex flex-col items-center justify-center text-center">
-                                <div className="bg-[#E3EBDE] p-3 rounded-xl mb-3 shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.25)]">
-                                    <List className="w-6 h-6 text-[#3A6D6C]" />
-                                </div>
-                                <h4 className="text-[#3A6D6C] font-bold mb-1">No listing views</h4>
-                                <p className="text-gray-500 text-xs">There are no listing views.</p>
-                            </div>
+                            {(() => {
+                                const rows = stats?.viewsByDay ?? [];
+                                if (rows.length === 0) {
+                                    return (
+                                        <div className="bg-[#F0F0F6] rounded-[2rem] p-12 flex flex-col items-center justify-center text-center">
+                                            <div className="bg-[#E3EBDE] p-3 rounded-xl mb-3 shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.25)]">
+                                                <List className="w-6 h-6 text-[#3A6D6C]" />
+                                            </div>
+                                            <h4 className="text-[#3A6D6C] font-bold mb-1">No listing views</h4>
+                                            <p className="text-gray-500 text-xs">There are no listing views.</p>
+                                        </div>
+                                    );
+                                }
+                                const max = Math.max(...rows.map((r) => r.count), 1);
+                                return (
+                                    <div className="bg-[#F0F0F6] rounded-[2rem] p-6">
+                                        <div className="space-y-3">
+                                            {rows.map((r) => {
+                                                const pct = Math.round((r.count / max) * 100);
+                                                const dateLabel = (() => {
+                                                    try {
+                                                        return new Date(r.date).toLocaleDateString(undefined, {
+                                                            year: 'numeric', month: 'short', day: '2-digit'
+                                                        });
+                                                    } catch { return r.date; }
+                                                })();
+                                                return (
+                                                    <div key={r.date} className="grid grid-cols-[140px_1fr_60px] items-center gap-3">
+                                                        <span className="text-sm font-medium text-gray-700">{dateLabel}</span>
+                                                        <div className="bg-white rounded-full h-3 overflow-hidden shadow-inner">
+                                                            <div
+                                                                className="bg-[#82D64D] h-full rounded-full transition-all"
+                                                                style={{ width: `${pct}%` }}
+                                                            />
+                                                        </div>
+                                                        <span className="text-sm font-bold text-gray-800 text-right">{r.count}</span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                );
+                            })()}
                         </div>
 
-                        {/* Leads sources */}
+                        {/* Leads sources — grouped by source enum */}
                         <div>
                             <h3 className="text-lg font-bold text-gray-800 mb-4">Leads sources</h3>
-                            <div className="bg-[#F0F0F6] rounded-[2rem] p-12 flex flex-col items-center justify-center text-center">
-                                <div className="bg-[#E3EBDE] p-3 rounded-xl mb-3 shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.25)]">
-                                    <List className="w-6 h-6 text-[#3A6D6C]" />
-                                </div>
-                                <h4 className="text-[#3A6D6C] font-bold mb-1">No leads</h4>
-                                <p className="text-gray-500 text-xs">There are no leads for this listing.</p>
-                            </div>
+                            {(() => {
+                                const rows = stats?.leadsBySource ?? [];
+                                if (rows.length === 0) {
+                                    return (
+                                        <div className="bg-[#F0F0F6] rounded-[2rem] p-12 flex flex-col items-center justify-center text-center">
+                                            <div className="bg-[#E3EBDE] p-3 rounded-xl mb-3 shadow-[inset_2px_2px_0px_0px_rgba(83,83,83,0.25)]">
+                                                <List className="w-6 h-6 text-[#3A6D6C]" />
+                                            </div>
+                                            <h4 className="text-[#3A6D6C] font-bold mb-1">No leads</h4>
+                                            <p className="text-gray-500 text-xs">There are no leads for this listing.</p>
+                                        </div>
+                                    );
+                                }
+                                const total = rows.reduce((s, r) => s + r.count, 0) || 1;
+                                return (
+                                    <div className="bg-[#F0F0F6] rounded-[2rem] p-6">
+                                        <div className="space-y-3">
+                                            {rows.map((r) => {
+                                                const pct = Math.round((r.count / total) * 100);
+                                                return (
+                                                    <div key={r.source} className="grid grid-cols-[180px_1fr_70px] items-center gap-3">
+                                                        <span className="text-sm font-medium text-gray-700">{r.label}</span>
+                                                        <div className="bg-white rounded-full h-3 overflow-hidden shadow-inner">
+                                                            <div
+                                                                className="bg-[#3A6D6C] h-full rounded-full transition-all"
+                                                                style={{ width: `${pct}%` }}
+                                                            />
+                                                        </div>
+                                                        <span className="text-sm font-bold text-gray-800 text-right">
+                                                            {r.count} <span className="text-gray-500 font-normal">({pct}%)</span>
+                                                        </span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                );
+                            })()}
                         </div>
                     </div>
                 )}

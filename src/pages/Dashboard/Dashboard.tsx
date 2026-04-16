@@ -3,7 +3,7 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 
 import profilePic from "../../assets/images/profilepic.png";
 import propertyPic from "../../assets/images/propertypic.png";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { useGetDashboardStats } from '../../hooks/useDashboardQueries';
 import { useGetAllTasks } from '../../hooks/useTaskQueries';
 import { useGetAllApplications } from '../../hooks/useApplicationQueries';
@@ -48,8 +48,8 @@ export default function Dashboard() {
     const total = propertiesData.length;
     if (!total) {
       return [
-        { name: 'Occupied', value: 0, color: '#8b5cf6' },
-        { name: 'Vacant', value: 0, color: '#c084fc' },
+        { name: 'Occupied', value: 0, color: '#16a34a' },
+        { name: 'Vacant', value: 0, color: '#86efac' },
       ];
     }
     const vacant = propertiesData.filter((property: any) =>
@@ -57,8 +57,8 @@ export default function Dashboard() {
     ).length;
     const occupied = Math.max(total - vacant, 0);
     return [
-      { name: 'Occupied', value: occupied, color: '#8b5cf6' },
-      { name: 'Vacant', value: vacant, color: '#c084fc' },
+      { name: 'Occupied', value: occupied, color: '#16a34a' },
+      { name: 'Vacant', value: vacant, color: '#86efac' },
     ];
   }, [propertiesData]);
 
@@ -570,8 +570,31 @@ export default function Dashboard() {
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
+                <Tooltip
+                  formatter={(value: any, name: any) => {
+                    const total = propertiesUnitsData.reduce((s, d) => s + (d.value || 0), 0) || 1;
+                    const pct = Math.round((Number(value) / total) * 100);
+                    return [`${value} (${pct}%)`, name];
+                  }}
+                  contentStyle={{
+                    borderRadius: 8,
+                    border: '1px solid #e5e7eb',
+                    fontSize: 12,
+                    padding: '6px 10px',
+                  }}
+                />
               </PieChart>
             </ResponsiveContainer>
+            {/* Center total label */}
+            {(() => {
+              const total = propertiesUnitsData.reduce((s, d) => s + (d.value || 0), 0);
+              return (
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-2xl font-bold text-gray-900">{total}</span>
+                  <span className="text-xs text-gray-500 font-medium">Total units</span>
+                </div>
+              );
+            })()}
           </div>
           <div className="mt-6 flex items-center justify-center gap-4">
             {propertiesUnitsData.map((item) => (

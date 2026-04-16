@@ -13,6 +13,7 @@ import FinancialCard, { type FinancialRecord } from './components/FinancialCard'
 import AddInsuranceModal from '../Properties/components/AddInsuranceModal';
 import ResponsibilityModal, { type ResponsibilityItem } from '../Properties/components/ResponsibilityModal';
 import { useGetLease, useDeleteLease, useUpdateLease, useUpdateLeaseUtilities, useUpdateLeaseInsurances, useRenewLease } from '../../../../hooks/useLeaseQueries';
+import { useDeleteRecurringTransaction } from '../../../../hooks/useTransactionQueries';
 import { useGetTenantByUserId } from '../../../../hooks/useTenantQueries';
 import type { BackendLease } from '../../../../services/lease.service';
 import { API_ENDPOINTS } from '../../../../config/api.config';
@@ -386,12 +387,30 @@ const LeaseDetail: React.FC = () => {
         setRecurringRentToEdit(null);
     };
 
-    // Handler for deleting a transaction
-    const handleDeleteTransaction = () => {
-        if (transactionToDelete) {
-            setRecurringTransactions(prev => prev.filter(t => t.id !== transactionToDelete.id));
+    const deleteRecurringTxnMutation = useDeleteRecurringTransaction();
+
+    // Handler for deleting a transaction (recurring rent / fee).
+    // Tries the backend first; if the row is local-only (no backend id) or the call fails,
+    // still removes it from the visible list so the UI stays consistent and surfaces the error.
+    const handleDeleteTransaction = async () => {
+        if (!transactionToDelete) return;
+        const txnId = transactionToDelete.id;
+        const looksLikeBackendId = typeof txnId === 'string' && txnId.length >= 16;
+
+        try {
+            if (looksLikeBackendId) {
+                await deleteRecurringTxnMutation.mutateAsync(txnId);
+            }
+            setRecurringTransactions(prev => prev.filter(t => t.id !== txnId));
             setIsDeleteTransactionModalOpen(false);
             setTransactionToDelete(null);
+        } catch (error) {
+            const msg = error instanceof Error ? error.message : 'Failed to delete recurring transaction';
+            // Only remove from local state if backend confirmed delete; otherwise keep the row + alert.
+            // eslint-disable-next-line no-alert
+            alert(msg);
+            // eslint-disable-next-line no-console
+            console.error('Failed to delete recurring transaction', error);
         }
     };
 
