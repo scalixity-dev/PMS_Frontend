@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"echo \\\"=== Reports.tsx (nav landing - no data query expected) ===\\\" && grep -c \\\"Link\\\\|to=\\\\\\\"/dashboard/reports\\\" /home/bsc/WORK/Scalixity/PMS/PMS_Frontend/src/pages/Dashboard/features/R...",
+  "error": "Exit code 1\n=== Reports.tsx (nav landing - no data query expected) ===\n0",
+  "timestamp": "2026-04-16T07:49:15.556Z",
+  "retry_count": 1
+}
