@@ -19,6 +19,7 @@ export interface BackendTenantProfile {
     fullName: string;
     role: string;
     isActive: boolean;
+    dateOfBirth?: string | null;
   } | null;
   contactBookEntry?: {
     id: string;
@@ -92,6 +93,7 @@ export interface CreateTenantProfileDto {
   lastName: string;
   phoneCountryCode?: string;
   phoneNumber?: string;
+  dateOfBirth?: string;
   forwardingAddress?: string;
   profilePhotoUrl?: string;
   emergencyContacts?: {
