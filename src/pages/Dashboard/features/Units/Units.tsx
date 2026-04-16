@@ -150,20 +150,22 @@ const Units: React.FC = () => {
                     if (unitsData.length > 0) {
                         // Transform MULTI property units from unit service
                         units = unitsData.map((unit: any) => {
-                            // Determine unit status - only Occupied if there's an active lease/tenant
-                            // Having leasing data doesn't mean occupied - it just means leasing terms are set
+                            // Determine unit status for MULTI — must be per-unit, NOT property-level.
+                            // Property-level leasing.occupancyStatus (e.g. PARTIALLY_OCCUPIED) is
+                            // aggregate across units and cannot identify which specific unit is occupied.
                             let unitStatus: 'Occupied' | 'Vacant' = 'Vacant';
 
-                            // Primary source: propertyLeasing.occupancyStatus (set by lease CRUD)
-                            const propLeasingStatus = property.leasing?.occupancyStatus;
-                            if (propLeasingStatus === 'OCCUPIED' || propLeasingStatus === 'PARTIALLY_OCCUPIED') {
+                            // Primary source: unit's own leasing record (propertyLeasing scoped to unitId)
+                            const unitLeasingStatus = unit.leasing?.occupancyStatus;
+                            if (unitLeasingStatus === 'OCCUPIED' || unitLeasingStatus === 'PARTIALLY_OCCUPIED') {
                                 unitStatus = 'Occupied';
                             } else {
-                                // Fallback: check unit listings
+                                // Fallback 1: unit-specific listing from map
                                 const activeListing = listingsMap.activeUnitListingsMap.get(unit.id);
                                 if (activeListing && (activeListing.occupancyStatus === 'OCCUPIED' || activeListing.occupancyStatus === 'PARTIALLY_OCCUPIED')) {
                                     unitStatus = 'Occupied';
                                 } else if (unit.listings && Array.isArray(unit.listings) && unit.listings.length > 0) {
+                                    // Fallback 2: unit's own listings array
                                     const unitListing = unit.listings.find((l: any) =>
                                         l.listingStatus === 'ACTIVE' &&
                                         l.isActive &&
