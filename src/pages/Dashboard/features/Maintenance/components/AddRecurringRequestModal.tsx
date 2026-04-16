@@ -7,6 +7,8 @@ interface AddRecurringRequestModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSubmit: (data: RecurringRequestFormData) => void;
+    // Real properties — when provided, replaces the hardcoded placeholder list.
+    propertyOptions?: Array<{ value: string; label: string }>;
 }
 
 export interface RecurringRequestFormData {
@@ -23,6 +25,7 @@ const AddRecurringRequestModal: React.FC<AddRecurringRequestModalProps> = ({
     isOpen,
     onClose,
     onSubmit,
+    propertyOptions,
 }) => {
     const [formData, setFormData] = useState<RecurringRequestFormData>({
         category: '',
@@ -191,12 +194,16 @@ const AddRecurringRequestModal: React.FC<AddRecurringRequestModalProps> = ({
                             label="Property*"
                             value={formData.property}
                             onChange={(value) => setFormData({ ...formData, property: value })}
-                            options={[
-                                { value: 'luxury_property', label: 'Luxury Property' },
-                                { value: 'sunset_villa', label: 'Sunset Villa' },
-                                { value: 'ocean_view', label: 'Ocean View Apartments' },
-                                { value: 'garden_heights', label: 'Garden Heights' }
-                            ]}
+                            options={
+                                propertyOptions && propertyOptions.length > 0
+                                    ? propertyOptions
+                                    : [
+                                        { value: 'luxury_property', label: 'Luxury Property' },
+                                        { value: 'sunset_villa', label: 'Sunset Villa' },
+                                        { value: 'ocean_view', label: 'Ocean View Apartments' },
+                                        { value: 'garden_heights', label: 'Garden Heights' }
+                                    ]
+                            }
                             placeholder="Select Property"
                             required
                             buttonClassName="!bg-white !border-none !rounded-lg !py-3 !px-6"
