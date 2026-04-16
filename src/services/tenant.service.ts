@@ -9,6 +9,7 @@ export interface BackendTenantProfile {
   lastName: string;
   phoneCountryCode?: string | null;
   phoneNumber?: string | null;
+  dateOfBirth?: string | null;
   forwardingAddress?: string | null;
   profilePhotoUrl?: string | null;
   createdAt: string;
